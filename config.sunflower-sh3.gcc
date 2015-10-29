@@ -1,0 +1,11 @@
+AR			= sh-coff-ar
+OBJECTEXTENSION		= o
+LD			= sh-coff-ld
+CC			= sh-coff-gcc
+CCFLAGS			= "-nostdlib -fno-builtin -std=gnu99"
+RANLIB			= sh-coff-ranlib
+HOSTNAME		= localhost#`hostname`
+PLATFORM_DFLAGS		+= -DkCrayonBasePath="\"/Library/WebServer/Documents/tmp/\"" -DkCrayonDotCommand="\"/opt/local/bin/dot\"" -DkCrayonLogPath="\"http://$(HOSTNAME)/tmp/salsvm-logo.png\"" -DkCrayonCgiFileUrlBase=\""http://$(HOSTNAME)/tmp/\"" -DkCrayonCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/crayoncgi-darwin\""
+PLATFORM_OPTFLAGS	= -O3
+PLATFORM_DBGFLAGS	+= -g
+PLATFORM_CFLAGS		+= -DCRAYON_OS_MACOSX
