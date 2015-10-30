@@ -27,26 +27,39 @@ SOURCES		=\
 		main.c\
 		noisy.c\
 		noisy-errors$(NOISY_L10N).c\
+		noisy-typeSignatures.c\
+		noisy-productions.c\
+		noisy-tokens.c\
 
 
 OBJS		=\
 		version.$(OBJECTEXTENSION)\
-#		main.$(OBJECTEXTENSION)\
-		noisy.$(OBJECTEXTENSION)\
 		noisy-errors$(NOISY_L10N).$(OBJECTEXTENSION)\
+		noisy-typeSignatures.$(OBJECTEXTENSION)\
+		noisy-productions.$(OBJECTEXTENSION)\
+		noisy-tokens.$(OBJECTEXTENSION)\
+#		main.$(OBJECTEXTENSION)\
+#		noisy.$(OBJECTEXTENSION)\
 
 
 CGIOBJS		=\
 		version.$(OBJECTEXTENSION)\
-#		cgimain.$(OBJECTEXTENSION)\
-		noisy.$(OBJECTEXTENSION)\
 		noisy-errors$(NOISY_L10N).$(OBJECTEXTENSION)\
+		noisy-typeSignatures.$(OBJECTEXTENSION)\
+		noisy-productions.$(OBJECTEXTENSION)\
+		noisy-tokens.$(OBJECTEXTENSION)\
+#		cgimain.$(OBJECTEXTENSION)\
+#		noisy.$(OBJECTEXTENSION)\
 
 
 LIBNOISYOBJS =\
 		version.$(OBJECTEXTENSION)\
-		noisy.$(OBJECTEXTENSION)\
 		noisy-errors$(NOISY_L10N).$(OBJECTEXTENSION)\
+		noisy-typeSignatures.$(OBJECTEXTENSION)\
+		noisy-productions.$(OBJECTEXTENSION)\
+		noisy-tokens.$(OBJECTEXTENSION)\
+#		noisy.$(OBJECTEXTENSION)\
+
 
 
 HEADERS		=\

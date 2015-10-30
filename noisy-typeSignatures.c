@@ -35,6 +35,10 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "noisy.h"
+
+
+
 /*
  *	Type signatures of nodes that can appear in a subtree representing a type.
  */
@@ -42,16 +46,17 @@ const char gNoisyTypeNodeSignatures[kNoisyIrNodeTypeMax] = {
 								[kNoisyIrNodeType_PerrorMagnitudeTolerance]	= 'W',
 								[kNoisyIrNodeType_PlossTolerance]		= 'X',
 								[kNoisyIrNodeType_PlatencyTolerance]		= 'Y',
-								[kNoisyIrNodeType_PadtTypeDeclaration]		= 'A',
-								[kNoisyIrNodeType_PanonymousAggregateType]	= 'G',
-								[kNoisyIrNodeType_PconstantDeclaration]		= 'L',
+								[kNoisyIrNodeType_PadtTypeDecl]			= 'A',
+								[kNoisyIrNodeType_PanonAggregateType]		= 'G',
+								[kNoisyIrNodeType_PconDecl]			= 'L',
 								[kNoisyIrNodeType_PfixedType]			= 'F',
 								[kNoisyIrNodeType_Pidentifier]			= 'I',
-								[kNoisyIrNodeType_PnamegenDeclaration]		= 'N',
+								[kNoisyIrNodeType_PnamegenDecl]			= 'N',
 								[kNoisyIrNodeType_PtupleType]			= 'T',
-								[kNoisyIrNodeType_PtypeDeclaration]		= 'P',
+								[kNoisyIrNodeType_PtypeDecl]			= 'P',
 								[kNoisyIrNodeType_PtypeExpression]		= 'E',
-								[kNoisyIrNodeType_PtypeName]			= 'M',
+								[kNoisyIrNodeType_Ptypename]			= 'M',
+								[kNoisyIrNodeType_PintConst]			= 'I',
 								[kNoisyIrNodeType_Talpha]			= 'h',
 								[kNoisyIrNodeType_Tarray]			= 'a',
 								[kNoisyIrNodeType_Tbool]			= 'o',
@@ -59,13 +64,12 @@ const char gNoisyTypeNodeSignatures[kNoisyIrNodeTypeMax] = {
 								[kNoisyIrNodeType_Tconst]			= 'c',
 								[kNoisyIrNodeType_Tepsilon]			= 'e',
 								[kNoisyIrNodeType_Tfixed]			= 'f',
-								[kNoisyIrNodeType_Tinteger]			= 'i',
-								[kNoisyIrNodeType_TintegerConstant]		= 'I',
+								[kNoisyIrNodeType_Tint]				= 'i',
 								[kNoisyIrNodeType_Tlist]			= 'l',
 								[kNoisyIrNodeType_Tnamegen]			= 'g',
 								[kNoisyIrNodeType_Tnybble]			= 'y',
 								[kNoisyIrNodeType_Treal]			= 'r',
-								[kNoisyIrNodeType_TrealConstant]		= 'R',
+								[kNoisyIrNodeType_TrealConst]			= 'R',
 								[kNoisyIrNodeType_Tset]				= 'z',
 								[kNoisyIrNodeType_Tstring]			= 's',
 								[kNoisyIrNodeType_Ttau]				= 't',

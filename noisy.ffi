@@ -430,7 +430,7 @@ production	kNoisyIrNodeType_Pexpression:		followset = {
 									kNoisyIrNodeType_Tgoes,
 									followset(kNoisyIrNodeType_Pelement),
 									kNoisyIrNodeType_Tsemicolon),
-									followset(kNoisyIrNodeType_PchanEventExpression),
+									-- This creates a loop... followset(kNoisyIrNodeType_PchanEventExpression),
 									kNoisyIrNodeType_TrealConst,
 									kNoisyIrNodeType_TrightParen,
 									kNoisyIrNodeType_Tcolon,
