@@ -20,7 +20,7 @@ CGI_TARGET	= noisycgi-$(OSTYPE)-$(NOISY_L10N)
 WFLAGS		= -Wall -Werror
 INCDIRS		= -I. -I$(LIBFLEXPATH)
 
-
+NOISYEXTENSION	= n
 
 SOURCES		=\
 		version.c\
@@ -107,7 +107,7 @@ scan:	clean
 
 
 README.sloccount: $(HEADERS) $(SOURCES)
-	sloccount *.c *.h > README.sloccount
+	sloccount *.c *.h *.grammar *.ffi *.$(NOISYEXTENSION) */*.$(NOISYEXTENSION) > README.sloccount
 
 
 test:

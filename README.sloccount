@@ -1,0 +1,58 @@
+Have a non-directory at the top, so creating directory top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/main.c to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-errorsEN.c to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-irPass-cBackend.c to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-irPass-contextSensitiveAnalysis.c to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-irPass-dotBackend.c to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-parser.c to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-symbolTable.c to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-types.c to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy.c to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/version.c to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-errors.h to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-errorsEN.h to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-irPass-cBackend.h to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-irPass-contextSensitiveAnalysis.h to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-irPass-dotBackend.h to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-parser.h to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-productions.h to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-symbolTable.h to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-tokens.h to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-typeSignatures.h to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-types.h to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy.h to top_dir
+Adding /Volumes/doos/Noisy-lang-compiler-hg/version.h to top_dir
+WARNING!!! Not a file nor a directory (so ignored): *.grammar
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy.ffi to top_dir
+WARNING!!! Not a file nor a directory (so ignored): *.n
+Adding /Volumes/doos/Noisy-lang-compiler-hg/Examples/helloWorld.n to top_dir
+Categorizing files.
+Finding a working MD5 command....
+Found a working MD5 command.
+Computing results.
+
+
+SLOC	Directory	SLOC-by-Language (Sorted)
+5316    top_dir         ansic=5316
+
+
+Totals grouped by language (dominant language first):
+ansic:         5316 (100.00%)
+
+
+
+
+Total Physical Source Lines of Code (SLOC)                = 5,316
+Development Effort Estimate, Person-Years (Person-Months) = 1.16 (13.87)
+ (Basic COCOMO model, Person-Months = 2.4 * (KSLOC**1.05))
+Schedule Estimate, Years (Months)                         = 0.57 (6.79)
+ (Basic COCOMO model, Months = 2.5 * (person-months**0.38))
+Estimated Average Number of Developers (Effort/Schedule)  = 2.04
+Total Estimated Cost to Develop                           = $ 156,137
+ (average salary = $56,286/year, overhead = 2.40).
+SLOCCount, Copyright (C) 2001-2004 David A. Wheeler
+SLOCCount is Open Source Software/Free Software, licensed under the GNU GPL.
+SLOCCount comes with ABSOLUTELY NO WARRANTY, and you are welcome to
+redistribute it under certain conditions as specified by the GNU GPL license;
+see the documentation for details.
+Please credit this data as "generated using David A. Wheeler's 'SLOCCount'."
