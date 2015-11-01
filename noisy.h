@@ -101,7 +101,7 @@ typedef enum
 	kNoisyIrNodeType_Tidentifier,
 	kNoisyIrNodeType_Tinc,
 	kNoisyIrNodeType_Tint,
-	kNoisyIrNodeType_TintegerConst,
+	kNoisyIrNodeType_TintConst,
 	kNoisyIrNodeType_Titer,
 	kNoisyIrNodeType_Tlatency,
 	kNoisyIrNodeType_TleftBrac,
