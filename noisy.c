@@ -34,3 +34,9 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+
+
+
+const char	gNoisyEol[]		=	"\n\r";
+const char	gNoisyWhitespace[]	=	" \t\n\r";
+const char	gNoisyStickies[]	=	"~!%&*()+=[]{}\\|:;'\",<.>/?";

@@ -38,6 +38,7 @@ OBJS		=\
 		noisy-typeSignatures.$(OBJECTEXTENSION)\
 		noisy-productions.$(OBJECTEXTENSION)\
 		noisy-tokens.$(OBJECTEXTENSION)\
+		noisy.$(OBJECTEXTENSION)\
 #		main.$(OBJECTEXTENSION)\
 #		noisy.$(OBJECTEXTENSION)\
 
@@ -48,6 +49,7 @@ CGIOBJS		=\
 		noisy-typeSignatures.$(OBJECTEXTENSION)\
 		noisy-productions.$(OBJECTEXTENSION)\
 		noisy-tokens.$(OBJECTEXTENSION)\
+		noisy.$(OBJECTEXTENSION)\
 #		cgimain.$(OBJECTEXTENSION)\
 #		noisy.$(OBJECTEXTENSION)\
 
@@ -58,6 +60,7 @@ LIBNOISYOBJS =\
 		noisy-typeSignatures.$(OBJECTEXTENSION)\
 		noisy-productions.$(OBJECTEXTENSION)\
 		noisy-tokens.$(OBJECTEXTENSION)\
+		noisy.$(OBJECTEXTENSION)\
 #		noisy.$(OBJECTEXTENSION)\
 
 

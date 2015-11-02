@@ -37,12 +37,6 @@
 
 
 
-#define kNoisyEol 		"\n\r"
-#define kNoisyWhitespace	" \t\n\r"
-#define kNoisySticky		"~!%&*()+=[]{}\\|:;'\",<.>/?"
-
-
-
 typedef enum
 {
 	kNoisyDebugLexer,
