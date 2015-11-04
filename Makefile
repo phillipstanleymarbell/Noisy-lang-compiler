@@ -39,7 +39,7 @@ OBJS		=\
 		noisy-productions.$(OBJECTEXTENSION)\
 		noisy-tokens.$(OBJECTEXTENSION)\
 		noisy.$(OBJECTEXTENSION)\
-#		main.$(OBJECTEXTENSION)\
+		main.$(OBJECTEXTENSION)\
 #		noisy.$(OBJECTEXTENSION)\
 
 
