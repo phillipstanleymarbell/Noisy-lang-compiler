@@ -43,6 +43,10 @@ typedef enum
 	kNoisyDebugParser,
 	kNoisyDebugAST,
 	kNoisyDebugFF,
+	
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */	
 	kNoisyDebugMax,
 } NoisyDebugType;
 
@@ -239,6 +243,9 @@ typedef enum
 	 */
 	kNoisyIrNodeType_Xseq,
 
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
 	kNoisyIrNodeTypeMax,
 } NoisyIrNodeType;
 
@@ -301,3 +308,237 @@ const NoisyIrNodeType gNoisyReservedTokens[] = {
 							kNoisyIrNodeType_TprogtypeEqual,
 						};
 
+
+
+typedef enum
+{
+	kNoisyVerbosityVerbose				= (1 << 0),
+	kNoisyVerbosityActionTrace			= (1 << 1),
+	kNoisyVerbosityCallTrace			= (1 << 2),
+	kNoisyVerbosityPostScanStreamCheck		= (1 << 3),
+	kNoisyVerbosityPreScanStreamCheck		= (1 << 4),
+
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNoisyVerbosityMax,
+} NoisyVerbosity;
+
+
+
+typedef enum
+{
+	kNoisyIrPassXXX					= (0 << 0),
+	
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNoisyIrPassMax,
+} NoisyIrPasses;
+
+
+
+typedef enum
+{
+	kNoisyIrBackendDot				= (1 << 0),
+	
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNoisyIrBackendMax,
+} NoisyIrBackend;
+
+
+
+typedef enum
+{
+	kNoisyDotDetailLevelNoText			= (1 << 0),
+	kNoisyDotDetailLevelNoNilNodes			= (1 << 1),
+	
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNoisyDotDetailLevelMax,
+} NoisyDotDetailLevel;
+
+
+
+typedef enum
+{
+	kNoisyIrNodeColorDotBackendColoring		= (1 << 0),
+	
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNoisyIrNodeColor,
+} NoisyIrNodeColor;
+
+
+
+typedef enum
+{
+	kNoisyMaxBufferLength				= 8192,
+	kNoisyChunkBufferLength				= 8192,
+	kNoisyMaxErrorTokenCount			= 32,
+	kNoisyStreamchkWidth				= 32,
+	kNoisyMaxPrintBufferLength			= 8192,
+	kNoisyMaxTokenCharacters			= 32,
+	kNoisyMaxFilenameLength				= 128,
+	kNoisyTimeStamptimelineLength			= 1 /* Set to, e.g., 4000000000 if we want to capture very long traces for debug */,
+	kNoisyCgiRandomDigits				= 10,
+	kNoisyRlimitCpuSeconds				= 5*60,			/*	5 mins	*/
+	kNoisyRlimitRssBytes				= 2*1024*1024*1024UL,	/*	2GB	*/
+	kNoisyProgressTimerSeconds			= 5,
+
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNoisyConstantMax,
+} NoisyConstant;
+
+
+
+typedef enum
+{
+	kNoisyModeDefault				= (0 << 0),
+	kNoisyModeCallTracing				= (1 << 0),
+	kNoisyModeCallStatistics			= (1 << 1),
+	kNoisyModeCGI					= (1 << 2),
+
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNoisyModeMax
+} NoisyMode;
+
+
+
+typedef enum
+{
+	kNoisyPostFileWriteActionRenderDot		= (1 << 0),
+
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNoisyPostFileWriteActionMax,
+} NoisyPostFileWriteAction;
+
+
+
+struct NoisyIrNode
+{
+	NoisyIrNodeType	type;
+
+	/*
+	 *	Syntactic (AST) information.
+	 */
+	char *			tokenString;
+	uint64_t		srcLineNumber;
+	uint64_t		srcColumnNumber;
+	NoisyIrNode *		irParent;
+	NoisyIrNode *		irLeftChild;
+	NoisyIrNode *		irRightChild;
+
+	/*
+	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
+	 */
+	NoisyIrNodeColor	nodeColor;
+};
+
+
+
+typedef struct
+{
+	/*
+	 *	Timestamps to track lifecycle
+	 */
+	uint64_t		initializationTimestamp;
+	NoisyTimeStamp *	timestamps;
+	uint64_t		timestampCount;
+	uint64_t		timestampSlots;
+
+
+	/*
+	 *	Track aggregate time spent in all routines, by incrementing
+	 *	timeAggregates[timeAggregatesLastKey] by (now - timeAggregatesLastTimestamp)
+	 */
+	uint64_t *		timeAggregates;
+	NoisyTimeStampKey	timeAggregatesLastKey;
+	uint64_t		timeAggregatesLastTimestamp;
+	uint64_t		timeAggregateTotal;
+	uint64_t *		callAggregates;
+	uint64_t		callAggregateTotal;
+
+
+	/*
+	 *	Used to get error status from FlexLib routines
+	 */
+	FlexErrState *		Fe;
+
+	/*
+	 *	Tokenized input stream
+	 */
+	FlexIstream *		Fi;
+
+	/*
+	 *	State for the portable/monitoring allocator (FlexM)
+	 */
+	FlexMstate *		Fm;
+
+	/*
+	 *	State for portable/buffering print routines (FlexP)
+	 *	We have one buffer for informational messages, another
+	 *	for errors and warnings.
+	 */
+	FlexPrintBuf *		Fperr;
+	FlexPrintBuf *		Fpinfo;
+
+
+	/*
+	 *	The output file of the last render. TODO: Not very happy
+	 *	with this solution as it stands... (inherited from Sal/svm)
+	 */
+	char *			lastDotRender;
+
+
+	/*
+	 *	The root of the IR tree.
+	 */
+	NoisyIrNode *		noisyIrRoot;
+
+
+	NoisyMode		mode;
+	uint64_t		verbosityLevel;
+	uint64_t		dotDetailLevel;
+	uint64_t		optimizationLevel;
+	uint64_t		irPasses;
+	uint64_t		irBackends;
+
+
+	jmp_buf			jmpbuf;
+	bool			jmpbufIsValid;
+} NoisyState;
+
+
+
+typedef struct
+{
+	NoisyIrNodeType		type;
+	char *			string;
+} Pair;
+
+
+
+void				noisyFatal(NoisyState *  C, const char *  msg) __attribute__((noreturn));
+void				noisyError(NoisyState *  C, const char *  msg);
+void				noisyTimestampsInit(NoisyState *  C);
+void				noisyTimeStampDumpTimeline(NoisyState *  C);
+void				noisyTimeStampDumpResidencies(NoisyState *  C);
+NoisyState *			noisyInit(NoisyMode mode);
+void				noisyDealloc(NoisyState *  C);
+void				noisyRunPasses(NoisyState *  C);
+uint64_t			noisyCheckRss(NoisyState *  C);
+void				noisyConsolePrintBuffers(NoisyState *  C);
+void				noisyPrintToFile(NoisyState *  C, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action);
+void				noisyRenderDotInFile(NoisyState *  C, char *  pathName, char *  randomizedFileName);
+void				noisyCheckCgiCompletion(NoisyState *  C, const char *  pathName, const char *  renderExtension);
