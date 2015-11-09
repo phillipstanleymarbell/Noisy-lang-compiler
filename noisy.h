@@ -424,7 +424,7 @@ typedef enum
 } NoisyPostFileWriteAction;
 
 
-
+typedef struct NoisyIrNode NoisyIrNode;
 struct NoisyIrNode
 {
 	NoisyIrNodeType	type;

@@ -35,6 +35,13 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdlib.h>
+#include <stdbool.h>
+#include <setjmp.h>
+#include "flextypes.h"
+#include "flexerror.h"
+#include "flex.h"
+#include "noisy-timeStamps.h"
 #include "noisy.h"
 
 
