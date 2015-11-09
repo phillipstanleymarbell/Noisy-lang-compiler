@@ -34,16 +34,32 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
-
 const char	Esanity[]			= "Sanity check failed";
 const char	Eopen[]				= "Could not open \"%s\": %s\n";
 const char	EbadXseqNode[]			= "Xseq node with no children seen";
 const char	EillegallyPlacedXseqNode[]	= "Illegally placed Xseq node in Node.left";
 const char	EexpectedElementOrStar[]	= "Expected element or \"*\"";
 const char	EterminalTcons[]		= "T_CONS case should have prevented us from getting here";
+const char	Enoinput[]			= "No input files specified!";
+const char	Epipe[]				= "popen() failed";
+const char	Efatal[]			= "Noisy Fatal error: ";
+const char	Eerror[]			= "Noisy Error: ";
+const char	Efork[]				= "fork() failed";
+const char	EnullFileNameInPrintToFile[]	= "Null file name supplied to crayonPrintToFile()";
+const char	EdotRenderFailed[]		= "GraphViz/Dot rendering failed";
+const char	EbadCgiQuery[]			= "bad CGI query (no request, or request not a HEAD or GET)";
+const char	Emkstemps[]			= "mkstemps() failed";
+
+
 
 /*
  *	These are mostly passed in eSemantics()
  */
 const char	Eundeclared[]			= "Variable use before declaration: ";
+
+
+
+/*
+ *	HTML-format errors for CGI version
+ */
+const char	WcgiAsync[] 			= "\n<span width=\"580\" style=\"background-color:FFCC00; color:#FF0000\"><br><b>&#9888;</b>&nbsp;&nbsp;&nbsp; NoisyCompiler halted the computation. Memory or CPU usage limit exceeded.<br><br>See the \"SETCPULIMIT\" and \"SETMEMLIMIT\" commands; \"help\" for more information.</span>\n";

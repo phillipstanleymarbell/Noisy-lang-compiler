@@ -34,3 +34,32 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+extern const char	Esanity[];
+extern const char	Eopen[];
+extern const char	EbadXseqNode[];
+extern const char	EillegallyPlacedXseqNode[];
+extern const char	EexpectedElementOrStar[];
+extern const char	EterminalTcons[];
+extern const char	Enoinput[];
+extern const char	Epipe[];
+extern const char	Efatal[];
+extern const char	Eerror[];
+extern const char	Efork[];
+extern const char	EnullFileNameInPrintToFile[];
+extern const char	EdotRenderFailed[];
+extern const char	EbadCgiQuery[];
+extern const char	Emkstemps[];
+
+
+
+/*
+ *	These are mostly passed in eSemantics()
+ */
+extern const char	Eundeclared[];
+
+
+
+/*
+ *	HTML-format errors for CGI version
+ */
+extern const char	WcgiAsync[];

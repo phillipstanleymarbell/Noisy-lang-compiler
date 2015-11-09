@@ -251,65 +251,6 @@ typedef enum
 
 
 
-/*
- *	Some classes of characters used in Lexer
- */
-const NoisyIrNodeType gNoisyReservedTokens[] = {
-							kNoisyIrNodeType_Ttilde,
-							kNoisyIrNodeType_Tbang,
-							kNoisyIrNodeType_Tpercent,
-							kNoisyIrNodeType_Tcaret,
-							kNoisyIrNodeType_Tampersand,
-							kNoisyIrNodeType_Tasterisk,
-							kNoisyIrNodeType_TleftParen,
-							kNoisyIrNodeType_TrightParen,
-							kNoisyIrNodeType_Tminus,
-							kNoisyIrNodeType_Tplus,
-							kNoisyIrNodeType_Tas,
-							kNoisyIrNodeType_Tdiv,
-							kNoisyIrNodeType_Tgt,
-							kNoisyIrNodeType_Tlt,
-							kNoisyIrNodeType_Tsemicolon,
-							kNoisyIrNodeType_Tcolon,
-							kNoisyIrNodeType_TsingleQuote,
-							kNoisyIrNodeType_TdoubleQuote,
-							kNoisyIrNodeType_TleftBrace,
-							kNoisyIrNodeType_TrightBrace,
-							kNoisyIrNodeType_TleftBrac,
-							kNoisyIrNodeType_TrightBrac,
-							kNoisyIrNodeType_Tstroke,
-							kNoisyIrNodeType_Tgets,
-							kNoisyIrNodeType_Tdot,
-							kNoisyIrNodeType_Tcomma,
-							kNoisyIrNodeType_Tle,
-							kNoisyIrNodeType_Tge,
-							kNoisyIrNodeType_TxorAs,
-							kNoisyIrNodeType_TorAs,
-							kNoisyIrNodeType_TandAs,
-							kNoisyIrNodeType_TmodAs,
-							kNoisyIrNodeType_TdivAs,
-							kNoisyIrNodeType_TmulAs,
-							kNoisyIrNodeType_TsubAs,
-							kNoisyIrNodeType_TaddAs,
-							kNoisyIrNodeType_TdefineAs,
-							kNoisyIrNodeType_Tneq,
-							kNoisyIrNodeType_TrightShift,
-							kNoisyIrNodeType_TrightShiftAs,
-							kNoisyIrNodeType_TleftShift,
-							kNoisyIrNodeType_TleftShiftAs,
-							kNoisyIrNodeType_Tand,
-							kNoisyIrNodeType_Tor,
-							kNoisyIrNodeType_Tcons,
-							kNoisyIrNodeType_Teq,
-							kNoisyIrNodeType_Tinc,
-							kNoisyIrNodeType_Tdec,
-							kNoisyIrNodeType_TchanWrite,
-							kNoisyIrNodeType_Tgoes,
-							kNoisyIrNodeType_TprogtypeEqual,
-						};
-
-
-
 typedef enum
 {
 	kNoisyVerbosityVerbose				= (1 << 0),

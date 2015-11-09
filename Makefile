@@ -9,10 +9,11 @@ include		config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT)
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs cairo`
 
+LIBNOISY	= libnoisy
 NOISY_L10N	= EN
 
 #	-std=gnu99 because we use anonymous unions and induction variable defintions in loop head.
-CCFLAGS		+= -std=gnu99 -DNOISY_L10N="\"$(NOISY_L10N)\"" -DNOISY_L10N_EN `pkg-config --cflags cairo`
+CCFLAGS		+= -std=gnu99 -DkNoisyL10N="\"$(NOISY_L10N)\"" -DNOISY_L10N_EN `pkg-config --cflags cairo`
 
 TARGET		= noisy-$(OSTYPE)-$(NOISY_L10N)
 CGI_TARGET	= noisycgi-$(OSTYPE)-$(NOISY_L10N)
@@ -25,11 +26,13 @@ NOISYEXTENSION	= n
 SOURCES		=\
 		version.c\
 		main.c\
+		cgimain.c\
 		noisy.c\
 		noisy-errors$(NOISY_L10N).c\
 		noisy-typeSignatures.c\
 		noisy-productions.c\
 		noisy-tokens.c\
+		noisy-timeStamps.c\
 
 
 OBJS		=\
@@ -38,9 +41,9 @@ OBJS		=\
 		noisy-typeSignatures.$(OBJECTEXTENSION)\
 		noisy-productions.$(OBJECTEXTENSION)\
 		noisy-tokens.$(OBJECTEXTENSION)\
+		noisy-timeStamps.$(OBJECTEXTENSION)\
 		noisy.$(OBJECTEXTENSION)\
 		main.$(OBJECTEXTENSION)\
-#		noisy.$(OBJECTEXTENSION)\
 
 
 CGIOBJS		=\
@@ -49,9 +52,9 @@ CGIOBJS		=\
 		noisy-typeSignatures.$(OBJECTEXTENSION)\
 		noisy-productions.$(OBJECTEXTENSION)\
 		noisy-tokens.$(OBJECTEXTENSION)\
+		noisy-timeStamps.$(OBJECTEXTENSION)\
 		noisy.$(OBJECTEXTENSION)\
-#		cgimain.$(OBJECTEXTENSION)\
-#		noisy.$(OBJECTEXTENSION)\
+		cgimain.$(OBJECTEXTENSION)\
 
 
 LIBNOISYOBJS =\
@@ -60,8 +63,8 @@ LIBNOISYOBJS =\
 		noisy-typeSignatures.$(OBJECTEXTENSION)\
 		noisy-productions.$(OBJECTEXTENSION)\
 		noisy-tokens.$(OBJECTEXTENSION)\
+		noisy-timeStamps.$(OBJECTEXTENSION)\
 		noisy.$(OBJECTEXTENSION)\
-#		noisy.$(OBJECTEXTENSION)\
 
 
 
@@ -70,7 +73,6 @@ HEADERS		=\
 		version.h\
 		noisy.h\
 		noisy-errors.h\
-		noisy-errors$(NOISY_L10N).h\
 
 
 

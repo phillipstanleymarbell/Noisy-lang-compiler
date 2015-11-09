@@ -1,7 +1,7 @@
 AR			= /usr/bin/ar
 RANLIB			= /usr/bin/ranlib
 HOSTNAME		= localhost#`hostname`
-PLATFORM_DFLAGS		+= -DkCrayonBasePath="\"/Library/WebServer/Documents/tmp/\"" -DkCrayonDotCommand="\"/opt/local/bin/dot\"" -DkCrayonLogPath="\"http://$(HOSTNAME)/tmp/salsvm-logo.png\"" -DkCrayonCgiFileUrlBase=\""http://$(HOSTNAME)/tmp/\"" -DkCrayonCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/crayoncgi-darwin\""
+PLATFORM_DFLAGS		+= -DkNoisyBasePath="\"/Library/WebServer/Documents/tmp/\"" -DkNoisyDotCommand="\"/opt/local/bin/dot\"" -DkNoisyLogoPath="\"http://$(HOSTNAME)/tmp/Noisy-logo.png\"" -DkNoisyCgiFileUrlBase=\""http://$(HOSTNAME)/tmp/\"" -DkNoisyCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/noisycgi-darwin\""
 PLATFORM_OPTFLAGS	= -O3
 PLATFORM_DBGFLAGS	+= -g
-PLATFORM_CFLAGS		+= -DCRAYON_OS_MACOSX
+PLATFORM_CFLAGS		+= -DNoisyOsMacOSX

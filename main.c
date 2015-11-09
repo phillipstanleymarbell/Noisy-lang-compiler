@@ -55,9 +55,9 @@
 #include "noisy-irPass-helpers.h"
 #include "noisy-irPass-dotBackend.h"
 
-extern const char	gNoisyEol[]		=	"\n\r";
-extern const char	gNoisyWhitespace[]	=	" \t\n\r";
-extern const char	gNoisyStickies[]	=	"~!%&*()+=[]{}\\|:;'\",<.>/?";
+extern const char	gNoisyEol[];
+extern const char	gNoisyWhitespace[];
+extern const char	gNoisyStickies[];
 
 static void		usage(NoisyState *  N);
 static void		processFile(NoisyState *  N, char *  filename);
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 	N = noisyInit(kNoisyModeDefault);
 	if (N == NULL)
 	{
-		fatal(NULL, Emalloc);
+		noisyFatal(NULL, Emalloc);
 
 		/*	Not reached	*/
 		noisyConsolePrintBuffers(N);
@@ -205,8 +205,8 @@ main(int argc, char *argv[])
 				/*
 				 *	Implies the following (basic) passes:
 				 */
-				N->irPasses |= xxx;
-				N->irPasses |= yyy;
+				//N->irPasses |= xxx;
+				//N->irPasses |= yyy;
 
 				uint64_t tmpInt = strtoul(optarg, &ep, 0);
 				if (*ep == '\0')
@@ -287,7 +287,7 @@ processFile(NoisyState *  N, char *  filename)
 	buf = (char *) flexcalloc(N->Fe, N->Fm, N->Fperr, kNoisyMaxBufferLength+1, sizeof(char), "noisy.c:main/buf");
 	if (buf == NULL)
 	{
-		fatal(N, Emalloc);
+		noisyFatal(N, Emalloc);
 
 		/*	Not reached	*/
 		noisyConsolePrintBuffers(N);
@@ -305,36 +305,34 @@ processFile(NoisyState *  N, char *  filename)
 	flexstreamclear(N->Fe, N->Fm, N->Fperr, N->Fi);
 	while (flexfgets(N->Fe, N->Fm, N->Fperr, buf, kNoisyMaxBufferLength, fd) != NULL)
 	{
-		flexstreammunch(N->Fe, N->Fm, N->Fperr, N->Fi, kNoisyWhitespace, kNoisyStickies, buf, &curline, &curcol);
+		flexstreammunch(N->Fe, N->Fm, N->Fperr, N->Fi, gNoisyWhitespace, gNoisyStickies, buf, &curline, &curcol);
 	}
 
 	flexfree(N->Fe, N->Fm, N->Fperr, buf, "noisy.c:main/buf");
 
 	if (N->verbosityLevel & kNoisyVerbosityPreScanStreamCheck)
 	{
-		flexstreamchk(N->Fe, N->Fm, N->Fperr, N->Fi, kNoisyMaxErrorTokens, kNoisyStreamchkWidth);
+		flexstreamchk(N->Fe, N->Fm, N->Fperr, N->Fi, kNoisyMaxErrorTokenCount, kNoisyStreamchkWidth);
 	}
 	flexstreamscan(N->Fe, N->Fm, N->Fperr, N->Fi);
 	if (N->verbosityLevel & kNoisyVerbosityPostScanStreamCheck)
 	{
-		flexstreamchk(N->Fe, N->Fm, N->Fperr, N->Fi, kNoisyMaxErrorTokens, kNoisyStreamchkWidth);
+		flexstreamchk(N->Fe, N->Fm, N->Fperr, N->Fi, kNoisyMaxErrorTokenCount, kNoisyStreamchkWidth);
 	}
 
 
 
-	mlex.init(hd args);
-
-	#	Initialize symbol table by creating a top-level scope
-	topscope := ref SymbolTable->Scope(nil, nil, nil, nil, nil);
-
-	#	Parse input, building AST and symbol table
-	ast :=	parsemod->parse(mlex, topscope);
+	/*
+	 *	Initialize symbol table by creating a top-level scope
+	 */
+	//xxx
 
 
 
-
-
-	N->noisyIrRoot = parseNoisyProgram(N);
+	/*
+	 *	Parse input, building AST and symbol table.
+	 */
+	//N->noisyIrRoot = parseNoisyProgram(N);
 	noisyRunPasses(N);
 
 	/*
@@ -353,7 +351,7 @@ processFile(NoisyState *  N, char *  filename)
 		//TODO: Emit symbol table Dot description into filename_symtab.dot
 		//dotgen->scopedotgen(topscope);
 		
-		fprintf(stdout, "%s\n", noisyIrDotBackend(N));
+		//fprintf(stdout, "%s\n", noisyIrDotBackend(N));
 	}
 
 
@@ -364,15 +362,15 @@ processFile(NoisyState *  N, char *  filename)
 
 	if (N->mode & kNoisyModeCallStatistics)
 	{
-		uint64_t	irNodeCount, scdgNodeCount = 0;
+		uint64_t	irNodeCount = 0;
 
 
 		noisyTimeStampDumpResidencies(N);
 
-		irNodeCount = noisyIrHelperTreeSize(N, N->noisyIrRoot);
+		//irNodeCount = noisyIrHelperTreeSize(N, N->noisyIrRoot);
 
 
-		flexprint(N->Fe, N->Fm, N->Fpinfo, "Intermediate Representation and Shape Compositing Dependence Graph Information:\n\n");
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "Intermediate Representation Information:\n\n");
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "    IR node count                        : %llu\n", irNodeCount);
 
 		/*
@@ -397,7 +395,7 @@ static void
 usage(NoisyState *  N)
 {
 	version(N);
-	flexprint(N->Fe, N->Fm, N->Fperr,	"Usage: noisy [   (--help, -h)                                       \n"
+	flexprint(N->Fe, N->Fm, N->Fperr,	"Usage:    noisy [ (--help, -h)                                       \n"
 						"                | (--version, --V)                                   \n"
 						"                | (--verbose <level>, -v <level>)                    \n"
 						"                | (--dot <level>, -d <level>)                        \n"

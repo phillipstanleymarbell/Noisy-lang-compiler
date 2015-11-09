@@ -44,9 +44,9 @@
 typedef enum
 {
 	/*
-	 *      Code depends on this being last.
+	 *	Code depends on this being last.
 	 */
-	kNoisyTimeStampKeyMax
+	kNoisyTimeStampKeyMax = 1,
 } NoisyTimeStampKey;
 
 typedef struct
