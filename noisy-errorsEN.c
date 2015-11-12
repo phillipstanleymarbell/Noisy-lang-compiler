@@ -39,17 +39,17 @@ const char	Eopen[]				= "Could not open \"%s\": %s\n";
 const char	EbadXseqNode[]			= "Xseq node with no children seen";
 const char	EillegallyPlacedXseqNode[]	= "Illegally placed Xseq node in Node.left";
 const char	EexpectedElementOrStar[]	= "Expected element or \"*\"";
-const char	EterminalTcons[]		= "T_CONS case should have prevented us from getting here";
+const char	EterminalTcons[]		= "Tcons case should have prevented us from getting here";
 const char	Enoinput[]			= "No input files specified!";
 const char	Epipe[]				= "popen() failed";
 const char	Efatal[]			= "Noisy Fatal error: ";
 const char	Eerror[]			= "Noisy Error: ";
 const char	Efork[]				= "fork() failed";
-const char	EnullFileNameInPrintToFile[]	= "Null file name supplied to crayonPrintToFile()";
+const char	EnullFileNameInPrintToFile[]	= "Null file name supplied to noisyPrintToFile()";
 const char	EdotRenderFailed[]		= "GraphViz/Dot rendering failed";
 const char	EbadCgiQuery[]			= "bad CGI query (no request, or request not a HEAD or GET)";
 const char	Emkstemps[]			= "mkstemps() failed";
-
+const char	EelementOrStar			= "Sanity check failed: Expected element or \"*\"";
 
 
 /*
