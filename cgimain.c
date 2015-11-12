@@ -435,6 +435,7 @@ main(void)
 #endif
 
 	printf("<img src=\"%s\" width=150 align=right>\n", kNoisyLogoPath);
+	printf("<link rel=\"mask-icon\" href=\"noisy-pinned-tab-logo.svg\" color=\"orange\">");
 	printf("<br><br>\n");
 
 	cgiVars = getCgiVars();
