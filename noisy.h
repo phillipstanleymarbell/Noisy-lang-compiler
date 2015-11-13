@@ -183,13 +183,13 @@ typedef enum
 	kNoisyIrNodeType_PidentifierChar,
 	kNoisyIrNodeType_Pidentifier,
 	kNoisyIrNodeType_Pprogram,
-	kNoisyIrNodeType_PprogtypeDecl,
+	kNoisyIrNodeType_PprogtypeDeclaration,
 	kNoisyIrNodeType_PprogtypeBody,
-	kNoisyIrNodeType_PprogtypeTypenameDecl,
-	kNoisyIrNodeType_PconDecl,
-	kNoisyIrNodeType_PtypeDecl,
-	kNoisyIrNodeType_PadtTypeDecl,
-	kNoisyIrNodeType_PnamegenDecl,
+	kNoisyIrNodeType_PprogtypeTypenameDeclaration,
+	kNoisyIrNodeType_PconstantDeclaration,
+	kNoisyIrNodeType_PtypeDeclaration,
+	kNoisyIrNodeType_PadtTypeDeclaration,
+	kNoisyIrNodeType_PnamegenDeclaration,
 	kNoisyIrNodeType_PidentifierOrNil,
 	kNoisyIrNodeType_PidentifierOrNilList,
 	kNoisyIrNodeType_PidentifierList,
@@ -443,6 +443,17 @@ typedef struct
 
 
 	/*
+	 *	This is the name of the progtype that the file we're parsing implements
+	 */
+	//const char	progtypeOfFile[];
+
+	/*
+	 *	We keep a global handle on the list of progtype scopes (list of (string, ref Scope)), for easy reference
+	 */
+	FlexTupleList *		progtypeScopes;
+
+
+	/*
 	 *	The root of the IR tree.
 	 */
 	NoisyIrNode *		noisyIrRoot;
@@ -459,15 +470,6 @@ typedef struct
 	jmp_buf			jmpbuf;
 	bool			jmpbufIsValid;
 } NoisyState;
-
-
-
-typedef struct
-{
-	NoisyIrNodeType		type;
-	char *			string;
-} Pair;
-
 
 
 void				noisyFatal(NoisyState *  C, const char *  msg) __attribute__((noreturn));
