@@ -49,8 +49,9 @@ const char	EnullFileNameInPrintToFile[]	= "Null file name supplied to noisyPrint
 const char	EdotRenderFailed[]		= "GraphViz/Dot rendering failed";
 const char	EbadCgiQuery[]			= "bad CGI query (no request, or request not a HEAD or GET)";
 const char	Emkstemps[]			= "mkstemps() failed";
-const char	EelementOrStar			= "Sanity check failed: Expected element or \"*\"";
-
+const char	EelementOrStar[]		= "Sanity check failed: Expected element or \"*\"";
+const char	Esyntax[]			= "Syntax error";
+const char	Esemantics[]			= "Semantics error";
 
 /*
  *	These are mostly passed in eSemantics()
