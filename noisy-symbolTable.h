@@ -36,7 +36,10 @@
 */
 
 
-typedef struct
+typedef struct NoisyScope	NoisyScope;
+typedef struct NoisySymbol	NoisySymbol;
+
+struct NoisyScope
 {
 	/*
 	 *	Hierarchy
@@ -54,10 +57,10 @@ typedef struct
 	 */
 	NoisyLexerSrc *		begin;
 	NoisyLexerSrc *		end;
-} NoisyScope;
+} ;
 
 
-typedef struct
+struct NoisySymbol
 {
 	const char *		identifier;
 
@@ -93,13 +96,13 @@ typedef struct
 	int			intConst;
 	double			realConst;
 	const char *		stringConst;
-} NoisySymbol;
+};
 
 
-NoisySymbol *	noisySymbolTableSymbolForIdentifier(NoisyScope *  scope, NoisyLexerToken *  token);
+NoisySymbol *	noisySymbolTableAddOrLookupSymbolForToken(NoisyScope *  scope, NoisyLexerToken *  token);
+NoisySymbol *	noisySymbolTableSymbolForIdentifier(NoisyScope *  scope, const char *  identifier);
 NoisyScope *	noisySymbolTableOpenScope(NoisyScope *  scope, NoisyIrNode *  subtree);
 void		noisySymbolTableCloseScope(NoisyScope *  scope, NoisyIrNode *  subtree);
-NoisySym *	noisySymbolTableLookup(NoisyScope *  scope, const char *  identifier);
 
 
 typedef enum
