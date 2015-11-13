@@ -34,3 +34,28 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+
+
+
+typedef struct
+{
+	NoisyIrNodeType		type;
+	char *			string;
+	int			lineNumber;
+	int			columnNumber;
+} NoisySourceInfo;
+
+
+
+/*
+ *	LibFlex's FlexList and FlexTuple etc. require user to tag type with their own enums.
+ */
+typedef enum
+{
+	kNoisyFlexListTypeString,
+	kNoisyFlexListTypeNoisyScopePointer,
+} NoisyFlexListType;
+
+
+
+#define noisyValidFlexTupleCheckMacro(x)	(((x)->siblings != NULL) && ((x)->siblings->hd != NULL))
