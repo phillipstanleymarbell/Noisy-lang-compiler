@@ -9,7 +9,7 @@ include		config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT)
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs cairo`
 
-LIBNOISY	= libnoisy
+LIBNOISY	= libNoisy
 NOISY_L10N	= EN
 
 #	-std=gnu99 because we use anonymous unions and induction variable defintions in loop head.
@@ -76,12 +76,12 @@ HEADERS		=\
 
 
 
-all: $(LIBNOISY).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile cgi
+all: $(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile cgi
 
 #
 #			Libraries
 #
-$(LIBNOISY).a: $(LIBNOISYOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
+$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a: $(LIBNOISYOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
 	$(AR) $(ARFLAGS) $@ $(LIBNOISYOBJS)
 
 
@@ -92,7 +92,7 @@ target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) con
 	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -o $(TARGET)
 
 
-cgi:$(LIBNOISY).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
+cgi:$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
 	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) -o $(CGI_TARGET)
 
 
@@ -128,9 +128,12 @@ README.sloccount: $(HEADERS) $(SOURCES)
 	sloccount *.c *.h *.grammar *.ffi *.$(NOISYEXTENSION) */*.$(NOISYEXTENSION) > README.sloccount
 
 
+installcgi:
+	sudo cp $(CGI_TARGET) $(CGI_BIN)
+	
 test:
 	./noisy-darwin-EN --dot examples/helloWorld.n | dot -Tpdf -O ; open noname.gv.pdf 
 
 
 clean:
-	rm -rf version.c $(OBJS) $(CGIOBJS) $(LIBNOISYOBJS) $(TARGET) $(TARGET).dSYM $(CGI_TARGET) $(CGI_TARGET).dsym libnoisy-$(OSTYPE)-$(NOISY_L10N).a *.o *.plist
+	rm -rf version.c $(OBJS) $(CGIOBJS) $(LIBNOISYOBJS) $(TARGET) $(TARGET).dSYM $(CGI_TARGET) $(CGI_TARGET).dsym $(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a *.o *.plist
