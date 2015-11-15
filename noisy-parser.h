@@ -39,10 +39,16 @@
 
 typedef struct
 {
-	NoisyIrNodeType		type;
-	char *			string;
-	int			lineNumber;
-	int			columnNumber;
+	/*
+	 *	Not yet used; for when we implement includes, this will be
+	 *	the 'genealogy' of includes leading to this token.
+	 */
+	const char **		genealogy;
+	
+	char *			fileName;
+	uint64_t		lineNumber;
+	uint64_t		columnNumber;
+	uint64_t		length;
 } NoisySourceInfo;
 
 
