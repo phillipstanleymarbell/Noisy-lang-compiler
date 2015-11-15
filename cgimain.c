@@ -68,8 +68,8 @@ static struct rusage		start, end;
 static uint64_t			startRss, endRss;
 static char *			noisyCodeBuffer = NULL;
 
-extern const char		gNoisyStickies[];
-extern const char		gNoisyWhitespace[];
+//extern const char		gNoisyStickies[];
+//extern const char		gNoisyWhitespace[];
 
 
 NoisyState *			noisyCgiState;
@@ -266,7 +266,9 @@ main(void)
 {
 	char **			cgiVars;
 	char			logFileStub[kNoisyMaxFilenameLength+1];
-	int			jumpParameter, logFd, i, curLine = 1, curCol = 1, fmtWidth = kNoisyCgiFormatWidth, cgiSparameter = 0, cgiOparameter = 0, cgiTparameter = 0;
+	int			jumpParameter, logFd, i;
+	//int			curLine = 1, curCol = 1;
+	int			fmtWidth = kNoisyCgiFormatWidth, cgiSparameter = 0, cgiOparameter = 0, cgiTparameter = 0;
 	char			tmp;
 	char *			ep = &tmp;
 	struct rlimit		rlp;
@@ -533,7 +535,7 @@ main(void)
 	}
 
 	flexstreamclear(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fperr, noisyCgiState->Fi);
-	flexstreammunch(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fperr, noisyCgiState->Fi, gNoisyWhitespace, gNoisyStickies, noisyCodeBuffer, &curLine, &curCol);
+	//flexstreammunch(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fperr, noisyCgiState->Fi, gNoisyWhitespace, gNoisyStickies, noisyCodeBuffer, &curLine, &curCol);
 	//flexstreamchk(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fperr, noisyCgiState->Fi, -1, 32);
 	flexstreamscan(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fperr, noisyCgiState->Fi);
 	//flexstreamchk(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fperr, noisyCgiState->Fi, -1, 32);
