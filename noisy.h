@@ -454,6 +454,17 @@ typedef struct
 
 
 	/*
+	 *	Lexer state
+	 */
+	const char *		fileName;
+	const char *		lineBuffer;
+	uint64_t		columnNumber;
+	uint64_t		lineNumber;
+	const char *		currentToken;
+	FlexList *		tokenlist;
+	
+
+	/*
 	 *	The root of the IR tree.
 	 */
 	NoisyIrNode *		noisyIrRoot;
