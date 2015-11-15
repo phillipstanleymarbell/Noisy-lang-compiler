@@ -52,7 +52,7 @@ extern const char	Emkstemps[];
 extern const char	EelementOrStar[];
 extern const char	Esyntax[];
 extern const char	Esemantics[];
-
+extern const char	EassignTypesSanity[];
 
 
 

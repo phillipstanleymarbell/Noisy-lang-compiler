@@ -52,6 +52,9 @@ const char	Emkstemps[]			= "mkstemps() failed";
 const char	EelementOrStar[]		= "Sanity check failed: Expected element or \"*\"";
 const char	Esyntax[]			= "Syntax error";
 const char	Esemantics[]			= "Semantics error";
+const char	EassignTypesSanity[]		= "Sanity check failed in assignTypes(): non-identifiers can't be assigned a type";
+
+
 
 /*
  *	These are mostly passed in eSemantics()
