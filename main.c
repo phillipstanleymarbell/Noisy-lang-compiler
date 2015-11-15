@@ -55,9 +55,9 @@
 #include "noisy-irPass-helpers.h"
 #include "noisy-irPass-dotBackend.h"
 
-extern const char	gNoisyEol[];
-extern const char	gNoisyWhitespace[];
-extern const char	gNoisyStickies[];
+//extern const char	gNoisyEol[];
+//extern const char	gNoisyWhitespace[];
+//extern const char	gNoisyStickies[];
 
 static void		usage(NoisyState *  N);
 static void		processFile(NoisyState *  N, char *  filename);
@@ -281,7 +281,7 @@ static void
 processFile(NoisyState *  N, char *  filename)
 {
 	char *		buf;
-	int		fd, curline = 1, curcol = 1;
+	int		fd;//, curline = 1, curcol = 1;
 
 
 	buf = (char *) flexcalloc(N->Fe, N->Fm, N->Fperr, kNoisyMaxBufferLength+1, sizeof(char), "noisy.c:main/buf");
@@ -305,7 +305,7 @@ processFile(NoisyState *  N, char *  filename)
 	flexstreamclear(N->Fe, N->Fm, N->Fperr, N->Fi);
 	while (flexfgets(N->Fe, N->Fm, N->Fperr, buf, kNoisyMaxBufferLength, fd) != NULL)
 	{
-		flexstreammunch(N->Fe, N->Fm, N->Fperr, N->Fi, gNoisyWhitespace, gNoisyStickies, buf, &curline, &curcol);
+		//flexstreammunch(N->Fe, N->Fm, N->Fperr, N->Fi, gNoisyWhitespace, gNoisyStickies, buf, &curline, &curcol);
 	}
 
 	flexfree(N->Fe, N->Fm, N->Fperr, buf, "noisy.c:main/buf");
