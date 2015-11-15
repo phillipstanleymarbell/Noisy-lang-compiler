@@ -57,9 +57,18 @@
 #include "noisy-irPass-helpers.h"
 #include "noisy-irPass-dotBackend.h"
 
-const char	gNoisyEol[]			= "\n\r";
-const char	gNoisyWhitespace[]		= " \t\n\r";
-const char	gNoisyStickies[]		= "~!%&*()+=[]{}\\|:;'\",<.>/?";
+/*
+ *	NOTE / TODO / BUG: (delete this once th eimplementation settles)
+ *
+ *	(1) 	The way we handle lexing in M and Noisy compilers does not use the
+ *		'stickies' as we do in our Yacc-based parsers.
+ *
+ *	(2)	We currently split up the input by '\n'-separated newline. This is
+ *		OK, since we also recognize '\r' as being a discardable whitespace.
+ */
+//const char	gNoisyEol[]			= "\n\r";
+//const char	gNoisyWhitespace[]		= " \t\n\r";
+//const char	gNoisyStickies[]		= "~!%&*()+=[]{}\\|:;'\",<.>/?";
 
 /*
  *	NOTE: -Tpng:gd gets rid of the ugly edge borders which are there in
