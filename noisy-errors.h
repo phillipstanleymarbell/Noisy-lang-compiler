@@ -53,7 +53,10 @@ extern const char	EelementOrStar[];
 extern const char	Esyntax[];
 extern const char	Esemantics[];
 extern const char	EassignTypesSanity[];
-
+extern const char	EtokenTooLong[];
+extern const char	EstringTooLongOrWithNewline[];
+extern const char	EruntTokenInNumericConst[];
+extern const char	EcannotFindTypeSignatureForNodeType[]
 
 
 /*

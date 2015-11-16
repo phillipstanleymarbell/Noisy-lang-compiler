@@ -34,25 +34,29 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-const char	Esanity[]			= "Sanity check failed";
-const char	Eopen[]				= "Could not open \"%s\": %s\n";
-const char	EbadXseqNode[]			= "Xseq node with no children seen";
-const char	EillegallyPlacedXseqNode[]	= "Illegally placed Xseq node in Node.left";
-const char	EexpectedElementOrStar[]	= "Expected element or \"*\"";
-const char	EterminalTcons[]		= "Tcons case should have prevented us from getting here";
-const char	Enoinput[]			= "No input files specified!";
-const char	Epipe[]				= "popen() failed";
-const char	Efatal[]			= "Noisy Fatal error: ";
-const char	Eerror[]			= "Noisy Error: ";
-const char	Efork[]				= "fork() failed";
-const char	EnullFileNameInPrintToFile[]	= "Null file name supplied to noisyPrintToFile()";
-const char	EdotRenderFailed[]		= "GraphViz/Dot rendering failed";
-const char	EbadCgiQuery[]			= "bad CGI query (no request, or request not a HEAD or GET)";
-const char	Emkstemps[]			= "mkstemps() failed";
-const char	EelementOrStar[]		= "Sanity check failed: Expected element or \"*\"";
-const char	Esyntax[]			= "Syntax error";
-const char	Esemantics[]			= "Semantics error";
-const char	EassignTypesSanity[]		= "Sanity check failed in assignTypes(): non-identifiers can't be assigned a type";
+const char	Esanity[]				= "Sanity check failed";
+const char	Eopen[]					= "Could not open \"%s\": %s\n";
+const char	EbadXseqNode[]				= "Xseq node with no children seen";
+const char	EillegallyPlacedXseqNode[]		= "Illegally placed Xseq node in Node.left";
+const char	EexpectedElementOrStar[]		= "Expected element or \"*\"";
+const char	EterminalTcons[]			= "Tcons case should have prevented us from getting here";
+const char	Enoinput[]				= "No input files specified!";
+const char	Epipe[]					= "popen() failed";
+const char	Efatal[]				= "Noisy Fatal error: ";
+const char	Eerror[]				= "Noisy Error: ";
+const char	Efork[]					= "fork() failed";
+const char	EnullFileNameInPrintToFile[]		= "Null file name supplied to noisyPrintToFile()";
+const char	EdotRenderFailed[]			= "GraphViz/Dot rendering failed";
+const char	EbadCgiQuery[]				= "bad CGI query (no request, or request not a HEAD or GET)";
+const char	Emkstemps[]				= "mkstemps() failed";
+const char	EelementOrStar[]			= "Sanity check failed: Expected element or \"*\"";
+const char	Esyntax[]				= "Syntax error";
+const char	Esemantics[]				= "Semantics error";
+const char	EassignTypesSanity[]			= "Sanity check failed in assignTypes(): non-identifiers can't be assigned a type";
+const char	EtokenTooLong[]				= "Saw a token longer than kNoisyMaxBufferLength during lexing";
+const char	EstringTooLongOrWithNewline[]		= "Saw a string longer than kNoisyMaxBufferLength or one containing an unescaped newline, during lexing";
+const char	EruntTokenInNumericConst[]		= "Run token passed to makeNumericConst()";
+const char	EcannotFindTypeSignatureForNodeType[] 	= "Cannot find type signature character in gNoisyTypeNodeSignatures for this node type";
 
 
 
