@@ -368,7 +368,7 @@ typedef enum
 typedef struct NoisyIrNode NoisyIrNode;
 struct NoisyIrNode
 {
-	NoisyIrNodeType	type;
+	NoisyIrNodeType		type;
 
 	/*
 	 *	Syntactic (AST) information.
