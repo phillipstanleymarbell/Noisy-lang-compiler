@@ -9,7 +9,7 @@ include		config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT)
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs cairo`
 
-LIBNOISY	= libNoisy
+LIBNOISY	= Noisy
 NOISY_L10N	= EN
 
 #	-std=gnu99 because we use anonymous unions and induction variable defintions in loop head.
@@ -37,26 +37,10 @@ SOURCES		=\
 
 
 OBJS		=\
-		version.$(OBJECTEXTENSION)\
-		noisy-errors$(NOISY_L10N).$(OBJECTEXTENSION)\
-		noisy-typeSignatures.$(OBJECTEXTENSION)\
-		noisy-productions.$(OBJECTEXTENSION)\
-		noisy-tokens.$(OBJECTEXTENSION)\
-		noisy-timeStamps.$(OBJECTEXTENSION)\
-		noisy.$(OBJECTEXTENSION)\
-		noisy-types.$(OBJECTEXTENSION)\
 		main.$(OBJECTEXTENSION)\
 
 
 CGIOBJS		=\
-		version.$(OBJECTEXTENSION)\
-		noisy-errors$(NOISY_L10N).$(OBJECTEXTENSION)\
-		noisy-typeSignatures.$(OBJECTEXTENSION)\
-		noisy-productions.$(OBJECTEXTENSION)\
-		noisy-tokens.$(OBJECTEXTENSION)\
-		noisy-timeStamps.$(OBJECTEXTENSION)\
-		noisy.$(OBJECTEXTENSION)\
-		noisy-types.$(OBJECTEXTENSION)\
 		cgimain.$(OBJECTEXTENSION)\
 
 
@@ -82,12 +66,12 @@ HEADERS		=\
 
 
 
-all: $(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile cgi
+all: lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile cgi
 
 #
 #			Libraries
 #
-$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a: $(LIBNOISYOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
+lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a: $(LIBNOISYOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
 	$(AR) $(ARFLAGS) $@ $(LIBNOISYOBJS)
 
 
@@ -95,11 +79,11 @@ $(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a: $(LIBNOISYOBJS) $(CONFIGPATH)/config.$(OS
 #			Executables
 #
 target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
-	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -o $(TARGET)
+	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -l$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N)  -o $(TARGET)
 
 
-cgi:$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
-	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) -o $(CGI_TARGET)
+cgi:lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
+	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) -l$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N) -o $(CGI_TARGET)
 
 
 full: scan README.sloccount
@@ -142,4 +126,4 @@ test:
 
 
 clean:
-	rm -rf version.c $(OBJS) $(CGIOBJS) $(LIBNOISYOBJS) $(TARGET) $(TARGET).dSYM $(CGI_TARGET) $(CGI_TARGET).dsym $(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a *.o *.plist
+	rm -rf version.c $(OBJS) $(CGIOBJS) $(LIBNOISYOBJS) $(TARGET) $(TARGET).dSYM $(CGI_TARGET) $(CGI_TARGET).dsym lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a *.o *.plist
