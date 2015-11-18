@@ -198,6 +198,15 @@ noisyInit(NoisyMode mode)
 	}
 
 
+	/*
+	 *	Used during lexing
+	 */
+	N->currentToken = calloc(kNoisyMaxBufferLength, sizeof(char));
+	if (N->currentToken == NULL)
+	{
+		noisyFatal(NULL, Emalloc);
+	}
+	
 
 	return N;
 }
