@@ -34,6 +34,7 @@ SOURCES		=\
 		noisy-tokens.c\
 		noisy-timeStamps.c\
 		noisy-types.c\
+		noisy-lexer.c\
 
 
 OBJS		=\
@@ -53,6 +54,7 @@ LIBNOISYOBJS =\
 		noisy-timeStamps.$(OBJECTEXTENSION)\
 		noisy.$(OBJECTEXTENSION)\
 		noisy-types.$(OBJECTEXTENSION)\
+		noisy-lexer.$(OBJECTEXTENSION)\
 
 
 
@@ -63,6 +65,7 @@ HEADERS		=\
 		noisy-errors.h\
 		noisy-timeStamps.h\
 		noisy-types.h\
+		noisy-lexer.h\
 
 
 
