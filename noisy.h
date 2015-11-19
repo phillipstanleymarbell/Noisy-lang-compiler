@@ -387,6 +387,35 @@ struct NoisyIrNode
 };
 
 
+typedef struct
+{
+	/*
+	 *	Not yet used; for when we implement includes, this will be
+	 *	the 'genealogy' of includes leading to this token.
+	 */
+	const char **		genealogy;
+	
+	char *			fileName;
+	uint64_t		lineNumber;
+	uint64_t		columnNumber;
+	uint64_t		length;
+} NoisySourceInfo;
+
+
+typedef struct NoisyToken	NoisyToken;
+struct NoisyToken
+{
+	NoisyIrNodeType		type;
+	const char *		identifier;
+	uint64_t		integerConst;
+	double			realConst;
+	const char *		stringConst;
+	NoisySourceInfo *	sourceInfo;
+	
+	NoisyToken *		prev;
+	NoisyToken *		next;
+};
+
 
 typedef struct
 {
@@ -456,12 +485,14 @@ typedef struct
 	/*
 	 *	Lexer state
 	 */
-	const char *		fileName;
-	const char *		lineBuffer;
+	char *			fileName;
+	char *			lineBuffer;
 	uint64_t		columnNumber;
 	uint64_t		lineNumber;
-	const char *		currentToken;
-	FlexList *		tokenlist;
+	uint64_t		lineLength;
+	char *			currentToken;
+	uint64_t		currentTokenLength;
+	NoisyToken *		tokenList;
 	
 
 	/*

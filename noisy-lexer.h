@@ -35,23 +35,24 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+NoisySourceInfo *	noisyLexAllocateSourceInfo(	NoisyState *  N, const char **  genealogy, 
+							const char *  fileName, uint64_t lineNumber,
+							uint64_t columnNumber, uint64_t length);
+
+NoisyToken *		noisyLexAllocateToken(		NoisyState *  N, NoisyIrNodeType type, 
+							const char *  identifier,
+							uint64_t integerConst, double realConst,
+							const char * stringConst,
+							NoisySourceInfo *  sourceInfo);
+
+void			noisyLexPut(NoisyState *  N, NoisyToken *  newToken);
+
+NoisyToken *		noisyLexGet(NoisyState *  N);
+
+NoisyToken *		noisyLexPeek(NoisyState *  N);
+
+void			noisyLexInit(NoisyState *  N, const char *  fileName);
+
+void			noisyLexPrintToken(NoisyState *  N, NoisyToken *  t);
 
 
-
-
-/*
- *	LibFlex's FlexList and FlexTuple etc. require user to tag type with their own enums.
- */
-typedef enum
-{
-	kNoisyFlexListTypeString,
-	kNoisyFlexListTypeNoisyScopePointer,
-} NoisyFlexListType;
-
-
-
-#define noisyValidFlexTupleCheckMacro(x)	(((x)->siblings != NULL) && ((x)->siblings->hd != NULL))
-
-void	noisyParserSemanticError(NoisyState *  N, ...);
-void	noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType production);
-void	noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType production) __attribute__((noreturn));
