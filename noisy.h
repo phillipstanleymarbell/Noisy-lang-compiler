@@ -393,7 +393,7 @@ typedef struct
 	 *	Not yet used; for when we implement includes, this will be
 	 *	the 'genealogy' of includes leading to this token.
 	 */
-	const char **		genealogy;
+	char **			genealogy;
 	
 	char *			fileName;
 	uint64_t		lineNumber;
@@ -406,10 +406,10 @@ typedef struct NoisyToken	NoisyToken;
 struct NoisyToken
 {
 	NoisyIrNodeType		type;
-	const char *		identifier;
+	char *			identifier;
 	uint64_t		integerConst;
 	double			realConst;
-	const char *		stringConst;
+	char *			stringConst;
 	NoisySourceInfo *	sourceInfo;
 	
 	NoisyToken *		prev;

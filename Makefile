@@ -37,11 +37,39 @@ SOURCES		=\
 		noisy-lexer.c\
 
 
+#
+#	Clang seems to be unable to do LTO unless we have all the objects
+#	not tucked into a library, so we don't just simply link maain against
+#	-l$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N)
+#
 OBJS		=\
+		version.$(OBJECTEXTENSION)\
+		noisy-errors$(NOISY_L10N).$(OBJECTEXTENSION)\
+		noisy-typeSignatures.$(OBJECTEXTENSION)\
+		noisy-productions.$(OBJECTEXTENSION)\
+		noisy-tokens.$(OBJECTEXTENSION)\
+		noisy-timeStamps.$(OBJECTEXTENSION)\
+		noisy.$(OBJECTEXTENSION)\
+		noisy-types.$(OBJECTEXTENSION)\
+		noisy-lexer.$(OBJECTEXTENSION)\
 		main.$(OBJECTEXTENSION)\
 
 
+#
+#	Clang seems to be unable to do LTO unless we have all the objects
+#	not tucked into a library, so we don't just simply link maain against
+#	-l$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N)
+#
 CGIOBJS		=\
+		version.$(OBJECTEXTENSION)\
+		noisy-errors$(NOISY_L10N).$(OBJECTEXTENSION)\
+		noisy-typeSignatures.$(OBJECTEXTENSION)\
+		noisy-productions.$(OBJECTEXTENSION)\
+		noisy-tokens.$(OBJECTEXTENSION)\
+		noisy-timeStamps.$(OBJECTEXTENSION)\
+		noisy.$(OBJECTEXTENSION)\
+		noisy-types.$(OBJECTEXTENSION)\
+		noisy-lexer.$(OBJECTEXTENSION)\
 		cgimain.$(OBJECTEXTENSION)\
 
 
@@ -82,11 +110,11 @@ lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a: $(LIBNOISYOBJS) $(CONFIGPATH)/config.$
 #			Executables
 #
 target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
-	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -l$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N)  -o $(TARGET)
+	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -o $(TARGET)
 
 
 cgi:lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
-	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) -l$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N) -o $(CGI_TARGET)
+	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) -o $(CGI_TARGET)
 
 
 full: scan README.sloccount

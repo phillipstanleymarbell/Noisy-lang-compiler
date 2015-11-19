@@ -35,6 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <math.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -52,9 +53,44 @@
 #include "noisy-lexer.h"
 
 
+extern const char *	gTerminalStrings[];
+extern const char *	gReservedTokenDescriptions[];
+
+
+static inline void	checkTokenLength(NoisyState *  N, int  count);
+static inline char	cur(NoisyState *  N);
+static void		gobble(NoisyState *  N, int count);
+static void		done(NoisyState *  N, NoisyToken *  newToken);
+static bool		eqf(NoisyState *  N);
+static void		checkComment(NoisyState *  N);
+static void		checkWeq(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2);
+static void		checkWeq3(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2, char char2, NoisyIrNodeType type3);
+static void		checkSingle(NoisyState *  N, NoisyIrNodeType tokenType);
+static void		checkDot(NoisyState *  N);
+static void		checkGt(NoisyState *  N);
+static void		checkLt(NoisyState *  N);
+static void		checkSingleQuote(NoisyState *  N);
+static void		checkDoubleQuote(NoisyState *  N);
+static void		checkMinus(NoisyState *  N);
+static void		finishToken(NoisyState *  N);
+static void		makeNumericConst(NoisyState *  N);
+static bool		isDecimal(char *  string);
+static char *		stringAtLeft(char *  string, char  character);
+static char *		stringAtRight(char *  string, char  character);
+static bool		isDecimalSeparatedWithChar(char *  string, char  character);
+static bool		isRadixConst(char *  string);
+static bool		isRealConst(char *  string);
+static bool		isEngineeringRealConst(char *  string);
+static uint64_t		stringToRadixConst(NoisyState *  N, char *  string);
+static double		stringToRealConst(NoisyState *  N, char *  string);
+static double		stringToEngineeringRealConst(NoisyState *  N, char *  string);
+static bool		isOperatorOrSeparator(char c);
+
+
+
 
 NoisySourceInfo *
-noisyLexAllocateSourceInfo(	NoisyState *  N, const char **  genealogy, const char *  fileName,
+noisyLexAllocateSourceInfo(	NoisyState *  N, char **  genealogy, char *  fileName,
 				uint64_t lineNumber, uint64_t columnNumber, uint64_t length)
 {
 	NoisySourceInfo *	newSourceInfo;
@@ -76,8 +112,8 @@ noisyLexAllocateSourceInfo(	NoisyState *  N, const char **  genealogy, const cha
 
 
 NoisyToken *
-noisyLexAllocateToken(	NoisyState *  N, NoisyIrNodeType type, const char *  identifier,
-			uint64_t integerConst, double realConst, const char * stringConst,
+noisyLexAllocateToken(	NoisyState *  N, NoisyIrNodeType type, char *  identifier,
+			uint64_t integerConst, double realConst, char * stringConst,
 			NoisySourceInfo *  sourceInfo)
 {
 	NoisyToken *	newToken;
@@ -175,10 +211,10 @@ noisyLexPeek(NoisyState *  N)
 
 
 void
-noisyLexInit(NoisyState *  N, const char *  fileName)
+noisyLexInit(NoisyState *  N, char *  fileName)
 {
 	FILE *			filePointer;
-	ssize_t			lineBufferSize;
+	size_t			lineBufferSize;
 
 
 	N->fileName 		= fileName;
@@ -230,31 +266,31 @@ noisyLexInit(NoisyState *  N, const char *  fileName)
 					 */
 					case '&':
 					{
-						checkWeq3(kNoisyIrNodeType_TandAs, kNoisyIrNodeType_Tand, '&', kNoisyIrNodeType_Tampersand);
+						checkWeq3(N, kNoisyIrNodeType_TandAs, kNoisyIrNodeType_Tand, '&', kNoisyIrNodeType_Tampersand);
 						continue;
 					}
 
 					case '|':
 					{
-						checkWeq3(kNoisyIrNodeType_TorAs, kNoisyIrNodeType_Tor, '|', kNoisyIrNodeType_Tstroke);
+						checkWeq3(N, kNoisyIrNodeType_TorAs, kNoisyIrNodeType_Tor, '|', kNoisyIrNodeType_Tstroke);
 						continue;
 					}
 
 					case ':':
 					{
-						checkWeq3(kNoisyIrNodeType_TdefineAs, kNoisyIrNodeType_Tcons, ':', kNoisyIrNodeType_Tcolon);
+						checkWeq3(N, kNoisyIrNodeType_TdefineAs, kNoisyIrNodeType_Tcons, ':', kNoisyIrNodeType_Tcolon);
 						continue;
 					}
 
 					case '=':
 					{
-						checkWeq3(kNoisyIrNodeType_Teq, kNoisyIrNodeType_Tgoes, '>', kNoisyIrNodeType_Tas);
+						checkWeq3(N, kNoisyIrNodeType_Teq, kNoisyIrNodeType_Tgoes, '>', kNoisyIrNodeType_Tas);
 						continue;
 					}
 
 					case '+':
 					{
-						checkWeq3(kNoisyIrNodeType_TaddAs, kNoisyIrNodeType_Tinc, '+', kNoisyIrNodeType_Tplus);
+						checkWeq3(N, kNoisyIrNodeType_TaddAs, kNoisyIrNodeType_Tinc, '+', kNoisyIrNodeType_Tplus);
 						continue;
 					}
 
@@ -266,31 +302,31 @@ noisyLexInit(NoisyState *  N, const char *  fileName)
 					 */
 					case '!':
 					{
-						checkWeq(kNoisyIrNodeType_Tneq, kNoisyIrNodeType_Tbang);
+						checkWeq(N, kNoisyIrNodeType_Tneq, kNoisyIrNodeType_Tbang);
 						continue;
 					}
 
 					case '%':
 					{
-						checkWeq(kNoisyIrNodeType_TmodAs, kNoisyIrNodeType_Tpercent);
+						checkWeq(N, kNoisyIrNodeType_TmodAs, kNoisyIrNodeType_Tpercent);
 						continue;
 					}
 
 					case '^':
 					{
-						checkWeq(kNoisyIrNodeType_TxorAs, kNoisyIrNodeType_Tcaret);
+						checkWeq(N, kNoisyIrNodeType_TxorAs, kNoisyIrNodeType_Tcaret);
 						continue;
 					}
 
 					case '*':
 					{
-						checkWeq(kNoisyIrNodeType_TmulAs, kNoisyIrNodeType_Tasterisk);
+						checkWeq(N, kNoisyIrNodeType_TmulAs, kNoisyIrNodeType_Tasterisk);
 						continue;
 					}
 
 					case '/':
 					{
-						checkWeq(kNoisyIrNodeType_TdivAs, kNoisyIrNodeType_Tdiv);
+						checkWeq(N, kNoisyIrNodeType_TdivAs, kNoisyIrNodeType_Tdiv);
 						continue;
 					}
 
@@ -302,49 +338,49 @@ noisyLexInit(NoisyState *  N, const char *  fileName)
 					 */
 					case '~':
 					{
-						checkSingle(kNoisyIrNodeType_Ttilde);
+						checkSingle(N, kNoisyIrNodeType_Ttilde);
 						continue;
 					}
 
 					case '(':
 					{
-						checkSingle(kNoisyIrNodeType_TleftParen);
+						checkSingle(N, kNoisyIrNodeType_TleftParen);
 						continue;
 					}
 
 					case ')':
 					{
-						checkSingle(kNoisyIrNodeType_TrightParen);
+						checkSingle(N, kNoisyIrNodeType_TrightParen);
 						continue;
 					}
 
 					case ';':
 					{
-						checkSingle(kNoisyIrNodeType_Tsemicolon);
+						checkSingle(N, kNoisyIrNodeType_Tsemicolon);
 						continue;
 					}
 
 					case '{':
 					{
-						checkSingle(kNoisyIrNodeType_TleftBrace);
+						checkSingle(N, kNoisyIrNodeType_TleftBrace);
 						continue;
 					}
 
 					case '}':
 					{
-						checkSingle(kNoisyIrNodeType_TrightBrace);
+						checkSingle(N, kNoisyIrNodeType_TrightBrace);
 						continue;
 					}
 
 					case '[':
 					{
-						checkSingle(kNoisyIrNodeType_TleftBrac);
+						checkSingle(N, kNoisyIrNodeType_TleftBrac);
 						continue;
 					}
 
 					case ']':
 					{
-						checkSingle(kNoisyIrNodeType_TrightBrac);
+						checkSingle(N, kNoisyIrNodeType_TrightBrac);
 						continue;
 					}
 
@@ -353,7 +389,7 @@ noisyLexInit(NoisyState *  N, const char *  fileName)
 						/*
 						 *	TODO/BUG: Is this right? Re-check. What about kNoisyIrNodeType_Tdot?
 						 */
-						checkSingle(kNoisyIrNodeType_Tcomma);
+						checkSingle(N, kNoisyIrNodeType_Tcomma);
 						continue;
 					}
 
@@ -364,43 +400,43 @@ noisyLexInit(NoisyState *  N, const char *  fileName)
 					 */
 					case '.':
 					{
-						checkDot();
+						checkDot(N);
 						continue;
 					}
 
 					case '>':
 					{
-						checkGt();
+						checkGt(N);
 						continue;
 					}
 
 					case '<':
 					{
-						checkLt();
+						checkLt(N);
 						continue;
 					}
 
 					case '\'':
 					{
-						checkSingleQuote();
+						checkSingleQuote(N);
 						continue;
 					}
 
 					case '\"':
 					{
-						checkDoubleQuote();
+						checkDoubleQuote(N);
 						continue;
 					}
 
 					case '-':
 					{
-						checkMinus();
+						checkMinus(N);
 						continue;
 					}
 
 					case '#':
 					{
-						checkComment();
+						checkComment(N);
 						continue;
 					}
 
@@ -412,7 +448,7 @@ noisyLexInit(NoisyState *  N, const char *  fileName)
 					case '\r':
 					case '\t':
 					{
-						N->columnNumber++; finishToken();
+						N->columnNumber++; finishToken(N);
 						continue;
 					}
 
@@ -437,31 +473,31 @@ noisyLexInit(NoisyState *  N, const char *  fileName)
 void
 noisyLexPrintToken(NoisyState *  N, NoisyToken *  t)
 {
-	flexprint(N->Fe, N->Fm, N->Fperr, "Token\t%16s: ", M_TERMSTRINGS[t->tokentype]);
+	flexprint(N->Fe, N->Fm, N->Fperr, "Token\t%16s: ", gTerminalStrings[t->type]);
 
 	switch (t->type)
 	{
 		case kNoisyIrNodeType_Tidentifier:
 		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\"%s\", ", t->ident);
+			flexprint(N->Fe, N->Fm, N->Fperr, "\"%s\", ", t->identifier);
 			break;
 		}
 
 		case kNoisyIrNodeType_TintConst:
 		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\"%d\", ", t->intconst);
+			flexprint(N->Fe, N->Fm, N->Fperr, "\"%d\", ", t->integerConst);
 			break;
 		}
 
 		case kNoisyIrNodeType_TrealConst:
 		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\"%f\", ", t->realconst);
+			flexprint(N->Fe, N->Fm, N->Fperr, "\"%f\", ", t->realConst);
 			break;
 		}
 
 		case kNoisyIrNodeType_TstringConst:
 		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\"%s\", ", t->strconst);
+			flexprint(N->Fe, N->Fm, N->Fperr, "\"%s\", ", t->stringConst);
 			break;
 		}
 
@@ -472,7 +508,7 @@ noisyLexPrintToken(NoisyState *  N, NoisyToken *  t)
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fperr, "source file: %s, line %d, pos %d, length %d\n",
-		t.srcinfo.file, t.srcinfo.line, t.srcinfo.pos, t.srcinfo.length);
+		t->sourceInfo->fileName, t->sourceInfo->lineNumber, t->sourceInfo->columnNumber, t->sourceInfo->length);
 }
 
 
@@ -515,7 +551,7 @@ done(NoisyState *  N, NoisyToken *  newToken)
 								N->fileName			/*   fileName 	*/,
 								N->lineNumber			/*   lineNumber */,
 								N->columnNumber - N->currentTokenLength /* columnNumber */,
-								N->currentTokenLEngth		/*   length 	*/);
+								N->currentTokenLength		/*   length 	*/);
 
 	N->currentTokenLength = 0;
 	noisyLexPut(N, newToken);
@@ -649,7 +685,7 @@ checkDot(NoisyState *  N)
 	 *	don't gobble; continue building token.  However, something like
 	 *	"5zyyg".
 	 */
-	if (isdecimal(N->currentToken))
+	if (isDecimal(N->currentToken))
 	{
 		checkTokenLength(N, 1);
 		N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
@@ -683,7 +719,7 @@ checkGt(NoisyState *  N)
 	/*
 	 *	Gobble any extant chars.
 	 */
-	finishToken();
+	finishToken(N);
 
 	if (eqf(N))
 	{
@@ -860,7 +896,7 @@ checkDoubleQuote(NoisyState *  N)
 		/*
 		 *	NOTE: N->currentToken is pre-allocated to be kNoisyMaxBufferLength characters long.
 		 */
-		while ((cur(N) != '\"') && copied < (kNoisyMaxBufferLength - 1) && (N->columnNumber < N->lineLength))
+		while ((cur(N) != '\"') && N->currentTokenLength < (kNoisyMaxBufferLength - 1) && (N->columnNumber < N->lineLength))
 		{
 			checkTokenLength(N, 1);
 			N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
@@ -963,7 +999,7 @@ finishToken(NoisyState *  N)
 		/*
 		 *	Booleans are kept in the 'integerConst' field of the token.
 		 */
-		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TbooleanConst	/*	type		*/,
+		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TboolConst	/*	type		*/,
 									NULL				/*	identifier	*/,
 									!strcmp(N->currentToken, "true")/*	integerConst	*/,
 									0.0	/* realConst	*/,
@@ -976,9 +1012,9 @@ finishToken(NoisyState *  N)
 		return;
 	}
 
-	for (i := 0; i < len M_RESERVED_DESCRS; i++)
+	for (int i = 0; i < kNoisyIrNodeTypeMax; i++)
 	{
-		if (!strcmp(M_RESERVED_DESCRS[i], N->currentToken))
+		if (!strcmp(gReservedTokenDescriptions[i], N->currentToken))
 		{
 			NoisyToken *	newToken = noisyLexAllocateToken(N,	i	/* type		*/,
 										NULL	/* identifier	*/,
@@ -1067,12 +1103,12 @@ makeNumericConst(NoisyState *  N)
 	/*
 	 *	Has the form XXX '.' YYY, XXX and YYY must be decimals.
 	 */
-	if (isrealconst(N->currentToken))
+	if (isRealConst(N->currentToken))
 	{
 		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
-									stringToRealConst(N->currentToken)	/* realConst	*/,
+									stringToRealConst(N, N->currentToken)	/* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
 		done(N, newToken);
@@ -1089,7 +1125,7 @@ makeNumericConst(NoisyState *  N)
 		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
-									stringToEngineeringRealConst(N->currentToken)	/* realConst	*/,
+									stringToEngineeringRealConst(N, N->currentToken) /* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
 		done(N, newToken);
@@ -1101,11 +1137,11 @@ makeNumericConst(NoisyState *  N)
 	/*
 	 *	Has the form XXX 'r' YYY, XXX must be decimal, YYY must be in base XXX.
 	 */
-	if (isradixconst(N->currentToken))
+	if (isRadixConst(N->currentToken))
 	{
 		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
 									NULL				/* identifier	*/,
-									stringToRadixConst(N->currentToken)	/* integerConst	*/,
+									stringToRadixConst(N, N->currentToken)	/* integerConst	*/,
 									0				/* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
@@ -1118,7 +1154,7 @@ makeNumericConst(NoisyState *  N)
 	/*
 	 *	At this point, if it is a non-decimal, it must be illegal.
 	 */
-	if (!isdecimal(N->currentToken))
+	if (!isDecimal(N->currentToken))
 	{
 		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_ZbadIdentifier	/* type		*/,
 									N->currentToken			/* identifier	*/,
@@ -1157,7 +1193,7 @@ makeNumericConst(NoisyState *  N)
 
 
 static bool
-isDecimal(const char *  string)
+isDecimal(char *  string)
 {
 	size_t	stringLength = strlen(string);
 	for (int i = 0; i < stringLength; i++)
@@ -1172,8 +1208,8 @@ isDecimal(const char *  string)
 }
 
 
-static const char *
-stringAtLeft(const char *  string, char  character)
+static char *
+stringAtLeft(char *  string, char  character)
 {
 	char *	left = string;
 	char *	right = strchr(string, 'r');
@@ -1188,8 +1224,8 @@ stringAtLeft(const char *  string, char  character)
 	return left;
 }
 
-static const char *
-stringAtRight(const char *  string, char  character)
+static char *
+stringAtRight(char *  string, char  character)
 {
 	char *	right = strchr(string, character);
 
@@ -1203,35 +1239,35 @@ stringAtRight(const char *  string, char  character)
 
 
 static bool
-isDecimalSeparatedWithChar(const char *  string, char  character)
+isDecimalSeparatedWithChar(char *  string, char  character)
 {
 	return (isDecimal(stringAtLeft(string, character)) && isDecimal(stringAtRight(string, character)));
 }
 
 
 static bool
-isRadixConst(const char *  string)
+isRadixConst(char *  string)
 {
 	return isDecimalSeparatedWithChar(string, 'r');
 }
 
 
 static bool
-isRealConst(const char *  string)
+isRealConst(char *  string)
 {
 	return isDecimalSeparatedWithChar(string, '.');
 }
 
 
 static bool
-isEngRealConst(const char *  string)
+isEngineeringRealConst(char *  string)
 {
 	return (isDecimalSeparatedWithChar(string, 'e') || isDecimalSeparatedWithChar(string, 'E'));
 }
 
 
 static uint64_t
-stringToRadixConst(const char *  string)
+stringToRadixConst(NoisyState *  N, char *  string)
 {
 	char		tmp;
 	char *		ep = &tmp;
@@ -1252,8 +1288,8 @@ stringToRadixConst(const char *  string)
 		 *	BUG/TODO: We should make sure that errorRecovery uses setjmp to eject
 		 *	us out of here.
 		 */
-		noisyParserSyntaxError(kNoisyIrNodeType_PintConst);
-		noisyParserErrorRecovery(kNoisyIrNodeType_PintConst);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PintConst);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PintConst);
 
 		/* Not reached */
 	}
@@ -1263,7 +1299,7 @@ stringToRadixConst(const char *  string)
 	for (int i = 0; i < rightLength; i++)
 	{
 		char	digitChar;
-		char	digitFloor;
+		char	digitValue;
 
 		if (i == 0)
 		{
@@ -1299,8 +1335,8 @@ stringToRadixConst(const char *  string)
 		}
 		else
 		{
-			noisyParserSyntaxError(kNoisyIrNodeType_PintConst);
-			noisyParserErrorRecovery(kNoisyIrNodeType_PintConst);
+			noisyParserSyntaxError(N, kNoisyIrNodeType_PintConst);
+			noisyParserErrorRecovery(N, kNoisyIrNodeType_PintConst);
 		}
 
 		value += p * digitValue;
@@ -1311,12 +1347,14 @@ stringToRadixConst(const char *  string)
 
 
 static double
-stringToRealConst(const char *  string)
+stringToRealConst(NoisyState *  N, char *  string)
 {
+	char		tmp;
+	char *		ep = &tmp;
 	char *		left;
 	char *		right;
 	int		rightLength;
-	uint64_t	integerPart, fractionalPart, p;
+	uint64_t	integerPart, fractionalPart;
 
 
 	left		= stringAtLeft(string, '.');
@@ -1332,8 +1370,8 @@ stringToRealConst(const char *  string)
 		 *	BUG/TODO: We should make sure that errorRecovery uses setjmp to eject
 		 *	us out of here.
 		 */
-		noisyParserSyntaxError(kNoisyIrNodeType_PrealConst);
-		noisyParserErrorRecovery(kNoisyIrNodeType_PrealConst);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PrealConst);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PrealConst);
 
 		/* Not reached */
 	}
@@ -1350,8 +1388,8 @@ stringToRealConst(const char *  string)
 		 *	BUG/TODO: We should make sure that errorRecovery uses setjmp to eject
 		 *	us out of here.
 		 */
-		noisyParserSyntaxError(kNoisyIrNodeType_PrealConst);
-		noisyParserErrorRecovery(kNoisyIrNodeType_PrealConst);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PrealConst);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PrealConst);
 
 		/* Not reached */
 	}
@@ -1361,12 +1399,11 @@ stringToRealConst(const char *  string)
 
 
 static double
-stringToEngineeringRealConst(const char *  string)
+stringToEngineeringRealConst(NoisyState *  N, char *  string)
 {
 	char		engineeringChar;
 	char *		left;
 	char *		right;
-	int		rightLength;
 	double		mantissa, exponent;
 
 
@@ -1382,10 +1419,8 @@ stringToEngineeringRealConst(const char *  string)
 	left		= stringAtLeft(string, engineeringChar);
 	right		= stringAtRight(string, engineeringChar);
 
-	rightLength	= strlen(right);
-
-	mantissa 	= stringToRealConst(left);
-	exponent 	= stringToRealConst(right);
+	mantissa 	= stringToRealConst(N, left);
+	exponent 	= stringToRealConst(N, right);
 
 
 	return (mantissa * pow(10.0, exponent));
