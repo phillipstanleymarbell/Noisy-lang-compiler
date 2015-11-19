@@ -35,6 +35,7 @@ SOURCES		=\
 		noisy-timeStamps.c\
 		noisy-types.c\
 		noisy-lexer.c\
+		noisy-parser.c\
 
 
 #
@@ -52,6 +53,7 @@ OBJS		=\
 		noisy.$(OBJECTEXTENSION)\
 		noisy-types.$(OBJECTEXTENSION)\
 		noisy-lexer.$(OBJECTEXTENSION)\
+		noisy-parser.$(OBJECTEXTENSION)\
 		main.$(OBJECTEXTENSION)\
 
 
@@ -70,6 +72,7 @@ CGIOBJS		=\
 		noisy.$(OBJECTEXTENSION)\
 		noisy-types.$(OBJECTEXTENSION)\
 		noisy-lexer.$(OBJECTEXTENSION)\
+		noisy-parser.$(OBJECTEXTENSION)\
 		cgimain.$(OBJECTEXTENSION)\
 
 
@@ -83,6 +86,7 @@ LIBNOISYOBJS =\
 		noisy.$(OBJECTEXTENSION)\
 		noisy-types.$(OBJECTEXTENSION)\
 		noisy-lexer.$(OBJECTEXTENSION)\
+		noisy-parser.$(OBJECTEXTENSION)\
 
 
 
@@ -94,6 +98,7 @@ HEADERS		=\
 		noisy-timeStamps.h\
 		noisy-types.h\
 		noisy-lexer.h\
+		noisy-parser.h\
 
 
 
