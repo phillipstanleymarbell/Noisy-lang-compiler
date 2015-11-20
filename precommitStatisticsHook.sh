@@ -1,7 +1,7 @@
 #!/bin/sh
 
 dtraceDirectory=/Volumes/doos/DTrace-hg
-trackingDirectory=statistics
+trackingDirectory=Statistics
 statsFile=`hg tip | grep 'changeset' | awk -F ':' '{print $3}'`.txt
 
 echo '' > $trackingDirectory/$statsFile
@@ -25,4 +25,3 @@ echo '\nsudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy-darwin-EN -O0 Exam
 sudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy-darwin-EN -O0 Examples/hellowWorld -s" >> $trackingDirectory/$statsFile
 
 cp $trackingDirectory/$statsFile $trackingDirectory/latest.txt
-
