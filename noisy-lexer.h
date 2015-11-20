@@ -38,20 +38,14 @@
 NoisySourceInfo *	noisyLexAllocateSourceInfo(	NoisyState *  N, char **  genealogy, 
 							char *  fileName, uint64_t lineNumber,
 							uint64_t columnNumber, uint64_t length);
-
 NoisyToken *		noisyLexAllocateToken(		NoisyState *  N, NoisyIrNodeType type, 
 							char *  identifier, uint64_t integerConst,
 							double realConst, char * stringConst,
 							NoisySourceInfo *  sourceInfo);
-
 void			noisyLexPut(NoisyState *  N, NoisyToken *  newToken);
-
 NoisyToken *		noisyLexGet(NoisyState *  N);
-
 NoisyToken *		noisyLexPeek(NoisyState *  N);
-
 void			noisyLexInit(NoisyState *  N, char *  fileName);
-
 void			noisyLexPrintToken(NoisyState *  N, NoisyToken *  t);
 
 
