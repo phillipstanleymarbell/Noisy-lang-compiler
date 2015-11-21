@@ -1,0 +1,2850 @@
+/*
+	Authored 2015. Phillip Stanley-Marbell.
+
+	All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions
+	are met:
+
+	*	Redistributions of source code must retain the above
+		copyright notice, this list of conditions and the following
+		disclaimer.
+
+	*	Redistributions in binary form must reproduce the above
+		copyright notice, this list of conditions and the following
+		disclaimer in the documentation and/or other materials
+		provided with the distribution.
+
+	*	Neither the name of the author nor the names of its
+		contributors may be used to endorse or promote products
+		derived from this software without specific prior written
+		permission.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTorS
+	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+	COPYRIGHT OWNER OR CONTRIBUTorS BE LIABLE FOR ANY DIRECT, INDIRECT,
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TorT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+	POSSIBILITY OF SUCH DAMAGE.
+*/
+
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <setjmp.h>
+#include <string.h>
+#include "flextypes.h"
+#include "flexerror.h"
+#include "flex.h"
+#include "noisy-errors.h"
+#include "version.h"
+#include "noisy-ff.h"
+#include "noisy-timeStamps.h"
+#include "noisy.h"
+#include "noisy-parser.h"
+#include "noisy-lexer.h"
+#include "noisy-symbolTable.h"
+
+
+/*
+ *
+ *	BUG:	We technically don't need the Xseq nodes at all, since we
+ *		can figure out from context whether we are chaning a list
+ *		of nodes at same level or not. Draw it out on paper, and
+ *		you'll see. having the Xseq's however makes thinking about
+ *		many things easier, as does visualizing, since we can easily
+ *		pick out the cases where we are stringing together things
+ *		at the same level, as opposed to having a hierarchy.
+ *
+ *	(1)	Need to flesh out the noisyParserSyntaxError/ErrorRecovery
+ *		stuff. Added also a 'semanticError()' for where
+ *		we want to deliver information on a semantic error (e.g.,
+ *		identifier use b/4 declaration). The 'semanticError'
+ *		messages can't be implicit in the parse state (i.e., can't
+ *		figure out error msg from current parse state and mlex), and
+ *		they take an explicit message string.
+ *
+ *	(2)	assignTypes(N, NoisyIrNode *  n, NoisyIrNode *  typeExpression)
+ *			the typeExpr might be, say, an identifier that is
+ *			an alias for a type. We should check for this case
+ *			and get the identifier's symbol->typeTree. Also, do
+ *			sanity checks to validate the typeTree, e.g. make
+ *			sure it is always made up of basic types and also
+ *			that it's not NULL
+ *
+ *
+ *	(3)	Urgent: we need to fogure out a strategy for recovering
+ *			from syntax or semantic errors. We currently just
+ *			exit. We can't simply ignore and continue either,
+ *			since some errors lead to NULL structures (e.g.,
+ *			ident not in symtab, so node->symbol field not
+ *			set...
+ *
+ *
+ */
+
+
+extern char *		gProductionStrings[];
+extern char *		gReservedTokenDescriptions[];
+extern char *		gTerminalStrings[];
+
+extern void		noisyFatal(NoisyState *  N, const char *  msg);
+extern void		noisyError(NoisyState *  N, const char *  msg);
+
+
+static NoisyScope *	progtypeName2scope(NoisyState *  N, const char *  identifier);
+static void		semanticError(NoisyState *  N, ...);
+static void		errorUseBeforeDefinition(NoisyState *  N, const char *  identifier);
+static void		errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol);
+static void		termSyntaxError(NoisyState *  N, NoisyIrNodeType expectedType);
+static void		termErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedType);
+static bool		peekCheck(NoisyState *  N, NoisyIrNodeType expectedType);
+static NoisyIrNode *	depthFirstWalk(NoisyState *  N, NoisyIrNode *  node);
+static void		addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);
+static void		addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);
+static void		addToProgtypeScopes(NoisyState *  N, const char *  identifier, NoisyScope *  progtypeScope);
+static void		assignTypes(NoisyState *  N, NoisyIrNode *  node, NoisyIrNode *  typeExpression);
+
+
+
+NoisyIrNode *
+noisyParse(NoisyState *  N, NoisyScope *  currentScope)
+{
+	return noisyParseProgram(N, currentScope);
+}
+
+
+/*
+ *	kNoisyIrNodeType_Pprogram
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PprogtypeDeclaration
+ *		node.right	= Xseq of kNoisyIrNodeType_PnamegenDefinition
+ */
+NoisyIrNode *
+noisyParseProgram(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseProgram);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N, 	kNoisyIrNodeType_Pprogram,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	/*
+	 *	Before we start parsing, set begin source line of toplevel scope.
+	 */
+	currentScope->begin = noisyLexPeek(N)->sourceInfo;
+
+	addLeaf(N, n, noisyParseProgtypeDeclaration(N, currentScope));
+	while (!inFollow(N, kNoisyIrNodeType_Pprogram))
+	{
+		addLeafWithChainingSeq(N, n, noisyParseNamegenDefinition(N, currentScope));
+	}
+
+	/*
+	 *	We can now fill in end src info for toplevel scope.
+	 */
+	currentScope->end = noisyLexPeek(N)->sourceInfo;
+
+
+	return n;
+}
+
+
+
+/*
+ *	kNoisyIrNodeType_PprogtypeDeclaration
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Tidentifier
+ *		node.right	= kNoisyIrNodeType_PprogtypeBody
+ */
+NoisyIrNode *
+noisyParseProgtypeDeclaration(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeDeclaration);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PprogtypeDeclaration,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	NoisyIrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+	addLeaf(N, n, identifier);
+	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
+	noisyParseTerminal(N, kNoisyIrNodeType_Tprogtype);
+
+	/*
+	 *	We keep a global handle on the progtype scope
+	 */
+	NoisyScope *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
+	NoisyScope *	progtypeScope	= noisySymbolTableOpenScope(scope, scopeBegin);
+	NoisyIrNode *	typeTree	= noisyParseprogtypebody(N, progtypeScope);
+	addLeaf(N, n, typeTree);
+	NoisyScope *	scopeEnd	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
+	noisySymbolTableCloseScope(progtypeScope, scopeEnd);
+	identifier->symbol->typeTree = typeTree;
+
+	addToProgtypeScopes(N, identifier->symbol->identifier, progtypeScope);
+
+
+	return n;
+}
+
+
+
+/*	
+ *	kNoisyIrNodeType_PprogtypeBody
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PprogtypeTypenameDecl
+ *		node.right	= Xseq of kNoisyIrNodeType_PprogtypeTypenameDecl
+ */
+NoisyIrNode *
+noisyParseProgtypeBody(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeBody);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PprogtypeBody,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	while (!inFollow(N, kNoisyIrNodeType_PprogtypeBody))
+	{
+		addLeafWithChainingSeq(N, n, noisyParseptypenamedecl(N, scope));
+		noisyParseTerminal(N, kNoisyIrNodeType_Tsemicolon);
+	}
+
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PprogtypeTypenameDeclaration
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PidentifierList
+ *		node.right	= kNoisyIrNodeType_PconstantDeclaration | kNoisyIrNodeType_PtypeDeclaration | kNoisyIrNodeType_PnamegenDeclaration
+ */
+NoisyIrNode *
+noisyParseProgtypeTypenameDeclaration(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeTypenameDeclaration);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PprogtypeTypenameDeclaration,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	NoisyIrNode *	identifierList = noisyParseIdentifierList(N, scope);
+	addLeaf(N, n, identifierList);
+	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
+
+	NoisyIrNode *	typeExpression;
+	if (inFirst(N, kNoisyIrNodeType_PconstantDeclaration))
+	{
+		typeExpression = noisyParseConstantDeclaration(N, scope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PtypeDeclaration))
+	{
+		typeExpression = noisyParseTypeDeclaration(N, scope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PnamegenDeclaration))
+	{
+		typeExpression = noisyParseNamegenDeclaration(N, scope);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PprogtypeBody);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PprogtypeBody);
+	}
+	addLeaf(N, n, typeExpression);
+
+	/*
+	 *	We've now figured out type ascribed to members of identifierList
+	 */
+	assignTypes(N, identifierList, typeExpression);
+
+
+	return n;
+}
+
+
+/*
+ *	kNoisyIrNodeType_PconstantDeclaration
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_TintConst | kNoisyIrNodeType_TrealConst | kNoisyIrNodeType_TboolConst
+ *		node.left	= NULL
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseConstantDeclaration(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseConstantDeclaration);
+
+
+	NoisyIrNode *	n;
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tconst);
+	if (peekCheck(N, kNoisyIrNodeType_TintConst))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TintConst);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TrealConst))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TrealConst);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TboolConst))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TboolConst);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PconstantDeclaration);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PconstantDeclaration);
+	}
+
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PtypeDeclaration
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Ttype | kNoisyIrNodeType_PadtTypeDeclaration
+ *		node.right	= kNoisyIrNodeType_PtypeExpression | NULL
+ */
+NoisyIrNode *
+noisyParseTypeDeclaration(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTypeDeclaration);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PtypeDeclaration,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	if (peekCheck(N, kNoisyIrNodeType_Ttype))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Ttype));
+		addLeaf(N, n, noisyParseTypeExpression(N, currentScope));
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tadt))
+	{
+		addLeaf(N, n, noisyParseAdtTypeDeclaration(N, currentScope));
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeDeclaration);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeDeclaration);
+	}
+
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PadtTypeDeclaration
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PidentifierList
+ *		node.right	= Xseq of texpr + zero or more kNoisyIrNodeType_PidentifierList+texpr
+ */
+NoisyIrNode *
+noisyParseAdtTypeDeclaration(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseAdtTypeDeclaration);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PadtTypeDeclaration,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tadt);
+	NoisyIrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
+	NoisyScope *	currentScope	= noisySymbolTableOpenScope(scope, scopeBegin);
+	NoisyIrNode *	identifierList	= noisyParseIdentifierList(N, currentScope);
+	addLeaf(N, n, identifierList);
+	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
+	NoisyIrNode *	typeExpression	= noisyParseTypeExpression(N, currentScope);
+	addLeafWithChainingSeq(N, n, typeExpression);
+	assignTypes(N, identifierList, typeExpression);
+	noisyParseTerminal(N, kNoisyIrNodeType_Tsemicolon);
+	while (!peekCheck(N, kNoisyIrNodeType_TrightBrace))
+	{
+		NoisyIrNode *	identifierList2	= noisyParseIdentifierList(N, currentScope);
+
+		addLeafWithChainingSeq(N, n, identifierList2);
+		noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
+		NoisyIrNode *	typeExpression2 = noisyParseTypeExpression(N, currentScope);
+		addLeafWithChainingSeq(N, n, typeExpression2);
+		assignTypes(N, identifierList2, typeExpression2);
+		noisyParseTerminal(N, kNoisyIrNodeType_Tsemicolon);
+	}
+
+	NoisyScope *	scopeEnd  = noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
+	noisySymbolTableCloseScope(currentScope, scopeEnd);
+
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PnamegenDeclaration
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PtupleType
+ *		node.right	= kNoisyIrNodeType_PtupleType
+ */
+NoisyIrNode *
+noisyParseNamegenDeclaration(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseNamegenDeclaration);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PnamegenDeclaration,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tnamegen);
+	addLeaf(N, n, noisyParsetupletype(N, scope));
+	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
+	addLeaf(N, n, noisyParsetupletype(N, scope));
+
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PidentifierOrNil
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Tidentifier
+ *		node.right	= Xseq of kNoisyIrNodeType_PfieldSelect
+ */
+NoisyIrNode *
+noisyParseIdentifierOrNil(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierOrNil);
+
+	NoisyIrNode *	n;
+
+	if(peekCheck(N, kNoisyIrNodeType_Tidentifier))
+	{
+		/*
+		 *	The typeTree's get filled-in in our caller
+		 */
+		n = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+
+		while (inFirst(N, kNoisyIrNodeType_PfieldSelect))
+		{
+			addLeafWithChainingSeq(N, n, noisyParsefieldselect(N, currentScope));
+		}
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tnil))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tnil);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PidentifierOrNil);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PidentifierOrNil);
+	}
+
+	return n;
+}
+
+
+/*
+ *	kNoisyIrNodeType_PidentifierOrNilList
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PidentifierOrNil
+ *		node.right	= Xseq of kNoisyIrNodeType_PidentifierOrNil
+ */
+NoisyIrNode *
+noisyParseIdentifierOrNilList(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierOrNilList);
+
+
+	NoisyIrNode *	n;
+
+
+	/*
+	 *	The typeTree's get filled in in our caller
+	 */
+	n = noisyParseIdentifierOrNil(N, currentScope);
+	
+	/*
+	 *	Could also have done
+	 *		while (peekCheck(N, kNoisyIrNodeType_Tcomma))
+	 */
+	while (!inFollow(N, kNoisyIrNodeType_PidentifierOrNilList))
+	{
+		noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
+		addLeafWithChainingSeq(N, n, noisyParseIdentifierOrNil(N, currentScope));
+	}
+
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PidentifierList
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Tidentifier
+ *		node.left	= kNoisyIrNodeType_Tidentifier
+ *		node.right	= Xseq of kNoisyIrNodeType_Tidentifier
+ */
+NoisyIrNode *
+noisyParseIdentifierList(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierList);
+
+
+	NoisyIrNode *	n;
+
+
+	/*
+	 *	The typeTree's get filled in in our caller
+	 */
+	n = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+	
+	/*
+	 *	Could also have done
+	 *		while (peekCheck(N, kNoisyIrNodeType_Tcomma))
+	 */
+	while (!inFollow(N, kNoisyIrNodeType_PidentifierList))
+	{
+		noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
+		addLeafWithChainingSeq(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+	}
+
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PtypeExpression
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_PbasicType | kNoisyIrNodeType_PanonAggregateType | kNoisyIrNodeType_PtypeName
+ *		node.left	= kNoisyIrNodeType_Ptolerance | NULL
+ *		node.right	= Xseq of kNoisyIrNodeType_Ptolerance | NULL
+ */
+NoisyIrNode *
+noisyParseTypeExpression(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTypeExpression);
+
+
+	NoisyIrNode *	n;
+
+
+	if (inFirst(N, kNoisyIrNodeType_PbasicType))
+	{
+		n = noisyParsebasictype(N, currentScope);
+
+		if (inFollow(N, kNoisyIrNodeType_PtypeExpression))
+		{
+			return n;
+		}
+
+		addLeaf(N, n, noisyParsetolerance(N, currentScope));
+
+		/*
+		 *	Could also have done
+		 *		while (!inFollow(N, kNoisyIrNodeType_PtypeExpression))
+		 */
+		while (peekCheck(N, kNoisyIrNodeType_Tcomma))
+		{
+			noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
+			addLeafWithChainingSeq(N, n, noisyParsetolerance(N, currentScope));
+		}
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PanonAggregateType))
+	{
+		n = noisyParseanonaggrtype(N, currentScope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_Ptypename))
+	{
+		n = noisyParsetypename(N, currentScope);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeExpression);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeExpression);
+	}
+
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PtypeName
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Pidentifier
+ *		node.right	= NULL | Xseq of kNoisyIrNodeType_PprogtypeEqual, kNoisyIrNodeType_Tidentifier
+ */
+NoisyIrNode *
+noisyParseTypeName(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTypeName);
+
+
+	NoisyIrNode *	id1;
+	NoisyIrNode *	id2;
+	NoisySymbol *	idsym;
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Ptypename,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	/*
+	 *	This is a use, not a def, so doesn't go into symtab (noisyParseIdentifierDefinitionTerminal);
+	 *	instead, noisyParseIdentifierUsageTerminal looks up its symbol in symtab.
+	 */
+	id1 = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+	if (id1->symbol == NULL)
+	{
+		/*
+		 *	TODO: we need a comprehensive error-recovery strategy
+		 */
+		noisyFatal(N, Esanity);
+	}
+
+	addLeaf(N, n, id1);
+
+	/*
+	 *	Since it's a use, it should already be in symtab. If it is a progtype
+	 *	qualified name, we look in the progtype's scope, otherwise we look
+	 *	in the current scope.
+	 */
+	if (peekCheck(N, kNoisyIrNodeType_TprogtypeEqual))
+	{
+		/*
+		 *	Note: kNoisyIrNodeType_TprogtypeEqual is the "->". We do not need to
+		 *	put it in AST, since, from parent node type = kNoisyIrNodeType_PtypeName,
+		 *	we know that if we have > 1 child, then it is a ptype-qualified
+		 *	name. It is not a chain of Xseqs, because we cannnot have 
+		 *	progtype embedded in progtype, so we at most have "a->b"
+		 */
+		noisyParseTerminal(N, kNoisyIrNodeType_TprogtypeEqual);
+		id2 = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, progtypeName2scope(N, id1->symbol->identifier));
+		if (id2->symbol == NULL)
+		{
+			semanticError(Eundeclared, id1->symbol->identifier, "->", id2->symbol->identifier);
+		}
+		idsym = id2->symbol;
+
+		addLeaf(N, n, id2);
+	}
+	else
+	{
+		idsym = noisySymbolTableSymbolForIdentifier(scope, id1->symbol->identifier);
+		if (idsym == NULL)
+		{
+			semanticError(Eundeclared, id1->symbol->identifier);
+		}
+	}
+
+	/*
+	 *	Set the symbol table entry for this to be that of the type or
+	 *	prog. qualified type, so that, among other things, it gets the
+	 *	type of the kNoisyIrNodeType_PtypeName treenode set to the discerned type.
+	 */
+	n->symbol = idsym;
+
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_Ptolerance
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_PERRORMAGTOL | kNoisyIrNodeType_PLOSSTOL | kNoisyIrNodeType_PLATENCYTOL
+ *		node.left	= NULL
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseTolerance(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTolerance);
+
+
+	NoisyIrNode *	n;
+
+
+	if (inFirst(N, kNoisyIrNodeType_PerrorMagnitudeTolerance))
+	{
+		n = noisyParseerrormagtolerance(N, currentScope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PlossTolerance))
+	{
+		n = noisyParselosstolerance(N, currentScope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PlatencyTolerance))
+	{
+		n = noisyParselatencytolerance(N, currentScope);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Ptolerance);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Ptolerance);
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PerrorMagnitudeTolerance
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_TrealConst
+ *		node.right	= kNoisyIrNodeType_TrealConst
+ */
+NoisyIrNode *
+noisyParseErrorMagnitudeTolerance(NoisyState *  N)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseErrorMagnitudeTolerance);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PerrorMagnitudeTolerance,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tepsilon);
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftParen);
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrealConst));
+	noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrealConst));
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PlossTolerance
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_TrealConst
+ *		node.right	= kNoisyIrNodeType_TrealConst
+ */
+NoisyIrNode *
+noisyParseLossTolerance(NoisyState *  N)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseLossTolerance);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PerrorMagnitudeTolerance,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Talpha);
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftParen);
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrealConst));
+	noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrealConst));
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PlatencyTolerance
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_TrealConst
+ *		node.right	= kNoisyIrNodeType_TrealConst
+ */
+NoisyIrNode *
+noisyParseLatencyTolerance(NoisyState *  N)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseLatencyTolerance);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PlatencyTolerance,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Ttau);
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftParen);
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrealConst));
+	noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrealConst));
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PbasicType
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Tbool | ... | kNoisyIrNodeType_Tstring
+ *		node.left	= NULL
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseBasicType(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseBasicType);
+
+
+	NoisyIrNode *	n;
+
+
+	if (peekCheck(N, kNoisyIrNodeType_Tbool))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tbool);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tnybble))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tnybble);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tbyte))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tbyte);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tint))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tint);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PrealType))
+	{
+		n = noisyParserealtype(N, currentScope);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tstring))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tstring);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PbasicType);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PbasicType);
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PrealType
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Treal | kNoisyIrNodeType_PfixedType
+ *		node.left	= NULL
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseRealType(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseRealType);
+
+
+	NoisyIrNode *	n;
+
+
+	if (peekCheck(N, kNoisyIrNodeType_Treal))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Treal);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PfixedType))
+	{
+		n = noisyParsefixedtype(N, currentScope);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PrealType);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PrealType);
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PfixedType
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_TintConst
+ *		node.right	= kNoisyIrNodeType_TintConst
+ */
+NoisyIrNode *
+noisyParseFixedType(NoisyState *  N)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseFixedType);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PfixedType,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tfixed);
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TintConst));
+	noisyParseTerminal(N, kNoisyIrNodeType_Tdot);
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TintConst));
+	
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PanonAggregateType
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_ParrayType | ... | kNoisyIrNodeType_PsetType
+ *		node.left	= NULL
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseAnonAggregateType(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseAnonAggregateType);
+
+
+	NoisyIrNode *	n;
+
+
+	if (inFirst(N, kNoisyIrNodeType_ParrayType))
+	{
+		n = noisyParsearraytype(N, currentScope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PlistType))
+	{
+		n = noisyParselisttype(N, currentScope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PtupleType))
+	{
+		n = noisyParsetupletype(N, currentScope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PsetType))
+	{
+		n = noisyParsesettype(N, currentScope);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PanonAggregateType);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PanonAggregateType);
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_ParrayType
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_TintConst
+ *		node.right	= Xseq of zero or more kNoisyIrNodeType_TintConst then a kNoisyIrNodeType_PtypeExpression
+ */
+NoisyIrNode *
+noisyParseArrayType(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseArrayType);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_ParrayType,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tarray);
+
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftBrac);
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TintConst));
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightBrac);
+
+	while (peekCheck(N, kNoisyIrNodeType_TleftBrac))
+	{
+		noisyParseTerminal(N, kNoisyIrNodeType_TleftBrac);
+		addLeafWithChainingSeq(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TintConst));
+		noisyParseTerminal(N, kNoisyIrNodeType_TrightBrac);
+	}
+	
+	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
+	addLeafWithChainingSeq(N, n, noisyParseTypeExpression(N, currentScope));
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PlistType
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PtypeExpression
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseListType(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseListType);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PlistType,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tlist);
+	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
+	addLeaf(N, n, noisyParseTypeExpression(N, currentScope));
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PtupleType
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PtypeExpression
+ *		node.right	= Xseq of kNoisyIrNodeType_PtypeExpression
+ */
+NoisyIrNode *
+noisyParseTupleType(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTupleType);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PtupleType,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftParen);
+	addLeaf(N, n, noisyParseTypeExpression(N, currentScope));
+	while(peekCheck(N, kNoisyIrNodeType_Tcomma))
+	{
+		noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
+		addLeafWithChainingSeq(N, n, noisyParseTypeExpression(N, currentScope));
+	}
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PsetType
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_TintConst
+ *		node.right	= kNoisyIrNodeType_PtypeExpression
+ */
+NoisyIrNode *
+noisyParseSetType(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseSetType);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PsetType,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tset);
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftBrac);
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TintConst));
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightBrac);
+	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
+	addLeaf(N, n, noisyParseTypeExpression(N, currentScope));
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PinitList
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Pexpression
+ *		node.right	= Xseq of kNoisyIrNodeType_Pexpression
+ */
+NoisyIrNode *
+noisyParseInitList(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseInitList);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PinitList,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
+	addLeaf(N, n, noisyParseExpression(N, scope));
+	while (peekCheck(N, kNoisyIrNodeType_Tcomma))
+	{
+		noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
+		addLeafWithChainingSeq(N, n, noisyParseExpression(N, scope));
+	}
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PidxInitList
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Pelement
+ *		node.right	= Xseq of kNoisyIrNodeType_Pelement
+ */
+NoisyIrNode *
+noisyParseIdxInitList(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIdxInitList);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PinitList,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
+	addLeaf(N, n, noisyParseelement(N, scope));
+	while (peekCheck(N, kNoisyIrNodeType_Tcomma))
+	{
+		noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
+		addLeafWithChainingSeq(N, n, noisyParseelement(N, scope));
+	}
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PstarInitList
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Pelement
+ *		node.right	= Xseq of kNoisyIrNodeType_Pelement, zero or more "*"+kNoisyIrNodeType_Pelement
+ */
+NoisyIrNode *
+noisyParseStarInitList(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseStarInitList);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PinitList,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
+	addLeaf(N, n, noisyParseelement(N, scope));
+	while (peekCheck(N, kNoisyIrNodeType_Tcomma))
+	{
+		noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
+
+		/*
+		 *	BUG?: verify w/ grammar (fixed from a yuck version)
+		 */
+		if (inFirst(N, kNoisyIrNodeType_Pelement))
+		{
+			addLeafWithChainingSeq(N, n, noisyParseelement(N, scope));
+		}
+		else if (peekCheck(N, kNoisyIrNodeType_Tasterisk))
+		{
+			/*
+			 *	Need to put this in AST to differentiate from default form
+			 */
+			addLeafWithChainingSeq(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tasterisk));
+			noisyParseTerminal(N, kNoisyIrNodeType_Tgoes);
+			addLeafWithChainingSeq(N, n, noisyParseelement(N, scope));
+		}
+		else
+		{
+			noisyFatal(N, EelementOrStar);
+		}
+	}
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_Pelement
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Pexpression
+ *		node.right	= NULL | kNoisyIrNodeType_Pexpression
+ */
+NoisyIrNode *
+noisyParseElement(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseElement);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Pelement,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	addLeaf(N, n, noisyParseExpr(N, scope));
+	if (peekCheck(N, kNoisyIrNodeType_Tgoes))
+	{
+		noisyParseTerminal(N, kNoisyIrNodeType_Tgoes);
+		addLeaf(N, n, noisyParseExpr(N, scope));
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PnamegenDefinition
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Tidentifier
+ *		node.right	= [Xseq of 2 tupletypes] kNoisyIrNodeType_PscopeStatementList
+ */
+NoisyIrNode *
+noisyParseNamegenDefinition(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseNamegenDefinition);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PnamegenDefinition,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	NoisyIrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+	addLeaf(N, n, identifier);
+
+	if (peekCheck(N, kNoisyIrNodeType_Tcolon))
+	{
+		noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
+
+		NoisyIrNode *	t1 = noisyParsetupletype(N, scope);
+		addLeafWithChainingSeq(N, n, t1);
+		noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
+		NoisyIrNode *	t2 = noisyParsetupletype(N, scope);
+		addLeafWithChainingSeq(N, n, t2);
+
+		/*
+		 *	We need a valid subtree representing the type.
+		 *	Need to be careful about not clobbering the
+		 *	main AST with new links, so we make copies.
+		 *
+		 *	BUG: is typeTree now really a copy or a reference ?
+		 */
+		NoisyIrNode *	typeTree = t1;
+		addLeaf(N, typeTree, t2);
+		identifier->symbol->typeTree = typeTree;
+	}
+	else
+	{
+		/*
+		 *	Lookup the type of the ident from the progtype
+		 *	decl which this file implements (N->progtypeOfFile).
+		 *
+		 *	BUG: We currently never set N->progtypeOfFile
+		 */
+		NoisySymbol *	sym = noisySymbolTableSymbolForIdentifier(progtypeName2scope(N, N->progtypeOfFile), identifier->symbol->identifier);
+
+		if (sym == NULL)
+		{
+			semanticError(Eundeclared, " ", identifier->symbol->identifier);
+		}
+		else
+		{
+			identifier->symbol->typeTree = sym->typeTree;
+		}
+	}
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tas);
+	addLeaf(N, n, noisyParsescopedstmtlist(N, scope));
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PscopedStatmentList
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PstatementList
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseScopedStatementList(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseScopedStatementList);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PscopedStatementList,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	NoisyScope *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
+	NoisyScope *	currentScope	= noisySymbolTableOpenScope(scope, scopeBegin);
+	addLeaf(N, n, noisyParsestmtlist(N, currentScope));
+	NoisyScope *	scopeEnd  	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
+	noisySymbolTableCloseScope(currentScope, scopeEnd);
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PstatementList
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Pstatement or NULL
+ *		node.right	= Xseq of kNoisyIrNodeType_Pstatement
+ */
+NoisyIrNode *
+noisyParseStatementList(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseStatementList);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PstatementList,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	/*
+	 *	Could also have done
+	 *		while (!inFollow(N, kNoisyIrNodeType_PstatementList))
+	 */
+	while (inFirst(N, kNoisyIrNodeType_Pstatement))
+	{
+		addLeafWithChainingSeq(N, n, noisyParsestmt(N, currentScope));
+		noisyParseTerminal(N, kNoisyIrNodeType_Tsemicolon);
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_Pstatement
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= NULL | kNoisyIrNodeType_PidentifierOrNilList
+ *		node.right	= NULL | kNoisyIrNodeType_PconstantDeclaration | .. | kNoisyIrNodeType_Pexpression
+ */
+NoisyIrNode *
+noisyParseStatement(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseStatement);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Pstatement,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	if (peekCheck(N, kNoisyIrNodeType_Tsemicolon))
+	{
+		noisyParseTerminal(N, kNoisyIrNodeType_Tsemicolon);
+
+		return n;
+	}
+
+	if (inFirst(N, kNoisyIrNodeType_PidentifierOrNilList))
+	{
+		NoisyIrNode *	identifierList = noisyParseIdentifierOrNilList(N, currentScope);
+		addLeaf(N, n, identifierList);
+
+		if (peekCheck(N, kNoisyIrNodeType_Tcolon))
+		{
+			NoisyIrNode *	typeExpr;
+
+			noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
+			if (inFirst(N, kNoisyIrNodeType_PconstantDeclaration))
+			{
+				typeExpr = noisyParseConstantDeclaration(N, currentScope);
+				addLeaf(N, n, typeExpr);
+			}
+			else if (inFirst(N, kNoisyIrNodeType_PtypeDeclaration))
+			{
+				typeExpr = noisyParseTypeDeclaration(N, currentScope);
+				addLeaf(N, n, typeExpr);
+			}
+			else if (inFirst(N, kNoisyIrNodeType_PtypeExpression))
+			{
+				typeExpr = noisyParseTypeExpression(N, currentScope);
+				addLeaf(N, n, typeExpr);
+			}
+			else
+			{
+				noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement);
+				noisyParserErrorRecovery(N, kNoisyIrNodeType_Pstatement);
+			}
+
+			/*
+			 *	assignTypes(N, ) handles expansion of typeTree, e.g., for kNoisyIrNodeType_PtypeName
+			 */
+			assignTypes(N, identifierList, typeExpr);
+		}
+		else if (inFirst(N, kNoisyIrNodeType_PassignOp))
+		{
+			addLeafWithChainingSeq(N, n, noisyParseassignop(N, currentScope));
+			addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
+		}
+		else
+		{
+			noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement);
+			noisyParserErrorRecovery(N, kNoisyIrNodeType_Pstatement);
+		}
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TleftParen))
+	{
+		/*
+		 *	We add one L_PAREN to AST as a marker to differentiate
+		 *	this case from that of regular assignment to identornil
+		 *	Only need to add one, just as a marker.
+		 */
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TleftParen));
+		addLeafWithChainingSeq(N, n, noisyParseIdentifierOrNilList(N, currentScope));
+		noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
+
+		addLeafWithChainingSeq(N, n, noisyParseassignop(N, currentScope));
+		addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PmatchStatement))
+	{
+		addLeaf(N, n, noisyParsematchstmt(N, currentScope));
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PiterationStatement))
+	{
+		addLeaf(N, n, noisyParseiterstmt(N, currentScope));
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PscopedStatementList))
+	{
+		addLeaf(N, n, noisyParsescopedstmtlist(N, currentScope));
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pstatement);
+	}
+
+	return n;
+}
+
+
+/*
+ *	kNoisyIrNodeType_PassignOp
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Tas | ... | kNoisyIrNodeType_TdefineAs
+ *		node.left	= NULL
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseAssignOp(NoisyState *  N)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseAssignOp);
+
+
+	NoisyIrNode *	n;
+
+
+	if (peekCheck(N, kNoisyIrNodeType_Tas))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tas);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TxorAs))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TxorAs);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TorAs))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TorAs);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TandAs))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TandAs);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TmodAs))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TmodAs);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TdivAs))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TdivAs);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TmulAs))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TmulAs);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TsubAs))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TsubAs);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TaddAs))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TaddAs);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TrightShiftAs))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TrightShiftAs);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TleftShiftAs))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TleftShiftAs);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TchanWrite))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TchanWrite);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TdefineAs))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TdefineAs);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PassignOp);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PassignOp);
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PmatchStatement
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Tmatch | kNoisyIrNodeType_TmatchSeq
+ *		node.left	= kNoisyIrNodeType_PguardBody
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseMatchStatement(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseMatchStatement);
+
+
+	NoisyIrNode *	n;
+
+
+	if (peekCheck(N, kNoisyIrNodeType_Tmatch))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tmatch);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TmatchSeq))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TmatchSeq);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PmatchStatement);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PmatchStatement);
+	}
+
+	NoisyIrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
+	NoisyScope *	currentScope	= noisySymbolTableOpenScope(scope, scopeBegin);
+	addLeaf(N, n, noisyParseguardbody(N, currentScope));
+	NoisyScope *	scopeEnd	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
+	noisySymbolTableCloseScope(currentScope, scopeEnd);
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PiterationStatement
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Titer
+ *		node.right	= kNoisyIrNodeType_PguardBody
+ */
+NoisyIrNode *
+noisyParseIterStatement(NoisyState *  N, NoisyScope *  scope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIterStatement);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PiterationStatement,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Titer));
+	NoisyIrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
+	NoisyScope *	currentScope	= noisySymbolTableOpenScope(scope, scopeBegin);
+	addLeaf(N, n, noisyParseguardbody(N, currentScope));
+	NoisyScope *	scopeEnd	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
+	noisySymbolTableCloseScope(currentScope, scopeEnd);
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PguardBody
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Pexpression
+ *		node.right	= Xseq of kNoisyIrNodeType_Pstatement and kNoisyIrNodeType_Pexpression alternating
+ */
+NoisyIrNode *
+noisyParseGuardBody(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseGuardBody);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PguardBody,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	if (inFollow(N, kNoisyIrNodeType_PguardBody))
+	{
+		/*
+		 *	BUG/TODO: we should not be returning NULL: return the childless Node n.
+		 *
+		 *	Leave this comment here for later cleanup
+		 */
+		return NULL;
+	}
+
+	while (inFirst(N, kNoisyIrNodeType_Pexpression))
+	{
+		addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
+		noisyParseTerminal(N, kNoisyIrNodeType_Tgoes);
+		addLeafWithChainingSeq(N, n, noisyParsestmtlist(N, currentScope));
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_Pexpression
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Pterm | kNoisyIrNodeType_PanonAggregateCastExpression | ... | kNoisyIrNodeType_Pname2chanExpression
+ *		node.left	= kNoisyIrNodeType_PlowPrecedenceBinaryOp
+ *		node.right	= Xseq of kNoisyIrNodeType_PlowPrecedenceBinaryOp, kNoisyIrNodeType_Pterm
+ */
+NoisyIrNode *
+noisyParseExpression(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseExpression);
+
+
+	NoisyIrNode *	n;
+
+
+	if (inFirst(N, kNoisyIrNodeType_Pterm))
+	{
+		n = noisyParseTerm(N, currentScope);
+
+		while (inFirst(N, kNoisyIrNodeType_PlowPrecedenceBinaryOp))
+		{
+			addLeafWithChainingSeq(N, n, noisyParseLowPrecedenceBinaryOp(N));
+			addLeafWithChainingSeq(N, n, noisyParseTerm(N, currentScope));
+		}
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PanonAggregateCastExpression))
+	{
+		n = noisyParseanonaggrcastexpr(N, currentScope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PchanEventExpression))
+	{
+		n = noisyParsechanevtexpr(N, currentScope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_Pchan2nameExpression))
+	{
+		n = noisyParsechan2nameexpr(N, currentScope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_Pvar2nameExpression))
+	{
+		n = noisyParsevar2nameexpr(N, currentScope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_Pname2chanExpression))
+	{
+		n = noisyParsename2chanexpr(N, currentScope);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pexpression);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pexpression);
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PlistCastExpression
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PinitList
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseListCastExpression(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseListCastExpression);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PlistCastExpression,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tlist);
+	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
+	addLeaf(N, n, noisyParseinitlist(N, currentScope));
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PsetCastExpression
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PinitList
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseSetCastExpression(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseSetCastExpression);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PsetCastExpression,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tset);
+	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
+	addLeaf(N, n, noisyParseinitlist(N, currentScope));
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_ParrayCastExpression
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PidxInitList | kNoisyIrNodeType_TintConst
+ *		node.right	= NULL | kNoisyIrNodeType_PstarInitList
+ */
+NoisyIrNode *
+noisyParseArrayCastExpression(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseArrayCastExpression);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_ParrayCastExpression,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tarray);
+	
+	if (peekCheck(N, kNoisyIrNodeType_Tof))
+	{
+		noisyParseTerminal(N, kNoisyIrNodeType_Tof);
+		addLeaf(N, n, noisyParseidxinitlist(N, currentScope));
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TleftBrac))
+	{
+		noisyParseTerminal(N, kNoisyIrNodeType_TleftBrac);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TintConst));
+		noisyParseTerminal(N, kNoisyIrNodeType_TrightBrac);
+		noisyParseTerminal(N, kNoisyIrNodeType_Tof);
+		addLeaf(N, n, noisyParsestarinitlist(N, currentScope));
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_ParrayCastExpression);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_ParrayCastExpression);
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PanonAggregateCastExpression
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_PlistCast | kNoisyIrNodeType_PsetCast | kNoisyIrNodeType_ParrayCast
+ *		node.left	= NULL
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseAnonAggregateCastExpression(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseAnonAggregateCastExpression);
+
+
+	NoisyIrNode *	n;
+
+
+	if (inFirst(N, kNoisyIrNodeType_PlistCastExpression))
+	{
+		n = noisyParselistcastexpr(N, currentScope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PsetCastExpression))
+	{
+		n = noisyParsesetcastexpr(N, currentScope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_ParrayCastExpression))
+	{
+		n = noisyParsearrcastexpr(N, currentScope);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PanonAggregateCastExpression);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PanonAggregateCastExpression);
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PchanEventExpression
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Terasures | kNoisyIrNodeType_Terrors | kNoisyIrNodeType_Tlatency
+ *		node.right	= Xseq of kNoisyIrNodeType_Tidentifier, cmpop, expr
+ */
+NoisyIrNode *
+noisyParseChanEventExpression(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseChanEventExpression);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PchanEventExpression,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	if (peekCheck(N, kNoisyIrNodeType_Terasures))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Terasures));
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Terrors))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Terrors));
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tlatency))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tlatency));
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PchanEventExpression);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PchanEventExpression);
+	}
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
+	addLeafWithChainingSeq(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tidentifier));
+	addLeafWithChainingSeq(N, n, noisyParsecmpop(N, currentScope));
+	addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_Pchan2nameExpression
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Pfactor
+ *		node.right	= kNoisyIrNodeType_TstringConst or NULL
+ */
+NoisyIrNode *
+noisyParseChan2nameExpression(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseChan2nameExpression);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Pchan2nameExpression,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tchan2name);
+	addLeaf(N, n, noisyParsefactor(N, currentScope));
+
+	if (peekCheck(N, kNoisyIrNodeType_TstringConst))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TstringConst));
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_Pvar2nameExpression
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Pfactor
+ *		node.right	= kNoisyIrNodeType_TstringConst | NULL
+ */
+NoisyIrNode *
+noisyParseVar2nameExpression(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseVar2nameExpression);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Pvar2nameExpression,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tvar2name);
+	addLeaf(N, n, noisyParsefactor(N, currentScope));
+
+	if (peekCheck(N, kNoisyIrNodeType_TstringConst))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TstringConst));
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_Pname2chanExpression
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PtypeExpression
+ *		node.right	= Xseq of kNoisyIrNodeType_Pexpression, REALCONST
+ */
+NoisyIrNode *
+noisyParseName2chanExpression(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseName2chanExpression);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Pname2chanExpression,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tname2chan);
+	addLeaf(N, n, noisyParseTypeExpression(N, currentScope));
+	addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
+	addLeafWithChainingSeq(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrealConst));
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_Pterm
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_Pfactor
+ *		node.right	= Xseq of kNoisyIrNodeType_PhighPrecedenceBinaryOp  and kNoisyIrNodeType_Pfactor
+ */
+NoisyIrNode *
+noisyParseTerm(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTerm);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Pterm,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+
+
+	/*
+	 *	BUG: we should be checking for [basictype] and [unop] here
+	 */
+	addLeaf(N, n, noisyParsefactor(N, currentScope));
+	while (inFirst(N, kNoisyIrNodeType_PhighPrecedenceBinaryOp))
+	{
+		addLeafWithChainingSeq(N, n, noisyParseHighPrecedenceBinaryOp(N));
+		addLeafWithChainingSeq(N, n, noisyParsefactor(N, currentScope));
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_Pfactor
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Tidentifier | ... | kNoisyIrNodeType_Pexpression
+ *		node.left	= NULL or kNoisyIrNodeType_PfieldSelect
+ *		node.right	= NULL or Xseq of kNoisyIrNodeType_PfieldSelect
+ */
+NoisyIrNode *
+noisyParseFactor(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseFactor);
+
+
+	NoisyIrNode *	n;
+
+	if (peekCheck(N, kNoisyIrNodeType_Tidentifier))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tidentifier);
+
+		while (inFirst(N, kNoisyIrNodeType_PfieldSelect))
+		{
+			addLeafWithChainingSeq(N, n, noisyParsefieldselect(N, currentScope));
+		}
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TintConst))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TintConst);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TrealConst))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TrealConst);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TstringConst))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TstringConst);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TboolConst))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TboolConst);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TleftParen))
+	{
+		noisyParseTerminal(N, kNoisyIrNodeType_TleftParen);
+		n = noisyParseExpression(N, currentScope);
+		noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
+	}
+/*
+ *	BUG: the following two should not be here. See grammar
+ *
+ *	else if (inFirst(N, kNoisyIrNodeType_Punop))
+ *	{
+ *		n = noisyParseunop(N, currentScope);
+ *		addLeaf(N, n, noisyParsefactor(N, currentScope));
+ *	}
+ *	else if (peekCheck(N, kNoisyIrNodeType_Tchan2name))
+ *	{
+ *		noisyParseTerminal(N, kNoisyIrNodeType_Tchan2name);
+ *		n = noisyParsefactor(N, currentScope);
+ *
+ *		if (peekCheck(N, kNoisyIrNodeType_Tstring))
+ *		{
+ *			addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tstring));
+ *		}
+ *	}
+ */
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pfactor);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pfactor);
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PfieldSelect
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Tdot or kNoisyIrNodeType_TleftBrac (nothing else)
+ *		node.left	= kNoisyIrNodeType_Tidentifier | kNoisyIrNodeType_Pexpression
+ *		node.right	= NULL or kNoisyIrNodeType_Pexpression
+ */
+NoisyIrNode *
+noisyParseFieldSelect(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseFieldSelect);
+
+
+	NoisyIrNode *	n;
+
+
+	/*
+	 *	We use a single AST node (kNoisyIrNodeType_Tdot or kNoisyIrNodeType_TleftBrac) to differentiate
+	 *	the two types of subtrees.
+	 */
+	if (peekCheck(N, kNoisyIrNodeType_Tdot))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tdot);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tidentifier));
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TleftBrac))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TleftBrac);
+		addLeaf(N, n, noisyParseExpression(N, currentScope));
+		
+		if (peekCheck(N, kNoisyIrNodeType_Tcolon))
+		{
+			noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
+			addLeaf(N, n, noisyParseExpression(N, currentScope));
+		}
+
+		noisyParseTerminal(N, kNoisyIrNodeType_TrightBrac);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PfieldSelect);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PfieldSelect);
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PhighPrecedenceBinaryOp
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Tasterisk | ... | kNoisyIrNodeType_TCONS
+ *		node.left	= NULL
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseHighPrecedenceBinaryOp(NoisyState *  N)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseHighPrecedenceBinaryO);
+
+
+	NoisyIrNode *	n;
+
+
+	if (peekCheck(N, kNoisyIrNodeType_Tasterisk))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tasterisk);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tdiv))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tdiv);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tpercent))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tpercent);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tcaret))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tcaret);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tcons))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tcons);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PhighPrecedenceBinaryOp);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PhighPrecedenceBinaryOp);
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PlowPrecedenceBinaryOp
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Tplus | ... | kNoisyIrNodeType_Tstroke
+ *		node.left	= NULL
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseLowPrecedenceBinaryOp(NoisyState *  N)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseLowPrecedenceBinaryOp);
+
+
+	NoisyIrNode *	n;
+
+
+	if (peekCheck(N, kNoisyIrNodeType_Tplus))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tplus);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tminus))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tminus);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TrightShift))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TrightShift);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_TleftShift))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_TleftShift);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tstroke))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tstroke);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PlowPrecedenceBinaryOp);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PlowPrecedenceBinaryOp);
+	}
+
+	return n;
+}
+
+/*
+ *	kNoisyIrNodeType_PcmpOp
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Teq | ... | kNoisyIrNodeType_Tor
+ *		node.left	= NULL
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseCmpOp(NoisyState *  N)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseCmpOp);
+
+
+	NoisyIrNode *	n;
+
+
+	if (peekCheck(N, kNoisyIrNodeType_Teq))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Teq);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tneq))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tneq);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tgt))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tgt);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tlt))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tlt);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tle))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tle);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tge))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tge);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tand))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tand);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tor))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tor);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PcmpOp);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PcmpOp);
+	}
+
+	return n;
+}
+
+
+/*
+ *	kNoisyIrNodeType_PBOOLEANOP
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Tand or kNoisyIrNodeType_Tor (nothing else)
+ *		node.left	= NULL
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseBooleanOp(NoisyState *  N)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseBooleanOp);
+
+
+	NoisyIrNode *	n;
+
+
+	if (peekCheck(N, kNoisyIrNodeType_Tand))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tand);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tor))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tor);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PbooleanOp);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PbooleanOp);
+	}
+
+	return n;
+}
+
+
+/*
+ *	kNoisyIrNodeType_Punop
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Tname2chan | ... | kNoisyIrNodeType_Tgets
+ *		node.left	= NULL
+ *		node.right	= NULL
+ */
+NoisyIrNode *
+noisyParseUnaryOp(NoisyState *  N)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseUnaryOp);
+
+
+	NoisyIrNode *	n;
+
+
+	if (peekCheck(N, kNoisyIrNodeType_Tname2chan))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tname2chan);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Ttilde))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Ttilde);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tbang))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tbang);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tminus))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tminus);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tplus))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tplus);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tinc))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tinc);
+	}
+	else if (peekCheck(N, kNoisyIrNodeType_Tgets))
+	{
+		n = noisyParseTerminal(N, kNoisyIrNodeType_Tgets);
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PunaryOp);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PunaryOp);
+	}
+
+	return n;
+}
+
+/*
+ *	Simply remove a terminal
+ */
+NoisyIrNode *
+noisyParseTerminal(NoisyState *  N, NoisyIrNodeType expectedType)
+{
+	if (!peekCheck(N, expectedType))
+	{
+		termSyntaxError(N, expectedType);
+		termErrorRecovery(N, expectedType);
+	}
+
+	NoisyToken *	t = noisyLexGet(N);
+	NoisyIrNode *	n = genNoisyIrNode(N,	t->type,
+						NULL /* left child */,
+						NULL /* right child */,
+						t->sourceInfo /* source info */);
+
+	return n;
+}
+
+/*
+ *	Remove an identifier _usage_ terminal, performing symtab lookup
+ */
+NoisyIrNode *
+noisyParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType, NoisyScope *  scope)
+{
+	if (!peekCheck(N, expectedType))
+	{
+		termSyntaxError(N, expectedType);
+		termErrorRecovery(N, expectedType);
+	}
+
+	NoisyToken *	t = noisyLexGet(N);
+	NoisyIrNode *	n = genNoisyIrNode(N,	t->type,
+						NULL /* left child */,
+						NULL /* right child */,
+						t->sourceInfo /* source info */);
+
+	n->symbol = noisySymbolTableSymbolForIdentifier(scope, t->identifier);
+	if (n->symbol == NULL)
+	{
+		errorUseBeforeDefinition(N, t->identifier);
+		// TODO: do noisyParserErrorRecovery() here ?
+	}
+
+	return n;
+}
+
+/*
+ *	Remove an identifier _definition_ terminal, performing symtab insertion
+ */
+NoisyIrNode *
+noisyParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expectedType, NoisyScope *  scope)
+{
+	if (!peekCheck(N, expectedType))
+	{
+		termSyntaxError(N, expectedType);
+		termErrorRecovery(N, expectedType);
+	}
+
+	NoisyToken *	t = noisyLexGet(N);
+	NoisyIrNode *	n = genNoisyIrNode(N,	t->type,
+						NULL /* left child */,
+						NULL /* right child */,
+						t->sourceInfo /* source info */);
+
+	//	NOTE: noisySymbolTableAddOrLookupSymbolForToken() adds token 't' to scope 'scope'
+	NoisySymbol *	sym = noisySymbolTableAddOrLookupSymbolForToken(scope, t);
+	if (sym->definition != NULL)
+	{
+		errorMultiDefinition(N, sym);
+		// TODO: do noisyParserErrorRecovery() here ?
+	}
+	n->symbol = sym;
+
+	return n;
+}
+
+
+
+
+
+
+/*
+ *	Exported non-parse routines
+ */
+
+
+
+
+
+
+void
+noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType expectedProductionOrToken)
+{
+	NoisyToken *	t = noisyLexPeek(N);
+
+	//errors++;
+	switch (t->type)
+	{
+		case kNoisyIrNodeType_TstringConst:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, 
+				"%s: Expected \"%s\", saw \"%s\"\n",
+				Esyntax, gProductionStrings[expectedProductionOrToken],
+				t->stringConst);
+			
+			break;
+		}
+
+		case kNoisyIrNodeType_Tidentifier:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, 
+				"%s: Expected \"%s\", saw \"%s\"\n",
+				Esyntax, gProductionStrings[expectedProductionOrToken],
+				t->identifier);
+			
+			break;
+		}
+
+		case kNoisyIrNodeType_TintConst:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, 
+				"%s: Expected \"%s\", saw \"%d\"\n",
+				Esyntax, gProductionStrings[expectedProductionOrToken],
+				t->integerConst);
+
+			break;
+		}
+
+		case kNoisyIrNodeType_TrealConst:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, 
+				"%s: Expected \"%s\", saw \"%f\"\n",
+				Esyntax, gProductionStrings[expectedProductionOrToken],
+				t->realConst);
+
+			break;
+		}
+
+		default:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, 
+				"%s: Expected \"%s\", saw \"%s\"\n",
+				Esyntax, gProductionStrings[expectedProductionOrToken],
+				gReservedTokenDescriptions[t->type]);
+		}
+	}
+}
+
+
+
+
+
+
+/*
+ *	Static local functions
+ */
+
+
+
+
+
+
+static NoisyScope *
+progtypeName2scope(NoisyState *  N, const char *  identifier)
+{
+//	FlexListItem *	tmp = N->progtypeScopes->hd;
+
+	/*
+	 *	Each item is a tuple of (identifier, scope).
+	 */
+//	while (tmp != NULL)
+//	{
+//		if (	noisyValidFlexTupleCheckMacro(tmp)			&&
+//			(tmp->siblings->hd->type == kNoisyFlexListTypeString)	&&
+//			!strcmp(tmp->siblings->hd->value, identifier)		&&
+//			(tmp->siblings->hd->next->type == kNoisyFlexListTypeNoisyScopePointer))
+//		{
+//			return tmp->siblings->hd->next->value;
+//		}
+//
+//		tmp = tmp->next;
+//	}
+
+	return NULL;
+}
+
+static void
+semanticError(NoisyState *  N, ...)
+{
+	/*
+	 *	We use varargs so that we can pass in a list of strings that should
+	 *	get concatenated, akin to joining them with "+" in Limbo.
+	 */
+	//flexprint(N->Fe, N->Fm, N->Fperr, "%s: %s\n", Esemantics, ...);
+}
+
+
+
+static void
+errorUseBeforeDefinition(NoisyState *  N, const char *  identifier)
+{
+	flexprint(N->Fe, N->Fm, N->Fperr, "Saw identifier \"%s\" in use before definition\n", identifier);
+}
+
+static void
+errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol)
+{
+}
+
+static void
+termSyntaxError(NoisyState *  N, NoisyIrNodeType expectedType)
+{
+	NoisyToken *	t = peekSource(N);
+
+	//errors++;
+	switch (t->type)
+	{
+		case kNoisyIrNodeType_Tidentifier:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, 
+				"%s: Expected \"%s\", saw \"%s\"\n",
+				Esyntax, gTerminalStrings[expectedType],
+				t->identifier);
+
+			break;
+		}
+		
+		case kNoisyIrNodeType_TintConst:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, 
+				"%s: Expected \"%s\", saw \"%d\"\n",
+				Esyntax, gTerminalStrings[expectedType],
+				t->integerConst);
+
+			break;
+		}
+		
+		case kNoisyIrNodeType_TrealConst:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, 
+				"%s: Expected \"%s\", saw \"%f\"\n",
+				Esyntax, gTerminalStrings[expectedType],
+				t->realConst);
+
+			break;
+		}
+		
+		case kNoisyIrNodeType_TstringConst:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, 
+				"%s: Expected \"%s\", saw \"%s\"\n",
+				Esyntax, gTerminalStrings[expectedType],
+				t->stringConst);
+
+			break;
+		}
+		
+		default:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, 
+				"%s: Expected \"%s\", saw \"%s\"\n",
+				Esyntax, gTerminalStrings[expectedType],
+				gReservedTokenDescriptions[t->type]);
+			
+		}
+	}
+
+	/*
+	 *	flexprint(N->Fe, N->Fm, N->Fperr, "\n\n%d tokens left in input stream\n\n\n", N->tokenListLength);
+ 	 *	while (N->tokenList != NULL)
+	 *	{
+	 *		flexprint(N->Fe, N->Fm, N->Fperr, "%10d ", i++);
+	 *		noisyLexGet(N);
+	 *	}
+	 */
+
+	noisyFatal(N, Esanity);
+}
+
+static void
+termErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedType)
+{
+}
+
+
+static bool
+peekCheck(NoisyState *  N, NoisyIrNodeType expectedType)
+{
+	return (noisyLexPeek(N)->type == expectedType);
+}
+
+
+static NoisyIrNode *
+depthFirstWalk(NoisyState *  N, NoisyIrNode *  node)
+{
+	if (node->irLeftChild == NULL || node->irRightChild == NULL)
+	{
+		return node;
+	}
+
+	return depthFirstWalk(N, node->irRightChild);
+}
+
+static void
+addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
+{
+	NoisyIrNode *	node = depthFirstWalk(N, parent);
+
+	if (node == NULL)
+	{
+		noisyFatal(N, Esanity);
+	}
+	
+	if (node->irLeftChild == NULL)
+	{
+		node->irLeftChild = newNode;
+		
+		return;
+	}
+
+	node->irRightChild = newNode;
+}
+
+static void
+addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
+{
+	NoisyIrNode *	node = depthFirstWalk(N, parent);
+
+	if (node->irLeftChild == NULL)
+	{
+		node->irLeftChild = newNode;
+
+		return;
+	}
+	
+	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
+						newNode /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N)->sourceInfo /* source info */);
+}
+
+static void
+addToProgtypeScopes(NoisyState *  N, const char *  identifier, NoisyScope *  progtypeScope)
+{
+	progtypeScope->identifier = identifier;
+
+	if (N->progtypeScopes == NULL)
+	{
+		N->progtypeScopes = progtypeScope;
+
+		return;
+	}
+
+	NoisyScope *	p = N->progtypeScopes;
+	while (p->next != NULL)
+	{
+		p = p->next;
+	}
+	p->next = progtypeScope;;
+
+	return;
+}
+
+
+
+/*
+ *	kNoisyIrNodeType_PidentifierList
+ *
+ *	AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Tidentifier
+ *		node.left	= kNoisyIrNodeType_Tidentifier
+ *		node.right	= Xseq of kNoisyIrNodeType_Tidentifier
+ */
+static void
+assignTypes(NoisyState *  N, NoisyIrNode *  node, NoisyIrNode *  typeExpression)
+{
+	/*
+	 *	TODO: The typeExpr might be, say, an identifier that is an
+	 *	alias for a type. We should check for this case and get the
+	 *	identifier's sym->typeTree. Also, do sanity checks to validate
+	 *	the typeTree, e.g., make sure it is always made up of basic
+	 *	types and also that it's not NULL.
+	 */
+
+	if (node->type != kNoisyIrNodeType_Tidentifier)
+	{
+		noisyFatal(N, EassignTypeSanity);
+	}
+
+	/*
+	 *	Walk subtree identifierList, set each node->symbol.typeExpr = typeExpr
+	 */
+	node->symbol->typeTree = typeExpression;
+
+	/*
+	 *	Might be only one ident, or only two, or a whole Xseq of them
+	 */
+	if (node->irLeftChild != NULL)
+	{
+		node->irLeftChild->symbol->typeTree = typeExpression;
+	}
+
+	node = node->irRightChild;
+
+	while (node != NULL)
+	{
+		/*
+		 *	In here, node->type is always Xseq, with node->irLeftChild a node,
+		 *	and node->irRightChild either another Xseq or NULL.
+		 */
+		if (node->irLeftChild != NULL)
+		{
+			node->irLeftChild->symbol->typeTree = typeExpression;
+		}
+
+		node = node->irRightChild;
+	}
+}
