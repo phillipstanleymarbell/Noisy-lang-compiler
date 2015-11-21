@@ -369,6 +369,7 @@ typedef struct NoisyScope	NoisyScope;
 typedef struct NoisySymbol	NoisySymbol;
 typedef struct NoisyToken	NoisyToken;
 typedef struct NoisyIrNode	NoisyIrNode;
+typedef struct NoisySourceInfo	NoisySourceInfo;
 
 
 struct NoisyIrNode
@@ -379,8 +380,7 @@ struct NoisyIrNode
 	 *	Syntactic (AST) information.
 	 */
 	char *			tokenString;
-	uint64_t		srcLineNumber;
-	uint64_t		srcColumnNumber;
+	NoisySourceInfo	*	sourceInfo;
 	NoisyIrNode *		irParent;
 	NoisyIrNode *		irLeftChild;
 	NoisyIrNode *		irRightChild;
@@ -394,7 +394,7 @@ struct NoisyIrNode
 };
 
 
-typedef struct
+struct NoisySourceInfo
 {
 	/*
 	 *	Not yet used; for when we implement includes, this will be
@@ -406,7 +406,7 @@ typedef struct
 	uint64_t		lineNumber;
 	uint64_t		columnNumber;
 	uint64_t		length;
-} NoisySourceInfo;
+};
 
 
 struct NoisyToken
@@ -459,7 +459,7 @@ struct NoisyScope
 
 struct NoisySymbol
 {
-	const char *		identifier;
+	char *			identifier;
 
 	/*
 	 *	This field is duplicated in the AST node, since only
@@ -492,7 +492,7 @@ struct NoisySymbol
 	 */
 	int			intConst;
 	double			realConst;
-	const char *		stringConst;
+	char *			stringConst;
 	
 	/*
 	 *	For chaining together sibling symbols in the same scope
@@ -562,9 +562,11 @@ typedef struct
 	char *			progtypeOfFile;
 
 	/*
-	 *	We keep a global handle on the list of progtype scopes (list of (string, ref Scope)), for easy reference
+	 *	We keep a global handle on the list of progtype scopes, for easy reference.
+	 *	In this use case, the node->identifier holds the scopes string name, and we
+	 *	chain then using their prev/next fields.
 	 */
-	FlexTupleList *		progtypeScopes;
+	NoisyScope *		progtypeScopes;
 
 
 	/*

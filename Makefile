@@ -7,13 +7,13 @@ include		config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT)
 #MAKEFLAGS	+= -j8
 
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
-LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs cairo`
+LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS)
 
 LIBNOISY	= Noisy
 NOISY_L10N	= EN
 
 #	-std=gnu99 because we use anonymous unions and induction variable defintions in loop head.
-CCFLAGS		+= -std=gnu99 -DkNoisyL10N="\"$(NOISY_L10N)\"" -DNOISY_L10N_EN `pkg-config --cflags cairo`
+CCFLAGS		+= -std=gnu99 -DkNoisyL10N="\"$(NOISY_L10N)\"" -DNOISY_L10N_EN
 
 TARGET		= noisy-$(OSTYPE)-$(NOISY_L10N)
 CGI_TARGET	= noisycgi-$(OSTYPE)-$(NOISY_L10N)
@@ -36,6 +36,8 @@ SOURCES		=\
 		noisy-types.c\
 		noisy-lexer.c\
 		noisy-parser.c\
+		noisy-firstAndFollow.c\
+		noisy-irHelpers.c\
 
 
 #
@@ -54,6 +56,8 @@ OBJS		=\
 		noisy-types.$(OBJECTEXTENSION)\
 		noisy-lexer.$(OBJECTEXTENSION)\
 		noisy-parser.$(OBJECTEXTENSION)\
+		noisy-firstAndFollow.$(OBJECTEXTENSION)\
+		noisy-irHelpers.$(OBJECTEXTENSION)\
 		main.$(OBJECTEXTENSION)\
 
 
@@ -73,6 +77,8 @@ CGIOBJS		=\
 		noisy-types.$(OBJECTEXTENSION)\
 		noisy-lexer.$(OBJECTEXTENSION)\
 		noisy-parser.$(OBJECTEXTENSION)\
+		noisy-firstAndFollow.$(OBJECTEXTENSION)\
+		noisy-irHelpers.$(OBJECTEXTENSION)\
 		cgimain.$(OBJECTEXTENSION)\
 
 
@@ -87,6 +93,8 @@ LIBNOISYOBJS =\
 		noisy-types.$(OBJECTEXTENSION)\
 		noisy-lexer.$(OBJECTEXTENSION)\
 		noisy-parser.$(OBJECTEXTENSION)\
+		noisy-firstAndFollow.$(OBJECTEXTENSION)\
+		noisy-irHelpers.$(OBJECTEXTENSION)\
 
 
 
@@ -99,6 +107,8 @@ HEADERS		=\
 		noisy-types.h\
 		noisy-lexer.h\
 		noisy-parser.h\
+		noisy-irHelpers.h\
+		noisy-firstAndFollow.h\
 
 
 
