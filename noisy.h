@@ -365,7 +365,12 @@ typedef enum
 } NoisyPostFileWriteAction;
 
 
-typedef struct NoisyIrNode NoisyIrNode;
+typedef struct NoisyScope	NoisyScope;
+typedef struct NoisySymbol	NoisySymbol;
+typedef struct NoisyToken	NoisyToken;
+typedef struct NoisyIrNode	NoisyIrNode;
+
+
 struct NoisyIrNode
 {
 	NoisyIrNodeType		type;
@@ -379,6 +384,8 @@ struct NoisyIrNode
 	NoisyIrNode *		irParent;
 	NoisyIrNode *		irLeftChild;
 	NoisyIrNode *		irRightChild;
+
+	NoisySymbol *		symbol;
 
 	/*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
@@ -402,7 +409,6 @@ typedef struct
 } NoisySourceInfo;
 
 
-typedef struct NoisyToken	NoisyToken;
 struct NoisyToken
 {
 	NoisyIrNodeType		type;
@@ -414,6 +420,85 @@ struct NoisyToken
 	
 	NoisyToken *		prev;
 	NoisyToken *		next;
+};
+
+
+
+struct NoisyScope
+{
+	/*
+	 *	For named scopes (at the moment, only Progtypes)
+	 */
+	char *			identifier;
+
+	/*
+	 *	Hierarchy. The firstChild is used to access its siblings via firstChild->next
+	 */
+	NoisyScope *		parent;
+	NoisyScope *		firstChild;
+
+	/*
+	 *	Symbols in this scope. The list of symbols is accesed via firstSymbol->next
+	 */
+	NoisySymbol *		firstSymbol;
+
+	/*
+	 *	Where in source scope begins and ends
+	 */
+	NoisySourceInfo *	begin;
+	NoisySourceInfo *	end;
+
+	/*
+	 *	For chaining together scopes (currently only used for Progtype
+	 *	scopes and for chaining together children).
+	 */
+	NoisyScope *		next;
+	NoisyScope *		prev;
+};
+
+
+struct NoisySymbol
+{
+	const char *		identifier;
+
+	/*
+	 *	This field is duplicated in the AST node, since only
+	 *	identifiers get into the symbol table:
+	 */
+	NoisySourceInfo *	sourceInfo;
+
+	/*
+	 *	Declaration, type definition, use, etc. (kNoisySymbolTypeXXX)
+	 */
+	int 			symbolType;
+
+	/*
+	 *	Scope within which sym appears
+	 */
+	NoisyScope *		scope;
+
+	/*
+	 *	If an identifier use, definition's Sym, if any
+	 */
+	NoisySymbol *		definition;
+
+	/*
+	 *	Subtree in AST that represents typeexpr
+	 */
+	NoisyIrNode *		typeTree;
+
+	/*
+	 *	If an I_CONST, its value.
+	 */
+	int			intConst;
+	double			realConst;
+	const char *		stringConst;
+	
+	/*
+	 *	For chaining together sibling symbols in the same scope
+	 */
+	NoisySymbol *		next;
+	NoisySymbol *		prev;
 };
 
 
@@ -474,7 +559,7 @@ typedef struct
 	/*
 	 *	This is the name of the progtype that the file we're parsing implements
 	 */
-	//const char	progtypeOfFile[];
+	char *			progtypeOfFile;
 
 	/*
 	 *	We keep a global handle on the list of progtype scopes (list of (string, ref Scope)), for easy reference

@@ -52,6 +52,74 @@ typedef enum
 
 #define noisyValidFlexTupleCheckMacro(x)	(((x)->siblings != NULL) && ((x)->siblings->hd != NULL))
 
-void	noisyParserSemanticError(NoisyState *  N, ...);
-void	noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType production);
-void	noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType production) __attribute__((noreturn));
+
+
+void		noisyParserSemanticError(NoisyState *  N, ...);
+void		noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType expectedProductionOrToken);
+void		noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType production) __attribute__((noreturn));
+
+/*
+ *	TODO / FUTURE:	Since we expose both the lexer and parser interface, 
+ *	libNoisy could be used to build a code editor plugin that proactively
+ *	flags syntax errors, offers code completion, etc.
+ *
+ *	The GitHub 'Atom' editor would be a good host organism.
+ */
+NoisyIrNode *	noisyParse(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseProgram(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseProgtypeDeclaration(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseProgtypeBody(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseProgtypeTypenameDeclaration(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseConstantDeclaration(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseTypeDeclaration(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseAdtTypeDeclaration(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseNamegenDeclaration(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseIdentifierOrNil(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseIdentifierOrNilList(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseIdentifierList(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseTypeExpression(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseTypeName(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseTolerance(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseErrorMagnitudeTolerance(NoisyState *  N);
+NoisyIrNode *	noisyParseLossTolerance(NoisyState *  N);
+NoisyIrNode *	noisyParseLatencyTolerance(NoisyState *  N);
+NoisyIrNode *	noisyParseBasicType(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseRealType(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseFixedType(NoisyState *  N);
+NoisyIrNode *	noisyParseAnonAggregateType(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseArrayType(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseListType(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseTupleType(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseSetType(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseInitList(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseIdxInitList(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseStarInitList(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseElement(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseNamegenDefinition(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseScopedStatementList(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseStatementList(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseStatement(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseAssignOp(NoisyState *  N);
+NoisyIrNode *	noisyParseMatchStatement(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseIterStatement(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseGuardBody(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseExpression(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseListCastExpression(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseSetCastExpression(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseArrayCastExpression(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseAnonAggregateCastExpression(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseChanEventExpression(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseChan2nameExpression(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseVar2nameExpression(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseName2chanExpression(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseTerm(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseFactor(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseFieldSelect(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseHighPrecedenceBinaryOp(NoisyState *  N);
+NoisyIrNode *	noisyParseLowPrecedenceBinaryOp(NoisyState *  N);
+NoisyIrNode *	noisyParseCmpOp(NoisyState *  N);
+NoisyIrNode *	noisyParseBooleanOp(NoisyState *  N);
+NoisyIrNode *	noisyParseUnaryOp(NoisyState *  N);
+NoisyIrNode *	noisyParseTerminal(NoisyState *  N, NoisyIrNodeType expectedType);
+NoisyIrNode *	noisyParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType, NoisyScope *  scope);
+NoisyIrNode *	noisyParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expectedType, NoisyScope *  scope);

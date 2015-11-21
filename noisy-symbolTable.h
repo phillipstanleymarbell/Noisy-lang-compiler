@@ -35,71 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-typedef struct NoisyScope	NoisyScope;
-typedef struct NoisySymbol	NoisySymbol;
-
-struct NoisyScope
-{
-	/*
-	 *	Hierarchy
-	 */
-	NoisyScope *		parent;
-	NoisyScope **		children;
-
-	/*
-	 *	Symbols in this scope
-	 */
-	NoisySymbol **		symbols;
-
-	/*
-	 *	Where in source scope begins and ends
-	 */
-	NoisyLexerSrc *		begin;
-	NoisyLexerSrc *		end;
-} ;
-
-
-struct NoisySymbol
-{
-	const char *		identifier;
-
-	/*
-	 *	This field is duplicated in the AST node, since only
-	 *	identifiers get into the symbol table:
-	 */
-	NoisyLexerSrc *		sourceInfo;
-
-	/*
-	 *	Declaration, type definition, use, etc. (kNoisySymbolTypeXXX)
-	 */
-	int 			symbolType;
-
-	/*
-	 *	Scope within which sym appears
-	 */
-	NoisyScope *		scope;
-
-	/*
-	 *	If an identifier use, definition's Sym, if any
-	 */
-	NoisySym *		definition;
-
-	/*
-	 *	Subtree in AST that represents typeexpr
-	 */
-	NoisyIrNode *		typeTree;
-
-	/*
-	 *	If an I_CONST, its value.
-	 */
-	int			intConst;
-	double			realConst;
-	const char *		stringConst;
-};
-
-
-NoisySymbol *	noisySymbolTableAddOrLookupSymbolForToken(NoisyScope *  scope, NoisyLexerToken *  token);
+NoisySymbol *	noisySymbolTableAddOrLookupSymbolForToken(NoisyScope *  scope, NoisyToken *  token);
 NoisySymbol *	noisySymbolTableSymbolForIdentifier(NoisyScope *  scope, const char *  identifier);
 NoisyScope *	noisySymbolTableOpenScope(NoisyScope *  scope, NoisyIrNode *  subtree);
 void		noisySymbolTableCloseScope(NoisyScope *  scope, NoisyIrNode *  subtree);
