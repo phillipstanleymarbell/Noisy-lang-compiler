@@ -57,6 +57,7 @@ extern const char	EtokenTooLong[];
 extern const char	EstringTooLongOrWithNewline[];
 extern const char	EruntTokenInNumericConst[];
 extern const char	EcannotFindTypeSignatureForNodeType[];
+extern const char	EassignTypeSanity[];
 
 
 /*

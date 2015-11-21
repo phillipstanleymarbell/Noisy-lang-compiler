@@ -57,7 +57,7 @@ const char	EtokenTooLong[]				= "Saw a token longer than kNoisyMaxBufferLength d
 const char	EstringTooLongOrWithNewline[]		= "Saw a string longer than kNoisyMaxBufferLength or one containing an unescaped newline, during lexing";
 const char	EruntTokenInNumericConst[]		= "Run token passed to makeNumericConst()";
 const char	EcannotFindTypeSignatureForNodeType[] 	= "Cannot find type signature character in gNoisyTypeNodeSignatures for this node type";
-
+const char	EassignTypeSanity[]			= "Sanity check failed in type assignment";
 
 
 /*
