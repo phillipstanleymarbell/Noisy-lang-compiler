@@ -1118,6 +1118,8 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 static void
 makeNumericConst(NoisyState *  N)
 {
+fprintf(stderr, "in makeNumericConst(), N->currentToken = [%s]\n", N->currentToken);
+
 	if (N->currentTokenLength == 0)
 	{
 		noisyFatal(N, EruntTokenInNumericConst);
@@ -1295,10 +1297,10 @@ isDecimal(char *  string)
 
 
 static char *
-stringAtLeft(char *  string, char  character)
+stringAtLeft(char *  string, char character)
 {
 	char *	left = string;
-	char *	right = strchr(string, 'r');
+	char *	right = strchr(string, character);
 
 	if (right == NULL)
 	{
@@ -1311,7 +1313,7 @@ stringAtLeft(char *  string, char  character)
 }
 
 static char *
-stringAtRight(char *  string, char  character)
+stringAtRight(char *  string, char character)
 {
 	char *	right = strchr(string, character);
 
@@ -1320,20 +1322,32 @@ stringAtRight(char *  string, char  character)
 		return NULL;
 	}
 
-	return ++right;
+	return &right[1];
 }
 
 
 static bool
 isDecimalSeparatedWithChar(char *  string, char  character)
 {
-	return (isDecimal(stringAtLeft(string, character)) && isDecimal(stringAtRight(string, character)));
+	/*
+	 *	stringAtLeft(string, character) will modify 'string' by
+	 *	inserting a '\0' at the position of 'character', so we
+	 *	need to operate on a copy. We use alloca() to simplify
+	 *	cleanup.
+	 */
+	char *	leftStringCopy = alloca(strlen(string)+1);
+	strcpy(leftStringCopy, string);
+
+fprintf(stderr, "stringAtLeft([%s], [%c]) = [%s]\n", leftStringCopy, character, stringAtLeft(leftStringCopy, character));
+fprintf(stderr, "stringAtRight([%s], [%c]) = [%s]\n", string, character, stringAtRight(string, character));
+	return (isDecimal(stringAtLeft(leftStringCopy, character)) && isDecimal(stringAtRight(string, character)));
 }
 
 
 static bool
 isRadixConst(char *  string)
 {
+fprintf(stderr, "isRadixConst(%s) = %d\n", string, isDecimalSeparatedWithChar(string, 'r'));
 	return isDecimalSeparatedWithChar(string, 'r');
 }
 
@@ -1341,6 +1355,8 @@ isRadixConst(char *  string)
 static bool
 isRealConst(char *  string)
 {
+fprintf(stderr, "isRealConst, string = [%s]\n", string);
+fprintf(stderr, "isRealConst(%s) = %d\n", string, isDecimalSeparatedWithChar(string, '.'));
 	return isDecimalSeparatedWithChar(string, '.');
 }
 
@@ -1348,6 +1364,7 @@ isRealConst(char *  string)
 static bool
 isEngineeringRealConst(char *  string)
 {
+fprintf(stderr, "isEngineeringRealConst(%s) = %d\n", string, (isDecimalSeparatedWithChar(string, 'e') || isDecimalSeparatedWithChar(string, 'E')));
 	return (isDecimalSeparatedWithChar(string, 'e') || isDecimalSeparatedWithChar(string, 'E'));
 }
 
@@ -1363,7 +1380,16 @@ stringToRadixConst(NoisyState *  N, char *  string)
 	uint64_t	base, value, p;
 
 
-	left		= stringAtLeft(string, 'r');
+	/*
+	 *	stringAtLeft(string, character) will modify 'string' by
+	 *	inserting a '\0' at the position of 'character', so we
+	 *	need to operate on a copy. We use alloca() to simplify
+	 *	cleanup.
+	 */
+	char *	leftStringCopy = alloca(strlen(string)+1);
+	strcpy(leftStringCopy, string);
+
+	left		= stringAtLeft(leftStringCopy, 'r');
 	right		= stringAtRight(string, 'r');
 	rightLength	= strlen(right);
 
@@ -1443,7 +1469,16 @@ stringToRealConst(NoisyState *  N, char *  string)
 	uint64_t	integerPart, fractionalPart;
 
 
-	left		= stringAtLeft(string, '.');
+	/*
+	 *	stringAtLeft(string, character) will modify 'string' by
+	 *	inserting a '\0' at the position of 'character', so we
+	 *	need to operate on a copy. We use alloca() to simplify
+	 *	cleanup.
+	 */
+	char *	leftStringCopy = alloca(strlen(string)+1);
+	strcpy(leftStringCopy, string);
+
+	left		= stringAtLeft(leftStringCopy, '.');
 	right		= stringAtRight(string, '.');
 	rightLength	= strlen(right);
 
@@ -1502,7 +1537,16 @@ stringToEngineeringRealConst(NoisyState *  N, char *  string)
 		engineeringChar = 'E';
 	}
 
-	left		= stringAtLeft(string, engineeringChar);
+	/*
+	 *	stringAtLeft(string, character) will modify 'string' by
+	 *	inserting a '\0' at the position of 'character', so we
+	 *	need to operate on a copy. We use alloca() to simplify
+	 *	cleanup.
+	 */
+	char *	leftStringCopy = alloca(strlen(string)+1);
+	strcpy(leftStringCopy, string);
+
+	left		= stringAtLeft(leftStringCopy, engineeringChar);
 	right		= stringAtRight(string, engineeringChar);
 
 	mantissa 	= stringToRealConst(N, left);
