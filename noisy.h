@@ -39,10 +39,10 @@
 
 typedef enum
 {
-	kNoisyDebugLexer,
-	kNoisyDebugParser,
-	kNoisyDebugAST,
-	kNoisyDebugFF,
+	kNoisyDebugLexer	=	(1 << 0),
+	kNoisyDebugParser	= 	(1 << 1),
+	kNoisyDebugAST		=	(1 << 2),
+	kNoisyDebugFF		=	(1 << 3),
 	
 	/*
 	 *	Code depends on this bringing up the rear.

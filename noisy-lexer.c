@@ -101,7 +101,7 @@ noisyLexAllocateSourceInfo(	NoisyState *  N, char **  genealogy, char *  fileNam
 	}
 
 	newSourceInfo->genealogy	= genealogy;
-	newSourceInfo->fileName		= fileName;
+	newSourceInfo->fileName		= (fileName == NULL ? NULL : strdup(fileName));
 	newSourceInfo->lineNumber	= lineNumber;
 	newSourceInfo->columnNumber	= columnNumber;
 	newSourceInfo->length		= length;
@@ -124,10 +124,10 @@ noisyLexAllocateToken(	NoisyState *  N, NoisyIrNodeType type, char *  identifier
 	}
 	
 	newToken->type		= type;
-	newToken->identifier	= identifier;
+	newToken->identifier	= (identifier == NULL ? NULL : strdup(identifier));
 	newToken->integerConst	= integerConst;
 	newToken->realConst	= realConst;
-	newToken->stringConst	= stringConst;
+	newToken->stringConst	= (stringConst == NULL ? NULL : strdup(stringConst));
 	newToken->sourceInfo	= sourceInfo;
 
 	return newToken;
@@ -249,8 +249,9 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 
 			if (N->mode & kNoisyDebugLexer)
 			{
-				flexprint(N->Fe, N->Fm, N->Fperr, "N->lineBuffer[%d] = [%c]\n",
-						N->columnNumber, N->lineBuffer[N->columnNumber]);
+				//flexprint(N->Fe, N->Fm, N->Fperr, "N->lineBuffer[%llu] = [%c]\n",
+				//		N->columnNumber, N->lineBuffer[N->columnNumber]);
+//fprintf(stderr, "N->lineBuffer[%llu] = [%c]\n", N->columnNumber, N->lineBuffer[N->columnNumber]);
 			}
 
 			if (isOperatorOrSeparator(cur(N)))
@@ -463,7 +464,12 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 		}
 		N->lineNumber++;
 	}
-	
+
+	if (N->mode & kNoisyDebugLexer)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "Done lexing...\n");
+	}
+
 
 	return;
 }
@@ -536,7 +542,8 @@ gobble(NoisyState *  N, int count)
 
 	if (N->mode & kNoisyDebugLexer)
 	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "gobble, N->currentToken = \"%s\"\n", N->currentToken);
+		//flexprint(N->Fe, N->Fm, N->Fperr, "gobble, N->currentToken = \"%s\"\n", N->currentToken);
+//fprintf(stderr, "gobble, N->currentToken = \"%s\"\n", N->currentToken);
 	}
 
 	N->columnNumber += count;
@@ -552,6 +559,7 @@ done(NoisyState *  N, NoisyToken *  newToken)
 								N->columnNumber - N->currentTokenLength /* columnNumber */,
 								N->currentTokenLength		/*   length 	*/);
 
+	bzero(N->currentToken, kNoisyMaxBufferLength);
 	N->currentTokenLength = 0;
 	noisyLexPut(N, newToken);
 }
@@ -609,6 +617,9 @@ checkWeq(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2)
 									NULL	/* stringConst	*/,
 									NULL	/* sourceInfo	*/);
 
+	/*
+	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+	 */
 	done(N, newToken);
 }
 
@@ -646,6 +657,9 @@ checkWeq3(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2, char ch
 									NULL	/* stringConst	*/,
 									NULL	/* sourceInfo	*/);
 
+	/*
+	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+	 */
 	done(N, newToken);
 }
 
@@ -662,7 +676,8 @@ checkSingle(NoisyState *  N, NoisyIrNodeType tokenType)
 
 	if (N->mode & kNoisyDebugLexer)
 	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "checkSingle(), tokenType = %d\n", tokenType);
+		//flexprint(N->Fe, N->Fm, N->Fperr, "checkSingle(), tokenType = %d\n", tokenType);
+//fprintf(stderr, "checkSingle(), tokenType = %d\n", tokenType);
 	}
 
 	NoisyToken *		newToken = noisyLexAllocateToken(N,	tokenType /* type	*/,
@@ -672,6 +687,9 @@ checkSingle(NoisyState *  N, NoisyIrNodeType tokenType)
 									NULL	/* stringConst	*/,
 									NULL	/* sourceInfo	*/);
 
+	/*
+	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+	 */
 	done(N, newToken);
 }
 
@@ -706,6 +724,9 @@ checkDot(NoisyState *  N)
 									NULL	/* stringConst	*/,
 									NULL	/* sourceInfo	*/);
 
+	/*
+	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+	 */
 	done(N, newToken);
 }
 
@@ -751,6 +772,9 @@ checkGt(NoisyState *  N)
 									NULL	/* stringConst	*/,
 									NULL	/* sourceInfo	*/);
 
+	/*
+	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+	 */
 	done(N, newToken);
 }
 
@@ -809,6 +833,9 @@ checkLt(NoisyState *  N)
 									NULL	/* stringConst	*/,
 									NULL	/* sourceInfo	*/);
 
+	/*
+	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+	 */
 	done(N, newToken);
 }
 
@@ -856,6 +883,9 @@ checkSingleQuote(NoisyState *  N)
 									NULL	/* stringConst	*/,
 									NULL	/* sourceInfo	*/);
 
+	/*
+	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+	 */
 	done(N, newToken);
 }
 
@@ -927,6 +957,9 @@ checkDoubleQuote(NoisyState *  N)
 							NULL				/* sourceInfo	*/);
 	}
 
+	/*
+	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+	 */
 	done(N, newToken);
 }
 
@@ -969,6 +1002,9 @@ checkMinus(NoisyState *  N)
 									NULL	/* stringConst	*/,
 									NULL	/* sourceInfo	*/);
 
+	/*
+	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+	 */
 	done(N, newToken);
 }
 
@@ -977,7 +1013,8 @@ finishToken(NoisyState *  N)
 {
 	if (N->mode & kNoisyDebugLexer)
 	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
+		//flexprint(N->Fe, N->Fm, N->Fperr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
+fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 	}
 
 	/*
@@ -1005,15 +1042,17 @@ finishToken(NoisyState *  N)
 									NULL	/* stringConst	*/,
 									NULL	/* sourceInfo	*/);
 
+		/*
+		 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+		 */
 		done(N, newToken);
-		N->currentTokenLength = 0;
 
 		return;
 	}
 
 	for (int i = 0; i < kNoisyIrNodeTypeMax; i++)
 	{
-		if (!strcmp(gReservedTokenDescriptions[i], N->currentToken))
+		if ((gReservedTokenDescriptions[i] != NULL) && !strcmp(gReservedTokenDescriptions[i], N->currentToken))
 		{
 			NoisyToken *	newToken = noisyLexAllocateToken(N,	i	/* type		*/,
 										NULL	/* identifier	*/,
@@ -1021,8 +1060,11 @@ finishToken(NoisyState *  N)
 										0.0	/* realConst	*/,
 										NULL	/* stringConst	*/,
 										NULL	/* sourceInfo	*/);
+
+			/*
+			 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+			 */
 			done(N, newToken);
-			N->currentTokenLength = 0;
 
 			return;
 		}
@@ -1045,8 +1087,11 @@ finishToken(NoisyState *  N)
 								0.0	/* realConst	*/,
 								NULL	/* stringConst	*/,
 								NULL	/* sourceInfo	*/);
+
+	/*
+	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+	 */
 	done(N, newToken);
-	N->currentTokenLength = 0;
 }
 
 static void
@@ -1078,8 +1123,11 @@ makeNumericConst(NoisyState *  N)
 										0.0	/* realConst	*/,
 										NULL	/* stringConst	*/,
 										NULL	/* sourceInfo	*/);
+
+			/*
+			 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+			 */
 			done(N, newToken);
-			N->currentTokenLength = 0;
 
 			return;
 		}
@@ -1092,8 +1140,11 @@ makeNumericConst(NoisyState *  N)
 										NULL	/* stringConst	*/,
 										NULL	/* sourceInfo	*/);
 			
+
+			/*
+			 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+			 */
 			done(N, newToken);
-			N->currentTokenLength = 0;
 
 			return;
 		}
@@ -1110,8 +1161,11 @@ makeNumericConst(NoisyState *  N)
 									stringToRealConst(N, N->currentToken)	/* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
+
+		/*
+		 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+		 */
 		done(N, newToken);
-		N->currentTokenLength = 0;
 
 		return;
 	}
@@ -1127,8 +1181,11 @@ makeNumericConst(NoisyState *  N)
 									stringToEngineeringRealConst(N, N->currentToken) /* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
+
+		/*
+		 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+		 */
 		done(N, newToken);
-		N->currentTokenLength = 0;
 
 		return;
 	}
@@ -1144,8 +1201,11 @@ makeNumericConst(NoisyState *  N)
 									0				/* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
+
+		/*
+		 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+		 */
 		done(N, newToken);
-		N->currentTokenLength = 0;
 
 		return;
 	}
@@ -1161,8 +1221,11 @@ makeNumericConst(NoisyState *  N)
 									0				/* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
+
+		/*
+		 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+		 */
 		done(N, newToken);
-		N->currentTokenLength = 0;
 
 		return;
 	}
@@ -1181,8 +1244,11 @@ makeNumericConst(NoisyState *  N)
 									0				/* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
+
+		/*
+		 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+		 */
 		done(N, newToken);
-		N->currentTokenLength = 0;
 	}
 	else
 	{

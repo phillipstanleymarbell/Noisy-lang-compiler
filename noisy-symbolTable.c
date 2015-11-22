@@ -58,6 +58,20 @@
  */
 
 
+NoisyScope *
+noisySymbolTableAllocScope(NoisyState *  N)
+{
+	NoisyScope *	newScope;
+
+	newScope = (NoisyScope *)calloc(1, sizeof(NoisyScope));
+	if (newScope == NULL)
+	{
+		noisyFatal(N, Emalloc);
+	}
+
+	return newScope;
+}
+
 
 NoisySymbol *
 noisySymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token)
@@ -132,20 +146,15 @@ noisySymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const 
 NoisyScope *
 noisySymbolTableOpenScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subTree)
 {
-	NoisyScope *	newScope;
+	NoisyScope *	newScope = noisySymbolTableAllocScope(N);
 
-	newScope = (NoisyScope *)calloc(1, sizeof(NoisyScope));
-	if (newScope == NULL)
-	{
-		noisyFatal(N, Emalloc);
-	}
-	
 	newScope->parent = scope;
 	newScope->begin = subTree->sourceInfo;
 	scope->firstChild = newScope;
 
 	return newScope;
 }
+
 
 void
 noisySymbolTableCloseScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subTree)

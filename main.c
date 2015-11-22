@@ -51,6 +51,8 @@
 #include "noisy-timeStamps.h"
 #include "noisy.h"
 #include "noisy-parser.h"
+#include "noisy-lexer.h"
+#include "noisy-symbolTable.h"
 #include "noisy-irPass-helpers.h"
 #include "noisy-irPass-dotBackend.h"
 
@@ -279,60 +281,25 @@ main(int argc, char *argv[])
 static void
 processFile(NoisyState *  N, char *  filename)
 {
-	char *		buf;
-	int		fd;//, curline = 1, curcol = 1;
+N->mode |= kNoisyDebugLexer;
 
+	/*
+	 *	Tokenize input, then parse it and build AST + symbol table.
+	 */
+	noisyLexInit(N, filename);
 
-	buf = (char *) flexcalloc(N->Fe, N->Fm, N->Fperr, kNoisyMaxBufferLength+1, sizeof(char), "noisy.c:main/buf");
-	if (buf == NULL)
-	{
-		noisyFatal(N, Emalloc);
-
-		/*	Not reached	*/
-		noisyConsolePrintBuffers(N);
-		exit(EXIT_FAILURE);
-	}
-
-	fd = flexopen(N->Fe, N->Fm, N->Fperr, filename, FLEX_OREAD);
-	if (fd < 0)
-	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "%s \"%s\"...\n\n", Eopen, filename);
-
-		return;
-	}
-
-	flexstreamclear(N->Fe, N->Fm, N->Fperr, N->Fi);
-	while (flexfgets(N->Fe, N->Fm, N->Fperr, buf, kNoisyMaxBufferLength, fd) != NULL)
-	{
-		//flexstreammunch(N->Fe, N->Fm, N->Fperr, N->Fi, gNoisyWhitespace, gNoisyStickies, buf, &curline, &curcol);
-	}
-
-	flexfree(N->Fe, N->Fm, N->Fperr, buf, "noisy.c:main/buf");
-
-	if (N->verbosityLevel & kNoisyVerbosityPreScanStreamCheck)
-	{
-		flexstreamchk(N->Fe, N->Fm, N->Fperr, N->Fi, kNoisyMaxErrorTokenCount, kNoisyStreamchkWidth);
-	}
-	flexstreamscan(N->Fe, N->Fm, N->Fperr, N->Fi);
-	if (N->verbosityLevel & kNoisyVerbosityPostScanStreamCheck)
-	{
-		flexstreamchk(N->Fe, N->Fm, N->Fperr, N->Fi, kNoisyMaxErrorTokenCount, kNoisyStreamchkWidth);
-	}
-
+	/*
+	 *	Create a top-level scope, then parse.
+	 */
+	NoisyScope *	topScope = noisySymbolTableAllocScope(N);
+	N->noisyIrRoot = noisyParse(N, topScope);
 
 
 	/*
-	 *	Initialize symbol table by creating a top-level scope
+	 *	Run passes requested in the command line flags.
 	 */
-	//xxx
-
-
-
-	/*
-	 *	Parse input, building AST and symbol table.
-	 */
-	//N->noisyIrRoot = parseNoisyProgram(N);
 	noisyRunPasses(N);
+
 
 	/*
 	 *	We don't put the following into noisyRunPasses() because they are not general-purpose
