@@ -1,0 +1,94 @@
+SelectionSort : progtype
+{
+	init		: namegen (list of string):(list of string);
+	smallestfind	: namegen (list of string):((string, list of string));
+}
+
+init =
+{
+	#
+	#	Pre-conditions: The init namegen is created, and a valid	
+	#		list-of-string input is written to it.
+	#
+	#	Post-conditions: The reader of the init namegen reads a
+	#		list of string whose head is the largest item,
+	#		and the items are in non-increasing order from
+	#		head to tail, lexicographically.
+	#
+	rest, result	: list of string;
+	smallest	: string;
+#	findsmallest	:= name2chan SelectionSort->smallestfind 0.0;
+
+	rest =<- init;
+	iter
+	{
+		#
+		#	Loop invariants: 'result' list contains no items
+		#		larger (lexicographically) than 'rest' list.
+		#
+		#	Progress: in each iteration, an item is removed
+		#		from 'rest'
+		#
+		#	Termination: when 'rest' is empty.
+		#
+		len rest > 0	=>
+		{
+			findsmallest <-= rest;
+			(smallest, rest) =<- findsmallest;
+			result = smallest :: result;
+		}
+	}
+	init <-= result;
+}
+
+smallestfind =
+{
+	#
+	#	Pre-conditions: The smallestfind namegen is created, and a	
+	#		valid list-of-string input is written to it.
+	#
+	#	Post-conditions: The reader of the smallestfind  namegen
+	#		reads a tuple, first item of which is a string, no
+	#		larger (lexicographically) than any item on the
+	#		incoming list, and the second item in the tuple is a
+	#		list of strings being the incoming list with one of
+	#		the possible multiple copies of the lexicographically
+	#		smallest item removed.
+	#
+	rest		: list of string;
+	input		:=<- smallestfind;
+	smallest	:= hd input;
+
+	iter
+	{
+		#
+		#	Loop invariant: 'smallest' is the lexicographically
+		#		smallest item seen on input thus far, and
+		#		is no smaller than any item in 'rest'.
+		#
+		#	Progress: in each iteration, an item is removed from
+		#		'input'.
+		#
+		#	Termination: when input list is empty.
+		#
+		len input > 0	=>
+		{
+			item := hd input;
+			match
+			{
+				item <= smallest =>
+				{
+					rest = smallest :: rest;
+					smallest = item;
+				}
+
+				item > smallest =>
+				{
+					rest = item :: rest;
+				}	
+			}
+			input = tl input;
+		}	
+	}
+	smallestfind <-= (smallest, rest);
+}

@@ -148,24 +148,14 @@ noisyLexPut(NoisyState *  N, NoisyToken *  newToken)
 	 */	
 	if (N->tokenList == NULL)
 	{
-		NoisySourceInfo *	eofSourceInfo = noisyLexAllocateSourceInfo(N,	NULL /* genealogy */,
-											N->fileName /* fileName */,
-											N->lineNumber /* lineNumber */,
-											0 /* columnNumber */,
-											0 /* length */);
-											
-		NoisyToken *		eofToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_Zeof /* type */,
-										NULL /* identifier */,
-										0 /* integerConst */,
-										0.0 /* realConst */,
-										NULL /* stringConst */,
-										eofSourceInfo /* sourceInfo */);
-		N->tokenList = eofToken;
+		N->lastToken = N->tokenList = newToken;
 	}
-
-	N->tokenList->prev = newToken;
-	newToken->next = N->tokenList;
-	N->tokenList = newToken;
+	else
+	{
+		newToken->prev = N->lastToken;
+		N->lastToken->next = newToken;
+		N->lastToken = newToken;
+	}
 }
 
 
@@ -464,10 +454,33 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 		}
 		N->lineNumber++;
 	}
+	
+	NoisySourceInfo *	eofSourceInfo = noisyLexAllocateSourceInfo(N,	NULL /* genealogy */,
+										N->fileName /* fileName */,
+										N->lineNumber /* lineNumber */,
+										N->columnNumber /* columnNumber */,
+										0 /* length */);
+										
+	NoisyToken *		eofToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_Zeof /* type */,
+									NULL /* identifier */,
+									0 /* integerConst */,
+									0.0 /* realConst */,
+									NULL /* stringConst */,
+									eofSourceInfo /* sourceInfo */);
+	noisyLexPut(N, eofToken);
 
 	if (N->mode & kNoisyDebugLexer)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "Done lexing...\n");
+		
+		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
+		NoisyToken *	p = N->tokenList;
+		while (p != NULL)
+		{
+			noisyLexPrintToken(N, p);
+			p = p->next;
+		}
+		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
 	}
 
 
@@ -478,41 +491,49 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 void
 noisyLexPrintToken(NoisyState *  N, NoisyToken *  t)
 {
-	flexprint(N->Fe, N->Fm, N->Fperr, "Token\t%16s: ", gTerminalStrings[t->type]);
+	flexprint(N->Fe, N->Fm, N->Fperr, "Token %30s: ", gTerminalStrings[t->type]);
 
 	switch (t->type)
 	{
 		case kNoisyIrNodeType_Tidentifier:
 		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\"%s\", ", t->identifier);
+			flexprint(N->Fe, N->Fm, N->Fperr, "\"%20s\", ", t->identifier);
 			break;
 		}
 
 		case kNoisyIrNodeType_TintConst:
 		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\"%d\", ", t->integerConst);
+			flexprint(N->Fe, N->Fm, N->Fperr, "\"%20d\", ", t->integerConst);
 			break;
 		}
 
 		case kNoisyIrNodeType_TrealConst:
 		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\"%f\", ", t->realConst);
+			flexprint(N->Fe, N->Fm, N->Fperr, "\"%20f\", ", t->realConst);
 			break;
 		}
 
 		case kNoisyIrNodeType_TstringConst:
 		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\"%s\", ", t->stringConst);
+			flexprint(N->Fe, N->Fm, N->Fperr, "\"%20s\", ", t->stringConst);
 			break;
 		}
 
 		default:
 		{
-			noisyFatal(N, Esanity);
+			if (gReservedTokenDescriptions[t->type] != NULL)
+			{
+				flexprint(N->Fe, N->Fm, N->Fperr, "%22s, ", gReservedTokenDescriptions[t->type]);
+			}
+			else
+			{
+				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in noisyLexPrintToken <<<", t->type);
+				//noisyFatal(N, Esanity);
+			}
 		}
 	}
 
-	flexprint(N->Fe, N->Fm, N->Fperr, "source file: %s, line %d, pos %d, length %d\n",
+	flexprint(N->Fe, N->Fm, N->Fperr, "source file: %16s, line %3d, pos %3d, length %3d\n",
 		t->sourceInfo->fileName, t->sourceInfo->lineNumber, t->sourceInfo->columnNumber, t->sourceInfo->length);
 }
 

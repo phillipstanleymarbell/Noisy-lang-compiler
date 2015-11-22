@@ -580,6 +580,7 @@ typedef struct
 	char *			currentToken;
 	uint64_t		currentTokenLength;
 	NoisyToken *		tokenList;
+	NoisyToken *		lastToken;
 	
 
 	/*

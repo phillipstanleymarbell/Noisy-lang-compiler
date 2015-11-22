@@ -73,18 +73,18 @@ noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken)
 		noisyFatal(N, Esanity);
 	}
 
-	fprintf(stderr, "noisyInFirst(): productionOrToken=[%d], gProductionStrings[%d]=[%s],"
-			"token->type=[%d], gTerminalStrings[%d]=[%s]...\n",
-			productionOrToken, productionOrToken, gProductionStrings[productionOrToken],
-			token->type, token->type, gTerminalStrings[token->type]);
+	//flexprint(N->Fe, N->Fm, N->Fperr, "noisyInFirst(): productionOrToken=[%d], gProductionStrings[%d]=[%s],"
+	//		"token->type=[%d], gTerminalStrings[%d]=[%s]...\n",
+	//		productionOrToken, productionOrToken, gProductionStrings[productionOrToken],
+	//		token->type, token->type, gTerminalStrings[token->type]);
 
 	/*
 	 *	NOTE: The arrays created by ffi2code have a kNoisyIrNodeTypeMax element at the end of each sub-array
 	 */
 	for (int i = 0; i < kNoisyIrNodeTypeMax && gNoisyFirsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
-		fprintf(stderr, "--->gNoisyFirsts[%d][%d] = %s...\n",
-			productionOrToken, i, gTerminalStrings[gNoisyFirsts[productionOrToken][i]]);
+		//flexprint(N->Fe, N->Fm, N->Fperr, "--->gNoisyFirsts[%d][%d] = %s...\n",
+		//	productionOrToken, i, gTerminalStrings[gNoisyFirsts[productionOrToken][i]]);
 
 		if (gNoisyFirsts[productionOrToken][i] == token->type)
 		{
