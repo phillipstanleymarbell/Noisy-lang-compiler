@@ -35,12 +35,6 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-NoisySymbol *	noisySymbolTableAddOrLookupSymbolForToken(NoisyScope *  scope, NoisyToken *  token);
-NoisySymbol *	noisySymbolTableSymbolForIdentifier(NoisyScope *  scope, const char *  identifier);
-NoisyScope *	noisySymbolTableOpenScope(NoisyScope *  scope, NoisyIrNode *  subtree);
-void		noisySymbolTableCloseScope(NoisyScope *  scope, NoisyIrNode *  subtree);
-
-
 typedef enum
 {
 	kNoisySymbolTypeTypeError,
@@ -57,3 +51,9 @@ typedef enum
 	 */
 	kNoisySymbolTypeMax,
 } NoisySymbolType;
+
+
+NoisySymbol *	noisySymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token);
+NoisySymbol *	noisySymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier);
+NoisyScope *	noisySymbolTableOpenScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subtree);
+void		noisySymbolTableCloseScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subtree);

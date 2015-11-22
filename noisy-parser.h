@@ -56,7 +56,8 @@ typedef enum
 
 void		noisyParserSemanticError(NoisyState *  N, ...);
 void		noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType expectedProductionOrToken);
-void		noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType production) __attribute__((noreturn));
+void		noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedProductionOrToken) __attribute__((noreturn));
+
 
 /*
  *	TODO / FUTURE:	Since we expose both the lexer and parser interface, 

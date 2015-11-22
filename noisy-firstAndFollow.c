@@ -44,7 +44,6 @@
 #include "flex.h"
 #include "noisy-errors.h"
 #include "version.h"
-#include "noisy-ff.h"
 #include "noisy-timeStamps.h"
 #include "noisy.h"
 #include "noisy-lexer.h"
@@ -79,7 +78,10 @@ noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken)
 			productionOrToken, productionOrToken, gProductionStrings[productionOrToken],
 			token->type, token->type, gTerminalStrings[token->type]);
 
-	for (int i = 0; i < kNoisyIrNodeTypeMax; i++)
+	/*
+	 *	NOTE: The arrays created by ffi2code have a kNoisyIrNodeTypeMax element at the end of each sub-array
+	 */
+	for (int i = 0; i < kNoisyIrNodeTypeMax && gNoisyFirsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
 		fprintf(stderr, "--->gNoisyFirsts[%d][%d] = %s...\n",
 			productionOrToken, i, gTerminalStrings[gNoisyFirsts[productionOrToken][i]]);
@@ -113,7 +115,10 @@ noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken)
 		noisyFatal(N, Esanity);
 	}
 
-	for (int i = 0; i < kNoisyIrNodeTypeMax; i++)
+	/*
+	 *	NOTE: The arrays created by ffi2code have a kNoisyIrNodeTypeMax element at the end of each sub-array
+	 */
+	for (int i = 0; i < kNoisyIrNodeTypeMax && gNoisyFollows[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
 		if (gNoisyFollows[productionOrToken][i] == token->type)
 		{

@@ -13,14 +13,14 @@ production	kNoisyIrNodeType_PprogtypeBody:		firstset = {
 									kNoisyIrNodeType_Zepsilon,
 									kNoisyIrNodeType_Tidentifier
 								}
-production	kNoisyIrNodeType_PprogtypeTypenameDecl:	firstset = {	kNoisyIrNodeType_Tidentifier	}
-production	kNoisyIrNodeType_PconDecl:		firstset = {	kNoisyIrNodeType_Tconst		}
-production	kNoisyIrNodeType_PtypeDecl:		firstset = {
+production	kNoisyIrNodeType_PprogtypeTypenameDeclaration:	firstset = {	kNoisyIrNodeType_Tidentifier	}
+production	kNoisyIrNodeType_PconstantDeclaration:		firstset = {	kNoisyIrNodeType_Tconst		}
+production	kNoisyIrNodeType_PtypeDeclaration:		firstset = {
 									kNoisyIrNodeType_Ttype,
 									kNoisyIrNodeType_Tadt
 								}
-production	kNoisyIrNodeType_PadtTypeDecl:		firstset = {	kNoisyIrNodeType_Tadt		}
-production	kNoisyIrNodeType_PnamegenDecl:		firstset = {	kNoisyIrNodeType_Tnamegen	}
+production	kNoisyIrNodeType_PadtTypeDeclaration:		firstset = {	kNoisyIrNodeType_Tadt		}
+production	kNoisyIrNodeType_PnamegenDeclaration:		firstset = {	kNoisyIrNodeType_Tnamegen	}
 production	kNoisyIrNodeType_PidentifierOrNil:	firstset = {
 									kNoisyIrNodeType_Tidentifier,
 									kNoisyIrNodeType_Tnil
@@ -153,7 +153,7 @@ production	kNoisyIrNodeType_PmatchStatement:	firstset = {
 									kNoisyIrNodeType_Tmatch,
 									kNoisyIrNodeType_TmatchSeq
 								}
-production	kNoisyIrNodeType_PiterStatement:	firstset = {	kNoisyIrNodeType_Titer	}
+production	kNoisyIrNodeType_PiterationStatement:	firstset = {	kNoisyIrNodeType_Titer	}
 production	kNoisyIrNodeType_PguardBody:		firstset = {
 									kNoisyIrNodeType_Zepsilon,
 									kNoisyIrNodeType_Tbool,
@@ -315,6 +315,7 @@ production	kNoisyIrNodeType_PunaryOp:		firstset = {
 									kNoisyIrNodeType_Tlen
 								}
 
+production	kNoisyIrNodeType_Pidentifier:		firstset = {kNoisyIrNodeType_Tidentifier}
 
 
 
@@ -325,7 +326,7 @@ production	kNoisyIrNodeType_PunaryOp:		firstset = {
 production	kNoisyIrNodeType_Pidentifier:		followset = {
 									kNoisyIrNodeType_Tcolon,
 									firstset(kNoisyIrNodeType_PfieldSelect),
-									followset(kNoisyIrNodeType_Ptypename),
+									--// This creates a loop... followset(kNoisyIrNodeType_Ptypename),
 									kNoisyIrNodeType_Tas,
 									firstset(kNoisyIrNodeType_PcmpOp),
 									followset(kNoisyIrNodeType_Pfactor),
@@ -334,11 +335,11 @@ production	kNoisyIrNodeType_Pidentifier:		followset = {
 production	kNoisyIrNodeType_Pprogram:		followset = {	kNoisyIrNodeType_Zeof		}
 production	kNoisyIrNodeType_PprogtypeDeclaration:	followset = {	kNoisyIrNodeType_Tidentifier	}
 production	kNoisyIrNodeType_PprogtypeBody:		followset = {	kNoisyIrNodeType_TrightBrace	}
-production	kNoisyIrNodeType_PprogtypeTypenameDecl:	followset = {	kNoisyIrNodeType_Tsemicolon	}
-production	kNoisyIrNodeType_PconDecl:		followset = {	kNoisyIrNodeType_Tsemicolon	}
-production	kNoisyIrNodeType_PtypeDecl:		followset = {	kNoisyIrNodeType_Tsemicolon	}
-production	kNoisyIrNodeType_PadtTypeDecl:		followset = {	kNoisyIrNodeType_Tsemicolon	}
-production	kNoisyIrNodeType_PnamegenDecl:		followset = {	kNoisyIrNodeType_Tsemicolon	}
+production	kNoisyIrNodeType_PprogtypeTypenameDeclaration:	followset = {	kNoisyIrNodeType_Tsemicolon	}
+production	kNoisyIrNodeType_PconstantDeclaration:		followset = {	kNoisyIrNodeType_Tsemicolon	}
+production	kNoisyIrNodeType_PtypeDeclaration:		followset = {	kNoisyIrNodeType_Tsemicolon	}
+production	kNoisyIrNodeType_PadtTypeDeclaration:		followset = {	kNoisyIrNodeType_Tsemicolon	}
+production	kNoisyIrNodeType_PnamegenDeclaration:		followset = {	kNoisyIrNodeType_Tsemicolon	}
 production	kNoisyIrNodeType_PidentifierOrNil:	followset = {
 									kNoisyIrNodeType_Tcomma,
 									followset(kNoisyIrNodeType_PidentifierList)
@@ -359,7 +360,7 @@ production	kNoisyIrNodeType_PtypeExpression:	followset = {
 									kNoisyIrNodeType_TrightParen,
 									firstset(kNoisyIrNodeType_PidentifierList),
 									firstset(kNoisyIrNodeType_Pexpression),
-									followset(kNoisyIrNodeType_PanonAggregateType),
+									--// This creates a loop... followset(kNoisyIrNodeType_PanonAggregateType),
 									followset(kNoisyIrNodeType_Ptypename)
 								}
 production	kNoisyIrNodeType_Ptypename:		followset = {	followset(kNoisyIrNodeType_Pidentifier)	}
@@ -392,7 +393,7 @@ production	kNoisyIrNodeType_ParrayType:		followset = {	followset(kNoisyIrNodeTyp
 production	kNoisyIrNodeType_PlistType:		followset = {	followset(kNoisyIrNodeType_PtypeExpression)	}
 production	kNoisyIrNodeType_PtupleType:		followset = {
 									followset(kNoisyIrNodeType_PtypeExpression),
-									followset(kNoisyIrNodeType_PnamegenDecl),
+									followset(kNoisyIrNodeType_PnamegenDeclaration),
 									kNoisyIrNodeType_Tcolon,
 									kNoisyIrNodeType_Tas
 								}
@@ -422,7 +423,7 @@ production	kNoisyIrNodeType_PstatementList:	followset = {
 production	kNoisyIrNodeType_Pstatement:		followset = {	firstset(kNoisyIrNodeType_Pstatement)	}
 production	kNoisyIrNodeType_PassignOp:		followset = {	firstset(kNoisyIrNodeType_Pexpression)	}
 production	kNoisyIrNodeType_PmatchStatement:	followset = {	kNoisyIrNodeType_Tsemicolon	}
-production	kNoisyIrNodeType_PiterStatement:	followset = {	kNoisyIrNodeType_Tsemicolon	}
+production	kNoisyIrNodeType_PiterationStatement:	followset = {	kNoisyIrNodeType_Tsemicolon	}
 production	kNoisyIrNodeType_PguardBody:		followset = {	kNoisyIrNodeType_TrightBrace	}
 production	kNoisyIrNodeType_Pexpression:		followset = {
 									kNoisyIrNodeType_Tcomma,
@@ -430,7 +431,7 @@ production	kNoisyIrNodeType_Pexpression:		followset = {
 									kNoisyIrNodeType_Tgoes,
 									followset(kNoisyIrNodeType_Pelement),
 									kNoisyIrNodeType_Tsemicolon),
-									-- This creates a loop... followset(kNoisyIrNodeType_PchanEventExpression),
+									--// This creates a loop... followset(kNoisyIrNodeType_PchanEventExpression),
 									kNoisyIrNodeType_TrealConst,
 									kNoisyIrNodeType_TrightParen,
 									kNoisyIrNodeType_Tcolon,
@@ -479,7 +480,7 @@ production	kNoisyIrNodeType_PunaryOp:		followset = {	firstset(kNoisyIrNodeType_P
 token		kNoisyIrNodeType_TaddAs:		followset = {T_XXX}
 token		kNoisyIrNodeType_Tadt:			followset = {T_XXX}
 token		kNoisyIrNodeType_Talpha:		followset = {T_XXX}
-token		kNoisyIrNodeType_Tamp:			followset = {T_XXX}
+token		kNoisyIrNodeType_Tampersand:			followset = {T_XXX}
 token		kNoisyIrNodeType_Tand:			followset = {T_XXX}
 token		kNoisyIrNodeType_TandAs:		followset = {T_XXX}
 token		kNoisyIrNodeType_Tarray:		followset = {T_XXX}

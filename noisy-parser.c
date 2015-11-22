@@ -45,7 +45,6 @@
 #include "flex.h"
 #include "noisy-errors.h"
 #include "version.h"
-#include "noisy-ff.h"
 #include "noisy-timeStamps.h"
 #include "noisy.h"
 #include "noisy-parser.h"
@@ -193,11 +192,11 @@ noisyParseProgtypeDeclaration(NoisyState *  N, NoisyScope *  scope)
 	 *	We keep a global handle on the progtype scope
 	 */
 	NoisyIrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
-	NoisyScope *	progtypeScope	= noisySymbolTableOpenScope(scope, scopeBegin);
+	NoisyScope *	progtypeScope	= noisySymbolTableOpenScope(N, scope, scopeBegin);
 	NoisyIrNode *	typeTree	= noisyParseProgtypeBody(N, progtypeScope);
 	addLeaf(N, n, typeTree);
 	NoisyIrNode *	scopeEnd	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
-	noisySymbolTableCloseScope(progtypeScope, scopeEnd);
+	noisySymbolTableCloseScope(N, progtypeScope, scopeEnd);
 	identifier->symbol->typeTree = typeTree;
 
 	addToProgtypeScopes(N, identifier->symbol->identifier, progtypeScope);
@@ -393,7 +392,7 @@ noisyParseAdtTypeDeclaration(NoisyState *  N, NoisyScope *  scope)
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tadt);
 	NoisyIrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
-	NoisyScope *	currentScope	= noisySymbolTableOpenScope(scope, scopeBegin);
+	NoisyScope *	currentScope	= noisySymbolTableOpenScope(N, scope, scopeBegin);
 	NoisyIrNode *	identifierList	= noisyParseIdentifierList(N, currentScope);
 	addLeaf(N, n, identifierList);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
@@ -414,7 +413,7 @@ noisyParseAdtTypeDeclaration(NoisyState *  N, NoisyScope *  scope)
 	}
 
 	NoisyIrNode *	scopeEnd  = noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
-	noisySymbolTableCloseScope(currentScope, scopeEnd);
+	noisySymbolTableCloseScope(N, currentScope, scopeEnd);
 
 
 	return n;
@@ -684,7 +683,7 @@ noisyParseTypeName(NoisyState *  N, NoisyScope *  scope)
 	}
 	else
 	{
-		idsym = noisySymbolTableSymbolForIdentifier(scope, id1->symbol->identifier);
+		idsym = noisySymbolTableSymbolForIdentifier(N, scope, id1->symbol->identifier);
 		if (idsym == NULL)
 		{
 			noisyParserSemanticError(N, Eundeclared, id1->symbol->identifier);
@@ -1314,7 +1313,7 @@ noisyParseNamegenDefinition(NoisyState *  N, NoisyScope *  scope)
 		 *
 		 *	BUG: We currently never set N->progtypeOfFile
 		 */
-		NoisySymbol *	sym = noisySymbolTableSymbolForIdentifier(progtypeName2scope(N, N->progtypeOfFile), identifier->symbol->identifier);
+		NoisySymbol *	sym = noisySymbolTableSymbolForIdentifier(N, progtypeName2scope(N, N->progtypeOfFile), identifier->symbol->identifier);
 
 		if (sym == NULL)
 		{
@@ -1353,10 +1352,10 @@ noisyParseScopedStatementList(NoisyState *  N, NoisyScope *  scope)
 
 
 	NoisyIrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
-	NoisyScope *	currentScope	= noisySymbolTableOpenScope(scope, scopeBegin);
+	NoisyScope *	currentScope	= noisySymbolTableOpenScope(N, scope, scopeBegin);
 	addLeaf(N, n, noisyParseStatementList(N, currentScope));
 	NoisyIrNode *	scopeEnd  	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
-	noisySymbolTableCloseScope(currentScope, scopeEnd);
+	noisySymbolTableCloseScope(N, currentScope, scopeEnd);
 
 	return n;
 }
@@ -1616,10 +1615,10 @@ noisyParseMatchStatement(NoisyState *  N, NoisyScope *  scope)
 	}
 
 	NoisyIrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
-	NoisyScope *	currentScope	= noisySymbolTableOpenScope(scope, scopeBegin);
+	NoisyScope *	currentScope	= noisySymbolTableOpenScope(N, scope, scopeBegin);
 	addLeaf(N, n, noisyParseGuardBody(N, currentScope));
 	NoisyIrNode *	scopeEnd	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
-	noisySymbolTableCloseScope(currentScope, scopeEnd);
+	noisySymbolTableCloseScope(N, currentScope, scopeEnd);
 
 	return n;
 }
@@ -1646,10 +1645,10 @@ noisyParseIterStatement(NoisyState *  N, NoisyScope *  scope)
 
 	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Titer));
 	NoisyIrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
-	NoisyScope *	currentScope	= noisySymbolTableOpenScope(scope, scopeBegin);
+	NoisyScope *	currentScope	= noisySymbolTableOpenScope(N, scope, scopeBegin);
 	addLeaf(N, n, noisyParseGuardBody(N, currentScope));
 	NoisyIrNode *	scopeEnd	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
-	noisySymbolTableCloseScope(currentScope, scopeEnd);
+	noisySymbolTableCloseScope(N, currentScope, scopeEnd);
 
 	return n;
 }
@@ -2466,7 +2465,7 @@ noisyParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType,
 						NULL /* right child */,
 						t->sourceInfo /* source info */);
 
-	n->symbol = noisySymbolTableSymbolForIdentifier(scope, t->identifier);
+	n->symbol = noisySymbolTableSymbolForIdentifier(N, scope, t->identifier);
 	if (n->symbol == NULL)
 	{
 		errorUseBeforeDefinition(N, t->identifier);
@@ -2494,8 +2493,8 @@ noisyParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expecte
 						NULL /* right child */,
 						t->sourceInfo /* source info */);
 
-	//	NOTE: noisySymbolTableAddOrLookupSymbolForToken() adds token 't' to scope 'scope'
-	NoisySymbol *	sym = noisySymbolTableAddOrLookupSymbolForToken(scope, t);
+	//	NOTE: noisySymbolTableAddOrLookupSymbolForToken(N, ) adds token 't' to scope 'scope'
+	NoisySymbol *	sym = noisySymbolTableAddOrLookupSymbolForToken(N, scope, t);
 	if (sym->definition != NULL)
 	{
 		errorMultiDefinition(N, sym);
@@ -2590,6 +2589,11 @@ noisyParserSemanticError(NoisyState *  N, ...)
 }
 
 
+void
+noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedProductionOrToken)
+{
+	exit(EXIT_SUCCESS);
+}
 
 
 
