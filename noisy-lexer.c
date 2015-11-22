@@ -1,9 +1,9 @@
 /*
-	Authored 2007--2011. Phillip Stanley-Marbell
- 
+	Authored 2015. Phillip Stanley-Marbell.
+
 	All rights reserved.
 
-	Redistribution and use in source and binary forms, with or without 
+	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions
 	are met:
 
@@ -18,20 +18,20 @@
 
 	*	Neither the name of the author nor the names of its
 		contributors may be used to endorse or promote products
-		derived from this software without specific prior written 
+		derived from this software without specific prior written
 		permission.
 
 	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
+	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
 	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
-	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
-	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
@@ -73,17 +73,17 @@ static void		checkDoubleQuote(NoisyState *  N);
 static void		checkMinus(NoisyState *  N);
 static void		finishToken(NoisyState *  N);
 static void		makeNumericConst(NoisyState *  N);
-static bool		isDecimal(char *  string);
-static char *		stringAtLeft(char *  string, char  character);
-static char *		stringAtRight(char *  string, char  character);
-static bool		isDecimalSeparatedWithChar(char *  string, char  character);
-static bool		isRadixConst(char *  string);
-static bool		isRealConst(char *  string);
-static bool		isEngineeringRealConst(char *  string);
+static bool		isDecimal(NoisyState *  N, char *  string);
+static char *		stringAtLeft(NoisyState *  N, char *  string, char  character);
+static char *		stringAtRight(NoisyState *  N, char *  string, char  character);
+static bool		isDecimalSeparatedWithChar(NoisyState *  N, char *  string, char  character);
+static bool		isRadixConst(NoisyState *  N, char *  string);
+static bool		isRealConst(NoisyState *  N, char *  string);
+static bool		isEngineeringRealConst(NoisyState *  N, char *  string);
 static uint64_t		stringToRadixConst(NoisyState *  N, char *  string);
 static double		stringToRealConst(NoisyState *  N, char *  string);
 static double		stringToEngineeringRealConst(NoisyState *  N, char *  string);
-static bool		isOperatorOrSeparator(char c);
+static bool		isOperatorOrSeparator(NoisyState *  N, char c);
 
 
 
@@ -92,6 +92,8 @@ NoisySourceInfo *
 noisyLexAllocateSourceInfo(	NoisyState *  N, char **  genealogy, char *  fileName,
 				uint64_t lineNumber, uint64_t columnNumber, uint64_t length)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexAllocateSourceInfo);
+
 	NoisySourceInfo *	newSourceInfo;
 
 	newSourceInfo = (NoisySourceInfo *) calloc(1, sizeof(NoisySourceInfo));
@@ -115,6 +117,8 @@ noisyLexAllocateToken(	NoisyState *  N, NoisyIrNodeType type, char *  identifier
 			uint64_t integerConst, double realConst, char * stringConst,
 			NoisySourceInfo *  sourceInfo)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexAllocateToken);
+
 	NoisyToken *	newToken;
 
 	newToken = (NoisyToken *) calloc(1, sizeof(NoisyToken));
@@ -138,6 +142,8 @@ noisyLexAllocateToken(	NoisyState *  N, NoisyIrNodeType type, char *  identifier
 void
 noisyLexPut(NoisyState *  N, NoisyToken *  newToken)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPut);
+
 	if (newToken == NULL)
 	{
 		noisyFatal(N, Esanity);
@@ -162,6 +168,8 @@ noisyLexPut(NoisyState *  N, NoisyToken *  newToken)
 NoisyToken *
 noisyLexGet(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexGet);
+
 	if (N->tokenList == NULL)
 	{
 		noisyFatal(N, Esanity);
@@ -178,7 +186,7 @@ noisyLexGet(NoisyState *  N)
 		noisyFatal(N, Esanity);
 	}
 
-	if (N->mode & kNoisyDebugLexer)
+	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		noisyLexPrintToken(N, t);	
 	}
@@ -190,6 +198,8 @@ noisyLexGet(NoisyState *  N)
 NoisyToken *
 noisyLexPeek(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPeek);
+
 	if (N->tokenList == NULL)
 	{
 		noisyFatal(N, Esanity);
@@ -202,6 +212,8 @@ noisyLexPeek(NoisyState *  N)
 void
 noisyLexInit(NoisyState *  N, char *  fileName)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexInit);
+
 	FILE *			filePointer;
 	size_t			lineBufferSize;
 
@@ -237,14 +249,14 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 		while (N->columnNumber < N->lineLength)
 		{
 
-			if (N->mode & kNoisyDebugLexer)
+			if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 			{
 				//flexprint(N->Fe, N->Fm, N->Fperr, "N->lineBuffer[%llu] = [%c]\n",
 				//		N->columnNumber, N->lineBuffer[N->columnNumber]);
 //fprintf(stderr, "N->lineBuffer[%llu] = [%c]\n", N->columnNumber, N->lineBuffer[N->columnNumber]);
 			}
 
-			if (isOperatorOrSeparator(cur(N)))
+			if (isOperatorOrSeparator(N, cur(N)))
 			{
 				switch (cur(N))
 				{
@@ -469,7 +481,7 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 									eofSourceInfo /* sourceInfo */);
 	noisyLexPut(N, eofToken);
 
-	if (N->mode & kNoisyDebugLexer)
+	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "Done lexing...\n");
 		
@@ -491,6 +503,8 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 void
 noisyLexPrintToken(NoisyState *  N, NoisyToken *  t)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPrintToken);
+
 	flexprint(N->Fe, N->Fm, N->Fperr, "Token %30s: ", gTerminalStrings[t->type]);
 
 	switch (t->type)
@@ -539,9 +553,17 @@ noisyLexPrintToken(NoisyState *  N, NoisyToken *  t)
 
 
 
+/*
+ *	Local non-exposed routines.
+ */
+
+
+
 static inline void
 checkTokenLength(NoisyState *  N, int  count)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckTokenLength);
+
 	if (N->currentTokenLength+count >= kNoisyMaxBufferLength)
 	{
 		noisyFatal(N, EtokenTooLong);
@@ -551,6 +573,8 @@ checkTokenLength(NoisyState *  N, int  count)
 static inline char
 cur(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCur);
+
 	return N->lineBuffer[N->columnNumber];
 }
 
@@ -558,10 +582,12 @@ cur(NoisyState *  N)
 static void
 gobble(NoisyState *  N, int count)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerGobble);
+
 	checkTokenLength(N, count);
 	strncpy(N->currentToken, &N->lineBuffer[N->columnNumber], count);
 
-	if (N->mode & kNoisyDebugLexer)
+	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "gobble, N->currentToken = \"%s\"\n", N->currentToken);
 //fprintf(stderr, "gobble, N->currentToken = \"%s\"\n", N->currentToken);
@@ -574,6 +600,8 @@ gobble(NoisyState *  N, int count)
 static void
 done(NoisyState *  N, NoisyToken *  newToken)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerDone);
+
 	newToken->sourceInfo = noisyLexAllocateSourceInfo(N,	NULL				/*   genealogy 	*/,
 								N->fileName			/*   fileName 	*/,
 								N->lineNumber			/*   lineNumber */,
@@ -589,6 +617,8 @@ done(NoisyState *  N, NoisyToken *  newToken)
 static bool
 eqf(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerEqf);
+
 	return (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '=');
 }
 
@@ -596,6 +626,8 @@ eqf(NoisyState *  N)
 static void
 checkComment(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckComment);
+
 	/*
 	 *	Gobble any extant chars
 	 */
@@ -613,6 +645,8 @@ checkComment(NoisyState *  N)
 static void
 checkWeq(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckWeq);
+
 	NoisyIrNodeType		type;
 
 	/*
@@ -648,6 +682,8 @@ checkWeq(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2)
 static void
 checkWeq3(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2, char char2, NoisyIrNodeType type3)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckWeq3);
+
 	NoisyIrNodeType		type;
 
 	/*
@@ -688,6 +724,8 @@ checkWeq3(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2, char ch
 static void
 checkSingle(NoisyState *  N, NoisyIrNodeType tokenType)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckSingle);
+
 	/*
 	 *	Gobble any extant chars.
 	 */
@@ -695,7 +733,7 @@ checkSingle(NoisyState *  N, NoisyIrNodeType tokenType)
 
 	gobble(N, 1);
 
-	if (N->mode & kNoisyDebugLexer)
+	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "checkSingle(), tokenType = %d\n", tokenType);
 //fprintf(stderr, "checkSingle(), tokenType = %d\n", tokenType);
@@ -718,12 +756,14 @@ checkSingle(NoisyState *  N, NoisyIrNodeType tokenType)
 static void
 checkDot(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckDot);
+
 	/*
 	 *	If token thus far is	"0" | onenine {zeronine}	then
 	 *	don't gobble; continue building token.  However, something like
 	 *	"5zyyg".
 	 */
-	if (isDecimal(N->currentToken))
+	if (isDecimal(N, N->currentToken))
 	{
 		checkTokenLength(N, 1);
 		N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
@@ -755,6 +795,8 @@ checkDot(NoisyState *  N)
 static void
 checkGt(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckGt);
+
 	NoisyIrNodeType		type;
 
 	/*
@@ -803,6 +845,8 @@ checkGt(NoisyState *  N)
 static void
 checkLt(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckLt);
+
 	NoisyIrNodeType		type;
 
 	/*
@@ -864,6 +908,8 @@ checkLt(NoisyState *  N)
 static void
 checkSingleQuote(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckSingleQuote);
+
 	/*
 	 *	TODO/BUG: we do not handle escaped squotes in a charconst
 	 */
@@ -914,6 +960,8 @@ checkSingleQuote(NoisyState *  N)
 static void
 checkDoubleQuote(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckDoubleQuote);
+
 	/*
 	 *	TODO/BUG: we do not handle escaped dquotes in a strconst
 	 */
@@ -988,6 +1036,8 @@ checkDoubleQuote(NoisyState *  N)
 static void
 checkMinus(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckMinus);
+
 	NoisyIrNodeType		type;
 
 	/*
@@ -1032,7 +1082,9 @@ checkMinus(NoisyState *  N)
 static void
 finishToken(NoisyState *  N)
 {
-	if (N->mode & kNoisyDebugLexer)
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerFinishToken);
+
+	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
@@ -1118,6 +1170,8 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 static void
 makeNumericConst(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerMakeNumericConst);
+
 fprintf(stderr, "in makeNumericConst(), N->currentToken = [%s]\n", N->currentToken);
 
 	if (N->currentTokenLength == 0)
@@ -1176,7 +1230,7 @@ fprintf(stderr, "in makeNumericConst(), N->currentToken = [%s]\n", N->currentTok
 	/*
 	 *	Has the form XXX '.' YYY, XXX and YYY must be decimals.
 	 */
-	if (isRealConst(N->currentToken))
+	if (isRealConst(N, N->currentToken))
 	{
 		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
 									NULL				/* identifier	*/,
@@ -1196,7 +1250,7 @@ fprintf(stderr, "in makeNumericConst(), N->currentToken = [%s]\n", N->currentTok
 	/*
 	 *	Has the form XXX 'e|E' YYY, XXX can be decimal or real, YYY must be decimal.
 	 */
-	if (isEngineeringRealConst(N->currentToken))
+	if (isEngineeringRealConst(N, N->currentToken))
 	{
 		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
 									NULL				/* identifier	*/,
@@ -1216,7 +1270,7 @@ fprintf(stderr, "in makeNumericConst(), N->currentToken = [%s]\n", N->currentTok
 	/*
 	 *	Has the form XXX 'r' YYY, XXX must be decimal, YYY must be in base XXX.
 	 */
-	if (isRadixConst(N->currentToken))
+	if (isRadixConst(N, N->currentToken))
 	{
 		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
 									NULL				/* identifier	*/,
@@ -1236,7 +1290,7 @@ fprintf(stderr, "in makeNumericConst(), N->currentToken = [%s]\n", N->currentTok
 	/*
 	 *	At this point, if it is a non-decimal, it must be illegal.
 	 */
-	if (!isDecimal(N->currentToken))
+	if (!isDecimal(N, N->currentToken))
 	{
 		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_ZbadIdentifier	/* type		*/,
 									N->currentToken			/* identifier	*/,
@@ -1281,8 +1335,10 @@ fprintf(stderr, "in makeNumericConst(), N->currentToken = [%s]\n", N->currentTok
 
 
 static bool
-isDecimal(char *  string)
+isDecimal(NoisyState *  N, char *  string)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimal);
+
 	size_t	stringLength = strlen(string);
 	for (int i = 0; i < stringLength; i++)
 	{
@@ -1297,8 +1353,10 @@ isDecimal(char *  string)
 
 
 static char *
-stringAtLeft(char *  string, char character)
+stringAtLeft(NoisyState *  N, char *  string, char character)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerStringAtLeft);
+
 	char *	left = string;
 	char *	right = strchr(string, character);
 
@@ -1313,8 +1371,10 @@ stringAtLeft(char *  string, char character)
 }
 
 static char *
-stringAtRight(char *  string, char character)
+stringAtRight(NoisyState *  N, char *  string, char character)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerStringAtRight);
+
 	char *	right = strchr(string, character);
 
 	if (right == NULL)
@@ -1327,10 +1387,12 @@ stringAtRight(char *  string, char character)
 
 
 static bool
-isDecimalSeparatedWithChar(char *  string, char  character)
+isDecimalSeparatedWithChar(NoisyState *  N, char *  string, char  character)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar);
+
 	/*
-	 *	stringAtLeft(string, character) will modify 'string' by
+	 *	stringAtLeft(N, string, character) will modify 'string' by
 	 *	inserting a '\0' at the position of 'character', so we
 	 *	need to operate on a copy. We use alloca() to simplify
 	 *	cleanup.
@@ -1338,40 +1400,48 @@ isDecimalSeparatedWithChar(char *  string, char  character)
 	char *	leftStringCopy = alloca(strlen(string)+1);
 	strcpy(leftStringCopy, string);
 
-fprintf(stderr, "stringAtLeft([%s], [%c]) = [%s]\n", leftStringCopy, character, stringAtLeft(leftStringCopy, character));
-fprintf(stderr, "stringAtRight([%s], [%c]) = [%s]\n", string, character, stringAtRight(string, character));
-	return (isDecimal(stringAtLeft(leftStringCopy, character)) && isDecimal(stringAtRight(string, character)));
+//fprintf(stderr, "stringAtLeft(N, [%s], [%c]) = [%s]\n", leftStringCopy, character, stringAtLeft(N, leftStringCopy, character));
+//fprintf(stderr, "stringAtRight(N, [%s], [%c]) = [%s]\n", string, character, stringAtRight(N, string, character));
+	return (isDecimal(N, stringAtLeft(N, leftStringCopy, character)) && isDecimal(N, stringAtRight(N, string, character)));
 }
 
 
 static bool
-isRadixConst(char *  string)
+isRadixConst(NoisyState *  N, char *  string)
 {
-fprintf(stderr, "isRadixConst(%s) = %d\n", string, isDecimalSeparatedWithChar(string, 'r'));
-	return isDecimalSeparatedWithChar(string, 'r');
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsRadixConst);
+
+//fprintf(stderr, "isRadixConst(N, %s) = %d\n", string, isDecimalSeparatedWithChar(N, string, 'r'));
+	return isDecimalSeparatedWithChar(N, string, 'r');
 }
 
 
 static bool
-isRealConst(char *  string)
+isRealConst(NoisyState *  N, char *  string)
 {
-fprintf(stderr, "isRealConst, string = [%s]\n", string);
-fprintf(stderr, "isRealConst(%s) = %d\n", string, isDecimalSeparatedWithChar(string, '.'));
-	return isDecimalSeparatedWithChar(string, '.');
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsRealConst);
+
+//fprintf(stderr, "isRealConst, string = [%s]\n", string);
+//fprintf(stderr, "isRealConst(N, %s) = %d\n", string, isDecimalSeparatedWithChar(N, string, '.'));
+	return isDecimalSeparatedWithChar(N, string, '.');
 }
 
 
 static bool
-isEngineeringRealConst(char *  string)
+isEngineeringRealConst(NoisyState *  N, char *  string)
 {
-fprintf(stderr, "isEngineeringRealConst(%s) = %d\n", string, (isDecimalSeparatedWithChar(string, 'e') || isDecimalSeparatedWithChar(string, 'E')));
-	return (isDecimalSeparatedWithChar(string, 'e') || isDecimalSeparatedWithChar(string, 'E'));
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsEngineeringRealConst);
+
+//fprintf(stderr, "isEngineeringRealConst(N, %s) = %d\n", string, (isDecimalSeparatedWithChar(N, string, 'e') || isDecimalSeparatedWithChar(N, string, 'E')));
+	return (isDecimalSeparatedWithChar(N, string, 'e') || isDecimalSeparatedWithChar(N, string, 'E'));
 }
 
 
 static uint64_t
 stringToRadixConst(NoisyState *  N, char *  string)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerStringToRadixConst);
+
 	char		tmp;
 	char *		ep = &tmp;
 	char *		left;
@@ -1381,7 +1451,7 @@ stringToRadixConst(NoisyState *  N, char *  string)
 
 
 	/*
-	 *	stringAtLeft(string, character) will modify 'string' by
+	 *	stringAtLeft(N, string, character) will modify 'string' by
 	 *	inserting a '\0' at the position of 'character', so we
 	 *	need to operate on a copy. We use alloca() to simplify
 	 *	cleanup.
@@ -1389,8 +1459,8 @@ stringToRadixConst(NoisyState *  N, char *  string)
 	char *	leftStringCopy = alloca(strlen(string)+1);
 	strcpy(leftStringCopy, string);
 
-	left		= stringAtLeft(leftStringCopy, 'r');
-	right		= stringAtRight(string, 'r');
+	left		= stringAtLeft(N, leftStringCopy, 'r');
+	right		= stringAtRight(N, string, 'r');
 	rightLength	= strlen(right);
 
 	base = strtoul(left, &ep, 0);
@@ -1461,6 +1531,8 @@ stringToRadixConst(NoisyState *  N, char *  string)
 static double
 stringToRealConst(NoisyState *  N, char *  string)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerStringToRealConst);
+
 	char		tmp;
 	char *		ep = &tmp;
 	char *		left;
@@ -1470,7 +1542,7 @@ stringToRealConst(NoisyState *  N, char *  string)
 
 
 	/*
-	 *	stringAtLeft(string, character) will modify 'string' by
+	 *	stringAtLeft(N, string, character) will modify 'string' by
 	 *	inserting a '\0' at the position of 'character', so we
 	 *	need to operate on a copy. We use alloca() to simplify
 	 *	cleanup.
@@ -1478,8 +1550,8 @@ stringToRealConst(NoisyState *  N, char *  string)
 	char *	leftStringCopy = alloca(strlen(string)+1);
 	strcpy(leftStringCopy, string);
 
-	left		= stringAtLeft(leftStringCopy, '.');
-	right		= stringAtRight(string, '.');
+	left		= stringAtLeft(N, leftStringCopy, '.');
+	right		= stringAtRight(N, string, '.');
 	rightLength	= strlen(right);
 
 
@@ -1522,6 +1594,8 @@ stringToRealConst(NoisyState *  N, char *  string)
 static double
 stringToEngineeringRealConst(NoisyState *  N, char *  string)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerStringToEngineeringRealConst);
+
 	char		engineeringChar;
 	char *		left;
 	char *		right;
@@ -1538,7 +1612,7 @@ stringToEngineeringRealConst(NoisyState *  N, char *  string)
 	}
 
 	/*
-	 *	stringAtLeft(string, character) will modify 'string' by
+	 *	stringAtLeft(N, string, character) will modify 'string' by
 	 *	inserting a '\0' at the position of 'character', so we
 	 *	need to operate on a copy. We use alloca() to simplify
 	 *	cleanup.
@@ -1546,8 +1620,8 @@ stringToEngineeringRealConst(NoisyState *  N, char *  string)
 	char *	leftStringCopy = alloca(strlen(string)+1);
 	strcpy(leftStringCopy, string);
 
-	left		= stringAtLeft(leftStringCopy, engineeringChar);
-	right		= stringAtRight(string, engineeringChar);
+	left		= stringAtLeft(N, leftStringCopy, engineeringChar);
+	right		= stringAtRight(N, string, engineeringChar);
 
 	mantissa 	= stringToRealConst(N, left);
 	exponent 	= stringToRealConst(N, right);
@@ -1558,8 +1632,10 @@ stringToEngineeringRealConst(NoisyState *  N, char *  string)
 
 
 static bool
-isOperatorOrSeparator(char c)
+isOperatorOrSeparator(NoisyState *  N, char c)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsOperatorOrSeparator);
+
 	/*
 	 *	Unlike in our Yacc-driven compielers, we don't use a "stickies" array
 	 */

@@ -245,6 +245,7 @@ main(int argc, char *argv[])
 		}
 	}
 
+
 	if (optind < argc)
 	{
 		while (optind < argc)
@@ -281,8 +282,6 @@ main(int argc, char *argv[])
 static void
 processFile(NoisyState *  N, char *  filename)
 {
-N->mode |= kNoisyDebugLexer;
-
 	/*
 	 *	Tokenize input, then parse it and build AST + symbol table.
 	 */

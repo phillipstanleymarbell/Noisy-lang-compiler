@@ -43,66 +43,186 @@
  */
 typedef enum
 {
+	/*
+	 *	Parser global routines in noisy-parser.c.
+	 */
+	kNoisyTimeStampKeyParse,
 	kNoisyTimeStampKeyParseProgram,
 	kNoisyTimeStampKeyParseProgtypeDeclaration,
 	kNoisyTimeStampKeyParseProgtypeBody,
-
-		kNoisyTimeStampKeyParsePtypenamedecl,
-	kNoisyTimeStampKeyParseConDecl,
-	kNoisyTimeStampKeyParseTypedecl,
-	kNoisyTimeStampKeyParseAdttypedecl,
-	kNoisyTimeStampKeyParseNamegendecl,
-	kNoisyTimeStampKeyParseDentornil,
-	kNoisyTimeStampKeyParseIdentornillist,
-	kNoisyTimeStampKeyParseIdentlist,
-	kNoisyTimeStampKeyParseTypeexpr,
-	kNoisyTimeStampKeyParseTypename,
+	kNoisyTimeStampKeyParseProgtypeTypenameDeclaration,
+	kNoisyTimeStampKeyParseConstantDeclaration,
+	kNoisyTimeStampKeyParseTypeDeclaration,
+	kNoisyTimeStampKeyParseAdtTypeDeclaration,
+	kNoisyTimeStampKeyParseNamegenDeclaration,
+	kNoisyTimeStampKeyParseIdentifierOrNil,
+	kNoisyTimeStampKeyParseIdentifierOrNilList,
+	kNoisyTimeStampKeyParseIdentifierList,
+	kNoisyTimeStampKeyParseTypeExpression,
+	kNoisyTimeStampKeyParseTypeName,
 	kNoisyTimeStampKeyParseTolerance,
-	kNoisyTimeStampKeyParseErrormagtolerance,
-	kNoisyTimeStampKeyParseLosstolerance,
-	kNoisyTimeStampKeyParseLatencytolerance,
-	kNoisyTimeStampKeyParseBasictype,
-	kNoisyTimeStampKeyParseRealtype,
-	kNoisyTimeStampKeyParseFixedtype,
-	kNoisyTimeStampKeyParseAnonaggrtype,
-	kNoisyTimeStampKeyParseArraytype,
-	kNoisyTimeStampKeyParseListtype,
-	kNoisyTimeStampKeyParseTupletype,
-	kNoisyTimeStampKeyParseSettype,
-	kNoisyTimeStampKeyParseInitlist,
-	kNoisyTimeStampKeyParseIdxinitlist,
-	kNoisyTimeStampKeyParseStarinitlist,
+	kNoisyTimeStampKeyParseErrorMagnitudeTolerance,
+	kNoisyTimeStampKeyParseLossTolerance,
+	kNoisyTimeStampKeyParseLatencyTolerance,
+	kNoisyTimeStampKeyParseBasicType,
+	kNoisyTimeStampKeyParseRealType,
+	kNoisyTimeStampKeyParseFixedType,
+	kNoisyTimeStampKeyParseAnonAggregateType,
+	kNoisyTimeStampKeyParseArrayType,
+	kNoisyTimeStampKeyParseListType,
+	kNoisyTimeStampKeyParseTupleType,
+	kNoisyTimeStampKeyParseSetType,
+	kNoisyTimeStampKeyParseInitList,
+	kNoisyTimeStampKeyParseIdxInitList,
+	kNoisyTimeStampKeyParseStarInitList,
 	kNoisyTimeStampKeyParseElement,
-	kNoisyTimeStampKeyParseNamegendefn,
-	kNoisyTimeStampKeyParseScopedstmtlist,
-	kNoisyTimeStampKeyParseStmtlist,
-	kNoisyTimeStampKeyParseStmt,
-	kNoisyTimeStampKeyParseAssignop,
-	kNoisyTimeStampKeyParseMatchstmt,
-	kNoisyTimeStampKeyParseIterstmt,
-	kNoisyTimeStampKeyParseGuardbody,
-	kNoisyTimeStampKeyParseExpr,
-	kNoisyTimeStampKeyParseListcastexpr,
-	kNoisyTimeStampKeyParseSetcastexpr,
-	kNoisyTimeStampKeyParseArrcastexpr,
-	kNoisyTimeStampKeyParseAnonaggrcastexpr,
-	kNoisyTimeStampKeyParseChanevtexpr,
-	kNoisyTimeStampKeyParseChan2nameexpr,
-	kNoisyTimeStampKeyParseVar2nameexpr,
-	kNoisyTimeStampKeyParseName2chanexpr,
+	kNoisyTimeStampKeyParseNamegenDefinition,
+	kNoisyTimeStampKeyParseScopedStatementList,
+	kNoisyTimeStampKeyParseStatementList,
+	kNoisyTimeStampKeyParseStatement,
+	kNoisyTimeStampKeyParseAssignOp,
+	kNoisyTimeStampKeyParseMatchStatement,
+	kNoisyTimeStampKeyParseIterStatement,
+	kNoisyTimeStampKeyParseGuardBody,
+	kNoisyTimeStampKeyParseExpression,
+	kNoisyTimeStampKeyParseListCastExpression,
+	kNoisyTimeStampKeyParseSetCastExpression,
+	kNoisyTimeStampKeyParseArrayCastExpression,
+	kNoisyTimeStampKeyParseAnonAggregateCastExpression,
+	kNoisyTimeStampKeyParseChanEventExpression,
+	kNoisyTimeStampKeyParseChan2nameExpression,
+	kNoisyTimeStampKeyParseVar2nameExpression,
+	kNoisyTimeStampKeyParseName2chanExpression,
 	kNoisyTimeStampKeyParseTerm,
 	kNoisyTimeStampKeyParseFactor,
-	kNoisyTimeStampKeyParseFieldselect,
-	kNoisyTimeStampKeyParseHprecbinop,
-	kNoisyTimeStampKeyParseLprecbinop,
-	kNoisyTimeStampKeyParseCmpop,
-	kNoisyTimeStampKeyParseBooleanop,
-	kNoisyTimeStampKeyParseUnop,
-	
+	kNoisyTimeStampKeyParseFieldSelect,
+	kNoisyTimeStampKeyParseHighPrecedenceBinaryO,
+	kNoisyTimeStampKeyParseLowPrecedenceBinaryOp,
+	kNoisyTimeStampKeyParseCmpOp,
+	kNoisyTimeStampKeyParseBooleanOp,
+	kNoisyTimeStampKeyParseUnaryOp,
+	kNoisyTimeStampKeyParseTerminal,
+	kNoisyTimeStampKeyParseIdentifierUsageTerminal,
+	kNoisyTimeStampKeyParseIdentifierDefinitionTerminal,
+
+	/*
+	 *	Parser local routines in noisy-parser.c.
+	 */
+	kNoisyTimeStampKeyParserSyntaxError,
+	kNoisyTimeStampKeyParserSemanticError,
+	kNoisyTimeStampKeyParserErrorRecovery,
+	kNoisyTimeStampKeyParserProgtypeName2scope,
+	kNoisyTimeStampKeyParserErrorUseBeforeDefinition,
+	kNoisyTimeStampKeyParserErrorMultiDefinition,
+	kNoisyTimeStampKeyParserTermSyntaxError,
+	kNoisyTimeStampKeyParserTermErrorRecovery,
+	kNoisyTimeStampKeyParserPeekCheck,
+	kNoisyTimeStampKeyParserDepthFirstWalk,
+	kNoisyTimeStampKeyParserAddLeaf,
+	kNoisyTimeStampKeyParserAddLeafWithChainingSeq,
+	kNoisyTimeStampKeyParserAddToProgtypeScopes,
+	kNoisyTimeStampKeyParserAssignTypes,
+
+
+	/*
+	 *	Symbol table routines in noisy-symbolTable.c.
+	 */
+	kNoisyTimeStampKeySymbolTableAllocScope,
+	kNoisyTimeStampKeySymbolTableAddOrLookupSymbolForToken,
+	kNoisyTimeStampKeySymbolTableSymbolForIdentifier,
+	kNoisyTimeStampKeySymbolTableOpenScope,
+	kNoisyTimeStampKeySymbolTableCloseScope,
+
+
+	/*
+	 *	Ir helper routines in noisy-irHelpers.c.
+	 */
+	kNoisyTimeStampKeyGenNoisyIrNode,
+
+
+	/*
+	 *	Lexer public routines in noisy-lexer.c.
+	 */
+	kNoisyTimeStampKeyLexAllocateSourceInfo,
+	kNoisyTimeStampKeyLexAllocateToken,
+	kNoisyTimeStampKeyLexPut,
+	kNoisyTimeStampKeyLexGet,
+	kNoisyTimeStampKeyLexPeek,
+	kNoisyTimeStampKeyLexInit,
+	kNoisyTimeStampKeyLexPrintToken,
+
+	/*
+	 *	Lexer local routines in noisy-lexer.c.
+	 */
+	kNoisyTimeStampKeyLexerCheckTokenLength,
+	kNoisyTimeStampKeyLexerCur,
+	kNoisyTimeStampKeyLexerGobble,
+	kNoisyTimeStampKeyLexerDone,
+	kNoisyTimeStampKeyLexerEqf,
+	kNoisyTimeStampKeyLexerCheckComment,
+	kNoisyTimeStampKeyLexerCheckWeq,
+	kNoisyTimeStampKeyLexerCheckWeq3,
+	kNoisyTimeStampKeyLexerCheckSingle,
+	kNoisyTimeStampKeyLexerCheckDot,
+	kNoisyTimeStampKeyLexerCheckGt,
+	kNoisyTimeStampKeyLexerCheckLt,
+	kNoisyTimeStampKeyLexerCheckSingleQuote,
+	kNoisyTimeStampKeyLexerCheckDoubleQuote,
+	kNoisyTimeStampKeyLexerCheckMinus,
+	kNoisyTimeStampKeyLexerFinishToken,
+	kNoisyTimeStampKeyLexerMakeNumericConst,
+	kNoisyTimeStampKeyLexerIsDecimal,
+	kNoisyTimeStampKeyLexerStringAtLeft,
+	kNoisyTimeStampKeyLexerStringAtRight,
+	kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar,
+	kNoisyTimeStampKeyLexerIsRadixConst,
+	kNoisyTimeStampKeyLexerIsRealConst,
+	kNoisyTimeStampKeyLexerIsEngineeringRealConst,
+	kNoisyTimeStampKeyLexerStringToRadixConst,
+	kNoisyTimeStampKeyLexerStringToRealConst,
+	kNoisyTimeStampKeyLexerStringToEngineeringRealConst,
+	kNoisyTimeStampKeyLexerIsOperatorOrSeparator,
+
+
+	/*
+	 *	First/Follow set routines in noisy-firstAndFollow.c.
+	 */
+	kNoisyTimeStampKeyInFirst,
+	kNoisyTimeStampKeyInFollow,
+
+
+	/*
+	 *	Type-related routines in noisy-types.c
+	 */
+	kNoisyTimeStampKeyTypeValidateIrSubtree,
+	kNoisyTimeStampKeyTypeEqualsSubtreeTypes,
+	kNoisyTimeStampKeyTypeMakeTypeSignature,
+
+
+	/*
+	 *	Miscellaneous platform and glue routines in noisy.c.
+	 */
+	kNoisyTimeStampKeyNoisyInit,
+	kNoisyTimeStampKeyRunPasses,
+	kNoisyTimeStampKeyCheckRss,
+	kNoisyTimeStampKeyConsolePrintBuffers,
+	kNoisyTimeStampKeyPrintToFile,
+	kNoisyTimeStampKeyRenderDotInFile,
+	kNoisyTimeStampKeyCheckCgiCompletion,
+	kNoisyTimeStampKeyFatal,
+	kNoisyTimeStampKeyError,
+
+
+	/*
+	 *	Used to tag un-tracked time.
+	 */
+	kNoisyTimeStampKeyUnknown,
+
+
 	/*
 	 *	Code depends on this being last.
 	 */
-	kNoisyTimeStampKeyMax = 1,
+	kNoisyTimeStampKeyMax,
 } NoisyTimeStampKey;
 
 typedef struct
@@ -112,7 +232,7 @@ typedef struct
 } NoisyTimeStamp;
 
 
-#ifdef NoisyOsMacOS
+#ifdef NoisyOsMacOSX
 #include <mach/mach.h>
 #include <mach/mach_time.h>
 
@@ -120,7 +240,10 @@ typedef struct
  *	NOTE: The final N->callAggregateTotal and N->timestampCount won't match
  *	because we roll timestampCount modulo number of slots. 
  *
- *	Need a cleaner solution...
+ *	We get complementary information from DTrace (see precommitStatisticsHook.sh).
+ *	However, having this manual tracing ability that we can statically compile in
+ *	lets us validate our DTrace setup, while also providing a quick statistics in
+ *	a self-contained mechanism.
  */
 #define NoisyTimeStampTraceMacro(routineKey)		if (N->mode & kNoisyModeCallStatistics)\
 							{\
@@ -145,6 +268,6 @@ typedef struct
 
 #else
 #define NoisyTimeStampTraceMacro(routineKey) 
-#endif /* NoisyOsMacOS */
+#endif /* #ifdef NoisyOsMacOSX */
 
 extern const char *     NoisyTimeStampKeyStrings[kNoisyTimeStampKeyMax];

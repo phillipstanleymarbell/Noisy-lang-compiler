@@ -246,14 +246,15 @@ noisyDealloc(NoisyState *  N)
 		free(N->callAggregates);
 	}
 
-	//TODO: recursively free all the nodes, then the layers
-	//free(N->noisyScdgLayers);
+	//TODO: recursively free all the nodes
 }
 
 
 void
 noisyRunPasses(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyRunPasses);
+
 	/*
 	 *	Convert the literal strings in tree for numeric and real-valued constants into uint64_t / double.
 	 */
@@ -268,6 +269,8 @@ noisyRunPasses(NoisyState *  N)
 uint64_t
 noisyCheckRss(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyCheckRss);
+
 	char		tmp, *ep = &tmp, buf[kNoisyMaxBufferLength];
 	FILE *		pipe;
 	uint64_t	ret;
@@ -305,6 +308,8 @@ noisyCheckRss(NoisyState *  N)
 void
 noisyConsolePrintBuffers(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyConsolePrintBuffers);
+
 	//TODO: need a better thought out way to handle printing out the internal buffers when we are running from the command line	
 	if (N && N->Fpinfo && strlen(N->Fpinfo->circbuf))
 	{
@@ -334,6 +339,8 @@ noisyConsolePrintBuffers(NoisyState *  N)
 void
 noisyPrintToFile(NoisyState *  N, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyPrintToFile);
+
 	int	fd;
 	char *	endName;
 	char *	pathName;
@@ -433,6 +440,8 @@ noisyPrintToFile(NoisyState *  N, const char *  msg, const char *  fileName, Noi
 void
 noisyRenderDotInFile(NoisyState *  N, char *  pathName, char *  randomizedFileName)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyRenderDotInFile);
+
 	/*	The N->lastrender purposefully does not contain VM_BASEPATH	*/
 	N->lastDotRender = realloc(N->lastDotRender, (strlen(randomizedFileName)+1) * sizeof(char));
 	if (N->lastDotRender == NULL)
@@ -518,8 +527,9 @@ noisyRenderDotInFile(NoisyState *  N, char *  pathName, char *  randomizedFileNa
 void
 noisyCheckCgiCompletion(NoisyState *  N, const char *  pathName, const char *  renderExtension)
 {
-	char *	renderPathName;
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyCheckCgiCompletion);
 
+	char *	renderPathName;
 
 	wait(NULL);
 
@@ -552,6 +562,8 @@ noisyCheckCgiCompletion(NoisyState *  N, const char *  pathName, const char *  r
 void
 noisyFatal(NoisyState *  N, const char *  msg)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyFatal);
+
 	fflush(stdout);
 	fflush(stderr);
 
@@ -627,6 +639,8 @@ noisyFatal(NoisyState *  N, const char *  msg)
 void
 noisyError(NoisyState *  N, const char *  msg)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyError);
+
 	if (N == NULL)
 	{
 		noisyFatal(N, Esanity);
@@ -634,7 +648,7 @@ noisyError(NoisyState *  N, const char *  msg)
 
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyError);
 
-	if (!(N->mode & kNoisyVerbosityVerbose))
+	if (!(N->verbosityLevel & kNoisyVerbosityVerbose))
 	{
 		return;
 	}

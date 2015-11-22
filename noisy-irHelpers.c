@@ -53,10 +53,9 @@
 NoisyIrNode *
 genNoisyIrNode(NoisyState *  N, NoisyIrNodeType type, NoisyIrNode *  irLeftChild, NoisyIrNode *  irRightChild, NoisySourceInfo *  sourceInfo)
 {
-	NoisyIrNode *		node;
-
-
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyGenNoisyIrNode);
+
+	NoisyIrNode *		node;
 
 	node = (NoisyIrNode *) calloc(1, sizeof(NoisyIrNode));
 	if (node == NULL)

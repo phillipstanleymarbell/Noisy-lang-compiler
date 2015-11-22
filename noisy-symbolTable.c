@@ -61,6 +61,8 @@
 NoisyScope *
 noisySymbolTableAllocScope(NoisyState *  N)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAllocScope);
+
 	NoisyScope *	newScope;
 
 	newScope = (NoisyScope *)calloc(1, sizeof(NoisyScope));
@@ -76,6 +78,8 @@ noisySymbolTableAllocScope(NoisyState *  N)
 NoisySymbol *
 noisySymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAddOrLookupSymbolForToken);
+
 	NoisySymbol *	newSymbol;
 
 	newSymbol = (NoisySymbol *)calloc(1, sizeof(NoisySymbol));
@@ -118,6 +122,8 @@ noisySymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, 
 NoisySymbol *
 noisySymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableSymbolForIdentifier);
+
 	/*
 	 *	Recursion falls out when we reach root which has nil parent
 	 */
@@ -146,6 +152,8 @@ noisySymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const 
 NoisyScope *
 noisySymbolTableOpenScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subTree)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableOpenScope);
+
 	NoisyScope *	newScope = noisySymbolTableAllocScope(N);
 
 	newScope->parent = scope;
@@ -159,5 +167,7 @@ noisySymbolTableOpenScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  s
 void
 noisySymbolTableCloseScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subTree)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableCloseScope);
+
 	scope->end = subTree->sourceInfo;
 }

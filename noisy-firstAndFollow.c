@@ -66,6 +66,8 @@ extern char *	gTerminalStrings[];
 bool
 noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFirst);
+
 	NoisyToken *	token = noisyLexPeek(N);
 
 	if (productionOrToken > kNoisyIrNodeTypeMax)
@@ -108,6 +110,8 @@ noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken)
 bool
 noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFollow);
+
 	NoisyToken *	token = noisyLexPeek(N);
 
 	if (productionOrToken > kNoisyIrNodeTypeMax)

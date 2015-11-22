@@ -55,6 +55,8 @@ extern const char	gNoisyTypeNodeSignatures[];
 NoisyIrNode *
 noisyTypeValidateIrSubtree(NoisyState *  N, NoisyIrNode *  subtree)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeValidateIrSubtree);
+
 	return NULL;
 }
 
@@ -62,6 +64,8 @@ noisyTypeValidateIrSubtree(NoisyState *  N, NoisyIrNode *  subtree)
 bool
 noisyTypeEqualsSubtreeTypes(NoisyState *  N, NoisyIrNode *  subtreeA, NoisyIrNode *  subtreeB)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeEqualsSubtreeTypes);
+
 	return false;
 }
 
@@ -69,6 +73,8 @@ noisyTypeEqualsSubtreeTypes(NoisyState *  N, NoisyIrNode *  subtreeA, NoisyIrNod
 char *
 noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeMakeTypeSignature);
+
 	char *	signature;
 	char *	leftSignature;
 	char *	rightSignature;

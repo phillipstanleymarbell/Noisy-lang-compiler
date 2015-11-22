@@ -117,6 +117,8 @@ static void		assignTypes(NoisyState *  N, NoisyIrNode *  node, NoisyIrNode *  ty
 NoisyIrNode *
 noisyParse(NoisyState *  N, NoisyScope *  currentScope)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParse);
+
 	return noisyParseProgram(N, currentScope);
 }
 
@@ -2432,6 +2434,8 @@ noisyParseUnaryOp(NoisyState *  N)
 NoisyIrNode *
 noisyParseTerminal(NoisyState *  N, NoisyIrNodeType expectedType)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTerminal);
+
 	if (!peekCheck(N, expectedType))
 	{
 		termSyntaxError(N, expectedType);
@@ -2453,6 +2457,8 @@ noisyParseTerminal(NoisyState *  N, NoisyIrNodeType expectedType)
 NoisyIrNode *
 noisyParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType, NoisyScope *  scope)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierUsageTerminal);
+
 	if (!peekCheck(N, expectedType))
 	{
 		termSyntaxError(N, expectedType);
@@ -2481,6 +2487,8 @@ noisyParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType,
 NoisyIrNode *
 noisyParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expectedType, NoisyScope *  scope)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierDefinitionTerminal);
+
 	if (!peekCheck(N, expectedType))
 	{
 		termSyntaxError(N, expectedType);
@@ -2522,6 +2530,8 @@ noisyParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expecte
 void
 noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType expectedProductionOrToken)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserSyntaxError);
+
 	NoisyToken *	t = noisyLexPeek(N);
 
 	//errors++;
@@ -2581,6 +2591,8 @@ noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType expectedProductionOrToke
 void
 noisyParserSemanticError(NoisyState *  N, ...)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserSemanticError);
+
 	/*
 	 *	We use varargs so that we can pass in a list of strings that should
 	 *	get concatenated, akin to joining them with "+" in Limbo.
@@ -2592,6 +2604,8 @@ noisyParserSemanticError(NoisyState *  N, ...)
 void
 noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedProductionOrToken)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorRecovery);
+
 	exit(EXIT_SUCCESS);
 }
 
@@ -2609,6 +2623,8 @@ noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedProductionOrTo
 static NoisyScope *
 progtypeName2scope(NoisyState *  N, const char *  identifier)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserProgtypeName2scope);
+
 //	FlexListItem *	tmp = N->progtypeScopes->hd;
 
 	/*
@@ -2634,17 +2650,22 @@ progtypeName2scope(NoisyState *  N, const char *  identifier)
 static void
 errorUseBeforeDefinition(NoisyState *  N, const char *  identifier)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorUseBeforeDefinition);
+
 	flexprint(N->Fe, N->Fm, N->Fperr, "Saw identifier \"%s\" in use before definition\n", identifier);
 }
 
 static void
 errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
 }
 
 static void
 termSyntaxError(NoisyState *  N, NoisyIrNodeType expectedType)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserTermSyntaxError);
+
 	NoisyToken *	t = noisyLexPeek(N);
 
 	//errors++;
@@ -2715,12 +2736,15 @@ termSyntaxError(NoisyState *  N, NoisyIrNodeType expectedType)
 static void
 termErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedType)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserTermErrorRecovery);
 }
 
 
 static bool
 peekCheck(NoisyState *  N, NoisyIrNodeType expectedType)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
+
 	return (noisyLexPeek(N)->type == expectedType);
 }
 
@@ -2728,6 +2752,8 @@ peekCheck(NoisyState *  N, NoisyIrNodeType expectedType)
 static NoisyIrNode *
 depthFirstWalk(NoisyState *  N, NoisyIrNode *  node)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserDepthFirstWalk);
+
 	if (node->irLeftChild == NULL || node->irRightChild == NULL)
 	{
 		return node;
@@ -2739,6 +2765,8 @@ depthFirstWalk(NoisyState *  N, NoisyIrNode *  node)
 static void
 addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
+
 	NoisyIrNode *	node = depthFirstWalk(N, parent);
 
 	if (node == NULL)
@@ -2759,6 +2787,8 @@ addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
 static void
 addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
+
 	NoisyIrNode *	node = depthFirstWalk(N, parent);
 
 	if (node->irLeftChild == NULL)
@@ -2777,6 +2807,8 @@ addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  ne
 static void
 addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeScope)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddToProgtypeScopes);
+
 	progtypeScope->identifier = identifier;
 
 	if (N->progtypeScopes == NULL)
@@ -2810,6 +2842,8 @@ addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeS
 static void
 assignTypes(NoisyState *  N, NoisyIrNode *  node, NoisyIrNode *  typeExpression)
 {
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAssignTypes);
+
 	/*
 	 *	TODO: The typeExpr might be, say, an identifier that is an
 	 *	alias for a type. We should check for this case and get the
