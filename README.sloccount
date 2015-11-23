@@ -51,22 +51,22 @@ Computing results.
 
 
 SLOC	Directory	SLOC-by-Language (Sorted)
-9751    top_dir         ansic=9751
+9789    top_dir         ansic=9789
 
 
 Totals grouped by language (dominant language first):
-ansic:         9751 (100.00%)
+ansic:         9789 (100.00%)
 
 
 
 
-Total Physical Source Lines of Code (SLOC)                = 9,751
-Development Effort Estimate, Person-Years (Person-Months) = 2.19 (26.22)
+Total Physical Source Lines of Code (SLOC)                = 9,789
+Development Effort Estimate, Person-Years (Person-Months) = 2.19 (26.33)
  (Basic COCOMO model, Person-Months = 2.4 * (KSLOC**1.05))
-Schedule Estimate, Years (Months)                         = 0.72 (8.65)
+Schedule Estimate, Years (Months)                         = 0.72 (8.66)
  (Basic COCOMO model, Months = 2.5 * (person-months**0.38))
-Estimated Average Number of Developers (Effort/Schedule)  = 3.03
-Total Estimated Cost to Develop                           = $ 295,218
+Estimated Average Number of Developers (Effort/Schedule)  = 3.04
+Total Estimated Cost to Develop                           = $ 296,426
  (average salary = $56,286/year, overhead = 2.40).
 SLOCCount, Copyright (C) 2001-2004 David A. Wheeler
 SLOCCount is Open Source Software/Free Software, licensed under the GNU GPL.

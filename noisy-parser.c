@@ -2534,6 +2534,10 @@ noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType expectedProductionOrToke
 
 	NoisyToken *	t = noisyLexPeek(N);
 
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
+	noisyLexPrintToken(N, t);
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
+
 	//errors++;
 	switch (t->type)
 	{
@@ -2585,6 +2589,8 @@ noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType expectedProductionOrToke
 				gReservedTokenDescriptions[t->type]);
 		}
 	}
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
+
 }
 
 
@@ -2635,6 +2641,8 @@ noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedProductionOrTo
 	/*
 	 *	Not reached if N->jmpbufIsValid
 	 */
+	noisyConsolePrintBuffers(N);
+
 	exit(EXIT_SUCCESS);
 }
 

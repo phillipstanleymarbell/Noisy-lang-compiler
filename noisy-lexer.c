@@ -243,7 +243,14 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 	 *	(3)	In the CGI case, we dump the program to a temporary file (we do this
 	 *		anyway to keep copies of inputs), and feed that file to the compiler.
 	 */
-	while ((N->lineLength = getline(&N->lineBuffer, &lineBufferSize, filePointer)) != -1)
+	
+	/*
+	 *	The following two are needed in order for getline() to allocate the buffer itself
+	 */
+	N->lineBuffer = NULL;
+	lineBufferSize = 0;
+
+	while ((N->lineLength = getline(&(N->lineBuffer), &lineBufferSize, filePointer)) != -1)
 	{
 		N->columnNumber = 0;
 		while (N->columnNumber < N->lineLength)
@@ -439,6 +446,11 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 					case '#':
 					{
 						checkComment(N);
+						
+						/*
+						 *	Set columnNumber to lineLength so we stop chomping on this line
+						 */
+						N->columnNumber = N->lineLength;
 						continue;
 					}
 
@@ -465,8 +477,16 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 			N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
 		}
 		N->lineNumber++;
-	}
 	
+		/*
+		 *	In order for getline() to allocate the buffer itself on the next iteration...
+		 */
+		N->lineBuffer = NULL;
+		lineBufferSize = 0;
+	}
+
+	fclose(filePointer);
+
 	NoisySourceInfo *	eofSourceInfo = noisyLexAllocateSourceInfo(N,	NULL /* genealogy */,
 										N->fileName /* fileName */,
 										N->lineNumber /* lineNumber */,
@@ -634,10 +654,9 @@ checkComment(NoisyState *  N)
 	finishToken(N);
 
 	/*
-	 *	NOTE: currentToken is allocated only once, but lineBuffer is alllocated each 
-	 *	time a line is read, gets().
+	 *	NOTE: currentToken is allocated only once, but lineBuffer is allocated each 
+	 *	time a line is read via getline().
 	 */
-	N->currentToken = 0;
 	free(N->lineBuffer);
 }
 
@@ -1339,6 +1358,11 @@ isDecimal(NoisyState *  N, char *  string)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimal);
 
+	if (string == NULL)
+	{
+		return false;
+	}
+
 	size_t	stringLength = strlen(string);
 	for (int i = 0; i < stringLength; i++)
 	{
@@ -1391,6 +1415,11 @@ isDecimalSeparatedWithChar(NoisyState *  N, char *  string, char  character)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar);
 
+	if (string == NULL)
+	{
+		return false;
+	}
+
 	/*
 	 *	stringAtLeft(N, string, character) will modify 'string' by
 	 *	inserting a '\0' at the position of 'character', so we
@@ -1400,8 +1429,8 @@ isDecimalSeparatedWithChar(NoisyState *  N, char *  string, char  character)
 	char *	leftStringCopy = alloca(strlen(string)+1);
 	strcpy(leftStringCopy, string);
 
-//fprintf(stderr, "stringAtLeft(N, [%s], [%c]) = [%s]\n", leftStringCopy, character, stringAtLeft(N, leftStringCopy, character));
-//fprintf(stderr, "stringAtRight(N, [%s], [%c]) = [%s]\n", string, character, stringAtRight(N, string, character));
+fprintf(stderr, "stringAtLeft(N, [%s], [%c]) = [%s]\n", leftStringCopy, character, stringAtLeft(N, leftStringCopy, character));
+fprintf(stderr, "stringAtRight(N, [%s], [%c]) = [%s]\n", string, character, stringAtRight(N, string, character));
 	return (isDecimal(N, stringAtLeft(N, leftStringCopy, character)) && isDecimal(N, stringAtRight(N, string, character)));
 }
 
@@ -1552,9 +1581,10 @@ stringToRealConst(NoisyState *  N, char *  string)
 
 	left		= stringAtLeft(N, leftStringCopy, '.');
 	right		= stringAtRight(N, string, '.');
-	rightLength	= strlen(right);
-
-
+	if (right != NULL)
+	{
+		rightLength	= strlen(right);
+	}
 
 	integerPart = strtoul(left, &ep, 0);
 	if (*ep != '\0')
