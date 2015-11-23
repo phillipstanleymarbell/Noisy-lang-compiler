@@ -77,6 +77,7 @@ static bool		isDecimal(NoisyState *  N, char *  string);
 static char *		stringAtLeft(NoisyState *  N, char *  string, char  character);
 static char *		stringAtRight(NoisyState *  N, char *  string, char  character);
 static bool		isDecimalSeparatedWithChar(NoisyState *  N, char *  string, char  character);
+static bool		isDecimalOrRealSeparatedWithChar(NoisyState *  N, char *  string, char  character);
 static bool		isRadixConst(NoisyState *  N, char *  string);
 static bool		isRealConst(NoisyState *  N, char *  string);
 static bool		isEngineeringRealConst(NoisyState *  N, char *  string);
@@ -1247,14 +1248,16 @@ makeNumericConst(NoisyState *  N)
 	}
 
 	/*
-	 *	Has the form XXX '.' YYY, XXX and YYY must be decimals.
+	 *	First (before checking if it has a '.'), check if it has the form XXX 'e|E' YYY, XXX can be decimal or real, YYY must be decimal.
+	 *
+	 *	(TODO: this implies that 'e' and 'E' bind tighter than '.'. We should record this and discuss in the language manual.)
 	 */
-	if (isRealConst(N, N->currentToken))
+	if (isEngineeringRealConst(N, N->currentToken))
 	{
 		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
-									stringToRealConst(N, N->currentToken)	/* realConst	*/,
+									stringToEngineeringRealConst(N, N->currentToken) /* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
 
@@ -1267,14 +1270,14 @@ makeNumericConst(NoisyState *  N)
 	}
 
 	/*
-	 *	Has the form XXX 'e|E' YYY, XXX can be decimal or real, YYY must be decimal.
+	 *	Otherwise, check if it has the form XXX '.' YYY, XXX and YYY must be decimals.
 	 */
-	if (isEngineeringRealConst(N, N->currentToken))
+	if (isRealConst(N, N->currentToken))
 	{
 		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
-									stringToEngineeringRealConst(N, N->currentToken) /* realConst	*/,
+									stringToRealConst(N, N->currentToken)	/* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
 
@@ -1381,7 +1384,18 @@ stringAtLeft(NoisyState *  N, char *  string, char character)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerStringAtLeft);
 
-	char *	left = string;
+	if (string == NULL)
+	{
+		return string;
+	}
+
+	/*
+	 *	NOTE: stringAtLeft (but not stringAtRight) makes
+	 *	a copy, because it will modify 'string' by inserting
+	 *	a '\0' at the position of 'character' and this has
+	 *	to be freed by caller.
+	 */
+	char *	left = strdup(string);
 	char *	right = strchr(string, character);
 
 	if (right == NULL)
@@ -1389,7 +1403,10 @@ stringAtLeft(NoisyState *  N, char *  string, char character)
 		return left;
 	}
 
-	left[right - left] = '\0';
+	/*
+	 *	right - string. Since left is a strdup, its address could be anywhere...
+	 */
+	left[right - string] = '\0';
 
 	return left;
 }
@@ -1398,6 +1415,11 @@ static char *
 stringAtRight(NoisyState *  N, char *  string, char character)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerStringAtRight);
+
+	if (string == NULL)
+	{
+		return string;
+	}
 
 	char *	right = strchr(string, character);
 
@@ -1415,23 +1437,69 @@ isDecimalSeparatedWithChar(NoisyState *  N, char *  string, char  character)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar);
 
+//fprintf(stderr, "isDecimalSeparatedWithChar, string = [%s]\n", string);
+
 	if (string == NULL)
 	{
 		return false;
 	}
 
-	/*
-	 *	stringAtLeft(N, string, character) will modify 'string' by
-	 *	inserting a '\0' at the position of 'character', so we
-	 *	need to operate on a copy. We use alloca() to simplify
-	 *	cleanup.
-	 */
-	char *	leftStringCopy = alloca(strlen(string)+1);
-	strcpy(leftStringCopy, string);
+	if (!strchr(string, character))
+	{
+		return false;
+	}
 
-fprintf(stderr, "stringAtLeft(N, [%s], [%c]) = [%s]\n", leftStringCopy, character, stringAtLeft(N, leftStringCopy, character));
-fprintf(stderr, "stringAtRight(N, [%s], [%c]) = [%s]\n", string, character, stringAtRight(N, string, character));
-	return (isDecimal(N, stringAtLeft(N, leftStringCopy, character)) && isDecimal(N, stringAtRight(N, string, character)));
+	char *	left = stringAtLeft(N, string, character);
+	char *	right = stringAtRight(N, string, character);
+	bool	result = isDecimal(N, left) && isDecimal(N, right);
+
+//fprintf(stderr, "isDecimalSeparatedWithChar. stringAtLeft(N, [%s], [%c]) = [%s]\n", string, character, left);
+//fprintf(stderr, "isDecimalSeparatedWithChar. stringAtRight(N, [%s], [%c]) = [%s]\n", string, character, right);
+
+	/*
+	 *	stringAtLeft() makes a copy, which needs to be freed.
+	 *	(stringAtRight on the other hand does not need to make
+	 *	a copy, and doesn't).
+	 */
+	free(left);
+
+
+	return result;
+}
+
+static bool
+isDecimalOrRealSeparatedWithChar(NoisyState *  N, char *  string, char  character)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar);
+
+	if (string == NULL)
+	{
+		return false;
+	}
+
+	if (!strchr(string, character))
+	{
+		return false;
+	}
+
+	char *	left = stringAtLeft(N, string, character);
+	char *	right = stringAtRight(N, string, character);
+	bool	result = (isDecimal(N, left)  || isRealConst(N, left))
+			&&
+			(isDecimal(N, right) || isRealConst(N, right));
+
+//fprintf(stderr, "stringAtLeft(N, [%s], [%c]) = [%s]\n", string, character, left);
+//fprintf(stderr, "stringAtRight(N, [%s], [%c]) = [%s]\n", string, character, right);
+
+	/*
+	 *	stringAtLeft() makes a copy, which needs to be freed.
+	 *	(stringAtRight on the other hand does not need to make
+	 *	a copy, and doesn't).
+	 */
+	free(left);
+
+
+	return result;
 }
 
 
@@ -1439,6 +1507,11 @@ static bool
 isRadixConst(NoisyState *  N, char *  string)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsRadixConst);
+
+	if (string == NULL || !strchr(string, 'r'))
+	{
+		return false;
+	}
 
 //fprintf(stderr, "isRadixConst(N, %s) = %d\n", string, isDecimalSeparatedWithChar(N, string, 'r'));
 	return isDecimalSeparatedWithChar(N, string, 'r');
@@ -1449,6 +1522,11 @@ static bool
 isRealConst(NoisyState *  N, char *  string)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsRealConst);
+
+	if (string == NULL || !strchr(string, '.'))
+	{
+		return false;
+	}
 
 //fprintf(stderr, "isRealConst, string = [%s]\n", string);
 //fprintf(stderr, "isRealConst(N, %s) = %d\n", string, isDecimalSeparatedWithChar(N, string, '.'));
@@ -1461,8 +1539,13 @@ isEngineeringRealConst(NoisyState *  N, char *  string)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsEngineeringRealConst);
 
-//fprintf(stderr, "isEngineeringRealConst(N, %s) = %d\n", string, (isDecimalSeparatedWithChar(N, string, 'e') || isDecimalSeparatedWithChar(N, string, 'E')));
-	return (isDecimalSeparatedWithChar(N, string, 'e') || isDecimalSeparatedWithChar(N, string, 'E'));
+	if (string == NULL || (!strchr(string, 'e') && !strchr(string, 'E')))
+	{
+		return false;
+	}
+
+//fprintf(stderr, "isEngineeringRealConst(N, %s)...\n", string);
+	return (isDecimalOrRealSeparatedWithChar(N, string, 'e') || isDecimalOrRealSeparatedWithChar(N, string, 'E'));
 }
 
 
@@ -1479,16 +1562,7 @@ stringToRadixConst(NoisyState *  N, char *  string)
 	uint64_t	base, value, p;
 
 
-	/*
-	 *	stringAtLeft(N, string, character) will modify 'string' by
-	 *	inserting a '\0' at the position of 'character', so we
-	 *	need to operate on a copy. We use alloca() to simplify
-	 *	cleanup.
-	 */
-	char *	leftStringCopy = alloca(strlen(string)+1);
-	strcpy(leftStringCopy, string);
-
-	left		= stringAtLeft(N, leftStringCopy, 'r');
+	left		= stringAtLeft(N, string, 'r');
 	right		= stringAtRight(N, string, 'r');
 	rightLength	= strlen(right);
 
@@ -1553,6 +1627,14 @@ stringToRadixConst(NoisyState *  N, char *  string)
 		value += p * digitValue;
 	}
 
+	/*
+	 *	stringAtLeft() makes a copy, which needs to be freed.
+	 *	(stringAtRight on the other hand does not need to make
+	 *	a copy, and doesn't).
+	 */
+	free(left);
+
+
 	return value;
 }
 
@@ -1570,16 +1652,7 @@ stringToRealConst(NoisyState *  N, char *  string)
 	uint64_t	integerPart, fractionalPart;
 
 
-	/*
-	 *	stringAtLeft(N, string, character) will modify 'string' by
-	 *	inserting a '\0' at the position of 'character', so we
-	 *	need to operate on a copy. We use alloca() to simplify
-	 *	cleanup.
-	 */
-	char *	leftStringCopy = alloca(strlen(string)+1);
-	strcpy(leftStringCopy, string);
-
-	left		= stringAtLeft(N, leftStringCopy, '.');
+	left		= stringAtLeft(N, string, '.');
 	right		= stringAtRight(N, string, '.');
 	if (right != NULL)
 	{
@@ -1602,6 +1675,13 @@ stringToRealConst(NoisyState *  N, char *  string)
 	
 	if (right == NULL)
 	{
+		/*
+		 *	stringAtLeft() makes a copy, which needs to be freed.
+		 *	(stringAtRight on the other hand does not need to make
+		 *	a copy, and doesn't).
+		 */
+		free(left);
+
 		return (double)integerPart;
 	}
 	fractionalPart	= strtoul(right, &ep, 0);
@@ -1616,6 +1696,14 @@ stringToRealConst(NoisyState *  N, char *  string)
 
 		/* Not reached */
 	}
+
+	/*
+	 *	stringAtLeft() makes a copy, which needs to be freed.
+	 *	(stringAtRight on the other hand does not need to make
+	 *	a copy, and doesn't).
+	 */
+	free(left);
+
 
 	return (double)integerPart + ((double)fractionalPart/pow(10.0, rightLength));
 }
@@ -1641,20 +1729,18 @@ stringToEngineeringRealConst(NoisyState *  N, char *  string)
 		engineeringChar = 'E';
 	}
 
-	/*
-	 *	stringAtLeft(N, string, character) will modify 'string' by
-	 *	inserting a '\0' at the position of 'character', so we
-	 *	need to operate on a copy. We use alloca() to simplify
-	 *	cleanup.
-	 */
-	char *	leftStringCopy = alloca(strlen(string)+1);
-	strcpy(leftStringCopy, string);
-
-	left		= stringAtLeft(N, leftStringCopy, engineeringChar);
+	left		= stringAtLeft(N, string, engineeringChar);
 	right		= stringAtRight(N, string, engineeringChar);
 
 	mantissa 	= stringToRealConst(N, left);
 	exponent 	= stringToRealConst(N, right);
+
+	/*
+	 *	stringAtLeft() makes a copy, which needs to be freed.
+	 *	(stringAtRight on the other hand does not need to make
+	 *	a copy, and doesn't).
+	 */
+	free(left);
 
 
 	return (mantissa * pow(10.0, exponent));
