@@ -300,7 +300,7 @@ noisyConsolePrintBuffers(NoisyState *  N)
 	//TODO: need a better thought out way to handle printing out the internal buffers when we are running from the command line	
 	if (N && N->Fpinfo && strlen(N->Fpinfo->circbuf))
 	{
-		fprintf(stdout, "Informational Report:\n---------------------\n%s", N->Fpinfo->circbuf);
+		fprintf(stdout, "\nInformational Report:\n---------------------\n%s", N->Fpinfo->circbuf);
 		if (N->mode & kNoisyModeCGI)
 		{
 			fflush(stdout);
@@ -316,7 +316,7 @@ noisyConsolePrintBuffers(NoisyState *  N)
 		}
 		else
 		{
-			fprintf(stderr, "Error Report:\n-------------\n%s", N->Fperr->circbuf);
+			fprintf(stderr, "\nError Report:\n-------------\n%s", N->Fperr->circbuf);
 		}
 	}
 }
