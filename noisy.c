@@ -155,19 +155,11 @@ noisyInit(NoisyMode mode)
 	}
 	N->Fm->debug = 0;
 
-	N->Fi = (FlexIstream *)calloc(1, sizeof(FlexIstream));
-	if (N->Fi == NULL)
-	{
-		noisyFatal(NULL, Emalloc);
-	}
-
 
 
 	/*
 	 *	Used to hold error messages
 	 */
-/* Comment out during initial debug so that all errors go to console */
-/*
 	N->Fperr = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
 	if (N->Fperr == NULL)
 	{
@@ -180,13 +172,10 @@ noisyInit(NoisyMode mode)
 	{
 		noisyFatal(NULL, Emalloc);
 	}
-*/
 
 	/*
 	 *	Used to hold informational messages
 	 */
-/* Comment out during initial debug so that all errors go to console */
-/*
 	N->Fpinfo = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
 	if (N->Fpinfo == NULL)
 	{
@@ -199,7 +188,6 @@ noisyInit(NoisyMode mode)
 	{
 		noisyFatal(NULL, Emalloc);
 	}
-*/
 
 	/*
 	 *	Used during lexing
@@ -221,7 +209,6 @@ noisyDealloc(NoisyState *  N)
 {
 	free(N->Fe);
 	free(N->Fm);
-	free(N->Fi);
 
 
 	/*

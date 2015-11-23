@@ -58,6 +58,7 @@ const char	EstringTooLongOrWithNewline[]		= "Saw a string longer than kNoisyMaxB
 const char	EruntTokenInNumericConst[]		= "Run token passed to makeNumericConst()";
 const char	EcannotFindTypeSignatureForNodeType[] 	= "Cannot find type signature character in gNoisyTypeNodeSignatures for this node type";
 const char	EassignTypeSanity[]			= "Sanity check failed in type assignment";
+const char	Efd2path[]				= "fcntl() failed to get path for file descriptor";
 
 
 /*

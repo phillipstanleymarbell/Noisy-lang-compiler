@@ -531,11 +531,6 @@ typedef struct
 	FlexErrState *		Fe;
 
 	/*
-	 *	Tokenized input stream
-	 */
-	FlexIstream *		Fi;
-
-	/*
 	 *	State for the portable/monitoring allocator (FlexM)
 	 */
 	FlexMstate *		Fm;

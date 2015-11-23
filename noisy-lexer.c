@@ -1172,7 +1172,7 @@ makeNumericConst(NoisyState *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerMakeNumericConst);
 
-fprintf(stderr, "in makeNumericConst(), N->currentToken = [%s]\n", N->currentToken);
+//fprintf(stderr, "in makeNumericConst(), N->currentToken = [%s]\n", N->currentToken);
 
 	if (N->currentTokenLength == 0)
 	{
@@ -1668,6 +1668,7 @@ isOperatorOrSeparator(NoisyState *  N, char c)
 		case '.':
 		case ' ':
 		case '\n':
+		case '\r':
 		case '\t':
 		case '#':
 		{

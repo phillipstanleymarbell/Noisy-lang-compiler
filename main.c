@@ -280,12 +280,12 @@ main(int argc, char *argv[])
 }
 
 static void
-processFile(NoisyState *  N, char *  filename)
+processFile(NoisyState *  N, char *  fileName)
 {
 	/*
 	 *	Tokenize input, then parse it and build AST + symbol table.
 	 */
-	noisyLexInit(N, filename);
+	noisyLexInit(N, fileName);
 
 	/*
 	 *	Create a top-level scope, then parse.

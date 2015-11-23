@@ -2606,6 +2606,35 @@ noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedProductionOrTo
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorRecovery);
 
+	while (!noisyInFollow(N, expectedProductionOrToken))
+	{
+		/*
+		 *	Retrieve token and discard...
+		 */
+		NoisyToken *	token = noisyLexGet(N);
+		if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
+		{
+			noisyLexPrintToken(N, token);
+		}
+	}
+
+	if ((N != NULL) && (N->jmpbufIsValid))
+	{
+		/*
+		 *	Could pass in case-specific info here, but just
+		 *	pass 0.
+		 *
+		 *	TODO: We could, e.g., return info on which line
+		 *	number of the input we have reached, and let, e.g.,
+		 *	the CGI version highlight the point at which
+		 *	processing stopped.
+		 */
+		longjmp(N->jmpbuf, 0);
+	}
+
+	/*
+	 *	Not reached if N->jmpbufIsValid
+	 */
 	exit(EXIT_SUCCESS);
 }
 

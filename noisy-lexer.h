@@ -47,5 +47,3 @@ NoisyToken *		noisyLexGet(NoisyState *  N);
 NoisyToken *		noisyLexPeek(NoisyState *  N);
 void			noisyLexInit(NoisyState *  N, char *  fileName);
 void			noisyLexPrintToken(NoisyState *  N, NoisyToken *  t);
-
-

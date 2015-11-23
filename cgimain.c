@@ -44,6 +44,9 @@
 #include <getopt.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <sys/syslimits.h>
+#include <fcntl.h>
+#include <sys/param.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -52,6 +55,8 @@
 #include "noisy-timeStamps.h"
 #include "noisy.h"
 #include "noisy-parser.h"
+#include "noisy-lexer.h"
+#include "noisy-symbolTable.h"
 #include "noisy-irPass-helpers.h"
 #include "noisy-irPass-dotBackend.h"
 
@@ -526,18 +531,12 @@ main(void)
 
 	if (logFd == -1)
 	{
-		fprintf(stderr, "%s\n", Emkstemps);
+		noisyFatal(noisyCgiState, Emkstemps);
 	}
 	else
 	{
 		write(logFd, noisyCodeBuffer, strlen(noisyCodeBuffer));
 	}
-
-	flexstreamclear(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fperr, noisyCgiState->Fi);
-	//flexstreammunch(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fperr, noisyCgiState->Fi, gNoisyWhitespace, gNoisyStickies, noisyCodeBuffer, &curLine, &curCol);
-	//flexstreamchk(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fperr, noisyCgiState->Fi, -1, 32);
-	flexstreamscan(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fperr, noisyCgiState->Fi);
-	//flexstreamchk(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fperr, noisyCgiState->Fi, -1, 32);
 
 	/*
 	 *	Force all streams to be written to output, in case we have
@@ -559,7 +558,26 @@ main(void)
 		 */
 		startRss = noisyCheckRss(noisyCgiState);
 		getrusage(RUSAGE_SELF, &start);	
-		//noisyCgiState->noisyIrRoot = parseNoisyProgram(noisyCgiState);
+
+		/*
+		 *	Get the path corresponding to the mkstemp()-created file.
+		 */
+		char inputFilePath[MAXPATHLEN];
+		if (fcntl(logFd, F_GETPATH, &inputFilePath) == -1)
+		{
+			noisyFatal(noisyCgiState, Efd2path);
+		}
+
+		/*
+		 *	Tokenize input, then parse it and build AST + symbol table.
+		 */
+		noisyLexInit(noisyCgiState, inputFilePath);
+
+		/*
+		 *	Create a top-level scope, then parse.
+		 */
+		NoisyScope *	topScope = noisySymbolTableAllocScope(noisyCgiState);
+		noisyCgiState->noisyIrRoot = noisyParse(noisyCgiState, topScope);
 		noisyRunPasses(noisyCgiState);
 
 
@@ -737,7 +755,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("<br><b>Compiler Parameters</b><br>\n");
 	printf("Backends Bitmap&nbsp;<input type=\"number\" name=\"s\" style=\"width: 30px\" value=\"%d\"><br>\n", cgiSparameter);
 	printf("Passes Bitmap&nbsp;<input type=\"number\" name=\"o\" style=\"width: 60px\" value=\"%d\"><br>\n", cgiOparameter);
-	printf("Dot detail level (14=SCDG)&nbsp;<input type=\"number\" name=\"t\" style=\"width: 60px\" value=\"%d\"><br>\n", cgiTparameter);
+	printf("Dot detail level&nbsp;<input type=\"number\" name=\"t\" style=\"width: 60px\" value=\"%d\"><br>\n", cgiTparameter);
 	printf("<input type=\"submit\" name=\"b\" value=\"compile\">\n");
 	printf("</form>\n");
 	printf("</div>\n");
