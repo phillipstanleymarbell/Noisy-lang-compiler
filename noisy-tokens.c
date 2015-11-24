@@ -116,7 +116,7 @@ const char *	gTerminalStrings[kNoisyIrNodeTypeMax] = {
 								[kNoisyIrNodeType_Tpercent]		=	"NoisyIrNodeType_Tpercent",
 								[kNoisyIrNodeType_Tplus]		=	"NoisyIrNodeType_Tplus",
 								[kNoisyIrNodeType_Tprogtype]		=	"NoisyIrNodeType_Tprogtype",
-								[kNoisyIrNodeType_TprogtypeEqual]	=	"NoisyIrNodeType_TprogtypeEqual",
+								[kNoisyIrNodeType_TprogtypeQualifier]	=	"kNoisyIrNodeType_TprogtypeQualifier",
 								[kNoisyIrNodeType_TrightBrac]		=	"NoisyIrNodeType_TrightBrac",
 								[kNoisyIrNodeType_TrightBrace]		=	"NoisyIrNodeType_TrightBrace",
 								[kNoisyIrNodeType_Treal]		=	"NoisyIrNodeType_Treal",
@@ -217,7 +217,7 @@ const char *	gReservedTokenDescriptions[kNoisyIrNodeTypeMax] = {
 									[kNoisyIrNodeType_Tpercent]		=	"%",
 									[kNoisyIrNodeType_Tplus]		=	"+",
 									[kNoisyIrNodeType_Tprogtype]		=	"progtype",
-									[kNoisyIrNodeType_TprogtypeEqual]	=	"->",
+									[kNoisyIrNodeType_TprogtypeQualifier]	=	"->",
 									[kNoisyIrNodeType_TrightBrac]		=	"]",
 									[kNoisyIrNodeType_TrightBrace]		=	"}",
 									[kNoisyIrNodeType_Treal]		=	"real",
@@ -302,7 +302,7 @@ const NoisyIrNodeType gNoisyReservedTokens[] = {
 							kNoisyIrNodeType_Tdec,
 							kNoisyIrNodeType_TchanWrite,
 							kNoisyIrNodeType_Tgoes,
-							kNoisyIrNodeType_TprogtypeEqual,
+							kNoisyIrNodeType_TprogtypeQualifier,
 						};
 
 

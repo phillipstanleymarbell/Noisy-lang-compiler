@@ -1078,7 +1078,7 @@ checkMinus(NoisyState *  N)
 	else if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '>')
 	{
 		gobble(N, 2);
-		type = kNoisyIrNodeType_TprogtypeEqual;
+		type = kNoisyIrNodeType_TprogtypeQualifier;
 	}
 	else
 	{

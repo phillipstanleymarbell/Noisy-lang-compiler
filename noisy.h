@@ -127,7 +127,7 @@ typedef enum
 	kNoisyIrNodeType_Tpercent,
 	kNoisyIrNodeType_Tplus,
 	kNoisyIrNodeType_Tprogtype,
-	kNoisyIrNodeType_TprogtypeEqual,
+	kNoisyIrNodeType_TprogtypeQualifier,
 	kNoisyIrNodeType_TrightBrac,
 	kNoisyIrNodeType_TrightBrace,
 	kNoisyIrNodeType_Treal,
@@ -325,7 +325,7 @@ typedef enum
 	kNoisyMaxPrintBufferLength			= 8192,
 	kNoisyMaxTokenCharacters			= 32,
 	kNoisyMaxFilenameLength				= 128,
-	kNoisyTimeStamptimelineLength			= 1 /* Set to, e.g., 4000000000 if we want to capture very long traces for debug */,
+	kNoisyTimeStamptimelineLength			= 4000000000 /* Set to, e.g., 4000000000 if we want to capture very long traces for debug; set to 1 otherwise */,
 	kNoisyCgiRandomDigits				= 10,
 	kNoisyRlimitCpuSeconds				= 5*60,			/*	5 mins	*/
 	kNoisyRlimitRssBytes				= 2*1024*1024*1024UL,	/*	2GB	*/

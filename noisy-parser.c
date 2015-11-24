@@ -56,7 +56,7 @@
 
 /*
  *
- *	BUG:	We technically don't need the Xseq nodes at all, since we
+ *	TODO/BUG: We technically don't need the Xseq nodes at all, since we
  *		can figure out from context whether we are chaning a list
  *		of nodes at same level or not. Draw it out on paper, and
  *		you'll see. having the Xseq's however makes thinking about
@@ -627,7 +627,7 @@ noisyParseTypeExpression(NoisyState *  N, NoisyScope *  currentScope)
  *	Generated AST subtree:
  *
  *		node.left	= kNoisyIrNodeType_Pidentifier
- *		node.right	= NULL | Xseq of kNoisyIrNodeType_PprogtypeEqual, kNoisyIrNodeType_Tidentifier
+ *		node.right	= NULL | Xseq of kNoisyIrNodeType_TprogtypeQualifier, kNoisyIrNodeType_Tidentifier
  */
 NoisyIrNode *
 noisyParseTypeName(NoisyState *  N, NoisyScope *  scope)
@@ -664,16 +664,16 @@ noisyParseTypeName(NoisyState *  N, NoisyScope *  scope)
 	 *	qualified name, we look in the progtype's scope, otherwise we look
 	 *	in the current scope.
 	 */
-	if (peekCheck(N, kNoisyIrNodeType_TprogtypeEqual))
+	if (peekCheck(N, kNoisyIrNodeType_TprogtypeQualifier))
 	{
 		/*
-		 *	Note: kNoisyIrNodeType_TprogtypeEqual is the "->". We do not need to
+		 *	Note: kNoisyIrNodeType_TprogtypeQualifier is the "->". We do not need to
 		 *	put it in AST, since, from parent node type = kNoisyIrNodeType_PtypeName,
 		 *	we know that if we have > 1 child, then it is a ptype-qualified
 		 *	name. It is not a chain of Xseqs, because we cannnot have 
 		 *	progtype embedded in progtype, so we at most have "a->b"
 		 */
-		noisyParseTerminal(N, kNoisyIrNodeType_TprogtypeEqual);
+		noisyParseTerminal(N, kNoisyIrNodeType_TprogtypeQualifier);
 		id2 = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, progtypeName2scope(N, id1->symbol->identifier));
 		if (id2->symbol == NULL)
 		{
@@ -1301,7 +1301,7 @@ noisyParseNamegenDefinition(NoisyState *  N, NoisyScope *  scope)
 		 *	Need to be careful about not clobbering the
 		 *	main AST with new links, so we make copies.
 		 *
-		 *	BUG: is typeTree now really a copy or a reference ?
+		 *	TODO/BUG: is typeTree now really a copy or a reference ?
 		 */
 		NoisyIrNode *	typeTree = t1;
 		addLeaf(N, typeTree, t2);
@@ -1313,7 +1313,7 @@ noisyParseNamegenDefinition(NoisyState *  N, NoisyScope *  scope)
 		 *	Lookup the type of the ident from the progtype
 		 *	decl which this file implements (N->progtypeOfFile).
 		 *
-		 *	BUG: We currently never set N->progtypeOfFile
+		 *	TODO/BUG: We currently never set N->progtypeOfFile
 		 */
 		NoisySymbol *	sym = noisySymbolTableSymbolForIdentifier(N, progtypeName2scope(N, N->progtypeOfFile), identifier->symbol->identifier);
 
@@ -2046,7 +2046,7 @@ noisyParseTerm(NoisyState *  N, NoisyScope *  currentScope)
 
 
 	/*
-	 *	BUG: we should be checking for [basictype] and [unop] here
+	 *	TODO/BUG: we should be checking for [basictype] and [unop] here
 	 */
 	addLeaf(N, n, noisyParseFactor(N, currentScope));
 	while (noisyInFirst(N, kNoisyIrNodeType_PhighPrecedenceBinaryOp))
@@ -2107,7 +2107,7 @@ noisyParseFactor(NoisyState *  N, NoisyScope *  currentScope)
 		noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
 	}
 /*
- *	BUG: the following two should not be here. See grammar
+ *	TODO/BUG: the following two should not be here. See grammar
  *
  *	else if (noisyInFirst(N, kNoisyIrNodeType_Punop))
  *	{
