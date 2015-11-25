@@ -173,7 +173,7 @@ README.sloccount: $(HEADERS) $(SOURCES)
 	sloccount *.c *.h *.grammar *.ffi *.$(NOISYEXTENSION) */*.$(NOISYEXTENSION) > README.sloccount
 
 
-installcgi:
+installcgi: cgi
 	sudo cp $(CGI_TARGET) $(CGI_BIN)
 	
 test:

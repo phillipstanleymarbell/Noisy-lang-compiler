@@ -45,6 +45,10 @@
 #include "noisy.h"
 
 
+/*
+ *	TODO: Places where we need the string form of a NoisyIrNodeType should also use gNoisyAstNodeStrings[], not
+ *	gProductionStrings[] and gTerminalStrings[]. Get rid of gProductionStrings[] and gTokenStrings[]
+ */
 
 const char *	gTerminalStrings[kNoisyIrNodeTypeMax] = {
 								[kNoisyIrNodeType_Tadt]			=	"NoisyIrNodeType_Tadt",
@@ -147,9 +151,10 @@ const char *	gTerminalStrings[kNoisyIrNodeTypeMax] = {
 
 
 const char *	gReservedTokenDescriptions[kNoisyIrNodeTypeMax] = {
-									[kNoisyIrNodeType_TaddAs]		=	"+=",
-									[kNoisyIrNodeType_Tadt]			=	"adt",
-									[kNoisyIrNodeType_Talpha]		=	"alpha",
+									[kNoisyIrNodeType_TaddAs]		=	"'+='",
+									[kNoisyIrNodeType_Tadt]			=	"'adt'",
+									[kNoisyIrNodeType_Talpha]		=	"'alpha'",
+									//TODO: put the rest of the cases where we mean the literal string, in single quotes (but not, e.g., in case of "Bolean constant")
 									[kNoisyIrNodeType_Tampersand]		=	"&",
 									[kNoisyIrNodeType_Tand]			=	"&&",
 									[kNoisyIrNodeType_TandAs]		=	"&=",

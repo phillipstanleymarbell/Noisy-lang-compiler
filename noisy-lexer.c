@@ -189,7 +189,7 @@ noisyLexGet(NoisyState *  N)
 
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
-		noisyLexPrintToken(N, t);	
+		noisyLexDebugPrintToken(N, t);	
 	}
 
 	return t;
@@ -207,6 +207,122 @@ noisyLexPeek(NoisyState *  N)
 	}
 
 	return N->tokenList;
+}
+
+void
+noisyLexPeekPrint(NoisyState *  N, int maxTokens, int formatCharacters)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPeekPrint);
+
+	if (N->tokenList == NULL)
+	{
+		noisyFatal(N, Esanity);
+	}
+
+	int		tripCharacters = 0, done = 0;
+	NoisyToken *	tmp = N->tokenList;
+
+//flexprint(E, M, P, "\tline %5d, token %3d\t", tmp->linenum, tmp->colnum);
+	flexprint(N->Fe, N->Fm, N->Fperr, "\t\tline %5d, token %3d\t", tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
+	while (tmp != NULL)
+	{
+		if (maxTokens > 0 && (done++ > maxTokens))
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, "...");
+			break;
+		}
+
+
+		//else
+		{
+			/*
+			 *	NOTE: We currently don't keep newlines and whitespace on the token list...
+			 */
+			switch (tmp->type)
+			{
+				case kNoisyIrNodeType_Tidentifier:
+				{
+					flexprint(N->Fe, N->Fm, N->Fperr, "'%s' (identifier) ", tmp->identifier);
+
+					/*
+					 *	Account for the output string and the
+					 *	two guarding "'" quotes.
+					 */
+					tripCharacters += strlen(tmp->identifier) + 14;
+
+					break;
+				}
+
+				case kNoisyIrNodeType_TintConst:
+				{
+					flexprint(N->Fe, N->Fm, N->Fperr, "'%llu' ", tmp->integerConst);
+
+					char	dummy[64];
+					tripCharacters += sprintf(dummy, "'%llu' ", tmp->integerConst);
+
+					break;
+				}
+
+				case kNoisyIrNodeType_TrealConst:
+				{
+					flexprint(N->Fe, N->Fm, N->Fperr, "'%f' ", tmp->realConst);
+
+					char	dummy[64];
+					tripCharacters += sprintf(dummy, "'%f' ", tmp->realConst);
+
+					break;
+				}
+
+				case kNoisyIrNodeType_TstringConst:
+				{
+					flexprint(N->Fe, N->Fm, N->Fperr, "'\"%s\"' ", tmp->stringConst);
+
+					/*
+					 *	Account for the output string and the
+					 *	two guarding "'" quotes.
+					 */
+					tripCharacters += strlen(tmp->stringConst) + 2;
+
+					break;
+				}
+
+				default:
+				{
+					if (gReservedTokenDescriptions[tmp->type] != NULL)
+					{
+						flexprint(N->Fe, N->Fm, N->Fperr, "%s ", gReservedTokenDescriptions[tmp->type]);
+
+						/*
+						 *	Account for the trailing space
+						 */
+						tripCharacters += strlen(gReservedTokenDescriptions[tmp->type]) + 1;
+
+					}
+					else
+					{
+						flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG/TODO: un-handled type [%d] in noisyLexPeekPrint <<<", tmp->type);
+						noisyFatal(N, Esanity);
+					}
+				}
+			}
+
+			if ((tmp->next != NULL) && (tmp->sourceInfo->lineNumber != tmp->next->sourceInfo->lineNumber))
+			{
+				//flexprint(N->Fe, N->Fm, N->Fperr, "(newlines)");
+				tripCharacters = 0;
+
+				flexprint(N->Fe, N->Fm, N->Fperr, "\n\t\tline %5d\t\t", tmp->next->sourceInfo->lineNumber);
+			}
+			else if (tripCharacters >= formatCharacters)
+			{
+				tripCharacters = 0;
+				flexprint(N->Fe, N->Fm, N->Fperr, "\n\t\t\t\t\t");
+			}
+		}
+
+		tmp = tmp->next;
+	}
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
 }
 
 
@@ -510,7 +626,7 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 		NoisyToken *	p = N->tokenList;
 		while (p != NULL)
 		{
-			noisyLexPrintToken(N, p);
+			noisyLexDebugPrintToken(N, p);
 			p = p->next;
 		}
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
@@ -522,9 +638,9 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 
 
 void
-noisyLexPrintToken(NoisyState *  N, NoisyToken *  t)
+noisyLexDebugPrintToken(NoisyState *  N, NoisyToken *  t)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPrintToken);
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexDebugPrintToken);
 
 	flexprint(N->Fe, N->Fm, N->Fperr, "Token %30s: ", gTerminalStrings[t->type]);
 
@@ -562,7 +678,7 @@ noisyLexPrintToken(NoisyState *  N, NoisyToken *  t)
 			}
 			else
 			{
-				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in noisyLexPrintToken <<<", t->type);
+				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in noisyLexDebugPrintToken <<<", t->type);
 				//noisyFatal(N, Esanity);
 			}
 		}
@@ -570,6 +686,53 @@ noisyLexPrintToken(NoisyState *  N, NoisyToken *  t)
 
 	flexprint(N->Fe, N->Fm, N->Fperr, "source file: %16s, line %3d, pos %3d, length %3d\n",
 		t->sourceInfo->fileName, t->sourceInfo->lineNumber, t->sourceInfo->columnNumber, t->sourceInfo->length);
+}
+
+
+void
+noisyLexPrintToken(NoisyState *  N, NoisyToken *  t)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPrintToken);
+
+	switch (t->type)
+	{
+		case kNoisyIrNodeType_Tidentifier:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, "\"%s\"", t->identifier);
+			break;
+		}
+
+		case kNoisyIrNodeType_TintConst:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, "\"%d\"", t->integerConst);
+			break;
+		}
+
+		case kNoisyIrNodeType_TrealConst:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, "\"%f\"", t->realConst);
+			break;
+		}
+
+		case kNoisyIrNodeType_TstringConst:
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, "\"%s\"", t->stringConst);
+			break;
+		}
+
+		default:
+		{
+			if (gReservedTokenDescriptions[t->type] != NULL)
+			{
+				flexprint(N->Fe, N->Fm, N->Fperr, "%s", gReservedTokenDescriptions[t->type]);
+			}
+			else
+			{
+				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in noisyLexPrintToken <<<", t->type);
+				//noisyFatal(N, Esanity);
+			}
+		}
+	}
 }
 
 
@@ -1573,8 +1736,7 @@ stringToRadixConst(NoisyState *  N, char *  string)
 		 *	BUG/TODO: We should make sure that errorRecovery uses setjmp to eject
 		 *	us out of here.
 		 */
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PintConst);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_PintConst);
+		noisyFatal(N, Esanity);
 
 		/* Not reached */
 	}
@@ -1620,8 +1782,7 @@ stringToRadixConst(NoisyState *  N, char *  string)
 		}
 		else
 		{
-			noisyParserSyntaxError(N, kNoisyIrNodeType_PintConst);
-			noisyParserErrorRecovery(N, kNoisyIrNodeType_PintConst);
+			noisyFatal(N, Esanity);
 		}
 
 		value += p * digitValue;
@@ -1662,12 +1823,7 @@ stringToRealConst(NoisyState *  N, char *  string)
 	integerPart = strtoul(left, &ep, 0);
 	if (*ep != '\0')
 	{
-		/*
-		 *	BUG/TODO: We should make sure that errorRecovery uses setjmp to eject
-		 *	us out of here.
-		 */
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PrealConst);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_PrealConst);
+		noisyFatal(N, Esanity);
 
 		/* Not reached */
 	}
@@ -1687,12 +1843,7 @@ stringToRealConst(NoisyState *  N, char *  string)
 	fractionalPart	= strtoul(right, &ep, 0);
 	if (*ep != '\0')
 	{
-		/*
-		 *	BUG/TODO: We should make sure that errorRecovery uses setjmp to eject
-		 *	us out of here.
-		 */
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PrealConst);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_PrealConst);
+		noisyFatal(N, Esanity);
 
 		/* Not reached */
 	}

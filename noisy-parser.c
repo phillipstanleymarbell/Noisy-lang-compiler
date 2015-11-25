@@ -93,8 +93,11 @@
 
 
 extern char *		gProductionStrings[];
+extern char *		gProductionDescriptions[];
 extern char *		gReservedTokenDescriptions[];
 extern char *		gTerminalStrings[];
+extern char *		gNoisyAstNodeStrings[];
+extern int		gNoisyFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 
 extern void		noisyFatal(NoisyState *  N, const char *  msg);
 extern void		noisyError(NoisyState *  N, const char *  msg);
@@ -112,6 +115,11 @@ static void		addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, Nois
 static void		addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeScope);
 static void		assignTypes(NoisyState *  N, NoisyIrNode *  node, NoisyIrNode *  typeExpression);
 
+
+static char		kNoisyErrorTokenHtmlTagOpen[]	= "<span style=\"background-color:#FFCC00; color:#FF0000;\">";
+static char		kNoisyErrorTokenHtmlTagClose[]	= "</span>";
+static char		kNoisyErrorDetailHtmlTagOpen[]	= "<span style=\"background-color:#A9E9FF; color:#000000;\">";
+static char		kNoisyErrorDetailHtmlTagClose[]	= "</span>";
 
 
 NoisyIrNode *
@@ -278,8 +286,8 @@ noisyParseProgtypeTypenameDeclaration(NoisyState *  N, NoisyScope *  scope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PprogtypeBody);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_PprogtypeBody);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PprogtypeTypenameDeclaration, kNoisyIrNodeTypeMax);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PprogtypeTypenameDeclaration);
 	}
 	addLeaf(N, n, typeExpression);
 
@@ -325,7 +333,7 @@ noisyParseConstantDeclaration(NoisyState *  N, NoisyScope *  scope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PconstantDeclaration);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PconstantDeclaration, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PconstantDeclaration);
 	}
 
@@ -364,7 +372,7 @@ noisyParseTypeDeclaration(NoisyState *  N, NoisyScope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeDeclaration);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeDeclaration, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeDeclaration);
 	}
 
@@ -483,7 +491,7 @@ noisyParseIdentifierOrNil(NoisyState *  N, NoisyScope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PidentifierOrNil);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PidentifierOrNil, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PidentifierOrNil);
 	}
 
@@ -613,7 +621,7 @@ noisyParseTypeExpression(NoisyState *  N, NoisyScope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeExpression);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeExpression, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeExpression);
 	}
 
@@ -735,7 +743,7 @@ noisyParseTolerance(NoisyState *  N, NoisyScope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Ptolerance);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Ptolerance, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_Ptolerance);
 	}
 
@@ -876,7 +884,7 @@ noisyParseBasicType(NoisyState *  N, NoisyScope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PbasicType);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PbasicType, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PbasicType);
 	}
 
@@ -911,7 +919,7 @@ noisyParseRealType(NoisyState *  N, NoisyScope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PrealType);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PrealType, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PrealType);
 	}
 
@@ -982,7 +990,7 @@ noisyParseAnonAggregateType(NoisyState *  N, NoisyScope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PanonAggregateType);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PanonAggregateType, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PanonAggregateType);
 	}
 
@@ -1449,7 +1457,7 @@ noisyParseStatement(NoisyState *  N, NoisyScope *  currentScope)
 			}
 			else
 			{
-				noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement);
+				noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement, kNoisyIrNodeTypeMax);
 				noisyParserErrorRecovery(N, kNoisyIrNodeType_Pstatement);
 			}
 
@@ -1465,7 +1473,7 @@ noisyParseStatement(NoisyState *  N, NoisyScope *  currentScope)
 		}
 		else
 		{
-			noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement);
+			noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement, kNoisyIrNodeTypeMax);
 			noisyParserErrorRecovery(N, kNoisyIrNodeType_Pstatement);
 		}
 	}
@@ -1497,7 +1505,7 @@ noisyParseStatement(NoisyState *  N, NoisyScope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pstatement);
 	}
 
@@ -1577,7 +1585,7 @@ noisyParseAssignOp(NoisyState *  N)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PassignOp);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PassignOp, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PassignOp);
 	}
 
@@ -1612,7 +1620,7 @@ noisyParseMatchStatement(NoisyState *  N, NoisyScope *  scope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PmatchStatement);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PmatchStatement, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PmatchStatement);
 	}
 
@@ -1745,7 +1753,7 @@ noisyParseExpression(NoisyState *  N, NoisyScope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pexpression);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pexpression, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pexpression);
 	}
 
@@ -1843,7 +1851,7 @@ noisyParseArrayCastExpression(NoisyState *  N, NoisyScope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_ParrayCastExpression);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_ParrayCastExpression, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_ParrayCastExpression);
 	}
 
@@ -1882,7 +1890,7 @@ noisyParseAnonAggregateCastExpression(NoisyState *  N, NoisyScope *  currentScop
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PanonAggregateCastExpression);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PanonAggregateCastExpression, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PanonAggregateCastExpression);
 	}
 
@@ -1923,7 +1931,7 @@ noisyParseChanEventExpression(NoisyState *  N, NoisyScope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PchanEventExpression);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PchanEventExpression, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PchanEventExpression);
 	}
 
@@ -2127,7 +2135,7 @@ noisyParseFactor(NoisyState *  N, NoisyScope *  currentScope)
  */
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pfactor);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pfactor, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pfactor);
 	}
 
@@ -2176,7 +2184,7 @@ noisyParseFieldSelect(NoisyState *  N, NoisyScope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PfieldSelect);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PfieldSelect, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PfieldSelect);
 	}
 
@@ -2223,7 +2231,7 @@ noisyParseHighPrecedenceBinaryOp(NoisyState *  N)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PhighPrecedenceBinaryOp);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PhighPrecedenceBinaryOp, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PhighPrecedenceBinaryOp);
 	}
 
@@ -2270,7 +2278,7 @@ noisyParseLowPrecedenceBinaryOp(NoisyState *  N)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PlowPrecedenceBinaryOp);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PlowPrecedenceBinaryOp, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PlowPrecedenceBinaryOp);
 	}
 
@@ -2329,7 +2337,7 @@ noisyParseCmpOp(NoisyState *  N)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PcmpOp);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PcmpOp, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PcmpOp);
 	}
 
@@ -2365,7 +2373,7 @@ noisyParseBooleanOp(NoisyState *  N)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PbooleanOp);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PbooleanOp, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PbooleanOp);
 	}
 
@@ -2421,7 +2429,7 @@ noisyParseUnaryOp(NoisyState *  N)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PunaryOp);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PunaryOp, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PunaryOp);
 	}
 
@@ -2528,69 +2536,82 @@ noisyParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expecte
 
 
 void
-noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType expectedProductionOrToken)
+noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType currentlyParsingProduction, NoisyIrNodeType expectedProductionOrToken)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserSyntaxError);
 
-	NoisyToken *	t = noisyLexPeek(N);
+	int		seen = 0;
 
-	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
-	noisyLexPrintToken(N, t);
-	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
 
 	//errors++;
-	switch (t->type)
+
+	/*
+	 *	TODO: Other places where we need the string form of a NoisyIrNodeType
+	 *	should also use gNoisyAstNodeStrings[] like we do here, rather than 
+	 *	gProductionStrings[] and gTerminalStrings[].
+	 */
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n");
+	if (N->mode & kNoisyModeCGI)
 	{
-		case kNoisyIrNodeType_TstringConst:
+		flexprint(N->Fe, N->Fm, N->Fperr, "<b>");
+	}
+
+	if (N->mode & kNoisyModeCGI)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "\n\t%s, line %d position %d, %s %s\"",
+						EsyntaxA,
+						noisyLexPeek(N)->sourceInfo->lineNumber,
+						noisyLexPeek(N)->sourceInfo->columnNumber,
+						EsyntaxD,
+						kNoisyErrorTokenHtmlTagOpen);
+		noisyLexPrintToken(N, noisyLexPeek(N));
+		flexprint(N->Fe, N->Fm, N->Fperr, "\"%s %s %s.<br><br>%s%s", kNoisyErrorTokenHtmlTagClose, EsyntaxB, gProductionDescriptions[currentlyParsingProduction], kNoisyErrorDetailHtmlTagOpen, EsyntaxC);
+	}
+	else
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "\n\t%s, %s line %d position %d, %s \"",
+						EsyntaxA,
+						noisyLexPeek(N)->sourceInfo->fileName,
+						noisyLexPeek(N)->sourceInfo->lineNumber,
+						noisyLexPeek(N)->sourceInfo->columnNumber,
+						EsyntaxD);
+		noisyLexPrintToken(N, noisyLexPeek(N));
+		flexprint(N->Fe, N->Fm, N->Fperr, "\" %s %s.\n\n\t%s", EsyntaxB, gProductionDescriptions[currentlyParsingProduction], EsyntaxC);
+	}
+
+	if (((expectedProductionOrToken > kNoisyIrNodeType_TMax) && (expectedProductionOrToken < kNoisyIrNodeType_PMax)) || (expectedProductionOrToken == kNoisyIrNodeTypeMax))
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, " one of:\n\n\t\t");
+		for (int i = 0; i < kNoisyIrNodeTypeMax && gNoisyFirsts[currentlyParsingProduction][i] != kNoisyIrNodeTypeMax; i++)
 		{
-			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: Expected \"%s\", saw \"%s\"\n",
-				Esyntax, gProductionStrings[expectedProductionOrToken],
-				t->stringConst);
-			
-			break;
-		}
+			if (seen > 0)
+			{
+				flexprint(N->Fe, N->Fm, N->Fperr, ",\n\t\t");
+			}
 
-		case kNoisyIrNodeType_Tidentifier:
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: Expected \"%s\", saw \"%s\"\n",
-				Esyntax, gProductionStrings[expectedProductionOrToken],
-				t->identifier);
-			
-			break;
-		}
-
-		case kNoisyIrNodeType_TintConst:
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: Expected \"%s\", saw \"%d\"\n",
-				Esyntax, gProductionStrings[expectedProductionOrToken],
-				t->integerConst);
-
-			break;
-		}
-
-		case kNoisyIrNodeType_TrealConst:
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: Expected \"%s\", saw \"%f\"\n",
-				Esyntax, gProductionStrings[expectedProductionOrToken],
-				t->realConst);
-
-			break;
-		}
-
-		default:
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: Expected \"%s\", saw \"%s\"\n",
-				Esyntax, gProductionStrings[expectedProductionOrToken],
-				gReservedTokenDescriptions[t->type]);
+			flexprint(N->Fe, N->Fm, N->Fperr, "%s", gReservedTokenDescriptions[gNoisyFirsts[currentlyParsingProduction][i]]);
+			seen++;
 		}
 	}
-	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
+	else if (expectedProductionOrToken < kNoisyIrNodeType_TMax)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, ":\n\n\t\t");
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s", gTerminalStrings[expectedProductionOrToken]);
+	}
+	else
+	{
+		noisyFatal(N, Esanity);
+	}
 
+	flexprint(N->Fe, N->Fm, N->Fperr, ".\n\n\tInstead, saw:\n\n");
+	noisyLexPeekPrint(N, 5, 0);
+	
+	if (N->mode & kNoisyModeCGI)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s</b>", kNoisyErrorDetailHtmlTagClose);
+	}
+
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n\n");
 }
 
 
@@ -2620,7 +2641,7 @@ noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedProductionOrTo
 		NoisyToken *	token = noisyLexGet(N);
 		if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 		{
-			noisyLexPrintToken(N, token);
+			noisyLexDebugPrintToken(N, token);
 		}
 	}
 
@@ -2711,8 +2732,8 @@ termSyntaxError(NoisyState *  N, NoisyIrNodeType expectedType)
 		case kNoisyIrNodeType_Tidentifier:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: Expected \"%s\", saw \"%s\"\n",
-				Esyntax, gTerminalStrings[expectedType],
+				"%s: %s \"%s\", saw \"%s\"\n",
+				EsyntaxA, EsyntaxC, gTerminalStrings[expectedType],
 				t->identifier);
 
 			break;
@@ -2721,8 +2742,8 @@ termSyntaxError(NoisyState *  N, NoisyIrNodeType expectedType)
 		case kNoisyIrNodeType_TintConst:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: Expected \"%s\", saw \"%d\"\n",
-				Esyntax, gTerminalStrings[expectedType],
+				"%s: %s \"%s\", saw \"%d\"\n",
+				EsyntaxA, EsyntaxC, gTerminalStrings[expectedType],
 				t->integerConst);
 
 			break;
@@ -2731,8 +2752,8 @@ termSyntaxError(NoisyState *  N, NoisyIrNodeType expectedType)
 		case kNoisyIrNodeType_TrealConst:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: Expected \"%s\", saw \"%f\"\n",
-				Esyntax, gTerminalStrings[expectedType],
+				"%s: %s \"%s\", saw \"%f\"\n",
+				EsyntaxA, EsyntaxC, gTerminalStrings[expectedType],
 				t->realConst);
 
 			break;
@@ -2741,8 +2762,8 @@ termSyntaxError(NoisyState *  N, NoisyIrNodeType expectedType)
 		case kNoisyIrNodeType_TstringConst:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: Expected \"%s\", saw \"%s\"\n",
-				Esyntax, gTerminalStrings[expectedType],
+				"%s: %s \"%s\", saw \"%s\"\n",
+				EsyntaxA, EsyntaxC, gTerminalStrings[expectedType],
 				t->stringConst);
 
 			break;
@@ -2751,8 +2772,8 @@ termSyntaxError(NoisyState *  N, NoisyIrNodeType expectedType)
 		default:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: Expected \"%s\", saw \"%s\"\n",
-				Esyntax, gTerminalStrings[expectedType],
+				"%s: %s \"%s\", saw \"%s\"\n",
+				EsyntaxA, EsyntaxC, gTerminalStrings[expectedType],
 				gReservedTokenDescriptions[t->type]);
 			
 		}

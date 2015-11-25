@@ -121,6 +121,10 @@ const char *	gProductionDescriptions[kNoisyIrNodeTypeMax] =
 };
 
 
+/*
+ *	TODO: Places where we need the string form of a NoisyIrNodeType should also use gNoisyAstNodeStrings[], not
+ *	gProductionStrings[] and gTerminalStrings[]. Get rid of gProductionStrings[] and gTerminalStrings[]
+ */
 
 const char *	gProductionStrings[kNoisyIrNodeTypeMax] =
 {

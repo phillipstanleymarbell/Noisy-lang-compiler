@@ -117,6 +117,7 @@ typedef enum
 	kNoisyTimeStampKeyParserTermSyntaxError,
 	kNoisyTimeStampKeyParserTermErrorRecovery,
 	kNoisyTimeStampKeyParserPeekCheck,
+	kNoisyTimeStampKeyLexPeekPrint,
 	kNoisyTimeStampKeyParserDepthFirstWalk,
 	kNoisyTimeStampKeyParserAddLeaf,
 	kNoisyTimeStampKeyParserAddLeafWithChainingSeq,
@@ -150,6 +151,7 @@ typedef enum
 	kNoisyTimeStampKeyLexPeek,
 	kNoisyTimeStampKeyLexInit,
 	kNoisyTimeStampKeyLexPrintToken,
+	kNoisyTimeStampKeyLexDebugPrintToken,
 
 	/*
 	 *	Lexer local routines in noisy-lexer.c.
