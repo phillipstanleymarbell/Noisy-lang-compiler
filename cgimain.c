@@ -365,7 +365,14 @@ main(void)
 	printf("<head>\n");
 	printf("<title>Noisy version %s</title>\n", kNoisyVersion);
 
-
+	/*
+	 *	To get numbered textarea (via JQuery Lined TextArea plugin)
+	 */
+	printf("<script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js\"></script>\n");
+	printf("<script src=\"../tmp/jquery-linedtextarea.js\"></script>\n");
+	printf("<link href=\"../tmp/jquery-linedtextarea.css\" type=\"text/css\" rel=\"stylesheet\"/>\n");
+	
+	
 	/*
 	 *	A little bit of inline JavaScript show/hide "Errors".
 	 *	(from http://www.dustindiaz.com/seven-togglers/)
@@ -746,10 +753,23 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	 *	the nicety of browser (e.g., safari) not underlining code
 	 *	as typos.
 	 */
-	printf("        <textarea spellcheck=\"false\" style=\"%s\" type=\"textarea\" cols=\"%d\" rows=\"%d\" id=\"inputarea\" name=\"c\">\n",
+	printf("        <textarea class=\"lined\" spellcheck=\"false\" style=\"%s\" type=\"textarea\" cols=\"%d\" rows=\"%d\" id=\"inputarea\" name=\"c\">\n",
 			kNoisyCgiHtmlInputStyle, (fmtWidth*100)/618, lines+2);
 	printf("%s", noisyCodeBuffer);
 	printf("</textarea>\n");
+	
+	/*
+	 *	Run javascript to set line numbers using JQuery Lined TextArea plugin
+	 */
+	printf("<script>\n");
+	printf("$(function() {\n");
+	printf("        $(\".lined\").linedtextarea(\n");
+	printf("                {selectedLine: %llu}\n", noisyLexPeek(noisyCgiState)->sourceInfo->lineNumber);
+	printf("        );\n");
+	printf("});\n");
+	printf("</script>\n");
+	
+	
 	printf("<br><input type=\"hidden\" name=\"w\" value=\"%d\">\n", fmtWidth);
 	
 	printf("<br><b>Compiler Parameters</b><br>\n");

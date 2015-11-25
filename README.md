@@ -82,6 +82,10 @@ line for LoadModule cgi_module (2) restart apache (apachectl restart), then (3)
 and visit:	http://localhost/cgi-bin/noisycgi-darwin-EN?c=HelloWorld+%3A+progtype%0D%0A%7B%0D%0A++++++++init++++%3A+namegen+%28list+of+string%29%3A%28list+of+string%29%3B%0D%0A%7D%0D%0A%0D%0Ainit+%3D%0D%0A%7B%0D%0A++++++++print+%3A%3D+name2chan+string+%22system.print%22+0.0%3B%0D%0A++++++++print+%3C-%3D+%22Hello+World%21%22%3B%0D%0A%7D%0D%0A&w=980&s=0&o=0&t=0&b=compile
 (the above URL encodes the parameters for the backends, passes, as well as the code, and html render width)
 
+To get the textarea with line numbers, we use JQuery Lined TextArea plugin from Allan Williamson (http://alan.blog-city.com/jquerylinedtextarea.htm)
+
+% sudo cp Html/jquery-linedtextarea.css Html/jquery-linedtextarea.js /Library/WebServer/Documents/tmp/
+
 
 Details on command line parameters:
 -----------------------------------
