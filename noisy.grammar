@@ -1,0 +1,78 @@
+character		::= Unicode-0000h-to-Unicode-FFFFh .
+rsvopseptoken		::= "~" | "!" | "%" | "^" | "&" | "*" | "(" | ")" | "," | "-" | "+" | "="
+			    | "/" | ">" | "<" | ";" | ":" | "'" | "\"" | "{" | "}" | "[" | "]" | "|" 
+			    | "<-" | "." | "<=" | ">=" | "^=" | "|=" | "&=" | "%=" | "/=" | "*=" | "-="
+			    | "+=" | ":=" | "!=" | ">>" | ">>=" | "<<" | "<<=" | "<-=" | "&&" | "||" 
+			    \| "::" | "=>" | "==" | "++" | "--" | "<-=" .
+zeronine		= "0-9" .
+onenine			= "1-9" .
+radix			= onenine {zeronine} "r" .
+charconst		= "'" character "'" .
+intconst		::= [radix] ("0" | onenine {zeronine}) | charconst .
+boolconst		::= "true" | "false" .
+drealconst		= ("0" | onenine {zeronine}) "." {zeronine} .
+erealconst		= (drealconst | intconst) ("e" | "E") intconst .
+realconst		::= drealconst | erealconst .
+strconst		::= "\"" {character} "\"" .
+idchar			= char-except-rsvopseptoken .
+identifier		::= (idchar-except-zeronine) {idchar} .
+
+program			::= progtypedecl {namegendefn} .
+progtypedecl		= identifier ":" "progtype" "{" progtypebody "}" .
+progtypebody		= {ptypenamedecl ";"} .
+ptypenamedecl		::= identlist ":" (condecl | typedecl | namegendecl) .
+condecl			= "const" (intconst | realconst | boolconst) .
+typedecl		= ("type" typeexpr) | adttypedecl .
+adttypedecl		::= "adt" "{" identlist ":" typeexpr ";" {identlist ":" typeexpr ";"} "}" .
+namegendecl		::= "namegen" tupletype ":" tupletype .
+identornil		::= (identifier {fieldselect}) | "nil" .
+identornillist		= identornil {"," identornil} .
+identlist		= identifier {"," identifier} .
+typeexpr		::= (basictype [tolerance {"," tolerance}]) | anonaggrtype | typename .
+typename		::= identifier ["->" identifier] .
+tolerance		= errormagtolerance | losstolerance | latencytolerance .
+errormagtolerance	= "epsilon" "(" realconst "," realconst ")" .
+losstolerance		= "alpha" "(" realconst "," realconst ")" .
+latencytolerance	= "tau" "(" realconst "," realconst ")" .
+basictype		::= "bool" | "nybble" | "byte" | "string" | "int" | realtype .
+realtype		= "real" | fixedtype .
+fixedtype		= "fixed" intconst "." intconst .
+anonaggrtype		::= arraytype | listtype | tupletype | settype .
+arraytype		= "array" "[" intconst "]" {"[" intconst "]"} of typeexpr .
+listtype		= "list" "of" typeexpr .
+tupletype		= "(" typeexpr {"," typeexpr} ")" .
+settype			= "set" "[" intconst "]" "of" typeexpr .
+initlist		= "{" expr {"," expr} "}" .
+idxinitlist		= "{" element {"," element} "}" .
+starinitlist		= "{" element {"," element} ["," "*" "=>" expr] "}" .
+element			= expr [ "=>" expr ] .
+namegendefn		::= identifier [":" tupletype ":" tupletype] "=" scopedstmtlist .
+scopedstmtlist		::= "{" stmtlist "}" .
+stmtlist		= {stmt} .
+stmt			::= [ identornillist ((":" (condecl | typedecl | typeexpr)) | (assignop expr))
+			    | "(" identornillist ")" assignop expr | matchstmt | iterstmt 
+			    | scopedstmtlist ] ";" .
+assignop		::= "=" | "^=" | "|=" | "&=" | "%=" | "/=" | "*=" | "-=" | "+=" | ">>="
+			   \| "<<=" | "<-=" | ":=" .
+matchstmt		::= ("match" | "matchseq") "{" guardbody "}" .
+iterstmt		::= "iter" "{" guardbody "}" .
+guardbody		= {expr "=>" stmtlist} .
+expr			::= (term {lprecbinop term}) | anonaggrcastexpr | chanevtexpr
+			    | chan2nameexpr | var2nameexpr | name2chanexpr .
+listcastexpr		= "list" "of" initlist .
+setcastexpr		= "set" "of" initlist .
+arrcastexpr		= "array" (("of" idxinitlist) | ("[" intconst "]" of starinitlist)) .
+anonaggrcastexpr	::= listcastexpr | setcastexpr | arrcastexpr .
+chanevtexpr		::= ("erasures" | "errors" | "latency") "of" identifier cmpop expr .
+chan2nameexpr		::= "chan2name" factor [strconst] .
+var2nameexpr		::= "var2name" factor [strconst] .
+name2chanexpr		::= "name2chan" typeexpr expr realconst .
+term			::= [basictype] [unop] factor ["++" | "--"] {hprecbinop factor} .
+factor			::= (identifier {fieldselect}) | intconst | realconst | strconst | boolconst
+			    | "(" expr ")" .
+fieldselect		::= ("." identifier) | ("[" expr [":" expr] "]") .
+hprecbinop		::= "*" | "/" | "%" | "^" | "::" .
+lprecbinop		::= "+" | "-" | ">>" | "<<" | "|"  | cmpop | booleanop .
+cmpop			::= "==" | "!=" | ">" | "<" | "<=" | ">=" .
+booleanop		::= "&&" | "||" .
+unop			::= "~" | "!" | "-"  | "+" | "<-"  | "hd" | "tl" | "len" .
