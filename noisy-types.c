@@ -87,7 +87,7 @@ noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
 	 */
 	if (subtree == NULL)
 	{
-		return "";
+		return strdup("");
 	}
 
 	char s = gNoisyTypeNodeSignatures[subtree->type];
@@ -111,18 +111,8 @@ noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
 	signature[strlen(leftSignature) + strlen(rightSignature)] = s;
 	signature[strlen(leftSignature) + strlen(rightSignature) + 1] = '\0';
 
-	/*
-	 *	No need to free if the left or right string is literal string ""
-	 *	which is what we return when the subtree is NULL (see above).
-	 */
-	if (strlen(leftSignature))
-	{
-		free(leftSignature);
-	}
-	if (strlen(rightSignature))
-	{
-		free(rightSignature);
-	}
+	free(leftSignature);
+	free(rightSignature);
 
 
 	return signature;
