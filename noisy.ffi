@@ -266,6 +266,9 @@ production	kNoisyIrNodeType_Pfactor:		firstset = {
 									kNoisyIrNodeType_TboolConst,
 									kNoisyIrNodeType_TleftParen
 								}
+production	kNoisyIrNodeType_PtupleValue:		firstset = {
+									kNoisyIrNodeType_TleftParen
+								}
 production	kNoisyIrNodeType_PfieldSelect:		firstset = {
 									kNoisyIrNodeType_Tdot,
 									kNoisyIrNodeType_TleftBrac
@@ -458,6 +461,11 @@ production	kNoisyIrNodeType_Pfactor:		followset = {
 									firstset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 									followset(kNoisyIrNodeType_Pterm)
 								}
+
+production	kNoisyIrNodeType_PtupleValue:		followset = {
+									followset(kNoisyIrNodeType_Pfactor),
+								}
+
 production	kNoisyIrNodeType_PfieldSelect:		followset = {
 									firstset(kNoisyIrNodeType_PfieldSelect),
 									followset(kNoisyIrNodeType_PidentifierOrNil),

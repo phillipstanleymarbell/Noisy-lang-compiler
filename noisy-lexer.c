@@ -197,7 +197,7 @@ noisyLexGet(NoisyState *  N)
 
 
 NoisyToken *
-noisyLexPeek(NoisyState *  N)
+noisyLexPeek(NoisyState *  N, int lookAhead)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPeek);
 
@@ -206,7 +206,15 @@ noisyLexPeek(NoisyState *  N)
 		noisyFatal(N, Esanity);
 	}
 
-	return N->tokenList;
+	NoisyToken *	tmp = N->tokenList;
+	int 		which = 1;
+	while ((tmp != NULL) && (which++ < lookAhead))
+	{
+//fprintf(stderr, "*** which=%d, lookAhead=%d\n", which, lookAhead);
+		tmp = tmp->next;
+	}
+
+	return tmp;
 }
 
 void

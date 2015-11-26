@@ -111,6 +111,7 @@ const char *	NoisyTimeStampKeyStrings[kNoisyTimeStampKeyMax] =
 	[kNoisyTimeStampKeyParseName2chanExpression]			"kNoisyTimeStampKeyParseName2chanExpression",
 	[kNoisyTimeStampKeyParseTerm]					"kNoisyTimeStampKeyParseTerm",
 	[kNoisyTimeStampKeyParseFactor]					"kNoisyTimeStampKeyParseFactor",
+	[kNoisyTimeStampKeyParseTupleValue]				"kNoisyTimeStampKeyParseTupleValue",
 	[kNoisyTimeStampKeyParseFieldSelect]				"kNoisyTimeStampKeyParseFieldSelect",
 	[kNoisyTimeStampKeyParseHighPrecedenceBinaryO]			"kNoisyTimeStampKeyParseHighPrecedenceBinaryO",
 	[kNoisyTimeStampKeyParseLowPrecedenceBinaryOp]			"kNoisyTimeStampKeyParseLowPrecedenceBinaryOp",

@@ -230,6 +230,7 @@ typedef enum
 	kNoisyIrNodeType_Pname2chanExpression,
 	kNoisyIrNodeType_Pterm,
 	kNoisyIrNodeType_Pfactor,
+	kNoisyIrNodeType_PtupleValue,
 	kNoisyIrNodeType_PfieldSelect,
 	kNoisyIrNodeType_PhighPrecedenceBinaryOp,
 	kNoisyIrNodeType_PlowPrecedenceBinaryOp,
@@ -325,7 +326,7 @@ typedef enum
 	kNoisyMaxPrintBufferLength			= 8192,
 	kNoisyMaxTokenCharacters			= 32,
 	kNoisyMaxFilenameLength				= 128,
-	kNoisyTimeStamptimelineLength			= 4000000000 /* Set to, e.g., 4000000000 if we want to capture very long traces for debug; set to 1 otherwise */,
+	kNoisyTimestampTimelineLength			= 4000000 /* Set to, e.g., 4000000 if we want to capture very long traces for debug; set to 1 otherwise */,
 	kNoisyCgiRandomDigits				= 10,
 	kNoisyRlimitCpuSeconds				= 5*60,			/*	5 mins	*/
 	kNoisyRlimitRssBytes				= 2*1024*1024*1024UL,	/*	2GB	*/

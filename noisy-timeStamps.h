@@ -95,6 +95,7 @@ typedef enum
 	kNoisyTimeStampKeyParseName2chanExpression,
 	kNoisyTimeStampKeyParseTerm,
 	kNoisyTimeStampKeyParseFactor,
+	kNoisyTimeStampKeyParseTupleValue,
 	kNoisyTimeStampKeyParseFieldSelect,
 	kNoisyTimeStampKeyParseHighPrecedenceBinaryO,
 	kNoisyTimeStampKeyParseLowPrecedenceBinaryOp,

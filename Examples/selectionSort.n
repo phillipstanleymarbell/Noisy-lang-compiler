@@ -37,7 +37,7 @@ init =
 			(smallest, rest) =<- findsmallest;
 			result = smallest :: result;
 		}
-	}
+	};
 	init <-= result;
 }
 
@@ -85,10 +85,10 @@ smallestfind =
 				item > smallest =>
 				{
 					rest = item :: rest;
-				}	
-			}
+				}
+			};
 			input = tl input;
-		}	
-	}
+		}
+	};
 	smallestfind <-= (smallest, rest);
 }

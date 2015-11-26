@@ -44,7 +44,7 @@ NoisyToken *		noisyLexAllocateToken(		NoisyState *  N, NoisyIrNodeType type,
 							NoisySourceInfo *  sourceInfo);
 void			noisyLexPut(NoisyState *  N, NoisyToken *  newToken);
 NoisyToken *		noisyLexGet(NoisyState *  N);
-NoisyToken *		noisyLexPeek(NoisyState *  N);
+NoisyToken *		noisyLexPeek(NoisyState *  N, int lookAhead);
 void			noisyLexInit(NoisyState *  N, char *  fileName);
 void			noisyLexPrintToken(NoisyState *  N, NoisyToken *  t);
 void			noisyLexDebugPrintToken(NoisyState *  N, NoisyToken *  t);

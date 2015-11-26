@@ -54,7 +54,7 @@ typedef enum
 
 
 
-void		noisyParserSemanticError(NoisyState *  N, ...);
+void		noisyParserSemanticError(NoisyState *  N, const char * format, ...);
 void		noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType currentlyParsingProduction, NoisyIrNodeType expectedProductionOrToken);
 void		noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedProductionOrToken) __attribute__((noreturn));
 
@@ -115,6 +115,7 @@ NoisyIrNode *	noisyParseVar2nameExpression(NoisyState *  N, NoisyScope *  curren
 NoisyIrNode *	noisyParseName2chanExpression(NoisyState *  N, NoisyScope *  currentScope);
 NoisyIrNode *	noisyParseTerm(NoisyState *  N, NoisyScope *  currentScope);
 NoisyIrNode *	noisyParseFactor(NoisyState *  N, NoisyScope *  currentScope);
+NoisyIrNode *	noisyParseTupleValue(NoisyState *  N, NoisyScope *  currentScope);
 NoisyIrNode *	noisyParseFieldSelect(NoisyState *  N, NoisyScope *  currentScope);
 NoisyIrNode *	noisyParseHighPrecedenceBinaryOp(NoisyState *  N);
 NoisyIrNode *	noisyParseLowPrecedenceBinaryOp(NoisyState *  N);

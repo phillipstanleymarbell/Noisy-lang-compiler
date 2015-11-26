@@ -161,6 +161,7 @@ main(int argc, char *argv[])
 			{
 				N->mode |= kNoisyModeCallTracing;
 				N->mode |= kNoisyModeCallStatistics;
+				noisyTimestampsInit(N);
 
 				break;
 			}

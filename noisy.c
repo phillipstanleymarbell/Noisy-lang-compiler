@@ -86,12 +86,12 @@ static char	kNoisyRenderExtensionSVG[]	= ".svg";
 void
 noisyTimestampsInit(NoisyState *  N)
 {
-	N->timestamps = (NoisyTimeStamp *) calloc(kNoisyTimeStamptimelineLength, sizeof(NoisyTimeStamp));
+	N->timestamps = (NoisyTimeStamp *) calloc(kNoisyTimestampTimelineLength, sizeof(NoisyTimeStamp));
 	if (N->timestamps == NULL)
 	{
 		noisyFatal(NULL, Emalloc);
 	}
-	N->timestampSlots = kNoisyTimeStamptimelineLength;
+	N->timestampSlots = kNoisyTimestampTimelineLength;
 
 
 	//TODO: replace this with a libflex call...

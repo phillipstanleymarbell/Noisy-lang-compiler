@@ -31,7 +31,7 @@ Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-timeStamps.h to top_dir
 Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy-types.h to top_dir
 Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy.h to top_dir
 Adding /Volumes/doos/Noisy-lang-compiler-hg/version.h to top_dir
-WARNING!!! Not a file nor a directory (so ignored): *.grammar
+Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy.grammar to top_dir
 Adding /Volumes/doos/Noisy-lang-compiler-hg/noisy.ffi to top_dir
 WARNING!!! Not a file nor a directory (so ignored): *.n
 Adding /Volumes/doos/Noisy-lang-compiler-hg/Examples/helloWorld.n to top_dir
@@ -52,22 +52,22 @@ Computing results.
 
 
 SLOC	Directory	SLOC-by-Language (Sorted)
-10111   top_dir         ansic=10111
+10224   top_dir         ansic=10224
 
 
 Totals grouped by language (dominant language first):
-ansic:        10111 (100.00%)
+ansic:        10224 (100.00%)
 
 
 
 
-Total Physical Source Lines of Code (SLOC)                = 10,111
-Development Effort Estimate, Person-Years (Person-Months) = 2.27 (27.24)
+Total Physical Source Lines of Code (SLOC)                = 10,224
+Development Effort Estimate, Person-Years (Person-Months) = 2.30 (27.56)
  (Basic COCOMO model, Person-Months = 2.4 * (KSLOC**1.05))
-Schedule Estimate, Years (Months)                         = 0.73 (8.78)
+Schedule Estimate, Years (Months)                         = 0.73 (8.82)
  (Basic COCOMO model, Months = 2.5 * (person-months**0.38))
-Estimated Average Number of Developers (Effort/Schedule)  = 3.10
-Total Estimated Cost to Develop                           = $ 306,673
+Estimated Average Number of Developers (Effort/Schedule)  = 3.13
+Total Estimated Cost to Develop                           = $ 310,273
  (average salary = $56,286/year, overhead = 2.40).
 SLOCCount, Copyright (C) 2001-2004 David A. Wheeler
 SLOCCount is Open Source Software/Free Software, licensed under the GNU GPL.

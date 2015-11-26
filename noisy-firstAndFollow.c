@@ -68,7 +68,7 @@ noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFirst);
 
-	NoisyToken *	token = noisyLexPeek(N);
+	NoisyToken *	token = noisyLexPeek(N, 1);
 
 	if (productionOrToken > kNoisyIrNodeTypeMax)
 	{
@@ -112,7 +112,7 @@ noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFollow);
 
-	NoisyToken *	token = noisyLexPeek(N);
+	NoisyToken *	token = noisyLexPeek(N, 1);
 
 	if (productionOrToken > kNoisyIrNodeTypeMax)
 	{

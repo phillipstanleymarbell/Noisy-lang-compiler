@@ -353,7 +353,8 @@ main(void)
 	sigaction(SIGVTALRM, &sa, NULL);
 
 
-	noisyCgiState = noisyInit(kNoisyModeDefault|kNoisyModeCallStatistics|kNoisyModeCGI|kNoisyModeCallStatistics);
+	noisyCgiState = noisyInit(kNoisyModeDefault|kNoisyModeCallStatistics|kNoisyModeCallTracing|kNoisyModeCGI);
+	noisyTimestampsInit(noisyCgiState);
 
 
 	/*
@@ -764,7 +765,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("<script>\n");
 	printf("$(function() {\n");
 	printf("        $(\".lined\").linedtextarea(\n");
-	printf("                {selectedLine: %llu}\n", noisyLexPeek(noisyCgiState)->sourceInfo->lineNumber);
+	printf("                {selectedLine: %llu}\n", noisyLexPeek(noisyCgiState, 1)->sourceInfo->lineNumber);
 	printf("        );\n");
 	printf("});\n");
 	printf("</script>\n");
