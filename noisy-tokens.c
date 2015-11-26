@@ -149,12 +149,11 @@ const char *	gTerminalStrings[kNoisyIrNodeTypeMax] = {
 								[kNoisyIrNodeType_Zeof]			=	"NoisyIrNodeType_Zeof",
 							};
 
-
+							//TODO: Even though we would like to put the tokens in quotes, we cannot, because we also use the array for checking to see if a token is a token. TODO: create a separate array for the latter
 const char *	gReservedTokenDescriptions[kNoisyIrNodeTypeMax] = {
-									[kNoisyIrNodeType_TaddAs]		=	"'+='",
-									[kNoisyIrNodeType_Tadt]			=	"'adt'",
-									[kNoisyIrNodeType_Talpha]		=	"'alpha'",
-									//TODO: put the rest of the cases where we mean the literal string, in single quotes (but not, e.g., in case of "Bolean constant")
+									[kNoisyIrNodeType_TaddAs]		=	"+=",
+									[kNoisyIrNodeType_Tadt]			=	"adt",
+									[kNoisyIrNodeType_Talpha]		=	"alpha",
 									[kNoisyIrNodeType_Tampersand]		=	"&",
 									[kNoisyIrNodeType_Tand]			=	"&&",
 									[kNoisyIrNodeType_TandAs]		=	"&=",
