@@ -73,6 +73,7 @@ const char gNoisyTypeNodeSignatures[kNoisyIrNodeTypeMax] = {
 								[kNoisyIrNodeType_Tfixed]			= 'f',
 								[kNoisyIrNodeType_Tint]				= 'i',
 								[kNoisyIrNodeType_Tlist]			= 'l',
+								[kNoisyIrNodeType_PlistType]			= 'l',
 								[kNoisyIrNodeType_Tnamegen]			= 'g',
 								[kNoisyIrNodeType_Tnybble]			= 'y',
 								[kNoisyIrNodeType_Treal]			= 'r',
