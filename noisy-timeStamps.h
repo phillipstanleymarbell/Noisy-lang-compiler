@@ -216,6 +216,29 @@ typedef enum
 
 
 	/*
+	 *	Public routines in Dotbackend
+	 */
+	kNoisyTimeStampKeyIrPassDotAstDotFmt,
+	kNoisyTimeStampKeyIrPassDotSymbotTableDotFmt,
+	kNoisyTimeStampKeyIrPassAstDotPrintWalk,
+	kNoisyTimeStampKeyIrPassSymbolTableDotPrintWalk,
+	kNoisyTimeStampKeyIrPassDotBackend,
+
+	/*
+	 *	Private routines in Dotbackend
+	 */
+	kNoisyTimeStampKeyIrPassDotIsType,
+	kNoisyTimeStampKeyIrPassDotScope2Id,
+	kNoisyTimeStampKeyIrPassDotScope2Id2,
+	kNoisyTimeStampKeyIrPassDotSymbol2Id,
+
+	/*
+	 *	IR pass helpers. TODO: should merge this into IR helpers...
+	 */
+	kNoisyTimeStampKeyIrPassHelperColorTree,
+	kNoisyTimeStampKeyIrPassHelperTreeSize,
+
+	/*
 	 *	Used to tag un-tracked time.
 	 */
 	kNoisyTimeStampKeyUnknown,

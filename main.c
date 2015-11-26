@@ -290,8 +290,8 @@ processFile(NoisyState *  N, char *  fileName)
 	/*
 	 *	Create a top-level scope, then parse.
 	 */
-	NoisyScope *	topScope = noisySymbolTableAllocScope(N);
-	N->noisyIrRoot = noisyParse(N, topScope);
+	N->noisyIrTopScope = noisySymbolTableAllocScope(N);
+	N->noisyIrRoot = noisyParse(N, N->noisyIrTopScope);
 
 
 	/*
@@ -310,13 +310,7 @@ processFile(NoisyState *  N, char *  fileName)
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
 	{
-		//TODO: Emit AST Dot description into filename_ast.dot
-		//dotgen->astdotgen(ast);
-
-		//TODO: Emit symbol table Dot description into filename_symtab.dot
-		//dotgen->scopedotgen(topscope);
-		
-		//fprintf(stdout, "%s\n", noisyIrDotBackend(N));
+		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N));
 	}
 
 
@@ -332,7 +326,7 @@ processFile(NoisyState *  N, char *  fileName)
 
 		noisyTimeStampDumpResidencies(N);
 
-		//irNodeCount = noisyIrHelperTreeSize(N, N->noisyIrRoot);
+		irNodeCount = noisyIrPassHelperTreeSize(N, N->noisyIrRoot);
 
 
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "Intermediate Representation Information:\n\n");

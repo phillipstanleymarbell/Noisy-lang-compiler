@@ -580,6 +580,8 @@ noisyFatal(NoisyState *  N, const char *  msg)
 
 	if ((N != NULL) && (N->jmpbufIsValid))
 	{
+		noisyConsolePrintBuffers(N);
+
 		/*
 		 *	Could pass in case-specific info here, but just
 		 *	pass 0.

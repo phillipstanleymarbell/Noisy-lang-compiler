@@ -35,4 +35,70 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-char *		noisyIrPassDotBackend(NoisyState *  N);
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <setjmp.h>
+#include <string.h>
+#include "flextypes.h"
+#include "flexerror.h"
+#include "flex.h"
+#include "noisy-errors.h"
+#include "version.h"
+#include "noisy-timeStamps.h"
+#include "noisy.h"
+
+
+void
+noisyIrPassHelperColorTree(NoisyState *  N, NoisyIrNode *  p, NoisyIrNodeColor nodeColor, bool setNotClear, bool recurseFlag)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperColorTree);
+
+	if (p == NULL)
+	{
+		return;
+	}
+
+	if (p->irLeftChild == p || p->irRightChild == p)
+	{
+		noisyFatal(N, "Immediate cycle in Ir, seen noisyIrPassHelperColorTree()!!\n");
+		return;
+	}
+
+	if (setNotClear)
+	{
+		p->nodeColor |= nodeColor;
+	}
+	else
+	{
+		p->nodeColor &= ~nodeColor;
+	}
+
+	if (recurseFlag)
+	{
+		noisyIrPassHelperColorTree(N, p->irLeftChild, nodeColor, setNotClear, recurseFlag);
+		noisyIrPassHelperColorTree(N, p->irRightChild, nodeColor, setNotClear, recurseFlag);
+	}
+
+	return;
+}
+
+
+uint64_t
+noisyIrPassHelperTreeSize(NoisyState *  N, NoisyIrNode *  p)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperTreeSize);
+
+	if (p == NULL)
+	{
+		return 0;
+	}
+
+	if (p->irLeftChild == p || p->irRightChild == p)
+	{
+		noisyFatal(N, "Immediate cycle in AST, seen in noisyIrPassHelperTreeSize()!!\n");
+		return 0;
+	}
+
+	return (1 + noisyIrPassHelperTreeSize(N, p->irLeftChild) + noisyIrPassHelperTreeSize(N, p->irRightChild));
+}

@@ -579,9 +579,10 @@ typedef struct
 	
 
 	/*
-	 *	The root of the IR tree.
+	 *	The root of the IR tree, and top scope
 	 */
 	NoisyIrNode *		noisyIrRoot;
+	NoisyScope *		noisyIrTopScope;
 
 
 	NoisyMode		mode;

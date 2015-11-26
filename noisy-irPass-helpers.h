@@ -34,3 +34,9 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+
+void			noisyIrPassHelperColorTree(NoisyState *  N, NoisyIrNode *  p, NoisyIrNodeColor nodeColor, bool setNotClear, bool recurseFlag);
+uint64_t		noisyIrPassHelperTreeSize(NoisyState *  N, NoisyIrNode *  p);
+
+#define L(node)		(node)->irLeftChild
+#define R(node)		(node)->irRightChild

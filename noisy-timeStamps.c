@@ -191,6 +191,17 @@ const char *	NoisyTimeStampKeyStrings[kNoisyTimeStampKeyMax] =
 	[kNoisyTimeStampKeyCheckCgiCompletion]				"kNoisyTimeStampKeyCheckCgiCompletion",
 	[kNoisyTimeStampKeyFatal]					"kNoisyTimeStampKeyFatal",
 	[kNoisyTimeStampKeyError]					"kNoisyTimeStampKeyError",
+	[kNoisyTimeStampKeyIrPassDotAstDotFmt]				"kNoisyTimeStampKeyIrPassDotAstDotFmt",
+	[kNoisyTimeStampKeyIrPassDotSymbotTableDotFmt]			"kNoisyTimeStampKeyIrPassDotSymbotTableDotFmt",
+	[kNoisyTimeStampKeyIrPassAstDotPrintWalk]			"kNoisyTimeStampKeyIrPassAstDotPrintWalk",
+	[kNoisyTimeStampKeyIrPassSymbolTableDotPrintWalk]		"kNoisyTimeStampKeyIrPassSymbolTableDotPrintWalk",
+	[kNoisyTimeStampKeyIrPassDotBackend]				"kNoisyTimeStampKeyIrPassDotBackend",
+	[kNoisyTimeStampKeyIrPassDotIsType]				"kNoisyTimeStampKeyIrPassDotIsType",
+	[kNoisyTimeStampKeyIrPassDotScope2Id]				"kNoisyTimeStampKeyIrPassDotScope2Id",
+	[kNoisyTimeStampKeyIrPassDotScope2Id2]				"kNoisyTimeStampKeyIrPassDotScope2Id2",
+	[kNoisyTimeStampKeyIrPassDotSymbol2Id]				"kNoisyTimeStampKeyIrPassDotSymbol2Id",
+	[kNoisyTimeStampKeyIrPassHelperColorTree]			"kNoisyTimeStampKeyIrPassHelperColorTree",
+	[kNoisyTimeStampKeyIrPassHelperTreeSize]			"kNoisyTimeStampKeyIrPassHelperTreeSize",
 
 	[kNoisyTimeStampKeyUnknown]					"kNoisyTimeStampKeyUnknown",
 };

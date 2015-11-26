@@ -49,7 +49,7 @@
 
 
 extern const char	gNoisyTypeNodeSignatures[];
-
+extern const char	gNoisyAstNodeStrings[];
 
 
 NoisyIrNode *
@@ -87,13 +87,13 @@ noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
 	 */
 	if (subtree == NULL)
 	{
-		return NULL;
+		return "";
 	}
 
 	char s = gNoisyTypeNodeSignatures[subtree->type];
 	if (s == 0)
 	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "%s, node Op = [%d]\n", EcannotFindTypeSignatureForNodeType, subtree->type);
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s, node type is %d (%s)\n", EcannotFindTypeSignatureForNodeType, subtree->type, gNoisyAstNodeStrings[subtree->type]);
 		noisyFatal(N, Esanity);
 	}
 
@@ -111,8 +111,18 @@ noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
 	signature[strlen(leftSignature) + strlen(rightSignature)] = s;
 	signature[strlen(leftSignature) + strlen(rightSignature) + 1] = '\0';
 
-	free(leftSignature);
-	free(rightSignature);
+	/*
+	 *	No need to free if the left or right string is literal string ""
+	 *	which is what we return when the subtree is NULL (see above).
+	 */
+	if (strlen(leftSignature))
+	{
+		free(leftSignature);
+	}
+	if (strlen(rightSignature))
+	{
+		free(rightSignature);
+	}
 
 
 	return signature;

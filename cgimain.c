@@ -599,7 +599,7 @@ main(void)
 		 */
 		if (noisyCgiState->irBackends & kNoisyIrBackendDot)
 		{
-			//noisyPrintToFile(noisyCgiState, noisyIrDotBackend(noisyCgiState), "tmpdot", kNoisyPostFileWriteActionRenderDot);
+			noisyPrintToFile(noisyCgiState, noisyIrPassDotBackend(noisyCgiState), "tmpdot", kNoisyPostFileWriteActionRenderDot);
 		}
 
 
@@ -625,7 +625,7 @@ main(void)
 
 			noisyTimeStampDumpResidencies(noisyCgiState);
 
-			//irNodeCount = noisyIrHelperTreeSize(noisyCgiState, noisyCgiState->noisyIrRoot);
+			irNodeCount = noisyIrPassHelperTreeSize(noisyCgiState, noisyCgiState->noisyIrRoot);
 
 			flexprint(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fpinfo, "Intermediate Representation Information:\n\n");
 			flexprint(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fpinfo, "    IR node count                        : %llu\n", irNodeCount);
