@@ -1,0 +1,5 @@
+/*
+ *	Google Protocol Buffer Specification for Noisy's data structures.
+ *
+ *	We use this, e.g., to save/restore the IR and Symbol Table to files.
+ */
