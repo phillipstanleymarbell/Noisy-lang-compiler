@@ -344,8 +344,8 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 
 
 	N->fileName 		= fileName;
-	N->columnNumber		= 0;
-	N->lineNumber		= 0;
+	N->columnNumber		= 1;
+	N->lineNumber		= 1;
 	N->lineLength		= 0;
 
 
