@@ -2710,14 +2710,14 @@ noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType currentlyParsingTokenOrP
 				flexprint(N->Fe, N->Fm, N->Fperr, ",\n\t\t");
 			}
 
-			flexprint(N->Fe, N->Fm, N->Fperr, "%s", gReservedTokenDescriptions[gNoisyFirsts[currentlyParsingTokenOrProduction][i]]);
+			flexprint(N->Fe, N->Fm, N->Fperr, "'%s'", gReservedTokenDescriptions[gNoisyFirsts[currentlyParsingTokenOrProduction][i]]);
 			seen++;
 		}
 	}
 	else if ((currentlyParsingTokenOrProduction == kNoisyIrNodeTypeMax) && (expectedProductionOrToken < kNoisyIrNodeType_TMax))
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, ":\n\n\t\t");
-		flexprint(N->Fe, N->Fm, N->Fperr, "%s", gTerminalStrings[expectedProductionOrToken]);
+		flexprint(N->Fe, N->Fm, N->Fperr, "'%s'", gReservedTokenDescriptions[expectedProductionOrToken]);
 	}
 	else
 	{

@@ -677,6 +677,11 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 
 	printf("Noisy version %s\n", kNoisyVersion);
 	printf("<br><br>");
+#if defined (_OPENMP)
+	printf("Multithreading enabled; detected %d hardware threads\n",
+		omp_get_max_threads());
+#endif
+
 	//printf("Authored 2015&#8211;2015, Phillip Stanley-Marbell\n");
 	//printf("<br>");
 
@@ -700,13 +705,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 					endRss, endRss-startRss);
 	printf("</div>\n");
 
-#if defined (_OPENMP)
-	printf("Multithreading enabled; detected %d hardware threads\n",
-		omp_get_max_threads());
-#endif
-
 	printf("<input type=\"hidden\" name=\"w\" value=\"%d\">\n", fmtWidth);
-
 
 	/*
 	 *	Use div instead of span to get bgcolor to be page-wide
@@ -799,7 +798,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("            var editor = ace.edit(editDiv[0]);\n");
 	printf("            editor.renderer.setShowGutter(true);\n");
 	printf("            editor.getSession().setValue(textarea.val());\n");
-	//printf("            editor.setKeyboardHandler(\"ace/keyboard/vim\");\n");
+	printf("            editor.setKeyboardHandler(\"ace/keyboard/vim\");\n");
 	printf("            editor.setTheme(\"ace/theme/solarized_light\");\n");
 	printf("            editor.session.setMode(\"ace/mode/c_cpp\");\n");
 	printf("            editor.setShowPrintMargin(false);\n");
