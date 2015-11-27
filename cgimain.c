@@ -383,6 +383,11 @@ main(void)
 	printf("              left: 0;\n");
 	printf("              right: 0;\n");
 	printf("          }\n");
+	printf("          td {\n");
+	printf("              color: white;\n");
+	printf("              font-family:sans-serif;\n");
+	printf("              font-size:12px;\n");
+	printf("          }\n");
 	printf("        </style>\n");
 
 
@@ -433,22 +438,6 @@ main(void)
 
 	printf("<body text=\"#555555\" bgcolor=\"#FFFFFF\">\n");
 	printf("<font face=\"Arial, Helvetica, sans-serif\" style=\"font-family: arial, 'lucida console', sans-serif; font-size:12px;color:#777777;\">\n");
-
-
-	/*
-	 *	We want this to come out here, not in flex output buffer
-	 */
-	printf("Noisy version %s\n", kNoisyVersion);
-	printf("<br>");
-	printf("Authored 2015&#8211;2015, Phillip Stanley-Marbell\n");
-	printf("<br>");
-#if defined (_OPENMP)
-	printf("Multithreading enabled; detected %d hardware threads\n",
-		omp_get_max_threads());
-#endif
-
-	printf("<img src=\"%s\" width=150 align=\"right\">\n", kNoisyLogoPath);
-	printf("<br><br><br><br>\n");
 
 	cgiVars = getCgiVars();
 	for (i = 0; cgiVars[i]; i+= 2)
@@ -647,6 +636,104 @@ main(void)
 	endRss = noisyCheckRss(noisyCgiState);
 
 
+
+
+	/*
+	 *	doTail() is also called directly if we run into trouble while
+	 *	interping in yyparse().
+	 */
+	doTail(fmtWidth, cgiSparameter, cgiOparameter, cgiTparameter);
+
+
+	for (i = 0; cgiVars[i]; i++)
+	{
+		free(cgiVars[i]);
+	}
+	free(cgiVars);
+
+
+	exit(0);
+}
+
+void
+doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
+{
+	int	i, lines;
+
+
+	/*
+	 *	We want all of these to come out directly, not in flex output buffer
+	 */
+
+
+	/*
+	 *	Count number of lines in noisyCodeBuffer
+	 */
+	lines = 0;
+	for (i = 0; i < strlen(noisyCodeBuffer); i++)
+	{
+		if (noisyCodeBuffer[i] == '\n') lines++;
+	}
+
+	printf("Noisy version %s\n", kNoisyVersion);
+	printf("<br><br>");
+	//printf("Authored 2015&#8211;2015, Phillip Stanley-Marbell\n");
+	//printf("<br>");
+
+	printf("<div>\n");
+
+	printf("<form action=\"%s-%s\">\n", kNoisyCgiExecutableUrl, kNoisyL10N);
+	printf("<textarea NAME=\"c\" name=\"data-editor\" data-editor=\"noisy\"  COLS=1 ROWS=1>\n");
+	printf("%s", noisyCodeBuffer);
+	printf("</textarea>\n");
+
+	printf("<div style=\"background-color:#FFDB58\">\n");
+	printf("&nbsp;&nbsp;(<b>Noisy/" FLEX_UVLONGFMT 
+					":</b>&nbsp;&nbsp;Operation completed in %.6f&thinsp;seconds S+U time; &nbsp; Mem = "
+					FLEX_UVLONGFMT "&thinsp;KB, &nbsp; &#916; Mem = " FLEX_UVLONGFMT "&thinsp;KB).\n",
+					noisyCgiState->callAggregateTotal, 
+					(	(end.ru_stime.tv_sec - start.ru_stime.tv_sec) +
+						(end.ru_utime.tv_sec - start.ru_utime.tv_sec))
+					+
+					(	(end.ru_stime.tv_usec - start.ru_stime.tv_usec) +
+						(end.ru_utime.tv_usec - start.ru_utime.tv_usec))/1E6,
+					endRss, endRss-startRss);
+	printf("</div>\n");
+
+#if defined (_OPENMP)
+	printf("Multithreading enabled; detected %d hardware threads\n",
+		omp_get_max_threads());
+#endif
+
+	printf("<input type=\"hidden\" name=\"w\" value=\"%d\">\n", fmtWidth);
+
+
+	/*
+	 *	Use div instead of span to get bgcolor to be page-wide
+	 */
+	printf("<br>\n");
+	printf("<br>\n");
+	printf("<div style=\"background-color:#EEEEEE; color:#000000;\" onclick=\"JavaScript:toggle('noisyinfo')\">");
+	printf("&nbsp;&nbsp;<b>Informational Report</b>&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;</div>");
+	printf("<table width=\"%d\" border=\"0\">\n", fmtWidth);
+	printf("<tr><td>\n");
+	printf("<pre>");
+	printf("<span style=\"background-color:#99CCFF; display:none; color:#000000;\" id='noisyinfo'>");
+	htmlPrint(noisyCgiState->Fpinfo->circbuf);
+	printf("</span>");
+	printf("</pre>\n");
+	printf("</td></tr>\n");
+	printf("</table>\n");
+
+	if (strlen(noisyCgiState->Fperr->circbuf) != 0)
+	{
+		printf("<div width=\"%d\" style=\"background-color:FFCC00; color:#FF0000\" onclick=\"JavaScript:toggle('noisyerrs')\">", fmtWidth);
+		printf("&nbsp;&nbsp;Error Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td><pre>", fmtWidth);
+		printf("<span style=\"background-color:whitesmoke display:none;\" id='noisyerrs'>%s</span></pre></td></tr></table>", noisyCgiState->Fperr->circbuf);
+	}
+
+
 	if (noisyCgiState->lastDotRender != NULL)
 	{
 		printf("<table width=\"%d\" border=\"0\">\n", fmtWidth);
@@ -669,95 +756,26 @@ main(void)
 			kNoisyCgiFileUrlBase, noisyCgiState->lastDotRender, fmtWidth);
 	}
 
-
-	/*
-	 *	Use div instead of span to get bgcolor to be page-wide
-	 */
-	printf("<br>\n");
-	printf("<br>\n");
-	printf("<div style=\"background-color:#99CCFF; color:#000000;\" onclick=\"JavaScript:toggle('noisyinfo')\">");
-	printf("&nbsp;&nbsp;Informational Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;</div>");
-	printf("<table width=\"%d\" border=\"0\">\n", fmtWidth);
+	printf("<br><b>Compiler Parameters:</b><br>\n");
+	printf("</font>\n");
+	
+	printf("<table style=\"width:100%%;\">\n");
 	printf("<tr><td>\n");
-	printf("<pre>");
-	printf("<span style=\"background-color:#99CCFF; color:#000000;\" id='noisyinfo'>");
-	htmlPrint(noisyCgiState->Fpinfo->circbuf);
-	printf("</span>");
-	printf("</pre>\n");
+	printf("<table style=\"width:300px; background-color: #2C3539\">\n");
+	printf("<tr><td>Backends Bitmap	</td><td><input type=\"number\" name=\"s\" style=\"width: 30px\" value=\"%d\"></td></tr>\n", cgiSparameter);
+	printf("<tr><td>Passes Bitmap	</td><td><input type=\"number\" name=\"o\" style=\"width: 60px\" value=\"%d\"></td></tr>\n", cgiOparameter);
+	printf("<tr><td>Dot detail level</td><td><input type=\"number\" name=\"t\" style=\"width: 60px\" value=\"%d\"></td></tr>\n", cgiTparameter);
+	printf("</table>\n");
+	printf("</td><td>\n");
+	printf("<img src=\"%s\" width=150 align=\"right\">\n", kNoisyLogoPath);
 	printf("</td></tr>\n");
 	printf("</table>\n");
-
-	/*
-	 *	doTail() is also called directly if we run into trouble while
-	 *	interping in yyparse().
-	 */
-	doTail(fmtWidth, cgiSparameter, cgiOparameter, cgiTparameter);
-	
-	
-	for (i = 0; cgiVars[i]; i++)
-	{
-		free(cgiVars[i]);
-	}
-	free(cgiVars);
-
-
-	exit(0);
-}
-
-void
-doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
-{
-	int	i, lines;
-	
-	
-	if (strlen(noisyCgiState->Fperr->circbuf) != 0)
-	{
-		printf("<div width=\"%d\" style=\"background-color:FFCC00; color:#FF0000\" onclick=\"JavaScript:toggle('noisyerrs')\">", fmtWidth);
-		printf("&nbsp;&nbsp;Error Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
-		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td><pre>", fmtWidth);
-		printf("<span style=\"background-color:whitesmoke\" id='noisyerrs'>%s</span></pre></td></tr></table>", noisyCgiState->Fperr->circbuf);
-	}
-
-	printf("<div style=\"background-color:#CCFF33\">\n");
-	printf("&nbsp;&nbsp;&nbsp;<b>&#9879;</b>&nbsp;&nbsp;&nbsp;(<b>Noisy/" FLEX_UVLONGFMT 
-					":</b>&nbsp;&nbsp;Operation completed in %.6f&thinsp;seconds S+U time; &nbsp; Mem = "
-					FLEX_UVLONGFMT "&thinsp;KB, &nbsp; &#916; Mem = " FLEX_UVLONGFMT "&thinsp;KB).\n",
-					noisyCgiState->callAggregateTotal, 
-					(	(end.ru_stime.tv_sec - start.ru_stime.tv_sec) +
-						(end.ru_utime.tv_sec - start.ru_utime.tv_sec))
-					+
-					(	(end.ru_stime.tv_usec - start.ru_stime.tv_usec) +
-						(end.ru_utime.tv_usec - start.ru_utime.tv_usec))/1E6,
-					endRss, endRss-startRss);
-	printf("</div>\n");
-
-
-	/*
-	 *	Count number of lines in noisyCodeBuffer
-	 */
-	lines = 0;
-	for (i = 0; i < strlen(noisyCodeBuffer); i++)
-	{
-		if (noisyCodeBuffer[i] == '\n') lines++;
-	}
-
-	printf("<div>\n");
-	
-	printf("<form action=\"%s-%s\">\n", kNoisyCgiExecutableUrl, kNoisyL10N);
-	printf("<textarea NAME=\"c\" name=\"data-editor\" data-editor=\"noisy\"  COLS=1 ROWS=1>\n");
-	printf("%s", noisyCodeBuffer);
-	printf("</textarea>\n");
-	printf("<br><input type=\"hidden\" name=\"w\" value=\"%d\">\n", fmtWidth);
-	printf("<br><b>Compiler Parameters</b><br>\n");
-	printf("Backends Bitmap&nbsp;<input type=\"number\" name=\"s\" style=\"width: 30px\" value=\"%d\"><br>\n", cgiSparameter);
-	printf("Passes Bitmap&nbsp;<input type=\"number\" name=\"o\" style=\"width: 60px\" value=\"%d\"><br>\n", cgiOparameter);
-	printf("Dot detail level&nbsp;<input type=\"number\" name=\"t\" style=\"width: 60px\" value=\"%d\"><br>\n", cgiTparameter);
+	printf("</font>\n");
 	printf("<input type=\"submit\" name=\"b\" value=\"compile\">\n");
 	printf("</form>\n");
-	
 	printf("</div>\n");
 
-	printf("</font>\n");
+
 
 
 	/*
@@ -781,7 +799,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("            var editor = ace.edit(editDiv[0]);\n");
 	printf("            editor.renderer.setShowGutter(true);\n");
 	printf("            editor.getSession().setValue(textarea.val());\n");
-	printf("            editor.setKeyboardHandler(\"ace/keyboard/vim\");\n");
+	//printf("            editor.setKeyboardHandler(\"ace/keyboard/vim\");\n");
 	printf("            editor.setTheme(\"ace/theme/solarized_light\");\n");
 	printf("            editor.session.setMode(\"ace/mode/c_cpp\");\n");
 	printf("            editor.setShowPrintMargin(false);\n");
@@ -790,6 +808,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	 *	Have ACE autosize the height, with an upper limit at maxLines
 	 */
 	printf("	editor.setOptions({maxLines: 40});\n");
+	printf("	editor.setOptions({minLines: 40});\n");
 
 	printf("            // Copy back to textarea on form submission...\n");
 	printf("            textarea.closest('form').submit(function () {\n");
