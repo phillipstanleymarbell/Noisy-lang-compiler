@@ -1,0 +1,32 @@
+#	U1	: Reals = <0. ... 100. delta 1.0*iota>
+#	U2	= U1 >< U1
+#	
+#	--
+#	--	The following predicate, applied to any 2D universe of Reals, yields the
+#	--	members (i, Fi) of the universe in which the Fi is the ith Fibonacci number.
+#	--
+#	P1	= (Fi:U2[2] == (((((1. + (5. pow 0.5))/2.) pow i:U2[1]) / (5. pow 0.5)) + 0.5) - ((((((1. + (5. pow 0.5))/2.) pow i:U2[1]) / (5. pow 0.5)) + 0.5) % 1.0))
+#	
+#	S1	= (P1 : U2)
+#	print enum S1
+
+fibonacci : progtype
+{
+	init	: namegen (list of string):(list of string);
+}
+
+
+#
+#	Problem definition
+#
+init =>
+{
+}
+
+
+#
+#	Algorithm implementation
+#
+init =
+{
+}
