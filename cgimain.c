@@ -407,13 +407,19 @@ main(void)
 
 
 	/*
-	 *	Toggle the Info and Errors blocks off on load.
+	 *	Toggle the Info and Errors blocks off on load if they are non-empty.
 	 */
 	printf("<script type=\"text/javascript\">\n");
 	printf("	window.onload=function()\n");
 	printf("	{\n");
-	printf("		toggle('noisyerrs');\n");
-	printf("		toggle('noisyinfo');\n");
+	if (strlen(noisyCgiState->Fperr->circbuf))
+	{
+		printf("		toggle('noisyerrs');\n");
+	}
+	if (strlen(noisyCgiState->Fpinfo->circbuf))
+	{
+		printf("		toggle('noisyinfo');\n");
+	}
 	printf("	}\n");
 	printf("</script>\n");
 
