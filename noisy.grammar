@@ -1,3 +1,6 @@
+/*
+ *	Lexical elements
+ */
 character		::= Unicode-0000h-to-Unicode-FFFFh .
 rsvopseptoken		::= "~" | "!" | "%" | "^" | "&" | "*" | "(" | ")" | "," | "-" | "+" | "="
 			    | "/" | ">" | "<" | ";" | ":" | "'" | "\"" | "{" | "}" | "[" | "]" | "|" 
@@ -8,16 +11,21 @@ zeronine		= "0-9" .
 onenine			= "1-9" .
 radix			= onenine {zeronine} "r" .
 charconst		= "'" character "'" .
-intconst		::= [radix] ("0" | onenine {zeronine}) | charconst .
+intconst		::= ["+" | "-"] [radix] ("0" | onenine {zeronine}) | charconst .
 boolconst		::= "true" | "false" .
 drealconst		= ("0" | onenine {zeronine}) "." {zeronine} .
 erealconst		= (drealconst | intconst) ("e" | "E") intconst .
-realconst		::= drealconst | erealconst .
+realconst		::= ["+" | "-"] (drealconst | erealconst) .
 strconst		::= "\"" {character} "\"" .
 idchar			= char-except-rsvopseptoken .
 identifier		::= (idchar-except-zeronine) {idchar} .
 
-program			::= progtypedecl {namegendefn} .
+
+
+/*
+ *	Syntactic elements
+ */
+program			::= progtypedecl {(namegendefn | problemdefn)} .
 progtypedecl		= identifier ":" "progtype" "{" progtypebody "}" .
 progtypebody		= {ptypenamedecl ";"} .
 ptypenamedecl		::= identlist ":" (condecl | typedecl | namegendecl) .
@@ -47,6 +55,7 @@ idxinitlist		= "{" element {"," element} "}" .
 starinitlist		= "{" element {"," element} ["," "*" "=>" expr] "}" .
 element			= expr [ "=>" expr ] .
 namegendefn		::= identifier [":" tupletype ":" tupletype] "=" scopedstmtlist .
+problemdefn		::= identifier [":" tupletype ":" tupletype] "=>" scopedsetstmtlist .
 scopedstmtlist		::= "{" stmtlist "}" .
 stmtlist		= {stmt} .
 stmt			::= [ identornillist ((":" (condecl | typedecl | typeexpr)) | (assignop expr))
@@ -77,3 +86,97 @@ lprecbinop		::= "+" | "-" | ">>" | "<<" | "|"  | cmpop | booleanop .
 cmpop			::= "==" | "!=" | ">" | "<" | "<=" | ">=" .
 booleanop		::= "&&" | "||" .
 unop			::= "~" | "!" | "-"  | "+" | "<-"  | "hd" | "tl" | "len" .
+
+
+
+
+
+
+/*
+ *	Below is the part of the grammar specific to se-theoretic operations (inherited from our earlier Sal language)
+ */
+
+
+
+
+
+
+
+intparamorconst		::= intconst | identifier .
+boolconst		::= "true" | "false" | "maybe" .
+realparamorconst	::= realconst | identifier .
+strparamorconst		::= strconst | identifier .
+baseconst		= intparamorconst | realparamorconst | strparamorconst .
+tuple			::= "(" baseconst {"," baseconst} ")" .
+constsetexpr		::= "{" tuple {"," tuple} "}"
+			| "{" baseconst {"," baseconst} "}" .
+intrangelist		= "..." intparamconst ["delta" arithexpr] .
+intconstlist		::= (intparamorconst | intrangelist) {"," (intparamorconst | intrangelist)} .
+realrangelist		= "..." realparamorconst "delta" arithexpr .
+realconstlist		::= (realparamorconst | realrangelist) {"," (realparamorconst | realrangelist)} .
+unorderableintconstdim	::= "{" intparamorconst {"," intparamorconst} "}" .
+orderableintconstdim	::= "<" intparamorconst {"," intparamorconst} ">" | "integers" .
+unorderablerealconstdim	::= "{" realparamorconst {"," realparamorconst} "}" .
+orderablerealconstdim	::= "<" realparamorconst {"," realparamorconst} ">" | "reals" .
+unorderablestrconstdim	::= "{" strparamorconst {"," strparamorconst} "}" .
+orderablestrconstdim	::= "<" strparamorconst {"," strparamorconst} ">" | "strings" .
+constdimexpr		::= unorderableintconstdim | orderableintconstdim
+			| unorderablerealconstdim | orderablerealconstdim
+			| unorderablestrconstdim | orderablestrconstdim .
+hprecbinboolop		::= "&" | "^" .
+lprecbinboolop		::= "|" .
+unaryboolop		::= "!" .
+arith2boolop		::= "==" | "!=" | ">" | ">=" | "<" | "<=" .
+hprecarith2arithop	::= "*" | "/" | "%" | "pow" | "nrt" | "log" . 
+lprecarith2arithop	::= "+" | "-" .
+aggrop			::= hprecarith2arithop | lprecarith2arithop .
+hprecboolsetop		::= "#" | "><" .
+lprecboolsetop		::= "+" | "-" | "^" .
+unarysetop		::= "powerset" | "complement" .
+quantifierop		::= "forall" | "exists" .
+uandop			::= "unionover" | "andover" .
+setcmpop		::= "sd" | "wd" .
+scopedsetstmtlist	::= '{' {booleanstmt} '}' .
+setstmt			::= setinferdefn | predassign | unvdefn
+			| unvinferdefn .
+
+/*
+ *	The operator 'var2type' returns a type that can only take on the same
+ *	values as can the variable 'identifier'.
+ *
+ *	Need to think how we deal with aggregate versus non-aggregate types in
+ *	this situation...
+ */
+noisyUniverseType	::= noisyTypeExpression | "(" "var2type" identifier ")" .
+
+unvfactor		::= type | "(" unvexpr ")" .
+unvterm			::= unvfactor {hprecboolsetop unvfactor}
+			| unarysetop unvfactor .
+unvexpr			::= unvterm {lprecboolsetop unvterm} .
+aggrexpr		::= "aggregate" sreg aggrop uimm uimm .
+abstrexpr		::= "abstract" sreg uimm .
+uandoverexpr		::= "(" uandop varintro predexpr setexpr ")" .
+varintro		::= identifier ":" noisyUniverseType .
+vartuple		::= "(" identifier {"," identifier} ")" .
+arithconst		::= intparamorconst | realparamorconst .
+sumover			::= "sum" varintro "from" arithexpr "to" arithexpr "of" arithexpr .
+prodover		::= "product" varintro "from" arithexpr "to" arithexpr "of" arithexpr .
+arithfactor		::= arithconst | varintro | identifier | "(" arithexpr ")" .
+arithterm		::= arithfactor {hprecarith2arithop arithfactor} .
+arithexpr		::= arithterm {lprecarith2arithop arithterm} | sumover | prodover .
+quantboolterm		::= quantifierop varintro predexpr .
+setcmpterm		::= setexpr setcmpop setexpr .
+predfactor		::= boolconst | preg | "(" predexpr ")" .
+predterm		::= predfactor {hprecbinboolop predfactor}
+			| arithexpr arith2boolop ["@" (intparamorconst | realparamorconst)] arithexpr
+			| quantboolterm | regfullterm | setcmpterm
+			| vartuple "in" ["@" (intparamorconst | realparamorconst)] setexpr
+			| unaryboolop predfactor .
+predexpr		::= predterm {lprecbinboolop predterm} .
+minexpr			::= "min" sreg .
+setfactor		::= constsetexpr ":" unvexpr | "{" "}" | "omega" | sreg
+			| "(" setexpr ")" | "(" predexpr ":" unvexpr ")" .
+setterm			::= setfactor {hprecboolsetop setfactor}
+			| unarysetop setfactor | minexpr
+			| aggrexpr | abstrexpr | uandoverexpr .
+setexpr			::= setterm {lprecboolsetop setterm} .

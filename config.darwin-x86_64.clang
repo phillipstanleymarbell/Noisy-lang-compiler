@@ -2,7 +2,7 @@ AR			= /usr/bin/ar
 RANLIB			= /usr/bin/ranlib
 HOSTNAME		= localhost#`hostname`
 PLATFORM_DFLAGS		+= -DkNoisyBasePath="\"/Library/WebServer/Documents/tmp/\"" -DkNoisyDotCommand="\"/opt/local/bin/dot\"" -DkNoisyLogoPath="\"http://$(HOSTNAME)/tmp/Noisy-logo.png\"" -DkNoisyCgiFileUrlBase=\""http://$(HOSTNAME)/tmp/\"" -DkNoisyCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/noisycgi-darwin\""
-PLATFORM_OPTFLAGS	= -O0
+PLATFORM_OPTFLAGS	= -O3
 PLATFORM_DBGFLAGS	+= -g
 PLATFORM_CFLAGS		+= -DNoisyOsMacOSX
 CGI_BIN			= /Library/WebServer/CGI-Executables/
