@@ -62,7 +62,6 @@
 
 static const char		kNoisyCgiInputLogStub[]		= "XXXXXXXXXX";
 static const char		kNoisyCgiInputLogExtension[]	= ".noisy";
-static const char		kNoisyCgiHtmlInputStyle[]	= "font-family: 'lucida console', monospace; font-size:10px;color:#333333;background-color:#DFDFDF";
 
 static char **			getCgiVars(void);
 static void			htmlPrint(char *  s);
@@ -353,7 +352,7 @@ main(void)
 	sigaction(SIGVTALRM, &sa, NULL);
 
 
-	noisyCgiState = noisyInit(kNoisyModeDefault|kNoisyModeCallStatistics|kNoisyModeCallTracing|kNoisyModeCGI);
+	noisyCgiState = noisyInit(kNoisyModeDefault|kNoisyModeCallStatistics/* | kNoisyModeCallTracing */|kNoisyModeCGI);
 	noisyTimestampsInit(noisyCgiState);
 
 
@@ -367,13 +366,26 @@ main(void)
 	printf("<title>Noisy version %s</title>\n", kNoisyVersion);
 
 	/*
-	 *	To get numbered textarea (via JQuery Lined TextArea plugin)
+	 *	Javascript for ACE editor hookup. Needs both ACE code editor plugin and jquery-git to work.
+	 *
+	 *	See	https://groups.google.com/forum/#!topic/ace-discuss/dDMVH_RbsAk
 	 */
-	printf("<script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js\"></script>\n");
-	printf("<script src=\"../tmp/jquery-linedtextarea.js\"></script>\n");
-	printf("<link href=\"../tmp/jquery-linedtextarea.css\" type=\"text/css\" rel=\"stylesheet\"/>\n");
-	
-	
+	printf("        <script src=\"../tmp/jquery-git.js\"></script>\n");
+	printf("        <style type=\"text/css\" media=\"screen\">\n");
+	printf("          body {\n");
+	printf("              overflow: hidden;\n");
+	printf("          }\n");
+	printf("          #editor {\n");
+	printf("              margin: 0;\n");
+	printf("              position: absolute;\n");
+	printf("              top: 0;\n");
+	printf("              bottom: 0;\n");
+	printf("              left: 0;\n");
+	printf("              right: 0;\n");
+	printf("          }\n");
+	printf("        </style>\n");
+
+
 	/*
 	 *	A little bit of inline JavaScript show/hide "Errors".
 	 *	(from http://www.dustindiaz.com/seven-togglers/)
@@ -395,16 +407,11 @@ main(void)
 
 
 	/*
-	 *	A little bit of inline JavaScript to force cursor to end of
-	 *	textarea 'x' below.
+	 *	Toggle the Info and Errors blocks off on load.
 	 */
 	printf("<script type=\"text/javascript\">\n");
 	printf("	window.onload=function()\n");
 	printf("	{\n");
-	printf("		ta = document.getElementById('inputarea');\n");
-	printf("		ta.focus();\n");
-	printf("		ta.setSelectionRange(ta.scrollHeight*ta.scrollWidth, ta.scrollHeight*ta.scrollWidth);\n");
-	printf("		ta.scrollTop = ta.scrollHeight;\n");
 	printf("		toggle('noisyerrs');\n");
 	printf("		toggle('noisyinfo');\n");
 	printf("	}\n");
@@ -412,31 +419,14 @@ main(void)
 
 
 	/*
-	 *		CSS hack to force wrapping of <pre> tag body.
-	 *	(www.longren.org/2006/09/27/wrapping-text-inside-pre-tags/)
+	 *	TODO: move logo URL into a constant definition
 	 */
-	printf("<style type=\"text/css\">\n");
-	printf("pre\n");
-	printf("{\n");
-	printf("	overflow-x: auto;\n");
-	printf("	white-space: pre-wrap;\n");
-	printf("	white-space: -moz-pre-wrap;\n");
-	printf("	white-space: -pre-wrap;\n");
-	printf("	white-space: -o-pre-wrap;\n");
-	printf("	word-wrap: break-word;\n");
-	printf("	font-size:12px;\n");
-	printf("}\n");
-	printf("</style>\n");
-
-
-	//TODO: move logo URL into a constant definition
 	printf("<link rel=\"mask-icon\" href=\"../tmp/noisy-pinned-tab-logo.svg\" color=\"orange\">");
 
 	printf("</head>\n");
 
-
 	printf("<body text=\"#555555\" bgcolor=\"#FFFFFF\">\n");
-	printf("<font face=\"Arial, Helvetica, sans-serif\" style=\"font-family: arial, 'lucida console', sans-serif; font-size:12px;color:#555555;\">\n");
+	printf("<font face=\"Arial, Helvetica, sans-serif\" style=\"font-family: arial, 'lucida console', sans-serif; font-size:12px;color:#777777;\">\n");
 
 
 	/*
@@ -451,8 +441,8 @@ main(void)
 		omp_get_max_threads());
 #endif
 
-	printf("<img src=\"%s\" width=150 align=right>\n", kNoisyLogoPath);
-	printf("<br><br>\n");
+	printf("<img src=\"%s\" width=150 align=\"right\">\n", kNoisyLogoPath);
+	printf("<br><br><br><br>\n");
 
 	cgiVars = getCgiVars();
 	for (i = 0; cgiVars[i]; i+= 2)
@@ -679,8 +669,8 @@ main(void)
 	 */
 	printf("<br>\n");
 	printf("<br>\n");
-	printf("<span style=\"background-color:#99CCFF; color:#000000;\" onclick=\"JavaScript:toggle('noisyinfo')\">");
-	printf("&nbsp;&nbsp;Informational Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;</span><br>");
+	printf("<div style=\"background-color:#99CCFF; color:#000000;\" onclick=\"JavaScript:toggle('noisyinfo')\">");
+	printf("&nbsp;&nbsp;Informational Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;</div>");
 	printf("<table width=\"%d\" border=\"0\">\n", fmtWidth);
 	printf("<tr><td>\n");
 	printf("<pre>");
@@ -716,13 +706,13 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	
 	if (strlen(noisyCgiState->Fperr->circbuf) != 0)
 	{
-		printf("<span width=\"%d\" style=\"background-color:FFCC00; color:#FF0000\" onclick=\"JavaScript:toggle('noisyerrs')\">", fmtWidth);
+		printf("<div width=\"%d\" style=\"background-color:FFCC00; color:#FF0000\" onclick=\"JavaScript:toggle('noisyerrs')\">", fmtWidth);
 		printf("&nbsp;&nbsp;Error Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
-		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><br><table width=\"%d\" border=\"0\"><tr><td><pre>", fmtWidth);
+		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td><pre>", fmtWidth);
 		printf("<span style=\"background-color:whitesmoke\" id='noisyerrs'>%s</span></pre></td></tr></table>", noisyCgiState->Fperr->circbuf);
 	}
 
-	printf("<span style=\"background-color:#CCFF33\">\n");
+	printf("<div style=\"background-color:#CCFF33\">\n");
 	printf("&nbsp;&nbsp;&nbsp;<b>&#9879;</b>&nbsp;&nbsp;&nbsp;(<b>Noisy/" FLEX_UVLONGFMT 
 					":</b>&nbsp;&nbsp;Operation completed in %.6f&thinsp;seconds S+U time; &nbsp; Mem = "
 					FLEX_UVLONGFMT "&thinsp;KB, &nbsp; &#916; Mem = " FLEX_UVLONGFMT "&thinsp;KB).\n",
@@ -733,8 +723,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 					(	(end.ru_stime.tv_usec - start.ru_stime.tv_usec) +
 						(end.ru_utime.tv_usec - start.ru_utime.tv_usec))/1E6,
 					endRss, endRss-startRss);
-	printf("</span>\n");
-	printf("<br>\n");
+	printf("</div>\n");
 
 
 	/*
@@ -747,41 +736,62 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	}
 
 	printf("<div>\n");
-	printf("<form action=\"%s-%s\">\n", kNoisyCgiExecutableUrl, kNoisyL10N);
 	
-	/*
-	 *	"spellcheck=false" is in the HTML5 spec. We do this to have
-	 *	the nicety of browser (e.g., safari) not underlining code
-	 *	as typos.
-	 */
-	printf("        <textarea class=\"lined\" spellcheck=\"false\" style=\"%s\" type=\"textarea\" cols=\"%d\" rows=\"%d\" id=\"inputarea\" name=\"c\">\n",
-			kNoisyCgiHtmlInputStyle, (fmtWidth*100)/618, lines+2);
+	printf("<form action=\"%s-%s\">\n", kNoisyCgiExecutableUrl, kNoisyL10N);
+	printf("<textarea NAME=\"c\" name=\"data-editor\" data-editor=\"noisy\"  COLS=1 ROWS=1>\n");
 	printf("%s", noisyCodeBuffer);
 	printf("</textarea>\n");
-	
-	/*
-	 *	Run javascript to set line numbers using JQuery Lined TextArea plugin
-	 */
-	printf("<script>\n");
-	printf("$(function() {\n");
-	printf("        $(\".lined\").linedtextarea(\n");
-	printf("                {selectedLine: %llu}\n", noisyLexPeek(noisyCgiState, 1)->sourceInfo->lineNumber);
-	printf("        );\n");
-	printf("});\n");
-	printf("</script>\n");
-	
-	
 	printf("<br><input type=\"hidden\" name=\"w\" value=\"%d\">\n", fmtWidth);
-	
 	printf("<br><b>Compiler Parameters</b><br>\n");
 	printf("Backends Bitmap&nbsp;<input type=\"number\" name=\"s\" style=\"width: 30px\" value=\"%d\"><br>\n", cgiSparameter);
 	printf("Passes Bitmap&nbsp;<input type=\"number\" name=\"o\" style=\"width: 60px\" value=\"%d\"><br>\n", cgiOparameter);
 	printf("Dot detail level&nbsp;<input type=\"number\" name=\"t\" style=\"width: 60px\" value=\"%d\"><br>\n", cgiTparameter);
 	printf("<input type=\"submit\" name=\"b\" value=\"compile\">\n");
 	printf("</form>\n");
+	
 	printf("</div>\n");
 
 	printf("</font>\n");
+
+
+	/*
+	 *	Javascript for ACE editor hookup. Adapted from 
+	 *
+	 *	See	https://groups.google.com/forum/#!topic/ace-discuss/dDMVH_RbsAk
+	 */
+	printf("<script src=\"../tmp/src-noconflict/ace.js\" type=\"text/javascript\" charset=\"utf-8\"></script>\n");
+	printf("<script>\n");
+	printf("    // Hook up ACE editor to all textareas with data-editor attribute\n");
+	printf("    $(function () {\n");
+	printf("        $('textarea[data-editor]').each(function () {\n");
+	printf("            var textarea = $(this);\n");
+	printf("            var editDiv = $('<div>', {\n");
+	printf("                position: 'absolute',\n");
+	printf("                //width: textarea.width(),\n");
+	printf("                //height: textarea.height(),\n");
+	printf("                'class': textarea.attr('class')\n");
+	printf("            }).insertBefore(textarea);\n");
+	printf("            textarea.css('visibility', 'hidden');\n");
+	printf("            var editor = ace.edit(editDiv[0]);\n");
+	printf("            editor.renderer.setShowGutter(true);\n");
+	printf("            editor.getSession().setValue(textarea.val());\n");
+	printf("            editor.setKeyboardHandler(\"ace/keyboard/vim\");\n");
+	printf("            editor.setTheme(\"ace/theme/solarized_light\");\n");
+	printf("            editor.session.setMode(\"ace/mode/c_cpp\");\n");
+	printf("            editor.setShowPrintMargin(false);\n");
+
+	/*
+	 *	Have ACE autosize the height, with an upper limit at maxLines
+	 */
+	printf("	editor.setOptions({maxLines: 40});\n");
+
+	printf("            // Copy back to textarea on form submission...\n");
+	printf("            textarea.closest('form').submit(function () {\n");
+	printf("                textarea.val(editor.getSession().getValue());\n");
+	printf("            })\n");
+	printf("        });\n");
+	printf("    });\n");
+	printf("</script>\n");
 
 	/*
 	 *	So all uses of any instance of the CGI version show up in
