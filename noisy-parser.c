@@ -1685,7 +1685,10 @@ noisyParseGuardBody(NoisyState *  N, NoisyScope *  currentScope)
 
 	if (noisyInFollow(N, kNoisyIrNodeType_PguardBody))
 	{
-		fprintf(stderr, "In noisyParseGuardBody(), known bug (noisyInFollow(N, kNoisyIrNodeType_PguardBody))\n");
+		if (N->verbosityLevel & kNoisyVerbosityDebugParser)
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParseGuardBody(), known bug (noisyInFollow(N, kNoisyIrNodeType_PguardBody))\n");
+		}
 
 		/*
 		 *	BUG/TODO: we should not be returning NULL: return the childless Node n.
@@ -2734,15 +2737,15 @@ noisyParserSemanticError(NoisyState *  N, const char * format, ...)
 	 *	We use varargs so that we can pass in a list of strings that should
 	 *	get concatenated, akin to joining them with "+" in Limbo.
 	 */
-fprintf(stderr, "In noisyParserSemanticError(), Ignoring semantic error...\n");
-fprintf(stderr, "In noisyParserSemanticError(), Source file line %llu\n", noisyLexPeek(N, 1)->sourceInfo->lineNumber);
-	
+	if (N->verbosityLevel & kNoisyVerbosityDebugParser)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParserSemanticError(), Ignoring semantic error...\n");
+		flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParserSemanticError(), Source file line %llu\n", noisyLexPeek(N, 1)->sourceInfo->lineNumber);
+	}
+
 	va_start(arg, format);
-	flexprint(N->Fe, N->Fm, N->Fperr, format, arg);
-fprintf(stderr, format, arg);
+//	flexprint(N->Fe, N->Fm, N->Fperr, format, arg);
 	va_end(arg);
-	
-	//flexprint(N->Fe, N->Fm, N->Fperr, "%s: %s\n", Esemantics, ...);
 }
 
 
@@ -2751,14 +2754,18 @@ noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedProductionOrTo
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorRecovery);
 
-fprintf(stderr, "In noisyParserErrorRecovery(), about to discard tokens...\n");
+	if (N->verbosityLevel & kNoisyVerbosityDebugParser)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParserErrorRecovery(), about to discard tokens...\n");
+	}
+
 	while (!noisyInFollow(N, expectedProductionOrToken))
 	{
 		/*
 		 *	Retrieve token and discard...
 		 */
 		NoisyToken *	token = noisyLexGet(N);
-		if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
+		if (N->verbosityLevel & kNoisyVerbosityDebugParser)
 		{
 			noisyLexDebugPrintToken(N, token);
 		}
