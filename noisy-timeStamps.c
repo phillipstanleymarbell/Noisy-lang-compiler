@@ -127,8 +127,6 @@ const char *	NoisyTimeStampKeyStrings[kNoisyTimeStampKeyMax] =
 	[kNoisyTimeStampKeyParserProgtypeName2scope]			"kNoisyTimeStampKeyParserProgtypeName2scope",
 	[kNoisyTimeStampKeyParserErrorUseBeforeDefinition]		"kNoisyTimeStampKeyParserErrorUseBeforeDefinition",
 	[kNoisyTimeStampKeyParserErrorMultiDefinition]			"kNoisyTimeStampKeyParserErrorMultiDefinition",
-	[kNoisyTimeStampKeyParserTermSyntaxError]			"kNoisyTimeStampKeyParserTermSyntaxError",
-	[kNoisyTimeStampKeyParserTermErrorRecovery]			"kNoisyTimeStampKeyParserTermErrorRecovery",
 	[kNoisyTimeStampKeyParserPeekCheck]				"kNoisyTimeStampKeyParserPeekCheck",
 	[kNoisyTimeStampKeyLexPeekPrint]				"kNoisyTimeStampKeyLexPeekPrint",
 	[kNoisyTimeStampKeyParserDepthFirstWalk]			"kNoisyTimeStampKeyParserDepthFirstWalk",

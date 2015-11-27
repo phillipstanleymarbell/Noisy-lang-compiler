@@ -115,8 +115,6 @@ typedef enum
 	kNoisyTimeStampKeyParserProgtypeName2scope,
 	kNoisyTimeStampKeyParserErrorUseBeforeDefinition,
 	kNoisyTimeStampKeyParserErrorMultiDefinition,
-	kNoisyTimeStampKeyParserTermSyntaxError,
-	kNoisyTimeStampKeyParserTermErrorRecovery,
 	kNoisyTimeStampKeyParserPeekCheck,
 	kNoisyTimeStampKeyLexPeekPrint,
 	kNoisyTimeStampKeyParserDepthFirstWalk,

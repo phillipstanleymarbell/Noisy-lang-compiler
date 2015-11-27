@@ -106,8 +106,6 @@ extern void		noisyError(NoisyState *  N, const char *  msg);
 static NoisyScope *	progtypeName2scope(NoisyState *  N, const char *  identifier);
 static void		errorUseBeforeDefinition(NoisyState *  N, const char *  identifier);
 static void		errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol);
-static void		termSyntaxError(NoisyState *  N, NoisyIrNodeType expectedType);
-static void		termErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedType);
 static bool		peekCheck(NoisyState *  N, int lookAhead, NoisyIrNodeType expectedType);
 static NoisyIrNode *	depthFirstWalk(NoisyState *  N, NoisyIrNode *  node);
 static void		addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);
@@ -2557,8 +2555,12 @@ noisyParseTerminal(NoisyState *  N, NoisyIrNodeType expectedType)
 
 	if (!peekCheck(N, 1, expectedType))
 	{
-		termSyntaxError(N, expectedType);
-		termErrorRecovery(N, expectedType);
+		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType);
+
+		/*
+		 *	In this case, we know the specific expected type/token.
+		 */
+		noisyParserErrorRecovery(N, expectedType);
 	}
 
 	NoisyToken *	t = noisyLexGet(N);
@@ -2580,8 +2582,12 @@ noisyParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType,
 
 	if (!peekCheck(N, 1, expectedType))
 	{
-		termSyntaxError(N, expectedType);
-		termErrorRecovery(N, expectedType);
+		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType);
+
+		/*
+		 *	In this case, we know the specific expected type/token.
+		 */
+		noisyParserErrorRecovery(N, expectedType);
 	}
 
 	NoisyToken *	t = noisyLexGet(N);
@@ -2610,8 +2616,12 @@ noisyParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expecte
 
 	if (!peekCheck(N, 1, expectedType))
 	{
-		termSyntaxError(N, expectedType);
-		termErrorRecovery(N, expectedType);
+		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType);
+
+		/*
+		 *	In this case, we know the specific expected type/token.
+		 */
+		noisyParserErrorRecovery(N, expectedType);
 	}
 
 	NoisyToken *	t = noisyLexGet(N);
@@ -2647,7 +2657,7 @@ noisyParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expecte
 
 
 void
-noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType currentlyParsingProduction, NoisyIrNodeType expectedProductionOrToken)
+noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType currentlyParsingTokenOrProduction, NoisyIrNodeType expectedProductionOrToken)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserSyntaxError);
 
@@ -2676,7 +2686,7 @@ noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType currentlyParsingProducti
 						EsyntaxD,
 						kNoisyErrorTokenHtmlTagOpen);
 		noisyLexPrintToken(N, noisyLexPeek(N, 1));
-		flexprint(N->Fe, N->Fm, N->Fperr, "\"%s %s %s.<br><br>%s%s", kNoisyErrorTokenHtmlTagClose, EsyntaxB, gProductionDescriptions[currentlyParsingProduction], kNoisyErrorDetailHtmlTagOpen, EsyntaxC);
+		flexprint(N->Fe, N->Fm, N->Fperr, "\"%s %s %s.<br><br>%s%s", kNoisyErrorTokenHtmlTagClose, EsyntaxB, gProductionDescriptions[currentlyParsingTokenOrProduction], kNoisyErrorDetailHtmlTagOpen, EsyntaxC);
 	}
 	else
 	{
@@ -2687,24 +2697,24 @@ noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType currentlyParsingProducti
 						noisyLexPeek(N, 1)->sourceInfo->columnNumber,
 						EsyntaxD);
 		noisyLexPrintToken(N, noisyLexPeek(N, 1));
-		flexprint(N->Fe, N->Fm, N->Fperr, "\" %s %s.\n\n\t%s", EsyntaxB, gProductionDescriptions[currentlyParsingProduction], EsyntaxC);
+		flexprint(N->Fe, N->Fm, N->Fperr, "\" %s %s.\n\n\t%s", EsyntaxB, gProductionDescriptions[currentlyParsingTokenOrProduction], EsyntaxC);
 	}
 
 	if (((expectedProductionOrToken > kNoisyIrNodeType_TMax) && (expectedProductionOrToken < kNoisyIrNodeType_PMax)) || (expectedProductionOrToken == kNoisyIrNodeTypeMax))
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, " one of:\n\n\t\t");
-		for (int i = 0; i < kNoisyIrNodeTypeMax && gNoisyFirsts[currentlyParsingProduction][i] != kNoisyIrNodeTypeMax; i++)
+		for (int i = 0; i < kNoisyIrNodeTypeMax && gNoisyFirsts[currentlyParsingTokenOrProduction][i] != kNoisyIrNodeTypeMax; i++)
 		{
 			if (seen > 0)
 			{
 				flexprint(N->Fe, N->Fm, N->Fperr, ",\n\t\t");
 			}
 
-			flexprint(N->Fe, N->Fm, N->Fperr, "%s", gReservedTokenDescriptions[gNoisyFirsts[currentlyParsingProduction][i]]);
+			flexprint(N->Fe, N->Fm, N->Fperr, "%s", gReservedTokenDescriptions[gNoisyFirsts[currentlyParsingTokenOrProduction][i]]);
 			seen++;
 		}
 	}
-	else if (expectedProductionOrToken < kNoisyIrNodeType_TMax)
+	else if ((currentlyParsingTokenOrProduction == kNoisyIrNodeTypeMax) && (expectedProductionOrToken < kNoisyIrNodeType_TMax))
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, ":\n\n\t\t");
 		flexprint(N->Fe, N->Fm, N->Fperr, "%s", gTerminalStrings[expectedProductionOrToken]);
@@ -2759,20 +2769,24 @@ noisyParserErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedProductionOrTo
 		flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParserErrorRecovery(), about to discard tokens...\n");
 	}
 
-	while (!noisyInFollow(N, expectedProductionOrToken))
+	/*
+	while (!noisyInFollow(N, expectedProductionOrToken) && N->tokenList != NULL)
 	{
-		/*
+		 *
 		 *	Retrieve token and discard...
-		 */
+		 *
 		NoisyToken *	token = noisyLexGet(N);
 		if (N->verbosityLevel & kNoisyVerbosityDebugParser)
 		{
 			noisyLexDebugPrintToken(N, token);
 		}
 	}
+	*/
 
 	if ((N != NULL) && (N->jmpbufIsValid))
 	{
+fprintf(stderr, "doing longjmp");
+
 		/*
 		 *	Could pass in case-specific info here, but just
 		 *	pass 0.
@@ -2843,90 +2857,6 @@ static void
 errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
-}
-
-/*
- *	TODO: merge this with the regular noisySyntaxError()
- */
-static void
-termSyntaxError(NoisyState *  N, NoisyIrNodeType expectedType)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserTermSyntaxError);
-
-	NoisyToken *	t = noisyLexPeek(N, 1);
-
-	//errors++;
-	switch (t->type)
-	{
-		case kNoisyIrNodeType_Tidentifier:
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: on line %llu. %s \"%s\", saw \"%s\"\n",
-				EsyntaxA, noisyLexPeek(N, 1)->sourceInfo->lineNumber, EsyntaxC, gTerminalStrings[expectedType],
-				t->identifier);
-
-			break;
-		}
-		
-		case kNoisyIrNodeType_TintConst:
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: on line %llu. %s \"%s\", saw \"%d\"\n",
-				EsyntaxA, noisyLexPeek(N, 1)->sourceInfo->lineNumber, EsyntaxC, gTerminalStrings[expectedType],
-				t->integerConst);
-
-			break;
-		}
-		
-		case kNoisyIrNodeType_TrealConst:
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: on line %llu. %s \"%s\", saw \"%f\"\n",
-				EsyntaxA, noisyLexPeek(N, 1)->sourceInfo->lineNumber, EsyntaxC, gTerminalStrings[expectedType],
-				t->realConst);
-
-			break;
-		}
-		
-		case kNoisyIrNodeType_TstringConst:
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: on line %llu. %s \"%s\", saw \"%s\"\n",
-				EsyntaxA, noisyLexPeek(N, 1)->sourceInfo->lineNumber, EsyntaxC, gTerminalStrings[expectedType],
-				t->stringConst);
-
-			break;
-		}
-		
-		default:
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, 
-				"%s: on line %llu. %s \"%s\", saw \"%s\"\n",
-				EsyntaxA, noisyLexPeek(N, 1)->sourceInfo->lineNumber, EsyntaxC, gTerminalStrings[expectedType],
-				gReservedTokenDescriptions[t->type]);
-			
-		}
-	}
-
-	/*
-	 *	flexprint(N->Fe, N->Fm, N->Fperr, "\n\n%d tokens left in input stream\n\n\n", N->tokenListLength);
- 	 *	while (N->tokenList != NULL)
-	 *	{
-	 *		flexprint(N->Fe, N->Fm, N->Fperr, "%10d ", i++);
-	 *		noisyLexGet(N);
-	 *	}
-	 */
-
-	noisyFatal(N, Esanity);
-}
-
-/*
- *	TODO: merge this with the regular noisySyntaxErrorRecovery()
- */
-static void
-termErrorRecovery(NoisyState *  N, NoisyIrNodeType expectedType)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserTermErrorRecovery);
 }
 
 
