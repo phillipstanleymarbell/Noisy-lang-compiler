@@ -3,3 +3,233 @@
  *
  *	We use this, e.g., to save/restore the IR and Symbol Table to files.
  */
+
+package Noisy;
+
+
+
+message NoisySourceInfo
+{
+	/*
+	 *	Not yet used; for when we implement includes, this will be
+	 *	the 'genealogy' of includes leading to this token.
+	 */
+	optional repeated string	genealogy;
+	
+	required string			fileName;
+	required int64			lineNumber;
+	required int64			columnNumber;
+	required int64			length;
+}
+
+
+message NoisyIrNode
+{
+	required int64			type;
+
+	/*
+	 *	Syntactic (AST) information.
+	 */
+	optional string			tokenString;
+	optional NoisySourceInfo	sourceInfo;
+	optional NoisyIrNode		irParent;
+	optional NoisyIrNode		irLeftChild;
+	optional NoisyIrNode		irRightChild;
+
+	optional NoisySymbol		symbol;
+
+	/*
+	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
+	 */
+	required int64			nodeColor;
+}
+
+
+
+
+message NoisyToken
+{
+	required int64			type;
+	optional string			identifier;
+	optional int64			integerConst;
+	optional real			realConst;
+	optional string			stringConst;
+	required NoisySourceInfo	sourceInfo;
+	
+	NoisyToken *		prev;
+	NoisyToken *		next;
+}
+
+
+message NoisyScope
+{
+	/*
+	 *	For named scopes (at the moment, only Progtypes)
+	 */
+	char *			identifier;
+
+	/*
+	 *	Hierarchy. The firstChild is used to access its siblings via firstChild->next
+	 */
+	NoisyScope *		parent;
+	NoisyScope *		firstChild;
+
+	/*
+	 *	Symbols in this scope. The list of symbols is accesed via firstSymbol->next
+	 */
+	NoisySymbol *		firstSymbol;
+
+	/*
+	 *	Where in source scope begins and ends
+	 */
+	NoisySourceInfo *	begin;
+	NoisySourceInfo *	end;
+
+	/*
+	 *	For chaining together scopes (currently only used for Progtype
+	 *	scopes and for chaining together children).
+	 */
+	NoisyScope *		next;
+	NoisyScope *		prev;
+}
+
+
+message NoisySymbol
+{
+	char *			identifier;
+
+	/*
+	 *	This field is duplicated in the AST node, since only
+	 *	identifiers get into the symbol table:
+	 */
+	NoisySourceInfo *	sourceInfo;
+
+	/*
+	 *	Declaration, type definition, use, etc. (kNoisySymbolTypeXXX)
+	 */
+	int 			symbolType;
+
+	/*
+	 *	Scope within which sym appears
+	 */
+	NoisyScope *		scope;
+
+	/*
+	 *	If an identifier use, definition's Sym, if any
+	 */
+	NoisySymbol *		definition;
+
+	/*
+	 *	Subtree in AST that represents typeexpr
+	 */
+	NoisyIrNode *		typeTree;
+
+	/*
+	 *	If an I_CONST, its value.
+	 */
+	int			intConst;
+	double			realConst;
+	char *			stringConst;
+	
+	/*
+	 *	For chaining together sibling symbols in the same scope
+	 */
+	NoisySymbol *		next;
+	NoisySymbol *		prev;
+}
+
+
+message NoisyState
+{
+	/*
+	 *	Timestamps to track lifecycle
+	 */
+	uint64_t		initializationTimestamp;
+	NoisyTimeStamp *	timestamps;
+	uint64_t		timestampCount;
+	uint64_t		timestampSlots;
+
+
+	/*
+	 *	Track aggregate time spent in all routines, by incrementing
+	 *	timeAggregates[timeAggregatesLastKey] by (now - timeAggregatesLastTimestamp)
+	 */
+	uint64_t *		timeAggregates;
+	NoisyTimeStampKey	timeAggregatesLastKey;
+	uint64_t		timeAggregatesLastTimestamp;
+	uint64_t		timeAggregateTotal;
+	uint64_t *		callAggregates;
+	uint64_t		callAggregateTotal;
+
+
+	/*
+	 *	Used to get error status from FlexLib routines
+	 */
+	FlexErrState *		Fe;
+
+	/*
+	 *	State for the portable/monitoring allocator (FlexM)
+	 */
+	FlexMstate *		Fm;
+
+	/*
+	 *	State for portable/buffering print routines (FlexP)
+	 *	We have one buffer for informational messages, another
+	 *	for errors and warnings.
+	 */
+	FlexPrintBuf *		Fperr;
+	FlexPrintBuf *		Fpinfo;
+
+
+	/*
+	 *	The output file of the last render. TODO: Not very happy
+	 *	with this solution as it stands... (inherited from Sal/svm)
+	 */
+	char *			lastDotRender;
+
+
+	/*
+	 *	This is the name of the progtype that the file we're parsing implements
+	 */
+	char *			progtypeOfFile;
+
+	/*
+	 *	We keep a global handle on the list of progtype scopes, for easy reference.
+	 *	In this use case, the node->identifier holds the scopes string name, and we
+	 *	chain then using their prev/next fields.
+	 */
+	NoisyScope *		progtypeScopes;
+
+
+	/*
+	 *	Lexer state
+	 */
+	char *			fileName;
+	char *			lineBuffer;
+	uint64_t		columnNumber;
+	uint64_t		lineNumber;
+	uint64_t		lineLength;
+	char *			currentToken;
+	uint64_t		currentTokenLength;
+	NoisyToken *		tokenList;
+	NoisyToken *		lastToken;
+	
+
+	/*
+	 *	The root of the IR tree, and top scope
+	 */
+	NoisyIrNode *		noisyIrRoot;
+	NoisyScope *		noisyIrTopScope;
+
+
+	NoisyMode		mode;
+	uint64_t		verbosityLevel;
+	uint64_t		dotDetailLevel;
+	uint64_t		optimizationLevel;
+	uint64_t		irPasses;
+	uint64_t		irBackends;
+
+
+	jmp_buf			jmpbuf;
+	bool			jmpbufIsValid;
+}
