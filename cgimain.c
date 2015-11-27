@@ -687,7 +687,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("%s", noisyCodeBuffer);
 	printf("</textarea>\n");
 
-	printf("<div style=\"background-color:#FFDB58\">\n");
+	printf("<div style=\"background-color:#EAFF7B\">\n");
 	printf("&nbsp;&nbsp;(<b>Noisy/" FLEX_UVLONGFMT 
 					":</b>&nbsp;&nbsp;Operation completed in %.6f&thinsp;seconds S+U time; &nbsp; Mem = "
 					FLEX_UVLONGFMT "&thinsp;KB, &nbsp; &#916; Mem = " FLEX_UVLONGFMT "&thinsp;KB).\n",
@@ -718,7 +718,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("<table width=\"%d\" border=\"0\">\n", fmtWidth);
 	printf("<tr><td>\n");
 	printf("<pre>");
-	printf("<span style=\"background-color:#99CCFF; display:none; color:#000000;\" id='noisyinfo'>");
+	printf("<span style=\"background-color:#D6FFFF; display:none; color:#000000;\" id='noisyinfo'>");
 	htmlPrint(noisyCgiState->Fpinfo->circbuf);
 	printf("</span>");
 	printf("</pre>\n");
@@ -727,10 +727,10 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 
 	if (strlen(noisyCgiState->Fperr->circbuf) != 0)
 	{
-		printf("<div width=\"%d\" style=\"background-color:FFCC00; color:#FF0000\" onclick=\"JavaScript:toggle('noisyerrs')\">", fmtWidth);
+		printf("<div width=\"%d\" style=\"background-color:FFDB58;\" onclick=\"JavaScript:toggle('noisyerrs')\">", fmtWidth);
 		printf("&nbsp;&nbsp;Error Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
 		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td><pre>", fmtWidth);
-		printf("<span style=\"background-color:whitesmoke display:none;\" id='noisyerrs'>%s</span></pre></td></tr></table>", noisyCgiState->Fperr->circbuf);
+		printf("<span style=\"background-color:whitesmoke display:none; color:#000000;\" id='noisyerrs'>%s</span></pre></td></tr></table>", noisyCgiState->Fperr->circbuf);
 	}
 
 
@@ -761,7 +761,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	
 	printf("<table style=\"width:100%%;\">\n");
 	printf("<tr><td>\n");
-	printf("<table style=\"width:300px; background-color: #2C3539\">\n");
+	printf("<table style=\"width:300px; background-color: #657383\">\n");
 	printf("<tr><td>Backends Bitmap	</td><td><input type=\"number\" name=\"s\" style=\"width: 30px\" value=\"%d\"></td></tr>\n", cgiSparameter);
 	printf("<tr><td>Passes Bitmap	</td><td><input type=\"number\" name=\"o\" style=\"width: 60px\" value=\"%d\"></td></tr>\n", cgiOparameter);
 	printf("<tr><td>Dot detail level</td><td><input type=\"number\" name=\"t\" style=\"width: 60px\" value=\"%d\"></td></tr>\n", cgiTparameter);
