@@ -92,10 +92,10 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrN
 	 *	string for each node in the graph. NOTE: dot renders _much_ faster
 	 *	if we don't supply a fontname (which it often cannot find anyway)...
 	 */
-	nilFormatString		= "style=filled,color=\"#003333\",fontcolor=white,fontsize=8,width=0.3,height=0.16,fixedsize=true,label=\"nil\", shape=record";
+	nilFormatString		= "style=filled,color=\"#003333\",fontcolor=white,fontname=\"LucidaSans-Typewriter\",fontsize=8,width=0.3,height=0.16,fixedsize=true,label=\"nil\", shape=record";
 	nodePropertiesString	= "";
 	nodeBorderString	= "M";
-	typeString		= gNoisyAstNodeStrings[p->type];
+	typeString		= &gNoisyAstNodeStrings[p->type][strlen("kNoisyIrNodeType_")];
 
 	/*
 	 *	For identifiers, different graph node properties
@@ -135,14 +135,14 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrN
 	if (N->dotDetailLevel & kNoisyDotDetailLevelNoText)
 	{
 		n += snprintf(&buf[n], bufferLength,
-			"\tP" FLEX_PTRFMTH " [%sfontsize=8,height=0.8,"
+			"\tP" FLEX_PTRFMTH " [%sfontsize=8,fontname=\"LucidaSans-Typewriter\",height=0.8,"
 			"label=\"{ | {<left> | <right> }}\",shape=%srecord];\n",
 			(FlexAddr)p, nodePropertiesString, nodeBorderString);
 	}
 	else
 	{
 		n += snprintf(&buf[n], bufferLength,
-			"\tP" FLEX_PTRFMTH " [%sfontsize=8,height=0.8,"
+			"\tP" FLEX_PTRFMTH " [%sfontsize=8,height=0.8,fontname=\"LucidaSans-Typewriter\","
 			"label=\"{P" FLEX_PTRFMTH "\\ntype=%s\\n%s%s\\n%s %s%s%s| {<left> | <right> }}\",shape=%srecord];\n",
 			(FlexAddr)p, nodePropertiesString, (FlexAddr)p, typeString, 
 			((tokenString == NULL || strlen(tokenString) == 0) ? "" : " tokenString="), tokenString, 
