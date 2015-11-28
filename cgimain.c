@@ -368,13 +368,11 @@ main(void)
 	printf("        <script src=\"../tmp/jquery-git.js\"></script>\n");
 	printf("        <style type=\"text/css\" media=\"screen\">\n");
 	printf("          body {\n");
-	
 	/*
 	 *	NOTE:	Use this to prevent page ever having a scroll bar:
 	 *
 	 *	printf("              overflow: hidden;\n");
 	 */
-	
 	printf("              overflow: scroll;\n");
 	printf("          }\n");
 	printf("          #editor {\n");
@@ -761,14 +759,14 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	 */
 	printf("<script src=\"../tmp/src-noconflict/ace.js\" type=\"text/javascript\" charset=\"utf-8\"></script>\n");
 	printf("<script>\n");
-	printf("    // Hook up ACE editor to all textareas with data-editor attribute\n");
+	/*
+	 *	Tie ACE editor to textareas with data-editor attribute
+	 */
 	printf("    $(function () {\n");
 	printf("        $('textarea[data-editor]').each(function () {\n");
 	printf("            var textarea = $(this);\n");
 	printf("            var editDiv = $('<div>', {\n");
 	printf("                position: 'absolute',\n");
-	printf("                //width: textarea.width(),\n");
-	printf("                //height: textarea.height(),\n");
 	printf("                'class': textarea.attr('class')\n");
 	printf("            }).insertBefore(textarea);\n");
 	printf("            textarea.css('visibility', 'hidden');\n");
@@ -781,14 +779,14 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("            editor.session.setMode(\"ace/mode/c_cpp\");\n");
 	printf("            editor.setShowPrintMargin(false);\n");
 	printf("            editor.gotoLine(%llu, %llu, true);\n", noisyLexPeek(noisyCgiState, 1)->sourceInfo->lineNumber, noisyLexPeek(noisyCgiState, 1)->sourceInfo->columnNumber);
-
 	/*
 	 *	Have ACE autosize the height, with an upper limit at maxLines
 	 */
 	printf("	editor.setOptions({maxLines: 40});\n");
 	printf("	editor.setOptions({minLines: 40});\n");
-
-	printf("            // Copy back to textarea on form submission...\n");
+	/*
+	 *	Copy the ACE editor contents back to textarea for form submission.
+	 */
 	printf("            textarea.closest('form').submit(function () {\n");
 	printf("                textarea.val(editor.getSession().getValue());\n");
 	printf("            })\n");
