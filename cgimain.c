@@ -71,9 +71,6 @@ static struct rusage		start, end;
 static uint64_t			startRss, endRss;
 static char *			noisyCodeBuffer = NULL;
 
-//extern const char		gNoisyStickies[];
-//extern const char		gNoisyWhitespace[];
-
 
 NoisyState *			noisyCgiState;
 
@@ -96,7 +93,6 @@ timeoutSignalHandler(int signum)
 	write(STDOUT_FILENO, "</body>\n", strlen("</body>\n")+1);
 	write(STDOUT_FILENO, "</html>\n", strlen("</html>\n")+1);
 	write(STDOUT_FILENO, "\n", strlen("\n")+1);
-
 
 	/*
 	 *	We could pass in case-specific information here, but we
@@ -270,7 +266,6 @@ main(void)
 	char **			cgiVars;
 	char			logFileStub[kNoisyMaxFilenameLength+1];
 	int			jumpParameter, logFd, i;
-	//int			curLine = 1, curCol = 1;
 	int			fmtWidth = kNoisyCgiFormatWidth, cgiSparameter = 0, cgiOparameter = 0, cgiTparameter = 0;
 	char			tmp;
 	char *			ep = &tmp;
@@ -373,7 +368,13 @@ main(void)
 	printf("        <script src=\"../tmp/jquery-git.js\"></script>\n");
 	printf("        <style type=\"text/css\" media=\"screen\">\n");
 	printf("          body {\n");
-	//Use this to prevent page ever having a scroll bar: printf("              overflow: hidden;\n");
+	
+	/*
+	 *	NOTE:	Use this to prevent page ever having a scroll bar:
+	 *
+	 *	printf("              overflow: hidden;\n");
+	 */
+	
 	printf("              overflow: scroll;\n");
 	printf("          }\n");
 	printf("          #editor {\n");
@@ -385,7 +386,6 @@ main(void)
 	printf("              right: 0;\n");
 	printf("          }\n");
 	printf("          td {\n");
-	//printf("              color: white;\n");
 	printf("              font-family:sans-serif;\n");
 	printf("              font-size:12px;\n");
 	printf("          }\n");
@@ -408,24 +408,6 @@ main(void)
 	printf("		{\n");
 	printf("			x.style.display = '';\n");
 	printf("		}\n");
-	printf("	}\n");
-	printf("</script>\n");
-
-
-	/*
-	 *	Toggle the Info and Errors blocks off on load if they are non-empty.
-	 */
-	printf("<script type=\"text/javascript\">\n");
-	printf("	window.onload=function()\n");
-	printf("	{\n");
-	if (strlen(noisyCgiState->Fperr->circbuf))
-	{
-		printf("		toggle('noisyerrs');\n");
-	}
-	if (strlen(noisyCgiState->Fpinfo->circbuf))
-	{
-		printf("		toggle('noisyinfo');\n");
-	}
 	printf("	}\n");
 	printf("</script>\n");
 
@@ -594,10 +576,10 @@ main(void)
 		 *	XXX
 		 */
 		//if (noisyCgiState->irBackends & kNoisyIrBackendXXX)
-		{
-			//noisyIrXXXBackend(noisyCgiState, noisyCgiState->colorOptimizationLambda, 
-			//				noisyCgiState->shapeOptimizationPercent, noisyCgiState->colorOptimizationBackgroundBrightness);
-		}
+		//{
+		//	noisyIrXXXBackend(noisyCgiState, noisyCgiState->colorOptimizationLambda, 
+		//					noisyCgiState->shapeOptimizationPercent, noisyCgiState->colorOptimizationBackgroundBrightness);
+		//}
 
 
 		if (noisyCgiState->mode & kNoisyModeCallTracing)
@@ -628,15 +610,15 @@ main(void)
 	}
 	else
 	{
-		//TODO: we could intelligently set (and use) the jumpParameter...
-		
+		/*
+		 *	TODO: we could intelligently set (and use) the jumpParameter...
+		 */
+
 		/*	Return again after longjmp	*/
 		noisyCgiState->jmpbufIsValid = false;
 	}
 	getrusage(RUSAGE_SELF, &end);
 	endRss = noisyCheckRss(noisyCgiState);
-
-
 
 
 	/*
@@ -689,11 +671,11 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("<div>\n");
 
 	printf("<form action=\"%s-%s\">\n", kNoisyCgiExecutableUrl, kNoisyL10N);
-	printf("<textarea NAME=\"c\" name=\"data-editor\" data-editor=\"noisy\"  COLS=1 ROWS=1>\n");
+	printf("<textarea NAME=\"c\" name=\"data-editor\" data-editor=\"noisy\" COLS=1 ROWS=1>\n");
 	printf("%s", noisyCodeBuffer);
 	printf("</textarea>\n");
 
-	printf("<div style=\"background-color:#EAFF7B\">\n");
+	printf("<div style=\"background-color:#EAFF7B; padding:3px;\">\n");
 	printf("&nbsp;&nbsp;(<b>Noisy/" FLEX_UVLONGFMT 
 					":</b>&nbsp;&nbsp;Operation completed in %.6f&thinsp;seconds S+U time; &nbsp; Mem = "
 					FLEX_UVLONGFMT "&thinsp;KB, &nbsp; &#916; Mem = " FLEX_UVLONGFMT "&thinsp;KB).\n",
@@ -711,8 +693,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	/*
 	 *	Use div instead of span to get bgcolor to be page-wide
 	 */
-	printf("<br>\n");
-	printf("<div style=\"background-color:#EEEEEE;\" onclick=\"JavaScript:toggle('noisyinfo')\">");
+	printf("<div style=\"background-color:#009999; color:white; padding:3px;\" onclick=\"JavaScript:toggle('noisyinfo')\">");
 	printf("&nbsp;&nbsp;<b>Informational Report</b>&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;</div>");
 	printf("<table width=\"%d\" border=\"0\">\n", fmtWidth);
 	printf("<tr><td>\n");
@@ -726,12 +707,11 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 
 	if (strlen(noisyCgiState->Fperr->circbuf) != 0)
 	{
-		printf("<div width=\"%d\" style=\"background-color:FFDB58;\" onclick=\"JavaScript:toggle('noisyerrs')\">", fmtWidth);
+		printf("<div width=\"%d\" style=\"background-color:FFDB58; padding:3px;\" onclick=\"JavaScript:toggle('noisyerrs')\">", fmtWidth);
 		printf("&nbsp;&nbsp;Error Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
 		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td><pre>", fmtWidth);
-		printf("<span style=\"background-color:whitesmoke display:none;\" id='noisyerrs'>%s</span></pre></td></tr></table>", noisyCgiState->Fperr->circbuf);
+		printf("<span style=\"background-color:whitesmoke; display:none;\" id='noisyerrs'>%s</span></pre></td></tr></table>", noisyCgiState->Fperr->circbuf);
 	}
-
 
 	if (noisyCgiState->lastDotRender != NULL)
 	{
@@ -770,12 +750,9 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("</td></tr>\n");
 	printf("</table>\n");
 	printf("</font>\n");
-	printf("<input style=\"border: 1px; background-color: orange;\" type=\"submit\" name=\"b\" value=\"compile\">\n");
+	printf("<input style=\"font-weight: bold; border: 1px; background-color: #FFCC00;\" type=\"submit\" name=\"b\" value=\"compile\">\n");
 	printf("</form>\n");
 	printf("</div>\n");
-
-
-
 
 	/*
 	 *	Javascript for ACE editor hookup. Adapted from 
@@ -796,6 +773,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("            }).insertBefore(textarea);\n");
 	printf("            textarea.css('visibility', 'hidden');\n");
 	printf("            var editor = ace.edit(editDiv[0]);\n");
+	printf("            editor.focus();\n");
 	printf("            editor.renderer.setShowGutter(true);\n");
 	printf("            editor.getSession().setValue(textarea.val());\n");
 	printf("            editor.setKeyboardHandler(\"ace/keyboard/vim\");\n");
@@ -850,9 +828,6 @@ htmlPrint(char *  s)
 			case '&': printf("&amp;"); break;
 			case '%': printf("&#37;"); break;
 			case '#': printf("&#35;"); break;
-//			case 'ó': printf("&#243;"); break;
-//			case 'é': printf("&#233;"); break;
-//			case 'ú': printf("&#250;"); break;
 
 			default : printf("%c", s[i]);
 		}
