@@ -384,7 +384,7 @@ main(void)
 	printf("              right: 0;\n");
 	printf("          }\n");
 	printf("          td {\n");
-	printf("              color: white;\n");
+	//printf("              color: white;\n");
 	printf("              font-family:sans-serif;\n");
 	printf("              font-size:12px;\n");
 	printf("          }\n");
@@ -711,13 +711,12 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	 *	Use div instead of span to get bgcolor to be page-wide
 	 */
 	printf("<br>\n");
-	printf("<br>\n");
-	printf("<div style=\"background-color:#EEEEEE; color:#000000;\" onclick=\"JavaScript:toggle('noisyinfo')\">");
+	printf("<div style=\"background-color:#EEEEEE;\" onclick=\"JavaScript:toggle('noisyinfo')\">");
 	printf("&nbsp;&nbsp;<b>Informational Report</b>&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;</div>");
 	printf("<table width=\"%d\" border=\"0\">\n", fmtWidth);
 	printf("<tr><td>\n");
 	printf("<pre>");
-	printf("<span style=\"background-color:#D6FFFF; display:none; color:#000000;\" id='noisyinfo'>");
+	printf("<span style=\"background-color:#D6FFFF; display:none;\" id='noisyinfo'>");
 	htmlPrint(noisyCgiState->Fpinfo->circbuf);
 	printf("</span>");
 	printf("</pre>\n");
@@ -729,7 +728,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 		printf("<div width=\"%d\" style=\"background-color:FFDB58;\" onclick=\"JavaScript:toggle('noisyerrs')\">", fmtWidth);
 		printf("&nbsp;&nbsp;Error Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
 		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td><pre>", fmtWidth);
-		printf("<span style=\"background-color:whitesmoke display:none; color:#000000;\" id='noisyerrs'>%s</span></pre></td></tr></table>", noisyCgiState->Fperr->circbuf);
+		printf("<span style=\"background-color:whitesmoke display:none;\" id='noisyerrs'>%s</span></pre></td></tr></table>", noisyCgiState->Fperr->circbuf);
 	}
 
 
@@ -760,7 +759,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	
 	printf("<table style=\"width:100%%;\">\n");
 	printf("<tr><td>\n");
-	printf("<table style=\"width:300px; background-color: #657383\">\n");
+	printf("<table style=\"width:300px; background-color: #EEEEEE\">\n");
 	printf("<tr><td>Backends Bitmap	</td><td><input type=\"number\" name=\"s\" style=\"width: 30px\" value=\"%d\"></td></tr>\n", cgiSparameter);
 	printf("<tr><td>Passes Bitmap	</td><td><input type=\"number\" name=\"o\" style=\"width: 60px\" value=\"%d\"></td></tr>\n", cgiOparameter);
 	printf("<tr><td>Dot detail level</td><td><input type=\"number\" name=\"t\" style=\"width: 60px\" value=\"%d\"></td></tr>\n", cgiTparameter);
@@ -770,7 +769,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("</td></tr>\n");
 	printf("</table>\n");
 	printf("</font>\n");
-	printf("<input type=\"submit\" name=\"b\" value=\"compile\">\n");
+	printf("<input style=\"border: 1px; background-color: orange;\" type=\"submit\" name=\"b\" value=\"compile\">\n");
 	printf("</form>\n");
 	printf("</div>\n");
 
