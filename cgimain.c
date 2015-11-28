@@ -373,7 +373,8 @@ main(void)
 	printf("        <script src=\"../tmp/jquery-git.js\"></script>\n");
 	printf("        <style type=\"text/css\" media=\"screen\">\n");
 	printf("          body {\n");
-	printf("              overflow: hidden;\n");
+	//Use this to prevent page ever having a scroll bar: printf("              overflow: hidden;\n");
+	printf("              overflow: scroll;\n");
 	printf("          }\n");
 	printf("          #editor {\n");
 	printf("              margin: 0;\n");
