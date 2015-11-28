@@ -199,8 +199,10 @@ const char *	NoisyTimeStampKeyStrings[kNoisyTimeStampKeyMax] =
 	[kNoisyTimeStampKeyIrPassDotScope2Id]				"kNoisyTimeStampKeyIrPassDotScope2Id",
 	[kNoisyTimeStampKeyIrPassDotScope2Id2]				"kNoisyTimeStampKeyIrPassDotScope2Id2",
 	[kNoisyTimeStampKeyIrPassDotSymbol2Id]				"kNoisyTimeStampKeyIrPassDotSymbol2Id",
-	[kNoisyTimeStampKeyIrPassHelperColorTree]			"kNoisyTimeStampKeyIrPassHelperColorTree",
-	[kNoisyTimeStampKeyIrPassHelperTreeSize]			"kNoisyTimeStampKeyIrPassHelperTreeSize",
+	[kNoisyTimeStampKeyIrPassHelperColorIr]				"kNoisyTimeStampKeyIrPassHelperColorIr",
+	[kNoisyTimeStampKeyIrPassHelperColorSymbolTable]		"kNoisyTimeStampKeyIrPassHelperColorSymbolTable",
+	[kNoisyTimeStampKeyIrPassHelperIrSize]				"kNoisyTimeStampKeyIrPassHelperIrSize",
+	[kNoisyTimeStampKeyIrPassHelperSymbolTableSize]			"kNoisyTimeStampKeyIrPassHelperSymbolTableSize",
 
 	[kNoisyTimeStampKeyUnknown]					"kNoisyTimeStampKeyUnknown",
 };

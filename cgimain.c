@@ -587,15 +587,17 @@ main(void)
 
 		if (noisyCgiState->mode & kNoisyModeCallStatistics)
 		{
-			uint64_t	irNodeCount = 0;
+			uint64_t	irNodeCount = 0, symbolTableNodeCount;
 
 
 			noisyTimeStampDumpResidencies(noisyCgiState);
 
-			irNodeCount = noisyIrPassHelperTreeSize(noisyCgiState, noisyCgiState->noisyIrRoot);
+			irNodeCount = noisyIrPassHelperIrSize(noisyCgiState, noisyCgiState->noisyIrRoot);
+			symbolTableNodeCount = noisyIrPassHelperSymbolTableSize(noisyCgiState, noisyCgiState->noisyIrTopScope);
 
 			flexprint(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fpinfo, "Intermediate Representation Information:\n\n");
 			flexprint(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fpinfo, "    IR node count                        : %llu\n", irNodeCount);
+			flexprint(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fpinfo, "    Symbol Table node count              : %llu\n", symbolTableNodeCount);
 
 			/*
 			 *	Libflex malloc statistics:

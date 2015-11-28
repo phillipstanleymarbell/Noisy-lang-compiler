@@ -62,7 +62,7 @@ static char *	symbol2id(NoisyState *  N, NoisySymbol *  symbol);
 
 
 int
-noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int buflen, NoisyIrNode *  p)
+noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrNode *  p)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotAstDotFmt);
 
@@ -134,14 +134,14 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int buflen, NoisyIrNode * 
 
 	if (N->dotDetailLevel & kNoisyDotDetailLevelNoText)
 	{
-		n += snprintf(&buf[n], buflen,
+		n += snprintf(&buf[n], bufferLength,
 			"\tP" FLEX_PTRFMTH " [%sfontsize=8,height=0.8,"
 			"label=\"{ | {<left> | <right> }}\",shape=%srecord];\n",
 			(FlexAddr)p, nodePropertiesString, nodeBorderString);
 	}
 	else
 	{
-		n += snprintf(&buf[n], buflen,
+		n += snprintf(&buf[n], bufferLength,
 			"\tP" FLEX_PTRFMTH " [%sfontsize=8,height=0.8,"
 			"label=\"{P" FLEX_PTRFMTH "\\ntype=%s\\n%s%s\\n%s %s%s%s| {<left> | <right> }}\",shape=%srecord];\n",
 			(FlexAddr)p, nodePropertiesString, (FlexAddr)p, typeString, 
@@ -149,19 +149,19 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int buflen, NoisyIrNode * 
 			src, (isType(N, p) ? "#" : ""), (isType(N, p) ? noisyTypeMakeTypeSignature(N, p) : ""), (isType(N, p) ? "#" : ""), nodeBorderString);
 	}
 
-	buflen -= n;
+	bufferLength -= n;
 
 	if (!(N->dotDetailLevel & kNoisyDotDetailLevelNoNilNodes) && (L(p) == NULL))
 	{
-		n += snprintf(&buf[n], buflen, "\tP" FLEX_PTRFMTH "_leftnil [%s];\n",
+		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH "_leftnil [%s];\n",
 			(FlexAddr)p, nilFormatString);
-		buflen -= n;
+		bufferLength -= n;
 	}
 	if (!(N->dotDetailLevel & kNoisyDotDetailLevelNoNilNodes) && (R(p) == NULL))
 	{
-		n += snprintf(&buf[n], buflen, "\tP" FLEX_PTRFMTH "_rightnil [%s];\n",
+		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH "_rightnil [%s];\n",
 			(FlexAddr)p, nilFormatString);
-		buflen -= n;
+		bufferLength -= n;
 	}
 
 	l = (char *)calloc(kNoisyMaxPrintBufferLength, sizeof(char));
@@ -196,17 +196,17 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int buflen, NoisyIrNode * 
 
 	if (strlen(l))
 	{
-		n += snprintf(&buf[n], buflen, "\tP" FLEX_PTRFMTH ":left -> %s;\n", (FlexAddr)p, l);
-		buflen -= n;
+		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH ":left -> %s;\n", (FlexAddr)p, l);
+		bufferLength -= n;
 	}
 
 	if (strlen(r))
 	{
-		n += snprintf(&buf[n], buflen, "\tP" FLEX_PTRFMTH ":right -> %s;\n", (FlexAddr)p, r);
-		buflen -= n;
+		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH ":right -> %s;\n", (FlexAddr)p, r);
+		bufferLength -= n;
 	}
 
-	USED(buflen);
+	USED(bufferLength);
 	free(l);
 	free(r);
 	free(src);
@@ -217,7 +217,7 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int buflen, NoisyIrNode * 
 
 
 int
-noisyIrPassDotSymbolTableDotFmt(NoisyState *  N, char *  buf, int buflen, NoisyScope *  scope)
+noisyIrPassDotSymbolTableDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyScope *  scope)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotSymbotTableDotFmt);
 
@@ -234,27 +234,27 @@ noisyIrPassDotSymbolTableDotFmt(NoisyState *  N, char *  buf, int buflen, NoisyS
 	nilFormatString		= "style=filled,color=\"#000000\",fontcolor=white,fontsize=8,width=0.3,height=0.16,fixedsize=true,fontname=\"LucidaSans-Typewriter\",label=\"nil\", shape=record";
 	symbolFormatString	= "style=filled,color=\"#dddddd\",fontcolor=black,fontsize=8,height=0.16,fontname=\"LucidaSans-Typewriter\", shape=record";
 
-	n += snprintf(	&buf[n], buflen, "\tscope%s [style=filled,color=\"#FFCC00\",fontname=\"LucidaSans-Typewriter\",fontsize=8,height=0.8,label=\"{%s | {<children> | <syms>}}\",shape=record];\n",
+	n += snprintf(	&buf[n], bufferLength, "\tscope%s [style=filled,color=\"#FFCC00\",fontname=\"LucidaSans-Typewriter\",fontsize=8,height=0.8,label=\"{%s | {<children> | <syms>}}\",shape=record];\n",
 			scope2id(N, scope), scope2id2(N, scope));
-	buflen -= n;
+	bufferLength -= n;
 
 	if (scope->firstChild == NULL)
 	{
-		n += snprintf(&buf[n], buflen, "\tscope%s_kidsnil [%s];\n", scope2id(N, scope), nilFormatString);
-		buflen -= n;
+		n += snprintf(&buf[n], bufferLength, "\tscope%s_kidsnil [%s];\n", scope2id(N, scope), nilFormatString);
+		bufferLength -= n;
 	}
 	if (scope->firstSymbol == NULL)
 	{
-		n += snprintf(&buf[n], buflen, "\tscope%s_symsnil [%s];\n", scope2id(N, scope), nilFormatString);
-		buflen -= n;
+		n += snprintf(&buf[n], bufferLength, "\tscope%s_symsnil [%s];\n", scope2id(N, scope), nilFormatString);
+		bufferLength -= n;
 	}
 
 	NoisyScope *	childScope  = scope->firstChild;
 	while (childScope != NULL)
 	{
-		n += snprintf(	&buf[n], buflen, "\tscope%s [style=filled,color=\"#FFCC00\",fontname=\"LucidaSans-Typewriter\",fontsize=8,height=0.8,label=\"{%s | {<children> | <syms>}}\",shape=record];\n",
+		n += snprintf(	&buf[n], bufferLength, "\tscope%s [style=filled,color=\"#FFCC00\",fontname=\"LucidaSans-Typewriter\",fontsize=8,height=0.8,label=\"{%s | {<children> | <syms>}}\",shape=record];\n",
 				scope2id(N, childScope), scope2id2(N, childScope));
-		buflen -= n;
+		bufferLength -= n;
 
 		childScope = childScope->next;
 	}
@@ -262,9 +262,9 @@ noisyIrPassDotSymbolTableDotFmt(NoisyState *  N, char *  buf, int buflen, NoisyS
 	NoisySymbol *	childSymbol = scope->firstSymbol;
 	while (childSymbol != NULL)
 	{
-		n += snprintf(&buf[n], buflen, "\tsym%s [%s,label=\"{%s}\",shape=rect];\n",
+		n += snprintf(&buf[n], bufferLength, "\tsym%s [%s,label=\"{%s}\",shape=rect];\n",
 			symbol2id(N, childSymbol), symbolFormatString, childSymbol->identifier);
-		buflen -= n;
+		bufferLength -= n;
 
 		childSymbol = childSymbol->next;
 	}
@@ -272,16 +272,16 @@ noisyIrPassDotSymbolTableDotFmt(NoisyState *  N, char *  buf, int buflen, NoisyS
 
 	if (scope->firstChild == NULL)
 	{
-		n += snprintf(&buf[n], buflen, "\tscope%s:children -> scope%s_kidsnil;\n", scope2id(N, scope), scope2id(N, scope));
-		buflen -= n;
+		n += snprintf(&buf[n], bufferLength, "\tscope%s:children -> scope%s_kidsnil;\n", scope2id(N, scope), scope2id(N, scope));
+		bufferLength -= n;
 	}
 	else
 	{
 		childScope  = scope->firstChild;
 		while (childScope != NULL)
 		{
-			n += snprintf(&buf[n], buflen, "\tscope%s:children -> scope%s;\n", scope2id(N, scope), scope2id(N, childScope));
-			buflen -= n;
+			n += snprintf(&buf[n], bufferLength, "\tscope%s:children -> scope%s;\n", scope2id(N, scope), scope2id(N, childScope));
+			bufferLength -= n;
 			
 			childScope = childScope->next;
 		}
@@ -289,30 +289,30 @@ noisyIrPassDotSymbolTableDotFmt(NoisyState *  N, char *  buf, int buflen, NoisyS
 
 	if (scope->firstSymbol == NULL)
 	{
-		n += snprintf(&buf[n], buflen, "\tscope%s:syms -> scope%s_symsnil;\n", scope2id(N, scope), scope2id(N, scope));
-		buflen -= n;
+		n += snprintf(&buf[n], bufferLength, "\tscope%s:syms -> scope%s_symsnil;\n", scope2id(N, scope), scope2id(N, scope));
+		bufferLength -= n;
 	}
 	else
 	{
 		childSymbol = scope->firstSymbol;
-		n += snprintf(&buf[n], buflen, "\tscope%s:syms -> sym%s;\n", scope2id(N, scope), symbol2id(N, childSymbol));
-		buflen -= n;
+		n += snprintf(&buf[n], bufferLength, "\tscope%s:syms -> sym%s;\n", scope2id(N, scope), symbol2id(N, childSymbol));
+		bufferLength -= n;
 
 		while (childSymbol != NULL && childSymbol->next != NULL)
 		{
-			n += snprintf(&buf[n], buflen, "\tsym%s:syms -> sym%s;\n", symbol2id(N, childSymbol), symbol2id(N, childSymbol->next));
-			buflen -= n;
+			n += snprintf(&buf[n], bufferLength, "\tsym%s:syms -> sym%s;\n", symbol2id(N, childSymbol), symbol2id(N, childSymbol->next));
+			bufferLength -= n;
 			childSymbol = childSymbol->next;
 		}
 	}
-	USED(buflen);
+	USED(bufferLength);
 
 	return n;
 }
 
 
 int
-noisyIrPassDotAstPrintWalk(NoisyState *  N, NoisyIrNode *  p, char *  buf, int buflen)
+noisyIrPassDotAstPrintWalk(NoisyState *  N, NoisyIrNode *  p, char *  buf, int bufferLength)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassAstDotPrintWalk);
 
@@ -337,15 +337,15 @@ noisyIrPassDotAstPrintWalk(NoisyState *  N, NoisyIrNode *  p, char *  buf, int b
 	 *	For DOT, we walk tree in postorder, though it doesn't matter
 	 *	either way.
 	 */
-	n0 = noisyIrPassDotAstPrintWalk(N, L(p), &buf[0], buflen);
-	n1 = noisyIrPassDotAstPrintWalk(N, R(p), &buf[n0], buflen-n0);
+	n0 = noisyIrPassDotAstPrintWalk(N, L(p), &buf[0], bufferLength);
+	n1 = noisyIrPassDotAstPrintWalk(N, R(p), &buf[n0], bufferLength-n0);
 
 	/*
 	 *	Only process nodes once.
 	 */
 	if (p->nodeColor & kNoisyIrNodeColorDotBackendColoring)
 	{
-		n2 = noisyIrPassDotAstDotFmt(N, &buf[n0+n1], buflen-(n0+n1), p);
+		n2 = noisyIrPassDotAstDotFmt(N, &buf[n0+n1], bufferLength-(n0+n1), p);
 		p->nodeColor &= ~kNoisyIrNodeColorDotBackendColoring;
 	}
 
@@ -354,7 +354,7 @@ noisyIrPassDotAstPrintWalk(NoisyState *  N, NoisyIrNode *  p, char *  buf, int b
 
 
 int
-noisyIrPassDotSymbolTablePrintWalk(NoisyState *  N, NoisyScope *  p, char *  buf, int buflen)
+noisyIrPassDotSymbolTablePrintWalk(NoisyState *  N, NoisyScope *  p, char *  buf, int bufferLength)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassSymbolTableDotPrintWalk);
 
@@ -365,31 +365,23 @@ noisyIrPassDotSymbolTablePrintWalk(NoisyState *  N, NoisyScope *  p, char *  buf
 		return 0;
 	}
 
-	//if (L(p) == p || R(p) == p)
+	NoisyScope *	tmp = p->firstChild;
+	while (tmp != NULL)
 	{
-		noisyFatal(N, "Immediate cycle in Ir, seen noisyIrPassDotSymbolTablePrintWalk()!!\n");
-
-		/*
-		 *	Not reached
-		 */
-		return 0;
+		n0 += noisyIrPassDotSymbolTablePrintWalk(N, tmp, &buf[n0], (bufferLength-n0));
+		tmp = tmp->next;
 	}
-
-	/*
-	 *	For DOT, we walk tree in postorder, though it doesn't matter
-	 *	either way.
-	 */
-	//n0 = noisyIrPassDotSymbolTablePrintWalk(N, L(p), &buf[0], buflen);
-	//n1 = noisyIrPassDotSymbolTablePrintWalk(N, R(p), &buf[n0], buflen-n0);
 
 	/*
 	 *	Only process nodes once.
 	 */
-	//if (p->nodeColor & kNoisyIrNodeColorDotBackendColoring)
+	if (p->nodeColor & kNoisyIrNodeColorDotBackendColoring)
 	{
-		//n2 = noisyIrPassDotSymbolTableDotFmt(N, &buf[n0+n1], buflen-(n0+n1), p);
-		//p->nodeColor &= ~kNoisyIrNodeColorDotBackendColoring;
+		n1 = noisyIrPassDotSymbolTableDotFmt(N, &buf[n0], (bufferLength-n0), p);
+		p->nodeColor &= ~kNoisyIrNodeColorDotBackendColoring;
 	}
+
+	n2 += noisyIrPassDotSymbolTablePrintWalk(N, p->next, &buf[n0+n1], (bufferLength-(n0+n1)));
 
 	return (n0+n1+n2);
 }
@@ -400,8 +392,7 @@ noisyIrPassDotBackend(NoisyState *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotBackend);
 
-	NoisyIrNode *		p;
-	int			buflen, treesz, n = 0;
+	int			bufferLength, irAndSymbolTableSize = 0, n = 0;
 	char *			buf = NULL;
 	struct timeval		t;
 
@@ -411,18 +402,18 @@ noisyIrPassDotBackend(NoisyState *  N)
 	char			dateString[26];
 
 
-	p = N->noisyIrRoot;
 
 	/*
 	 *	Heuristic
 	 */
-	treesz = noisyIrPassHelperTreeSize(N, p);
-	buflen = treesz*kNoisyChunkBufferLength;
+	irAndSymbolTableSize += noisyIrPassHelperIrSize(N, N->noisyIrRoot);
+	irAndSymbolTableSize += noisyIrPassHelperSymbolTableSize(N, N->noisyIrTopScope);
+	bufferLength = irAndSymbolTableSize*kNoisyChunkBufferLength;
 
 	/*
 	 *	This buffer is deallocated by our caller
 	 */
-	buf = calloc(buflen, sizeof(char));
+	buf = calloc(bufferLength, sizeof(char));
 	if (buf == NULL)
 	{
 		noisyFatal(N, Emalloc);
@@ -437,56 +428,57 @@ noisyIrPassDotBackend(NoisyState *  N)
 	 */
 	dateString[24] = '.';
 
-	n += snprintf(&buf[n], buflen, "digraph Noisy\n{\n");
-//TODO: here and elsewhere, should be taking buflen = max(buflen - n, 0)
+	n += snprintf(&buf[n], bufferLength, "digraph Noisy\n{\n");
+//TODO: here and elsewhere, should be taking bufferLength = max(bufferLength - n, 0)
 //n = max(MAX_PRINT_BUF - strlen(buf), 0); like we do for universe_print in sal
 
-	buflen -= n;
+	bufferLength -= n;
 
 	/*
 	 *	When rendering bitmapped, don't restrict size, and
 	 *	leave dpi reasonable (~150).
 	 */
-	n += snprintf(&buf[n], buflen, "\tdpi=150;\n");
-	buflen -= n;
-	n += snprintf(&buf[n], buflen, "\tfontcolor=\"#C0C0C0\";\n");
-	buflen -= n;
-	n += snprintf(&buf[n], buflen, "\tfontsize=18;\n");
-	buflen -= n;
+	n += snprintf(&buf[n], bufferLength, "\tdpi=150;\n");
+	bufferLength -= n;
+	n += snprintf(&buf[n], bufferLength, "\tfontcolor=\"#C0C0C0\";\n");
+	bufferLength -= n;
+	n += snprintf(&buf[n], bufferLength, "\tfontsize=18;\n");
+	bufferLength -= n;
 
 //TODO: take the whole of this following string as one of the arguments, called, e.g., "dotplotlabel",
 //so we are not calling gettimeofday() from here, and don't need to have the VM_VERSION symbol here either.
-	n += snprintf(&buf[n], buflen, "\tlabel = \"\\nAuto-generated by Noisy compiler, version %s, on %s\";\n",
+	n += snprintf(&buf[n], bufferLength, "\tlabel = \"\\nAuto-generated by Noisy compiler, version %s, on %s\";\n",
 			kNoisyVersion, dateString);
-	buflen -= n;
-	n += snprintf(&buf[n], buflen, "\tsplines = true;\n");
-	buflen -= n;
+	bufferLength -= n;
+	n += snprintf(&buf[n], bufferLength, "\tsplines = true;\n");
+	bufferLength -= n;
 
 	/*
 	 *	Don't restrict size when rendering bitmapped
 	 */
-	//n += snprintf(&buf[n], buflen, "\tsize = \"5,9\";\n");
-	//buflen -= n;
+	//n += snprintf(&buf[n], bufferLength, "\tsize = \"5,9\";\n");
+	//bufferLength -= n;
 
-	n += snprintf(&buf[n], buflen, "\tmargin = 0.1;\n");
-	buflen -= n;
+	n += snprintf(&buf[n], bufferLength, "\tmargin = 0.1;\n");
+	bufferLength -= n;
 
 	/*
 	 *	Temporarily color the graph, so we can know
 	 *	which nodes have been visited, in case when
 	 *	the graph is not a tree.
 	 */
-	noisyIrPassHelperColorTree(N, p, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
+	noisyIrPassHelperColorIr(N, N->noisyIrRoot, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
+	noisyIrPassHelperColorSymbolTable(N, N->noisyIrTopScope, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
 
-	n += noisyIrPassDotAstPrintWalk(N, p, &buf[n], buflen);
-	buflen -= n;
+	n += noisyIrPassDotAstPrintWalk(N, N->noisyIrRoot, &buf[n], bufferLength);
+	bufferLength -= n;
 
-//	n += noisyIrPassDotSymbolTablePrintWalk(N, N->noisyIrTopScope, &buf[n], buflen);
-//	buflen -= n;
+	n += noisyIrPassDotSymbolTablePrintWalk(N, N->noisyIrTopScope, &buf[n], bufferLength);
+	bufferLength -= n;
 
-	n += snprintf(&buf[n], buflen, "}\n");
-	buflen -= n;
-	USED(buflen);
+	n += snprintf(&buf[n], bufferLength, "}\n");
+	bufferLength -= n;
+	USED(bufferLength);
 
 	/*
 	 *	TODO: this is not really necessary, since we now use individual
@@ -494,7 +486,8 @@ noisyIrPassDotBackend(NoisyState *  N)
 	 *	colors of nodes above anyway. If/when we decide to get rid of
 	 *	this, be sure to document the associated gain.
 	 */
-	noisyIrPassHelperColorTree(N, p, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
+	noisyIrPassHelperColorIr(N, N->noisyIrRoot, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
+	noisyIrPassHelperColorSymbolTable(N, N->noisyIrTopScope, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
 #endif
 
 	return buf;

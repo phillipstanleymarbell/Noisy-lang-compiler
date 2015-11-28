@@ -35,8 +35,10 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void			noisyIrPassHelperColorTree(NoisyState *  N, NoisyIrNode *  p, NoisyIrNodeColor nodeColor, bool setNotClear, bool recurseFlag);
-uint64_t		noisyIrPassHelperTreeSize(NoisyState *  N, NoisyIrNode *  p);
+void			noisyIrPassHelperColorIr(NoisyState *  N, NoisyIrNode *  p, NoisyIrNodeColor nodeColor, bool setNotClear, bool recurseFlag);
+void			noisyIrPassHelperColorSymbolTable(NoisyState *  N, NoisyScope *  p, NoisyIrNodeColor nodeColor, bool setNotClear, bool recurseFlag);
+uint64_t		noisyIrPassHelperIrSize(NoisyState *  N, NoisyIrNode *  p);
+uint64_t		noisyIrPassHelperSymbolTableSize(NoisyState *  N, NoisyScope *  p);
 
 #define L(node)		(node)->irLeftChild
 #define R(node)		(node)->irRightChild

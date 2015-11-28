@@ -234,8 +234,10 @@ typedef enum
 	/*
 	 *	IR pass helpers. TODO: should merge this into IR helpers...
 	 */
-	kNoisyTimeStampKeyIrPassHelperColorTree,
-	kNoisyTimeStampKeyIrPassHelperTreeSize,
+	kNoisyTimeStampKeyIrPassHelperColorIr,
+	kNoisyTimeStampKeyIrPassHelperColorSymbolTable,
+	kNoisyTimeStampKeyIrPassHelperIrSize,
+	kNoisyTimeStampKeyIrPassHelperSymbolTableSize,
 
 	/*
 	 *	Used to tag un-tracked time.

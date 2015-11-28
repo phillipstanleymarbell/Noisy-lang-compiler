@@ -190,4 +190,4 @@ test:
 
 
 clean:
-	rm -rf version.c $(OBJS) $(CGIOBJS) $(LIBNOISYOBJS) $(TARGET) $(TARGET).dSYM $(CGI_TARGET) $(CGI_TARGET).dsym lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a *.o *.plist
+	rm -rf version.c $(OBJS) $(CGIOBJS) $(LIBNOISYOBJS) $(TARGET) $(TARGET).dSYM $(CGI_TARGET) $(CGI_TARGET).dsym lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a *.o *.plist noname.gv.pdf noname.gv.png

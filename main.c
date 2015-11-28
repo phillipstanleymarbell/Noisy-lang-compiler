@@ -322,16 +322,18 @@ processFile(NoisyState *  N, char *  fileName)
 
 	if (N->mode & kNoisyModeCallStatistics)
 	{
-		uint64_t	irNodeCount = 0;
+		uint64_t	irNodeCount = 0, symbolTableNodeCount = 0;
 
 
 		noisyTimeStampDumpResidencies(N);
 
-		irNodeCount = noisyIrPassHelperTreeSize(N, N->noisyIrRoot);
+		irNodeCount = noisyIrPassHelperIrSize(N, N->noisyIrRoot);
+		symbolTableNodeCount = noisyIrPassHelperSymbolTableSize(N, N->noisyIrTopScope);
 
 
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "Intermediate Representation Information:\n\n");
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "    IR node count                        : %llu\n", irNodeCount);
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "    Symbol Table node count              : %llu\n", symbolTableNodeCount);
 
 		/*
 		 *	Libflex malloc statistics:

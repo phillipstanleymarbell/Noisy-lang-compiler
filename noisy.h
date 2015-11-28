@@ -455,6 +455,11 @@ struct NoisyScope
 	 */
 	NoisyScope *		next;
 	NoisyScope *		prev;
+
+	/*
+	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
+	 */
+	NoisyIrNodeColor	nodeColor;
 };
 
 
