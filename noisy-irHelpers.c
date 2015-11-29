@@ -85,7 +85,7 @@ genNoisyIrNode(NoisyState *  N, NoisyIrNodeType type, NoisyIrNode *  irLeftChild
 	 *	sure that any time between here and next stamping is not attributed
 	 *	to genNoisyIrNode().
 	 */
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyUnknown);
+	//NoisyTimeStampTraceMacro(kNoisyTimeStampKeyUnknown);
 
 
 	return node;
