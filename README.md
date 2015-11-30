@@ -16,8 +16,9 @@ with the flags -h or --help to see the usage:
 >	                | (--version, --V)                                   
 >	                | (--verbose <level>, -v <level>)                    
 >	                | (--dot <level>, -d <level>)                        
+>	                | (--bytecode <output file name>, -b <output file name>)
 >	                | (--optimize <level>, -O <level>)                   
->	               | (--trace, -t)                                      
+>	                | (--trace, -t)                                      
 >	                | (--statistics, -s) ]                               
 >	                                                                     
 >	              <filenames>
