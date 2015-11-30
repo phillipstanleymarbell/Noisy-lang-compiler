@@ -40,7 +40,8 @@
 /*
  *	Google Protocol Buffer Specification for Noisy's data structures.
  *
- *	We use this, e.g., to save/restore the IR and Symbol Table to files.
+ *	We use this, e.g., to save/restore the IR and Symbol Table to
+ *	iles.
  */
 
 
@@ -76,7 +77,8 @@ message NoisyIrNode
 	optional NoisySymbol		symbol		= 7;
 
 	/*
-	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
+	 *	Used for coloring the IR tree, e.g., during Graphviz/dot
+	 *	generation.
 	 */
 	required int64			nodeColor	= 8;
 }
@@ -98,17 +100,19 @@ message NoisyToken
 message NoisyScope
 {
 	/*
-	 *	For named scopes (at the moment, only Progtypes)
+	 *	For named scopes (at the moment, only Progtypes).
 	 */
 	required string			identifier	= 1;
 
 	/*
-	 *	Hierarchy. The firstChild is used to access its siblings via firstChild->next
+	 *	Hierarchy. The firstChild is used to access its siblings
+	 *	via firstChild->next.
 	 */
 	repeated NoisyScope		childScopes	= 2;
 
 	/*
-	 *	Symbols in this scope. The list of symbols is accesed via firstSymbol->next
+	 *	Symbols in this scope. The list of symbols is accesed
+	 *	via firstSymbol->next.
 	 */
 	repeated NoisySymbol		symbols		= 3;
 
@@ -136,17 +140,17 @@ message NoisySymbol
 	required int64 			symbolType	= 3;
 
 	/*
-	 *	Scope within which sym appears
+	 *	Scope within which sym appears.
 	 */
 	required NoisyScope		scope		= 4;
 
 	/*
-	 *	If an identifier use, definition's Sym, if any
+	 *	If an identifier use, definition's Sym, if any.
 	 */
 	optional NoisySymbol		definition	= 5;
 
 	/*
-	 *	Subtree in AST that represents typeexpr
+	 *	Subtree in AST that represents typeexpr.
 	 */
 	optional NoisyIrNode		typeTree	= 6;
 

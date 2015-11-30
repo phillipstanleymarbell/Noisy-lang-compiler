@@ -106,7 +106,7 @@ noisyIrPassProtobufAstNodeEmitter(NoisyState *  N, NoisyIrNode *  irNode)
 void
 noisyIrPassProtobufAstSerializeWalk(NoisyState *  N, NoisyIrNode *  irNode)
 {
-//	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufAstSerializeWalk);
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufAstSerializeWalk);
 
 	if (irNode == NULL)
 	{
