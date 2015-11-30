@@ -231,6 +231,16 @@ typedef enum
 	kNoisyTimeStampKeyIrPassDotScope2Id2,
 	kNoisyTimeStampKeyIrPassDotSymbol2Id,
 
+
+	/*
+	 *	Public routines Protobuf backend
+	 */
+	kNoisyTimeStampKeyIrPassProtobufSymbotTableEmitter,
+	kNoisyTimeStampKeyIrPassProtobufAstEmitter,
+	kNoisyTimeStampKeyIrPassProtobufAstSerializeWalk,
+	kNoisyTimeStampKeyIrPassProtobufSymbolTableSerializeWalk,
+
+
 	/*
 	 *	IR pass helpers. TODO: should merge this into IR helpers...
 	 */

@@ -55,6 +55,7 @@
 #include "noisy-symbolTable.h"
 #include "noisy-irPass-helpers.h"
 #include "noisy-irPass-dotBackend.h"
+#include "noisy-irPass-protobufBackend.h"
 
 //extern const char	gNoisyEol[];
 //extern const char	gNoisyWhitespace[];
@@ -94,13 +95,14 @@ main(int argc, char *argv[])
 			{"help",		no_argument,		0,	'h'},
 			{"version",		no_argument,		0,	'V'},
 			{"dot",			required_argument,	0,	'd'},
+			{"bytecode",		required_argument,	0,	'b'},
 			{"trace",		no_argument,		0,	't'},
 			{"statistics",		no_argument,		0,	's'},
 			{"optimize",		required_argument,	0,	'O'},
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:stO:", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:b:stO:", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -153,6 +155,14 @@ main(int argc, char *argv[])
 					noisyConsolePrintBuffers(N);
 					exit(EXIT_FAILURE);
 				}
+
+				break;
+			}
+
+			case 'b':
+			{
+				N->irBackends |= kNoisyIrBackendProtobuf;
+				N->outputFilePath = optarg;
 
 				break;
 			}
@@ -307,6 +317,15 @@ processFile(NoisyState *  N, char *  fileName)
 
 
 	/*
+	 *	Bytecode backend. Emit IR in protobuf.
+	 */
+	if (N->irBackends & kNoisyIrBackendProtobuf)
+	{
+		noisyIrPassProtobufBackend(N);
+	}
+
+
+	/*
 	 *	Dot backend.
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
@@ -361,6 +380,7 @@ usage(NoisyState *  N)
 						"                | (--version, --V)                                   \n"
 						"                | (--verbose <level>, -v <level>)                    \n"
 						"                | (--dot <level>, -d <level>)                        \n"
+						"                | (--bytecode <output file name>, -b <output file name>)\n"
 						"                | (--optimize <level>, -O <level>)                   \n"
 						"                | (--trace, -t)                                      \n"
 						"                | (--statistics, -s) ]                               \n"

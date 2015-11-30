@@ -283,6 +283,7 @@ typedef enum
 typedef enum
 {
 	kNoisyIrBackendDot				= (1 << 0),
+	kNoisyIrBackendProtobuf				= (1 << 1),
 	
 	/*
 	 *	Code depends on this bringing up the rear.
@@ -308,7 +309,8 @@ typedef enum
 typedef enum
 {
 	kNoisyIrNodeColorDotBackendColoring		= (1 << 0),
-	
+	kNoisyIrNodeColorProtobufBackendColoring	= (1 << 1),
+
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -590,6 +592,10 @@ typedef struct
 	NoisyIrNode *		noisyIrRoot;
 	NoisyScope *		noisyIrTopScope;
 
+	/*
+	 *	Output file name when emitting bytecode/protobuf
+	 */
+	char *			outputFilePath;
 
 	NoisyMode		mode;
 	uint64_t		verbosityLevel;
