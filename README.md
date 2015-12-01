@@ -5,7 +5,10 @@ Noisy: A Language for Talking Sensors to Sleep
 
 The [noisy compiler]
 ---------------------
-...
+The Noisy compiler takes Noisy programs and compiles them to either
+Noisy Bytecode (the Noisy IR serialized via Google's Protocol
+Buffers), or renders the IR and symbol table using GraphViz/Dot for
+debugging.
 
 You can invoke the compiler on your platform, e.g., [./noisy-darwin-EN],
 with the flags -h or --help to see the usage:
@@ -28,7 +31,7 @@ routine calls:
 
 >	% ./noisy-darwin-EN --optimize 0 --statistics Examples/helloWorld.n
 
-To compiler a Noisy program and emit its IR into [dot], and render
+To compile a Noisy program and emit its IR into [dot], and render
 the generated [dot] code through [dot]:
 
 >	% ./noisy-darwin-EN --optimize 0 --dot 0 Examples/helloWorld.n | dot -Tpdf -O ; open noname.gv.pdf
@@ -42,10 +45,11 @@ scripts described below.
 
 The [noisy helper scripts]: [noisyIr2dot.sh]
 ----------------------------------------------------------------------
-The scripts [noisyIr2dot.sh] generates renderings of the Noisy AST.
-It takes two arguments: a Noisy source file and a rendering format
-(e.g., "pdf" or "png").  It is a simple wrapper routines to the
-noisy compiler that invoke it with a useful default set of flags.
+The scripts [noisyIr2dot.sh] generates renderings of the Noisy AST
+and symbol table. It takes two arguments: a Noisy source file and
+a rendering format (e.g., "pdf" or "png").  It is a simple wrapper
+to the noisy compiler, which it invokes with a useful default set 
+of flags.
 
 Example:
 
@@ -66,11 +70,17 @@ The hooks can be enabled for mercurial by adding the following to
 >	pretxncommit    = ./precommitStatisticsHook.sh
 >	commit          = ./postcommitStatisticsHook.sh
 
+The generated statistics are stored in the Statistics/ subdirectory,
+and can be analyzed using the Mathematica notebook that resides at
+Mathematica/AnalyzeStatistics.nb.
+
 
 CGI on Mac OS X
 ---------------
-Installing the CGI version of the compiler lets us use a web browser
-and some minimal Javascript to create a cross-platform GUI and IDE.
+We use a CGI interface along with any web browser to provide a
+poor-person's GUI interface. Installing the CGI version of the
+compiler lets us use a web browser and some minimal Javascript to
+create a cross-platform GUI and IDE.
 
 (On Mac OS X, $kNoisyBasePath is /Library/WebServer/Documents/tmp.
 See config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) for other
@@ -113,7 +123,7 @@ Details on command line parameters:
 -----------------------------------
 Compiler pass bitmaps:
 - - - - - - - - - - -
-...
+TBD.
 
 
 Compiler backend bitmaps:
