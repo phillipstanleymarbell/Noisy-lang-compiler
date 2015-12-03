@@ -428,9 +428,6 @@ main(void)
 	printf("              font-size:12px;\n");
 	printf("              color: #777777;\n");
 	printf("          }\n");
-
-
-//	printf("<font style=\"font-family: 'Source Sans Pro', arial, sans-serif; font-size:12px; font-weight:300; \">\n");
 	
 	printf("        </style>\n");
 
@@ -462,7 +459,7 @@ main(void)
 
 	printf("</head>\n");
 
-	printf("<body text=\"#555555\" bgcolor=\"#FFFFFF\">\n");
+	printf("<body text=\"#555555\" bgcolor=\"#FFFFF7\">\n");
 
 	cgiVars = getCgiVars();
 	for (i = 0; cgiVars[i]; i+= 2)
@@ -779,12 +776,9 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 			kNoisyCgiFileUrlBase, noisyCgiState->lastDotRender, fmtWidth);
 	}
 
-	
 	printf("<br><span style=\"background-color:#EAFF7B; padding:3px;\">");
 	printf("&nbsp;&nbsp;<b>Compiler Parameters:</b>&nbsp;&nbsp;</span>\n");
-	
-//	printf("</font>\n");
-	
+
 	printf("<table style=\"width:100%%;\">\n");
 	printf("<tr><td>\n");
 	printf("<table style=\"width:300px; background-color: #EEEEEE\">\n");
@@ -796,7 +790,6 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("<img src=\"%s\" width=150 align=\"right\">\n", kNoisyLogoPath);
 	printf("</td></tr>\n");
 	printf("</table>\n");
-//	printf("</font>\n");
 	printf("<input style=\"font-family:'Source Sans Pro'; color: black; font-size:14px; font-weight:400; border: 1px; background-color: #FFCC00;\" type=\"submit\" name=\"b\" value=\"Compile\">\n");
 	printf("</form>\n");
 	printf("</div>\n");
