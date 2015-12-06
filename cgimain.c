@@ -388,7 +388,7 @@ main(void)
 
 	printf("          b {\n");
 	printf("              font-family: 'Source Sans Pro', sans-serif;\n");
-	printf("              font-weight: 400\n");
+	printf("              font-weight: 400;\n");
 	printf("              font-size:12.5px;\n");
 	printf("          }\n");
 
