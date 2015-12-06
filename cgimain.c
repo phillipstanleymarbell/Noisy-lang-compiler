@@ -699,8 +699,9 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 		if (noisyCodeBuffer[i] == '\n') lines++;
 	}
 
-	printf("Noisy version %s\n", kNoisyVersion);
-	printf("<br><br>");
+	printf("Noisy version %s.\n", kNoisyVersion);
+	printf("<br>");
+	printf("Authored 2015&#8211;2015, Phillip Stanley-Marbell.\n");
 #if defined (_OPENMP)
 	printf("Multithreading enabled; detected %d hardware threads\n",
 		omp_get_max_threads());
@@ -716,7 +717,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("%s", noisyCodeBuffer);
 	printf("</textarea>\n");
 
-	printf("<div style=\"background-color:#EAFF7B; padding:3px;\">\n");
+	printf("<div style=\"background-color:#EEEEEE; color:444444; padding:3px;\">\n");
 	printf("&nbsp;&nbsp;(Noisy/" FLEX_UVLONGFMT 
 					":&nbsp;&nbsp;Operation completed in %.6f&thinsp;seconds S+U time; &nbsp; Mem = "
 					FLEX_UVLONGFMT "&thinsp;KB, &nbsp; &#916; Mem = " FLEX_UVLONGFMT "&thinsp;KB).\n",
@@ -776,7 +777,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 			kNoisyCgiFileUrlBase, noisyCgiState->lastDotRender, fmtWidth);
 	}
 
-	printf("<br><span style=\"background-color:#EAFF7B; padding:3px;\">");
+	printf("<br><span style=\"color: black; background-color:#FF9966; padding:3px;\">");
 	printf("&nbsp;&nbsp;<b>Compiler Parameters:</b>&nbsp;&nbsp;</span>\n");
 
 	printf("<table style=\"width:100%%;\">\n");
@@ -790,7 +791,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("<img src=\"%s\" width=150 align=\"right\">\n", kNoisyLogoPath);
 	printf("</td></tr>\n");
 	printf("</table>\n");
-	printf("<input style=\"font-family:'Source Sans Pro'; color: black; font-size:14px; font-weight:400; border: 1px; background-color: #FFCC00;\" type=\"submit\" name=\"b\" value=\"Compile\">\n");
+	printf("<input style=\"font-family:'Source Sans Pro'; color: black; font-size:14px; font-weight:400; border: 1px; background-color: #FF9900;\" type=\"submit\" name=\"b\" value=\"Compile\">\n");
 	printf("</form>\n");
 	printf("</div>\n");
 
