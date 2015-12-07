@@ -459,7 +459,7 @@ main(void)
 
 	printf("</head>\n");
 
-	printf("<body text=\"#555555\" bgcolor=\"#FFFFF7\">\n");
+	printf("<body text=\"#555555\" bgcolor=\"#FFFFFC\">\n");
 
 	cgiVars = getCgiVars();
 	for (i = 0; cgiVars[i]; i+= 2)
