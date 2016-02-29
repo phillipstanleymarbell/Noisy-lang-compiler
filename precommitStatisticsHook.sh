@@ -1,6 +1,7 @@
 #!/bin/sh
 
 dtraceDirectory=/Volumes/doos/DTrace-hg
+libflexDirectory=/Volumes/doos/libflex-hg-clone
 trackingDirectory=Statistics
 statsFile=`hg tip | grep 'changeset' | awk -F ':' '{print $3}'`.txt
 
@@ -9,7 +10,7 @@ system_profiler -detailLevel mini | grep -A 10 'Hardware Overview' >> $trackingD
 echo '' >> $trackingDirectory/$statsFile
 hg tip >> $trackingDirectory/$statsFile 
 
-cd /Volumes/doos/libflex-hg-clone && make clean all &
+cd $libflexDirectory && make clean all &
 make clean
 make -j
 make README.sloccount

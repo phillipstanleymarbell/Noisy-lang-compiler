@@ -1,6 +1,22 @@
 Noisy: A Language for Talking Sensors to Sleep
 ==============================================
 
+Building the Noisy compiler and debug tools depends on the following repositories:
+
+	gemusehaken/Libflex:		git@github.com:gemusehaken/libflex.git
+	gemusehaken/DTrace-scripts:	git@github.com:gemusehaken/DTrace-scripts.git
+
+After cloning the above two repositories, 
+(1) Edit the Makefile to set
+
+	LIBFLEXPATH     = full-path-to-libflex-repository-clone 
+	CONFIGPATH      = full-path-to-libflex-repository-clone
+
+
+(2) Edit precommitStatisticsHook.sh to set
+
+	dtraceDirectory=full-path-to-DTrace-repository-clone
+	libflexDirectory=full-path-to-libflex-repository-clone
 
 
 The [noisy compiler]
