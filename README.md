@@ -6,6 +6,10 @@ Building the Noisy compiler and debug tools depends on the following repositorie
 	gemusehaken/Libflex:		git@github.com:gemusehaken/libflex.git
 	gemusehaken/DTrace-scripts:	git@github.com:gemusehaken/DTrace-scripts.git
 
+The build also depends on the C protobuf compiler. On Mac OS X, the easiest way to
+install this is to use macports (macports.org) to install the packages protobuf-c 
+and protobuf-cpp.
+
 After cloning the above two repositories, 
 (1) Edit the Makefile to set
 
