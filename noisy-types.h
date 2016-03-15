@@ -35,6 +35,10 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+void checkAllNodeTypes(NoisyState * N, NoisyIrNode * node);
+bool isValidIdChar(char * string);
+bool isNumber(char c);
+bool isValidIdentifier(NoisyState * N, NoisyIrNode * node);
 NoisyIrNode *	noisyTypeValidateIrSubtree(NoisyState *  N, NoisyIrNode *  subtree);
 bool 		noisyTypeEqualsSubtreeTypes(NoisyState *  N, NoisyIrNode *  subtreeA, NoisyIrNode *  subtreeB);
 const char *	noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree);

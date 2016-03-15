@@ -1,8 +1,9 @@
-LIBFLEXPATH     = /Volumes/doos/libflex-hg-clone
-CONFIGPATH	= /Volumes/doos/libflex-hg-clone
-COMPILERVARIANT = .clang
-include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT)
-include		config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT)
+LIBFLEXPATH=/Users/jonathanlim/Documents/Compiler/libflex
+CONFIGPATH=/Users/jonathanlim/Documents/Compiler/libflex
+COMPILERVARIANT = x86_64.clang
+MYOSTYPE=darwin
+include		$(CONFIGPATH)/config.$(MYOSTYPE)-$(COMPILERVARIANT)
+include		config.$(MYOSTYPE)-$(COMPILERVARIANT)
 
 MAKEFLAGS	+= -j
 
@@ -15,8 +16,8 @@ NOISY_L10N	= EN
 #	-std=gnu99 because we use anonymous unions and induction variable defintions in loop head.
 CCFLAGS		+= -std=gnu99 -DkNoisyL10N="\"$(NOISY_L10N)\"" -DNOISY_L10N_EN
 
-TARGET		= noisy-$(OSTYPE)-$(NOISY_L10N)
-CGI_TARGET	= noisycgi-$(OSTYPE)-$(NOISY_L10N)
+TARGET		= noisy-$(MYOSTYPE)-$(NOISY_L10N)
+CGI_TARGET	= noisycgi-$(MYOSTYPE)-$(NOISY_L10N)
 
 WFLAGS		= -Wall -Werror
 INCDIRS		= -I. -I$(LIBFLEXPATH)
@@ -49,7 +50,7 @@ SOURCES		=\
 #
 #	Clang seems to be unable to do LTO unless we have all the objects
 #	not tucked into a library, so we don't just simply link maain against
-#	-l$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N)
+#	-l$(LIBNOISY)-$(MYOSTYPE)-$(NOISY_L10N)
 #
 OBJS		=\
 		version.$(OBJECTEXTENSION)\
@@ -76,7 +77,7 @@ OBJS		=\
 #
 #	Clang seems to be unable to do LTO unless we have all the objects
 #	not tucked into a library, so we don't just simply link maain against
-#	-l$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N)
+#	-l$(LIBNOISY)-$(MYOSTYPE)-$(NOISY_L10N)
 #
 CGIOBJS		=\
 		version.$(OBJECTEXTENSION)\
@@ -141,24 +142,24 @@ HEADERS		=\
 
 
 
-all: lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile cgi
+all: lib$(LIBNOISY)-$(MYOSTYPE)-$(NOISY_L10N).a target $(CONFIGPATH)/config.$(MYOSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(MYOSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile cgi
 
 #
 #			Libraries
 #
-lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a: $(LIBNOISYOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
+lib$(LIBNOISY)-$(MYOSTYPE)-$(NOISY_L10N).a: $(LIBNOISYOBJS) $(CONFIGPATH)/config.$(MYOSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(MYOSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
 	$(AR) $(ARFLAGS) $@ $(LIBNOISYOBJS)
 
 
 #
 #			Executables
 #
-target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
-	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -o $(TARGET)
+target: $(OBJS) $(CONFIGPATH)/config.$(MYOSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(MYOSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
+	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(OBJS) -lflex-$(MYOSTYPE) -o $(TARGET)
 
 
-cgi:lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
-	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) -o $(CGI_TARGET)
+cgi:lib$(LIBNOISY)-$(MYOSTYPE)-$(NOISY_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(MYOSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(MYOSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
+	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(CGIOBJS) -lflex-$(MYOSTYPE) -o $(CGI_TARGET)
 
 
 full: scan README.sloccount
@@ -167,7 +168,7 @@ full: scan README.sloccount
 #
 #			Objects
 #
-%.$(OBJECTEXTENSION): %.c $(HEADERS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
+%.$(OBJECTEXTENSION): %.c $(HEADERS) $(CONFIGPATH)/config.$(MYOSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(MYOSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
 #	$(SPLINT) $(FLEXFLAGS) $(INCDIRS) $<
 #	$(LCLINT) $(FLEXFLAGS) $(INCDIRS) $<
 	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) -c --analyze $<
@@ -212,4 +213,4 @@ test:
 
 
 clean:
-	rm -rf version.c $(OBJS) $(CGIOBJS) $(LIBNOISYOBJS) $(TARGET) $(TARGET).dSYM $(CGI_TARGET) $(CGI_TARGET).dsym lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a *.o *.plist noisy.pb-c.c noisy.pb-c.h noname.gv.pdf noname.gv.png 
+	rm -rf version.c $(OBJS) $(CGIOBJS) $(LIBNOISYOBJS) $(TARGET) $(TARGET).dSYM $(CGI_TARGET) $(CGI_TARGET).dsym lib$(LIBNOISY)-$(MYOSTYPE)-$(NOISY_L10N).a *.o *.plist noisy.pb-c.c noisy.pb-c.h noname.gv.pdf noname.gv.png 
