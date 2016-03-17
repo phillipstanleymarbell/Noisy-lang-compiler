@@ -22,6 +22,8 @@ After cloning the above two repositories,
 	dtraceDirectory=full-path-to-DTrace-repository-clone
 	libflexDirectory=full-path-to-libflex-repository-clone
 
+(3) Build Libflex by going to the directory you cloned for Libflex and running 'make'.
+
 
 The [noisy compiler]
 ---------------------
