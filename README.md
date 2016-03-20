@@ -58,7 +58,7 @@ the generated `dot` code through `dot`:
 
 	% ./noisy-darwin-EN --optimize 0 --dot 0 Examples/helloWorld.n | dot -Tpdf -O ; open noname.gv.pdf
 
-The `dot` detail levels are bit masks: 1<<0: no text, 1<<1: no nil nodes
+The `dot` detail levels are bit masks: `1<<0`: no text, `1<<1`: no nil nodes
 
 Rendering of the IR can be simplified by using one of the helper
 scripts described below.
@@ -116,8 +116,8 @@ platforms.)
 
 On older versions of MacOS (~10.8 and earlier), enable the web
 server via the MacOS System Preferences --> Sharing. On Mac OS 10.10
-and later, edit /etc/apache2/httpd.conf and (1) uncomment the line
-for LoadModule cgi_module (2) restart apache (apachectl restart),
+and later, edit `/etc/apache2/httpd.conf` and (1) uncomment the line
+for LoadModule cgi_module (2) restart apache (`sudo apachectl restart`),
 then (3) and visit:
 
 	% open  http://localhost/cgi-bin/noisycgi-darwin-EN?c=HelloWorld+%3A+progtype%0D%0A%7B%0D%0A++++++++init++++%3A+namegen+%28list+of+string%29%3A%28list+of+string%29%3B%0D%0A%7D%0D%0A%0D%0Ainit+%3D%0D%0A%7B%0D%0A++++++++print+%3A%3D+name2chan+string+%22system.print%22+0.0%3B%0D%0A++++++++print+%3C-%3D+%22Hello+World%21%22%3B%0D%0A%7D%0D%0A&w=980&s=0&o=0&t=0&b=compile
