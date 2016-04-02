@@ -10,23 +10,48 @@
 #	S1	= (P1 : U2)
 #	print enum S1
 
-fibonacci : progtype
-{
-	init	: namegen (list of string):(list of string);
-}
-
-
 #
 #	Problem definition
 #
-init =>
-{
-}
+#init =>
+#{
+#}
 
 
 #
 #	Algorithm implementation
 #
-init =
+#init =
+#{
+#}
+
+fibonacci : progtype
 {
+   fib : namegen (int):(int);
+}
+
+fib : (int) : (int) =
+{
+ v := <-fib;
+ 
+ matchseq
+ {
+   (v == 0) =>
+   {
+       fib <-= 0;
+   }
+   
+   (v == 1) =>
+   {
+       fib <-= 1;
+   }
+   
+   true =>
+   {
+     c1, c2 := name2chan int "fib" 0.0;
+     c1 <-= (v - 1);
+     c2 <-= (v - 2);
+     r <-= <-c1 + <-c2;
+   }
+ };
 }

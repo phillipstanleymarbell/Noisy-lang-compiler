@@ -145,7 +145,7 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrN
 			"\tP" FLEX_PTRFMTH " [%sfontsize=8,height=0.8,fontname=\"LucidaSans-Typewriter\","
 			"label=\"{P" FLEX_PTRFMTH "\\ntype=%s\\n%s%s\\n%s %s%s%s| {<left> | <right> }}\",shape=%srecord];\n",
 			(FlexAddr)irNode, nodePropertiesString, (FlexAddr)irNode, typeString, 
-			((tokenString == NULL || strlen(tokenString) == 0) ? "" : " tokenString="), tokenString, 
+			((tokenString == NULL || strlen(tokenString) == 0) ? "" : " tokenString="), tokenString,
 			src, (isType(N, irNode) ? "#" : ""), (isType(N, irNode) ? noisyTypeMakeTypeSignature(N, irNode) : ""), (isType(N, irNode) ? "#" : ""), nodeBorderString);
 	}
 

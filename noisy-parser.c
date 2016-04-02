@@ -471,7 +471,7 @@ noisyParseIdentifierOrNil(NoisyState *  N, NoisyScope *  currentScope)
 
 	NoisyIrNode *	n;
 
-	if(peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
+	if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
 		/*
 		 *	The typeTree's get filled-in in our caller
@@ -1948,7 +1948,7 @@ noisyParseChanEventExpression(NoisyState *  N, NoisyScope *  currentScope)
 	}
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
-	addLeafWithChainingSeq(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tidentifier));
+	addLeafWithChainingSeq(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
 	addLeafWithChainingSeq(N, n, noisyParseCmpOp(N));
 	addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
 
@@ -2107,10 +2107,13 @@ noisyParseFactor(NoisyState *  N, NoisyScope *  currentScope)
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tidentifier);
+		n = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
 
 		while (noisyInFirst(N, kNoisyIrNodeType_PfieldSelect))
 		{
+			/*
+			 *	TODO/BUG: This looks suspicious.
+			 */
 			addLeafWithChainingSeq(N, n, noisyParseFieldSelect(N, currentScope));
 		}
 	}
@@ -2229,7 +2232,7 @@ noisyParseFieldSelect(NoisyState *  N, NoisyScope *  currentScope)
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tdot))
 	{
 		n = noisyParseTerminal(N, kNoisyIrNodeType_Tdot);
-		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tidentifier));
+		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TleftBrac))
 	{
@@ -2596,6 +2599,8 @@ noisyParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType,
 						NULL /* right child */,
 						t->sourceInfo /* source info */);
 
+	n->tokenString = t->identifier;
+
 	n->symbol = noisySymbolTableSymbolForIdentifier(N, scope, t->identifier);
 	if (n->symbol == NULL)
 	{
@@ -2629,6 +2634,8 @@ noisyParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expecte
 						NULL /* left child */,
 						NULL /* right child */,
 						t->sourceInfo /* source info */);
+
+	n->tokenString = t->identifier;
 
 	//	NOTE: noisySymbolTableAddOrLookupSymbolForToken(N, ) adds token 't' to scope 'scope'
 	NoisySymbol *	sym = noisySymbolTableAddOrLookupSymbolForToken(N, scope, t);
