@@ -35,10 +35,13 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+void checkPlus(NoisyState * N, NoisyIrNode * node);
+void checkBinOps(NoisyState * N, NoisyIrNode * node);
 void checkAllNodeTypes(NoisyState * N, NoisyIrNode * node);
 bool isValidIdChar(char * string);
 bool isNumber(char c);
 bool isValidIdentifier(NoisyState * N, NoisyIrNode * node);
+void noisyIrPassTypeChecker(NoisyState * N, NoisyIrNode * irNode);
 NoisyIrNode *	noisyTypeValidateIrSubtree(NoisyState *  N, NoisyIrNode *  subtree);
 bool 		noisyTypeEqualsSubtreeTypes(NoisyState *  N, NoisyIrNode *  subtreeA, NoisyIrNode *  subtreeB);
-const char *	noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree);
+char *	noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree);

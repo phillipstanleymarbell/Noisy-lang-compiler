@@ -46,11 +46,64 @@
 #include "version.h"
 #include "noisy-timeStamps.h"
 #include "noisy.h"
-
+#include "noisy-irPass-helpers.h"
+#include "noisy-types.h"
 
 extern const char	gNoisyTypeNodeSignatures[];
 extern const char	gNoisyAstNodeStrings[];
 extern const char * gReservedTokenDescriptions[];
+
+void 
+noisyIrPassTypeChecker(NoisyState * N, NoisyIrNode * irNode) 
+{
+  NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassTypeChecker);
+  
+  if (irNode == NULL) 
+  {
+    return;
+  }
+
+  checkAllNodeTypes(N, irNode);
+  if (L(irNode) == irNode || R(irNode) == irNode)
+  {
+  	noisyFatal(N, "Immediate cycle in Ir, seen noisyIrPassProtobufAstSerializeWalk()!!\n");
+  }
+  noisyIrPassTypeChecker(N, irNode->irLeftChild);
+  noisyIrPassTypeChecker(N, irNode->irRightChild);
+}
+
+void 
+checkAllNodeTypes(NoisyState * N, NoisyIrNode * node)
+{
+    switch(node->type) 
+    {
+        case kNoisyIrNodeType_Pidentifier:
+            if (!isValidIdentifier(N, node))
+            {
+                noisyFatal(N, "An identifier failed type checking!! \n");
+            }
+            break;
+        case kNoisyIrNodeType_PlowPrecedenceBinaryOp:
+            break;
+        case kNoisyIrNodeType_Tplus:
+            break;
+        case kNoisyIrNodeType_PassignOp:
+            break;
+        default:
+            break;
+
+    }
+}
+
+void checkPlus(NoisyState * N, NoisyIrNode * node) 
+{ 
+}
+
+void
+checkBinOps(NoisyState * N, NoisyIrNode * node)
+{
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "inside binops %s\n", node->tokenString);
+}
 
 bool 
 isNumber(char c)
@@ -94,23 +147,6 @@ isValidIdentifier(NoisyState * N, NoisyIrNode * node)
     }
 }
 
-void 
-checkAllNodeTypes(NoisyState * N, NoisyIrNode * node)
-{
-    switch(node->type) 
-    {
-        case kNoisyIrNodeType_Tidentifier:
-            if (!isValidIdentifier(N, node))
-            {
-                noisyFatal(N, "An identifier failed type checking!! \n");
-            }
-            break;
-        default:
-            break;
-
-    }
-
-}
 
 NoisyIrNode *
 noisyTypeValidateIrSubtree(NoisyState *  N, NoisyIrNode *  subtree)
@@ -130,8 +166,7 @@ noisyTypeEqualsSubtreeTypes(NoisyState *  N, NoisyIrNode *  subtreeA, NoisyIrNod
 }
 
 
-char *
-noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
+char * noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeMakeTypeSignature);
 

@@ -113,8 +113,6 @@ noisyIrPassProtobufAstSerializeWalk(NoisyState *  N, NoisyIrNode *  irNode)
 		return;
 	}
 
-    checkAllNodeTypes(N, irNode); // type checking
-
 	if (L(irNode) == irNode || R(irNode) == irNode)
 	{
 		noisyFatal(N, "Immediate cycle in Ir, seen noisyIrPassProtobufAstSerializeWalk()!!\n");

@@ -239,6 +239,7 @@ typedef enum
 	kNoisyTimeStampKeyIrPassProtobufAstEmitter,
 	kNoisyTimeStampKeyIrPassProtobufAstSerializeWalk,
 	kNoisyTimeStampKeyIrPassProtobufSymbolTableSerializeWalk,
+	kNoisyTimeStampKeyIrPassTypeChecker,
 
 
 	/*
