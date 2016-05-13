@@ -47,6 +47,7 @@
 #include "noisy-timeStamps.h"
 #include "noisy.h"
 #include "noisy-irPass-helpers.h"
+#include "noisy-symbolTable.h"
 #include "noisy-types.h"
 
 extern const char	gNoisyTypeNodeSignatures[];
@@ -68,8 +69,14 @@ noisyIrPassTypeChecker(NoisyState * N, NoisyIrNode * irNode)
   {
   	noisyFatal(N, "Immediate cycle in Ir, seen noisyIrPassProtobufAstSerializeWalk()!!\n");
   }
-  noisyIrPassTypeChecker(N, irNode->irLeftChild);
-  noisyIrPassTypeChecker(N, irNode->irRightChild);
+
+  // set parent pointers of the nodes
+  if (L(irNode) != NULL) 
+      L(irNode)->irParent = irNode;
+  if (R(irNode) != NULL) 
+      R(irNode)->irParent = irNode;
+  noisyIrPassTypeChecker(N, L(irNode));
+  noisyIrPassTypeChecker(N, R(irNode));
 }
 
 void 
@@ -77,7 +84,7 @@ checkAllNodeTypes(NoisyState * N, NoisyIrNode * node)
 {
     switch(node->type) 
     {
-        case kNoisyIrNodeType_Pidentifier:
+        case kNoisyIrNodeType_Tidentifier:
             if (!isValidIdentifier(N, node))
             {
                 noisyFatal(N, "An identifier failed type checking!! \n");
@@ -85,8 +92,12 @@ checkAllNodeTypes(NoisyState * N, NoisyIrNode * node)
             break;
         case kNoisyIrNodeType_PlowPrecedenceBinaryOp:
             break;
+        case kNoisyIrNodeType_Tminus:
+        case kNoisyIrNodeType_T
         case kNoisyIrNodeType_Tplus:
+            checkPlus(N, node);
             break;
+      
         case kNoisyIrNodeType_PassignOp:
             break;
         default:
@@ -95,10 +106,163 @@ checkAllNodeTypes(NoisyState * N, NoisyIrNode * node)
     }
 }
 
-void checkPlus(NoisyState * N, NoisyIrNode * node) 
-{ 
+/*
+ * input: kNoisyIrNodeType_Pterm nodes when binop detected (and maybe more)
+ * do a post order walk, and propagate types up from leaf nodes
+ *
+ * output: basic type of the kNoisyIrNodeType_Pterm
+ */
+NoisyIrNodeType postOrderWalkBinOp(NoisyState * N, NoisyIrNode * node) 
+{
+    
+    NoisyIrNodeType left = kNoisyIrNodeType_Tnone; // a flag enum value for None
+    NoisyIrNodeType right = kNoisyIrNodeType_Tnone;
+
+    // base case: leaf node that only has nil nodes as children
+    if (L(node) == NULL && R(node) == NULL)
+    {
+        if (node->type == kNoisyIrNodeType_Tidentifier) {
+            NoisySymbol * tmp = noisySymbolTableSymbolForIdentifier(N, node->currentScope, node->tokenString);
+            return tmp->symbolType;
+        }
+        return node->type;
+    }
+
+    // recurse
+    if (L(node) != NULL)
+        left = postOrderWalkBinOp(N, L(node));
+    if (R(node) != NULL)
+        right = postOrderWalkBinOp(N, R(node));
+
+    // if we need to look up the node in symbol table to return the correct type
+    // e.g.) kNoisyIrNodeType_Tidentifier
+    if (left == kNoisyIrNodeType_Tidentifier)
+        left = noisySymbolTableSymbolForIdentifier(N, node->currentScope, L(node)->tokenString)->symbolType; 
+    if (right == kNoisyIrNodeType_Tidentifier)
+        right = noisySymbolTableSymbolForIdentifier(N, node->currentScope, R(node)->tokenString)->symbolType; 
+
+    // sanity checks
+    if (left == kNoisyIrNodeType_Tidentifier && right == kNoisyIrNodeType_Tidentifier) 
+        noisyFatal(N, "postOrder failed: both children are identifiers\n");
+    if (left == kNoisyIrNodeType_Tnone && right == kNoisyIrNodeType_Tnone)
+        noisyFatal(N, "postOrder failed: left and right are -1\n");
+    
+    // evaluate the result
+    if (node->type == kNoisyIrNodeType_Tidentifier) // if we need to evaluate the current node
+    {
+        NoisyIrNodeType current = noisySymbolTableSymbolForIdentifier(N, node->currentScope, node->tokenString)->symbolType; 
+        if (isTokenToIgnoreBinOp(left) || left == kNoisyIrNodeType_Tnone) 
+            return areSameTypes(current, right); // identifier node doesn't need to propagate up kNoisyIrNodeType_Tint
+        if (isTokenToIgnoreBinOp(right) || right == kNoisyIrNodeType_Tnone)
+            return areSameTypes(current, left);
+        if (!areSameTypes(left, current) || !areSameTypes(current, right)) // left, current, right must all be same
+            noisyFatal(N, "postOrder failed\n");
+        return left; // same as right
+    }
+    else 
+    {
+        if (isTokenToIgnoreBinOp(left) || left == kNoisyIrNodeType_Tnone) 
+            return right; // identifier node doesn't need to propagate up kNoisyIrNodeType_Tint
+        if (isTokenToIgnoreBinOp(right) || right == kNoisyIrNodeType_Tnone)
+            return left;
+        if (!areSameTypes(left, right))
+            noisyFatal(N, "postOrder failed\n");
+        return left; // same as right
+    }
 }
 
+void 
+checkPlus(NoisyState * N, NoisyIrNode * node) 
+{ 
+    NoisyIrNode * term = lookupNodeInParents(node, kNoisyIrNodeType_Pterm);
+    if (term == NULL)
+        noisyFatal(N, "there is no kNoisyIrNodeType_Pterm!\n");
+    NoisyIrNodeType type = postOrderWalkBinOp(N, term);
+    
+    if (type != kNoisyIrNodeType_Tint && type != kNoisyIrNodeType_TintConst)
+    {
+        noisyFatal(N, "checkplus has slightly failed\n");
+    }
+}
+
+/*
+ * Perform type inference at declaration
+ * For each declaration token such as defineAs, find the statement ancestor
+ * the statement node's left child identifier will be inserted with the correct node type
+ */
+void
+noisyInferTypeAtDeclaration(NoisyState * N, NoisyScope * scope, NoisyIrNode * node)
+{
+    NoisyIrNode * statement = lookupNodeInParents(node, kNoisyIrNodeType_Pstatement);
+    if (statement == NULL)
+    {
+        noisyFatal(N, "There is no statement in the parent!!\n"); 
+    }
+    NoisyIrNode * identifierNode = statement->irLeftChild;
+    if (identifierNode == NULL)
+    {
+        noisyFatal(N, "Left child of statement isn't identifier!!\n");
+    }
+    NoisySymbol * symbol = noisySymbolTableAddOrLookupSymbolForToken(N, scope, identifierNode->token);
+    symbol->typeTree->type;
+}
+
+/*
+ * this function accounts for the fact that sometimes
+ * different types are indeed the same thing
+ * e.g.) kNoisyIrNodeType_Tint and kNoisyIrNodeType_TintConst
+ */
+bool
+areSameTypes(NoisyIrNodeType type1, NoisyIrNodeType type2)
+{
+    if ((type1 == kNoisyIrNodeType_Tint && type2 == kNoisyIrNodeType_TintConst) || 
+        (type2 == kNoisyIrNodeType_Tint && type1 == kNoisyIrNodeType_TintConst))
+        return true;
+    return type1 == type2;
+}
+
+bool
+isTokenToIgnoreBinOp(NoisyIrNodeType targetType) 
+{
+    return (targetType == kNoisyIrNodeType_Tplus ||
+            targetType == kNoisyIrNodeType_Tminus ||
+            targetType == kNoisyIrNodeType_Tgets); // TODO: fill in more of these
+}
+
+
+NoisyIrNode *
+lookupNodeInParents(NoisyIrNode * node, NoisyIrNodeType targetType)
+{
+    NoisyIrNode * current = node;
+    while (current != NULL && current->type != targetType)
+    {
+        current = current->irParent;
+    }
+    return current;
+}
+
+/* in a subtree, returns the first node of targetType it finds.
+ */
+NoisyIrNode *
+lookupNodeInSubtree(NoisyIrNode * node, NoisyIrNodeType targetType)
+{
+    if (node == NULL)
+        return NULL;
+    if (node->type == targetType) 
+        return node;
+
+    NoisyIrNode * leftResult = lookupNodeInSubtree(node->irLeftChild, targetType);
+    if (leftResult != NULL)
+        return leftResult;
+    NoisyIrNode * rightResult = lookupNodeInSubtree(node->irRightChild, targetType);
+    if (rightResult != NULL)
+        return rightResult;
+    return NULL; // if children are nil
+}
+
+
+
+// TODO after plus, generalize to some binary op
 void
 checkBinOps(NoisyState * N, NoisyIrNode * node)
 {

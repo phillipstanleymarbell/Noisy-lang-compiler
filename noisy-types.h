@@ -34,7 +34,12 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
+void        noisyInferTypeAtDeclaration(NoisyState * N, NoisyScope * scope, NoisyIrNode * node);
+bool areSameTypes(NoisyIrNodeType type1, NoisyIrNodeType type2);
+bool isTokenToIgnoreBinOp(NoisyIrNodeType targetType);
+NoisyIrNode * lookupNodeInParents(NoisyIrNode * node, NoisyIrNodeType targetType);
+NoisyIrNode * lookupNodeInSubtree(NoisyIrNode * node, NoisyIrNodeType targetType);
+NoisyIrNodeType postOrderWalkBinOp(NoisyState *N, NoisyIrNode * node);
 void checkPlus(NoisyState * N, NoisyIrNode * node);
 void checkBinOps(NoisyState * N, NoisyIrNode * node);
 void checkAllNodeTypes(NoisyState * N, NoisyIrNode * node);
