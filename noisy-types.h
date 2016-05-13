@@ -34,7 +34,8 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-void        noisyInferTypeAtDeclaration(NoisyState * N, NoisyScope * scope, NoisyIrNode * node);
+void        noisyInferIdentifierTypeInDeclaration(NoisyState * N, NoisyScope * scope, NoisyIrNode * node);
+void        noisyInferIdentifierTypeInStatement(NoisyState * N, NoisyScope * scope, NoisyIrNode * node);
 bool areSameTypes(NoisyIrNodeType type1, NoisyIrNodeType type2);
 bool isTokenToIgnoreBinOp(NoisyIrNodeType targetType);
 NoisyIrNode * lookupNodeInParents(NoisyIrNode * node, NoisyIrNodeType targetType);

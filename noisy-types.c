@@ -186,12 +186,26 @@ checkPlus(NoisyState * N, NoisyIrNode * node)
 }
 
 /*
- * Perform type inference at declaration
+ * Perform type inference at declaration 
+ * Input: PXXX_Declaration nodes
+ */
+void
+noisyInferIdentifierTypeInDeclaration(NoisyState * N, NoisyScope * scope, NoisyIrNode * node)
+{
+   NoisyIrNodeType decl
+   // TODO
+   // post order walk on some depth level down and then insert to symtab an identifier
+}
+
+
+/*
+ * Perform type inference at declaration for statement nodes only
+ * Input: declaration tokens like defineAs Token nodes
  * For each declaration token such as defineAs, find the statement ancestor
  * the statement node's left child identifier will be inserted with the correct node type
  */
 void
-noisyInferTypeAtDeclaration(NoisyState * N, NoisyScope * scope, NoisyIrNode * node)
+noisyInferIdentifierTypeInStatement(NoisyState * N, NoisyScope * scope, NoisyIrNode * node)
 {
     NoisyIrNode * statement = lookupNodeInParents(node, kNoisyIrNodeType_Pstatement);
     if (statement == NULL)
@@ -204,7 +218,7 @@ noisyInferTypeAtDeclaration(NoisyState * N, NoisyScope * scope, NoisyIrNode * no
         noisyFatal(N, "Left child of statement isn't identifier!!\n");
     }
     NoisySymbol * symbol = noisySymbolTableAddOrLookupSymbolForToken(N, scope, identifierNode->token);
-    symbol->typeTree->type;
+    symbol->type = postOrderBinop // TODO
 }
 
 /*
