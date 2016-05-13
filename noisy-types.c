@@ -50,7 +50,67 @@
 
 extern const char	gNoisyTypeNodeSignatures[];
 extern const char	gNoisyAstNodeStrings[];
+extern const char * gReservedTokenDescriptions[];
 
+bool 
+isNumber(char c)
+{
+    return c >= '0' && c <= '9';
+}
+
+bool 
+isValidIdChar(char * string) 
+{
+    // check string is not "true" or "false"
+    if (!(strcmp(string, "true") || (strcmp(string, "false")))) 
+    {
+        return false;
+    }
+
+    // check string is not one of reserved tokens
+    for (int i = 0; i < kNoisyIrNodeTypeMax; i++)
+    {
+        if ((gReservedTokenDescriptions[i] != NULL) && !strcmp(gReservedTokenDescriptions[i], string))
+        {
+            return false;
+        }
+    } 
+    return true;
+}
+
+bool 
+isValidIdentifier(NoisyState * N, NoisyIrNode * node) 
+{
+    NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeValidateIrSubtree);
+
+    if (!isNumber(node->tokenString[0]) && isValidIdChar(node->tokenString)) 
+    {
+        return true;
+    }
+    else 
+    {
+        flexprint(N->Fe, N->Fm, N->Fperr, "Not a valid identifier %s!", node->tokenString);
+        return false;
+    }
+}
+
+void 
+checkAllNodeTypes(NoisyState * N, NoisyIrNode * node)
+{
+    switch(node->type) 
+    {
+        case kNoisyIrNodeType_Tidentifier:
+            if (!isValidIdentifier(N, node))
+            {
+                noisyFatal(N, "An identifier failed type checking!! \n");
+            }
+            break;
+        default:
+            break;
+
+    }
+
+}
 
 NoisyIrNode *
 noisyTypeValidateIrSubtree(NoisyState *  N, NoisyIrNode *  subtree)
