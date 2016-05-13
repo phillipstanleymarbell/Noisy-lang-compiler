@@ -202,6 +202,7 @@ const char *	NoisyTimeStampKeyStrings[kNoisyTimeStampKeyMax] =
 	[kNoisyTimeStampKeyIrPassProtobufSymbotTableEmitter]		"kNoisyTimeStampKeyIrPassProtobufSymbotTableEmitter",
 	[kNoisyTimeStampKeyIrPassProtobufAstEmitter]			"kNoisyTimeStampKeyIrPassProtobufAstEmitter",
 	[kNoisyTimeStampKeyIrPassProtobufAstSerializeWalk]		"kNoisyTimeStampKeyIrPassProtobufAstSerializeWalk",
+    [kNoisyTimeStampKeyIrPassTypeChecker] "kNoisyTimeStampKeyIrPassTypeChecker",
 	[kNoisyTimeStampKeyIrPassProtobufSymbolTableSerializeWalk]	"kNoisyTimeStampKeyIrPassProtobufSymbolTableSerializeWalk",
 	[kNoisyTimeStampKeyIrPassHelperColorIr]				"kNoisyTimeStampKeyIrPassHelperColorIr",
 	[kNoisyTimeStampKeyIrPassHelperColorSymbolTable]		"kNoisyTimeStampKeyIrPassHelperColorSymbolTable",

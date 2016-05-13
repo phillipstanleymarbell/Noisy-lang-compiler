@@ -57,6 +57,7 @@ typedef enum
 	/*
 	 *	Tokens
 	 */
+    kNoisyIrNodeType_Tnone,
 	kNoisyIrNodeType_TaddAs,
 	kNoisyIrNodeType_Tadt,
 	kNoisyIrNodeType_Talpha,
@@ -389,6 +390,7 @@ struct NoisyIrNode
 	NoisyIrNode *		irRightChild;
 
 	NoisySymbol *		symbol;
+    NoisyScope * currentScope;
 
 	/*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
@@ -479,6 +481,8 @@ struct NoisySymbol
 	 *	Declaration, type definition, use, etc. (kNoisySymbolTypeXXX)
 	 */
 	int 			symbolType;
+
+    NoisyIrNodeType type;
 
 	/*
 	 *	Scope within which sym appears
