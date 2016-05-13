@@ -56,6 +56,7 @@
 #include "noisy-irPass-helpers.h"
 #include "noisy-irPass-dotBackend.h"
 #include "noisy-irPass-protobufBackend.h"
+#include "noisy-types.h"
 
 //extern const char	gNoisyEol[];
 //extern const char	gNoisyWhitespace[];
@@ -310,6 +311,8 @@ processFile(NoisyState *  N, char *  fileName)
 	 */
 	noisyRunPasses(N);
 
+    // recursively perform typechecking
+    noisyIrPassTypeChecker(N, N->noisyIrRoot);
 
 	/*
 	 *	We don't put the following into noisyRunPasses() because they are not general-purpose
