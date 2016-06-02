@@ -170,7 +170,7 @@ full: scan README.sloccount
 %.$(OBJECTEXTENSION): %.c $(HEADERS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
 #	$(SPLINT) $(FLEXFLAGS) $(INCDIRS) $<
 #	$(LCLINT) $(FLEXFLAGS) $(INCDIRS) $<
-	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) -c --analyze $<
+	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) -c $(LINTFLAGS) $<
 	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) -c $<
 
 noisy.pb-c.c: noisy.proto Makefile
