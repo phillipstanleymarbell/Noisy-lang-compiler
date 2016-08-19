@@ -3,8 +3,8 @@ Noisy: A Language for Talking Sensors to Sleep
 
 Building the Noisy compiler and debug tools depends on the following repositories:
 
-	gemusehaken/Libflex:		git@github.com:gemusehaken/libflex.git
-	gemusehaken/DTrace-scripts:	git@github.com:gemusehaken/DTrace-scripts.git
+	Libflex:		git@github.com:phillipstanleymarbell/libflex.git
+	DTrace-scripts:		git@github.com:phillipstanleymarbell/DTrace-scripts.git
 
 The build also depends on the C protobuf compiler. On Mac OS X, the easiest way to
 install this is to use macports (macports.org) to install the packages protobuf-c 
