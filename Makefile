@@ -154,7 +154,7 @@ lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a: $(LIBNOISYOBJS) $(CONFIGPATH)/config.$
 #			Executables
 #
 target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
-	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -o $(TARGET)
+	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -lm -o $(TARGET)
 
 
 cgi:lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile 
@@ -185,7 +185,7 @@ noisy.pb-c.$(OBJECTEXTENSION): noisy.pb-c.c noisy.proto Makefile
 	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) `pkg-config --cflags 'libprotobuf-c >= 1.0.0'` $(WFLAGS) $(OPTFLAGS) -c $<
 
 version.c: $(HEADERS) Makefile
-	echo 'char kNoisyVersion[] = "0.1-alpha-'`hg id --id`'('`hg id --num`') (build '`date '+%m-%d-%Y-%H:%M'`-`whoami`@`hostname -s`-`uname -s`-`uname -r`-`uname -m`\)\"\; > version.c
+	echo 'char kNoisyVersion[] = "0.1-alpha-'`git rev-parse HEAD`'(build '`date '+%m-%d-%Y-%H:%M'`-`whoami`@`hostname -s`-`uname -s`-`uname -r`-`uname -m`\)\"\; > version.c
 
 
 #

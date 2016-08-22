@@ -1,5 +1,5 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2015--2016. Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -47,6 +47,7 @@
 #include <sys/syslimits.h>
 #include <fcntl.h>
 #include <sys/param.h>
+#include <stdint.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -701,13 +702,13 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 
 	printf("Noisy version %s.\n", kNoisyVersion);
 	printf("<br>");
-	printf("Authored 2015&#8211;2015, Phillip Stanley-Marbell.\n");
+	printf("Authored 2015&#8211;2016, Phillip Stanley-Marbell.\n");
 #if defined (_OPENMP)
 	printf("Multithreading enabled; detected %d hardware threads\n",
 		omp_get_max_threads());
 #endif
 
-	//printf("Authored 2015&#8211;2015, Phillip Stanley-Marbell\n");
+	//printf("Authored 2015&#8211;2016, Phillip Stanley-Marbell\n");
 	//printf("<br>");
 
 	printf("<div>\n");

@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <setjmp.h>
+#include <stdint.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"

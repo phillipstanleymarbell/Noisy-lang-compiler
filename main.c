@@ -43,6 +43,7 @@
 #include <sys/time.h>
 #include <getopt.h>
 #include <setjmp.h>
+#include <stdint.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"

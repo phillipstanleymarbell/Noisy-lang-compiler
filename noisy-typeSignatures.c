@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <setjmp.h>
+#include <stdint.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
