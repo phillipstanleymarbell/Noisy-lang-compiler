@@ -6,3 +6,4 @@ PLATFORM_OPTFLAGS	= -O0
 PLATFORM_DBGFLAGS	+= -g
 PLATFORM_CFLAGS		+= -DNoisyOsMacOSX
 CGI_BIN			= /Library/WebServer/CGI-Executables/
+LINTFLAGS		= --analyze

@@ -52,6 +52,7 @@
 #include <unistd.h>
 #include <setjmp.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
