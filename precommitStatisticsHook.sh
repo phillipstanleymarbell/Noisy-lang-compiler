@@ -5,6 +5,11 @@ libflexDirectory=/Volumes/doos/libflex-hg-clone
 trackingDirectory=Statistics
 statsFile=`git rev-parse HEAD`.txt
 
+#
+#	Since the pre-commit hook leads to a change of the hash, we save the hash at the point of commit in the file '.noisy-last-head'
+#
+echo `git rev-parse HEAD` > .noisy-last-head
+
 echo '' > $trackingDirectory/$statsFile
 system_profiler -detailLevel mini | grep -A 10 'Hardware Overview' >> $trackingDirectory/$statsFile
 echo '' >> $trackingDirectory/$statsFile
