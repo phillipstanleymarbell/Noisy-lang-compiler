@@ -13,7 +13,7 @@ echo `git rev-parse HEAD` > .noisy-last-head
 echo '' > $trackingDirectory/$statsFile
 system_profiler -detailLevel mini | grep -A 10 'Hardware Overview' >> $trackingDirectory/$statsFile
 echo '' >> $trackingDirectory/$statsFile
-git rev-parse HEAD >> $trackingDirectory/$statsFile 
+echo "changeset: `git rev-list --count HEAD`:`git rev-parse HEAD`" >> $trackingDirectory/$statsFile 
 
 cd $libflexDirectory && make clean all &
 wait $!
