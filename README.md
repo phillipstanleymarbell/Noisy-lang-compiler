@@ -23,6 +23,14 @@ After cloning the above two repositories,
 	libflexDirectory=full-path-to-libflex-repository-clone
 
 (3) Build Libflex by going to the directory you cloned for Libflex and running `make`.
+The makefiles assume the environment variables `OSTYPE` and `MACHTYPE` are set. If that
+is not the case, you will need to explicitly do:
+
+	make OSTYPE=darwin MACHTYPE=x86_64
+
+(4) Build the noisy compiler by running `make`. The makefiles assume the environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the case, you will need to explicitly do:
+
+	make OSTYPE=darwin MACHTYPE=x86_64
 
 
 The Noisy compiler
