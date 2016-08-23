@@ -1,6 +1,6 @@
 #!/bin/sh
 
 trackingDirectory=statistics
-statsFile=`hg tip | grep 'changeset' | awk -F ':' '{print $3}'`.txt
+statsFile=`git rev-parse HEAD`.txt
 
 hg add $trackingDirectory/$statsFile

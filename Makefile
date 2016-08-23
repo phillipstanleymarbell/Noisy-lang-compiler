@@ -141,7 +141,17 @@ HEADERS		=\
 
 
 
-all: lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile cgi
+all: installhooks lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE)$(COMPILERVARIANT) Makefile cgi
+
+#
+#			Install the pre-commit hooks. There doesn't seem to be any other way to force people to install the hook when comitting on Noisy.
+#
+installhooks:
+	cp precommitStatisticsHook.sh .git/hooks/pre-commit
+	cp postcommitStatisticsHook.sh .git/hooks/post-commit
+	chmod +x .git/hooks/pre-commit
+	chmod +x .git/hooks/post-commit
+
 
 #
 #			Libraries
