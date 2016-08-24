@@ -16,7 +16,8 @@ echo '' >> $trackingDirectory/$statsFile
 echo "changeset: `git rev-list --count HEAD`:`git rev-parse HEAD`" >> $trackingDirectory/$statsFile 
 
 cd $libflexDirectory && make clean all &
-wait $!
+
+#wait $!
 make clean
 make -j
 make README.sloccount
