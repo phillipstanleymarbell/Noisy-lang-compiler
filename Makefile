@@ -195,7 +195,7 @@ noisy.pb-c.$(OBJECTEXTENSION): noisy.pb-c.c noisy.proto Makefile
 	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) `pkg-config --cflags 'libprotobuf-c >= 1.0.0'` $(WFLAGS) $(OPTFLAGS) -c $<
 
 version.c: $(HEADERS) Makefile
-	echo 'char kNoisyVersion[] = "0.1-alpha-'`git rev-parse HEAD`'(build '`date '+%m-%d-%Y-%H:%M'`-`whoami`@`hostname -s`-`uname -s`-`uname -r`-`uname -m`\)\"\; > version.c
+	echo 'char kNoisyVersion[] = "0.1-alpha-'`git rev-list --count HEAD`' ('`git rev-parse HEAD`') (build '`date '+%m-%d-%Y-%H:%M'`-`whoami`@`hostname -s`-`uname -s`-`uname -r`-`uname -m`\)\"\; > version.c
 
 
 #
