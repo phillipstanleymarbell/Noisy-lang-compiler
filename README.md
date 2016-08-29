@@ -6,9 +6,9 @@ Building the Noisy compiler and debug tools depends on the following repositorie
 	Libflex:		git@github.com:phillipstanleymarbell/libflex.git
 	DTrace-scripts:		git@github.com:phillipstanleymarbell/DTrace-scripts.git
 
-The build also depends on the C protobuf compiler. On Mac OS X, the easiest way to
-install this is to use macports (macports.org) to install the packages protobuf-c 
-and protobuf-cpp.
+The build also depends on the C protobuf compiler and on Graphviz. On Mac OS X, the easiest way to
+install these is to use macports (macports.org) to install the packages `protobuf-c`
+`protobuf-cpp`, and `graphviz-devel`.
 
 After cloning the above two repositories, 
 (1) Edit the `Makefile` to set
