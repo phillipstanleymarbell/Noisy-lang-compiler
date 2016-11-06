@@ -35,4 +35,10 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-extern char kNoisyConfigVersion[];
+void			noisyConfigIrPassHelperColorIr(NoisyConfigState *  N, NoisyConfigIrNode *  p, NoisyConfigIrNodeColor nodeColor, bool setNotClear, bool recurseFlag);
+void			noisyConfigIrPassHelperColorSymbolTable(NoisyConfigState *  N, NoisyConfigScope *  p, NoisyConfigIrNodeColor nodeColor, bool setNotClear, bool recurseFlag);
+uint64_t		noisyConfigIrPassHelperIrSize(NoisyConfigState *  N, NoisyConfigIrNode *  p);
+uint64_t		noisyConfigIrPassHelperSymbolTableSize(NoisyConfigState *  N, NoisyConfigScope *  p);
+
+#define L(node)		(node)->irLeftChild
+#define R(node)		(node)->irRightChild

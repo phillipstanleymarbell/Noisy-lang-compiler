@@ -35,4 +35,26 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-extern char kNoisyConfigVersion[];
+typedef enum
+{
+	kNoisyConfigSymbolTypeTypeError,
+	kNoisyConfigSymbolTypeProgtype,
+	kNoisyConfigSymbolTypeConstantDeclaration,
+	kNoisyConfigSymbolTypeTypeDeclaration,
+	kNoisyConfigSymbolTypeNamegenDeclaration,
+	kNoisyConfigSymbolTypeVariableDeclaration,
+	kNoisyConfigSymbolTypeNamegenDefinition,
+	kNoisyConfigSymbolTypeUse,
+
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNoisyConfigSymbolTypeMax,
+} NoisyConfigSymbolType;
+
+
+struct NoisyConfigScope *	noisyConfigSymbolTableAllocScope(NoisyConfigState *  N);
+struct NoisyConfigSymbol *	noisyConfigSymbolTableAddOrLookupSymbolForToken(NoisyConfigState *  N, struct NoisyConfigScope *  scope, struct NoisyConfigToken *  token);
+struct NoisyConfigSymbol *	noisyConfigSymbolTableSymbolForIdentifier(NoisyConfigState *  N, struct NoisyConfigScope *  scope, const char *  identifier);
+struct NoisyConfigScope *	noisyConfigSymbolTableOpenScope(NoisyConfigState *  N, struct NoisyConfigScope *  scope, struct NoisyConfigIrNode *  subtree);
+void		        noisyConfigSymbolTableCloseScope(NoisyConfigState *  N, struct NoisyConfigScope *  scope, struct NoisyConfigIrNode *  subtree);

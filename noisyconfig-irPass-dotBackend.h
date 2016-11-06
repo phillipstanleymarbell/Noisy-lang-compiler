@@ -35,4 +35,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-extern char kNoisyConfigVersion[];
+char *		noisyConfigIrPassDotBackend(NoisyConfigState *  N);

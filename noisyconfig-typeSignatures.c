@@ -35,4 +35,21 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-extern char kNoisyConfigVersion[];
+#include <stdlib.h>
+#include <stdbool.h>
+#include <setjmp.h>
+#include <stdint.h>
+#include "flextypes.h"
+#include "flexerror.h"
+#include "flex.h"
+#include "noisyconfig.h"
+
+
+
+/*
+ *	Type signatures of nodes that can appear in a subtree representing a type.
+ */
+const char gNoisyConfigTypeNodeSignatures[kNoisyConfigIrNodeTypeMax] = {
+								[kNoisyConfigIrNodeType_Tidentifier]			= 'n',
+								[kNoisyConfigIrNodeType_Xseq]				= ':',
+};

@@ -34,5 +34,5 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
-extern char kNoisyConfigVersion[];
+bool	noisyConfigInFirst(NoisyConfigState *  N, NoisyConfigIrNodeType productionOrToken);
+bool	noisyConfigInFollow(NoisyConfigState *  N, NoisyConfigIrNodeType productionOrToken);

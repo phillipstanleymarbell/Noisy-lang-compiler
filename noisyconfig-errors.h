@@ -34,5 +34,44 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+extern const char	Esanity[];
+extern const char	Eopen[];
+extern const char	EbadXseqNode[];
+extern const char	EillegallyPlacedXseqNode[];
+extern const char	EexpectedElementOrStar[];
+extern const char	EterminalTcons[];
+extern const char	Enoinput[];
+extern const char	Epipe[];
+extern const char	Efatal[];
+extern const char	Eerror[];
+extern const char	Efork[];
+extern const char	EnullFileNameInPrintToFile[];
+extern const char	EdotRenderFailed[];
+extern const char	EbadCgiQuery[];
+extern const char	Emkstemps[];
+extern const char	EelementOrStar[];
+extern const char	EsyntaxA[];
+extern const char	EsyntaxB[];
+extern const char	EsyntaxC[];
+extern const char	EsyntaxD[];
+extern const char	Esemantics[];
+extern const char	EassignTypesSanity[];
+extern const char	EtokenTooLong[];
+extern const char	EstringTooLongOrWithNewline[];
+extern const char	EruntTokenInNumericConst[];
+extern const char	EcannotFindTypeSignatureForNodeType[];
+extern const char	EassignTypeSanity[];
+extern const char	Efd2path[];
 
-extern char kNoisyConfigVersion[];
+
+/*
+ *	These are mostly passed in eSemantics()
+ */
+extern const char	Eundeclared[];
+
+
+
+/*
+ *	HTML-format errors for CGI version
+ */
+extern const char	WcgiAsync[];

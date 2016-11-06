@@ -1,0 +1,216 @@
+--//
+--//  FIRST()S
+--//
+
+--// high level productions
+
+--// scopes
+production kNoisyConfigIrNodeType_PconfigFile: firstset = {  kNoisyConfigIrNodeType_TdimensionTypeNames  }
+production kNoisyConfigIrNodeType_PdimensionTypeNameScope: firstset = {  kNoisyConfigIrNodeType_TdimensionTypeNames  }
+production kNoisyConfigIrNodeType_PlawScope: firstset = {  kNoisyConfigIrNodeType_Tlaw }
+production kNoisyConfigIrNodeType_PdimensionAliasScope: firstset = {  kNoisyConfigIrNodeType_TdimensionAliases }
+production kNoisyConfigIrNodeType_PvectorIntegralScope: firstset = {  kNoisyConfigIrNodeType_TvectorIntegrals  }
+production kNoisyConfigIrNodeType_PscalarIntegralScope: firstset = {  kNoisyConfigIrNodeType_TscalarIntegrals  }
+production kNoisyConfigIrNodeType_PvectorScalarPairScope: firstset = {  kNoisyConfigIrNodeType_TvectorScalarPairs  }
+
+--// statement lists
+production kNoisyConfigIrNodeType_PdimensionTypeNameStatementList: firstset = {  kNoisyConfigIrNodeType_Tidentifier  }
+production kNoisyConfigIrNodeType_PlawStatementList: firstset = {  kNoisyConfigIrNodeType_Tidentifier  }
+production kNoisyConfigIrNodeType_PvectorScalarPairStatementList: firstset = {  kNoisyConfigIrNodeType_Tidentifier  }
+production kNoisyConfigIrNodeType_PintegralLists: firstset = {  kNoisyConfigIrNodeType_TleftBrac  }
+
+--// statements
+production kNoisyConfigIrNodeType_PdimensionTypeNameStatement: firstset = {  kNoisyConfigIrNodeType_Tidentifier  }
+production kNoisyConfigIrNodeType_PlawStatement: firstset = {  kNoisyConfigIrNodeType_Tidentifier  }
+production kNoisyConfigIrNodeType_PintegralList: firstset = {  kNoisyConfigIrNodeType_TleftBrac  }
+production kNoisyConfigIrNodeType_PvectorScalarPairStatement: firstset = {
+  kNoisyConfigIrNodeType_Tidentifier
+}
+
+--// expression related ops
+production kNoisyConfigIrNodeType_PunaryOp: firstset = {
+  kNoisyConfigIrNodeType_Tminus
+}
+production kNoisyConfigIrNodeType_PlowPrecedenceBinaryOp: firstset = {
+  kNoisyConfigIrNodeType_Tminus,
+  kNoisyConfigIrNodeType_Tplus
+}
+production kNoisyConfigIrNodeType_PhighPrecedenceBinaryOp: firstset = {
+  kNoisyConfigIrNodeType_Tmul,
+  kNoisyConfigIrNodeType_Tdiv
+}
+production kNoisyConfigIrNodeType_PvectorOp: firstset = {
+  kNoisyConfigIrNodeType_Tdot,
+  kNoisyConfigIrNodeType_Tcross
+}
+production kNoisyConfigIrNodeType_PassignOp: firstset = {
+  kNoisyConfigIrNodeType_Tequals,
+}
+
+
+--// expression related productions
+production kNoisyConfigIrNodeType_Pexpression: firstset = {  
+  kNoisyConfigIrNodeType_Tminus,
+  kNoisyConfigIrNodeType_Tplus,
+  kNoisyConfigIrNodeType_Tidentifier,
+  kNoisyConfigIrNodeType_TstringConst,
+  kNoisyConfigIrNodeType_TleftParen,
+  firstset(kNoisyConfigIrNodeType_PvectorOp)
+}
+production kNoisyConfigIrNodeType_Pterm: firstset = {
+  firstset(kNoisyConfigIrNodeType_PunaryOp),
+  kNoisyConfigIrNodeType_Tidentifier,
+  kNoisyConfigIrNodeType_TleftParen
+}
+production kNoisyConfigIrNodeType_Pfactor: firstset = {
+  kNoisyConfigIrNodeType_Tminus, --// firstset(unaryop) already included
+  kNoisyConfigIrNodeType_Tplus,
+  kNoisyConfigIrNodeType_Tidentifier,
+  kNoisyConfigIrNodeType_TleftParen
+}
+
+--// array expression related productions
+production kNoisyIrNodeType_ParrayCastExpression:  firstset = {  
+  kNoisyConfigIrNodeType_TleftBrac 
+}
+production kNoisyConfigIrNodeType_PanonAggregateCastExpression: firstset = {
+  kNoisyConfigIrNodeType_TleftBrac
+}
+
+
+--// FOLLOW SETS
+--// high level productions
+production kNoisyConfigIrNodeType_PconfigFile: followset = {
+  kNoisyConfigIrNodeType_Zeof
+}
+production kNoisyConfigIrNodeType_PdimensionTypeNameScope: followset = {
+  kNoisyConfigIrNodeType_Tlaw
+}
+production kNoisyConfigIrNodeType_PlawScope: followset = {
+  kNoisyConfigIrNodeType_TdimensionAliases
+}
+production kNoisyConfigIrNodeType_PdimensionAliasScope: followset = {
+  kNoisyConfigIrNodeType_TvectorIntegrals
+}
+production kNoisyConfigIrNodeType_PvectorIntegralScope: followset = {
+  kNoisyConfigIrNodeType_TscalarIntegrals
+}
+production kNoisyConfigIrNodeType_PscalarIntegralScope: followset = {
+  kNoisyConfigIrNodeType_TvectorScalarPairs
+}
+production kNoisyConfigIrNodeType_PvectorScalarPairScope: followset = {
+  kNoisyConfigIrNodeType_Zeof
+}
+
+--// statement lists
+--// TODO check this is correct
+production kNoisyConfigIrNodeType_PdimensionTypeNameStatementList: followset = {
+  kNoisyConfigIrNodeType_TrightBrace
+}
+production kNoisyConfigIrNodeType_PlawStatementList: followset = {  
+  kNoisyConfigIrNodeType_TrightBrace
+}
+production kNoisyConfigIrNodeType_PintegralLists: followset = {
+  kNoisyConfigIrNodeType_TrightBrace
+}
+production kNoisyConfigIrNodeType_PvectorScalarPairStatementList: followset = {
+  kNoisyConfigIrNodeType_TrightBrace
+}
+
+--// TODO check this is correct
+production kNoisyConfigIrNodeType_PdimensionTypeNameStatement: followset = {
+  kNoisyConfigIrNodeType_TrightBrace,
+  firstset(kNoisyConfigIrNodeType_PdimensionTypeNameStatement)
+}
+production kNoisyConfigIrNodeType_PlawStatement: followset = {
+  kNoisyConfigIrNodeType_TrightBrace,
+  firstset(kNoisyConfigIrNodeType_PlawStatement)
+}
+production kNoisyConfigIrNodeType_PintegralList: followset = {
+  kNoisyConfigIrNodeType_TrightBrace,
+  firstset(kNoisyConfigIrNodeType_PintegralList)
+}
+production kNoisyConfigIrNodeType_PvectorScalarPairStatement: followset = {
+  kNoisyConfigIrNodeType_TrightBrace,
+  firstset(kNoisyConfigIrNodeType_PvectorScalarPairStatement)
+}
+
+--// expression related productions
+production kNoisyConfigIrNodeType_Pexpression: followset = {
+  kNoisyConfigIrNodeType_TrightParen,
+  kNoisyConfigIrNodeType_Tsemicolon,
+  kNoisyConfigIrNodeType_TrightBrace
+}
+production kNoisyConfigIrNodeType_Pterm: followset = {
+  firstset(kNoisyConfigIrNodeType_PlowPrecedenceBinaryOp),
+  followset(kNoisyConfigIrNodeType_Pexpression)
+}
+production kNoisyConfigIrNodeType_Pfactor: followset = {
+  firstset(kNoisyConfigIrNodeType_PhighPrecedenceBinaryOp),
+  followset(kNoisyConfigIrNodeType_Pterm)
+}
+
+--// operation related productions
+production kNoisyConfigIrNodeType_PunaryOp: followset = {
+  firstset(kNoisyConfigIrNodeType_Pterm)
+}
+production kNoisyConfigIrNodeType_PlowPrecedenceBinaryOp: followset = {
+  firstset(kNoisyConfigIrNodeType_Pterm)
+}
+production kNoisyConfigIrNodeType_PhighPrecedenceBinaryOp: followset = {
+  firstset(kNoisyConfigIrNodeType_Pfactor)
+}
+production kNoisyConfigIrNodeType_PvectorOp: followset = {
+  kNoisyConfigIrNodeTypeT_leftParen
+}
+production kNoisyConfigIrNodeType_PassignOp: followset = {
+  firstset(kNoisyConfigIrNodeType_Pexpression)
+}
+
+--// array expression related productions
+production  kNoisyIrNodeType_ParrayCastExpression: followset = {
+  kNoisyConfigIrNodeType_TrightBrac
+}
+production kNoisyConfigIrNodeType_PanonAggregateCastExpression: followset = {
+  kNoisyConfigIrNodeType_TrightBrac
+}
+
+
+--// Tokens
+
+--// special name tokens of scopes
+token kNoisyConfigIrNodeType_TdimensionTypeNames: followset = {T_XXX}
+token kNoisyConfigIrNodeType_Tlaw : followset = {T_XXX}
+token kNoisyConfigIrNodeType_TdimensionAliases: followset = {T_XXX}
+token kNoisyConfigIrNodeType_TvectorIntegrals  : followset = {T_XXX}
+token kNoisyConfigIrNodeType_TscalarIntegrals  : followset = {T_XXX}
+token kNoisyConfigIrNodeType_TvectorScalarPairs  : followset = {T_XXX}
+
+--// strings
+token kNoisyConfigIrNodeType_Tidentifier  : followset = {T_XXX}
+token kNoisyConfigIrNodeType_TstringConst: followset = {T_XXX}
+
+--// operators
+token kNoisyConfigIrNodeType_Tminus: followset = {T_XXX}
+token kNoisyConfigIrNodeType_Tplus: followset = {T_XXX}
+token kNoisyConfigIrNodeType_Tmul: followset = {T_XXX}
+token kNoisyConfigIrNodeType_Tdiv: followset = {T_XXX}
+token kNoisyConfigIrNodeType_Tdot: followset = {T_XXX}
+token kNoisyConfigIrNodeType_Tcross: followset = {T_XXX}
+token kNoisyConfigIrNodeType_Tequals: followset = {T_XXX}
+
+--// scope and statement demarcations
+token kNoisyConfigIrNodeType_TleftBrac  : followset = {T_XXX}
+token kNoisyConfigIrNodeType_TrightBrac  : followset = {T_XXX}
+token kNoisyConfigIrNodeType_TleftBrace: followset = {T_XXX}
+token kNoisyConfigIrNodeType_TrightBrace: followset = {T_XXX}
+token kNoisyConfigIrNodeType_TleftParen: followset = {T_XXX}
+token kNoisyConfigIrNodeType_TrightParen: followset = {T_XXX}
+token kNoisyConfigIrNodeType_Tsemicolon: followset = {T_XXX}
+
+--// miscellaneous
+token kNoisyConfigIrNodeType_Zeof: followset = {T_XXX}
+token kNoisyConfigIrNodeType_Zepsilon: followset = {T_XXX}
+token kNoisyConfigIrNodeType_Tnil: followset = {T_XXX}
+
+token T_XXX: followset = {T_XXX}

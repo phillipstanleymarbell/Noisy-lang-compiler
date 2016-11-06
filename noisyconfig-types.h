@@ -34,5 +34,20 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
-extern char kNoisyConfigVersion[];
+void        noisyConfigInferIdentifierTypeInDeclaration(NoisyConfigState * N, NoisyConfigScope * scope, NoisyConfigIrNode * node);
+void        noisyConfigInferIdentifierTypeInStatement(NoisyConfigState * N, NoisyConfigScope * scope, NoisyConfigIrNode * node);
+bool areSameTypes(NoisyConfigIrNodeType type1, NoisyConfigIrNodeType type2);
+bool isTokenToIgnoreBinOp(NoisyConfigIrNodeType targetType);
+NoisyConfigIrNode * lookupNodeInParents(NoisyConfigIrNode * node, NoisyConfigIrNodeType targetType);
+NoisyConfigIrNode * lookupNodeInSubtree(NoisyConfigIrNode * node, NoisyConfigIrNodeType targetType);
+NoisyConfigIrNodeType postOrderWalkBinOp(NoisyConfigState *N, NoisyConfigIrNode * node);
+void checkPlus(NoisyConfigState * N, NoisyConfigIrNode * node);
+void checkBinOps(NoisyConfigState * N, NoisyConfigIrNode * node);
+void checkAllNodeTypes(NoisyConfigState * N, NoisyConfigIrNode * node);
+bool isValidIdChar(char * string);
+bool isNumber(char c);
+bool isValidIdentifier(NoisyConfigState * N, NoisyConfigIrNode * node);
+void noisyConfigIrPassTypeChecker(NoisyConfigState * N, NoisyConfigIrNode * irNode);
+NoisyConfigIrNode *	noisyConfigTypeValidateIrSubtree(NoisyConfigState *  N, NoisyConfigIrNode *  subtree);
+bool 		noisyConfigTypeEqualsSubtreeTypes(NoisyConfigState *  N, NoisyConfigIrNode *  subtreeA, NoisyConfigIrNode *  subtreeB);
+char *	noisyConfigTypeMakeTypeSignature(NoisyConfigState *  N, NoisyConfigIrNode *  subtree);
