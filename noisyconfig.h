@@ -67,6 +67,8 @@ typedef enum
 
 	kNoisyConfigIrNodeType_Xseq,
 
+    kNoisyConfigIrNodeType_ZbadIdentifier,
+    kNoisyConfigIrNodeType_ZbadCharConst,
 	kNoisyConfigIrNodeType_Zepsilon,
 	kNoisyConfigIrNodeType_Zeof,
     kNoisyConfigIrNodeType_ZbadStringConst,

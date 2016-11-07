@@ -45,8 +45,6 @@ main(int argc, char *argv[])
 		noisyConfigConsolePrintBuffers(N);
 		exit(EXIT_FAILURE);
 	}
-    printf("got here after noisy config init\n");
-    return 0;
 
 	while (1)
 	{
@@ -211,7 +209,6 @@ main(int argc, char *argv[])
 		}
 	}
 
-
 	if (optind < argc)
 	{
 		while (optind < argc)
@@ -231,10 +228,7 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	if (!(N->mode & kNoisyConfigModeCGI))
-	{
-		noisyConfigConsolePrintBuffers(N);
-	}
+    noisyConfigConsolePrintBuffers(N);
 
 	return 0;
 }
@@ -276,12 +270,15 @@ processFile(NoisyConfigState *  N, char *  fileName)
 	{
 		fprintf(stdout, "%s\n", noisyConfigIrPassDotBackend(N));
 	}
+    
 
 
 	// if (N->mode & kNoisyConfigModeCallTracing)
 	// {
 	// 	noisyConfigTimeStampDumpTimeline(N);
 	// }
+    
+    noisyConfigConsolePrintBuffers(N);
 }
 
 

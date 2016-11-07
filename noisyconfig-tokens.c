@@ -35,7 +35,11 @@ const NoisyConfigIrNodeType gNoisyConfigReservedTokens[] = {
 	kNoisyConfigIrNodeType_TdimensionAliases,
 	kNoisyConfigIrNodeType_Tlaw,
 	kNoisyConfigIrNodeType_TdimensionTypeNames,
-
+	
+	kNoisyConfigIrNodeType_ZbadStringConst,
+	kNoisyConfigIrNodeType_ZbadIdentifier,
+	kNoisyConfigIrNodeType_Zepsilon,
+	kNoisyConfigIrNodeType_Zeof
 };
 
 const char *    gReservedTokenDescriptions[kNoisyConfigIrNodeTypeMax] = {
@@ -60,4 +64,9 @@ const char *    gReservedTokenDescriptions[kNoisyConfigIrNodeTypeMax] = {
 	[kNoisyConfigIrNodeType_TdimensionAliases] = "dimensionAliases",
 	[kNoisyConfigIrNodeType_Tlaw] = "law",
 	[kNoisyConfigIrNodeType_TdimensionTypeNames] = "dimensionTypeNames",
+	
+    [kNoisyConfigIrNodeType_ZbadStringConst]  =   "NoisyConfigIrNodeType_ZbadStringConst",
+    [kNoisyConfigIrNodeType_ZbadIdentifier]   =   "NoisyConfigIrNodeType_ZbadIdentifier",
+    [kNoisyConfigIrNodeType_Zepsilon]     =   "NoisyConfigIrNodeType_Zepsilon",
+    [kNoisyConfigIrNodeType_Zeof]         =   "NoisyConfigIrNodeType_Zeof"
 };

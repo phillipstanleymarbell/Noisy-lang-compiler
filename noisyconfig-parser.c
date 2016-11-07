@@ -108,12 +108,11 @@ noisyConfigParseDimensionTypeNameScope(NoisyConfigState *  N, NoisyConfigScope *
     n->currentScope = scope;
 
 
-	NoisyConfigIrNode *	dimensionToken = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TdimensionTypeNames, scope);
-	addLeaf(N, n, dimensionToken, scope);
+	NoisyConfigIrNode *	dimensionTypeNames = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TdimensionTypeNames, scope);
+	addLeaf(N, n, dimensionTypeNames, scope);
 	
 	noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TleftBrace, scope);
 	
-    noisyConfigParseDimensionTypeNameStatementList(N, scope);
     addLeaf(N, n, noisyConfigParseDimensionTypeNameStatementList(N, scope), scope);
 	
     noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TrightBrace, scope);
@@ -170,30 +169,28 @@ noisyConfigParseDimensionTypeNameStatement(NoisyConfigState *  N, NoisyConfigSco
     n->currentScope = currentScope;
 
 
-	if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_Tidentifier))
+	if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PdimensionTypeNameStatement))
 	{
-		addLeaf(
-			N,
-			n,
-			noisyConfigParseIdentifier(N, currentScope),
-			currentScope
-		);
+	    // flexprint(N->Fe, N->Fm, N->Fperr, "what is this%s\n", N->currentToken);
+		addLeaf(N, n, noisyConfigParseIdentifier(N, currentScope), currentScope);
 
 		if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PassignOp))
 		{
-			addLeafWithChainingSeq(N, n, noisyConfigParseAssignOp(N, currentScope), currentScope);
-			addLeafWithChainingSeq(N, n, noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tidentifier, currentScope), currentScope);
+	        flexprint(N->Fe, N->Fm, N->Fperr, "assign %s\n", N->tokenList);
+            noisyConfigParseAssignOp(N, currentScope);
+	        flexprint(N->Fe, N->Fm, N->Fperr, "after assign %s\n", N->tokenList);
+			addLeafWithChainingSeq(N, n, noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TstringConst, currentScope), currentScope);
 		}
 		else
 		{
+	        flexprint(N->Fe, N->Fm, N->Fperr, "hello%s\n", N->currentToken);
 			noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_PdimensionTypeNameStatement, kNoisyConfigIrNodeTypeMax);
-			// noisyConfigParserErrorRecovery(N, kNoisyConfigIrNodeType_Pstatement);
 		}
 	}
 	else
 	{
-		noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_PlawStatement, kNoisyConfigIrNodeTypeMax);
-		// noisyConfigParserErrorRecovery(N, kNoisyConfigIrNodeType_Pstatement);
+
+		noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_PdimensionTypeNameStatement, kNoisyConfigIrNodeTypeMax);
 	}
     
     noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tsemicolon, currentScope);

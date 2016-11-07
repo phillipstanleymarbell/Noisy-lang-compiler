@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <setjmp.h>
@@ -206,7 +207,7 @@ noisyConfigLexPeekPrint(NoisyConfigState *  N, int maxTokens, int formatCharacte
 
 					break;
 				}
-
+				
 				default:
 				{
 					if (gReservedTokenDescriptions[tmp->type] != NULL)
@@ -221,7 +222,7 @@ noisyConfigLexPeekPrint(NoisyConfigState *  N, int maxTokens, int formatCharacte
 					}
 					else
 					{
-						flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG/TODO: un-handled type [%d] in noisyConfigLexPeekPrint <<<", tmp->type);
+						flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG/TODO: un-handled type %s in noisyConfigLexPeekPrint <<<", gReservedTokenDescriptions[tmp->type]);
 						noisyConfigFatal(N, Esanity);
 					}
 				}
@@ -321,6 +322,24 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
 						checkSingle(N, kNoisyConfigIrNodeType_TrightParen);
 						continue;
 					}
+					
+                    case '{':
+					{
+						checkSingle(N, kNoisyConfigIrNodeType_TleftBrace);
+						continue;
+					}
+
+					case '}':
+					{
+						checkSingle(N, kNoisyConfigIrNodeType_TrightBrace);
+						continue;
+					}
+					
+                    case ';':
+					{
+						checkSingle(N, kNoisyConfigIrNodeType_Tsemicolon);
+						continue;
+					}
                     
                     case '=':
 					{
@@ -345,7 +364,7 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
 					 *	These tokens require special handling beyond being paired with an equals,
 					 *	being part of a number, or doubled-up (e.g., ">>", etc.).
 					 */
-					case '\"':
+					case '"':
 					{
 						checkDoubleQuote(N);
 						continue;
@@ -382,6 +401,8 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
 
 					default:
 					{
+	                    flexprint(N->Fe, N->Fm, N->Fperr, "hello %c", cur(N));
+                        noisyConfigConsolePrintBuffers(N);
 						noisyConfigFatal(N, Esanity);
 					}
 				}
@@ -617,7 +638,7 @@ checkDoubleQuote(NoisyConfigState *  N)
 	 *	N->lineBuffer must contain the closing quote, else we flag this as a
 	 *	bad string constant (kNoisyConfigIrNodeType_ZbadStringConst)
 	 */
-	if (strchr(&N->lineBuffer[N->columnNumber+1], '\"') == NULL)
+	if (strchr(&N->lineBuffer[N->columnNumber+1], '"') == NULL)
 	{
 		newToken = noisyConfigLexAllocateToken(N,	kNoisyConfigIrNodeType_ZbadStringConst	/* type		*/,
 							NULL					/* identifier	*/,
@@ -633,7 +654,7 @@ checkDoubleQuote(NoisyConfigState *  N)
 		/*
 		 *	NOTE: N->currentToken is pre-allocated to be kNoisyConfigMaxBufferLength characters long.
 		 */
-		while ((cur(N) != '\"') && N->currentTokenLength < (kNoisyConfigMaxBufferLength - 1) && (N->columnNumber < N->lineLength))
+		while ((cur(N) != '"') && N->currentTokenLength < (kNoisyConfigMaxBufferLength - 1) && (N->columnNumber < N->lineLength))
 		{
 			checkTokenLength(N, 1);
 			N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
@@ -642,7 +663,7 @@ checkDoubleQuote(NoisyConfigState *  N)
 		checkTokenLength(N, 1);
 		N->currentToken[N->currentTokenLength++] = '\0';
 
-		if (cur(N) != '\"')
+		if (cur(N) != '"')
 		{
 			/*
 			 *	We ran out of buffer space or reached end of lineBuffer

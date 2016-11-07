@@ -3,12 +3,12 @@ Noisy: A Language for Talking Sensors to Sleep
 
 Building the Noisy compiler and debug tools depends on the following repositories:
 
-	Libflex:		git@github.com:phillipstanleymarbell/libflex.git
-	DTrace-scripts:		git@github.com:phillipstanleymarbell/DTrace-scripts.git
+	gemusehaken/Libflex:		git@github.com:gemusehaken/libflex.git
+	gemusehaken/DTrace-scripts:	git@github.com:gemusehaken/DTrace-scripts.git
 
-The build also depends on the C protobuf compiler and on Graphviz. On Mac OS X, the easiest way to
-install these is to use macports (macports.org) to install the packages `protobuf-c`
-`protobuf-cpp`, and `graphviz-devel`.
+The build also depends on the C protobuf compiler. On Mac OS X, the easiest way to
+install this is to use macports (macports.org) to install the packages protobuf-c 
+and protobuf-cpp.
 
 After cloning the above two repositories, 
 (1) Edit the `Makefile` to set
@@ -23,14 +23,6 @@ After cloning the above two repositories,
 	libflexDirectory=full-path-to-libflex-repository-clone
 
 (3) Build Libflex by going to the directory you cloned for Libflex and running `make`.
-The makefiles assume the environment variables `OSTYPE` and `MACHTYPE` are set. If that
-is not the case, you will need to explicitly do:
-
-	make OSTYPE=darwin MACHTYPE=x86_64
-
-(4) Build the noisy compiler by running `make`. The makefiles assume the environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the case, you will need to explicitly do:
-
-	make OSTYPE=darwin MACHTYPE=x86_64
 
 
 The Noisy compiler

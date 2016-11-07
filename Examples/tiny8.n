@@ -1,4 +1,0 @@
-tiny8 : progtype
-{
-	complex	: type (int, int);
-}

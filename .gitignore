@@ -40,3 +40,7 @@
 version.c
 noisy-darwin-EN
 noisycgi-darwin-EN
+
+# stats
+statistics/*.txt
+Statistics/*.txt

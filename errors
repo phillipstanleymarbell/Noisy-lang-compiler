@@ -1,0 +1,372 @@
+echo 'char kNoisyConfigVersion[] = "0.1-alpha-'`git rev-list --count HEAD`' ('`git rev-parse HEAD`') (build '`date '+%m-%d-%Y-%H:%M'`-`whoami`@`hostname -s`-`uname -s`-`uname -r`-`uname -m`\)\"\; > version.c
+clang -DFLEX64 -I. -I/Users/jonathanlim/Documents/Compiler/libflex  -g -emit-llvm -Wno-gnu-designator -DNoisyOsMacOSX -DkNoisyBasePath="\"/Library/WebServer/Documents/tmp/\"" -DkNoisyDotCommand="\"/opt/local/bin/dot\"" -DkNoisyLogoPath="\"http://localhost/tmp/Noisy-logo.png\"" -DkNoisyCgiFileUrlBase=\""http://localhost/tmp/\"" -DkNoisyCgiExecutableUrl="\"http://localhost/cgi-bin/noisycgi-darwin\"" -O0 -std=gnu99 -DkNoisyConfigL10N="\"EN\"" -DNOISYCONFIG_L10N_EN -Wall -Werror  -c --analyze noisyconfig-lexer.c
+clang -DFLEX64 -I. -I/Users/jonathanlim/Documents/Compiler/libflex  -g -emit-llvm -Wno-gnu-designator -DNoisyOsMacOSX -DkNoisyBasePath="\"/Library/WebServer/Documents/tmp/\"" -DkNoisyDotCommand="\"/opt/local/bin/dot\"" -DkNoisyLogoPath="\"http://localhost/tmp/Noisy-logo.png\"" -DkNoisyCgiFileUrlBase=\""http://localhost/tmp/\"" -DkNoisyCgiExecutableUrl="\"http://localhost/cgi-bin/noisycgi-darwin\"" -O0 -std=gnu99 -DkNoisyConfigL10N="\"EN\"" -DNOISYCONFIG_L10N_EN -Wall -Werror  -c --analyze noisyconfig-typeSignatures.c
+clang -DFLEX64 -I. -I/Users/jonathanlim/Documents/Compiler/libflex  -g -emit-llvm -Wno-gnu-designator -DNoisyOsMacOSX -DkNoisyBasePath="\"/Library/WebServer/Documents/tmp/\"" -DkNoisyDotCommand="\"/opt/local/bin/dot\"" -DkNoisyLogoPath="\"http://localhost/tmp/Noisy-logo.png\"" -DkNoisyCgiFileUrlBase=\""http://localhost/tmp/\"" -DkNoisyCgiExecutableUrl="\"http://localhost/cgi-bin/noisycgi-darwin\"" -O0 -std=gnu99 -DkNoisyConfigL10N="\"EN\"" -DNOISYCONFIG_L10N_EN -Wall -Werror  -c --analyze noisyconfig-firstAndFollow.c
+clang -DFLEX64 -I. -I/Users/jonathanlim/Documents/Compiler/libflex  -g -emit-llvm -Wno-gnu-designator -DNoisyOsMacOSX -DkNoisyBasePath="\"/Library/WebServer/Documents/tmp/\"" -DkNoisyDotCommand="\"/opt/local/bin/dot\"" -DkNoisyLogoPath="\"http://localhost/tmp/Noisy-logo.png\"" -DkNoisyCgiFileUrlBase=\""http://localhost/tmp/\"" -DkNoisyCgiExecutableUrl="\"http://localhost/cgi-bin/noisycgi-darwin\"" -O0 -std=gnu99 -DkNoisyConfigL10N="\"EN\"" -DNOISYCONFIG_L10N_EN -Wall -Werror  -c --analyze noisyconfig-parser.c
+clang -DFLEX64 -I. -I/Users/jonathanlim/Documents/Compiler/libflex  -g -emit-llvm -Wno-gnu-designator -DNoisyOsMacOSX -DkNoisyBasePath="\"/Library/WebServer/Documents/tmp/\"" -DkNoisyDotCommand="\"/opt/local/bin/dot\"" -DkNoisyLogoPath="\"http://localhost/tmp/Noisy-logo.png\"" -DkNoisyCgiFileUrlBase=\""http://localhost/tmp/\"" -DkNoisyCgiExecutableUrl="\"http://localhost/cgi-bin/noisycgi-darwin\"" -O0 -std=gnu99 -DkNoisyConfigL10N="\"EN\"" -DNOISYCONFIG_L10N_EN -Wall -Werror  -c --analyze noisyconfig-types.c
+make: *** No rule to make target `noisyconfig-irPass-cBackend.bc', needed by `libNoisyConfig-darwin-.a'.  Stop.
+make: *** Waiting for unfinished jobs....
+noisyconfig-types.c:46:10: fatal error: 'noisy-errors.h' file not found
+#include "noisy-errors.h"
+         ^
+1 error generated.
+make: *** [noisyconfig-types.bc] Error 1
+In file included from noisyconfig-typeSignatures.c:45:
+./noisyconfig-timeStamps.h:271:50: error: use of undeclared identifier 'kNoisyTimeStampKeyMax'; did you mean 'kNoisyConfigTimeStampKeyMax'?
+extern const char *     NoisyTimeStampKeyStrings[kNoisyTimeStampKeyMax];
+                                                 ^~~~~~~~~~~~~~~~~~~~~
+                                                 kNoisyConfigTimeStampKeyMax
+./noisyconfig-timeStamps.h:223:2: note: 'kNoisyConfigTimeStampKeyMax' declared hereIn file included from noisyconfig-firstAndFollow.c:48:
+
+./noisyconfig-timeStamps.h:271:50: error: use of undeclared identifier 'kNoisyTimeStampKeyMax'; did you mean 'kNoisyConfigTimeStampKeyMax'?
+        kNoisyConfigTimeStampKeyMax,
+        ^
+extern const char *     NoisyTimeStampKeyStrings[kNoisyTimeStampKeyMax];
+                                                 ^~~~~~~~~~~~~~~~~~~~~
+                                                 kNoisyConfigTimeStampKeyMax
+./noisyconfig-timeStamps.h:223:2: note: 'kNoisyConfigTimeStampKeyMax' declared here
+        kNoisyConfigTimeStampKeyMax,
+        ^
+In file included from noisyconfig-parser.c:12:
+./noisyconfig-timeStamps.h:271:50: error: use of undeclared identifier 'kNoisyTimeStampKeyMax'; did you mean 'kNoisyConfigTimeStampKeyMax'?
+extern const char *     NoisyTimeStampKeyStrings[kNoisyTimeStampKeyMax];
+                                                 ^~~~~~~~~~~~~~~~~~~~~
+                                                 kNoisyConfigTimeStampKeyMax
+./noisyconfig-timeStamps.h:223:2: note: 'kNoisyConfigTimeStampKeyMax' declared here
+        kNoisyConfigTimeStampKeyMax,
+        ^
+In file included from In file included from noisyconfig-firstAndFollow.c:49:
+./noisyconfig.h:209:2noisyconfig-typeSignatures.c:46:
+./noisyconfig.h:209: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+:2: error        NoisyConfigSymbol *             symbol;
+        ^
+        struct 
+: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        NoisyConfigSymbol *             symbol;
+        ^
+        struct 
+./noisyconfig.h:265:2: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+./noisyconfig.h:265:2:         NoisyConfigSymbol *             firstSymbol;
+        ^
+        struct 
+In file included from noisyconfig-parser.c:13:
+./noisyconfig.h:209:error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+2:        NoisyConfigSymbol *             firstSymbol;
+        ^
+        struct 
+ error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        NoisyConfigSymbol *             symbol;
+        ^
+        struct 
+./noisyconfig.h:312:2: ./noisyconfig.h:312:2: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'error: 
+must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        NoisyConfigSymbol *             definition;
+        ^
+        struct 
+        NoisyConfigSymbol *             definition;
+        ^
+        struct 
+./noisyconfig.h:./noisyconfig.h:329:./noisyconfig.h:3292: :2: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+265        NoisyConfigSymbol *             next;
+:2        ^
+        struct 
+        NoisyConfigSymbol *             next;
+: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        ^
+        struct         NoisyConfigSymbol *             firstSymbol;
+        ^
+./noisyconfig.h:330:2: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        struct         NoisyConfigSymbol *             prev;
+        ^
+        struct 
+
+
+./noisyconfig.h:330:2: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        NoisyConfigSymbol *             prev;
+        ^
+        struct 
+./noisyconfig.h:312:2: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        NoisyConfigSymbol *             definition;
+        ^
+        struct 
+./noisyconfig.h:329:2: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        NoisyConfigSymbol *             next;
+        ^
+        struct 
+./noisyconfig.h:330:2: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        NoisyConfigSymbol *             prev;
+        ^
+        struct 
+./noisyconfig.h:340:2: error: unknown type name 'NoisyTimeStamp'
+        NoisyTimeStamp *        timestamps;
+        ^
+./noisyconfig.h:340:2: error: unknown type name 'NoisyTimeStamp'
+        NoisyTimeStamp *        timestamps;
+        ^
+In file included from noisyconfig-lexer.c:13:
+./noisyconfig-timeStamps.h:271:50: error: use of undeclared identifier 'kNoisyTimeStampKeyMax'; did you mean 'kNoisyConfigTimeStampKeyMax'?
+extern const char *     NoisyTimeStampKeyStrings[kNoisyTimeStampKeyMax];
+                                                 ^~~~~~~~~~~~~~~~~~~~~
+                                                 kNoisyConfigTimeStampKeyMax
+./noisyconfig-timeStamps.h:223:2: note: 'kNoisyConfigTimeStampKeyMax' declared here
+        kNoisyConfigTimeStampKeyMax,
+        ^
+./noisyconfig.h:340:2: error: unknown type name 'NoisyTimeStamp'
+        NoisyTimeStamp *        timestamps;
+        ^
+In file included from noisyconfig-lexer.c:14:
+./noisyconfig.h:209:2: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        NoisyConfigSymbol *             symbol;
+        ^
+        struct 
+./noisyconfig.h:265:2: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        NoisyConfigSymbol *             firstSymbol;
+        ^
+        struct 
+./noisyconfig.h:312:2: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        NoisyConfigSymbol *             definition;
+        ^
+        struct 
+./noisyconfig.h:329:2: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        NoisyConfigSymbol *             next;
+        ^
+        struct 
+./noisyconfig.h:330:2: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+        NoisyConfigSymbol *             prev;
+        ^
+        struct 
+./noisyconfig.h:350:2: error: unknown type name 'NoisyTimeStampKey'
+        NoisyTimeStampKey       timeAggregatesLastKey;
+        ^
+./noisyconfig.h:350:2: error: unknown type name 'NoisyTimeStampKey'
+./noisyconfig.h:340:2: error: unknown type name 'NoisyTimeStamp'
+        NoisyTimeStampKey       timeAggregatesLastKey;
+        ^
+        NoisyTimeStamp *        timestamps;
+        ^
+./noisyconfig.h:350:2: error: unknown type name 'NoisyTimeStampKey'
+        NoisyTimeStampKey       timeAggregatesLastKey;
+        ^
+./noisyconfig.h:435:1: error: unknown type name 'NoisyState'
+NoisyState *        noisyConfigInit(NoisyConfigMode mode);
+^
+./noisyconfig.h:435:1: error: unknown type name 'NoisyState'
+NoisyState *        noisyConfigInit(NoisyConfigMode mode);
+^
+./noisyconfig.h:435:1: error: unknown type name 'NoisyState'
+NoisyState *        noisyConfigInit(NoisyConfigMode mode);
+^
+In file included from noisyconfig-parser.c:15:
+./noisyconfig-parser-helper.h:3:51: error: must use 'struct' tag to refer to type 'NoisyConfigSymbol'
+void            errorMultiDefinition(NoisyConfigState *  N, NoisyConfigSymbol *  symbol);
+                                                            ^
+                                                            struct 
+In file included from noisyconfig-parser.c:18:
+./noisyconfig-symbolTable.h:56:1: error: unknown type name 'NoisyScope'
+NoisyScope *    noisySymbolTableAllocScope(NoisyState *  N);
+^
+./noisyconfig.h:350:2: error: unknown type name 'NoisyTimeStampKey'
+        NoisyTimeStampKey       timeAggregatesLastKey;
+        ^
+./noisyconfig-symbolTable.h:56:41: error: unknown type name 'NoisyState'
+NoisyScope *    noisySymbolTableAllocScope(NoisyState *  N);
+                                           ^
+./noisyconfig.h:435:1: error: unknown type name 'NoisyState'
+NoisyState *        noisyConfigInit(NoisyConfigMode mode);
+^
+./noisyconfig-symbolTable.h:57:1: error: unknown type name 'NoisySymbol'
+NoisySymbol *   noisySymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token);
+^
+noisyconfig-lexer.c:76:1: error: conflicting types for 'noisyConfigLexAllocateToken'
+noisyConfigLexAllocateToken(    
+^
+./noisyconfig-lexer.h:4:21: note: previous declaration is here
+NoisyConfigToken *              noisyConfigLexAllocateToken(            NoisyConfigState *  N, NoisyConfigIrNodeType type, 
+                                ^
+./noisyconfig-symbolTable.h:57:57: error: unknown type name 'NoisyState'
+noisyconfig-typeSignatures.c:53:37: error: use of undeclared identifier 'kNoisyIrNodeTypeMax'; did you mean 'kNoisyConfigIrNodeTypeMax'?
+NoisySymbol *   noisySymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token);
+                                                          ^
+const char gNoisyTypeNodeSignatures[kNoisyIrNodeTypeMax] = {
+                                    ^~~~~~~~~~~~~~~~~~~
+                                    kNoisyConfigIrNodeTypeMax
+./noisyconfig.h:71:2: note: 'kNoisyConfigIrNodeTypeMax' declared here
+        kNoisyConfigIrNodeTypeMax
+        ^
+./noisyconfig-symbolTable.h:57:74: error: unknown type name 'NoisyScope'
+NoisySymbol *   noisySymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token);
+                                                                           ^
+noisyconfig-firstAndFollow.c:83:51: error: use of undeclared identifier 'gNoisyFirsts'
+        for (int i = 0; i < kNoisyConfigIrNodeTypeMax && gNoisyFirsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
+                                                         ^
+noisyconfig-firstAndFollow.c:83:89: error: use of undeclared identifier 'kNoisyIrNodeTypeMax'; did you mean 'kNoisyConfigIrNodeTypeMax'?
+        for (int i = 0; i < kNoisyConfigIrNodeTypeMax && gNoisyFirsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
+                                                                                               ^~~~~~~~~~~~~~~~~~~
+                                                                                               kNoisyConfigIrNodeTypeMax
+./noisyconfig.h:71:2: note: 'kNoisyConfigIrNodeTypeMax' declared here
+        kNoisyConfigIrNodeTypeMax
+        ^
+./noisyconfig-symbolTable.h:57:95: error: unknown type name 'NoisyToken'
+NoisySymbol *   noisySymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token);
+                                                                                                ^
+./noisyconfig-symbolTable.h:58:1: error: unknown type name 'NoisySymbol'
+noisyconfig-firstAndFollow.c:NoisySymbol *   noisySymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier);
+^88:7: error: use of undeclared identifier 'gNoisyFirsts'
+
+                if (gNoisyFirsts[productionOrToken][i] == token->type)
+                    ^
+./noisyconfig-symbolTable.h:58:51: error: unknown type name 'NoisyState'
+noisyconfig-firstAndFollow.c:108NoisySymbol *   noisySymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier);
+                                                    ^
+:15: error: unknown type name 'NoisyState'
+noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken)
+              ^
+./noisyconfig-symbolTable.h:58:68: error: unknown type name 'NoisyScope'
+NoisySymbol *   noisySymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier);
+                                                                     ^
+noisyconfig-lexer.c:132:19: error: unknown type name 'NoisyConfigConfigState'
+noisyConfigLexGet(NoisyConfigConfigState *  N)
+                  ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+noisyconfig-firstAndFollow.c:108:32: error: unknown type name 'NoisyIrNodeType'
+noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken)
+                               ^
+20 errors generated.
+noisyconfig-typeSignatures.c:54:10: error: use of undeclared identifier 'kNoisyIrNodeType_Pidentifier'; did you mean 'kNoisyConfigIrNodeType_Tidentifier'?
+                                                                [kNoisyIrNodeType_Pidentifier]                  = 'I',
+                                                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                                                 kNoisyConfigIrNodeType_Tidentifier
+./noisyconfig.h:36:2: note: 'kNoisyConfigIrNodeType_Tidentifier' declared here
+        kNoisyConfigIrNodeType_Tidentifier,
+        ^
+make: *** [noisyconfig-parser.bc] Error 1
+noisyconfig-firstAndFollow.c:110:2: error: use of undeclared identifier 'kNoisyModeCallStatistics'; did you mean 'kNoisyConfigModeCallStatistics'?
+        NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFollow);
+        ^
+./noisyconfig-timeStamps.h:246:61: note: expanded from macro 'NoisyTimeStampTraceMacro'
+#define NoisyTimeStampTraceMacro(routineKey)            if (N->mode & kNoisyModeCallStatistics)\
+                                                                      ^
+./noisyconfig.h:167:2: note: 'kNoisyConfigModeCallStatistics' declared here
+        kNoisyConfigModeCallStatistics                  = (1 << 1),
+        ^
+noisyconfig-lexer.c:152:26: error: use of undeclared identifier 'kNoisyConfigVerbosityDebugLexer'; did you mean 'kNoisyVerbosityDebugLexer'?
+        if (N->verbosityLevel & kNoisyConfigVerbosityDebugLexer)
+                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                kNoisyVerbosityDebugLexer
+./noisyconfig.h:3:2: note: 'kNoisyVerbosityDebugLexer' declared here
+        kNoisyVerbosityDebugLexer       =       (1 << 0),
+        ^
+noisyconfig-typeSignatures.c:55:10: error: use of undeclared identifier 'kNoisyIrNodeType_PnamegenDeclaration'
+                                                                [kNoisyIrNodeType_PnamegenDeclaration]          = 'N',
+                                                                 ^
+noisyconfig-firstAndFollow.c:110:27: error: use of undeclared identifier 'kNoisyTimeStampKeyInFollow'; did you mean 'kNoisyConfigTimeStampKeyInFollow'?
+        NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFollow);
+                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+                                 kNoisyConfigTimeStampKeyInFollow
+./noisyconfig-timeStamps.h:251:49: note: expanded from macro 'NoisyTimeStampTraceMacro'
+                                                                N->timestamps[N->timestampCount].key = (routineKey);\
+                                                                                                        ^
+./noisyconfig-timeStamps.h:153:2: note: 'kNoisyConfigTimeStampKeyInFollow' declared here
+        kNoisyConfigTimeStampKeyInFollow,
+        ^
+noisyconfig-lexer.cnoisyconfig-typeSignatures.c:56:10: error: use of undeclared identifier 'kNoisyIrNodeType_PintConst'
+:223:10: error: use of undeclared identifier 'kNoisyConfigIrNodeType_TintConst'; did you mean 'kNoisyConfigIrNodeType_TstringConst'?
+                                                                [kNoisyIrNodeType_PintConst]                    = 'I',
+                                                                 ^
+                                case kNoisyConfigIrNodeType_TintConst:
+                                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                     kNoisyConfigIrNodeType_TstringConst
+./noisyconfig.h:35:2: note: 'kNoisyConfigIrNodeType_TstringConst' declared here
+        kNoisyConfigIrNodeType_TstringConst,
+        ^
+noisyconfig-firstAndFollow.c:110:27: error: use of undeclared identifier 'kNoisyTimeStampKeyInFollow'; did you mean 'kNoisyConfigTimeStampKeyInFollow'?
+        NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFollow);
+                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+                                 kNoisyConfigTimeStampKeyInFollow
+./noisyconfig-timeStamps.h:259:37: note: expanded from macro 'NoisyTimeStampTraceMacro'
+                                                                N->timeAggregatesLastKey = (routineKey);\
+noisyconfig-typeSignatures.c:57:10: error:                                                                                             ^
+./noisyconfig-timeStamps.h:153:use of undeclared identifier 'kNoisyIrNodeType_Talpha'
+2: note: 'kNoisyConfigTimeStampKeyInFollow' declared here
+                                                                [kNoisyIrNodeType_Talpha]                       = 'h',
+                                                                 ^
+        kNoisyConfigTimeStampKeyInFollow,
+        ^
+noisyconfig-lexer.c:233:10: error: use of undeclared identifier 'kNoisyConfigIrNodeType_TrealConst'; did you mean 'kNoisyConfigIrNodeType_TstringConst'?
+                                case kNoisyConfigIrNodeType_TrealConst:
+                                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                     kNoisyConfigIrNodeType_TstringConst
+./noisyconfig.h:35:2: note: 'kNoisyConfigIrNodeType_TstringConst' declared here
+        kNoisyConfigIrNodeType_TstringConst,
+        ^
+noisyconfig-lexer.c:233:10: error: duplicate case value 'kNoisyConfigIrNodeType_TstringConst'
+                                case kNoisyConfigIrNodeType_TrealConst:
+                                     ^
+noisyconfig-lexer.c:223:10: note: previous case defined here
+                                case kNoisyConfigIrNodeType_TintConst:
+                                     ^
+noisyconfig-lexer.c:243:10: error: duplicate case value 'kNoisyConfigIrNodeType_TstringConst'
+                                case kNoisyConfigIrNodeType_TstringConst:
+                                     ^
+noisyconfig-lexer.c:233:10: note: previous case defined here
+                                case kNoisyConfigIrNodeType_TrealConst:
+                                     ^
+noisyconfig-typeSignatures.c:58:10: error: use of undeclared identifier 'kNoisyIrNodeType_Tint'
+                                                                [kNoisyIrNodeType_Tint]                         = 'i',
+                                                                 ^
+noisyconfig-firstAndFollow.c:110:27: error: use of undeclared identifier 'kNoisyTimeStampKeyInFollow'; did you mean 'kNoisyConfigTimeStampKeyInFollow'?
+        NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFollow);
+                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+                                 kNoisyConfigTimeStampKeyInFollow
+./noisyconfig-timeStamps.h:263:27: note: expanded from macro 'NoisyTimeStampTraceMacro'
+                                                                N->callAggregates[routineKey]++;\
+                                                                                  ^
+./noisyconfig-timeStamps.h:153:2: note: 'kNoisyConfigTimeStampKeyInFollow' declared here
+        kNoisyConfigTimeStampKeyInFollow,
+        ^
+noisyconfig-firstAndFollow.c:112:2: error: use of undeclared identifier 'NoisyToken'
+        NoisyToken *    token = noisyLexPeek(N, 1);
+        ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+20 errors generated.
+noisyconfig-typeSignatures.c:59:10: error: use of undeclared identifier 'kNoisyIrNodeType_Tlist'
+                                                                [kNoisyIrNodeType_Tlist]                        = 'l',
+                                                                 ^
+make: *** [noisyconfig-firstAndFollow.bc] Error 1
+noisyconfig-typeSignatures.c:60:10: error: use of undeclared identifier 'kNoisyIrNodeType_Tnybble'
+                                                                [kNoisyIrNodeType_Tnybble]                      = 'y',
+                                                                 ^
+noisyconfig-typeSignatures.c:61:10: error: use of undeclared identifier 'kNoisyIrNodeType_Treal'
+                                                                [kNoisyIrNodeType_Treal]                        = 'r',
+                                                                 ^
+noisyconfig-lexer.c:355:20: error: use of undeclared identifier 'kNoisyConfigIrNodeType_TandAs'; did you mean 'kNoisyConfigIrNodeType_Tdot'?
+                                                checkWeq3(N, kNoisyConfigIrNodeType_TandAs, kNoisyConfigIrNodeType_Tand, '&', kNoisyConfigIrNodeType_Tampersand);
+                                                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                                             kNoisyConfigIrNodeType_Tdot
+./noisyconfig.h:30:2: note: 'kNoisyConfigIrNodeType_Tdot' declared here
+        kNoisyConfigIrNodeType_Tdot,
+        ^
+noisyconfig-lexer.c:355:51: error: use of undeclared identifier 'kNoisyConfigIrNodeType_Tand'; did you mean 'kNoisyConfigIrNodeType_Tdot'?
+                                                checkWeq3(N, kNoisyConfigIrNodeType_TandAs, kNoisyConfigIrNodeType_Tand, '&', kNoisyConfigIrNodeType_Tampersand);
+                                                                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                                                                            kNoisyConfigIrNodeType_Tdot
+./noisyconfig.h:30:2: note: 'kNoisyConfigIrNodeType_Tdot' declared here
+        kNoisyConfigIrNodeType_Tdot,
+        ^
+noisyconfig-lexer.c:355:85: error: use of undeclared identifier 'kNoisyConfigIrNodeType_Tampersand'
+                                                checkWeq3(N, kNoisyConfigIrNodeType_TandAs, kNoisyConfigIrNodeType_Tand, '&', kNoisyConfigIrNodeType_Tampersand);
+                                                                                                                              ^
+noisyconfig-typeSignatures.c:62:10: error: use of undeclared identifier 'kNoisyIrNodeType_Tidentifier'; did you mean 'kNoisyConfigIrNodeType_Tidentifier'?
+                                                                [kNoisyIrNodeType_Tidentifier]                  = 'n',
+                                                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                                                 kNoisyConfigIrNodeType_Tidentifier
+./noisyconfig.h:36:2: note: 'kNoisyConfigIrNodeType_Tidentifier' declared here
+        kNoisyConfigIrNodeType_Tidentifier,
+        ^
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+20 errors generated.
+make: *** [noisyconfig-typeSignatures.bc] Error 1
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+20 errors generated.
+make: *** [noisyconfig-lexer.bc] Error 1
