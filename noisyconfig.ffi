@@ -59,14 +59,15 @@ production kNoisyConfigIrNodeType_Pexpression: firstset = {
 }
 production kNoisyConfigIrNodeType_Pterm: firstset = {
   firstset(kNoisyConfigIrNodeType_PunaryOp),
+  firstset(kNoisyConfigIrNodeType_PvectorOp),
   kNoisyConfigIrNodeType_Tidentifier,
   kNoisyConfigIrNodeType_TleftParen
 }
 production kNoisyConfigIrNodeType_Pfactor: firstset = {
-  kNoisyConfigIrNodeType_Tminus, --// firstset(unaryop) already included
-  kNoisyConfigIrNodeType_Tplus,
+  firstset(kNoisyConfigIrNodeType_PunaryOp),
+  firstset(kNoisyConfigIrNodeType_PvectorOp),
   kNoisyConfigIrNodeType_Tidentifier,
-  kNoisyConfigIrNodeType_TleftParen
+  kNoisyConfigIrNodeType_TleftParen,
 }
 
 --// array expression related productions
@@ -161,7 +162,8 @@ production kNoisyConfigIrNodeType_PhighPrecedenceBinaryOp: followset = {
   firstset(kNoisyConfigIrNodeType_Pfactor)
 }
 production kNoisyConfigIrNodeType_PvectorOp: followset = {
-  kNoisyConfigIrNodeTypeT_leftParen
+  firstset(kNoisyConfigIrNodeType_Pfactor,
+  firstset(kNoisyConfigIrNodeType_PvectorOp)
 }
 production kNoisyConfigIrNodeType_PassignOp: followset = {
   firstset(kNoisyConfigIrNodeType_Pexpression)
@@ -211,6 +213,8 @@ token kNoisyConfigIrNodeType_Tsemicolon: followset = {T_XXX}
 --// miscellaneous
 token kNoisyConfigIrNodeType_Zeof: followset = {T_XXX}
 token kNoisyConfigIrNodeType_Zepsilon: followset = {T_XXX}
+token kNoisyConfigIrNodeType_ZbadStringConst: followset = {T_XXX}
+token kNoisyConfigIrNodeType_ZbadIdentifier: followset = {T_XXX}
 token kNoisyConfigIrNodeType_Tnil: followset = {T_XXX}
 
 token T_XXX: followset = {T_XXX}

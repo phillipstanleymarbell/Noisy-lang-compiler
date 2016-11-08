@@ -70,11 +70,11 @@ noisyConfigParseConfigFile(NoisyConfigState *  N, NoisyConfigScope *  currentSco
 	addLeaf(N, n, noisyConfigParseDimensionTypeNameScope(N, currentScope), currentScope);
 	
     // TODO after getting dimension scope working, uncomment the below
-    // if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
-	// {
-	// 	addLeafWithChainingSeq(N, n, noisyConfigParseEquationScope(N, currentScope), currentScope);
-	// }
-	// 
+    if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
+	{
+		addLeafWithChainingSeq(N, n, noisyConfigParseLawScope(N, currentScope), currentScope);
+	}
+	
     // if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
 	// {
 	// 	addLeafWithChainingSeq(N, n, noisyConfigParseIntegralsScope(N, currentScope), currentScope);
@@ -96,7 +96,7 @@ noisyConfigParseConfigFile(NoisyConfigState *  N, NoisyConfigScope *  currentSco
  *	Generated AST subtree:
  *
  *		node.left	= kNoisyConfigIrNodeType_TdimensionTypeName
- *		node.right	= kNoisyConfigIrNodeType_PscopedDimensionStatementList
+ *		node.right	= kNoisyConfigIrNodeType_TdimensionTypeNameStatementList
  */
 NoisyConfigIrNode *
 noisyConfigParseDimensionTypeNameScope(NoisyConfigState *  N, NoisyConfigScope *  scope)
@@ -171,19 +171,15 @@ noisyConfigParseDimensionTypeNameStatement(NoisyConfigState *  N, NoisyConfigSco
 
 	if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PdimensionTypeNameStatement))
 	{
-	    // flexprint(N->Fe, N->Fm, N->Fperr, "what is this%s\n", N->currentToken);
 		addLeaf(N, n, noisyConfigParseIdentifier(N, currentScope), currentScope);
 
 		if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PassignOp))
 		{
-	        flexprint(N->Fe, N->Fm, N->Fperr, "assign %s\n", N->tokenList);
             noisyConfigParseAssignOp(N, currentScope);
-	        flexprint(N->Fe, N->Fm, N->Fperr, "after assign %s\n", N->tokenList);
-			addLeafWithChainingSeq(N, n, noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TstringConst, currentScope), currentScope);
+			addLeaf(N, n, noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TstringConst, currentScope), currentScope);
 		}
 		else
 		{
-	        flexprint(N->Fe, N->Fm, N->Fperr, "hello%s\n", N->currentToken);
 			noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_PdimensionTypeNameStatement, kNoisyConfigIrNodeTypeMax);
 		}
 	}
@@ -196,6 +192,304 @@ noisyConfigParseDimensionTypeNameStatement(NoisyConfigState *  N, NoisyConfigSco
     noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tsemicolon, currentScope);
 
 	return n;
+}
+
+/*
+ *	kNoisyConfigIrNodeType_PlawScope
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyConfigIrNodeType_Tlaw
+ *		node.right	= kNoisyConfigIrNodeType_PlawStatementList
+ */
+NoisyConfigIrNode *
+noisyConfigParseLawScope(NoisyConfigState *  N, NoisyConfigScope *  scope)
+{
+	NoisyConfigIrNode *	n = genNoisyConfigIrNode(N,
+                        kNoisyConfigIrNodeType_PlawScope,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyConfigLexPeek(N, 1)->sourceInfo /* source info */);
+    n->currentScope = scope;
+
+
+	NoisyConfigIrNode *	lawToken = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tlaw, scope);
+	addLeaf(N, n, lawToken, scope);
+	
+	noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TleftBrace, scope);
+	
+    addLeaf(N, n, noisyConfigParseLawStatementList(N, scope), scope);
+	
+    noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TrightBrace, scope);
+
+    return n;
+}
+
+/*	
+ *	kNoisyConfigIrNodeType_PlawStatementList
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyConfigIrNodeType_PlawStatement
+ *		node.right	= Xseq of kNoisyConfigIrNodeType_PlawStatement
+ */
+NoisyConfigIrNode *
+noisyConfigParseLawStatementList(NoisyConfigState * N, NoisyConfigScope * scope)
+{
+	NoisyConfigIrNode *	n = genNoisyConfigIrNode(
+		N,
+		kNoisyConfigIrNodeType_PlawStatementList,
+		NULL /* left child */,
+		NULL /* right child */,
+		noisyConfigLexPeek(N, 1)->sourceInfo /* source info */
+	);
+    n->currentScope = scope;
+
+    while (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PlawStatement)) 
+    {
+        addLeafWithChainingSeq(N, n, noisyConfigParseLawStatement(N, scope), scope);
+    }
+
+    return n;
+}
+
+/*
+ *	kNoisyConfigIrNodeType_PlawStatement
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= NULL | kNoisyConfigIrNodeType_PidentifierOrNilList
+ *		node.right	= kNoisyConfigIrNodeType_Pexpression
+ */
+NoisyConfigIrNode *
+noisyConfigParseLawStatement(NoisyConfigState *  N, NoisyConfigScope *  currentScope)
+{
+	NoisyConfigIrNode *	n = genNoisyConfigIrNode(
+						N,
+						kNoisyConfigIrNodeType_PlawStatement,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyConfigLexPeek(N, 1)->sourceInfo /* source info */);
+    n->currentScope = currentScope;
+
+
+	if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PlawStatement))
+	{
+		addLeaf(N, n, noisyConfigParseIdentifier(N, currentScope), currentScope);
+
+		if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PassignOp))
+		{
+            noisyConfigParseAssignOp(N, currentScope);
+			addLeaf(N, n, noisyConfigParseExpression(N, currentScope), currentScope);
+		}
+		else
+		{
+			noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_PdimensionTypeNameStatement, kNoisyConfigIrNodeTypeMax);
+		}
+	}
+	else
+	{
+		noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_PlawStatement, kNoisyConfigIrNodeTypeMax);
+	}
+    
+    noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tsemicolon, currentScope);
+
+	return n;
+}
+
+NoisyConfigIrNode*
+noisyConfigParseExpression(NoisyConfigState *  N, NoisyConfigScope *  currentScope)
+{
+    NoisyConfigIrNode *   n;
+    bool t = noisyConfigInFirst(N, kNoisyConfigIrNodeType_Pterm);
+
+    if (t && noisyConfigInFirst(N, kNoisyConfigIrNodeType_Pterm))
+    {
+        n = noisyConfigParseTerm(N, currentScope);
+
+        while (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PlowPrecedenceBinaryOp))
+        {
+            addLeafWithChainingSeq(N, n, noisyConfigParseLowPrecedenceBinaryOp(N, currentScope), currentScope);
+            addLeafWithChainingSeq(N, n, noisyConfigParseTerm(N, currentScope), currentScope);
+        }
+    }
+    else
+    {
+        noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_Pexpression, kNoisyConfigIrNodeTypeMax);
+        // noisyConfigParserErrorRecovery(N, kNoisyConfigIrNodeType_Pexpression);
+        return NULL;
+    }
+    n->currentScope = currentScope;
+
+    return n;	
+}
+
+/*
+ *  kNoisyIrNodeType_Pterm
+ *
+ *  Generated AST subtree:
+ *
+ *      node.left   = kNoisyIrNodeType_Pfactor
+ *      node.right  = Xseq of kNoisyIrNodeType_PhighPrecedenceBinaryOp  and kNoisyIrNodeType_Pfactor
+ */
+NoisyConfigIrNode *
+noisyConfigParseTerm(NoisyConfigState *  N, NoisyConfigScope *  currentScope)
+{
+    NoisyConfigIrNode *   n = genNoisyConfigIrNode(N,   kNoisyConfigIrNodeType_Pterm,
+                        NULL /* left child */,
+                        NULL /* right child */,
+                        noisyConfigLexPeek(N, 1)->sourceInfo /* source info */);
+
+    n->currentScope = currentScope;
+
+    if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PunaryOp))
+    {
+        addLeaf(N, n, noisyConfigParseUnaryOp(N, currentScope), currentScope);
+    }
+
+    addLeaf(N, n, noisyConfigParseFactor(N, currentScope), currentScope);
+    while (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PhighPrecedenceBinaryOp))
+    {
+        addLeafWithChainingSeq(N, n, noisyConfigParseHighPrecedenceBinaryOp(N, currentScope), currentScope);
+        addLeafWithChainingSeq(N, n, noisyConfigParseFactor(N, currentScope), currentScope);
+    }
+
+    return n;
+}
+
+NoisyConfigIrNode *
+noisyConfigParseLowPrecedenceBinaryOp(NoisyConfigState *  N, NoisyConfigScope * currentScope)
+{
+    NoisyConfigIrNode *   n;
+
+
+    if (peekCheck(N, 1, kNoisyConfigIrNodeType_Tplus))
+    {
+        n = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tplus, currentScope);
+    }
+    else if (peekCheck(N, 1, kNoisyConfigIrNodeType_Tminus))
+    {
+        n = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tminus, currentScope);
+    }
+    else
+    {
+        noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_PlowPrecedenceBinaryOp, kNoisyConfigIrNodeTypeMax);
+        // noisyConfigParserErrorRecovery(N, kNoisyConfigIrNodeType_PlowPrecedenceBinaryOp);
+        return NULL;
+    }
+    n->currentScope = currentScope;
+
+    return n;
+}
+
+NoisyConfigIrNode *
+noisyConfigParseHighPrecedenceBinaryOp(NoisyConfigState *  N, NoisyConfigScope * currentScope)
+{
+    NoisyConfigIrNode *   n;
+
+    if (peekCheck(N, 1, kNoisyConfigIrNodeType_Tmul))
+    {
+        n = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tmul, currentScope);
+    }
+    else if (peekCheck(N, 1, kNoisyConfigIrNodeType_Tdiv))
+    {
+        n = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tdiv, currentScope);
+    }
+    else
+    {
+        noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_PhighPrecedenceBinaryOp, kNoisyConfigIrNodeTypeMax);
+        // noisyConfigParserErrorRecovery(N, kNoisyConfigIrNodeType_PhighPrecedenceBinaryOp);
+        return NULL;
+    }
+    
+	n->currentScope = currentScope;
+
+    return n;
+}
+
+NoisyConfigIrNode *
+noisyConfigParseUnaryOp(NoisyConfigState *  N, NoisyConfigScope * currentScope)
+{
+    NoisyConfigIrNode *   n = NULL;
+
+    if (peekCheck(N, 1, kNoisyConfigIrNodeType_Tminus))
+    {
+        n = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tminus, currentScope);
+    }
+    else
+    {
+        noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_PunaryOp, kNoisyConfigIrNodeTypeMax);
+        // noisyConfigParserErrorRecovery(N, kNoisyConfigIrNodeType_PunaryOp);
+        return NULL;
+    }
+    n->currentScope = currentScope;
+
+    return n;
+}
+
+NoisyConfigIrNode *
+noisyConfigParseFactor(NoisyConfigState * N, NoisyConfigScope * currentScope)
+{
+    NoisyConfigIrNode *   n;
+
+    if (peekCheck(N, 1, kNoisyConfigIrNodeType_Tidentifier))
+    {
+        n = noisyConfigParseIdentifierUsageTerminal(N, kNoisyConfigIrNodeType_Tidentifier, currentScope);
+    }
+    else if (peekCheck(N, 1, kNoisyConfigIrNodeType_TstringConst))
+    {
+        n = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TstringConst, currentScope);
+    }
+    else if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PvectorOp) && peekCheck(N, 2, kNoisyConfigIrNodeType_TleftParen) && peekCheck(N, 4, kNoisyConfigIrNodeType_Tcomma))
+    {
+		n = noisyConfigParseVectorOp(N, currentScope);
+    }
+    else if (peekCheck(N, 1, kNoisyConfigIrNodeType_TleftParen))
+    {
+        noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TleftParen, currentScope);
+        n = noisyConfigParseExpression(N, currentScope);
+        noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TrightParen, currentScope);
+    }
+    else
+    {
+        noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_Pfactor, kNoisyConfigIrNodeTypeMax);
+        noisyConfigFatal(N, "noisyConfigParseFactor: missed a case in factor\n");
+    }
+    n->currentScope = currentScope;
+
+    return n;
+}
+
+NoisyConfigIrNode *
+noisyConfigParseVectorOp(NoisyConfigState *  N, NoisyConfigScope * currentScope)
+{
+    NoisyConfigIrNode *   n = genNoisyConfigIrNode(N,   kNoisyConfigIrNodeType_PvectorOp,
+                        NULL /* left child */,
+                        NULL /* right child */,
+                        noisyConfigLexPeek(N, 1)->sourceInfo /* source info */);
+
+    n->currentScope = currentScope;
+    
+    if (peekCheck(N, 1, kNoisyConfigIrNodeType_Tdot))
+    {
+        addLeaf(N, n, noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tdot, currentScope), currentScope);
+    } 
+    else if (peekCheck(N, 1, kNoisyConfigIrNodeType_Tcross))
+    {
+        addLeaf(N, n, noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tcross, currentScope), currentScope);
+    } else {
+        noisyConfigFatal(N, "noisyConfigParseVectorOp: op is not dot or cross\n");
+    }
+    
+    noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TleftParen, currentScope);
+    
+    addLeafWithChainingSeq(N, n, noisyConfigParseExpression(N, currentScope), currentScope);
+    noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tcomma, currentScope);
+    addLeafWithChainingSeq(N, n, noisyConfigParseExpression(N, currentScope), currentScope);
+    
+    noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TrightParen, currentScope);
+
+    return n;
 }
 
 NoisyConfigIrNode *
@@ -268,7 +562,42 @@ noisyConfigParseIdentifier(NoisyConfigState *  N, NoisyConfigScope *  currentSco
 		// noisyConfigParserErrorRecovery(N, kNoisyConfigIrNodeType_TidentifierOrNil);
 	}
     return NULL;
+}
 
+/*
+ *  Remove an identifier _usage_ terminal, performing symtab lookup
+ */
+NoisyConfigIrNode *
+noisyConfigParseIdentifierUsageTerminal(NoisyConfigState *  N, NoisyConfigIrNodeType expectedType, NoisyConfigScope *  scope)
+{
+    if (!peekCheck(N, 1, expectedType))
+    {
+        noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeTypeMax, expectedType);
+
+        /*
+         *  In this case, we know the specific expected type/token.
+         */
+        // noisyConfigParserErrorRecovery(N, expectedType);
+        return NULL;
+    }
+
+    NoisyConfigToken *    t = noisyConfigLexGet(N);
+    NoisyConfigIrNode *   n = genNoisyConfigIrNode(N,   t->type,
+                        NULL /* left child */,
+                        NULL /* right child */,
+                        t->sourceInfo /* source info */);
+
+    n->tokenString = t->identifier;
+
+    n->symbol = noisyConfigSymbolTableSymbolForIdentifier(N, scope, t->identifier);
+    n->currentScope = scope;
+    if (n->symbol == NULL)
+    {
+        errorUseBeforeDefinition(N, t->identifier);
+        // TODO: do noisyParserErrorRecovery() here ?
+    }
+
+    return n;
 }
 
 /*

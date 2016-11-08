@@ -11,7 +11,7 @@
 #include "noisyconfig.h"
 
 
-int    gNoisyConfigFirsts[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax]  = {
+int   gNoisyConfigFirsts[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax]  = {
                                                [kNoisyConfigIrNodeType_PanonAggregateCastExpression]            = {kNoisyConfigIrNodeType_TleftBrac, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyIrNodeType_ParrayCastExpression]            = {kNoisyConfigIrNodeType_TleftBrac, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PassignOp]            = {kNoisyConfigIrNodeType_Tequals, kNoisyConfigIrNodeTypeMax},
@@ -33,13 +33,16 @@ int    gNoisyConfigFirsts[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax] 
                                                [kNoisyConfigIrNodeType_PunaryOp ]            = {kNoisyConfigIrNodeType_Tminus, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_Pfactor  ]            = {
                                                                                                     kNoisyConfigIrNodeType_Tminus,
-                                                                                                    kNoisyConfigIrNodeType_Tplus,
+                                                                                                    kNoisyConfigIrNodeType_Tdot,
+                                                                                                    kNoisyConfigIrNodeType_Tcross,
                                                                                                     kNoisyConfigIrNodeType_Tidentifier,
                                                                                                     kNoisyConfigIrNodeType_TleftParen,
                                                                                                     kNoisyConfigIrNodeTypeMax
                                                                                                },
                                                [kNoisyConfigIrNodeType_Pterm    ]            = {
                                                                                                     kNoisyConfigIrNodeType_Tminus,
+                                                                                                    kNoisyConfigIrNodeType_Tdot,
+                                                                                                    kNoisyConfigIrNodeType_Tcross,
                                                                                                     kNoisyConfigIrNodeType_Tidentifier,
                                                                                                     kNoisyConfigIrNodeType_TleftParen,
                                                                                                     kNoisyConfigIrNodeTypeMax
@@ -71,7 +74,7 @@ int    gNoisyConfigFirsts[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax] 
                                                [kNoisyConfigIrNodeType_PconfigFile]            = {kNoisyConfigIrNodeType_TdimensionTypeNames, kNoisyConfigIrNodeTypeMax}
                                     };
 
-int   gNoisyConfigFollows[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax]  = {
+int    gNoisyConfigFollows[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax]  = {
                                                [kNoisyConfigIrNodeType_PanonAggregateCastExpression]            = {kNoisyConfigIrNodeType_TrightBrac, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyIrNodeType_ParrayCastExpression]            = {kNoisyConfigIrNodeType_TrightBrac, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PassignOp]            = {
@@ -84,22 +87,34 @@ int   gNoisyConfigFollows[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax] 
                                                                                                     kNoisyConfigIrNodeType_Tcross,
                                                                                                     kNoisyConfigIrNodeTypeMax
                                                                                                },
-                                               [kNoisyConfigIrNodeType_PvectorOp]            = {kNoisyConfigIrNodeType_TleftParen, kNoisyConfigIrNodeTypeMax},
+                                               [kNoisyConfigIrNodeType_PvectorOp]            = {
+                                                                                                    kNoisyConfigIrNodeType_Tminus,
+                                                                                                    kNoisyConfigIrNodeType_Tdot,
+                                                                                                    kNoisyConfigIrNodeType_Tcross,
+                                                                                                    kNoisyConfigIrNodeType_Tidentifier,
+                                                                                                    kNoisyConfigIrNodeType_TleftParen,
+                                                                                                    kNoisyConfigIrNodeTypeMax
+                                                                                               },
                                                [kNoisyConfigIrNodeType_PhighPrecedenceBinaryOp]            = {
                                                                                                     kNoisyConfigIrNodeType_Tminus,
-                                                                                                    kNoisyConfigIrNodeType_Tplus,
+                                                                                                    kNoisyConfigIrNodeType_Tdot,
+                                                                                                    kNoisyConfigIrNodeType_Tcross,
                                                                                                     kNoisyConfigIrNodeType_Tidentifier,
                                                                                                     kNoisyConfigIrNodeType_TleftParen,
                                                                                                     kNoisyConfigIrNodeTypeMax
                                                                                                },
                                                [kNoisyConfigIrNodeType_PlowPrecedenceBinaryOp]            = {
                                                                                                     kNoisyConfigIrNodeType_Tminus,
+                                                                                                    kNoisyConfigIrNodeType_Tdot,
+                                                                                                    kNoisyConfigIrNodeType_Tcross,
                                                                                                     kNoisyConfigIrNodeType_Tidentifier,
                                                                                                     kNoisyConfigIrNodeType_TleftParen,
                                                                                                     kNoisyConfigIrNodeTypeMax
                                                                                                },
                                                [kNoisyConfigIrNodeType_PunaryOp ]            = {
                                                                                                     kNoisyConfigIrNodeType_Tminus,
+                                                                                                    kNoisyConfigIrNodeType_Tdot,
+                                                                                                    kNoisyConfigIrNodeType_Tcross,
                                                                                                     kNoisyConfigIrNodeType_Tidentifier,
                                                                                                     kNoisyConfigIrNodeType_TleftParen,
                                                                                                     kNoisyConfigIrNodeTypeMax
@@ -158,10 +173,11 @@ int   gNoisyConfigFollows[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax] 
                                                [kNoisyConfigIrNodeType_PdimensionAliasScope]            = {kNoisyConfigIrNodeType_TvectorIntegrals, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PlawScope]            = {kNoisyConfigIrNodeType_TdimensionAliases, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PdimensionTypeNameScope]            = {kNoisyConfigIrNodeType_Tlaw, kNoisyConfigIrNodeTypeMax},
-                                               [kNoisyConfigIrNodeType_PconfigFile]            = {kNoisyConfigIrNodeType_Zeof, kNoisyConfigIrNodeTypeMax},
-                                               
+                                               [kNoisyConfigIrNodeType_PconfigFile]            = {kNoisyConfigIrNodeType_Zeof, kNoisyConfigIrNodeTypeMax}
                                                // [T_XXX                           ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
                                                // [kNoisyConfigIrNodeType_Tnil     ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
+                                               // [kNoisyConfigIrNodeType_ZbadIdentifier]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
+                                               // [kNoisyConfigIrNodeType_ZbadStringConst]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
                                                // [kNoisyConfigIrNodeType_Zepsilon ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
                                                // [kNoisyConfigIrNodeType_Zeof     ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
                                                // [kNoisyConfigIrNodeType_Tsemicolon]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
@@ -216,6 +232,8 @@ char	*gNoisyConfigAstNodeStrings[kNoisyConfigIrNodeTypeMax]	= {
                                                [kNoisyConfigIrNodeType_PconfigFile]            = "kNoisyConfigIrNodeType_PconfigFile",
                                                // [                           T_XXX]            = "T_XXX",
                                                [     kNoisyConfigIrNodeType_Tnil]            = "kNoisyConfigIrNodeType_Tnil",
+                                               [kNoisyConfigIrNodeType_ZbadIdentifier]            = "kNoisyConfigIrNodeType_ZbadIdentifier",
+                                               [kNoisyConfigIrNodeType_ZbadStringConst]            = "kNoisyConfigIrNodeType_ZbadStringConst",
                                                [ kNoisyConfigIrNodeType_Zepsilon]            = "kNoisyConfigIrNodeType_Zepsilon",
                                                [     kNoisyConfigIrNodeType_Zeof]            = "kNoisyConfigIrNodeType_Zeof",
                                                [kNoisyConfigIrNodeType_Tsemicolon]            = "kNoisyConfigIrNodeType_Tsemicolon",

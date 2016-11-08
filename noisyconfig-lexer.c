@@ -26,7 +26,7 @@ static void		done(NoisyConfigState *  N, NoisyConfigToken *  newToken);
 static void		checkComment(NoisyConfigState *  N);
 static void		checkSingle(NoisyConfigState *  N, NoisyConfigIrNodeType tokenType);
 static void		checkDoubleQuote(NoisyConfigState *  N);
-static void		checkMinus(NoisyConfigState *  N);
+// static void		checkMinus(NoisyConfigState *  N);
 static void		finishToken(NoisyConfigState *  N);
 static bool		isOperatorOrSeparator(NoisyConfigState *  N, char c);
 
@@ -293,6 +293,7 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
 		while (N->columnNumber < N->lineLength)
 		{
 
+	        flexprint(N->Fe, N->Fm, N->Fperr, "%c", cur(N));
 			if (isOperatorOrSeparator(N, cur(N)))
 			{
 				switch (cur(N))
@@ -335,9 +336,26 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
 						continue;
 					}
 					
-                    case ';':
+                    case '+':
 					{
-						checkSingle(N, kNoisyConfigIrNodeType_Tsemicolon);
+						checkSingle(N, kNoisyConfigIrNodeType_Tplus);
+						continue;
+					}
+
+					case '-':
+					{
+						checkSingle(N, kNoisyConfigIrNodeType_Tminus);
+						continue;
+					}
+                    case '*':
+					{
+						checkSingle(N, kNoisyConfigIrNodeType_Tmul);
+						continue;
+					}
+                    
+                    case '/':
+					{
+						checkSingle(N, kNoisyConfigIrNodeType_Tdiv);
 						continue;
 					}
                     
@@ -358,6 +376,15 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
 						checkSingle(N, kNoisyConfigIrNodeType_Tcomma);
 						continue;
 					}
+                    
+                    case ';':
+					{
+						/*
+						 *	TODO/BUG: Is this right? Re-check. What about kNoisyIrNodeType_Tdot?
+						 */
+						checkSingle(N, kNoisyConfigIrNodeType_Tsemicolon);
+						continue;
+					}
 
 
 					/*
@@ -367,12 +394,6 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
 					case '"':
 					{
 						checkDoubleQuote(N);
-						continue;
-					}
-
-					case '-':
-					{
-						checkMinus(N);
 						continue;
 					}
 
@@ -401,7 +422,6 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
 
 					default:
 					{
-	                    flexprint(N->Fe, N->Fm, N->Fperr, "hello %c", cur(N));
                         noisyConfigConsolePrintBuffers(N);
 						noisyConfigFatal(N, Esanity);
 					}
@@ -693,29 +713,29 @@ checkDoubleQuote(NoisyConfigState *  N)
 }
 
 
-static void
-checkMinus(NoisyConfigState *  N)
-{
-	/*
-	 *	Gobble any extant chars.
-	 */
-	finishToken(N);
-
-    gobble(N, 1);
-    NoisyConfigIrNodeType type = kNoisyConfigIrNodeType_Tminus;
-
-	NoisyConfigToken *		newToken = noisyConfigLexAllocateToken(N,	type	/* type		*/,
-									NULL	/* identifier	*/,
-									0	/* integerConst	*/,
-									0.0	/* realConst	*/,
-									NULL	/* stringConst	*/,
-									NULL	/* sourceInfo	*/);
-
-	/*
-	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
-	 */
-	done(N, newToken);
-}
+// static void
+// checkMinus(NoisyConfigState *  N)
+// {
+// 	/*
+// 	 *	Gobble any extant chars.
+// 	 */
+// 	finishToken(N);
+// 
+//     gobble(N, 1);
+//     NoisyConfigIrNodeType type = kNoisyConfigIrNodeType_Tminus;
+// 
+// 	NoisyConfigToken *		newToken = noisyConfigLexAllocateToken(N,	type	/* type		*/,
+// 									NULL	/* identifier	*/,
+// 									0	/* integerConst	*/,
+// 									0.0	/* realConst	*/,
+// 									NULL	/* stringConst	*/,
+// 									NULL	/* sourceInfo	*/);
+// 
+// 	/*
+// 	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+// 	 */
+// 	done(N, newToken);
+// }
 
 static void
 finishToken(NoisyConfigState *  N)
