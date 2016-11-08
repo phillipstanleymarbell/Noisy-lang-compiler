@@ -28,6 +28,10 @@ NoisyConfigIrNode * noisyConfigParseExpression(NoisyConfigState *  N, NoisyConfi
 NoisyConfigIrNode * noisyConfigParseTerm(NoisyConfigState *  N, NoisyConfigScope *  currentScope);
 NoisyConfigIrNode * noisyConfigParseFactor(NoisyConfigState * N, NoisyConfigScope * currentScope);
 
+NoisyConfigIrNode * noisyConfigParseDimensionAliasScope(NoisyConfigState *  N, NoisyConfigScope *  scope);
+NoisyConfigIrNode * noisyConfigParseDimensionAliasStatementList(NoisyConfigState * N, NoisyConfigScope * scope);
+NoisyConfigIrNode * noisyConfigParseDimensionAliasStatement(NoisyConfigState *  N, NoisyConfigScope *  currentScope);
+
 NoisyConfigIrNode * noisyConfigParseLowPrecedenceBinaryOp(NoisyConfigState *  N, NoisyConfigScope * currentScope);
 NoisyConfigIrNode * noisyConfigParseHighPrecedenceBinaryOp(NoisyConfigState *  N, NoisyConfigScope * currentScope);
 NoisyConfigIrNode * noisyConfigParseUnaryOp(NoisyConfigState *  N, NoisyConfigScope * currentScope);

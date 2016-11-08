@@ -10,8 +10,7 @@
 #include "version.h"
 #include "noisyconfig.h"
 
-
-int   gNoisyConfigFirsts[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax]  = {
+int    gNoisyConfigFirsts[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax]  = {
                                                [kNoisyConfigIrNodeType_PanonAggregateCastExpression]            = {kNoisyConfigIrNodeType_TleftBrac, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyIrNodeType_ParrayCastExpression]            = {kNoisyConfigIrNodeType_TleftBrac, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PassignOp]            = {kNoisyConfigIrNodeType_Tequals, kNoisyConfigIrNodeTypeMax},
@@ -59,10 +58,12 @@ int   gNoisyConfigFirsts[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax]  
                                                                                                },
                                                [kNoisyConfigIrNodeType_PvectorScalarPairStatement]            = {kNoisyConfigIrNodeType_Tidentifier, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PintegralList]            = {kNoisyConfigIrNodeType_TleftBrac, kNoisyConfigIrNodeTypeMax},
+                                               [kNoisyConfigIrNodeType_PdimensionAliasStatement]            = {kNoisyConfigIrNodeType_Tidentifier, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PlawStatement]            = {kNoisyConfigIrNodeType_Tidentifier, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PdimensionTypeNameStatement]            = {kNoisyConfigIrNodeType_Tidentifier, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PvectorScalarPairStatementList]            = {kNoisyConfigIrNodeType_Tidentifier, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PintegralLists]            = {kNoisyConfigIrNodeType_TleftBrac, kNoisyConfigIrNodeTypeMax},
+                                               [kNoisyConfigIrNodeType_PdimensionAliasStatementList]            = {kNoisyConfigIrNodeType_Tidentifier, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PlawStatementList]            = {kNoisyConfigIrNodeType_Tidentifier, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PdimensionTypeNameStatementList]            = {kNoisyConfigIrNodeType_Tidentifier, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PvectorScalarPairScope]            = {kNoisyConfigIrNodeType_TvectorScalarPairs, kNoisyConfigIrNodeTypeMax},
@@ -153,6 +154,11 @@ int    gNoisyConfigFollows[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax]
                                                                                                     kNoisyConfigIrNodeType_TleftBrac,
                                                                                                     kNoisyConfigIrNodeTypeMax
                                                                                                },
+                                               [kNoisyConfigIrNodeType_PdimensionAliasStatement]            = {
+                                                                                                    kNoisyConfigIrNodeType_TrightBrace,
+                                                                                                    kNoisyConfigIrNodeType_Tidentifier,
+                                                                                                    kNoisyConfigIrNodeTypeMax
+                                                                                               },
                                                [kNoisyConfigIrNodeType_PlawStatement]            = {
                                                                                                     kNoisyConfigIrNodeType_TrightBrace,
                                                                                                     kNoisyConfigIrNodeType_Tidentifier,
@@ -165,6 +171,7 @@ int    gNoisyConfigFollows[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax]
                                                                                                },
                                                [kNoisyConfigIrNodeType_PvectorScalarPairStatementList]            = {kNoisyConfigIrNodeType_TrightBrace, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PintegralLists]            = {kNoisyConfigIrNodeType_TrightBrace, kNoisyConfigIrNodeTypeMax},
+                                               [kNoisyConfigIrNodeType_PdimensionAliasStatementList]            = {kNoisyConfigIrNodeType_TrightBrace, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PlawStatementList]            = {kNoisyConfigIrNodeType_TrightBrace, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PdimensionTypeNameStatementList]            = {kNoisyConfigIrNodeType_TrightBrace, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PvectorScalarPairScope]            = {kNoisyConfigIrNodeType_Zeof, kNoisyConfigIrNodeTypeMax},
@@ -174,34 +181,6 @@ int    gNoisyConfigFollows[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax]
                                                [kNoisyConfigIrNodeType_PlawScope]            = {kNoisyConfigIrNodeType_TdimensionAliases, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PdimensionTypeNameScope]            = {kNoisyConfigIrNodeType_Tlaw, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PconfigFile]            = {kNoisyConfigIrNodeType_Zeof, kNoisyConfigIrNodeTypeMax}
-                                               // [T_XXX                           ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_Tnil     ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_ZbadIdentifier]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_ZbadStringConst]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_Zepsilon ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_Zeof     ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_Tsemicolon]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_TrightParen]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_TleftParen]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_TrightBrace]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_TleftBrace]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_TrightBrac]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_TleftBrac]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_Tequals  ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_Tcross   ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_Tdot     ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_Tdiv     ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_Tmul     ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_Tplus    ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_Tminus   ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_TstringConst]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_Tidentifier]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_TvectorScalarPairs]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_TscalarIntegrals]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_TvectorIntegrals]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_TdimensionAliases]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_Tlaw     ]            = {T_XXX, kNoisyConfigIrNodeTypeMax},
-                                               // [kNoisyConfigIrNodeType_TdimensionTypeNames]            = {T_XXX, kNoisyConfigIrNodeTypeMax}
                                    };
 
 char	*gNoisyConfigAstNodeStrings[kNoisyConfigIrNodeTypeMax]	= {
@@ -217,10 +196,12 @@ char	*gNoisyConfigAstNodeStrings[kNoisyConfigIrNodeTypeMax]	= {
                                                [kNoisyConfigIrNodeType_Pexpression]            = "kNoisyConfigIrNodeType_Pexpression",
                                                [kNoisyConfigIrNodeType_PvectorScalarPairStatement]            = "kNoisyConfigIrNodeType_PvectorScalarPairStatement",
                                                [kNoisyConfigIrNodeType_PintegralList]            = "kNoisyConfigIrNodeType_PintegralList",
+                                               [kNoisyConfigIrNodeType_PdimensionAliasStatement]            = "kNoisyConfigIrNodeType_PdimensionAliasStatement",
                                                [kNoisyConfigIrNodeType_PlawStatement]            = "kNoisyConfigIrNodeType_PlawStatement",
                                                [kNoisyConfigIrNodeType_PdimensionTypeNameStatement]            = "kNoisyConfigIrNodeType_PdimensionTypeNameStatement",
                                                [kNoisyConfigIrNodeType_PvectorScalarPairStatementList]            = "kNoisyConfigIrNodeType_PvectorScalarPairStatementList",
                                                [kNoisyConfigIrNodeType_PintegralLists]            = "kNoisyConfigIrNodeType_PintegralLists",
+                                               [kNoisyConfigIrNodeType_PdimensionAliasStatementList]            = "kNoisyConfigIrNodeType_PdimensionAliasStatementList",
                                                [kNoisyConfigIrNodeType_PlawStatementList]            = "kNoisyConfigIrNodeType_PlawStatementList",
                                                [kNoisyConfigIrNodeType_PdimensionTypeNameStatementList]            = "kNoisyConfigIrNodeType_PdimensionTypeNameStatementList",
                                                [kNoisyConfigIrNodeType_PvectorScalarPairScope]            = "kNoisyConfigIrNodeType_PvectorScalarPairScope",
@@ -230,7 +211,6 @@ char	*gNoisyConfigAstNodeStrings[kNoisyConfigIrNodeTypeMax]	= {
                                                [kNoisyConfigIrNodeType_PlawScope]            = "kNoisyConfigIrNodeType_PlawScope",
                                                [kNoisyConfigIrNodeType_PdimensionTypeNameScope]            = "kNoisyConfigIrNodeType_PdimensionTypeNameScope",
                                                [kNoisyConfigIrNodeType_PconfigFile]            = "kNoisyConfigIrNodeType_PconfigFile",
-                                               // [                           T_XXX]            = "T_XXX",
                                                [     kNoisyConfigIrNodeType_Tnil]            = "kNoisyConfigIrNodeType_Tnil",
                                                [kNoisyConfigIrNodeType_ZbadIdentifier]            = "kNoisyConfigIrNodeType_ZbadIdentifier",
                                                [kNoisyConfigIrNodeType_ZbadStringConst]            = "kNoisyConfigIrNodeType_ZbadStringConst",

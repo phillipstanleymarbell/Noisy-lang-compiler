@@ -69,12 +69,15 @@ noisyConfigParseConfigFile(NoisyConfigState *  N, NoisyConfigScope *  currentSco
 
 	addLeaf(N, n, noisyConfigParseDimensionTypeNameScope(N, currentScope), currentScope);
 	
-    // TODO after getting dimension scope working, uncomment the below
     if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
 	{
 		addLeafWithChainingSeq(N, n, noisyConfigParseLawScope(N, currentScope), currentScope);
 	}
 	
+    if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
+	{
+		addLeafWithChainingSeq(N, n, noisyConfigParseDimensionAliasScope(N, currentScope), currentScope);
+	}
     // if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
 	// {
 	// 	addLeafWithChainingSeq(N, n, noisyConfigParseIntegralsScope(N, currentScope), currentScope);
@@ -193,6 +196,111 @@ noisyConfigParseDimensionTypeNameStatement(NoisyConfigState *  N, NoisyConfigSco
 
 	return n;
 }
+
+/*
+ *	kNoisyConfigIrNodeType_PdimensionAliasScope
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyConfigIrNodeType_TdimensionAliases
+ *		node.right	= kNoisyConfigIrNodeType_TdimensionAliasStatementList
+ */
+NoisyConfigIrNode *
+noisyConfigParseDimensionAliasScope(NoisyConfigState *  N, NoisyConfigScope *  scope)
+{
+	NoisyConfigIrNode *	n = genNoisyConfigIrNode(N,	kNoisyConfigIrNodeType_PdimensionAliasScope,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyConfigLexPeek(N, 1)->sourceInfo /* source info */);
+    n->currentScope = scope;
+
+
+	NoisyConfigIrNode *	dimensionAliasesToken = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TdimensionAliases, scope);
+	addLeaf(N, n, dimensionAliasesToken, scope);
+	
+	noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TleftBrace, scope);
+	
+    addLeaf(N, n, noisyConfigParseDimensionAliasStatementList(N, scope), scope);
+	
+    noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TrightBrace, scope);
+
+    return n;
+}
+
+/*	
+ *	kNoisyConfigIrNodeType_PdimensionAliasStatementList
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyConfigIrNodeType_PdimensionTypeNameStatement or NULL
+ *		node.right	= Xseq of kNoisyConfigIrNodeType_PdimensionTypeNameStatement
+ */
+NoisyConfigIrNode *
+noisyConfigParseDimensionAliasStatementList(NoisyConfigState * N, NoisyConfigScope * scope)
+{
+	NoisyConfigIrNode *	n = genNoisyConfigIrNode(
+		N,
+		kNoisyConfigIrNodeType_PdimensionAliasStatementList,
+		NULL /* left child */,
+		NULL /* right child */,
+		noisyConfigLexPeek(N, 1)->sourceInfo /* source info */
+	);
+    n->currentScope = scope;
+
+    while (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PdimensionAliasStatement)) 
+    {
+        addLeafWithChainingSeq(N, n, noisyConfigParseDimensionAliasStatement(N, scope), scope);
+    }
+
+    return n;
+}
+
+/*
+ *	kNoisyConfigIrNodeType_PdimensionAliasStatement
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyConfigIrNodeType_Tidentifier
+ *		node.right	= kNoisyConfigIrNodeType_TstringConst
+ */
+NoisyConfigIrNode *
+noisyConfigParseDimensionAliasStatement(NoisyConfigState *  N, NoisyConfigScope *  currentScope)
+{
+	NoisyConfigIrNode *	n = genNoisyConfigIrNode(
+						N,
+						kNoisyConfigIrNodeType_PdimensionAliasStatement,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyConfigLexPeek(N, 1)->sourceInfo /* source info */);
+    n->currentScope = currentScope;
+
+
+	if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PdimensionAliasStatement))
+	{
+		addLeaf(N, n, noisyConfigParseIdentifier(N, currentScope), currentScope);
+
+		if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PassignOp))
+		{
+            noisyConfigParseAssignOp(N, currentScope);
+			addLeaf(N, n, noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TstringConst, currentScope), currentScope);
+		}
+		else
+		{
+			noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_PdimensionAliasStatement, kNoisyConfigIrNodeTypeMax);
+		}
+	}
+	else
+	{
+
+		noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_PdimensionAliasStatement, kNoisyConfigIrNodeTypeMax);
+	}
+    
+    noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tsemicolon, currentScope);
+
+	return n;
+}
+
+
 
 /*
  *	kNoisyConfigIrNodeType_PlawScope
