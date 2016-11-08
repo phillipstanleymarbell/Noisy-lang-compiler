@@ -18,13 +18,15 @@ production kNoisyConfigIrNodeType_PdimensionTypeNameStatementList: firstset = { 
 production kNoisyConfigIrNodeType_PlawStatementList: firstset = {  kNoisyConfigIrNodeType_Tidentifier  }
 production kNoisyConfigIrNodeType_PdimensionAliasStatementList: firstset = {  kNoisyConfigIrNodeType_Tidentifier  }
 production kNoisyConfigIrNodeType_PvectorScalarPairStatementList: firstset = {  kNoisyConfigIrNodeType_Tidentifier  }
-production kNoisyConfigIrNodeType_PintegralLists: firstset = {  kNoisyConfigIrNodeType_TleftBrac  }
+production kNoisyConfigIrNodeType_PvectorIntegralLists: firstset = {  kNoisyConfigIrNodeType_TleftBrac  }
+production kNoisyConfigIrNodeType_PscalarIntegralLists: firstset = {  kNoisyConfigIrNodeType_TleftBrac  }
 
 --// statements
 production kNoisyConfigIrNodeType_PdimensionTypeNameStatement: firstset = {  kNoisyConfigIrNodeType_Tidentifier  }
 production kNoisyConfigIrNodeType_PlawStatement: firstset = {  kNoisyConfigIrNodeType_Tidentifier  }
 production kNoisyConfigIrNodeType_PdimensionAliasStatement: firstset = {  kNoisyConfigIrNodeType_Tidentifier  }
-production kNoisyConfigIrNodeType_PintegralList: firstset = {  kNoisyConfigIrNodeType_TleftBrac  }
+production kNoisyConfigIrNodeType_PvectorIntegralList: firstset = {  kNoisyConfigIrNodeType_TleftBrac  }
+production kNoisyConfigIrNodeType_PscalarIntegralList: firstset = {  kNoisyConfigIrNodeType_TleftBrac  }
 production kNoisyConfigIrNodeType_PvectorScalarPairStatement: firstset = {
   kNoisyConfigIrNodeType_Tidentifier
 }
@@ -116,7 +118,10 @@ production kNoisyConfigIrNodeType_PlawStatementList: followset = {
 production kNoisyConfigIrNodeType_PdimensionAliasStatementList: followset = {
   kNoisyConfigIrNodeType_TrightBrace
 }
-production kNoisyConfigIrNodeType_PintegralLists: followset = {
+production kNoisyConfigIrNodeType_PvectorIntegralLists: followset = {
+  kNoisyConfigIrNodeType_TrightBrace
+}
+production kNoisyConfigIrNodeType_PscalarIntegralLists: followset = {
   kNoisyConfigIrNodeType_TrightBrace
 }
 production kNoisyConfigIrNodeType_PvectorScalarPairStatementList: followset = {
@@ -136,9 +141,13 @@ production kNoisyConfigIrNodeType_PdimensionAliasStatement: followset = {
   kNoisyConfigIrNodeType_TrightBrace,
   firstset(kNoisyConfigIrNodeType_PdimensionAliasStatement)
 }
-production kNoisyConfigIrNodeType_PintegralList: followset = {
+production kNoisyConfigIrNodeType_PvectorIntegralList: followset = {
   kNoisyConfigIrNodeType_TrightBrace,
-  firstset(kNoisyConfigIrNodeType_PintegralList)
+  firstset(kNoisyConfigIrNodeType_PvectorIntegralList)
+}
+production kNoisyConfigIrNodeType_PscalarIntegralList: followset = {
+  kNoisyConfigIrNodeType_TrightBrace,
+  firstset(kNoisyConfigIrNodeType_PscalarIntegralList)
 }
 production kNoisyConfigIrNodeType_PvectorScalarPairStatement: followset = {
   kNoisyConfigIrNodeType_TrightBrace,

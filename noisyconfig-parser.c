@@ -78,10 +78,11 @@ noisyConfigParseConfigFile(NoisyConfigState *  N, NoisyConfigScope *  currentSco
 	{
 		addLeafWithChainingSeq(N, n, noisyConfigParseDimensionAliasScope(N, currentScope), currentScope);
 	}
-    // if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
-	// {
-	// 	addLeafWithChainingSeq(N, n, noisyConfigParseIntegralsScope(N, currentScope), currentScope);
-	// }
+    
+    if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
+	{
+		addLeafWithChainingSeq(N, n, noisyConfigParseVectorIntegralScope(N, currentScope), currentScope);
+	}
 
 	/*
 	 *	We can now fill in end src info for toplevel scope.
@@ -195,6 +196,102 @@ noisyConfigParseDimensionTypeNameStatement(NoisyConfigState *  N, NoisyConfigSco
     noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tsemicolon, currentScope);
 
 	return n;
+}
+
+/*
+ *	kNoisyConfigIrNodeType_PvectorIntegralScope
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyConfigIrNodeType_TvectorIntegrals
+ *		node.right	= kNoisyConfigIrNodeType_PvetorIntegralList
+ */
+NoisyConfigIrNode *
+noisyConfigParseVectorIntegralScope(NoisyConfigState *  N, NoisyConfigScope *  scope)
+{
+	NoisyConfigIrNode *	n = genNoisyConfigIrNode(N,	kNoisyConfigIrNodeType_PvectorIntegralScope,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyConfigLexPeek(N, 1)->sourceInfo /* source info */);
+    n->currentScope = scope;
+
+	NoisyConfigIrNode *	vectorIntegralsToken = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TvectorIntegrals, scope);
+	addLeaf(N, n, vectorIntegralsToken, scope);
+	
+	noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TleftBrace, scope);
+	
+    addLeaf(N, n, noisyConfigParseVectorIntegralLists(N, scope), scope);
+	
+    noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TrightBrace, scope);
+
+    return n;
+}
+
+/*	
+ *  kNoisyConfigIrNodeType_PvetorIntegralLists
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyConfigIrNodeType_PvetorIntegralList
+ *		node.right	= Xseq of kNoisyConfigIrNodeType_PvetorIntegralList
+ */
+NoisyConfigIrNode *
+noisyConfigParseVectorIntegralLists(NoisyConfigState * N, NoisyConfigScope * scope)
+{
+	NoisyConfigIrNode *	n = genNoisyConfigIrNode(
+		N,
+        kNoisyConfigIrNodeType_PvectorIntegralLists,
+		NULL /* left child */,
+		NULL /* right child */,
+		noisyConfigLexPeek(N, 1)->sourceInfo /* source info */
+	);
+    n->currentScope = scope;
+
+    while (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PvectorIntegralList)) 
+    {
+        addLeafWithChainingSeq(N, n, noisyConfigParseVectorIntegralList(N, scope), scope);
+    }
+
+    return n;
+}
+
+/*	
+ *  kNoisyConfigIrNodeType_PvectorIntegralList
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyConfigIrNodeType_Tidentifier
+ *		node.right	= Xseq of kNoisyConfigIrNodeType_Tidentifier
+ */
+NoisyConfigIrNode *
+noisyConfigParseVectorIntegralList(NoisyConfigState * N, NoisyConfigScope * scope)
+{
+	NoisyConfigIrNode *	n = genNoisyConfigIrNode(
+		N,
+        kNoisyConfigIrNodeType_PvectorIntegralList,
+		NULL /* left child */,
+		NULL /* right child */,
+		noisyConfigLexPeek(N, 1)->sourceInfo /* source info */
+	);
+    n->currentScope = scope;
+
+    noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TleftBrac, scope);
+
+    while (peekCheck(N, 1, kNoisyConfigIrNodeType_Tidentifier)) 
+    {
+        addLeafWithChainingSeq(N, n, noisyConfigParseIdentifierUsageTerminal(N, kNoisyConfigIrNodeType_Tidentifier, scope), scope);
+       
+        if (peekCheck(N, 1 ,kNoisyConfigIrNodeType_TrightBrac)) {
+            noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TrightBrac, scope);
+            break;
+        } else {
+            noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tcomma, scope);
+        }
+    }
+
+    noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tsemicolon, scope);
+
+    return n;
 }
 
 /*
@@ -409,9 +506,8 @@ NoisyConfigIrNode*
 noisyConfigParseExpression(NoisyConfigState *  N, NoisyConfigScope *  currentScope)
 {
     NoisyConfigIrNode *   n;
-    bool t = noisyConfigInFirst(N, kNoisyConfigIrNodeType_Pterm);
 
-    if (t && noisyConfigInFirst(N, kNoisyConfigIrNodeType_Pterm))
+    if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_Pterm))
     {
         n = noisyConfigParseTerm(N, currentScope);
 

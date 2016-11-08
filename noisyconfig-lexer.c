@@ -336,6 +336,17 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
 						continue;
 					}
 					
+					case '[':
+					{
+						checkSingle(N, kNoisyConfigIrNodeType_TleftBrac);
+						continue;
+					}
+
+					case ']':
+					{
+						checkSingle(N, kNoisyConfigIrNodeType_TrightBrac);
+						continue;
+					}
                     case '+':
 					{
 						checkSingle(N, kNoisyConfigIrNodeType_Tplus);
