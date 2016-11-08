@@ -84,6 +84,10 @@ noisyConfigParseConfigFile(NoisyConfigState *  N, NoisyConfigScope *  currentSco
 		addLeafWithChainingSeq(N, n, noisyConfigParseVectorIntegralScope(N, currentScope), currentScope);
 	}
 
+    if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
+	{
+		addLeafWithChainingSeq(N, n, noisyConfigParseScalarIntegralScope(N, currentScope), currentScope);
+	}
 	/*
 	 *	We can now fill in end src info for toplevel scope.
 	 */
@@ -269,6 +273,102 @@ noisyConfigParseVectorIntegralList(NoisyConfigState * N, NoisyConfigScope * scop
 	NoisyConfigIrNode *	n = genNoisyConfigIrNode(
 		N,
         kNoisyConfigIrNodeType_PvectorIntegralList,
+		NULL /* left child */,
+		NULL /* right child */,
+		noisyConfigLexPeek(N, 1)->sourceInfo /* source info */
+	);
+    n->currentScope = scope;
+
+    noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TleftBrac, scope);
+
+    while (peekCheck(N, 1, kNoisyConfigIrNodeType_Tidentifier)) 
+    {
+        addLeafWithChainingSeq(N, n, noisyConfigParseIdentifierUsageTerminal(N, kNoisyConfigIrNodeType_Tidentifier, scope), scope);
+       
+        if (peekCheck(N, 1 ,kNoisyConfigIrNodeType_TrightBrac)) {
+            noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TrightBrac, scope);
+            break;
+        } else {
+            noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tcomma, scope);
+        }
+    }
+
+    noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tsemicolon, scope);
+
+    return n;
+}
+
+/*
+ *	kNoisyConfigIrNodeType_PscalarIntegralScope
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyConfigIrNodeType_TscalarIntegrals
+ *		node.right	= kNoisyConfigIrNodeType_PscalarIntegralList
+ */
+NoisyConfigIrNode *
+noisyConfigParseScalarIntegralScope(NoisyConfigState *  N, NoisyConfigScope *  scope)
+{
+	NoisyConfigIrNode *	n = genNoisyConfigIrNode(N,	kNoisyConfigIrNodeType_PscalarIntegralScope,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyConfigLexPeek(N, 1)->sourceInfo /* source info */);
+    n->currentScope = scope;
+
+	NoisyConfigIrNode *	scalarIntegralsToken = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TscalarIntegrals, scope);
+	addLeaf(N, n, scalarIntegralsToken, scope);
+	
+	noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TleftBrace, scope);
+	
+    addLeaf(N, n, noisyConfigParseScalarIntegralLists(N, scope), scope);
+	
+    noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TrightBrace, scope);
+
+    return n;
+}
+
+/*	
+ *  kNoisyConfigIrNodeType_PscalarIntegralLists
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyConfigIrNodeType_PscalarIntegralList
+ *		node.right	= Xseq of kNoisyConfigIrNodeType_PscalarIntegralList
+ */
+NoisyConfigIrNode *
+noisyConfigParseScalarIntegralLists(NoisyConfigState * N, NoisyConfigScope * scope)
+{
+	NoisyConfigIrNode *	n = genNoisyConfigIrNode(
+		N,
+        kNoisyConfigIrNodeType_PscalarIntegralLists,
+		NULL /* left child */,
+		NULL /* right child */,
+		noisyConfigLexPeek(N, 1)->sourceInfo /* source info */
+	);
+    n->currentScope = scope;
+
+    while (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PscalarIntegralList)) 
+    {
+        addLeafWithChainingSeq(N, n, noisyConfigParseScalarIntegralList(N, scope), scope);
+    }
+
+    return n;
+}
+
+/*	
+ *  kNoisyConfigIrNodeType_PscalarIntegralList
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyConfigIrNodeType_Tidentifier
+ *		node.right	= Xseq of kNoisyConfigIrNodeType_Tidentifier
+ */
+NoisyConfigIrNode *
+noisyConfigParseScalarIntegralList(NoisyConfigState * N, NoisyConfigScope * scope)
+{
+	NoisyConfigIrNode *	n = genNoisyConfigIrNode(
+		N,
+        kNoisyConfigIrNodeType_PscalarIntegralList,
 		NULL /* left child */,
 		NULL /* right child */,
 		noisyConfigLexPeek(N, 1)->sourceInfo /* source info */

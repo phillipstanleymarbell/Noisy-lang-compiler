@@ -36,6 +36,10 @@ NoisyConfigIrNode * noisyConfigParseVectorIntegralScope(NoisyConfigState *  N, N
 NoisyConfigIrNode * noisyConfigParseVectorIntegralLists(NoisyConfigState * N, NoisyConfigScope * scope);
 NoisyConfigIrNode * noisyConfigParseVectorIntegralList(NoisyConfigState * N, NoisyConfigScope * scope);
 
+NoisyConfigIrNode * noisyConfigParseScalarIntegralScope(NoisyConfigState *  N, NoisyConfigScope *  scope);
+NoisyConfigIrNode * noisyConfigParseScalarIntegralLists(NoisyConfigState * N, NoisyConfigScope * scope);
+NoisyConfigIrNode * noisyConfigParseScalarIntegralList(NoisyConfigState * N, NoisyConfigScope * scope);
+
 NoisyConfigIrNode * noisyConfigParseLowPrecedenceBinaryOp(NoisyConfigState *  N, NoisyConfigScope * currentScope);
 NoisyConfigIrNode * noisyConfigParseHighPrecedenceBinaryOp(NoisyConfigState *  N, NoisyConfigScope * currentScope);
 NoisyConfigIrNode * noisyConfigParseUnaryOp(NoisyConfigState *  N, NoisyConfigScope * currentScope);

@@ -14,5 +14,9 @@ dimensionAliases {
 }
 
 vectorIntegrals {
-    [distance, velocity, acceleration];
+    [displacement, velocity, acceleration];
+}
+
+scalarIntegrals {
+    [distance, speed, scalar_acceleration];
 }
