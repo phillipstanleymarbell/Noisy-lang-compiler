@@ -429,6 +429,42 @@ noisyParseAdtTypeDeclaration(NoisyState *  N, NoisyScope *  scope)
 }
 
 /*
+ *	kNoisyIrNodeType_PvectorType
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_TintConst
+ *		node.right	= kNoisyIrNodeType_PtypeExpression
+ */
+NoisyIrNode *
+noisyParseVectorType(NoisyState *  N, NoisyScope *  currentScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseVectorType);
+
+
+	NoisyIrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PvectorType,
+						NULL /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tvector);
+
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftBrac);
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TintConst));
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightBrac);
+
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftBrac);
+	addLeafWithChainingSeq(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TintConst));
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightBrac);
+	
+	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
+	addLeafWithChainingSeq(N, n, noisyParseTypeExpression(N, currentScope));
+
+	return n;
+}
+
+/*
  *	kNoisyIrNodeType_PnamegenDeclaration
  *
  *	Generated AST subtree:

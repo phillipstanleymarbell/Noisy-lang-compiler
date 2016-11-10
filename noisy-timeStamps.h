@@ -69,6 +69,7 @@ typedef enum
 	kNoisyTimeStampKeyParseFixedType,
 	kNoisyTimeStampKeyParseAnonAggregateType,
 	kNoisyTimeStampKeyParseArrayType,
+	kNoisyTimeStampKeyParseVectorType,
 	kNoisyTimeStampKeyParseListType,
 	kNoisyTimeStampKeyParseTupleType,
 	kNoisyTimeStampKeyParseSetType,
