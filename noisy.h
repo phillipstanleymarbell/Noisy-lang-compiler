@@ -148,6 +148,7 @@ typedef enum
 	kNoisyIrNodeType_Ttrue,
 	kNoisyIrNodeType_Ttype,
 	kNoisyIrNodeType_Tvar2name,
+	kNoisyIrNodeType_Tvector,
 	kNoisyIrNodeType_TxorAs,
 
 	kNoisyIrNodeType_ZbadCharConst,
@@ -189,6 +190,7 @@ typedef enum
 	kNoisyIrNodeType_PconstantDeclaration,
 	kNoisyIrNodeType_PtypeDeclaration,
 	kNoisyIrNodeType_PadtTypeDeclaration,
+	kNoisyIrNodeType_PvectorType,
 	kNoisyIrNodeType_PnamegenDeclaration,
 	kNoisyIrNodeType_PidentifierOrNil,
 	kNoisyIrNodeType_PidentifierOrNilList,

@@ -74,6 +74,7 @@ NoisyIrNode *	noisyParseProgtypeTypenameDeclaration(NoisyState *  N, NoisyScope 
 NoisyIrNode *	noisyParseConstantDeclaration(NoisyState *  N, NoisyScope *  scope);
 NoisyIrNode *	noisyParseTypeDeclaration(NoisyState *  N, NoisyScope *  currentScope);
 NoisyIrNode *	noisyParseAdtTypeDeclaration(NoisyState *  N, NoisyScope *  scope);
+NoisyIrNode *	noisyParseVectorType(NoisyState *  N, NoisyScope *  scope);
 NoisyIrNode *	noisyParseNamegenDeclaration(NoisyState *  N, NoisyScope *  scope);
 NoisyIrNode *	noisyParseIdentifierOrNil(NoisyState *  N, NoisyScope *  currentScope);
 NoisyIrNode *	noisyParseIdentifierOrNilList(NoisyState *  N, NoisyScope *  currentScope);

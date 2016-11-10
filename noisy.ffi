@@ -39,6 +39,7 @@ production	kNoisyIrNodeType_PtypeExpression:	firstset = {
 									kNoisyIrNodeType_Tfixed,
 									kNoisyIrNodeType_Tstring,
 									kNoisyIrNodeType_Tarray,
+									kNoisyIrNodeType_Tvector,
 									kNoisyIrNodeType_Tlist,
 									kNoisyIrNodeType_TleftParen,
 									kNoisyIrNodeType_Tset,
@@ -74,6 +75,7 @@ production	kNoisyIrNodeType_PanonAggregateType:	firstset = {
 									kNoisyIrNodeType_Tset
 								}
 production	kNoisyIrNodeType_ParrayType:		firstset = {	kNoisyIrNodeType_Tarray		}
+production	kNoisyIrNodeType_PvectorType:		firstset = {	kNoisyIrNodeType_Tvector	}
 production	kNoisyIrNodeType_PlistType:		firstset = {	kNoisyIrNodeType_Tlist		}
 production	kNoisyIrNodeType_PtupleType:		firstset = {	kNoisyIrNodeType_TleftParen	}
 production	kNoisyIrNodeType_PsetType:		firstset = {	kNoisyIrNodeType_Tset		}
@@ -105,6 +107,7 @@ production	kNoisyIrNodeType_Pelement:		firstset = {
 									kNoisyIrNodeType_Tlist,
 									kNoisyIrNodeType_Tset,
 									kNoisyIrNodeType_Tarray,
+									kNoisyIrNodeType_Tvector,
 									kNoisyIrNodeType_Terasures,
 									kNoisyIrNodeType_Terrors,
 									kNoisyIrNodeType_Tlatency,
@@ -180,6 +183,7 @@ production	kNoisyIrNodeType_PguardBody:		firstset = {
 									kNoisyIrNodeType_Tlist,
 									kNoisyIrNodeType_Tset,
 									kNoisyIrNodeType_Tarray,
+									kNoisyIrNodeType_Tvector,
 									kNoisyIrNodeType_Terasures,
 									kNoisyIrNodeType_Terrors,
 									kNoisyIrNodeType_Tlatency,
@@ -212,6 +216,7 @@ production	kNoisyIrNodeType_Pexpression:		firstset = {
 									kNoisyIrNodeType_Tlist,
 									kNoisyIrNodeType_Tset,
 									kNoisyIrNodeType_Tarray,
+									kNoisyIrNodeType_Tvector,
 									kNoisyIrNodeType_Terasures,
 									kNoisyIrNodeType_Terrors,
 									kNoisyIrNodeType_Tlatency,
@@ -393,6 +398,7 @@ production	kNoisyIrNodeType_PrealType:		followset = {	followset(kNoisyIrNodeType
 production	kNoisyIrNodeType_PfixedType:		followset = {	followset(kNoisyIrNodeType_PrealType)	}
 production	kNoisyIrNodeType_PanonAggregateType:	followset = {	followset(kNoisyIrNodeType_PtypeExpression)	}
 production	kNoisyIrNodeType_ParrayType:		followset = {	followset(kNoisyIrNodeType_PtypeExpression)	}
+production	kNoisyIrNodeType_PvectorType:		followset = {	followset(kNoisyIrNodeType_PtypeExpression)	}
 production	kNoisyIrNodeType_PlistType:		followset = {	followset(kNoisyIrNodeType_PtypeExpression)	}
 production	kNoisyIrNodeType_PtupleType:		followset = {
 									followset(kNoisyIrNodeType_PtypeExpression),
@@ -492,6 +498,7 @@ token		kNoisyIrNodeType_Tampersand:			followset = {T_XXX}
 token		kNoisyIrNodeType_Tand:			followset = {T_XXX}
 token		kNoisyIrNodeType_TandAs:		followset = {T_XXX}
 token		kNoisyIrNodeType_Tarray:		followset = {T_XXX}
+token		kNoisyIrNodeType_Tvector:		followset = {T_XXX}
 token		kNoisyIrNodeType_Tas:			followset = {T_XXX}
 token		kNoisyIrNodeType_Tasterisk:		followset = {T_XXX}
 token		kNoisyIrNodeType_Tbang:			followset = {T_XXX}
