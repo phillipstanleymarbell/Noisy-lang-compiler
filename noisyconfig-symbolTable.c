@@ -44,11 +44,13 @@
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
+#include "noisyconfig.h"
 #include "noisyconfig-errors.h"
 #include "version.h"
-#include "noisyconfig.h"
 #include "noisyconfig-symbolTable.h"
 
+
+extern int primeNumbers[168];
 
 /*
  *	TODO: need to tag scopes corresponding to progtypes with a name, so
@@ -56,7 +58,187 @@
  *	can use the "a" of "a->b" to lookup, and get the type structure of
  *	"b".  See, e.g., comments at P_TYPENAME in noisyConfig-irPass-cBackend.
  */
+void 
+noisyConfigPhysicsAddNumeratorDimension(NoisyConfigState * N, Physics * physics, Dimension * numerator)
+{
+    if (physics->numeratorDimensions == NULL) {
+        physics->numeratorDimensions = numerator;
+    } else {
+        Dimension * curDimension = physics->numeratorDimensions;
+        while (curDimension->next != NULL) {
+            curDimension = curDimension->next;
+        }
+        curDimension->next = numerator;
+    }
+    physics->numeratorPrimeProduct *= numerator->primeNumber;
+}
 
+void 
+noisyConfigPhysicsAddDenominatorDimension(NoisyConfigState * N, Physics * physics, Dimension * denominator)
+{
+    if (physics->denominatorDimensions == NULL) {
+        physics->denominatorDimensions = denominator;
+    } else {
+        Dimension * curDimension = physics->denominatorDimensions;
+        while (curDimension->next != NULL) {
+            curDimension = curDimension->next;
+        }
+        curDimension->next = denominator;
+    }
+    physics->denominatorPrimeProduct *= denominator->primeNumber;
+}
+
+Dimension *
+noisyConfigDimensionTableAddOrLookupDimensionForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, NoisyConfigToken *  token)
+{
+	Dimension *	newDimension;
+
+	newDimension = (Dimension *)calloc(1, sizeof(Dimension));
+	if (newDimension == NULL)
+	{
+		noisyConfigFatal(N, Emalloc);
+	}
+
+	newDimension->identifier	= token->stringConst;
+	newDimension->sourceInfo	= token->sourceInfo;
+	newDimension->scope	= scope;
+    newDimension->primeNumber = primeNumbers[N->primeNumbersIndex++];
+
+    if (scope->firstDimension == NULL) {
+        scope->firstDimension = newDimension;
+    } else {
+        Dimension * curDimension = scope->firstDimension;
+        while (curDimension->next != NULL) {
+            curDimension = curDimension->next;
+        }
+        curDimension->next = newDimension;
+    }
+
+	return newDimension;
+}
+
+Physics *
+noisyConfigPhysicsTableAddOrLookupPhysicsForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, NoisyConfigToken *  token)
+{
+	Physics *	newPhysics;
+
+	newPhysics = (Physics *)calloc(1, sizeof(Physics));
+	if (newPhysics == NULL)
+	{
+		noisyConfigFatal(N, Emalloc);
+	}
+
+	newPhysics->identifier	= token->identifier;
+	newPhysics->sourceInfo	= token->sourceInfo;
+	newPhysics->scope	= scope;
+    
+    newPhysics->numeratorPrimeProduct = 1;
+    newPhysics->denominatorPrimeProduct = 1;
+
+	newPhysics->definition	= noisyConfigPhysicsTablePhysicsForIdentifier(N, scope, token->identifier);
+
+    if (scope->firstPhysics == NULL) {
+        scope->firstPhysics = newPhysics;        
+    } else {
+        Physics * curPhysics = scope->firstPhysics;
+        while (curPhysics->next != NULL) {
+            curPhysics = curPhysics->next;
+        }
+        curPhysics->next = newPhysics;
+    }
+
+	return newPhysics;
+}
+
+Physics *
+noisyConfigPhysicsTablePhysicsForIdentifier(NoisyConfigState *  N, NoisyConfigScope *  scope, const char *  identifier)
+{
+	if (scope == NULL)
+	{
+		return NULL;
+	}
+
+	Physics * curPhysics = scope->firstPhysics;
+	while (curPhysics != NULL)
+	{
+		if (!strcmp(curPhysics->identifier, identifier))
+		{
+			return curPhysics;
+		}
+		curPhysics = curPhysics->next;
+	}
+
+	return noisyConfigPhysicsTablePhysicsForIdentifier(N, scope->parent, identifier);
+}
+
+// NoisyConfigSymbol *
+// noisyConfigSymbolTableSymbolForIdentifier(NoisyConfigState *  N, NoisyConfigScope *  scope, const char *  identifier)
+// {
+// 	/*
+// 	 *	Recursion falls out when we reach root which has nil parent
+// 	 */
+// 	if (scope == NULL)
+// 	{
+// 		return NULL;
+// 	}
+// 
+// 	/*
+// 	 *	Search current and parent (not siblings or children)
+// 	 */
+// 	NoisyConfigSymbol *	p = scope->firstSymbol;
+// 	while (p != NULL)
+// 	{
+// 		if (!strcmp(p->identifier, identifier))
+// 		{
+// 			return p;
+// 		}
+// 		p = p->next;
+// 	}
+// 
+// 	return noisyConfigSymbolTableSymbolForIdentifier(N, scope->parent, identifier);
+// }
+// 
+// 
+// NoisyConfigSymbol *
+// noisyConfigSymbolTableAddOrLookupSymbolForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, NoisyConfigToken *  token)
+// {
+// 	NoisyConfigSymbol *	newSymbol;
+// 
+// 	newSymbol = (NoisyConfigSymbol *)calloc(1, sizeof(NoisyConfigSymbol));
+// 	if (newSymbol == NULL)
+// 	{
+// 		noisyConfigFatal(N, Emalloc);
+// 	}
+// 
+// 	newSymbol->identifier	= token->identifier;
+// 	newSymbol->sourceInfo	= token->sourceInfo;
+// 	newSymbol->scope	= scope;
+// 
+// 	/*
+// 	 *	NOTE:	An extant definition might not exist.
+// 	 */
+// 	newSymbol->definition	= noisyConfigSymbolTableSymbolForIdentifier(N, scope, token->identifier);
+// 
+// 	/*
+// 	 *	NOTE:	Caller sets (1) intconst/etc. fields, (2) type, based on context.
+// 	 *		Caller sets the typesig based on the parsed typeexpr for defns.
+// 	 */
+// 	if (scope->firstSymbol == NULL)
+// 	{
+// 		scope->firstSymbol = newSymbol;
+// 	}
+// 	else
+// 	{
+// 		NoisyConfigSymbol *	p = scope->firstSymbol;
+// 		while (p->next != NULL)
+// 		{
+// 			p = p->next;
+// 		}
+// 		p->next = newSymbol;
+// 	}
+// 
+// 	return newSymbol;
+// }
 
 NoisyConfigScope *
 noisyConfigSymbolTableAllocScope(NoisyConfigState *  N)
@@ -70,76 +252,6 @@ noisyConfigSymbolTableAllocScope(NoisyConfigState *  N)
 	}
 
 	return newScope;
-}
-
-
-NoisyConfigSymbol *
-noisyConfigSymbolTableAddOrLookupSymbolForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, NoisyConfigToken *  token)
-{
-	NoisyConfigSymbol *	newSymbol;
-
-	newSymbol = (NoisyConfigSymbol *)calloc(1, sizeof(NoisyConfigSymbol));
-	if (newSymbol == NULL)
-	{
-		noisyConfigFatal(N, Emalloc);
-	}
-
-	newSymbol->identifier	= token->identifier;
-	newSymbol->sourceInfo	= token->sourceInfo;
-	newSymbol->scope	= scope;
-
-	/*
-	 *	NOTE:	An extant definition might not exist.
-	 */
-	newSymbol->definition	= noisyConfigSymbolTableSymbolForIdentifier(N, scope, token->identifier);
-
-	/*
-	 *	NOTE:	Caller sets (1) intconst/etc. fields, (2) type, based on context.
-	 *		Caller sets the typesig based on the parsed typeexpr for defns.
-	 */
-	if (scope->firstSymbol == NULL)
-	{
-		scope->firstSymbol = newSymbol;
-	}
-	else
-	{
-		NoisyConfigSymbol *	p = scope->firstSymbol;
-		while (p->next != NULL)
-		{
-			p = p->next;
-		}
-		p->next = newSymbol;
-	}
-
-	return newSymbol;
-}
-
-
-NoisyConfigSymbol *
-noisyConfigSymbolTableSymbolForIdentifier(NoisyConfigState *  N, NoisyConfigScope *  scope, const char *  identifier)
-{
-	/*
-	 *	Recursion falls out when we reach root which has nil parent
-	 */
-	if (scope == NULL)
-	{
-		return NULL;
-	}
-
-	/*
-	 *	Search current and parent (not siblings or children)
-	 */
-	NoisyConfigSymbol *	p = scope->firstSymbol;
-	while (p != NULL)
-	{
-		if (!strcmp(p->identifier, identifier))
-		{
-			return p;
-		}
-		p = p->next;
-	}
-
-	return noisyConfigSymbolTableSymbolForIdentifier(N, scope->parent, identifier);
 }
 
 

@@ -26,6 +26,49 @@ static void		usage(NoisyConfigState *  N);
 static void		processFile(NoisyConfigState *  N, char *  filename);
 static void		version(NoisyConfigState *  N);
 
+static void     recurseDimensions(NoisyConfigState * N, NoisyConfigScope * topScope);
+static void     recursePhysics(NoisyConfigState * N, NoisyConfigScope * topScope);
+
+static void
+recurseDimensions(NoisyConfigState * N, NoisyConfigScope * topScope)
+{
+    Dimension * curDimension = topScope->firstDimension;
+    if (curDimension == NULL)
+		flexprint(N->Fe, N->Fm, N->Fperr, "topscope dimension doesn't exist\n");
+
+    while (curDimension != NULL) {
+		flexprint(N->Fe, N->Fm, N->Fperr, "dimension %s\n", curDimension->identifier);
+        curDimension = curDimension->next;
+    }
+}
+
+static void
+recursePhysics(NoisyConfigState * N, NoisyConfigScope * topScope)
+{
+    Physics * curPhysics = topScope->firstPhysics;
+    if (curPhysics == NULL)
+		flexprint(N->Fe, N->Fm, N->Fperr, "topscope physics doesn't exist\n");
+    
+    while (curPhysics != NULL) {
+		flexprint(N->Fe, N->Fm, N->Fperr, "physics%s\n", curPhysics->identifier);
+        
+        Dimension * curDimension = curPhysics->numeratorDimensions;
+        while (curDimension != NULL) {
+	    	flexprint(N->Fe, N->Fm, N->Fperr, "dimension %s\n", curDimension->identifier);
+            curDimension = curDimension->next;
+        }
+        
+        curDimension = curPhysics->denominatorDimensions;
+        while (curDimension != NULL) {
+	    	flexprint(N->Fe, N->Fm, N->Fperr, "dimension %s\n", curDimension->identifier);
+            curDimension = curDimension->next;
+        }
+        
+        curPhysics = curPhysics->next;
+    }
+    
+    return;
+}
 
 
 int
@@ -229,6 +272,9 @@ main(int argc, char *argv[])
 	}
 
     noisyConfigConsolePrintBuffers(N);
+    
+    recurseDimensions(N, N->noisyConfigIrTopScope);
+    recursePhysics(N, N->noisyConfigIrTopScope);
 
 	return 0;
 }
@@ -261,6 +307,7 @@ processFile(NoisyConfigState *  N, char *  fileName)
 	// {
 	// 	noisyConfigIrPassProtobufBackend(N);
 	// }
+
 
 
 	/*

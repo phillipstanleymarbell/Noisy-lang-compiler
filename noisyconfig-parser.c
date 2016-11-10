@@ -61,7 +61,6 @@ noisyConfigParseConfigFile(NoisyConfigState *  N, NoisyConfigScope *  currentSco
     );
     n->currentScope = currentScope;
 
-
 	/*
 	 *	Before we start parsing, set begin source line of toplevel scope.
 	 */
@@ -184,12 +183,20 @@ noisyConfigParseDimensionTypeNameStatement(NoisyConfigState *  N, NoisyConfigSco
 
 	if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PdimensionTypeNameStatement))
 	{
-		addLeaf(N, n, noisyConfigParseIdentifier(N, currentScope), currentScope);
+        NoisyConfigIrNode * basicPhysicsIdentifier = noisyConfigParseIdentifier(N, currentScope);
+        Physics * newPhysics = noisyConfigPhysicsTableAddOrLookupPhysicsForToken(N, currentScope, basicPhysicsIdentifier->token);
+		addLeaf(N, n, basicPhysicsIdentifier, currentScope);
 
 		if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PassignOp))
 		{
             noisyConfigParseAssignOp(N, currentScope);
-			addLeaf(N, n, noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TstringConst, currentScope), currentScope);
+            
+            NoisyConfigIrNode * dimensionNode = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TstringConst, currentScope);
+            Dimension * newDimension = noisyConfigDimensionTableAddOrLookupDimensionForToken(N, currentScope, dimensionNode->token);
+            noisyConfigPhysicsAddNumeratorDimension(N, newPhysics, newDimension);
+
+			addLeaf(N, n, dimensionNode, currentScope);
+
 		}
 		else
 		{
@@ -208,7 +215,7 @@ noisyConfigParseDimensionTypeNameStatement(NoisyConfigState *  N, NoisyConfigSco
 }
 
 /*
- *	kNoisyConfigIrNodeType_PvectorScalarPairsScope
+ *	kNoisyConfigIrNodeType_PvectorScalarPairScope
  *
  *	Generated AST subtree:
  *
@@ -218,7 +225,7 @@ noisyConfigParseDimensionTypeNameStatement(NoisyConfigState *  N, NoisyConfigSco
 NoisyConfigIrNode *
 noisyConfigParseVectorScalarPairScope(NoisyConfigState *  N, NoisyConfigScope *  scope)
 {
-	NoisyConfigIrNode *	n = genNoisyConfigIrNode(N,	kNoisyConfigIrNodeType_TvectorScalarPairs,
+	NoisyConfigIrNode *	n = genNoisyConfigIrNode(N,	kNoisyConfigIrNodeType_PvectorScalarPairScope,
 						NULL /* left child */,
 						NULL /* right child */,
 						noisyConfigLexPeek(N, 1)->sourceInfo /* source info */);
@@ -944,6 +951,10 @@ noisyConfigParseTerminal(NoisyConfigState *  N, NoisyConfigIrNodeType expectedTy
                         NULL /* left child */,
                         NULL /* right child */,
                         t->sourceInfo /* source info */);
+    
+    n->token = t;
+    n->tokenString = t->identifier;
+   
     n->currentScope = currentScope;
 
     return n;
@@ -1000,11 +1011,12 @@ noisyConfigParseIdentifierUsageTerminal(NoisyConfigState *  N, NoisyConfigIrNode
                         NULL /* right child */,
                         t->sourceInfo /* source info */);
 
+    n->token = t;
     n->tokenString = t->identifier;
-
-    n->symbol = noisyConfigSymbolTableSymbolForIdentifier(N, scope, t->identifier);
     n->currentScope = scope;
-    if (n->symbol == NULL)
+    
+    Physics * physicsSearchResult = noisyConfigPhysicsTablePhysicsForIdentifier(N, scope, t->identifier);
+    if (physicsSearchResult == NULL)
     {
         errorUseBeforeDefinition(N, t->identifier);
         // TODO: do noisyParserErrorRecovery() here ?
@@ -1035,6 +1047,7 @@ noisyConfigParseIdentifierDefinitionTerminal(NoisyConfigState *  N, NoisyConfigI
 						NULL /* right child */,
 						t->sourceInfo /* source info */);
 
+    n->token = t;
 	n->tokenString = t->identifier;
     n->currentScope = scope;
 

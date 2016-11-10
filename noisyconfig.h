@@ -40,7 +40,7 @@ typedef enum
 	kNoisyConfigIrNodeType_Tlaw,
 	kNoisyConfigIrNodeType_TdimensionTypeNames,
 	kNoisyConfigIrNodeType_PanonAggregateCastExpression,
-	kNoisyIrNodeType_ParrayCastExpression,
+	kNoisyConfigIrNodeType_ParrayCastExpression,
 	kNoisyConfigIrNodeType_PassignOp,
 	kNoisyConfigIrNodeType_PvectorOp,
 	kNoisyConfigIrNodeType_PhighPrecedenceBinaryOp,
@@ -199,7 +199,21 @@ typedef struct NoisyConfigSymbol	NoisyConfigSymbol;
 typedef struct NoisyConfigToken	NoisyConfigToken;
 typedef struct NoisyConfigIrNode	NoisyConfigIrNode;
 typedef struct NoisyConfigSourceInfo	NoisyConfigSourceInfo;
+typedef struct Dimension Dimension;
+typedef struct Physics Physics;
 
+struct NoisyConfigToken
+{
+	NoisyConfigIrNodeType		type;
+	char *			identifier;
+	uint64_t		integerConst;
+	double			realConst;
+	char *			stringConst;
+	NoisyConfigSourceInfo *	sourceInfo;
+	
+	NoisyConfigToken *		prev;
+	NoisyConfigToken *		next;
+};
 
 struct NoisyConfigIrNode
 {
@@ -209,6 +223,7 @@ struct NoisyConfigIrNode
 	 *	Syntactic (AST) information.
 	 */
 	char *			tokenString;
+    struct NoisyConfigToken * token;
 	struct NoisyConfigSourceInfo	*	sourceInfo;
 	struct NoisyConfigIrNode *		irParent;
 	struct NoisyConfigIrNode *		irLeftChild;
@@ -239,19 +254,39 @@ struct NoisyConfigSourceInfo
 };
 
 
-struct NoisyConfigToken
+
+struct Dimension
 {
-	NoisyConfigIrNodeType		type;
-	char *			identifier;
-	uint64_t		integerConst;
-	double			realConst;
-	char *			stringConst;
-	NoisyConfigSourceInfo *	sourceInfo;
+    char * identifier;
 	
-	NoisyConfigToken *		prev;
-	NoisyConfigToken *		next;
+    NoisyConfigScope *		scope;
+	
+    NoisyConfigSourceInfo *	sourceInfo;
+    
+    int primeNumber;
+
+    Dimension * next;
 };
 
+struct Physics 
+{
+    char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
+    NoisyConfigScope *		scope;
+    NoisyConfigSourceInfo *	sourceInfo;
+    
+    bool isVector;
+
+    Dimension * numeratorDimensions;
+    int numeratorPrimeProduct;
+    
+    Dimension * denominatorDimensions;
+    int denominatorPrimeProduct;
+
+    Physics * definition;
+
+    Physics * next;
+
+};
 
 
 struct NoisyConfigScope
@@ -271,6 +306,13 @@ struct NoisyConfigScope
 	 *	Symbols in this scope. The list of symbols is accesed via firstSymbol->next
 	 */
 	struct NoisyConfigSymbol *		firstSymbol;
+
+    /*
+     * For the config file, we only have one global scope that keeps track of all
+     * dimensions ad physics quantities.
+     */
+    struct Dimension * firstDimension;
+    struct Physics * firstPhysics;
 
 	/*
 	 *	Where in source scope begins and ends
@@ -392,7 +434,6 @@ typedef struct
 	uint64_t		currentTokenLength;
 	struct NoisyConfigToken *		tokenList;
 	struct NoisyConfigToken *		lastToken;
-	
 
 	/*
 	 *	The root of the IR tree, and top scope
@@ -411,7 +452,10 @@ typedef struct
 
 	jmp_buf			jmpbuf;
 	bool			jmpbufIsValid;
+    
+    int primeNumbersIndex;
 } NoisyConfigState;
+
 
 
 void				noisyConfigFatal(NoisyConfigState *  C, const char *  msg) __attribute__((noreturn));

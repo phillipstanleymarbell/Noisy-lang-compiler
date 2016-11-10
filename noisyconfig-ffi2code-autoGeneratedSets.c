@@ -12,7 +12,7 @@
 
 int    gNoisyConfigFirsts[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax]  = {
                                                [kNoisyConfigIrNodeType_PanonAggregateCastExpression]            = {kNoisyConfigIrNodeType_TleftBrac, kNoisyConfigIrNodeTypeMax},
-                                               [kNoisyIrNodeType_ParrayCastExpression]            = {kNoisyConfigIrNodeType_TleftBrac, kNoisyConfigIrNodeTypeMax},
+                                               [kNoisyConfigIrNodeType_ParrayCastExpression]            = {kNoisyConfigIrNodeType_TleftBrac, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PassignOp]            = {kNoisyConfigIrNodeType_Tequals, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PvectorOp]            = {
                                                                                                     kNoisyConfigIrNodeType_Tdot,
@@ -79,7 +79,7 @@ int    gNoisyConfigFirsts[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax] 
 
 int    gNoisyConfigFollows[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax]  = {
                                                [kNoisyConfigIrNodeType_PanonAggregateCastExpression]            = {kNoisyConfigIrNodeType_TrightBrac, kNoisyConfigIrNodeTypeMax},
-                                               [kNoisyIrNodeType_ParrayCastExpression]            = {kNoisyConfigIrNodeType_TrightBrac, kNoisyConfigIrNodeTypeMax},
+                                               [kNoisyConfigIrNodeType_ParrayCastExpression]            = {kNoisyConfigIrNodeType_TrightBrac, kNoisyConfigIrNodeTypeMax},
                                                [kNoisyConfigIrNodeType_PassignOp]            = {
                                                                                                     kNoisyConfigIrNodeType_Tminus,
                                                                                                     kNoisyConfigIrNodeType_Tplus,
@@ -221,7 +221,7 @@ int    gNoisyConfigFollows[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax]
 
 char	*gNoisyConfigAstNodeStrings[kNoisyConfigIrNodeTypeMax]	= {
                                                [kNoisyConfigIrNodeType_PanonAggregateCastExpression]            = "kNoisyConfigIrNodeType_PanonAggregateCastExpression",
-                                               [kNoisyIrNodeType_ParrayCastExpression]            = "kNoisyIrNodeType_ParrayCastExpression",
+                                               [kNoisyConfigIrNodeType_ParrayCastExpression]            = "kNoisyConfigIrNodeType_ParrayCastExpression",
                                                [kNoisyConfigIrNodeType_PassignOp]            = "kNoisyConfigIrNodeType_PassignOp",
                                                [kNoisyConfigIrNodeType_PvectorOp]            = "kNoisyConfigIrNodeType_PvectorOp",
                                                [kNoisyConfigIrNodeType_PhighPrecedenceBinaryOp]            = "kNoisyConfigIrNodeType_PhighPrecedenceBinaryOp",

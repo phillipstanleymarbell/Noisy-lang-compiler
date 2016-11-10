@@ -53,8 +53,15 @@ typedef enum
 } NoisyConfigSymbolType;
 
 
-struct NoisyConfigScope *	noisyConfigSymbolTableAllocScope(NoisyConfigState *  N);
-struct NoisyConfigSymbol *	noisyConfigSymbolTableAddOrLookupSymbolForToken(NoisyConfigState *  N, struct NoisyConfigScope *  scope, struct NoisyConfigToken *  token);
-struct NoisyConfigSymbol *	noisyConfigSymbolTableSymbolForIdentifier(NoisyConfigState *  N, struct NoisyConfigScope *  scope, const char *  identifier);
-struct NoisyConfigScope *	noisyConfigSymbolTableOpenScope(NoisyConfigState *  N, struct NoisyConfigScope *  scope, struct NoisyConfigIrNode *  subtree);
+Dimension * noisyConfigDimensionTableAddOrLookupDimensionForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, struct NoisyConfigToken *  token);
+Physics * noisyConfigPhysicsTableAddOrLookupPhysicsForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, struct NoisyConfigToken *  token);
+Physics * noisyConfigPhysicsTablePhysicsForIdentifier(NoisyConfigState *  N, NoisyConfigScope *  scope, const char *  identifier);
+void noisyConfigPhysicsAddNumeratorDimension(NoisyConfigState * N, Physics * physics, Dimension * numerator);
+void noisyConfigPhysicsAddDenominatorDimension(NoisyConfigState * N, Physics * physics, Dimension * denominator);
+
+
+NoisyConfigScope *	noisyConfigSymbolTableAllocScope(NoisyConfigState *  N);
+NoisyConfigSymbol *	noisyConfigSymbolTableAddOrLookupSymbolForToken(NoisyConfigState *  N, struct NoisyConfigScope *  scope, struct NoisyConfigToken *  token);
+NoisyConfigSymbol *	noisyConfigSymbolTableSymbolForIdentifier(NoisyConfigState *  N, struct NoisyConfigScope *  scope, const char *  identifier);
+NoisyConfigScope *	noisyConfigSymbolTableOpenScope(NoisyConfigState *  N, struct NoisyConfigScope *  scope, struct NoisyConfigIrNode *  subtree);
 void		        noisyConfigSymbolTableCloseScope(NoisyConfigState *  N, struct NoisyConfigScope *  scope, struct NoisyConfigIrNode *  subtree);
