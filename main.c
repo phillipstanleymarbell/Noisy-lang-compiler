@@ -50,17 +50,17 @@ recursePhysics(NoisyConfigState * N, NoisyConfigScope * topScope)
 		flexprint(N->Fe, N->Fm, N->Fperr, "topscope physics doesn't exist\n");
     
     while (curPhysics != NULL) {
-		flexprint(N->Fe, N->Fm, N->Fperr, "physics%s\n", curPhysics->identifier);
+		flexprint(N->Fe, N->Fm, N->Fperr, "physics %s\n", curPhysics->identifier);
         
         Dimension * curDimension = curPhysics->numeratorDimensions;
         while (curDimension != NULL) {
-	    	flexprint(N->Fe, N->Fm, N->Fperr, "dimension %s\n", curDimension->identifier);
+	    	flexprint(N->Fe, N->Fm, N->Fperr, "numerator dimension %s %d\n", curDimension->identifier, curDimension->primeNumber);
             curDimension = curDimension->next;
         }
         
         curDimension = curPhysics->denominatorDimensions;
         while (curDimension != NULL) {
-	    	flexprint(N->Fe, N->Fm, N->Fperr, "dimension %s\n", curDimension->identifier);
+	    	flexprint(N->Fe, N->Fm, N->Fperr, "denominator dimension %s %d\n", curDimension->identifier, curDimension->primeNumber);
             curDimension = curDimension->next;
         }
         
@@ -273,8 +273,6 @@ main(int argc, char *argv[])
 
     noisyConfigConsolePrintBuffers(N);
     
-    recurseDimensions(N, N->noisyConfigIrTopScope);
-    recursePhysics(N, N->noisyConfigIrTopScope);
 
 	return 0;
 }
@@ -299,6 +297,8 @@ processFile(NoisyConfigState *  N, char *  fileName)
 	 */
 	noisyConfigRunPasses(N);
 
+    recurseDimensions(N, N->noisyConfigIrTopScope);
+    recursePhysics(N, N->noisyConfigIrTopScope);
 
 	/*
 	 *	Bytecode backend. Emit IR in protobuf.

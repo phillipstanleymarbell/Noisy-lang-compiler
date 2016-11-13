@@ -1,3 +1,4 @@
+#include <string.h>
 /*
 	Authored 2015. Phillip Stanley-Marbell.
 
@@ -53,12 +54,19 @@ typedef enum
 } NoisyConfigSymbolType;
 
 
-Dimension * noisyConfigDimensionTableAddOrLookupDimensionForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, struct NoisyConfigToken *  token);
-Physics * noisyConfigPhysicsTableAddOrLookupPhysicsForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, struct NoisyConfigToken *  token);
+Dimension * noisyConfigDimensionTableAddDimensionForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, struct NoisyConfigToken *  token);
+Dimension * noisyConfigDimensionTableDimensionForIdentifier(NoisyConfigState *  N, NoisyConfigScope *  scope, const char *  identifier);
+
+Physics * noisyConfigPhysicsTableAddPhysicsForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, struct NoisyConfigToken *  token);
 Physics * noisyConfigPhysicsTablePhysicsForIdentifier(NoisyConfigState *  N, NoisyConfigScope *  scope, const char *  identifier);
-void noisyConfigPhysicsAddNumeratorDimension(NoisyConfigState * N, Physics * physics, Dimension * numerator);
+
+void noisyConfigPhysicsAddNumeratorDimension(NoisyConfigState * N, Physics * physics, Dimension * numerator); 
 void noisyConfigPhysicsAddDenominatorDimension(NoisyConfigState * N, Physics * physics, Dimension * denominator);
 
+void noisyConfigPhysicsCopyNumeratorDimensions(NoisyConfigState * N, Physics * dest, Physics * source);
+void noisyConfigPhysicsCopyDenominatorDimensions(NoisyConfigState * N, Physics * dest, Physics * source);
+void noisyConfigPhysicsCopyNumeratorToDenominatorDimensions(NoisyConfigState * N, Physics * dest, Physics * source);
+void noisyConfigPhysicsCopyDenominatorToNumeratorDimensions(NoisyConfigState * N, Physics * dest, Physics * source);
 
 NoisyConfigScope *	noisyConfigSymbolTableAllocScope(NoisyConfigState *  N);
 NoisyConfigSymbol *	noisyConfigSymbolTableAddOrLookupSymbolForToken(NoisyConfigState *  N, struct NoisyConfigScope *  scope, struct NoisyConfigToken *  token);

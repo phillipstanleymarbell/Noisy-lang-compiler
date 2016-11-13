@@ -232,6 +232,11 @@ struct NoisyConfigIrNode
 	struct NoisyConfigSymbol *		symbol;
     struct NoisyConfigScope * currentScope;
 
+    /*
+     * Used for evaluating dimensions in expressions
+     */
+    Physics * physics;
+
 	/*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
 	 */

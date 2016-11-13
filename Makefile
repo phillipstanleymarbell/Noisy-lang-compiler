@@ -136,4 +136,4 @@ version.c: $(HEADERS) Makefile
 
 
 clean:
-	rm -rf version.c $(OBJS) $(CGIOBJS) $(LIBNOISYCONFIGOBJS) $(TARGET) $(TARGET).dSYM $(CGI_TARGET) $(CGI_TARGET).dsym lib$(LIBNOISYCONFIG)-$(OSTYPE)-$(NOISYCONFIG_L10N).a *.o *.plist noname.gv.pdf noname.gv.png 
+	rm -rf version.c $(OBJS) $(CGIOBJS) $(LIBNOISYCONFIGOBJS) $(TARGET) $(TARGET).dSYM $(CGI_TARGET) $(CGI_TARGET).dsym lib$(LIBNOISYCONFIG)-$(OSTYPE)-$(NOISYCONFIG_L10N).a *.o *.plist 

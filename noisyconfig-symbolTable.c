@@ -58,17 +58,162 @@ extern int primeNumbers[168];
  *	can use the "a" of "a->b" to lookup, and get the type structure of
  *	"b".  See, e.g., comments at P_TYPENAME in noisyConfig-irPass-cBackend.
  */
+
+void 
+noisyConfigPhysicsCopyDenominatorToNumeratorDimensions(NoisyConfigState * N, Physics * dest, Physics * source)
+{
+    if (source->denominatorDimensions == NULL)
+        return;
+    
+    if (dest->numeratorDimensions == NULL) 
+    {
+        Dimension * tmpDestDimension = (Dimension*) calloc(1, sizeof(Dimension));
+        dest->numeratorDimensions = (Dimension *) memcpy(tmpDestDimension, source->denominatorDimensions, sizeof(Dimension));
+        dest->numeratorDimensions->next = NULL;
+    }
+    else
+    {
+        Dimension * curDestDimension = dest->numeratorDimensions;
+        while (curDestDimension->next != NULL) {
+            curDestDimension = curDestDimension->next;
+        }
+        
+        Dimension * curSourceDimension = source->denominatorDimensions;
+        while (curSourceDimension != NULL) {
+            Dimension * tmpDestDimension = (Dimension *) calloc(1, sizeof(Dimension));
+            memcpy(tmpDestDimension, curSourceDimension, sizeof(Dimension));
+            curDestDimension->next = tmpDestDimension;
+            curDestDimension->next->next = NULL;
+            
+            curDestDimension = curDestDimension->next;
+            curSourceDimension = curSourceDimension->next;
+        }
+    }
+    
+    dest->numeratorPrimeProduct *= source->denominatorPrimeProduct;
+
+}
+void 
+noisyConfigPhysicsCopyNumeratorToDenominatorDimensions(NoisyConfigState * N, Physics * dest, Physics * source)
+{
+    if (source->numeratorDimensions == NULL)
+        return;
+    
+    if (dest->denominatorDimensions == NULL) 
+    {
+        Dimension * tmpDestDimension = (Dimension*) calloc(1, sizeof(Dimension));
+        dest->denominatorDimensions = (Dimension *) memcpy(tmpDestDimension, source->numeratorDimensions, sizeof(Dimension));
+        dest->denominatorDimensions->next = NULL;
+    }
+    else
+    {
+        Dimension * curDestDimension = dest->denominatorDimensions;
+        while (curDestDimension->next != NULL) {
+            curDestDimension = curDestDimension->next;
+        }
+        
+        Dimension * curSourceDimension = source->numeratorDimensions;
+        while (curSourceDimension != NULL) {
+            Dimension * tmpDestDimension = (Dimension *) calloc(1, sizeof(Dimension));
+            memcpy(tmpDestDimension, curSourceDimension, sizeof(Dimension));
+            curDestDimension->next = tmpDestDimension;
+            curDestDimension->next->next = NULL;
+            
+            curDestDimension = curDestDimension->next;
+            curSourceDimension = curSourceDimension->next;
+        }
+    }
+    
+    dest->denominatorPrimeProduct *= source->numeratorPrimeProduct;
+
+}
+
+// TODO change method name from copy to transfer
+void noisyConfigPhysicsCopyNumeratorDimensions(NoisyConfigState * N, Physics * dest, Physics * source) 
+{
+    if (source->numeratorDimensions == NULL)
+        return;
+    
+    if (dest->numeratorDimensions == NULL) 
+    {
+        Dimension * tmpDestDimension = (Dimension*) calloc(1, sizeof(Dimension));
+        dest->numeratorDimensions = (Dimension *) memcpy(tmpDestDimension, source->numeratorDimensions, sizeof(Dimension));
+        dest->numeratorDimensions->next = NULL;
+    }
+    else
+    {
+        Dimension * curDestDimension = dest->numeratorDimensions;
+        while (curDestDimension->next != NULL) {
+            curDestDimension = curDestDimension->next;
+        }
+        
+        Dimension * curSourceDimension = source->numeratorDimensions;
+        while (curSourceDimension != NULL) {
+            Dimension * tmpDestDimension = (Dimension *) calloc(1, sizeof(Dimension));
+            memcpy(tmpDestDimension, curSourceDimension, sizeof(Dimension));
+            curDestDimension->next = tmpDestDimension;
+            curDestDimension->next->next = NULL;
+            
+            curDestDimension = curDestDimension->next;
+            curSourceDimension = curSourceDimension->next;
+        }
+    }
+    
+    dest->numeratorPrimeProduct *= source->numeratorPrimeProduct;
+}
+
+void noisyConfigPhysicsCopyDenominatorDimensions(NoisyConfigState * N, Physics * dest, Physics * source)
+{
+    if (source->denominatorDimensions == NULL)
+        return;
+    
+    if (dest->denominatorDimensions == NULL) 
+    {
+        Dimension * tmpDestDimension = (Dimension *) calloc(1, sizeof(Dimension));
+        dest->denominatorDimensions = (Dimension *) memcpy(tmpDestDimension, source->denominatorDimensions, sizeof(Dimension));
+        dest->denominatorDimensions->next = NULL;
+    }
+    else
+    {
+        Dimension * curDestDimension = dest->denominatorDimensions;
+        while (curDestDimension->next != NULL) {
+            curDestDimension = curDestDimension->next;
+        }
+        
+        Dimension * curSourceDimension = source->denominatorDimensions;
+        while (curSourceDimension != NULL) {
+            Dimension * tmpDestDimension = (Dimension *)calloc(1, sizeof(Dimension));
+            memcpy(tmpDestDimension, curSourceDimension, sizeof(Dimension));
+            curDestDimension->next = tmpDestDimension;
+            curDestDimension->next->next = NULL;
+            
+            curDestDimension = curDestDimension->next;
+            curSourceDimension = curSourceDimension->next;
+        }
+    }
+    
+    dest->denominatorPrimeProduct *= source->denominatorPrimeProduct;
+}
+
 void 
 noisyConfigPhysicsAddNumeratorDimension(NoisyConfigState * N, Physics * physics, Dimension * numerator)
 {
     if (physics->numeratorDimensions == NULL) {
-        physics->numeratorDimensions = numerator;
+        Dimension * tmpDestDimension = (Dimension *) calloc(1, sizeof(Dimension));
+        memcpy(tmpDestDimension, numerator, sizeof(Dimension));
+        physics->numeratorDimensions = tmpDestDimension;
+        physics->numeratorDimensions->next = NULL;
     } else {
         Dimension * curDimension = physics->numeratorDimensions;
         while (curDimension->next != NULL) {
+            
             curDimension = curDimension->next;
         }
-        curDimension->next = numerator;
+        
+        Dimension * tmpDestDimension = (Dimension *) calloc(1, sizeof(Dimension));
+        memcpy(tmpDestDimension, numerator, sizeof(Dimension));
+        curDimension->next = tmpDestDimension;
+        curDimension->next->next = NULL;
     }
     physics->numeratorPrimeProduct *= numerator->primeNumber;
 }
@@ -77,19 +222,27 @@ void
 noisyConfigPhysicsAddDenominatorDimension(NoisyConfigState * N, Physics * physics, Dimension * denominator)
 {
     if (physics->denominatorDimensions == NULL) {
-        physics->denominatorDimensions = denominator;
+        Dimension * tmpDestDimension = (Dimension *) calloc(1, sizeof(Dimension));
+        memcpy(tmpDestDimension, denominator, sizeof(Dimension));
+        physics->denominatorDimensions = tmpDestDimension;
+        physics->denominatorDimensions->next = NULL;
     } else {
         Dimension * curDimension = physics->denominatorDimensions;
         while (curDimension->next != NULL) {
+            
             curDimension = curDimension->next;
         }
-        curDimension->next = denominator;
+        
+        Dimension * tmpDestDimension = (Dimension *) calloc(1, sizeof(Dimension));
+        memcpy(tmpDestDimension, denominator, sizeof(Dimension));
+        curDimension->next = tmpDestDimension;
+        curDimension->next->next = NULL;
     }
     physics->denominatorPrimeProduct *= denominator->primeNumber;
 }
 
 Dimension *
-noisyConfigDimensionTableAddOrLookupDimensionForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, NoisyConfigToken *  token)
+noisyConfigDimensionTableAddDimensionForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, NoisyConfigToken *  token)
 {
 	Dimension *	newDimension;
 
@@ -118,7 +271,7 @@ noisyConfigDimensionTableAddOrLookupDimensionForToken(NoisyConfigState *  N, Noi
 }
 
 Physics *
-noisyConfigPhysicsTableAddOrLookupPhysicsForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, NoisyConfigToken *  token)
+noisyConfigPhysicsTableAddPhysicsForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, NoisyConfigToken *  token)
 {
 	Physics *	newPhysics;
 
@@ -148,6 +301,27 @@ noisyConfigPhysicsTableAddOrLookupPhysicsForToken(NoisyConfigState *  N, NoisyCo
     }
 
 	return newPhysics;
+}
+
+Dimension *
+noisyConfigDimensionTableDimensionForIdentifier(NoisyConfigState *  N, NoisyConfigScope *  scope, const char *  identifier)
+{
+	if (scope == NULL)
+	{
+		return NULL;
+	}
+
+	Dimension * curDimension = scope->firstDimension;
+	while (curDimension != NULL)
+	{
+		if (!strcmp(curDimension->identifier, identifier))
+		{
+			return curDimension;
+		}
+		curDimension = curDimension->next;
+	}
+
+	return noisyConfigDimensionTableDimensionForIdentifier(N, scope->parent, identifier);
 }
 
 Physics *
