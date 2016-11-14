@@ -71,29 +71,30 @@ noisyConfigParseConfigFile(NoisyConfigState *  N, NoisyConfigScope *  currentSco
 	
     if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
 	{
+		addLeafWithChainingSeq(N, n, noisyConfigParseVectorScalarPairScope(N, currentScope), currentScope);
+	}
+    
+    if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
+	{
 		addLeafWithChainingSeq(N, n, noisyConfigParseLawScope(N, currentScope), currentScope);
 	}
 	
-    // if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
-	// {
-	// 	addLeafWithChainingSeq(N, n, noisyConfigParseDimensionAliasScope(N, currentScope), currentScope);
-	// }
-    // 
-    // if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
-	// {
-	// 	addLeafWithChainingSeq(N, n, noisyConfigParseVectorIntegralScope(N, currentScope), currentScope);
-	// }
+    if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
+	{
+		addLeafWithChainingSeq(N, n, noisyConfigParseDimensionAliasScope(N, currentScope), currentScope);
+	}
+    
+    if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
+	{
+		addLeafWithChainingSeq(N, n, noisyConfigParseVectorIntegralScope(N, currentScope), currentScope);
+	}
 
-    // if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
-	// {
-	// 	addLeafWithChainingSeq(N, n, noisyConfigParseScalarIntegralScope(N, currentScope), currentScope);
-	// }
-    // 
-    // if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
-	// {
-	// 	addLeafWithChainingSeq(N, n, noisyConfigParseVectorScalarPairScope(N, currentScope), currentScope);
-	// }
-	/*
+    if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
+	{
+		addLeafWithChainingSeq(N, n, noisyConfigParseScalarIntegralScope(N, currentScope), currentScope);
+	}
+	
+    /*
 	 *	We can now fill in end src info for toplevel scope.
 	 */
 	currentScope->end = noisyConfigLexPeek(N, 1)->sourceInfo;
@@ -295,12 +296,34 @@ noisyConfigParseVectorScalarPairStatement(NoisyConfigState *  N, NoisyConfigScop
 
 	if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PvectorScalarPairStatement))
 	{
-		addLeaf(N, n, noisyConfigParseIdentifier(N, currentScope), currentScope);
+        NoisyConfigIrNode * vectorPhysicsIdentifier = noisyConfigParseIdentifier(N, currentScope);
+        Physics * vectorPhysics = noisyConfigPhysicsTablePhysicsForIdentifier(N, currentScope, vectorPhysicsIdentifier->token->identifier);
+
+        if (vectorPhysics == NULL)
+        {
+            vectorPhysics = noisyConfigPhysicsTableAddPhysicsForToken(N, currentScope, vectorPhysicsIdentifier->token);
+        }
+
+        vectorPhysics->isVector = true;
+		
+		addLeaf(N, n, vectorPhysicsIdentifier, currentScope);
 
 		if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PassignOp))
 		{
             noisyConfigParseAssignOp(N, currentScope);
-			addLeaf(N, n, noisyConfigParseIdentifierUsageTerminal(N, kNoisyConfigIrNodeType_Tidentifier, currentScope), currentScope);
+            
+            NoisyConfigIrNode * scalarPhysicsIdentifier = noisyConfigParseIdentifier(N, currentScope);
+            Physics * scalarPhysics = noisyConfigPhysicsTablePhysicsForIdentifier(N, currentScope, scalarPhysicsIdentifier->token->identifier);
+
+            if (scalarPhysics == NULL)
+            {
+                scalarPhysics = noisyConfigPhysicsTableAddPhysicsForToken(N, currentScope, scalarPhysicsIdentifier->token);
+            }
+
+            scalarPhysics->vectorCounterpart = vectorPhysics;
+            vectorPhysics->vectorCounterpart = scalarPhysics;
+			
+            addLeaf(N, n, scalarPhysicsIdentifier, currentScope);
 		}
 		else
 		{
@@ -369,7 +392,19 @@ noisyConfigParseVectorIntegralLists(NoisyConfigState * N, NoisyConfigScope * sco
 
     while (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PvectorIntegralList)) 
     {
-        addLeafWithChainingSeq(N, n, noisyConfigParseVectorIntegralList(N, scope), scope);
+        NoisyConfigIrNode * irNode = noisyConfigParseVectorIntegralList(N, scope);
+
+        if (N->vectorIntegralLists == NULL)
+        {
+            N->vectorIntegralLists = irNode->vectorIntegralList;
+        }
+        else
+        {
+            IntegralList* current = getTailIntegralList(N->vectorIntegralLists);
+            current->next = irNode->vectorIntegralList;
+        }
+
+        addLeafWithChainingSeq(N, n, irNode, scope);
     }
 
     return n;
@@ -395,11 +430,33 @@ noisyConfigParseVectorIntegralList(NoisyConfigState * N, NoisyConfigScope * scop
 	);
     n->currentScope = scope;
 
+    n->vectorIntegralList = (IntegralList *) calloc(1, sizeof(IntegralList));
+    n->vectorIntegralList->head = NULL;
+
     noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TleftBrac, scope);
 
+    
     while (peekCheck(N, 1, kNoisyConfigIrNodeType_Tidentifier)) 
     {
-        addLeafWithChainingSeq(N, n, noisyConfigParseIdentifierUsageTerminal(N, kNoisyConfigIrNodeType_Tidentifier, scope), scope);
+        NoisyConfigIrNode * physicsIdentifier = noisyConfigParseIdentifierUsageTerminal(N, kNoisyConfigIrNodeType_Tidentifier, scope);
+        Physics * physics = noisyConfigPhysicsTablePhysicsForIdentifier(N, scope, physicsIdentifier->token->identifier);
+
+        if (physics == NULL)
+        {
+            noisyConfigFatal(N, Esanity);
+        }
+
+        if (n->vectorIntegralList->head == NULL)
+        {
+            n->vectorIntegralList->head = copyPhysicsNode(physics);
+        }
+        else
+        {
+            Physics * current = getTailPhysics(n->vectorIntegralList->head);
+            current->next = copyPhysicsNode(physics);
+        }
+
+        addLeafWithChainingSeq(N, n, physicsIdentifier, scope);
        
         if (peekCheck(N, 1 ,kNoisyConfigIrNodeType_TrightBrac)) {
             noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TrightBrac, scope);
@@ -465,7 +522,19 @@ noisyConfigParseScalarIntegralLists(NoisyConfigState * N, NoisyConfigScope * sco
 
     while (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PscalarIntegralList)) 
     {
-        addLeafWithChainingSeq(N, n, noisyConfigParseScalarIntegralList(N, scope), scope);
+        NoisyConfigIrNode * irNode = noisyConfigParseScalarIntegralList(N, scope);
+
+        if (N->scalarIntegralLists == NULL)
+        {
+            N->scalarIntegralLists = irNode->scalarIntegralList;
+        }
+        else
+        {
+            IntegralList* current = getTailIntegralList(N->scalarIntegralLists);
+            current->next = irNode->scalarIntegralList;
+        }
+        
+        addLeafWithChainingSeq(N, n, irNode, scope);
     }
 
     return n;
@@ -491,11 +560,32 @@ noisyConfigParseScalarIntegralList(NoisyConfigState * N, NoisyConfigScope * scop
 	);
     n->currentScope = scope;
 
+    n->scalarIntegralList = (IntegralList *) calloc(1, sizeof(IntegralList));
+    n->scalarIntegralList->head = NULL;
+
     noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TleftBrac, scope);
 
     while (peekCheck(N, 1, kNoisyConfigIrNodeType_Tidentifier)) 
     {
-        addLeafWithChainingSeq(N, n, noisyConfigParseIdentifierUsageTerminal(N, kNoisyConfigIrNodeType_Tidentifier, scope), scope);
+        NoisyConfigIrNode * physicsIdentifier = noisyConfigParseIdentifierUsageTerminal(N, kNoisyConfigIrNodeType_Tidentifier, scope);
+        Physics * physics = noisyConfigPhysicsTablePhysicsForIdentifier(N, scope, physicsIdentifier->token->identifier);
+
+        if (physics == NULL)
+        {
+            noisyConfigFatal(N, Esanity);
+        }
+
+        if (n->scalarIntegralList->head == NULL)
+        {
+            n->scalarIntegralList->head = copyPhysicsNode(physics);
+        }
+        else
+        {
+            Physics * current = getTailPhysics(n->scalarIntegralList->head);
+            current->next = copyPhysicsNode(physics);
+        }
+
+        addLeafWithChainingSeq(N, n, physicsIdentifier, scope);
        
         if (peekCheck(N, 1 ,kNoisyConfigIrNodeType_TrightBrac)) {
             noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TrightBrac, scope);
@@ -590,12 +680,24 @@ noisyConfigParseDimensionAliasStatement(NoisyConfigState *  N, NoisyConfigScope 
 
 	if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PdimensionAliasStatement))
 	{
-		addLeaf(N, n, noisyConfigParseIdentifier(N, currentScope), currentScope);
+        NoisyConfigIrNode * derivedPhysicsIdentifier = noisyConfigParseIdentifier(N, currentScope);
+        Physics * derivedPhysics = noisyConfigPhysicsTablePhysicsForIdentifier(N, currentScope, derivedPhysicsIdentifier->token->identifier);
+
+        if (derivedPhysics == NULL)
+        {
+            noisyConfigFatal(N, Esanity);
+        }
+		
+        addLeaf(N, n, derivedPhysicsIdentifier, currentScope);
 
 		if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PassignOp))
 		{
             noisyConfigParseAssignOp(N, currentScope);
-			addLeaf(N, n, noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TstringConst, currentScope), currentScope);
+            
+            NoisyConfigIrNode * dimensionAlias = noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TstringConst, currentScope);
+            derivedPhysics->dimensionAlias = dimensionAlias->token->stringConst;
+
+			addLeaf(N, n, dimensionAlias, currentScope);
 		}
 		else
 		{
@@ -604,7 +706,6 @@ noisyConfigParseDimensionAliasStatement(NoisyConfigState *  N, NoisyConfigScope 
 	}
 	else
 	{
-
 		noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_PdimensionAliasStatement, kNoisyConfigIrNodeTypeMax);
 	}
     
@@ -697,7 +798,12 @@ noisyConfigParseLawStatement(NoisyConfigState *  N, NoisyConfigScope *  currentS
 	if (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PlawStatement))
 	{
         NoisyConfigIrNode * derivedPhysicsIdentifier = noisyConfigParseIdentifier(N, currentScope);
-        Physics * derivedPhysics = noisyConfigPhysicsTableAddPhysicsForToken(N, currentScope, derivedPhysicsIdentifier->token);
+        Physics * derivedPhysics = noisyConfigPhysicsTablePhysicsForIdentifier(N, currentScope, derivedPhysicsIdentifier->token->identifier);
+
+        if (derivedPhysics == NULL)
+        {
+            derivedPhysics = noisyConfigPhysicsTableAddPhysicsForToken(N, currentScope, derivedPhysicsIdentifier->token);
+        }
         
 		addLeaf(N, n, derivedPhysicsIdentifier, currentScope);
 

@@ -60,6 +60,11 @@ Dimension * noisyConfigDimensionTableDimensionForIdentifier(NoisyConfigState *  
 Physics * noisyConfigPhysicsTableAddPhysicsForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, struct NoisyConfigToken *  token);
 Physics * noisyConfigPhysicsTablePhysicsForIdentifier(NoisyConfigState *  N, NoisyConfigScope *  scope, const char *  identifier);
 
+Physics* copyPhysicsNode(Physics* list);
+Physics* getTailPhysics(Physics* list);
+
+IntegralList* getTailIntegralList(IntegralList* list);
+
 void noisyConfigPhysicsAddNumeratorDimension(NoisyConfigState * N, Physics * physics, Dimension * numerator); 
 void noisyConfigPhysicsAddDenominatorDimension(NoisyConfigState * N, Physics * physics, Dimension * denominator);
 

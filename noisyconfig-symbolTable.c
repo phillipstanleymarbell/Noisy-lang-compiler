@@ -64,6 +64,8 @@ static Dimension* copyDimensionNode(Dimension* list);
 static Dimension* copyDimensionList(Dimension* list);
 static Dimension* getTailDimension(Dimension* list);
 
+
+
 static Dimension*
 getTailDimension(Dimension* list)
 {
@@ -121,6 +123,48 @@ copyDimensionList(Dimension* source)
         sourceHead = sourceHead->next;
     }
     return returnNode;
+}
+
+Physics*
+copyPhysicsNode(Physics* list)
+{
+    Physics * copy = (Physics*) calloc(1, sizeof(Physics));
+    memcpy(copy, list, sizeof(Physics));
+    copy->next = NULL;
+
+    return copy;
+}
+
+IntegralList*
+getTailIntegralList(IntegralList* list)
+{
+    if (list == NULL)
+        return NULL;
+    else
+    {
+        IntegralList* current = list;
+        while (current->next != NULL)
+        {
+            current = current->next;
+        }
+        return current;
+    }
+}
+
+Physics*
+getTailPhysics(Physics* list)
+{
+    if (list == NULL)
+        return NULL;
+    else
+    {
+        Physics* current = list;
+        while (current->next != NULL)
+        {
+            current = current->next;
+        }
+        return current;
+    }
 }
 
 // TODO clean up the code. make helper methods

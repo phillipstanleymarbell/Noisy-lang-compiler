@@ -6,11 +6,18 @@ dimensionTypeNames {
     angle = "rad";
 }
 
+vectorScalarPairs {
+    displacement = distance;
+    velocity = speed;
+    acceleration = scalar_acceleration;
+}
+
 law {
     velocity = distance / time;
     acceleration = velocity / time;
     force = mass * acceleration;
     work = dot(force, displacement);
+    torque = cross(force, displacement);
 }
 
 dimensionAliases {
@@ -26,8 +33,3 @@ scalarIntegrals {
     [distance, speed, scalar_acceleration];
 }
 
-vectorScalarPairs {
-    displacement = distance;
-    velocity = speed;
-    acceleration = scalar_acceleration;
-}

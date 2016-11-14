@@ -201,6 +201,7 @@ typedef struct NoisyConfigIrNode	NoisyConfigIrNode;
 typedef struct NoisyConfigSourceInfo	NoisyConfigSourceInfo;
 typedef struct Dimension Dimension;
 typedef struct Physics Physics;
+typedef struct IntegralList IntegralList;
 
 struct NoisyConfigToken
 {
@@ -236,6 +237,12 @@ struct NoisyConfigIrNode
      * Used for evaluating dimensions in expressions
      */
     Physics * physics;
+
+    /*
+     * Used for returning integral list from noisyConfigParseIntegralList
+     */
+    IntegralList * vectorIntegralList;
+    IntegralList * scalarIntegralList;
 
 	/*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
@@ -280,6 +287,8 @@ struct Physics
     NoisyConfigSourceInfo *	sourceInfo;
     
     bool isVector;
+    Physics * vectorCounterpart; // non-NULL if a scalar AND counterpart defined in vectorScalarPairScope
+    Physics * scalarCounterpart; // non-NULl if a vector AND counterpart defined in vectorScalarPairScope
 
     Dimension * numeratorDimensions;
     int numberOfNumerators;
@@ -289,12 +298,18 @@ struct Physics
     int numberOfDenominators;
     int denominatorPrimeProduct;
 
+    char * dimensionAlias;
+
     Physics * definition;
 
     Physics * next;
-
 };
 
+struct IntegralList
+{
+    Physics * head;
+    IntegralList * next;
+};
 
 struct NoisyConfigScope
 {
@@ -460,8 +475,24 @@ typedef struct
 	jmp_buf			jmpbuf;
 	bool			jmpbufIsValid;
     
+    /*
+     * Global index of which prime numbers we have used for the dimension id's
+     */
     int primeNumbersIndex;
+
+    /*
+     * This is a group (linked list) of linked list of physics nodes
+     */
+    IntegralList * vectorIntegralLists;
+    
+    /*
+     * This is a group (linked list) of linked list of physics nodes
+     */
+    IntegralList * scalarIntegralLists;
+
 } NoisyConfigState;
+
+
 
 
 

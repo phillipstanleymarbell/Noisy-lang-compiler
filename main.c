@@ -51,6 +51,12 @@ recursePhysics(NoisyConfigState * N, NoisyConfigScope * topScope)
     
     while (curPhysics != NULL) {
 		flexprint(N->Fe, N->Fm, N->Fperr, "physics %s\n", curPhysics->identifier);
+		flexprint(N->Fe, N->Fm, N->Fperr, "alias %s\n", curPhysics->dimensionAlias);
+		flexprint(N->Fe, N->Fm, N->Fperr, "isvector %b\n", curPhysics->isVector);
+        if (curPhysics->vectorCounterpart)
+		    flexprint(N->Fe, N->Fm, N->Fperr, "vectorCounterpart %s\n", curPhysics->vectorCounterpart->identifier);
+        if (curPhysics->scalarCounterpart)
+		    flexprint(N->Fe, N->Fm, N->Fperr, "scalarCounterpart %s\n", curPhysics->scalarCounterpart->identifier);
         
         Dimension * curDimension = curPhysics->numeratorDimensions;
         while (curDimension != NULL) {
@@ -65,6 +71,32 @@ recursePhysics(NoisyConfigState * N, NoisyConfigScope * topScope)
         }
         
         curPhysics = curPhysics->next;
+    }
+
+    IntegralList* curVectorIntegralList = N->vectorIntegralLists;
+    while (curVectorIntegralList != NULL)
+    {
+        Physics * curIntegralPhysics = curVectorIntegralList->head;
+        while (curIntegralPhysics != NULL)
+        {
+	    	flexprint(N->Fe, N->Fm, N->Fperr, "vector integral element %s\n", curIntegralPhysics->identifier);
+            curIntegralPhysics = curIntegralPhysics->next;
+        }
+    
+        curVectorIntegralList = curVectorIntegralList->next; 
+    }
+    
+    IntegralList* curScalarIntegralList = N->scalarIntegralLists;
+    while (curScalarIntegralList != NULL)
+    {
+        Physics * curIntegralPhysics = curScalarIntegralList->head;
+        while (curIntegralPhysics != NULL)
+        {
+	    	flexprint(N->Fe, N->Fm, N->Fperr, "scalar integral element %s\n", curIntegralPhysics->identifier);
+            curIntegralPhysics = curIntegralPhysics->next;
+        }
+    
+        curScalarIntegralList = curScalarIntegralList->next; 
     }
     
     return;
