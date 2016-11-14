@@ -37,7 +37,7 @@ recurseDimensions(NoisyConfigState * N, NoisyConfigScope * topScope)
 		flexprint(N->Fe, N->Fm, N->Fperr, "topscope dimension doesn't exist\n");
 
     while (curDimension != NULL) {
-		flexprint(N->Fe, N->Fm, N->Fperr, "dimension %s\n", curDimension->identifier);
+		flexprint(N->Fe, N->Fm, N->Fperr, "dimension %s %x\n", curDimension->identifier, curDimension);
         curDimension = curDimension->next;
     }
 }
@@ -54,13 +54,13 @@ recursePhysics(NoisyConfigState * N, NoisyConfigScope * topScope)
         
         Dimension * curDimension = curPhysics->numeratorDimensions;
         while (curDimension != NULL) {
-	    	flexprint(N->Fe, N->Fm, N->Fperr, "numerator dimension %s %d\n", curDimension->identifier, curDimension->primeNumber);
+	    	flexprint(N->Fe, N->Fm, N->Fperr, "numerator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
             curDimension = curDimension->next;
         }
         
         curDimension = curPhysics->denominatorDimensions;
         while (curDimension != NULL) {
-	    	flexprint(N->Fe, N->Fm, N->Fperr, "denominator dimension %s %d\n", curDimension->identifier, curDimension->primeNumber);
+	    	flexprint(N->Fe, N->Fm, N->Fperr, "denominator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
             curDimension = curDimension->next;
         }
         

@@ -912,6 +912,8 @@ noisyConfigParseVectorOp(NoisyConfigState *  N, NoisyConfigScope * currentScope)
     NoisyConfigIrNode * left;
     left = noisyConfigParseExpression(N, currentScope);
     addLeafWithChainingSeq(N, intermediate, left, currentScope);
+    noisyConfigPhysicsCopyNumeratorDimensions(N, intermediate->physics, left->physics);
+    noisyConfigPhysicsCopyDenominatorDimensions(N, intermediate->physics, left->physics);
     
     noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tcomma, currentScope);
     
@@ -919,8 +921,7 @@ noisyConfigParseVectorOp(NoisyConfigState *  N, NoisyConfigScope * currentScope)
     right = noisyConfigParseExpression(N, currentScope);
     addLeafWithChainingSeq(N, intermediate, right, currentScope);
 
-    noisyConfigPhysicsCopyNumeratorDimensions(N, intermediate->physics, left->physics);
-    noisyConfigPhysicsCopyDenominatorDimensions(N, intermediate->physics, left->physics);
+    // TODO BUG: after this statement, left->physics->numeratorDimensions changes
     noisyConfigPhysicsCopyNumeratorDimensions(N, intermediate->physics, right->physics);
     noisyConfigPhysicsCopyDenominatorDimensions(N, intermediate->physics, right->physics);
 

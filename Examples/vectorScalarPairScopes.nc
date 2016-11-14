@@ -10,11 +10,12 @@ law {
     velocity = distance / time;
     acceleration = velocity / time;
     force = mass * acceleration;
-    # work = dot(force, displacement);
+    work = dot(force, displacement);
 }
 
 dimensionAliases {
     work = "J";
+    force = "N";
 }
 
 vectorIntegrals {
