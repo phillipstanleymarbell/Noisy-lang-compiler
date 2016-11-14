@@ -282,9 +282,11 @@ struct Physics
     bool isVector;
 
     Dimension * numeratorDimensions;
+    int numberOfNumerators;
     int numeratorPrimeProduct;
     
     Dimension * denominatorDimensions;
+    int numberOfDenominators;
     int denominatorPrimeProduct;
 
     Physics * definition;

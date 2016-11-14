@@ -68,8 +68,9 @@ noisyConfigPhysicsCopyDenominatorToNumeratorDimensions(NoisyConfigState * N, Phy
     if (dest->numeratorDimensions == NULL) 
     {
         Dimension * tmpDestDimension = (Dimension*) calloc(1, sizeof(Dimension));
-        dest->numeratorDimensions = (Dimension *) memcpy(tmpDestDimension, source->denominatorDimensions, sizeof(Dimension));
-        dest->numeratorDimensions->next = NULL;
+        dest->numeratorDimensions = (Dimension *) memcpy(tmpDestDimension, source->denominatorDimensions, sizeof(Dimension) * source->numberOfDenominators);
+        dest->numeratorDimensions[source->numberOfDenominators-1].next = NULL;
+        dest->numberOfNumerators = source->numberOfDenominators;
     }
     else
     {
@@ -84,6 +85,8 @@ noisyConfigPhysicsCopyDenominatorToNumeratorDimensions(NoisyConfigState * N, Phy
             memcpy(tmpDestDimension, curSourceDimension, sizeof(Dimension));
             curDestDimension->next = tmpDestDimension;
             curDestDimension->next->next = NULL;
+
+            dest->numberOfNumerators++;
             
             curDestDimension = curDestDimension->next;
             curSourceDimension = curSourceDimension->next;
@@ -91,8 +94,8 @@ noisyConfigPhysicsCopyDenominatorToNumeratorDimensions(NoisyConfigState * N, Phy
     }
     
     dest->numeratorPrimeProduct *= source->denominatorPrimeProduct;
-
 }
+
 void 
 noisyConfigPhysicsCopyNumeratorToDenominatorDimensions(NoisyConfigState * N, Physics * dest, Physics * source)
 {
@@ -102,8 +105,9 @@ noisyConfigPhysicsCopyNumeratorToDenominatorDimensions(NoisyConfigState * N, Phy
     if (dest->denominatorDimensions == NULL) 
     {
         Dimension * tmpDestDimension = (Dimension*) calloc(1, sizeof(Dimension));
-        dest->denominatorDimensions = (Dimension *) memcpy(tmpDestDimension, source->numeratorDimensions, sizeof(Dimension));
-        dest->denominatorDimensions->next = NULL;
+        dest->denominatorDimensions = (Dimension *) memcpy(tmpDestDimension, source->numeratorDimensions, sizeof(Dimension) * source->numberOfNumerators);
+        dest->denominatorDimensions[source->numberOfNumerators-1].next = NULL;
+        dest->numberOfDenominators = source->numberOfNumerators;
     }
     else
     {
@@ -118,6 +122,8 @@ noisyConfigPhysicsCopyNumeratorToDenominatorDimensions(NoisyConfigState * N, Phy
             memcpy(tmpDestDimension, curSourceDimension, sizeof(Dimension));
             curDestDimension->next = tmpDestDimension;
             curDestDimension->next->next = NULL;
+
+            dest->numberOfDenominators++;
             
             curDestDimension = curDestDimension->next;
             curSourceDimension = curSourceDimension->next;
@@ -137,8 +143,8 @@ void noisyConfigPhysicsCopyNumeratorDimensions(NoisyConfigState * N, Physics * d
     if (dest->numeratorDimensions == NULL) 
     {
         Dimension * tmpDestDimension = (Dimension*) calloc(1, sizeof(Dimension));
-        dest->numeratorDimensions = (Dimension *) memcpy(tmpDestDimension, source->numeratorDimensions, sizeof(Dimension));
-        dest->numeratorDimensions->next = NULL;
+        dest->numeratorDimensions = (Dimension *) memcpy(tmpDestDimension, source->numeratorDimensions, sizeof(Dimension) * source->numberOfNumerators);
+        dest->numeratorDimensions[source->numberOfNumerators-1].next = NULL;
     }
     else
     {
@@ -159,6 +165,7 @@ void noisyConfigPhysicsCopyNumeratorDimensions(NoisyConfigState * N, Physics * d
         }
     }
     
+    dest->numberOfNumerators += source->numberOfNumerators;
     dest->numeratorPrimeProduct *= source->numeratorPrimeProduct;
 }
 
@@ -170,8 +177,8 @@ void noisyConfigPhysicsCopyDenominatorDimensions(NoisyConfigState * N, Physics *
     if (dest->denominatorDimensions == NULL) 
     {
         Dimension * tmpDestDimension = (Dimension *) calloc(1, sizeof(Dimension));
-        dest->denominatorDimensions = (Dimension *) memcpy(tmpDestDimension, source->denominatorDimensions, sizeof(Dimension));
-        dest->denominatorDimensions->next = NULL;
+        dest->denominatorDimensions = (Dimension *) memcpy(tmpDestDimension, source->denominatorDimensions, sizeof(Dimension) * source->numberOfDenominators); 
+        dest->denominatorDimensions[source->numberOfDenominators-1].next = NULL;
     }
     else
     {
@@ -182,16 +189,17 @@ void noisyConfigPhysicsCopyDenominatorDimensions(NoisyConfigState * N, Physics *
         
         Dimension * curSourceDimension = source->denominatorDimensions;
         while (curSourceDimension != NULL) {
-            Dimension * tmpDestDimension = (Dimension *)calloc(1, sizeof(Dimension));
+            Dimension * tmpDestDimension = (Dimension *) calloc(1, sizeof(Dimension));
             memcpy(tmpDestDimension, curSourceDimension, sizeof(Dimension));
             curDestDimension->next = tmpDestDimension;
             curDestDimension->next->next = NULL;
-            
+
             curDestDimension = curDestDimension->next;
             curSourceDimension = curSourceDimension->next;
         }
     }
     
+    dest->numberOfDenominators += source->numberOfDenominators;
     dest->denominatorPrimeProduct *= source->denominatorPrimeProduct;
 }
 
@@ -216,6 +224,7 @@ noisyConfigPhysicsAddNumeratorDimension(NoisyConfigState * N, Physics * physics,
         curDimension->next->next = NULL;
     }
     physics->numeratorPrimeProduct *= numerator->primeNumber;
+    physics->numberOfNumerators++;
 }
 
 void 
@@ -239,6 +248,7 @@ noisyConfigPhysicsAddDenominatorDimension(NoisyConfigState * N, Physics * physic
         curDimension->next->next = NULL;
     }
     physics->denominatorPrimeProduct *= denominator->primeNumber;
+    physics->numberOfDenominators++;
 }
 
 Dimension *

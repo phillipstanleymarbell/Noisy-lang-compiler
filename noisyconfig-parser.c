@@ -206,7 +206,6 @@ noisyConfigParseDimensionTypeNameStatement(NoisyConfigState *  N, NoisyConfigSco
 	}
 	else
 	{
-
 		noisyConfigParserSyntaxError(N, kNoisyConfigIrNodeType_PdimensionTypeNameStatement, kNoisyConfigIrNodeTypeMax);
 	}
     
@@ -789,7 +788,7 @@ noisyConfigParseExpression(NoisyConfigState *  N, NoisyConfigScope *  currentSco
     }
     left->currentScope = currentScope;
 
-    return left;	
+    return left;
 }
 
 /*

@@ -8,8 +8,8 @@ dimensionTypeNames {
 
 law {
     velocity = distance / time;
-    # acceleration = velocity / time;
-    # force = mass * acceleration;
+    acceleration = velocity / time;
+    force = mass * acceleration;
     # work = dot(force, displacement);
 }
 
