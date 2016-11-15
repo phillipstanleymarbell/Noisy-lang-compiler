@@ -84,6 +84,7 @@ noisyConfigParseConfigFile(NoisyConfigState *  N, NoisyConfigScope *  currentSco
 		addLeafWithChainingSeq(N, n, noisyConfigParseDimensionAliasScope(N, currentScope), currentScope);
 	}
     
+    // TODO combine vector and scalar integral scopes into one
     if (!noisyConfigInFollow(N, kNoisyConfigIrNodeType_PconfigFile))
 	{
 		addLeafWithChainingSeq(N, n, noisyConfigParseVectorIntegralScope(N, currentScope), currentScope);
