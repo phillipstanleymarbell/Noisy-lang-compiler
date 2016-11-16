@@ -442,6 +442,8 @@ noisyConfigParseVectorIntegralList(NoisyConfigState * N, NoisyConfigScope * scop
         NoisyConfigIrNode * physicsIdentifier = noisyConfigParseIdentifierUsageTerminal(N, kNoisyConfigIrNodeType_Tidentifier, scope);
         Physics * physics = noisyConfigPhysicsTablePhysicsForIdentifier(N, scope, physicsIdentifier->token->identifier);
 
+        assert(physics->isVector);
+
         if (physics == NULL)
         {
             noisyConfigFatal(N, Esanity);
@@ -570,6 +572,8 @@ noisyConfigParseScalarIntegralList(NoisyConfigState * N, NoisyConfigScope * scop
     {
         NoisyConfigIrNode * physicsIdentifier = noisyConfigParseIdentifierUsageTerminal(N, kNoisyConfigIrNodeType_Tidentifier, scope);
         Physics * physics = noisyConfigPhysicsTablePhysicsForIdentifier(N, scope, physicsIdentifier->token->identifier);
+
+        assert(!physics->isVector);
 
         if (physics == NULL)
         {
@@ -817,6 +821,16 @@ noisyConfigParseLawStatement(NoisyConfigState *  N, NoisyConfigScope *  currentS
             
             noisyConfigPhysicsCopyNumeratorDimensions(N, derivedPhysics, expression->physics);
             noisyConfigPhysicsCopyDenominatorDimensions(N, derivedPhysics, expression->physics);
+
+
+            /*
+             * If LHS is declared a vector in vectorScalarPairScope, then 
+             * the expression must evaluate to a vector.
+             */
+            if (derivedPhysics->isVector)
+            {
+                assert(expression->physics->isVector);
+            }
 		}
 		else
 		{
@@ -927,9 +941,19 @@ noisyConfigParseTerm(NoisyConfigState *  N, NoisyConfigScope *  currentScope)
 
     NoisyConfigIrNode * left = noisyConfigParseFactor(N, currentScope);
     addLeaf(N, intermediate, left, currentScope);
-    
+
     noisyConfigPhysicsCopyNumeratorDimensions(N, intermediate->physics, left->physics);
     noisyConfigPhysicsCopyDenominatorDimensions(N, intermediate->physics, left->physics);
+    
+    int numVectorsInTerm = 0;
+    /*
+     * If either LHS or RHS is a vector (not both), then the resultant is a vector
+     */
+    if (left->physics->isVector)
+    {
+        intermediate->physics->isVector = true;
+        numVectorsInTerm++;
+    }
     
     NoisyConfigIrNode * right;
 
@@ -940,6 +964,19 @@ noisyConfigParseTerm(NoisyConfigState *  N, NoisyConfigScope *  currentScope)
         
         right = noisyConfigParseFactor(N, currentScope);
         addLeafWithChainingSeq(N, intermediate, right, currentScope);
+        
+        if (right->physics->isVector)
+        {
+            intermediate->physics->isVector = true;
+            numVectorsInTerm++;
+        }
+
+        /*
+         * Cannot perform multiply or divide operations on two vectors
+         * e.g.) vector * scalar * scalar / vector is illegal because
+         * it boils down to vector / vector which is illegal
+         */
+        assert(numVectorsInTerm < 2);
 
         if (binOp->type == kNoisyConfigIrNodeType_Tmul) 
         {
@@ -952,6 +989,7 @@ noisyConfigParseTerm(NoisyConfigState *  N, NoisyConfigScope *  currentScope)
             noisyConfigPhysicsCopyDenominatorToNumeratorDimensions(N, intermediate->physics, right->physics);
         }
     }
+
 
     return intermediate;
 }
@@ -1027,6 +1065,8 @@ noisyConfigParseVectorOp(NoisyConfigState *  N, NoisyConfigScope * currentScope)
     NoisyConfigIrNode * right;
     right = noisyConfigParseExpression(N, currentScope);
     addLeafWithChainingSeq(N, intermediate, right, currentScope);
+
+    assert(left->physics->isVector && right->physics->isVector);
 
     // TODO BUG: after this statement, left->physics->numeratorDimensions changes
     noisyConfigPhysicsCopyNumeratorDimensions(N, intermediate->physics, right->physics);

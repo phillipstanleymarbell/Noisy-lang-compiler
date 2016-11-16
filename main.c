@@ -52,7 +52,7 @@ recursePhysics(NoisyConfigState * N, NoisyConfigScope * topScope)
     while (curPhysics != NULL) {
 		flexprint(N->Fe, N->Fm, N->Fperr, "physics %s\n", curPhysics->identifier);
 		flexprint(N->Fe, N->Fm, N->Fperr, "alias %s\n", curPhysics->dimensionAlias);
-		flexprint(N->Fe, N->Fm, N->Fperr, "isvector %b\n", curPhysics->isVector);
+		flexprint(N->Fe, N->Fm, N->Fperr, "isvector %d\n", curPhysics->isVector);
         if (curPhysics->vectorCounterpart)
 		    flexprint(N->Fe, N->Fm, N->Fperr, "vectorCounterpart %s\n", curPhysics->vectorCounterpart->identifier);
         if (curPhysics->scalarCounterpart)
