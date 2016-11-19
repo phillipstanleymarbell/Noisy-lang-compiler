@@ -65,6 +65,25 @@ static Dimension* copyDimensionList(Dimension* list);
 static Dimension* getTailDimension(Dimension* list);
 
 
+/*
+ * this function counts the number of dimensions in a physics struct
+ * that has time
+ */
+int countNumberTime(Dimension* dimensionHead)
+{
+    int numTimes = 0;
+    Dimension * current = dimensionHead;
+    while (current != NULL)
+    {
+		if (!strcmp(current->identifier, "s")) // TODO this is hard coded... fix it. use a method that finds physics named time
+        {
+            numTimes++;
+        }
+        current = current->next;
+    }
+
+    return numTimes;
+}
 
 static Dimension*
 getTailDimension(Dimension* list)

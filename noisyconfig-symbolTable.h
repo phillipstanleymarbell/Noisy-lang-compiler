@@ -65,6 +65,8 @@ Physics* getTailPhysics(Physics* list);
 
 IntegralList* getTailIntegralList(IntegralList* list);
 
+int countNumberTime(Dimension* head);
+
 void noisyConfigPhysicsAddNumeratorDimension(NoisyConfigState * N, Physics * physics, Dimension * numerator); 
 void noisyConfigPhysicsAddDenominatorDimension(NoisyConfigState * N, Physics * physics, Dimension * denominator);
 

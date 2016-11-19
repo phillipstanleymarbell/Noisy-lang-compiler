@@ -395,6 +395,8 @@ noisyConfigParseVectorIntegralLists(NoisyConfigState * N, NoisyConfigScope * sco
     {
         NoisyConfigIrNode * irNode = noisyConfigParseVectorIntegralList(N, scope);
 
+
+
         if (N->vectorIntegralLists == NULL)
         {
             N->vectorIntegralLists = irNode->vectorIntegralList;
@@ -406,6 +408,22 @@ noisyConfigParseVectorIntegralLists(NoisyConfigState * N, NoisyConfigScope * sco
         }
 
         addLeafWithChainingSeq(N, n, irNode, scope);
+    }
+
+    /*
+     * check the numbers of "time" structs inside the integral list are correct
+     * e.g.) in a list of [displacement, velocity, acceleration]
+     * displacement should have one more "time" than velocity.
+     */
+    Physics * current = N->vectorIntegralLists->head;
+    int pastNumberTime = countNumberTime(current->numeratorDimensions) - countNumberTime(current->denominatorDimensions);
+
+    while (current->next != NULL)
+    {
+        current = current->next;
+        int curNumberTime = countNumberTime(current->numeratorDimensions) - countNumberTime(current->denominatorDimensions);
+        assert(curNumberTime == pastNumberTime - 1);
+        pastNumberTime = curNumberTime;
     }
 
     return n;
@@ -538,6 +556,20 @@ noisyConfigParseScalarIntegralLists(NoisyConfigState * N, NoisyConfigScope * sco
         }
         
         addLeafWithChainingSeq(N, n, irNode, scope);
+    }
+    
+    /*
+     * See the comment for noisyConfigParseVectorIntegralLists
+     */
+    Physics * current = N->scalarIntegralLists->head;
+    int pastNumberTime = countNumberTime(current->numeratorDimensions) - countNumberTime(current->denominatorDimensions);
+
+    while (current->next != NULL)
+    {
+        current = current->next;
+        int curNumberTime = countNumberTime(current->numeratorDimensions) - countNumberTime(current->denominatorDimensions);
+        assert(curNumberTime == pastNumberTime - 1);
+        pastNumberTime = curNumberTime;
     }
 
     return n;
@@ -847,7 +879,7 @@ noisyConfigParseLawStatement(NoisyConfigState *  N, NoisyConfigScope *  currentS
 	return n;
 }
 
-// TODO the lower expression methods should take in Physics * and depending on 
+// The lower expression methods should take in Physics * and depending on 
 // the operation, add previously existing Physics dimension dimension to 
 // numerator or denominator list at Expression, Term, Factor level
 // 1. Expression: Add or Subtract. 
