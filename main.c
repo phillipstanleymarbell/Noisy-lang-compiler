@@ -58,6 +58,13 @@
 #include "noisy-irPass-dotBackend.h"
 #include "noisy-irPass-protobufBackend.h"
 
+#include "noisyconfig.h"
+#include "noisyconfig-parser.h"
+#include "noisyconfig-lexer.h"
+#include "noisyconfig-symbolTable.h"
+#include "noisyconfig-irPass-helpers.h"
+#include "noisyconfig-irPass-dotBackend.h"
+
 //extern const char	gNoisyEol[];
 //extern const char	gNoisyWhitespace[];
 //extern const char	gNoisyStickies[];
@@ -67,16 +74,98 @@ static void		processFile(NoisyState *  N, char *  filename);
 static void		version(NoisyState *  N);
 
 
+// static void		usage(NoisyConfigState *  N);
+static void		processConfigFile(NoisyConfigState *  N);
+// static void		version(NoisyConfigState *  N);
+
+static void     recurseDimensions(NoisyConfigState * N, NoisyConfigScope * topScope);
+static void     recursePhysics(NoisyConfigState * N, NoisyConfigScope * topScope);
+
+static void
+recurseDimensions(NoisyConfigState * N, NoisyConfigScope * topScope)
+{
+    Dimension * curDimension = topScope->firstDimension;
+    if (curDimension == NULL)
+		flexprint(N->Fe, N->Fm, N->Fperr, "topscope dimension doesn't exist\n");
+
+    while (curDimension != NULL) {
+		flexprint(N->Fe, N->Fm, N->Fperr, "dimension %s %x\n", curDimension->identifier, curDimension);
+        curDimension = curDimension->next;
+    }
+}
+
+static void
+recursePhysics(NoisyConfigState * N, NoisyConfigScope * topScope)
+{
+    Physics * curPhysics = topScope->firstPhysics;
+    if (curPhysics == NULL)
+		flexprint(N->Fe, N->Fm, N->Fperr, "topscope physics doesn't exist\n");
+    
+    while (curPhysics != NULL) {
+		flexprint(N->Fe, N->Fm, N->Fperr, "physics %s\n", curPhysics->identifier);
+		flexprint(N->Fe, N->Fm, N->Fperr, "alias %s\n", curPhysics->dimensionAlias);
+		flexprint(N->Fe, N->Fm, N->Fperr, "isvector %d\n", curPhysics->isVector);
+        if (curPhysics->vectorCounterpart)
+		    flexprint(N->Fe, N->Fm, N->Fperr, "vectorCounterpart %s\n", curPhysics->vectorCounterpart->identifier);
+        if (curPhysics->scalarCounterpart)
+		    flexprint(N->Fe, N->Fm, N->Fperr, "scalarCounterpart %s\n", curPhysics->scalarCounterpart->identifier);
+        
+        Dimension * curDimension = curPhysics->numeratorDimensions;
+        while (curDimension != NULL) {
+	    	flexprint(N->Fe, N->Fm, N->Fperr, "numerator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
+            curDimension = curDimension->next;
+        }
+        
+        curDimension = curPhysics->denominatorDimensions;
+        while (curDimension != NULL) {
+	    	flexprint(N->Fe, N->Fm, N->Fperr, "denominator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
+            curDimension = curDimension->next;
+        }
+        
+        curPhysics = curPhysics->next;
+    }
+
+    IntegralList* curVectorIntegralList = N->vectorIntegralLists;
+    while (curVectorIntegralList != NULL)
+    {
+        Physics * curIntegralPhysics = curVectorIntegralList->head;
+        while (curIntegralPhysics != NULL)
+        {
+	    	flexprint(N->Fe, N->Fm, N->Fperr, "vector integral element %s\n", curIntegralPhysics->identifier);
+            curIntegralPhysics = curIntegralPhysics->next;
+        }
+    
+        curVectorIntegralList = curVectorIntegralList->next; 
+    }
+    
+    IntegralList* curScalarIntegralList = N->scalarIntegralLists;
+    while (curScalarIntegralList != NULL)
+    {
+        Physics * curIntegralPhysics = curScalarIntegralList->head;
+        while (curIntegralPhysics != NULL)
+        {
+	    	flexprint(N->Fe, N->Fm, N->Fperr, "scalar integral element %s\n", curIntegralPhysics->identifier);
+            curIntegralPhysics = curIntegralPhysics->next;
+        }
+    
+        curScalarIntegralList = curScalarIntegralList->next; 
+    }
+    
+    return;
+}
 
 int
 main(int argc, char *argv[])
 {
 	int			jumpParameter;
 	NoisyState *		N;
+	NoisyConfigState *		NC;
 
 
 	N = noisyInit(kNoisyModeDefault);
-	if (N == NULL)
+	NC = noisyConfigInit(kNoisyConfigModeDefault);
+	
+    if (N == NULL)
 	{
 		noisyFatal(NULL, Emalloc);
 
@@ -266,6 +355,7 @@ main(int argc, char *argv[])
 			if (!jumpParameter)
 			{
 				processFile(N, argv[optind++]);
+                processConfigFile(NC);
 			}
 			else
 			{
@@ -289,6 +379,64 @@ main(int argc, char *argv[])
 	}
 
 	return 0;
+}
+
+/*
+ * TODO: change this to be more flexible and take an arg from command line
+ * https://github.com/phillipstanleymarbell/Noisy-lang-compiler/issues/28
+ */
+static void
+processConfigFile(NoisyConfigState *  N)
+{
+
+    char * fileName = "Examples/fullExamples2.nc";
+
+	/*
+	 *	Tokenize input, then parse it and build AST + symbol table.
+	 */
+	noisyConfigLexInit(N, fileName);
+
+	/*
+	 *	Create a top-level scope, then parse.
+	 */
+	N->noisyConfigIrTopScope = noisyConfigSymbolTableAllocScope(N);
+	N->noisyConfigIrRoot = noisyConfigParse(N, N->noisyConfigIrTopScope);
+
+
+	/*
+	 *	Run passes requested in the command line flags.
+	 */
+	noisyConfigRunPasses(N);
+
+    recurseDimensions(N, N->noisyConfigIrTopScope);
+    recursePhysics(N, N->noisyConfigIrTopScope);
+
+	/*
+	 *	Bytecode backend. Emit IR in protobuf.
+	 */
+	// if (N->irBackends & kNoisyConfigIrBackendProtobuf)
+	// {
+	// 	noisyConfigIrPassProtobufBackend(N);
+	// }
+
+
+
+	/*
+	 *	Dot backend.
+	 */
+	if (N->irBackends & kNoisyConfigIrBackendDot)
+	{
+		fprintf(stdout, "%s\n", noisyConfigIrPassDotBackend(N));
+	}
+    
+
+
+	// if (N->mode & kNoisyConfigModeCallTracing)
+	// {
+	// 	noisyConfigTimeStampDumpTimeline(N);
+	// }
+    
+    noisyConfigConsolePrintBuffers(N);
 }
 
 static void

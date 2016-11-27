@@ -44,6 +44,7 @@
 #include "flex.h"
 #include "noisy-timeStamps.h"
 #include "noisy.h"
+#include "noisyconfig.h"
 
 
 /*
