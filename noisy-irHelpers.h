@@ -36,3 +36,13 @@
 */
 
 NoisyIrNode *	genNoisyIrNode(NoisyState *  N, NoisyIrNodeType type, NoisyIrNode *  irLeftChild, NoisyIrNode *  irRightChild, NoisySourceInfo *  sourceInfo);
+
+NoisyScope *	progtypeName2scope(NoisyState *  N, const char *  identifier);
+void		errorUseBeforeDefinition(NoisyState *  N, const char *  identifier);
+void		errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol);
+bool		peekCheck(NoisyState *  N, int lookAhead, NoisyIrNodeType expectedType);
+NoisyIrNode *	depthFirstWalk(NoisyState *  N, NoisyIrNode *  node);
+void		addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);
+void		addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);
+void		addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeScope);
+void		assignTypes(NoisyState *  N, NoisyIrNode *  node, NoisyIrNode *  typeExpression);

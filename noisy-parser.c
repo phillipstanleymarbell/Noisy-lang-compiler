@@ -53,6 +53,7 @@
 #include "noisy-symbolTable.h"
 #include "noisy-irHelpers.h"
 #include "noisy-firstAndFollow.h"
+#include "noisyconfig-symbolTable.h"
 
 
 /*
@@ -104,15 +105,6 @@ extern void		noisyFatal(NoisyState *  N, const char *  msg);
 extern void		noisyError(NoisyState *  N, const char *  msg);
 
 
-static NoisyScope *	progtypeName2scope(NoisyState *  N, const char *  identifier);
-static void		errorUseBeforeDefinition(NoisyState *  N, const char *  identifier);
-static void		errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol);
-static bool		peekCheck(NoisyState *  N, int lookAhead, NoisyIrNodeType expectedType);
-static NoisyIrNode *	depthFirstWalk(NoisyState *  N, NoisyIrNode *  node);
-static void		addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);
-static void		addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);
-static void		addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeScope);
-static void		assignTypes(NoisyState *  N, NoisyIrNode *  node, NoisyIrNode *  typeExpression);
 
 
 static char		kNoisyErrorTokenHtmlTagOpen[]	= "<span style=\"background-color:#FFCC00; color:#FF0000;\">";
@@ -656,6 +648,22 @@ noisyParseTypeExpression(NoisyState *  N, NoisyScope *  currentScope)
 	}
 	else
 	{
+        /*
+         * Here, we compile the "Physics type"
+         * TODO fix this. N needs to have NC stuff in it
+         */
+        // NoisyToken * nextToken = noisyLexPeek(N, 1);
+        // Physics * physicsType = noisyConfigPhysicsTablePhysicsForIdentifier(N, N->noisyConfigIrTopScope, nextToken->identifier);
+        // 
+        // if (physicsType != NULL)
+        // {
+        //     n->physicsType = physicsType;
+        // }
+        // else 
+        // {
+		//     noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeExpression, kNoisyIrNodeTypeMax);
+		//     noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeExpression);
+        // }
 		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeExpression, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeExpression);
 	}
@@ -720,7 +728,7 @@ noisyParseTypeName(NoisyState *  N, NoisyScope *  scope)
 		id2 = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, progtypeName2scope(N, id1->symbol->identifier));
 		if (id2->symbol == NULL)
 		{
-			noisyParserSemanticError(N, "%s'%s%s%s'\n", Eundeclared, id1->symbol->identifier, "->", id2->symbol->identifier);
+			noisyParserSemanticError(N, "%s'%s%s%s'\n", Eundeclared, id1->symbol->identifier, "->", "noisyParseTypeName: semantic Error" /*id2->symbol->identifier*/);
 		}
 		idsym = id2->symbol;
 
@@ -2853,205 +2861,5 @@ fprintf(stderr, "doing longjmp");
 
 
 
-/*
- *	Static local functions
- */
 
 
-
-
-
-
-static NoisyScope *
-progtypeName2scope(NoisyState *  N, const char *  identifier)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserProgtypeName2scope);
-
-//	FlexListItem *	tmp = N->progtypeScopes->hd;
-
-	/*
-	 *	Each item is a tuple of (identifier, scope).
-	 */
-//	while (tmp != NULL)
-//	{
-//		if (	noisyValidFlexTupleCheckMacro(tmp)			&&
-//			(tmp->siblings->hd->type == kNoisyFlexListTypeString)	&&
-//			!strcmp(tmp->siblings->hd->value, identifier)		&&
-//			(tmp->siblings->hd->next->type == kNoisyFlexListTypeNoisyScopePointer))
-//		{
-//			return tmp->siblings->hd->next->value;
-//		}
-//
-//		tmp = tmp->next;
-//	}
-
-	return NULL;
-}
-
-
-static void
-errorUseBeforeDefinition(NoisyState *  N, const char *  identifier)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorUseBeforeDefinition);
-
-	flexprint(N->Fe, N->Fm, N->Fperr, "Saw identifier \"%s\" in use before definition\n", identifier);
-}
-
-static void
-errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
-}
-
-
-static bool
-peekCheck(NoisyState *  N, int lookAhead, NoisyIrNodeType expectedType)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
-
-	if (noisyLexPeek(N, lookAhead) == NULL)
-	{
-		return false;
-	}
-
-	return (noisyLexPeek(N, lookAhead)->type == expectedType);
-}
-
-
-static NoisyIrNode *
-depthFirstWalk(NoisyState *  N, NoisyIrNode *  node)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserDepthFirstWalk);
-
-	if (node->irLeftChild == NULL || node->irRightChild == NULL)
-	{
-		return node;
-	}
-
-	return depthFirstWalk(N, node->irRightChild);
-}
-
-static void
-addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
-
-	NoisyIrNode *	node = depthFirstWalk(N, parent);
-
-	if (node == NULL)
-	{
-		noisyFatal(N, Esanity);
-	}
-	
-	if (node->irLeftChild == NULL)
-	{
-		node->irLeftChild = newNode;
-		
-		return;
-	}
-
-	node->irRightChild = newNode;
-}
-
-static void
-addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
-
-	NoisyIrNode *	node = depthFirstWalk(N, parent);
-
-	if (node->irLeftChild == NULL)
-	{
-		node->irLeftChild = newNode;
-
-		return;
-	}
-	
-	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
-						newNode /* left child */,
-						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
-}
-
-static void
-addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeScope)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddToProgtypeScopes);
-
-	progtypeScope->identifier = identifier;
-
-	if (N->progtypeScopes == NULL)
-	{
-		N->progtypeScopes = progtypeScope;
-
-		return;
-	}
-
-	NoisyScope *	p = N->progtypeScopes;
-	while (p->next != NULL)
-	{
-		p = p->next;
-	}
-	p->next = progtypeScope;;
-
-	return;
-}
-
-
-
-/*
- *	kNoisyIrNodeType_PidentifierList
- *
- *	AST subtree:
- *
- *		node		= kNoisyIrNodeType_Tidentifier
- *		node.left	= kNoisyIrNodeType_Tidentifier
- *		node.right	= Xseq of kNoisyIrNodeType_Tidentifier
- */
-static void
-assignTypes(NoisyState *  N, NoisyIrNode *  node, NoisyIrNode *  typeExpression)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAssignTypes);
-
-	/*
-	 *	TODO: The typeExpr might be, say, an identifier that is an
-	 *	alias for a type. We should check for this case and get the
-	 *	identifier's sym->typeTree. Also, do sanity checks to validate
-	 *	the typeTree, e.g., make sure it is always made up of basic
-	 *	types and also that it's not NULL.
-	 */
-
-	if (node->type != kNoisyIrNodeType_Tidentifier)
-	{
-		noisyFatal(N, EassignTypeSanity);
-	}
-
-	/*
-	 *	Walk subtree identifierList, set each node->symbol.typeExpr = typeExpr
-	 */
-	node->symbol->typeTree = typeExpression;
-
-	/*
-	 *	Might be only one ident, or only two, or a whole Xseq of them
-	 */
-	if (node->irLeftChild != NULL)
-	{
-		node->irLeftChild->symbol->typeTree = typeExpression;
-	}
-
-	node = node->irRightChild;
-
-	while (node != NULL)
-	{
-		/*
-		 *	In here, node->type is always Xseq, with node->irLeftChild a node,
-		 *	and node->irRightChild either another Xseq or NULL.
-		 */
-		if (node->irLeftChild != NULL)
-		{
-			node->irLeftChild->symbol->typeTree = typeExpression;
-		}
-
-		node = node->irRightChild;
-	}
-}

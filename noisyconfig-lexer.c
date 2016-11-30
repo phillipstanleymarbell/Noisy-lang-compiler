@@ -9,40 +9,42 @@
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
-#include "version.h"
 #include "noisy-errors.h"
-#include "noisyconfig.h"
+#include "version.h"
+#include "noisy-timeStamps.h"
+#include "noisy.h"
 #include "noisyconfig-parser.h"
+#include "noisy-parser.h"
 #include "noisyconfig-lexer.h"
 
 
 extern const char *	gReservedConfigTokenDescriptions[];
 
 
-static inline void	checkTokenLength(NoisyConfigState *  N, int  count);
-static inline char	cur(NoisyConfigState *  N);
-static void		gobble(NoisyConfigState *  N, int count);
-static void		done(NoisyConfigState *  N, NoisyConfigToken *  newToken);
-static void		checkComment(NoisyConfigState *  N);
-static void		checkSingle(NoisyConfigState *  N, NoisyConfigIrNodeType tokenType);
-static void		checkDoubleQuote(NoisyConfigState *  N);
-// static void		checkMinus(NoisyConfigState *  N);
-static void		finishToken(NoisyConfigState *  N);
-static bool		isOperatorOrSeparator(NoisyConfigState *  N, char c);
+static inline void	checkTokenLength(NoisyState *  N, int  count);
+static inline char	cur(NoisyState *  N);
+static void		gobble(NoisyState *  N, int count);
+static void		done(NoisyState *  N, NoisyToken *  newToken);
+static void		checkComment(NoisyState *  N);
+static void		checkSingle(NoisyState *  N, NoisyIrNodeType tokenType);
+static void		checkDoubleQuote(NoisyState *  N);
+// static void		checkMinus(NoisyState *  N);
+static void		finishToken(NoisyState *  N);
+static bool		isOperatorOrSeparator(NoisyState *  N, char c);
 
 
 
 
-NoisyConfigSourceInfo *
-noisyConfigLexAllocateSourceInfo(	NoisyConfigState *  N, char **  genealogy, char *  fileName,
+NoisySourceInfo *
+noisyConfigLexAllocateSourceInfo(	NoisyState *  N, char **  genealogy, char *  fileName,
 				uint64_t lineNumber, uint64_t columnNumber, uint64_t length)
 {
-	NoisyConfigSourceInfo *	newSourceInfo;
+	NoisySourceInfo *	newSourceInfo;
 
-	newSourceInfo = (NoisyConfigSourceInfo *) calloc(1, sizeof(NoisyConfigSourceInfo));
+	newSourceInfo = (NoisySourceInfo *) calloc(1, sizeof(NoisySourceInfo));
 	if (newSourceInfo == NULL)
 	{
-		noisyConfigFatal(N, Emalloc);
+		noisyFatal(N, Emalloc);
 	}
 
 	newSourceInfo->genealogy	= genealogy;
@@ -55,22 +57,22 @@ noisyConfigLexAllocateSourceInfo(	NoisyConfigState *  N, char **  genealogy, cha
 }
 
 
-NoisyConfigToken *
+NoisyToken *
 noisyConfigLexAllocateToken(	
-    NoisyConfigState *  N, 
-    NoisyConfigIrNodeType type, 
+    NoisyState *  N, 
+    NoisyIrNodeType type, 
     char *  identifier,
     uint64_t integerConst,
     double realConst, 
     char * stringConst,
-	NoisyConfigSourceInfo *  sourceInfo
+	NoisySourceInfo *  sourceInfo
 ) {
-	NoisyConfigToken *	newToken;
+	NoisyToken *	newToken;
 
-	newToken = (NoisyConfigToken *) calloc(1, sizeof(NoisyConfigToken));
+	newToken = (NoisyToken *) calloc(1, sizeof(NoisyToken));
 	if (newToken == NULL)
 	{
-		noisyConfigFatal(N, Emalloc);
+		noisyFatal(N, Emalloc);
 	}
 	
 	newToken->type		= type;
@@ -86,11 +88,11 @@ noisyConfigLexAllocateToken(
 
 
 void
-noisyConfigLexPut(NoisyConfigState *  N, NoisyConfigToken *  newToken)
+noisyConfigLexPut(NoisyState *  N, NoisyToken *  newToken)
 {
 	if (newToken == NULL)
 	{
-		noisyConfigFatal(N, Esanity);
+		noisyFatal(N, Esanity);
 	}
 
 	/*
@@ -109,15 +111,15 @@ noisyConfigLexPut(NoisyConfigState *  N, NoisyConfigToken *  newToken)
 }
 
 
-NoisyConfigToken *
-noisyConfigLexGet(NoisyConfigState *  N)
+NoisyToken *
+noisyConfigLexGet(NoisyState *  N)
 {
 	if (N->tokenList == NULL)
 	{
-		noisyConfigFatal(N, Esanity);
+		noisyFatal(N, Esanity);
 	}
 
-	NoisyConfigToken *	t = N->tokenList;
+	NoisyToken *	t = N->tokenList;
 	
 	if (t->next != NULL)
 	{
@@ -125,10 +127,10 @@ noisyConfigLexGet(NoisyConfigState *  N)
 	}
 	else if (t->type != kNoisyConfigIrNodeType_Zeof)
 	{
-		noisyConfigFatal(N, Esanity);
+		noisyFatal(N, Esanity);
 	}
 
-	if (N->verbosityLevel & kNoisyConfigVerbosityDebugLexer)
+	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		noisyConfigLexDebugPrintToken(N, t);	
 	}
@@ -137,15 +139,15 @@ noisyConfigLexGet(NoisyConfigState *  N)
 }
 
 
-NoisyConfigToken *
-noisyConfigLexPeek(NoisyConfigState *  N, int lookAhead)
+NoisyToken *
+noisyConfigLexPeek(NoisyState *  N, int lookAhead)
 {
 	if (N->tokenList == NULL)
 	{
-		noisyConfigFatal(N, Esanity);
+		noisyFatal(N, Esanity);
 	}
 
-	NoisyConfigToken *	tmp = N->tokenList;
+	NoisyToken *	tmp = N->tokenList;
 	int 		which = 1;
 	while ((tmp != NULL) && (which++ < lookAhead))
 	{
@@ -156,15 +158,15 @@ noisyConfigLexPeek(NoisyConfigState *  N, int lookAhead)
 }
 
 void
-noisyConfigLexPeekPrint(NoisyConfigState *  N, int maxTokens, int formatCharacters)
+noisyConfigLexPeekPrint(NoisyState *  N, int maxTokens, int formatCharacters)
 {
 	if (N->tokenList == NULL)
 	{
-		noisyConfigFatal(N, Esanity);
+		noisyFatal(N, Esanity);
 	}
 
 	int		tripCharacters = 0, done = 0;
-	NoisyConfigToken *	tmp = N->tokenList;
+	NoisyToken *	tmp = N->tokenList;
 
 	flexprint(N->Fe, N->Fm, N->Fperr, "\t\tline %5d, token %3d\t", tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
 	while (tmp != NULL)
@@ -223,7 +225,7 @@ noisyConfigLexPeekPrint(NoisyConfigState *  N, int maxTokens, int formatCharacte
 					else
 					{
 						flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG/TODO: un-handled type %s in noisyConfigLexPeekPrint <<<", gReservedConfigTokenDescriptions[tmp->type]);
-						noisyConfigFatal(N, Esanity);
+						noisyFatal(N, Esanity);
 					}
 				}
 			}
@@ -249,7 +251,7 @@ noisyConfigLexPeekPrint(NoisyConfigState *  N, int maxTokens, int formatCharacte
 
 
 void
-noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
+noisyConfigLexInit(NoisyState *  N, char *  fileName)
 {
 	FILE *			filePointer;
 	size_t			lineBufferSize;
@@ -264,7 +266,7 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
 	filePointer = fopen(fileName, "r");
 	if (filePointer == NULL)
 	{
-		noisyConfigFatal(N, Eopen);
+		noisyFatal(N, Eopen);
 	}
 
 
@@ -373,7 +375,7 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
                     case '=':
 					{
 						/*
-						 *	TODO/BUG: Is this right? Re-check. What about kNoisyIrNodeType_Tdot?
+						 *	TODO/BUG: Is this right? Re-check. What about kNoisyConfigIrNodeType_Tdot?
 						 */
 						checkSingle(N, kNoisyConfigIrNodeType_Tequals);
 						continue;
@@ -382,7 +384,7 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
                     case ',':
 					{
 						/*
-						 *	TODO/BUG: Is this right? Re-check. What about kNoisyIrNodeType_Tdot?
+						 *	TODO/BUG: Is this right? Re-check. What about kNoisyConfigIrNodeType_Tdot?
 						 */
 						checkSingle(N, kNoisyConfigIrNodeType_Tcomma);
 						continue;
@@ -391,7 +393,7 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
                     case ';':
 					{
 						/*
-						 *	TODO/BUG: Is this right? Re-check. What about kNoisyIrNodeType_Tdot?
+						 *	TODO/BUG: Is this right? Re-check. What about kNoisyConfigIrNodeType_Tdot?
 						 */
 						checkSingle(N, kNoisyConfigIrNodeType_Tsemicolon);
 						continue;
@@ -433,8 +435,8 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
 
 					default:
 					{
-                        noisyConfigConsolePrintBuffers(N);
-						noisyConfigFatal(N, Esanity);
+                        noisyConsolePrintBuffers(N);
+						noisyFatal(N, Esanity);
 					}
 				}
 			}
@@ -453,26 +455,26 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
 
 	fclose(filePointer);
 
-	NoisyConfigSourceInfo *	eofSourceInfo = noisyConfigLexAllocateSourceInfo(N,	NULL /* genealogy */,
+	NoisySourceInfo *	eofSourceInfo = noisyConfigLexAllocateSourceInfo(N,	NULL /* genealogy */,
 										N->fileName /* fileName */,
 										N->lineNumber /* lineNumber */,
 										N->columnNumber /* columnNumber */,
 										0 /* length */);
-										
-	NoisyConfigToken *		eofToken = noisyConfigLexAllocateToken(N,	kNoisyConfigIrNodeType_Zeof /* type */,
-									NULL /* identifier */,
-									0 /* integerConst */,
-									0.0 /* realConst */,
-									NULL /* stringConst */,
-									eofSourceInfo /* sourceInfo */);
-	noisyConfigLexPut(N, eofToken);
+	  								
+	 NoisyToken *		eofToken = noisyConfigLexAllocateToken(N,	kNoisyConfigIrNodeType_Zeof /* type */,
+	 								NULL /* identifier */,
+	 								0 /* integerConst */,
+	 								0.0 /* realConst */,
+	 								NULL /* stringConst */,
+	 								eofSourceInfo /* sourceInfo */);
+	 noisyConfigLexPut(N, eofToken);
 
-	if (N->verbosityLevel & kNoisyConfigVerbosityDebugLexer)
+	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "Done lexing...\n");
 		
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
-		NoisyConfigToken *	p = N->tokenList;
+		NoisyToken *	p = N->tokenList;
 		while (p != NULL)
 		{
 			noisyConfigLexDebugPrintToken(N, p);
@@ -487,7 +489,7 @@ noisyConfigLexInit(NoisyConfigState *  N, char *  fileName)
 
 
 void
-noisyConfigLexDebugPrintToken(NoisyConfigState *  N, NoisyConfigToken *  t)
+noisyConfigLexDebugPrintToken(NoisyState *  N, NoisyToken *  t)
 {
 	switch (t->type)
 	{
@@ -513,7 +515,7 @@ noisyConfigLexDebugPrintToken(NoisyConfigState *  N, NoisyConfigToken *  t)
 			else
 			{
 				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in noisyConfigLexDebugPrintToken <<<", t->type);
-				//noisyConfigFatal(N, Esanity);
+				noisyFatal(N, Esanity);
 			}
 		}
 	}
@@ -524,7 +526,7 @@ noisyConfigLexDebugPrintToken(NoisyConfigState *  N, NoisyConfigToken *  t)
 
 
 void
-noisyConfigLexPrintToken(NoisyConfigState *  N, NoisyConfigToken *  t)
+noisyConfigLexPrintToken(NoisyState *  N, NoisyToken *  t)
 {
 	switch (t->type)
 	{
@@ -549,7 +551,7 @@ noisyConfigLexPrintToken(NoisyConfigState *  N, NoisyConfigToken *  t)
 			else
 			{
 				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in noisyLexPrintToken <<<", t->type);
-				//noisyConfigFatal(N, Esanity);
+				//noisyFatal(N, Esanity);
 			}
 		}
 	}
@@ -564,23 +566,23 @@ noisyConfigLexPrintToken(NoisyConfigState *  N, NoisyConfigToken *  t)
 
 
 static inline void
-checkTokenLength(NoisyConfigState *  N, int  count)
+checkTokenLength(NoisyState *  N, int  count)
 {
-	if (N->currentTokenLength+count >= kNoisyConfigMaxBufferLength)
+	if (N->currentTokenLength+count >= kNoisyMaxBufferLength)
 	{
-		noisyConfigFatal(N, EtokenTooLong);
+		noisyFatal(N, EtokenTooLong);
 	}
 }
 
 static inline char
-cur(NoisyConfigState *  N)
+cur(NoisyState *  N)
 {
 	return N->lineBuffer[N->columnNumber];
 }
 
 
 static void
-gobble(NoisyConfigState *  N, int count)
+gobble(NoisyState *  N, int count)
 {
 	checkTokenLength(N, count);
 	strncpy(N->currentToken, &N->lineBuffer[N->columnNumber], count);
@@ -590,7 +592,7 @@ gobble(NoisyConfigState *  N, int count)
 
 
 static void
-done(NoisyConfigState *  N, NoisyConfigToken *  newToken)
+done(NoisyState *  N, NoisyToken *  newToken)
 {
 	newToken->sourceInfo = noisyConfigLexAllocateSourceInfo(N,	NULL				/*   genealogy 	*/,
 								N->fileName			/*   fileName 	*/,
@@ -598,14 +600,14 @@ done(NoisyConfigState *  N, NoisyConfigToken *  newToken)
 								N->columnNumber - N->currentTokenLength /* columnNumber */,
 								N->currentTokenLength		/*   length 	*/);
 
-	bzero(N->currentToken, kNoisyConfigMaxBufferLength);
+	bzero(N->currentToken, kNoisyMaxBufferLength);
 	N->currentTokenLength = 0;
 	noisyConfigLexPut(N, newToken);
 }
 
 
 static void
-checkComment(NoisyConfigState *  N)
+checkComment(NoisyState *  N)
 {
 	/*
 	 *	Gobble any extant chars
@@ -621,7 +623,7 @@ checkComment(NoisyConfigState *  N)
 
 
 static void
-checkSingle(NoisyConfigState *  N, NoisyConfigIrNodeType tokenType)
+checkSingle(NoisyState *  N, NoisyIrNodeType tokenType)
 {
 	/*
 	 *	Gobble any extant chars.
@@ -630,13 +632,13 @@ checkSingle(NoisyConfigState *  N, NoisyConfigIrNodeType tokenType)
 
 	gobble(N, 1);
 
-	if (N->verbosityLevel & kNoisyConfigVerbosityDebugLexer)
+	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "checkSingle(), tokenType = %d\n", tokenType);
 //fprintf(stderr, "checkSingle(), tokenType = %d\n", tokenType);
 	}
 
-	NoisyConfigToken *		newToken = noisyConfigLexAllocateToken(N,	tokenType /* type	*/,
+	NoisyToken *		newToken = noisyConfigLexAllocateToken(N,	tokenType /* type	*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -651,12 +653,12 @@ checkSingle(NoisyConfigState *  N, NoisyConfigIrNodeType tokenType)
 
 
 static void
-checkDoubleQuote(NoisyConfigState *  N)
+checkDoubleQuote(NoisyState *  N)
 {
 	/*
 	 *	TODO/BUG: we do not handle escaped dquotes in a strconst
 	 */
-	NoisyConfigToken *	newToken;
+	NoisyToken *	newToken;
 
 
 	/*
@@ -683,9 +685,9 @@ checkDoubleQuote(NoisyConfigState *  N)
 		N->columnNumber++;
 
 		/*
-		 *	NOTE: N->currentToken is pre-allocated to be kNoisyConfigMaxBufferLength characters long.
+		 *	NOTE: N->currentToken is pre-allocated to be kNoisyMaxBufferLength characters long.
 		 */
-		while ((cur(N) != '"') && N->currentTokenLength < (kNoisyConfigMaxBufferLength - 1) && (N->columnNumber < N->lineLength))
+		while ((cur(N) != '"') && N->currentTokenLength < (kNoisyMaxBufferLength - 1) && (N->columnNumber < N->lineLength))
 		{
 			checkTokenLength(N, 1);
 			N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
@@ -699,7 +701,7 @@ checkDoubleQuote(NoisyConfigState *  N)
 			/*
 			 *	We ran out of buffer space or reached end of lineBuffer
 			 */
-			noisyConfigFatal(N, EstringTooLongOrWithNewline);
+			noisyFatal(N, EstringTooLongOrWithNewline);
 		}
 		else
 		{
@@ -725,7 +727,7 @@ checkDoubleQuote(NoisyConfigState *  N)
 
 
 // static void
-// checkMinus(NoisyConfigState *  N)
+// checkMinus(NoisyState *  N)
 // {
 // 	/*
 // 	 *	Gobble any extant chars.
@@ -733,9 +735,9 @@ checkDoubleQuote(NoisyConfigState *  N)
 // 	finishToken(N);
 // 
 //     gobble(N, 1);
-//     NoisyConfigIrNodeType type = kNoisyConfigIrNodeType_Tminus;
+//     NoisyIrNodeType type = kNoisyConfigIrNodeType_Tminus;
 // 
-// 	NoisyConfigToken *		newToken = noisyConfigLexAllocateToken(N,	type	/* type		*/,
+// 	NoisyToken *		newToken = noisyConfigLexAllocateToken(N,	type	/* type		*/,
 // 									NULL	/* identifier	*/,
 // 									0	/* integerConst	*/,
 // 									0.0	/* realConst	*/,
@@ -749,9 +751,9 @@ checkDoubleQuote(NoisyConfigState *  N)
 // }
 
 static void
-finishToken(NoisyConfigState *  N)
+finishToken(NoisyState *  N)
 {
-	if (N->verbosityLevel & kNoisyConfigVerbosityDebugLexer)
+	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
@@ -767,11 +769,11 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 		return;
 	}
 
-	for (int i = 0; i < kNoisyConfigIrNodeTypeMax; i++)
+	for (int i = 0; i < kNoisyIrNodeTypeMax; i++)
 	{
 		if ((gReservedConfigTokenDescriptions[i] != NULL) && !strcmp(gReservedConfigTokenDescriptions[i], N->currentToken))
 		{
-			NoisyConfigToken *	newToken = noisyConfigLexAllocateToken(N,	i	/* type		*/,
+			NoisyToken *	newToken = noisyConfigLexAllocateToken(N,	i	/* type		*/,
 										NULL	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -790,7 +792,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 	if (N->currentToken[0] >= '0' && N->currentToken[0] <= '9')
 	{
         // noisyconfig-lexer.c: finishToken: we don't use numbers in the config file. amirite
-        noisyConfigFatal(N, Esanity);
+        noisyFatal(N, Esanity);
 		// makeNumericConst(N);
 		return;
 	}
@@ -800,7 +802,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 	 *	since we would have halted the building of the token on seing them
 	 *	and gotten called here.
 	 */
-	NoisyConfigToken *	newToken = noisyConfigLexAllocateToken(N,	kNoisyConfigIrNodeType_Tidentifier	/* type		*/,
+	NoisyToken *	newToken = noisyConfigLexAllocateToken(N,	kNoisyConfigIrNodeType_Tidentifier	/* type		*/,
 								N->currentToken			/* identifier	*/,
 								0	/* integerConst	*/,
 								0.0	/* realConst	*/,
@@ -815,7 +817,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 
 
 static bool
-isOperatorOrSeparator(NoisyConfigState *  N, char c)
+isOperatorOrSeparator(NoisyState *  N, char c)
 {
 	/*
 	 *	Unlike in our Yacc-driven compielers, we don't use a "stickies" array

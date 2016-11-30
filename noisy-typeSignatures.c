@@ -44,7 +44,6 @@
 #include "flex.h"
 #include "noisy-timeStamps.h"
 #include "noisy.h"
-#include "noisyconfig.h"
 
 
 
@@ -92,7 +91,7 @@ const char gNoisyTypeNodeSignatures[kNoisyIrNodeTypeMax] = {
 /*
  *  Type signatures of nodes that can appear in a subtree representing a type.
  */
-const char gNoisyConfigTypeNodeSignatures[kNoisyConfigIrNodeTypeMax] = {
+const char gNoisyConfigTypeNodeSignatures[kNoisyIrNodeTypeMax] = {
                                 [kNoisyConfigIrNodeType_Tidentifier]            = 'n',
                                 [kNoisyConfigIrNodeType_Xseq]               = ':',
 };

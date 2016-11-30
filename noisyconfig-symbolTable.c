@@ -45,8 +45,9 @@
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
-#include "noisyconfig.h"
 #include "version.h"
+#include "noisy-timeStamps.h"
+#include "noisy.h"
 #include "noisyconfig-symbolTable.h"
 
 
@@ -187,7 +188,7 @@ getTailPhysics(Physics* list)
 
 // TODO clean up the code. make helper methods
 void 
-noisyConfigPhysicsCopyDenominatorToNumeratorDimensions(NoisyConfigState * N, Physics * dest, Physics * source)
+noisyConfigPhysicsCopyDenominatorToNumeratorDimensions(NoisyState * N, Physics * dest, Physics * source)
 {
     if (dest->numeratorDimensions == NULL)
     {
@@ -203,7 +204,7 @@ noisyConfigPhysicsCopyDenominatorToNumeratorDimensions(NoisyConfigState * N, Phy
 }
 
 void 
-noisyConfigPhysicsCopyNumeratorToDenominatorDimensions(NoisyConfigState * N, Physics * dest, Physics * source)
+noisyConfigPhysicsCopyNumeratorToDenominatorDimensions(NoisyState * N, Physics * dest, Physics * source)
 {
     if (dest->denominatorDimensions == NULL)
     {
@@ -220,7 +221,7 @@ noisyConfigPhysicsCopyNumeratorToDenominatorDimensions(NoisyConfigState * N, Phy
 }
 
 // TODO change method name from copy to transfer
-void noisyConfigPhysicsCopyNumeratorDimensions(NoisyConfigState * N, Physics * dest, Physics * source) 
+void noisyConfigPhysicsCopyNumeratorDimensions(NoisyState * N, Physics * dest, Physics * source) 
 {
     if (dest->numeratorDimensions == NULL)
     {
@@ -235,7 +236,7 @@ void noisyConfigPhysicsCopyNumeratorDimensions(NoisyConfigState * N, Physics * d
     dest->numeratorPrimeProduct *= source->numeratorPrimeProduct;
 }
 
-void noisyConfigPhysicsCopyDenominatorDimensions(NoisyConfigState * N, Physics * dest, Physics * source)
+void noisyConfigPhysicsCopyDenominatorDimensions(NoisyState * N, Physics * dest, Physics * source)
 {
     if (dest->denominatorDimensions == NULL)
     {
@@ -251,7 +252,7 @@ void noisyConfigPhysicsCopyDenominatorDimensions(NoisyConfigState * N, Physics *
 }
 
 void 
-noisyConfigPhysicsAddNumeratorDimension(NoisyConfigState * N, Physics * dest, Dimension * numerator)
+noisyConfigPhysicsAddNumeratorDimension(NoisyState * N, Physics * dest, Dimension * numerator)
 {
     if (dest->numeratorDimensions == NULL)
     {
@@ -267,7 +268,7 @@ noisyConfigPhysicsAddNumeratorDimension(NoisyConfigState * N, Physics * dest, Di
 }
 
 void 
-noisyConfigPhysicsAddDenominatorDimension(NoisyConfigState * N, Physics * dest, Dimension * denominator)
+noisyConfigPhysicsAddDenominatorDimension(NoisyState * N, Physics * dest, Dimension * denominator)
 {
     if (dest->denominatorDimensions == NULL)
     {
@@ -283,14 +284,14 @@ noisyConfigPhysicsAddDenominatorDimension(NoisyConfigState * N, Physics * dest, 
 }
 
 Dimension *
-noisyConfigDimensionTableAddDimensionForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, NoisyConfigToken *  token)
+noisyConfigDimensionTableAddDimensionForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token)
 {
 	Dimension *	newDimension;
 
 	newDimension = (Dimension *)calloc(1, sizeof(Dimension));
 	if (newDimension == NULL)
 	{
-		noisyConfigFatal(N, Emalloc);
+		noisyFatal(N, Emalloc);
 	}
 
 	newDimension->identifier	= token->stringConst;
@@ -312,14 +313,14 @@ noisyConfigDimensionTableAddDimensionForToken(NoisyConfigState *  N, NoisyConfig
 }
 
 Physics *
-noisyConfigPhysicsTableAddPhysicsForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, NoisyConfigToken *  token)
+noisyConfigPhysicsTableAddPhysicsForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token)
 {
 	Physics *	newPhysics;
 
 	newPhysics = (Physics *)calloc(1, sizeof(Physics));
 	if (newPhysics == NULL)
 	{
-		noisyConfigFatal(N, Emalloc);
+		noisyFatal(N, Emalloc);
 	}
 
 	newPhysics->identifier	= token->identifier;
@@ -345,7 +346,7 @@ noisyConfigPhysicsTableAddPhysicsForToken(NoisyConfigState *  N, NoisyConfigScop
 }
 
 Dimension *
-noisyConfigDimensionTableDimensionForIdentifier(NoisyConfigState *  N, NoisyConfigScope *  scope, const char *  identifier)
+noisyConfigDimensionTableDimensionForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier)
 {
 	if (scope == NULL)
 	{
@@ -366,7 +367,7 @@ noisyConfigDimensionTableDimensionForIdentifier(NoisyConfigState *  N, NoisyConf
 }
 
 Physics *
-noisyConfigPhysicsTablePhysicsForIdentifier(NoisyConfigState *  N, NoisyConfigScope *  scope, const char *  identifier)
+noisyConfigPhysicsTablePhysicsForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier)
 {
 	if (scope == NULL)
 	{
@@ -386,8 +387,8 @@ noisyConfigPhysicsTablePhysicsForIdentifier(NoisyConfigState *  N, NoisyConfigSc
 	return noisyConfigPhysicsTablePhysicsForIdentifier(N, scope->parent, identifier);
 }
 
-// NoisyConfigSymbol *
-// noisyConfigSymbolTableSymbolForIdentifier(NoisyConfigState *  N, NoisyConfigScope *  scope, const char *  identifier)
+// NoisySymbol *
+// noisyConfigSymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier)
 // {
 // 	/*
 // 	 *	Recursion falls out when we reach root which has nil parent
@@ -400,7 +401,7 @@ noisyConfigPhysicsTablePhysicsForIdentifier(NoisyConfigState *  N, NoisyConfigSc
 // 	/*
 // 	 *	Search current and parent (not siblings or children)
 // 	 */
-// 	NoisyConfigSymbol *	p = scope->firstSymbol;
+// 	NoisySymbol *	p = scope->firstSymbol;
 // 	while (p != NULL)
 // 	{
 // 		if (!strcmp(p->identifier, identifier))
@@ -414,15 +415,15 @@ noisyConfigPhysicsTablePhysicsForIdentifier(NoisyConfigState *  N, NoisyConfigSc
 // }
 // 
 // 
-// NoisyConfigSymbol *
-// noisyConfigSymbolTableAddOrLookupSymbolForToken(NoisyConfigState *  N, NoisyConfigScope *  scope, NoisyConfigToken *  token)
+// NoisySymbol *
+// noisyConfigSymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token)
 // {
-// 	NoisyConfigSymbol *	newSymbol;
+// 	NoisySymbol *	newSymbol;
 // 
-// 	newSymbol = (NoisyConfigSymbol *)calloc(1, sizeof(NoisyConfigSymbol));
+// 	newSymbol = (NoisySymbol *)calloc(1, sizeof(NoisySymbol));
 // 	if (newSymbol == NULL)
 // 	{
-// 		noisyConfigFatal(N, Emalloc);
+// 		noisyFatal(N, Emalloc);
 // 	}
 // 
 // 	newSymbol->identifier	= token->identifier;
@@ -444,7 +445,7 @@ noisyConfigPhysicsTablePhysicsForIdentifier(NoisyConfigState *  N, NoisyConfigSc
 // 	}
 // 	else
 // 	{
-// 		NoisyConfigSymbol *	p = scope->firstSymbol;
+// 		NoisySymbol *	p = scope->firstSymbol;
 // 		while (p->next != NULL)
 // 		{
 // 			p = p->next;
@@ -455,25 +456,25 @@ noisyConfigPhysicsTablePhysicsForIdentifier(NoisyConfigState *  N, NoisyConfigSc
 // 	return newSymbol;
 // }
 
-NoisyConfigScope *
-noisyConfigSymbolTableAllocScope(NoisyConfigState *  N)
+NoisyScope *
+noisyConfigSymbolTableAllocScope(NoisyState *  N)
 {
-	NoisyConfigScope *	newScope;
+	NoisyScope *	newScope;
 
-	newScope = (NoisyConfigScope *)calloc(1, sizeof(NoisyConfigScope));
+	newScope = (NoisyScope *)calloc(1, sizeof(NoisyScope));
 	if (newScope == NULL)
 	{
-		noisyConfigFatal(N, Emalloc);
+		noisyFatal(N, Emalloc);
 	}
 
 	return newScope;
 }
 
 
-NoisyConfigScope *
-noisyConfigSymbolTableOpenScope(NoisyConfigState *  N, NoisyConfigScope *  scope, NoisyConfigIrNode *  subTree)
+NoisyScope *
+noisyConfigSymbolTableOpenScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subTree)
 {
-	NoisyConfigScope *	newScope = noisyConfigSymbolTableAllocScope(N);
+	NoisyScope *	newScope = noisyConfigSymbolTableAllocScope(N);
 
 	newScope->parent = scope;
 	newScope->begin = subTree->sourceInfo;
@@ -484,7 +485,7 @@ noisyConfigSymbolTableOpenScope(NoisyConfigState *  N, NoisyConfigScope *  scope
 
 
 void
-noisyConfigSymbolTableCloseScope(NoisyConfigState *  N, NoisyConfigScope *  scope, NoisyConfigIrNode *  subTree)
+noisyConfigSymbolTableCloseScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subTree)
 {
 	scope->end = subTree->sourceInfo;
 }

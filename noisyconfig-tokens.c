@@ -5,13 +5,14 @@
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
-#include "noisyconfig.h"
+#include "noisy-timeStamps.h"
+#include "noisy.h"
 
 
 /*
  *	Some classes of characters used in Lexer
  */
-const NoisyConfigIrNodeType gNoisyConfigReservedTokens[] = {
+const NoisyIrNodeType gNoisyConfigReservedTokens[] = {
 	
     kNoisyConfigIrNodeType_Tsemicolon,
 	kNoisyConfigIrNodeType_TrightParen,
@@ -41,7 +42,7 @@ const NoisyConfigIrNodeType gNoisyConfigReservedTokens[] = {
 	kNoisyConfigIrNodeType_Zeof
 };
 
-const char *	gReservedConfigTokenDescriptions[kNoisyConfigIrNodeTypeMax] = {
+const char *	gReservedConfigTokenDescriptions[kNoisyIrNodeTypeMax] = {
     [kNoisyConfigIrNodeType_Tsemicolon] = ";",
 	[kNoisyConfigIrNodeType_TrightParen] = ")",
 	[kNoisyConfigIrNodeType_TleftParen] = "(",
