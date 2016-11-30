@@ -58,12 +58,9 @@
 #include "noisy-irPass-dotBackend.h"
 #include "noisy-irPass-protobufBackend.h"
 
-#include "noisyconfig.h"
 #include "noisyconfig-parser.h"
 #include "noisyconfig-lexer.h"
 #include "noisyconfig-symbolTable.h"
-#include "noisyconfig-irPass-helpers.h"
-#include "noisyconfig-irPass-dotBackend.h"
 
 //extern const char	gNoisyEol[];
 //extern const char	gNoisyWhitespace[];
@@ -74,15 +71,15 @@ static void		processFile(NoisyState *  N, char *  filename);
 static void		version(NoisyState *  N);
 
 
-// static void		usage(NoisyConfigState *  N);
-static void		processConfigFile(NoisyConfigState *  N);
-// static void		version(NoisyConfigState *  N);
+// static void		usage(NoisyState *  N);
+static void		processConfigFile(NoisyState *  N);
+// static void		version(NoisyState *  N);
 
-static void     recurseDimensions(NoisyConfigState * N, NoisyConfigScope * topScope);
-static void     recursePhysics(NoisyConfigState * N, NoisyConfigScope * topScope);
+static void     recurseDimensions(NoisyState * N, NoisyScope * topScope);
+static void     recursePhysics(NoisyState * N, NoisyScope * topScope);
 
 static void
-recurseDimensions(NoisyConfigState * N, NoisyConfigScope * topScope)
+recurseDimensions(NoisyState * N, NoisyScope * topScope)
 {
     Dimension * curDimension = topScope->firstDimension;
     if (curDimension == NULL)
@@ -95,7 +92,7 @@ recurseDimensions(NoisyConfigState * N, NoisyConfigScope * topScope)
 }
 
 static void
-recursePhysics(NoisyConfigState * N, NoisyConfigScope * topScope)
+recursePhysics(NoisyState * N, NoisyScope * topScope)
 {
     Physics * curPhysics = topScope->firstPhysics;
     if (curPhysics == NULL)
@@ -159,11 +156,8 @@ main(int argc, char *argv[])
 {
 	int			jumpParameter;
 	NoisyState *		N;
-	NoisyConfigState *		NC;
-
 
 	N = noisyInit(kNoisyModeDefault);
-	NC = noisyConfigInit(kNoisyConfigModeDefault);
 	
     if (N == NULL)
 	{
@@ -346,6 +340,7 @@ main(int argc, char *argv[])
 		}
 	}
 
+    processConfigFile(N);
 
 	if (optind < argc)
 	{
@@ -355,7 +350,6 @@ main(int argc, char *argv[])
 			if (!jumpParameter)
 			{
 				processFile(N, argv[optind++]);
-                processConfigFile(NC);
 			}
 			else
 			{
@@ -386,7 +380,7 @@ main(int argc, char *argv[])
  * https://github.com/phillipstanleymarbell/Noisy-lang-compiler/issues/28
  */
 static void
-processConfigFile(NoisyConfigState *  N)
+processConfigFile(NoisyState *  N)
 {
 
     char * fileName = "Examples/fullExamples2.nc";
@@ -406,7 +400,7 @@ processConfigFile(NoisyConfigState *  N)
 	/*
 	 *	Run passes requested in the command line flags.
 	 */
-	noisyConfigRunPasses(N);
+	noisyRunPasses(N);
 
     recurseDimensions(N, N->noisyConfigIrTopScope);
     recursePhysics(N, N->noisyConfigIrTopScope);
@@ -424,9 +418,9 @@ processConfigFile(NoisyConfigState *  N)
 	/*
 	 *	Dot backend.
 	 */
-	if (N->irBackends & kNoisyConfigIrBackendDot)
+	if (N->irBackends & kNoisyIrBackendDot)
 	{
-		fprintf(stdout, "%s\n", noisyConfigIrPassDotBackend(N));
+		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N));
 	}
     
 
@@ -436,7 +430,7 @@ processConfigFile(NoisyConfigState *  N)
 	// 	noisyConfigTimeStampDumpTimeline(N);
 	// }
     
-    noisyConfigConsolePrintBuffers(N);
+    noisyConsolePrintBuffers(N);
 }
 
 static void

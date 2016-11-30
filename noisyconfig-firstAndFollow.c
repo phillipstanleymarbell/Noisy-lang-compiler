@@ -44,12 +44,13 @@
 #include "flexerror.h"
 #include "flex.h"
 #include "version.h"
+#include "noisy-timeStamps.h"
+#include "noisy.h"
 #include "noisy-errors.h"
-#include "noisyconfig.h"
 #include "noisyconfig-lexer.h"
 
-extern int	gNoisyConfigFirsts[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax];
-extern int	gNoisyConfigFollows[kNoisyConfigIrNodeTypeMax][kNoisyConfigIrNodeTypeMax];
+extern int	gNoisyConfigFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
+extern int	gNoisyConfigFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 extern char *	gProductionStrings[];
 
 
@@ -63,20 +64,20 @@ extern char *	gProductionStrings[];
  *		inFirst(NoisyIrNodeType productionOrToken, NoisyIrNodeType token)
  */
 bool
-noisyConfigInFirst(NoisyConfigState *  N, NoisyConfigIrNodeType productionOrToken)
+noisyConfigInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken)
 {
-	NoisyConfigToken *	token = noisyConfigLexPeek(N, 1);
+	NoisyToken *	token = noisyConfigLexPeek(N, 1);
 
-	if (productionOrToken > kNoisyConfigIrNodeTypeMax)
+	if (productionOrToken > kNoisyIrNodeTypeMax)
 	{
-		noisyConfigFatal(N, Esanity);
+		noisyFatal(N, Esanity);
 	}
 
 
 	/*
 	 *	NOTE: The arrays created by ffi2code have a kNoisyIrNodeTypeMax element at the end of each sub-array
 	 */
-	for (int i = 0; i < kNoisyConfigIrNodeTypeMax && gNoisyConfigFirsts[productionOrToken][i] != kNoisyConfigIrNodeTypeMax; i++)
+	for (int i = 0; i < kNoisyIrNodeTypeMax && gNoisyConfigFirsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "--->gNoisyFirsts[%d][%d] = %s...\n",
 		//	productionOrToken, i, gTerminalStrings[gNoisyFirsts[productionOrToken][i]]);
@@ -101,19 +102,19 @@ noisyConfigInFirst(NoisyConfigState *  N, NoisyConfigIrNodeType productionOrToke
  *		inFollow(NoisyIrNodeType productionOrToken, NoisyIrNodeType token)
  */
 bool
-noisyConfigInFollow(NoisyConfigState *  N, NoisyConfigIrNodeType productionOrToken)
+noisyConfigInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken)
 {
-	NoisyConfigToken *	token = noisyConfigLexPeek(N, 1);
+	NoisyToken *	token = noisyConfigLexPeek(N, 1);
 
-	if (productionOrToken > kNoisyConfigIrNodeTypeMax)
+	if (productionOrToken > kNoisyIrNodeTypeMax)
 	{
-		noisyConfigFatal(N, Esanity);
+		noisyFatal(N, Esanity);
 	}
 
 	/*
 	 *	NOTE: The arrays created by ffi2code have a kNoisyIrNodeTypeMax element at the end of each sub-array
 	 */
-	for (int i = 0; i < kNoisyConfigIrNodeTypeMax && gNoisyConfigFollows[productionOrToken][i] != kNoisyConfigIrNodeTypeMax; i++)
+	for (int i = 0; i < kNoisyIrNodeTypeMax && gNoisyConfigFollows[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
 		if (gNoisyConfigFollows[productionOrToken][i] == token->type)
 		{
