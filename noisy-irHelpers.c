@@ -48,6 +48,8 @@
 #include "version.h"
 #include "noisy-timeStamps.h"
 #include "noisy.h"
+#include "noisy-irHelpers.h"
+#include "noisy-lexer.h"
 
 
 
@@ -90,4 +92,198 @@ genNoisyIrNode(NoisyState *  N, NoisyIrNodeType type, NoisyIrNode *  irLeftChild
 
 
 	return node;
+}
+
+NoisyScope *
+progtypeName2scope(NoisyState *  N, const char *  identifier)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserProgtypeName2scope);
+
+//	FlexListItem *	tmp = N->progtypeScopes->hd;
+
+	/*
+	 *	Each item is a tuple of (identifier, scope).
+	 */
+//	while (tmp != NULL)
+//	{
+//		if (	noisyValidFlexTupleCheckMacro(tmp)			&&
+//			(tmp->siblings->hd->type == kNoisyFlexListTypeString)	&&
+//			!strcmp(tmp->siblings->hd->value, identifier)		&&
+//			(tmp->siblings->hd->next->type == kNoisyFlexListTypeNoisyScopePointer))
+//		{
+//			return tmp->siblings->hd->next->value;
+//		}
+//
+//		tmp = tmp->next;
+//	}
+
+	return NULL;
+}
+
+
+void
+errorUseBeforeDefinition(NoisyState *  N, const char *  identifier)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorUseBeforeDefinition);
+
+	flexprint(N->Fe, N->Fm, N->Fperr, "Saw identifier \"%s\" in use before definition\n", identifier);
+}
+
+void
+errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
+}
+
+
+bool
+peekCheck(NoisyState *  N, int lookAhead, NoisyIrNodeType expectedType)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
+
+	if (noisyLexPeek(N, lookAhead) == NULL)
+	{
+		return false;
+	}
+
+	return (noisyLexPeek(N, lookAhead)->type == expectedType);
+}
+
+
+NoisyIrNode *
+depthFirstWalk(NoisyState *  N, NoisyIrNode *  node)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserDepthFirstWalk);
+
+	if (node->irLeftChild == NULL || node->irRightChild == NULL)
+	{
+		return node;
+	}
+
+	return depthFirstWalk(N, node->irRightChild);
+}
+
+void
+addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
+
+	NoisyIrNode *	node = depthFirstWalk(N, parent);
+
+	if (node == NULL)
+	{
+		noisyFatal(N, Esanity);
+	}
+	
+	if (node->irLeftChild == NULL)
+	{
+		node->irLeftChild = newNode;
+		
+		return;
+	}
+
+	node->irRightChild = newNode;
+}
+
+void
+addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
+
+	NoisyIrNode *	node = depthFirstWalk(N, parent);
+
+	if (node->irLeftChild == NULL)
+	{
+		node->irLeftChild = newNode;
+
+		return;
+	}
+	
+	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
+						newNode /* left child */,
+						NULL /* right child */,
+						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+}
+
+void
+addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeScope)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddToProgtypeScopes);
+
+	progtypeScope->identifier = identifier;
+
+	if (N->progtypeScopes == NULL)
+	{
+		N->progtypeScopes = progtypeScope;
+
+		return;
+	}
+
+	NoisyScope *	p = N->progtypeScopes;
+	while (p->next != NULL)
+	{
+		p = p->next;
+	}
+	p->next = progtypeScope;;
+
+	return;
+}
+
+
+
+/*
+ *	kNoisyIrNodeType_PidentifierList
+ *
+ *	AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_Tidentifier
+ *		node.left	= kNoisyIrNodeType_Tidentifier
+ *		node.right	= Xseq of kNoisyIrNodeType_Tidentifier
+ */
+void
+assignTypes(NoisyState *  N, NoisyIrNode *  node, NoisyIrNode *  typeExpression)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAssignTypes);
+
+	/*
+	 *	TODO: The typeExpr might be, say, an identifier that is an
+	 *	alias for a type. We should check for this case and get the
+	 *	identifier's sym->typeTree. Also, do sanity checks to validate
+	 *	the typeTree, e.g., make sure it is always made up of basic
+	 *	types and also that it's not NULL.
+	 */
+
+	if (node->type != kNoisyIrNodeType_Tidentifier)
+	{
+		noisyFatal(N, EassignTypeSanity);
+	}
+
+	/*
+	 *	Walk subtree identifierList, set each node->symbol.typeExpr = typeExpr
+	 */
+	node->symbol->typeTree = typeExpression;
+
+	/*
+	 *	Might be only one ident, or only two, or a whole Xseq of them
+	 */
+	if (node->irLeftChild != NULL)
+	{
+		node->irLeftChild->symbol->typeTree = typeExpression;
+	}
+
+	node = node->irRightChild;
+
+	while (node != NULL)
+	{
+		/*
+		 *	In here, node->type is always Xseq, with node->irLeftChild a node,
+		 *	and node->irRightChild either another Xseq or NULL.
+		 */
+		if (node->irLeftChild != NULL)
+		{
+			node->irLeftChild->symbol->typeTree = typeExpression;
+		}
+
+		node = node->irRightChild;
+	}
 }

@@ -35,8 +35,6 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-
 typedef enum
 {
 	kNoisyVerbosityDebugLexer	=	(1 << 0),
@@ -246,6 +244,71 @@ typedef enum
 	 */
 	kNoisyIrNodeType_Xseq,
 
+
+    /*
+     * Config file related node types
+     */
+	kNoisyConfigIrNodeType_Tnil,
+	kNoisyConfigIrNodeType_Tsemicolon,
+	kNoisyConfigIrNodeType_TrightParen,
+	kNoisyConfigIrNodeType_TleftParen,
+	kNoisyConfigIrNodeType_TrightBrace,
+	kNoisyConfigIrNodeType_TleftBrace,
+	kNoisyConfigIrNodeType_TrightBrac,
+	kNoisyConfigIrNodeType_TleftBrac,
+	kNoisyConfigIrNodeType_Tequals,
+	kNoisyConfigIrNodeType_Tcomma,
+	kNoisyConfigIrNodeType_Tcross,
+	kNoisyConfigIrNodeType_Tdot,
+	kNoisyConfigIrNodeType_Tdiv,
+	kNoisyConfigIrNodeType_Tmul,
+	kNoisyConfigIrNodeType_Tplus,
+	kNoisyConfigIrNodeType_Tminus,
+	kNoisyConfigIrNodeType_TstringConst,
+	kNoisyConfigIrNodeType_Tidentifier,
+	kNoisyConfigIrNodeType_TvectorScalarPairs,
+	kNoisyConfigIrNodeType_TscalarIntegrals,
+	kNoisyConfigIrNodeType_TvectorIntegrals,
+	kNoisyConfigIrNodeType_TdimensionAliases,
+	kNoisyConfigIrNodeType_Tlaw,
+	kNoisyConfigIrNodeType_TdimensionTypeNames,
+	kNoisyConfigIrNodeType_PanonAggregateCastExpression,
+	kNoisyConfigIrNodeType_ParrayCastExpression,
+	kNoisyConfigIrNodeType_PassignOp,
+	kNoisyConfigIrNodeType_PvectorOp,
+	kNoisyConfigIrNodeType_PhighPrecedenceBinaryOp,
+	kNoisyConfigIrNodeType_PlowPrecedenceBinaryOp,
+	kNoisyConfigIrNodeType_PunaryOp,
+	kNoisyConfigIrNodeType_Pfactor,
+	kNoisyConfigIrNodeType_Pterm,
+	kNoisyConfigIrNodeType_Pexpression,
+	kNoisyConfigIrNodeType_PvectorScalarPairStatement,
+	kNoisyConfigIrNodeType_PvectorIntegralList,
+	kNoisyConfigIrNodeType_PscalarIntegralList,
+	kNoisyConfigIrNodeType_PlawStatement,
+	kNoisyConfigIrNodeType_PdimensionTypeNameStatement,
+	kNoisyConfigIrNodeType_PdimensionAliasStatement,
+	kNoisyConfigIrNodeType_PvectorScalarPairStatementList,
+	kNoisyConfigIrNodeType_PvectorIntegralLists,
+	kNoisyConfigIrNodeType_PscalarIntegralLists,
+	kNoisyConfigIrNodeType_PlawStatementList,
+	kNoisyConfigIrNodeType_PdimensionTypeNameStatementList,
+	kNoisyConfigIrNodeType_PdimensionAliasStatementList,
+	kNoisyConfigIrNodeType_PvectorScalarPairScope,
+	kNoisyConfigIrNodeType_PscalarIntegralScope,
+	kNoisyConfigIrNodeType_PvectorIntegralScope,
+	kNoisyConfigIrNodeType_PdimensionAliasScope,
+	kNoisyConfigIrNodeType_PlawScope,
+	kNoisyConfigIrNodeType_PdimensionTypeNameScope,
+	kNoisyConfigIrNodeType_PconfigFile,
+
+	kNoisyConfigIrNodeType_Xseq,
+
+    kNoisyConfigIrNodeType_ZbadIdentifier,
+    kNoisyConfigIrNodeType_ZbadCharConst,
+	kNoisyConfigIrNodeType_Zepsilon,
+	kNoisyConfigIrNodeType_Zeof,
+    kNoisyConfigIrNodeType_ZbadStringConst,
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -375,16 +438,64 @@ typedef struct NoisySymbol	NoisySymbol;
 typedef struct NoisyToken	NoisyToken;
 typedef struct NoisyIrNode	NoisyIrNode;
 typedef struct NoisySourceInfo	NoisySourceInfo;
+typedef struct Dimension Dimension;
+typedef struct Physics Physics;
+typedef struct IntegralList IntegralList;
 
+struct Dimension
+{
+    char * identifier;
+	
+    NoisyScope *		scope;
+	
+    NoisySourceInfo *	sourceInfo;
+    
+    int primeNumber;
+
+    Dimension * next;
+};
+
+struct Physics 
+{
+    char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
+    NoisyScope *		scope;
+    NoisySourceInfo *	sourceInfo;
+    
+    bool isVector;
+    Physics * vectorCounterpart; // non-NULL if a scalar AND counterpart defined in vectorScalarPairScope
+    Physics * scalarCounterpart; // non-NULl if a vector AND counterpart defined in vectorScalarPairScope
+
+    Dimension * numeratorDimensions;
+    int numberOfNumerators;
+    int numeratorPrimeProduct;
+    
+    Dimension * denominatorDimensions;
+    int numberOfDenominators;
+    int denominatorPrimeProduct;
+
+    char * dimensionAlias;
+
+    Physics * definition;
+
+    Physics * next;
+};
+
+struct IntegralList
+{
+    Physics * head;
+    IntegralList * next;
+};
 
 struct NoisyIrNode
 {
 	NoisyIrNodeType		type;
+    Physics *           physicsType;
 
 	/*
 	 *	Syntactic (AST) information.
 	 */
 	char *			tokenString;
+    NoisyToken * token;
 	NoisySourceInfo	*	sourceInfo;
 	NoisyIrNode *		irParent;
 	NoisyIrNode *		irLeftChild;
@@ -392,7 +503,18 @@ struct NoisyIrNode
 
 	NoisySymbol *		symbol;
 
-	/*
+    /*
+     * Used for evaluating dimensions in expressions
+     */
+    Physics * physics;
+
+    /*
+     * Used for returning integral list from noisyConfigParseIntegralList
+     */
+    IntegralList * vectorIntegralList;
+    IntegralList * scalarIntegralList;
+	
+    /*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
 	 */
 	NoisyIrNodeColor	nodeColor;
@@ -446,6 +568,13 @@ struct NoisyScope
 	 *	Symbols in this scope. The list of symbols is accesed via firstSymbol->next
 	 */
 	NoisySymbol *		firstSymbol;
+
+    /*
+     * For the config file, we only have one global scope that keeps track of all
+     * dimensions ad physics quantities.
+     */
+    struct Dimension * firstDimension;
+    struct Physics * firstPhysics;
 
 	/*
 	 *	Where in source scope begins and ends
@@ -592,7 +721,9 @@ typedef struct
 	 *	The root of the IR tree, and top scope
 	 */
 	NoisyIrNode *		noisyIrRoot;
+	NoisyIrNode *		noisyConfigIrRoot;
 	NoisyScope *		noisyIrTopScope;
+    NoisyScope *        noisyConfigIrTopScope;
 
 	/*
 	 *	Output file name when emitting bytecode/protobuf
@@ -609,6 +740,22 @@ typedef struct
 
 	jmp_buf			jmpbuf;
 	bool			jmpbufIsValid;
+    
+    /*
+     * Global index of which prime numbers we have used for the dimension id's
+     */
+    int primeNumbersIndex;
+
+    /*
+     * This is a group (linked list) of linked list of physics nodes
+     */
+    IntegralList * vectorIntegralLists;
+    
+    /*
+     * This is a group (linked list) of linked list of physics nodes
+     */
+    IntegralList * scalarIntegralLists;
+
 } NoisyState;
 
 
