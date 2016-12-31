@@ -397,12 +397,6 @@ processConfigFile(NoisyState *  N)
 	N->noisyConfigIrTopScope = noisyConfigSymbolTableAllocScope(N);
 	N->noisyConfigIrRoot = noisyConfigParse(N, N->noisyConfigIrTopScope);
 
-
-	/*
-	 *	Run passes requested in the command line flags.
-	 */
-	noisyRunPasses(N);
-
     recurseDimensions(N, N->noisyConfigIrTopScope);
     recursePhysics(N, N->noisyConfigIrTopScope);
 
