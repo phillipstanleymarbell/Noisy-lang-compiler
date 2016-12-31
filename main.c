@@ -415,7 +415,7 @@ processConfigFile(NoisyState *  N)
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
 	{
-		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N));
+		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N, N->noisyIrTopScope, N->noisyIrRoot));
 	}
     
 
@@ -468,7 +468,7 @@ processFile(NoisyState *  N, char *  fileName)
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
 	{
-		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N));
+		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N, N->noisyIrTopScope, N->noisyIrRoot));
 	}
 
 
