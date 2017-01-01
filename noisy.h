@@ -489,7 +489,6 @@ struct IntegralList
 struct NoisyIrNode
 {
 	NoisyIrNodeType		type;
-    Physics *           physicsType;
 
 	/*
 	 *	Syntactic (AST) information.

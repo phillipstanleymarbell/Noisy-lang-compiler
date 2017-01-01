@@ -341,7 +341,6 @@ main(int argc, char *argv[])
 	}
 
     processConfigFile(N);
-	flexprint(N->Fe, N->Fm, N->Fperr, "\nhellohello\n");
 
 	if (optind < argc)
 	{
