@@ -46,6 +46,7 @@ Physics * noisyConfigPhysicsTablePhysicsForIdentifier(NoisyState *  N, NoisyScop
 Physics* copyPhysicsNode(Physics* list);
 Physics* getTailPhysics(Physics* list);
 
+void appendIntegralList(IntegralList* head, IntegralList* list);
 IntegralList* getTailIntegralList(IntegralList* list);
 
 int countNumberTime(Dimension* head);

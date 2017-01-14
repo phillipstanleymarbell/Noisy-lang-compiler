@@ -154,6 +154,15 @@ copyPhysicsNode(Physics* list)
     return copy;
 }
 
+void
+appendIntegralList(IntegralList* head, IntegralList* list)
+{
+    IntegralList* tail = getTailIntegralList(head);
+    assert(tail != NULL);
+    
+    tail->next = list;
+}
+
 IntegralList*
 getTailIntegralList(IntegralList* list)
 {
