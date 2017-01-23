@@ -1,0 +1,20 @@
+time : signal =
+{
+        name = "second" English
+        symbol = "s";
+        # derivation = none;
+}
+
+distance : signal =
+{
+        name = "meter" English
+        symbol = "m";
+        # derivation = none;
+}
+
+mass : signal =
+{
+        name = "kilogram" English
+        symbol = "kg";
+        # derivation = none;
+}

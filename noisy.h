@@ -309,7 +309,81 @@ typedef enum
 	kNoisyConfigIrNodeType_Zepsilon,
 	kNoisyConfigIrNodeType_Zeof,
     kNoisyConfigIrNodeType_ZbadStringConst,
-	/*
+
+    /*
+     * Newton related nodes
+     */
+	kNewtonIrNodeType_Tnil,
+    kNewtonIrNodeType_Tlt,
+    kNewtonIrNodeType_Tle,
+    kNewtonIrNodeType_Tgt,
+    kNewtonIrNodeType_Tge,
+    kNewtonIrNodeType_Tproportionality,
+    kNewtonIrNodeType_Tequivalent,
+    kNewtonIrNodeType_Tsemicolon,
+    kNewtonIrNodeType_Tcolon,
+    kNewtonIrNodeType_Tcomma,
+	kNewtonIrNodeType_Tdiv,
+	kNewtonIrNodeType_Tmul,
+	kNewtonIrNodeType_Tplus,
+	kNewtonIrNodeType_Tminus,
+    kNewtonIrNodeType_Texponent,
+	kNewtonIrNodeType_Tequals,
+    kNewtonIrNodeType_TintConst,
+    kNewtonIrNodeType_TrealConst,	
+	kNewtonIrNodeType_TstringConst,
+	kNewtonIrNodeType_ZbadIdentifier,
+	kNewtonIrNodeType_ZbadStringConst,
+	kNewtonIrNodeType_Zepsilon,
+	kNewtonIrNodeType_Zeof,
+	kNewtonIrNodeType_Tcross,
+	kNewtonIrNodeType_Tdot,
+	kNewtonIrNodeType_Tintegral,
+	kNewtonIrNodeType_Tderivative,
+	kNewtonIrNodeType_TSpanish,
+	kNewtonIrNodeType_TEnglish,
+	kNewtonIrNodeType_Tinvariant,
+	kNewtonIrNodeType_Tconstant,
+	kNewtonIrNodeType_Tsignal,
+	kNewtonIrNodeType_Tderivation,
+	kNewtonIrNodeType_Tsymbol,
+	kNewtonIrNodeType_Tname,
+	kNewtonIrNodeType_Tnumber,
+	kNewtonIrNodeType_TrightBrace,
+	kNewtonIrNodeType_TleftBrace,
+	kNewtonIrNodeType_TrightParen,
+	kNewtonIrNodeType_TleftParen,
+	kNewtonIrNodeType_Tidentifier,
+    kNewtonIrNodeType_PlanguageSetting,
+	kNewtonIrNodeType_PcompareOp,
+	kNewtonIrNodeType_PvectorOp,
+	kNewtonIrNodeType_PhighPrecedenceBinaryOp,
+	kNewtonIrNodeType_PmidPrecedenceBinaryOp,
+	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
+	kNewtonIrNodeType_PunaryOp,
+	kNewtonIrNodeType_PtimeOp,
+	kNewtonIrNodeType_Punit,
+	kNewtonIrNodeType_PunitFactor,
+	kNewtonIrNodeType_PunitExpression,
+	kNewtonIrNodeType_Pquantity,
+	kNewtonIrNodeType_PquantityFactor,
+	kNewtonIrNodeType_PquantityTerm,
+	kNewtonIrNodeType_PquantityExpression,
+	kNewtonIrNodeType_Pparameter,
+	kNewtonIrNodeType_PparameterTuple,
+	kNewtonIrNodeType_Pderivation,
+	kNewtonIrNodeType_Psymbol,
+	kNewtonIrNodeType_Pname,
+	kNewtonIrNodeType_Pconstraint,
+	kNewtonIrNodeType_PconstraintList,
+	kNewtonIrNodeType_PbaseSignal,
+	kNewtonIrNodeType_Pinvariant,
+	kNewtonIrNodeType_Pconstant,
+	kNewtonIrNodeType_Prule,
+	kNewtonIrNodeType_PruleList,
+	kNewtonIrNodeType_PnewtonFile,
+	
+    /*
 	 *	Code depends on this bringing up the rear.
 	 */
 	kNoisyIrNodeTypeMax,
@@ -445,6 +519,7 @@ typedef struct IntegralList IntegralList;
 struct Dimension
 {
     char * identifier;
+    char * abbreviation;
 	
     NoisyScope *		scope;
 	
@@ -458,6 +533,7 @@ struct Dimension
 struct Physics 
 {
     char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
+    
     NoisyScope *		scope;
     NoisySourceInfo *	sourceInfo;
     
@@ -489,7 +565,6 @@ struct IntegralList
 struct NoisyIrNode
 {
 	NoisyIrNodeType		type;
-    Physics *           physicsType;
 
 	/*
 	 *	Syntactic (AST) information.
@@ -507,6 +582,7 @@ struct NoisyIrNode
      * Used for evaluating dimensions in expressions
      */
     Physics * physics;
+    Dimension * dimension;
 
     /*
      * Used for returning integral list from noisyConfigParseIntegralList
@@ -721,9 +797,9 @@ typedef struct
 	 *	The root of the IR tree, and top scope
 	 */
 	NoisyIrNode *		noisyIrRoot;
-	NoisyIrNode *		noisyConfigIrRoot;
+	NoisyIrNode *		newtonIrRoot;
 	NoisyScope *		noisyIrTopScope;
-    NoisyScope *        noisyConfigIrTopScope;
+    NoisyScope *        newtonIrTopScope;
 
 	/*
 	 *	Output file name when emitting bytecode/protobuf
