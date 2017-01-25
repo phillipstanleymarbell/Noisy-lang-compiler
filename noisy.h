@@ -75,6 +75,7 @@ typedef enum
 	kNoisyIrNodeType_TcharConst,
 	kNoisyIrNodeType_Tcolon,
 	kNoisyIrNodeType_Tcomma,
+	kNoisyIrNodeType_Tnone,
 	kNoisyIrNodeType_Tcons,
 	kNoisyIrNodeType_Tconst,
 	kNoisyIrNodeType_TdefineAs,
@@ -314,6 +315,7 @@ typedef enum
      * Newton related nodes
      */
 	kNewtonIrNodeType_Tnil,
+	kNewtonIrNodeType_Tnone,
     kNewtonIrNodeType_Tlt,
     kNewtonIrNodeType_Tle,
     kNewtonIrNodeType_Tgt,
@@ -364,6 +366,7 @@ typedef enum
 	kNewtonIrNodeType_PtimeOp,
 	kNewtonIrNodeType_Punit,
 	kNewtonIrNodeType_PunitFactor,
+    kNewtonIrNodeType_PunitTerm,
 	kNewtonIrNodeType_PunitExpression,
 	kNewtonIrNodeType_Pquantity,
 	kNewtonIrNodeType_PquantityFactor,
@@ -515,6 +518,7 @@ typedef struct NoisySourceInfo	NoisySourceInfo;
 typedef struct Dimension Dimension;
 typedef struct Physics Physics;
 typedef struct IntegralList IntegralList;
+typedef struct Invariant Invariant;
 
 struct Dimension
 {
@@ -528,6 +532,21 @@ struct Dimension
     int primeNumber;
 
     Dimension * next;
+};
+
+struct Invariant
+{
+    char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
+    
+    NoisyScope *		scope;
+    NoisySourceInfo *	sourceInfo;
+
+    NoisyIrNode * parameterList; // this is just bunch of NoisyIrNode's in Xseq
+    int id; // TODO calculate id by multiplying all the prime numbers of parameterList
+
+    NoisyIrNode * constraints;
+
+    Invariant * next;
 };
 
 struct Physics 
@@ -550,6 +569,7 @@ struct Physics
     int denominatorPrimeProduct;
 
     char * dimensionAlias;
+    char * dimensionAliasAbbreviation;
 
     Physics * definition;
 
@@ -649,8 +669,8 @@ struct NoisyScope
      * For the config file, we only have one global scope that keeps track of all
      * dimensions ad physics quantities.
      */
-    struct Dimension * firstDimension;
-    struct Physics * firstPhysics;
+    Dimension * firstDimension;
+    Physics * firstPhysics;
 
 	/*
 	 *	Where in source scope begins and ends
@@ -831,6 +851,8 @@ typedef struct
      * This is a group (linked list) of linked list of physics nodes
      */
     IntegralList * scalarIntegralLists;
+
+    Invariant * invariantList;
 
 } NoisyState;
 

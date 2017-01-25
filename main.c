@@ -98,9 +98,11 @@ recursePhysics(NoisyState * N, NoisyScope * topScope)
     if (curPhysics == NULL)
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "topscope physics doesn't exist\n");
     
-    while (curPhysics != NULL) {
+    while (curPhysics != NULL) 
+    {
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "physics %s\n", curPhysics->identifier);
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "alias %s\n", curPhysics->dimensionAlias);
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "alias abbreviation %s\n", curPhysics->dimensionAliasAbbreviation);
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "isvector %d\n", curPhysics->isVector);
         if (curPhysics->vectorCounterpart)
 		    flexprint(N->Fe, N->Fm, N->Fpinfo, "vectorCounterpart %s\n", curPhysics->vectorCounterpart->identifier);
@@ -118,6 +120,8 @@ recursePhysics(NoisyState * N, NoisyScope * topScope)
 	    	flexprint(N->Fe, N->Fm, N->Fpinfo, "denominator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
             curDimension = curDimension->next;
         }
+		
+        flexprint(N->Fe, N->Fm, N->Fpinfo, "==============================================================================================\n");
         
         curPhysics = curPhysics->next;
     }

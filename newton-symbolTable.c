@@ -85,6 +85,22 @@ int countNumberTime(Dimension* dimensionHead)
     return numTimes;
 }
 
+static Invariant*
+getTailInvariant(Invariant * head)
+{
+    if (head == NULL)
+        return NULL;
+    else
+    {
+        Invariant* current = head;
+        while (current->next != NULL)
+        {
+            current = current->next;
+        }
+        return current;
+    }
+}
+
 static Dimension*
 getTailDimension(Dimension* list)
 {
@@ -184,6 +200,35 @@ getTailPhysics(Physics* list)
         }
         return current;
     }
+}
+
+Physics * 
+newtonPhysicsTableCopyAndAddPhysics(NoisyState * N, NoisyScope * scope, Physics * source)
+{
+    Physics * dest = (Physics *) calloc(1, sizeof(Physics));
+    dest->numeratorPrimeProduct = 1;
+    dest->denominatorPrimeProduct = 1;
+    
+    newtonPhysicsCopyNumeratorDimensions(N, dest, source);
+    newtonPhysicsCopyDenominatorDimensions(N, dest, source);
+
+    Physics * tail;
+    if ((tail = getTailPhysics(source)) == NULL)
+        scope->firstPhysics = dest;
+    else
+        tail->next = dest;
+
+    return dest;
+}
+
+void
+newtonAddInvariant(NoisyState * N, Invariant * invariant)
+{
+    Invariant * tail;
+    if ((tail = getTailInvariant(invariant)) == NULL)
+        N->invariantList = invariant;
+    else
+        tail->next = invariant;
 }
 
 // TODO clean up the code. make helper methods

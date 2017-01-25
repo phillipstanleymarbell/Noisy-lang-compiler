@@ -15,6 +15,7 @@
 #include "noisy-irHelpers.h"
 #include "noisy-parser.h"
 #include "newton-parser.h"
+#include "newton-parser-expression.h"
 #include "newton-lexer.h"
 #include "newton-symbolTable.h"
 #include "newton-firstAndFollow.h"
@@ -120,6 +121,152 @@ newtonParseRule(NoisyState * N, NoisyScope * currentScope)
 }
 
 NoisyIrNode *
+newtonParseInvariant(NoisyState * N, NoisyScope * currentScope)
+{
+	NoisyIrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pinvariant,
+						NULL /* left child */,
+						NULL /* right child */,
+						newtonLexPeek(N, 1)->sourceInfo /* source info */);
+
+
+    Invariant * invariant = (Invariant *) calloc(1, sizeof(Invariant));
+    
+    NoisyIrNode * invariantName = newtonParseIdentifier(N, currentScope);
+    addLeaf(N, node, invariantName);
+    
+    newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
+    newtonParseTerminal(N, kNewtonIrNodeType_Tsignal, currentScope);
+
+    invariant->parameterList = newtonParseParameterTuple(N, currentScope);
+
+	newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, currentScope);
+
+    if (newtonInFirst(N, kNewtonIrNodeType_Pconstraint))
+	{
+		addLeaf(N, node, newtonParseConstraint(N, currentScope));
+	}
+    else
+    {
+        noisyFatal(N, "newton-parser.c:newtonParseInvariant no constraints specified!");
+    }
+    while (newtonInFirst(N, kNewtonIrNodeType_Pconstraint))
+	{
+        newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
+		addLeafWithChainingSeqNewton(N, node, newtonParseConstraint(N, currentScope));
+	}
+    
+    invariant->constraints = node->irRightChild;
+
+    // TODO calculate the invariant id somewhere here
+    
+	newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
+
+    // TODO add the invariant struct to NoisyState somewhere here
+    newtonAddInvariant(N, invariant);
+    
+    return node;
+}
+
+NoisyIrNode *
+newtonParseConstraint(NoisyState * N, NoisyScope * currentScope)
+{
+	NoisyIrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pconstraint,
+						NULL /* left child */,
+						NULL /* right child */,
+						newtonLexPeek(N, 1)->sourceInfo /* source info */);
+    
+    if (newtonInFirst(N, kNewtonIrNodeType_PquantityExpression))
+    {
+        addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
+        addLeafWithChainingSeqNewton(N, node, newtonParseCompareOp(N, currentScope));
+        addLeafWithChainingSeqNewton(N, node, newtonParseQuantityExpression(N, currentScope));
+        
+        // TODO do some epic type checking here
+    }
+    else
+    {
+        noisyFatal(N, "newton-parser.c:newtonParseConstraint not a first of quantityExpression\n");
+    }
+
+    return node;
+}
+
+NoisyIrNode *
+newtonParseParameterTuple(NoisyState * N, NoisyScope * currentScope)
+{
+	NoisyIrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_PparameterTuple,
+						NULL /* left child */,
+						NULL /* right child */,
+						newtonLexPeek(N, 1)->sourceInfo /* source info */);
+    
+	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
+    addLeaf(N, node, newtonParseParameter(N, currentScope));
+    while (newtonInFirst(N, kNewtonIrNodeType_Pconstraint))
+	{
+        newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
+		addLeafWithChainingSeqNewton(N, node, newtonParseParameter(N, currentScope));
+	}
+	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
+
+    return node;
+}
+
+NoisyIrNode *
+newtonParseParameter(NoisyState * N, NoisyScope * currentScope)
+{
+	NoisyIrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pparameter,
+						NULL /* left child */,
+						NULL /* right child */,
+						newtonLexPeek(N, 1)->sourceInfo /* source info */);
+
+    /*
+     * By convention the left child is the name, and the right child is the name of the Physics
+     */
+    addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+    newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
+    addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+
+    return node;
+}
+
+NoisyIrNode *
+newtonIrParseConstant(NoisyState * N, NoisyScope * currentScope)
+{
+	NoisyIrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pconstant,
+						NULL /* left child */,
+						NULL /* right child */,
+						newtonLexPeek(N, 1)->sourceInfo /* source info */);
+    
+    NoisyIrNode * constantIdentifier = newtonParseIdentifier(N, currentScope);
+
+    newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
+    newtonParseTerminal(N, kNewtonIrNodeType_Tconstant, currentScope);
+    newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
+
+    addLeaf(N, node, constantIdentifier);
+    Physics * constantPhysics = newtonPhysicsTableAddPhysicsForToken(N, currentScope, constantIdentifier->token);
+    
+    NoisyIrNode * expression = newtonParseUnitExpression(N, currentScope);
+    addLeaf(N, node, expression);
+            
+    newtonPhysicsCopyNumeratorDimensions(N, constantPhysics, expression->physics);
+    newtonPhysicsCopyDenominatorDimensions(N, constantPhysics, expression->physics);
+
+    /*
+     * If LHS is declared a vector in vectorScalarPairScope, then 
+     * the expression must evaluate to a vector.
+     */
+    if (constantPhysics->isVector)
+    {
+        assert(expression->physics->isVector);
+    }
+    
+    newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
+
+    return node;
+}
+
+NoisyIrNode *
 newtonParseBaseSignal(NoisyState * N, NoisyScope * currentScope)
 {
 	NoisyIrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_PbaseSignal,
@@ -141,11 +288,36 @@ newtonParseBaseSignal(NoisyState * N, NoisyScope * currentScope)
     NoisyIrNode * unitAbbreviation = newtonParseSymbol(N, currentScope);
     addLeafWithChainingSeqNewton(N, node, unitAbbreviation);
     
-    Dimension * newDimension = newtonDimensionTableAddDimensionForToken(N, currentScope, unitName->token, unitAbbreviation->token);
-   
-    newtonPhysicsAddNumeratorDimension(N, newPhysics, newDimension);
-
-    addLeafWithChainingSeqNewton(N, node, newtonParseDerivation(N, currentScope));
+    NoisyIrNode * derivationExpression = newtonParseDerivation(N, currentScope)->irLeftChild;
+    addLeafWithChainingSeqNewton(N, node, derivationExpression);
+    
+    /*
+     * These are the derived signals
+     */
+    if (derivationExpression->type != kNewtonIrNodeType_Tnone)
+    {
+        newtonPhysicsCopyNumeratorDimensions(N, newPhysics, derivationExpression->physics);
+        newtonPhysicsCopyDenominatorDimensions(N, newPhysics, derivationExpression->physics);
+    }
+    /*
+     * These are the base signals
+     */
+    else
+    {
+        newtonPhysicsAddNumeratorDimension(
+            N, 
+            newPhysics, 
+            newtonDimensionTableAddDimensionForToken(
+                N, 
+                currentScope, 
+                unitName->token, 
+                unitAbbreviation->token
+            )
+        );
+    }
+    
+    newPhysics->dimensionAlias = unitName->token->stringConst; /* e.g.) meter, Pascal*/
+    newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g.) m, Pa*/
 	
     newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
 
@@ -169,7 +341,7 @@ newtonParseName(NoisyState * N, NoisyScope * currentScope)
     addLeafWithChainingSeqNewton(N, node, baseSignalName);
     
     if (newtonLexPeek(N, 1)->type == kNewtonIrNodeType_TEnglish || 
-                newtonLexPeek(N, 1)->type == kNewtonIrNodeType_TSpanish)
+        newtonLexPeek(N, 1)->type == kNewtonIrNodeType_TSpanish)
 	{
 		addLeafWithChainingSeqNewton(N, node, newtonParseTerminal(N, newtonLexPeek(N, 1)->type, currentScope));
 	}
@@ -208,6 +380,21 @@ newtonParseDerivation(NoisyState * N, NoisyScope * currentScope)
 						NULL /* left child */,
 						NULL /* right child */,
 						newtonLexPeek(N, 1)->sourceInfo /* source info */);
+    
+    newtonParseTerminal(N, kNewtonIrNodeType_Tderivation, currentScope);
+    newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
+    
+    if (newtonLexPeek(N, 1)->type == kNewtonIrNodeType_Tnone)
+	{
+		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tnone, currentScope));
+	}
+    else
+    {
+		addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
+    }
+    
+    newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
+
     return node;
 }
 
@@ -299,7 +486,6 @@ newtonParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType
     if (physicsSearchResult == NULL)
     {
         errorUseBeforeDefinition(N, t->identifier);
-        // TODO: do noisyParserErrorRecovery() here ?
     } else {
         n->physics = physicsSearchResult;
     }
@@ -331,16 +517,6 @@ newtonParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expect
 
     n->token = t;
 	n->tokenString = t->identifier;
-
-	//	NOTE: newtonSymbolTableAddOrLookupSymbolForToken(N, ) adds token 't' to scope 'scope'
-    // TODO fill in symbol table stuff after finishing the IR scope
-	// NoisySymbol *	sym = newtonSymbolTableAddOrLookupSymbolForToken(N, scope, t);
-	// if (sym->definition != NULL)
-	// {
-	// 	errorMultiDefinition(N, sym);
-	// 	// TODO: do noisyParserErrorRecovery() here ?
-	// }
-	// n->symbol = sym;
 
 	return n;
 }

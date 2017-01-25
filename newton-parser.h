@@ -11,6 +11,18 @@ NoisyIrNode *
 newtonParseRule(NoisyState * N, NoisyScope * currentScope);
 
 NoisyIrNode *
+newtonParseInvariant(NoisyState * N, NoisyScope * currentScope);
+    
+NoisyIrNode *
+newtonParseParameter(NoisyState * N, NoisyScope * currentScope);
+
+NoisyIrNode *
+newtonParseParameterTuple(NoisyState * N, NoisyScope * currentScope);
+
+NoisyIrNode *
+newtonParseConstraint(NoisyState * N, NoisyScope * currentScope);
+
+NoisyIrNode *
 newtonParseBaseSignal(NoisyState * N, NoisyScope * currentScope);
 
 NoisyIrNode *
@@ -34,4 +46,9 @@ newtonParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType
 NoisyIrNode *
 newtonParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expectedType, NoisyScope *  scope);
 
+NoisyIrNode *
+newtonIrParseConstant(NoisyState * N, NoisyScope * currentScope);
+
+NoisyIrNode *
+newtonParseCompareOp(NoisyState * N, NoisyScope * currentScope);
 

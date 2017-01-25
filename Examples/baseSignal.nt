@@ -2,19 +2,40 @@ time : signal =
 {
         name = "second" English
         symbol = "s";
-        # derivation = none;
+        derivation = none;
 }
 
 distance : signal =
 {
         name = "meter" English
         symbol = "m";
-        # derivation = none;
+        derivation = none;
 }
 
 mass : signal =
 {
         name = "kilogram" English
         symbol = "kg";
-        # derivation = none;
+        derivation = none;
+}
+
+speed : signal =
+{
+        name = "MegaSpeed" English
+        symbol = "MegS";
+        derivation = distance / time;
+}
+
+acceleration : signal =
+{
+        name = "MegaAcceleration" English
+        symbol = "MegA";
+        derivation = speed / time;
+}
+
+force : signal = 
+{
+        name = "Newton" English
+        symbol = "N";
+        derivation = mass * acceleration;
 }
