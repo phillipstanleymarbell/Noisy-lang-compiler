@@ -106,7 +106,7 @@ newtonParseRule(NoisyState * N, NoisyScope * currentScope)
             newtonParseBaseSignal(N, currentScope);
             break;
         case kNewtonIrNodeType_Tconstant:
-            // newtonParseConstant(N, currentScope);
+            newtonParseConstant(N, currentScope);
             break;
         case kNewtonIrNodeType_Tinvariant:
             // newtonParseInvariant(N, currentScope);
@@ -229,8 +229,9 @@ newtonParseParameter(NoisyState * N, NoisyScope * currentScope)
     return node;
 }
 
+
 NoisyIrNode *
-newtonIrParseConstant(NoisyState * N, NoisyScope * currentScope)
+newtonParseConstant(NoisyState * N, NoisyScope * currentScope)
 {
 	NoisyIrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pconstant,
 						NULL /* left child */,
@@ -245,20 +246,26 @@ newtonIrParseConstant(NoisyState * N, NoisyScope * currentScope)
 
     addLeaf(N, node, constantIdentifier);
     Physics * constantPhysics = newtonPhysicsTableAddPhysicsForToken(N, currentScope, constantIdentifier->token);
-    
-    NoisyIrNode * expression = newtonParseUnitExpression(N, currentScope);
-    addLeaf(N, node, expression);
-            
-    newtonPhysicsCopyNumeratorDimensions(N, constantPhysics, expression->physics);
-    newtonPhysicsCopyDenominatorDimensions(N, constantPhysics, expression->physics);
 
-    /*
-     * If LHS is declared a vector in vectorScalarPairScope, then 
-     * the expression must evaluate to a vector.
-     */
-    if (constantPhysics->isVector)
+    NoisyIrNode * number = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
+    addLeaf(N, node, number);
+    
+    if (peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier))
     {
-        assert(expression->physics->isVector);
+        NoisyIrNode * expression = newtonParseUnitExpression(N, currentScope);
+        addLeaf(N, node, expression);
+                
+        newtonPhysicsCopyNumeratorDimensions(N, constantPhysics, expression->physics);
+        newtonPhysicsCopyDenominatorDimensions(N, constantPhysics, expression->physics);
+
+        /*
+         * If LHS is declared a vector in vectorScalarPairScope, then 
+         * the expression must evaluate to a vector.
+         */
+        if (constantPhysics->isVector)
+        {
+            assert(expression->physics->isVector);
+        }
     }
     
     newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
@@ -409,12 +416,6 @@ newtonParseTerminal(NoisyState *  N, NoisyIrNodeType expectedType, NoisyScope * 
     if (!peekCheckNewton(N, 1, expectedType))
     {
         noisyFatal(N, "newton-parser.c: newtonParseTerminal");
-        // noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType);
-
-        /*
-         *  In this case, we know the specific expected type/token.
-         */
-        // noisyParserErrorRecovery(N, expectedType);
     }
 
     NoisyToken *  t = newtonLexGet(N);
@@ -451,7 +452,6 @@ newtonParseIdentifier(NoisyState *  N, NoisyScope *  currentScope)
 	else
 	{
 		noisyParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNoisyIrNodeTypeMax);
-		// noisyParserErrorRecovery(N, kNewtonIrNodeType_TidentifierOrNil);
 	}
     return NULL;
 }
@@ -465,11 +465,6 @@ newtonParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType
     if (!peekCheckNewton(N, 1, expectedType))
     {
         noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType);
-
-        /*
-         *  In this case, we know the specific expected type/token.
-         */
-        // noisyParserErrorRecovery(N, expectedType);
         return NULL;
     }
 
@@ -482,11 +477,18 @@ newtonParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType
     n->token = t;
     n->tokenString = t->identifier;
     
-    Physics * physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, t->identifier);
+    Physics * physicsSearchResult;
+    if ((physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, t->identifier)) == NULL)
+    {
+        physicsSearchResult = newtonPhysicsTablePhysicsForDimensionAlias(N, scope, t->identifier);
+    } 
+    
     if (physicsSearchResult == NULL)
     {
         errorUseBeforeDefinition(N, t->identifier);
-    } else {
+    }
+    else 
+    {
         n->physics = physicsSearchResult;
     }
 
@@ -502,11 +504,6 @@ newtonParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expect
 	if (!peekCheckNewton(N, 1, expectedType))
 	{
 		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType);
-
-		/*
-		 *	In this case, we know the specific expected type/token.
-		 */
-		// noisyParserErrorRecovery(N, expectedType);
 	}
 
 	NoisyToken *	t = newtonLexGet(N);

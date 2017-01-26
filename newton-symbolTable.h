@@ -4,8 +4,10 @@
 Dimension * newtonDimensionTableAddDimensionForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  nameToken, NoisyToken * abbrevToken);
 Dimension * newtonDimensionTableDimensionForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier);
 
+
 Physics * newtonPhysicsTableAddPhysicsForToken(NoisyState *  N, NoisyScope *  scope, struct NoisyToken *  token);
 Physics * newtonPhysicsTablePhysicsForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier);
+Physics * newtonPhysicsTablePhysicsForDimensionAlias(NoisyState *  N, NoisyScope *  scope, const char * dimensionAliasIdentifier);
 Physics * newtonPhysicsTableAddPhysics(NoisyState * N, NoisyScope * scope);
 
 Physics* copyPhysicsNode(Physics* list);

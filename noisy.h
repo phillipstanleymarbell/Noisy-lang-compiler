@@ -325,6 +325,7 @@ typedef enum
     kNewtonIrNodeType_Tsemicolon,
     kNewtonIrNodeType_Tcolon,
     kNewtonIrNodeType_Tcomma,
+    kNewtonIrNodeType_Tdot,
 	kNewtonIrNodeType_Tdiv,
 	kNewtonIrNodeType_Tmul,
 	kNewtonIrNodeType_Tplus,
@@ -339,7 +340,6 @@ typedef enum
 	kNewtonIrNodeType_Zepsilon,
 	kNewtonIrNodeType_Zeof,
 	kNewtonIrNodeType_Tcross,
-	kNewtonIrNodeType_Tdot,
 	kNewtonIrNodeType_Tintegral,
 	kNewtonIrNodeType_Tderivative,
 	kNewtonIrNodeType_TSpanish,
@@ -350,6 +350,7 @@ typedef enum
 	kNewtonIrNodeType_Tderivation,
 	kNewtonIrNodeType_Tsymbol,
 	kNewtonIrNodeType_Tname,
+	kNewtonIrNodeType_Pinteger,
 	kNewtonIrNodeType_Tnumber,
 	kNewtonIrNodeType_TrightBrace,
 	kNewtonIrNodeType_TleftBrace,
@@ -560,6 +561,10 @@ struct Physics
     Physics * vectorCounterpart; // non-NULL if a scalar AND counterpart defined in vectorScalarPairScope
     Physics * scalarCounterpart; // non-NULl if a vector AND counterpart defined in vectorScalarPairScope
 
+    /*
+     * numeratorPrimeProduct and denominatorPrimeProduct == 1 means
+     * the Physics is dimensionless. e.g. constants like Pi
+     */
     Dimension * numeratorDimensions;
     int numberOfNumerators;
     int numeratorPrimeProduct;

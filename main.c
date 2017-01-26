@@ -387,7 +387,7 @@ static void
 processNewtonFile(NoisyState *  N)
 {
 
-    char * fileName = "Examples/baseSignal.nt";
+    char * fileName = "Examples/constants.nt";
 
 	/*
 	 *	Tokenize input, then parse it and build AST + symbol table.

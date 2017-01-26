@@ -36,7 +36,7 @@ acceleration : signal =
 force : signal = 
 {
         name = "Newton" English
-        symbol = "N";
+        symbol = "N" ;
         derivation = mass * acceleration;
 }
 
@@ -46,3 +46,7 @@ work : signal =
         symbol = "J";
         derivation = force * distance;
 }
+
+Pi : constant = 3.14159;
+g : constant = 9.8 meter * second ** -2;
+G : constant = 6.674 meter ** 3 * kilogram ** -1 * second ** -2;

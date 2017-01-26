@@ -47,8 +47,9 @@ NoisyIrNode *
 newtonParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expectedType, NoisyScope *  scope);
 
 NoisyIrNode *
-newtonIrParseConstant(NoisyState * N, NoisyScope * currentScope);
+newtonParseConstant(NoisyState * N, NoisyScope * currentScope);
 
 NoisyIrNode *
 newtonParseCompareOp(NoisyState * N, NoisyScope * currentScope);
+
 

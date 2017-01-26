@@ -36,3 +36,6 @@ newtonParseUnitTerm(NoisyState * N, NoisyScope * currentScope);
 
 NoisyIrNode *
 newtonParseUnitFactor(NoisyState * N, NoisyScope * currentScope);
+
+NoisyIrNode *
+newtonParseInteger(NoisyState * N, NoisyScope * currentScope);

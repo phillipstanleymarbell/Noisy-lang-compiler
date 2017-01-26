@@ -413,6 +413,27 @@ newtonDimensionTableDimensionForIdentifier(NoisyState *  N, NoisyScope *  scope,
 }
 
 Physics *
+newtonPhysicsTablePhysicsForDimensionAlias(NoisyState *  N, NoisyScope *  scope, const char * dimensionAliasIdentifier)
+{
+	if (scope == NULL)
+	{
+		return NULL;
+	}
+
+	Physics * curPhysics = scope->firstPhysics;
+	while (curPhysics != NULL)
+	{
+		if (!strcmp(curPhysics->dimensionAlias, dimensionAliasIdentifier))
+		{
+			return curPhysics;
+		}
+		curPhysics = curPhysics->next;
+	}
+
+	return newtonPhysicsTablePhysicsForDimensionAlias(N, scope->parent, dimensionAliasIdentifier);
+}
+
+Physics *
 newtonPhysicsTablePhysicsForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier)
 {
 	if (scope == NULL)

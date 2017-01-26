@@ -36,6 +36,7 @@ static void		checkGt(NoisyState *  N);
 static void		checkLt(NoisyState *  N);
 static void     checkMul(NoisyState * N);
 static bool checkProportionality(NoisyState * N);
+static void checkDot(NoisyState *  N);
 
 static void		makeNumericConst(NoisyState *  N);
 static bool		isDecimal(NoisyState *  N, char *  string);
@@ -409,6 +410,12 @@ newtonLexInit(NoisyState *  N, char *  fileName)
 						checkSingle(N, kNewtonIrNodeType_Tcolon);
 						continue;
 					}
+
+                    case '.':
+                    {
+                        checkDot(N);
+                        continue;
+                    }
 					
 
 					/*
@@ -820,8 +827,6 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 
 	if (N->currentToken[0] >= '0' && N->currentToken[0] <= '9')
 	{
-        // newton-lexer.c: finishToken: we don't use numbers in the config file. amirite
-        noisyFatal(N, Esanity);
 		makeNumericConst(N);
 		return;
 	}
@@ -1493,6 +1498,43 @@ checkMul(NoisyState *  N)
 	done(N, newToken);
 }
 
+static void
+checkDot(NoisyState *  N)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckDot);
+
+	/*
+	 *	If token thus far is	"0" | onenine {zeronine}	then
+	 *	don't gobble; continue building token.  However, something like
+	 *	"5zyyg".
+	 */
+	if (isDecimal(N, N->currentToken))
+	{
+		checkTokenLength(N, 1);
+		N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
+
+		return;
+	}
+
+	/*
+	 *	Gobble any extant chars.
+	 */
+	finishToken(N);
+
+	gobble(N, 1);
+
+	NoisyToken *		newToken = newtonLexAllocateToken(N,	kNewtonIrNodeType_Tdot /* type	*/,
+									NULL	/* identifier	*/,
+									0	/* integerConst	*/,
+									0.0	/* realConst	*/,
+									NULL	/* stringConst	*/,
+									NULL	/* sourceInfo	*/);
+
+	/*
+	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+	 */
+	done(N, newToken);
+}
 
 static bool
 isOperatorOrSeparator(NoisyState *  N, char c)
