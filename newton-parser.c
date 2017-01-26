@@ -109,7 +109,7 @@ newtonParseRule(NoisyState * N, NoisyScope * currentScope)
             newtonParseConstant(N, currentScope);
             break;
         case kNewtonIrNodeType_Tinvariant:
-            // newtonParseInvariant(N, currentScope);
+            newtonParseInvariant(N, currentScope);
             break;
         default:
             noisyFatal(N, "newton-parser.c:newtonParseRule neither signal, constant, nor invariant\n");
@@ -135,31 +135,29 @@ newtonParseInvariant(NoisyState * N, NoisyScope * currentScope)
     addLeaf(N, node, invariantName);
     
     newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
-    newtonParseTerminal(N, kNewtonIrNodeType_Tsignal, currentScope);
+    newtonParseTerminal(N, kNewtonIrNodeType_Tinvariant, currentScope);
 
     invariant->parameterList = newtonParseParameterTuple(N, currentScope);
 
-	newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, currentScope);
+    newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
+	
+    NoisyIrNode * scopeBegin = newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, currentScope);
+	NoisyScope * newScope	= newtonSymbolTableOpenScope(N, currentScope, scopeBegin);
+    newScope->invariantParameterList = invariant->parameterList;
 
-    if (newtonInFirst(N, kNewtonIrNodeType_Pconstraint))
-	{
-		addLeaf(N, node, newtonParseConstraint(N, currentScope));
-	}
-    else
-    {
-        noisyFatal(N, "newton-parser.c:newtonParseInvariant no constraints specified!");
-    }
+	addLeafWithChainingSeqNewton(N, node, newtonParseConstraint(N, newScope));
     while (newtonInFirst(N, kNewtonIrNodeType_Pconstraint))
 	{
-        newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
-		addLeafWithChainingSeqNewton(N, node, newtonParseConstraint(N, currentScope));
+        newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, newScope);
+		addLeafWithChainingSeqNewton(N, node, newtonParseConstraint(N, newScope));
 	}
     
     invariant->constraints = node->irRightChild;
 
     // TODO calculate the invariant id somewhere here
     
-	newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
+	NoisyIrNode *	scopeEnd = newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, newScope);
+	newtonSymbolTableCloseScope(N, newScope, scopeEnd);
 
     // TODO add the invariant struct to NoisyState somewhere here
     newtonAddInvariant(N, invariant);
@@ -201,7 +199,7 @@ newtonParseParameterTuple(NoisyState * N, NoisyScope * currentScope)
     
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
     addLeaf(N, node, newtonParseParameter(N, currentScope));
-    while (newtonInFirst(N, kNewtonIrNodeType_Pconstraint))
+    while (peekCheckNewton(N, 1, kNewtonIrNodeType_Tcomma))
 	{
         newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
 		addLeafWithChainingSeqNewton(N, node, newtonParseParameter(N, currentScope));
@@ -456,6 +454,38 @@ newtonParseIdentifier(NoisyState *  N, NoisyScope *  currentScope)
     return NULL;
 }
 
+char *
+newtonParseGetPhysicsTypeStringByBoundIdentifier(NoisyState * N, NoisyIrNode * root, char* boundVariableIdentifier)
+{
+    // do DFS and find the node whose left child node has given identifier
+    // and return the right node's identifier
+    if (root->type == kNewtonIrNodeType_Pparameter)
+    {
+        assert(root->irLeftChild != NULL && root->irRightChild != NULL);
+		if (!strcmp(root->irLeftChild->tokenString, boundVariableIdentifier))
+        {
+            return root->irRightChild->tokenString;
+        }
+    }
+
+    char * stringResult = "";
+    
+    if (root->irLeftChild != NULL)
+        stringResult = newtonParseGetPhysicsTypeStringByBoundIdentifier(N, root->irLeftChild, boundVariableIdentifier);
+
+    if (strcmp(stringResult, ""))
+        return stringResult;
+    
+    if (root->irRightChild != NULL)
+        stringResult = newtonParseGetPhysicsTypeStringByBoundIdentifier(N, root->irRightChild, boundVariableIdentifier);
+
+    if (strcmp(stringResult, ""))
+        return stringResult;
+
+    return "";
+}
+
+
 /*
  *  Remove an identifier _usage_ terminal, performing symtab lookup
  */
@@ -477,11 +507,21 @@ newtonParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType
     n->token = t;
     n->tokenString = t->identifier;
     
+    // TODO rewrite this logic in a cleaner way.... make a new method or something
     Physics * physicsSearchResult;
     if ((physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, t->identifier)) == NULL)
     {
         physicsSearchResult = newtonPhysicsTablePhysicsForDimensionAlias(N, scope, t->identifier);
     } 
+
+    if (physicsSearchResult == NULL)
+    {
+        char * physicsTypeString = newtonParseGetPhysicsTypeStringByBoundIdentifier(N, scope->invariantParameterList, t->identifier);
+        if ((physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, physicsTypeString)) == NULL)
+        {
+            physicsSearchResult = newtonPhysicsTablePhysicsForDimensionAlias(N, scope, physicsTypeString);
+        } 
+    }
     
     if (physicsSearchResult == NULL)
     {

@@ -220,25 +220,33 @@ newtonParseQuantityTerm(NoisyState * N, NoisyScope * currentScope)
     intermediate->physics->numeratorPrimeProduct = 1;
     intermediate->physics->denominatorPrimeProduct = 1;
 
+
     if (newtonInFirst(N, kNewtonIrNodeType_PunaryOp))
     {
         addLeaf(N, intermediate, newtonParseUnaryOp(N, currentScope));
     }
 
+    bool isPhysics /*not a number*/ = peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier);
     NoisyIrNode * leftFactor = newtonParseQuantityFactor(N, currentScope);
     addLeaf(N, intermediate, leftFactor);
-
-    newtonPhysicsCopyNumeratorDimensions(N, intermediate->physics, leftFactor->physics);
-    newtonPhysicsCopyDenominatorDimensions(N, intermediate->physics, leftFactor->physics);
     
     int numVectorsInTerm = 0;
-    /*
-     * If either LHS or RHS is a vector (not both), then the resultant is a vector
-     */
-    if (leftFactor->physics->isVector)
+
+    if (isPhysics)
     {
-        intermediate->physics->isVector = true;
-        numVectorsInTerm++;
+        if (leftFactor->physics->numeratorDimensions)
+            newtonPhysicsCopyNumeratorDimensions(N, intermediate->physics, leftFactor->physics);
+        if (leftFactor->physics->denominatorDimensions)
+            newtonPhysicsCopyDenominatorDimensions(N, intermediate->physics, leftFactor->physics);
+
+        /*
+         * If either LHS or RHS is a vector (not both), then the resultant is a vector
+         */
+        if (leftFactor->physics->isVector)
+        {
+            intermediate->physics->isVector = true;
+            numVectorsInTerm++;
+        }
     }
     
     NoisyIrNode * rightFactor;
@@ -248,31 +256,38 @@ newtonParseQuantityTerm(NoisyState * N, NoisyScope * currentScope)
         NoisyIrNode * binOp = newtonParseMidPrecedenceBinaryOp(N, currentScope);
         addLeafWithChainingSeq(N, intermediate, binOp);
         
+        bool isPhysics = peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier);
         rightFactor = newtonParseQuantityFactor(N, currentScope);
         addLeafWithChainingSeq(N, intermediate, rightFactor);
         
-        if (rightFactor->physics->isVector)
+        // TODO double check this logic when I'm more awake
+        if (isPhysics && rightFactor->physics->isVector)
         {
             intermediate->physics->isVector = true;
             numVectorsInTerm++;
+            
+            /*
+             * Cannot perform multiply or divide operations on two vectors
+             * e.g.) vector * scalar * scalar / vector is illegal because
+             * it boils down to vector / vector which is illegal
+             */
+            assert(numVectorsInTerm < 2);
         }
 
-        /*
-         * Cannot perform multiply or divide operations on two vectors
-         * e.g.) vector * scalar * scalar / vector is illegal because
-         * it boils down to vector / vector which is illegal
-         */
-        assert(numVectorsInTerm < 2);
 
-        if (binOp->type == kNewtonIrNodeType_Tmul) 
+        if (isPhysics && binOp->type == kNewtonIrNodeType_Tmul) 
         {
-            newtonPhysicsCopyNumeratorDimensions(N, intermediate->physics, rightFactor->physics);
-            newtonPhysicsCopyDenominatorDimensions(N, intermediate->physics, rightFactor->physics);
+            if (rightFactor->physics->numeratorDimensions)
+                newtonPhysicsCopyNumeratorDimensions(N, intermediate->physics, rightFactor->physics);
+            if (rightFactor->physics->denominatorDimensions)
+                newtonPhysicsCopyDenominatorDimensions(N, intermediate->physics, rightFactor->physics);
         }
-        else if (binOp->type == kNewtonIrNodeType_Tdiv)
+        else if (isPhysics && binOp->type == kNewtonIrNodeType_Tdiv)
         {
-            newtonPhysicsCopyNumeratorToDenominatorDimensions(N, intermediate->physics, rightFactor->physics);
-            newtonPhysicsCopyDenominatorToNumeratorDimensions(N, intermediate->physics, rightFactor->physics);
+            if (rightFactor->physics->denominatorDimensions)
+                newtonPhysicsCopyNumeratorToDenominatorDimensions(N, intermediate->physics, rightFactor->physics);
+            if (rightFactor->physics->numeratorDimensions)
+                newtonPhysicsCopyDenominatorToNumeratorDimensions(N, intermediate->physics, rightFactor->physics);
         }
     }
 
@@ -388,6 +403,8 @@ newtonParseVectorOp(NoisyState *  N, NoisyScope * currentScope)
     NoisyIrNode * left;
     left = newtonParseQuantityExpression(N, currentScope);
     addLeafWithChainingSeq(N, intermediate, left);
+
+    // TODO follow the logic of ParseUnitExpressions
     newtonPhysicsCopyNumeratorDimensions(N, intermediate->physics, left->physics);
     newtonPhysicsCopyDenominatorDimensions(N, intermediate->physics, left->physics);
     
@@ -421,15 +438,20 @@ newtonParseQuantityFactor(NoisyState * N, NoisyScope * currentScope)
     if (peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier))
     {
         node = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
+        if (newtonInFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp))
+        {
+            addLeaf(N, node, newtonParseHighPrecedenceBinaryOp(N, currentScope));
+
+            // TODO https://github.com/phillipstanleymarbell/Noisy-lang-compiler/issues/74
+            // this should technically be something other than newtonParseUnitExpression
+            // Make a new expression for only numbers
+            // because we shouldn't allow meter ** (something other than expression of numbers)
+            addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
+        }
     }
     else if (peekCheck(N, 1, kNewtonIrNodeType_Tnumber))
     {
         node = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
-    }
-    else if (newtonInFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp))
-    {
-        node = newtonParseHighPrecedenceBinaryOp(N, currentScope);
-        addLeafWithChainingSeqNewton(N, node, newtonParseQuantityExpression(N, currentScope));
     }
     else if (newtonInFirst(N, kNewtonIrNodeType_PtimeOp))
     {
@@ -444,6 +466,12 @@ newtonParseQuantityFactor(NoisyState * N, NoisyScope * currentScope)
         newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
         node = newtonParseQuantityExpression(N, currentScope);
         newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
+        
+        if (newtonInFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp))
+        {
+            addLeaf(N, node, newtonParseHighPrecedenceBinaryOp(N, currentScope));
+            addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
+        }
     }
     else
     {

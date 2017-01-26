@@ -671,6 +671,11 @@ struct NoisyScope
 	NoisySymbol *		firstSymbol;
 
     /*
+     * each invariant scope will have its own list of parameters
+     */
+    NoisyIrNode * invariantParameterList; // this is just bunch of NoisyIrNode's in Xseq
+    
+    /*
      * For the config file, we only have one global scope that keeps track of all
      * dimensions ad physics quantities.
      */

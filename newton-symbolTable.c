@@ -423,7 +423,10 @@ newtonPhysicsTablePhysicsForDimensionAlias(NoisyState *  N, NoisyScope *  scope,
 	Physics * curPhysics = scope->firstPhysics;
 	while (curPhysics != NULL)
 	{
-		if (!strcmp(curPhysics->dimensionAlias, dimensionAliasIdentifier))
+        /*
+         * NOTE: not all physics structs have a dimensionAlias...
+         */
+		if (curPhysics->dimensionAlias && !strcmp(curPhysics->dimensionAlias, dimensionAliasIdentifier))
 		{
 			return curPhysics;
 		}

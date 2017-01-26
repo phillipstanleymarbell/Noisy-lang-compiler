@@ -27,7 +27,7 @@ void newtonPhysicsCopyDenominatorToNumeratorDimensions(NoisyState * N, Physics *
 void newtonAddInvariant(NoisyState * N, Invariant * invariant);
 
 NoisyScope *	newtonSymbolTableAllocScope(NoisyState *  N);
-NoisySymbol *	newtonSymbolTableAddOrLookupSymbolForToken(NoisyState *  N, struct NoisyScope *  scope, struct NoisyToken *  token);
-NoisySymbol *	newtonSymbolTableSymbolForIdentifier(NoisyState *  N, struct NoisyScope *  scope, const char *  identifier);
-NoisyScope *	newtonSymbolTableOpenScope(NoisyState *  N, struct NoisyScope *  scope, struct NoisyIrNode *  subtree);
-void		        newtonSymbolTableCloseScope(NoisyState *  N, struct NoisyScope *  scope, struct NoisyIrNode *  subtree);
+NoisySymbol *	newtonSymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token);
+NoisySymbol *	newtonSymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier);
+NoisyScope *	newtonSymbolTableOpenScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subtree);
+void		        newtonSymbolTableCloseScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subtree);
