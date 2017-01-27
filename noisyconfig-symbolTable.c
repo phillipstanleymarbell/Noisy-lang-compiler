@@ -1,5 +1,5 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2015. Jonathan Lim.
 
 	All rights reserved.
 
@@ -152,6 +152,15 @@ copyPhysicsNode(Physics* list)
     copy->next = NULL;
 
     return copy;
+}
+
+void
+appendIntegralList(IntegralList* head, IntegralList* list)
+{
+    IntegralList* tail = getTailIntegralList(head);
+    assert(tail != NULL);
+    
+    tail->next = list;
 }
 
 IntegralList*

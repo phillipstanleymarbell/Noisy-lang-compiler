@@ -489,7 +489,6 @@ struct IntegralList
 struct NoisyIrNode
 {
 	NoisyIrNodeType		type;
-    Physics *           physicsType;
 
 	/*
 	 *	Syntactic (AST) information.
@@ -507,12 +506,6 @@ struct NoisyIrNode
      * Used for evaluating dimensions in expressions
      */
     Physics * physics;
-
-    /*
-     * Used for returning integral list from noisyConfigParseIntegralList
-     */
-    IntegralList * vectorIntegralList;
-    IntegralList * scalarIntegralList;
 	
     /*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
