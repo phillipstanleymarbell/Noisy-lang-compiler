@@ -1,3 +1,39 @@
+/*
+	Authored 2015. Jonathan Lim.
+
+	All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions
+	are met:
+
+	*	Redistributions of source code must retain the above
+		copyright notice, this list of conditions and the following
+		disclaimer.
+
+	*	Redistributions in binary form must reproduce the above
+		copyright notice, this list of conditions and the following
+		disclaimer in the documentation and/or other materials
+		provided with the distribution.
+
+	*	Neither the name of the author nor the names of its
+		contributors may be used to endorse or promote products
+		derived from this software without specific prior written
+		permission.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+	POSSIBILITY OF SUCH DAMAGE.
+*/
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -383,21 +419,7 @@ noisyConfigParseVectorIntegralLists(NoisyState * N, NoisyScope * scope)
     
     while (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PvectorIntegralList)) 
     {
-        NoisyIrNode * irNode = noisyConfigParseVectorIntegralList(N, scope);
-
-
-
-        if (N->vectorIntegralLists == NULL)
-        {
-            N->vectorIntegralLists = irNode->vectorIntegralList;
-        }
-        else
-        {
-            IntegralList* current = getTailIntegralList(N->vectorIntegralLists);
-            current->next = irNode->vectorIntegralList;
-        }
-
-        addLeafWithChainingSeq(N, n, irNode);
+        addLeafWithChainingSeq(N, n, noisyConfigParseVectorIntegralList(N, scope));
     }
 
     /*
@@ -438,8 +460,8 @@ noisyConfigParseVectorIntegralList(NoisyState * N, NoisyScope * scope)
 		noisyConfigLexPeek(N, 1)->sourceInfo /* source info */
 	);
 
-    n->vectorIntegralList = (IntegralList *) calloc(1, sizeof(IntegralList));
-    n->vectorIntegralList->head = NULL;
+    IntegralList *vectorIntegralList = (IntegralList *) calloc(1, sizeof(IntegralList));
+    vectorIntegralList->head = NULL;
 
     noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TleftBrac, scope);
 
@@ -456,14 +478,13 @@ noisyConfigParseVectorIntegralList(NoisyState * N, NoisyScope * scope)
             noisyFatal(N, Esanity);
         }
 
-        if (n->vectorIntegralList->head == NULL)
+        if (vectorIntegralList->head == NULL)
         {
-            n->vectorIntegralList->head = copyPhysicsNode(physics);
+            vectorIntegralList->head = copyPhysicsNode(physics);
         }
         else
         {
-            Physics * current = getTailPhysics(n->vectorIntegralList->head);
-            current->next = copyPhysicsNode(physics);
+            getTailPhysics(vectorIntegralList->head)->next = copyPhysicsNode(physics);
         }
 
         addLeafWithChainingSeq(N, n, physicsIdentifier);
@@ -475,6 +496,11 @@ noisyConfigParseVectorIntegralList(NoisyState * N, NoisyScope * scope)
             noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tcomma, scope);
         }
     }
+
+    if (N->vectorIntegralLists == NULL)
+        N->vectorIntegralLists = vectorIntegralList;
+    else
+        appendIntegralList(N->vectorIntegralLists, vectorIntegralList);
 
     noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tsemicolon, scope);
 
@@ -530,19 +556,7 @@ noisyConfigParseScalarIntegralLists(NoisyState * N, NoisyScope * scope)
 
     while (noisyConfigInFirst(N, kNoisyConfigIrNodeType_PscalarIntegralList)) 
     {
-        NoisyIrNode * irNode = noisyConfigParseScalarIntegralList(N, scope);
-
-        if (N->scalarIntegralLists == NULL)
-        {
-            N->scalarIntegralLists = irNode->scalarIntegralList;
-        }
-        else
-        {
-            IntegralList* current = getTailIntegralList(N->scalarIntegralLists);
-            current->next = irNode->scalarIntegralList;
-        }
-        
-        addLeafWithChainingSeq(N, n, irNode);
+        addLeafWithChainingSeq(N, n, noisyConfigParseScalarIntegralList(N, scope));
     }
     
     /*
@@ -581,8 +595,8 @@ noisyConfigParseScalarIntegralList(NoisyState * N, NoisyScope * scope)
 		noisyConfigLexPeek(N, 1)->sourceInfo /* source info */
 	);
 
-    n->scalarIntegralList = (IntegralList *) calloc(1, sizeof(IntegralList));
-    n->scalarIntegralList->head = NULL;
+    IntegralList *scalarIntegralList = (IntegralList *) calloc(1, sizeof(IntegralList));
+    scalarIntegralList->head = NULL;
 
     noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_TleftBrac, scope);
 
@@ -598,14 +612,13 @@ noisyConfigParseScalarIntegralList(NoisyState * N, NoisyScope * scope)
             noisyFatal(N, Esanity);
         }
 
-        if (n->scalarIntegralList->head == NULL)
+        if (scalarIntegralList->head == NULL)
         {
-            n->scalarIntegralList->head = copyPhysicsNode(physics);
+            scalarIntegralList->head = copyPhysicsNode(physics);
         }
         else
         {
-            Physics * current = getTailPhysics(n->scalarIntegralList->head);
-            current->next = copyPhysicsNode(physics);
+            getTailPhysics(scalarIntegralList->head)->next = copyPhysicsNode(physics);
         }
 
         addLeafWithChainingSeq(N, n, physicsIdentifier);
@@ -617,6 +630,11 @@ noisyConfigParseScalarIntegralList(NoisyState * N, NoisyScope * scope)
             noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tcomma, scope);
         }
     }
+    
+    if (N->scalarIntegralLists == NULL)
+        N->scalarIntegralLists = scalarIntegralList;
+    else
+        appendIntegralList(N->scalarIntegralLists, scalarIntegralList);
 
     noisyConfigParseTerminal(N, kNoisyConfigIrNodeType_Tsemicolon, scope);
 
