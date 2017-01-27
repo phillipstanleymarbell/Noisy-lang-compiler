@@ -34,5 +34,5 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-bool	noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken);
-bool	noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken);
+bool noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
+bool noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
