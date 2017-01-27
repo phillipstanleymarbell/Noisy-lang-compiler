@@ -75,6 +75,7 @@ typedef enum
 	kNoisyIrNodeType_TcharConst,
 	kNoisyIrNodeType_Tcolon,
 	kNoisyIrNodeType_Tcomma,
+	kNoisyIrNodeType_Tnone,
 	kNoisyIrNodeType_Tcons,
 	kNoisyIrNodeType_Tconst,
 	kNoisyIrNodeType_TdefineAs,
@@ -309,7 +310,84 @@ typedef enum
 	kNoisyConfigIrNodeType_Zepsilon,
 	kNoisyConfigIrNodeType_Zeof,
     kNoisyConfigIrNodeType_ZbadStringConst,
-	/*
+
+    /*
+     * Newton related nodes
+     */
+	kNewtonIrNodeType_Tnil,
+	kNewtonIrNodeType_Tnone,
+    kNewtonIrNodeType_Tlt,
+    kNewtonIrNodeType_Tle,
+    kNewtonIrNodeType_Tgt,
+    kNewtonIrNodeType_Tge,
+    kNewtonIrNodeType_Tproportionality,
+    kNewtonIrNodeType_Tequivalent,
+    kNewtonIrNodeType_Tsemicolon,
+    kNewtonIrNodeType_Tcolon,
+    kNewtonIrNodeType_Tcomma,
+    kNewtonIrNodeType_Tdot,
+	kNewtonIrNodeType_Tdiv,
+	kNewtonIrNodeType_Tmul,
+	kNewtonIrNodeType_Tplus,
+	kNewtonIrNodeType_Tminus,
+    kNewtonIrNodeType_Texponent,
+	kNewtonIrNodeType_Tequals,
+    kNewtonIrNodeType_TintConst,
+    kNewtonIrNodeType_TrealConst,	
+	kNewtonIrNodeType_TstringConst,
+	kNewtonIrNodeType_ZbadIdentifier,
+	kNewtonIrNodeType_ZbadStringConst,
+	kNewtonIrNodeType_Zepsilon,
+	kNewtonIrNodeType_Zeof,
+	kNewtonIrNodeType_Tcross,
+	kNewtonIrNodeType_Tintegral,
+	kNewtonIrNodeType_Tderivative,
+	kNewtonIrNodeType_TSpanish,
+	kNewtonIrNodeType_TEnglish,
+	kNewtonIrNodeType_Tinvariant,
+	kNewtonIrNodeType_Tconstant,
+	kNewtonIrNodeType_Tsignal,
+	kNewtonIrNodeType_Tderivation,
+	kNewtonIrNodeType_Tsymbol,
+	kNewtonIrNodeType_Tname,
+	kNewtonIrNodeType_Pinteger,
+	kNewtonIrNodeType_Tnumber,
+	kNewtonIrNodeType_TrightBrace,
+	kNewtonIrNodeType_TleftBrace,
+	kNewtonIrNodeType_TrightParen,
+	kNewtonIrNodeType_TleftParen,
+	kNewtonIrNodeType_Tidentifier,
+    kNewtonIrNodeType_PlanguageSetting,
+	kNewtonIrNodeType_PcompareOp,
+	kNewtonIrNodeType_PvectorOp,
+	kNewtonIrNodeType_PhighPrecedenceBinaryOp,
+	kNewtonIrNodeType_PmidPrecedenceBinaryOp,
+	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
+	kNewtonIrNodeType_PunaryOp,
+	kNewtonIrNodeType_PtimeOp,
+	kNewtonIrNodeType_Punit,
+	kNewtonIrNodeType_PunitFactor,
+    kNewtonIrNodeType_PunitTerm,
+	kNewtonIrNodeType_PunitExpression,
+	kNewtonIrNodeType_Pquantity,
+	kNewtonIrNodeType_PquantityFactor,
+	kNewtonIrNodeType_PquantityTerm,
+	kNewtonIrNodeType_PquantityExpression,
+	kNewtonIrNodeType_Pparameter,
+	kNewtonIrNodeType_PparameterTuple,
+	kNewtonIrNodeType_Pderivation,
+	kNewtonIrNodeType_Psymbol,
+	kNewtonIrNodeType_Pname,
+	kNewtonIrNodeType_Pconstraint,
+	kNewtonIrNodeType_PconstraintList,
+	kNewtonIrNodeType_PbaseSignal,
+	kNewtonIrNodeType_Pinvariant,
+	kNewtonIrNodeType_Pconstant,
+	kNewtonIrNodeType_Prule,
+	kNewtonIrNodeType_PruleList,
+	kNewtonIrNodeType_PnewtonFile,
+	
+    /*
 	 *	Code depends on this bringing up the rear.
 	 */
 	kNoisyIrNodeTypeMax,
@@ -441,10 +519,12 @@ typedef struct NoisySourceInfo	NoisySourceInfo;
 typedef struct Dimension Dimension;
 typedef struct Physics Physics;
 typedef struct IntegralList IntegralList;
+typedef struct Invariant Invariant;
 
 struct Dimension
 {
     char * identifier;
+    char * abbreviation;
 	
     NoisyScope *		scope;
 	
@@ -455,9 +535,25 @@ struct Dimension
     Dimension * next;
 };
 
+struct Invariant
+{
+    char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
+    
+    NoisyScope *		scope;
+    NoisySourceInfo *	sourceInfo;
+
+    NoisyIrNode * parameterList; // this is just bunch of NoisyIrNode's in Xseq
+    int id; // TODO calculate id by multiplying all the prime numbers of parameterList
+
+    NoisyIrNode * constraints;
+
+    Invariant * next;
+};
+
 struct Physics 
 {
     char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
+    
     NoisyScope *		scope;
     NoisySourceInfo *	sourceInfo;
     
@@ -465,6 +561,10 @@ struct Physics
     Physics * vectorCounterpart; // non-NULL if a scalar AND counterpart defined in vectorScalarPairScope
     Physics * scalarCounterpart; // non-NULl if a vector AND counterpart defined in vectorScalarPairScope
 
+    /*
+     * numeratorPrimeProduct and denominatorPrimeProduct == 1 means
+     * the Physics is dimensionless. e.g. constants like Pi
+     */
     Dimension * numeratorDimensions;
     int numberOfNumerators;
     int numeratorPrimeProduct;
@@ -474,6 +574,7 @@ struct Physics
     int denominatorPrimeProduct;
 
     char * dimensionAlias;
+    char * dimensionAliasAbbreviation;
 
     Physics * definition;
 
@@ -563,11 +664,16 @@ struct NoisyScope
 	NoisySymbol *		firstSymbol;
 
     /*
+     * each invariant scope will have its own list of parameters
+     */
+    NoisyIrNode * invariantParameterList; // this is just bunch of NoisyIrNode's in Xseq
+    
+    /*
      * For the config file, we only have one global scope that keeps track of all
      * dimensions ad physics quantities.
      */
-    struct Dimension * firstDimension;
-    struct Physics * firstPhysics;
+    Dimension * firstDimension;
+    Physics * firstPhysics;
 
 	/*
 	 *	Where in source scope begins and ends
@@ -714,9 +820,9 @@ typedef struct
 	 *	The root of the IR tree, and top scope
 	 */
 	NoisyIrNode *		noisyIrRoot;
-	NoisyIrNode *		noisyConfigIrRoot;
+	NoisyIrNode *		newtonIrRoot;
 	NoisyScope *		noisyIrTopScope;
-    NoisyScope *        noisyConfigIrTopScope;
+    NoisyScope *        newtonIrTopScope;
 
 	/*
 	 *	Output file name when emitting bytecode/protobuf
@@ -748,6 +854,8 @@ typedef struct
      * This is a group (linked list) of linked list of physics nodes
      */
     IntegralList * scalarIntegralLists;
+
+    Invariant * invariantList;
 
 } NoisyState;
 

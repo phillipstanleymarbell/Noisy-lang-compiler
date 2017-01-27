@@ -50,6 +50,7 @@
 #include "noisy.h"
 #include "noisy-irHelpers.h"
 #include "noisy-lexer.h"
+#include "newton-lexer.h"
 
 
 
@@ -135,6 +136,18 @@ errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
 }
 
+bool
+peekCheckNewton(NoisyState *  N, int lookAhead, NoisyIrNodeType expectedType)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
+
+	if (newtonLexPeek(N, lookAhead) == NULL)
+	{
+		return false;
+	}
+
+	return (newtonLexPeek(N, lookAhead)->type == expectedType);
+}
 
 bool
 peekCheck(NoisyState *  N, int lookAhead, NoisyIrNodeType expectedType)
@@ -183,6 +196,26 @@ addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
 	}
 
 	node->irRightChild = newNode;
+}
+
+void
+addLeafWithChainingSeqNewton(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
+
+	NoisyIrNode *	node = depthFirstWalk(N, parent);
+
+	if (node->irLeftChild == NULL)
+	{
+		node->irLeftChild = newNode;
+
+		return;
+	}
+	
+	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
+						newNode /* left child */,
+						NULL /* right child */,
+						newtonLexPeek(N, 1)->sourceInfo /* source info */);
 }
 
 void

@@ -58,9 +58,9 @@
 #include "noisy-irPass-dotBackend.h"
 #include "noisy-irPass-protobufBackend.h"
 
-#include "noisyconfig-parser.h"
-#include "noisyconfig-lexer.h"
-#include "noisyconfig-symbolTable.h"
+#include "newton-parser.h"
+#include "newton-lexer.h"
+#include "newton-symbolTable.h"
 
 //extern const char	gNoisyEol[];
 //extern const char	gNoisyWhitespace[];
@@ -72,7 +72,7 @@ static void		version(NoisyState *  N);
 
 
 // static void		usage(NoisyState *  N);
-static void		processConfigFile(NoisyState *  N);
+static void		processNewtonFile(NoisyState *  N);
 // static void		version(NoisyState *  N);
 
 static void     recurseDimensions(NoisyState * N, NoisyScope * topScope);
@@ -83,10 +83,10 @@ recurseDimensions(NoisyState * N, NoisyScope * topScope)
 {
     Dimension * curDimension = topScope->firstDimension;
     if (curDimension == NULL)
-		flexprint(N->Fe, N->Fm, N->Fperr, "topscope dimension doesn't exist\n");
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "topscope dimension doesn't exist\n");
 
     while (curDimension != NULL) {
-		flexprint(N->Fe, N->Fm, N->Fperr, "dimension %s %x\n", curDimension->identifier, curDimension);
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "dimension %s %s %x\n", curDimension->identifier, curDimension->abbreviation, curDimension);
         curDimension = curDimension->next;
     }
 }
@@ -96,28 +96,32 @@ recursePhysics(NoisyState * N, NoisyScope * topScope)
 {
     Physics * curPhysics = topScope->firstPhysics;
     if (curPhysics == NULL)
-		flexprint(N->Fe, N->Fm, N->Fperr, "topscope physics doesn't exist\n");
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "topscope physics doesn't exist\n");
     
-    while (curPhysics != NULL) {
-		flexprint(N->Fe, N->Fm, N->Fperr, "physics %s\n", curPhysics->identifier);
-		flexprint(N->Fe, N->Fm, N->Fperr, "alias %s\n", curPhysics->dimensionAlias);
-		flexprint(N->Fe, N->Fm, N->Fperr, "isvector %d\n", curPhysics->isVector);
+    while (curPhysics != NULL) 
+    {
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "physics %s\n", curPhysics->identifier);
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "alias %s\n", curPhysics->dimensionAlias);
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "alias abbreviation %s\n", curPhysics->dimensionAliasAbbreviation);
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "isvector %d\n", curPhysics->isVector);
         if (curPhysics->vectorCounterpart)
-		    flexprint(N->Fe, N->Fm, N->Fperr, "vectorCounterpart %s\n", curPhysics->vectorCounterpart->identifier);
+		    flexprint(N->Fe, N->Fm, N->Fpinfo, "vectorCounterpart %s\n", curPhysics->vectorCounterpart->identifier);
         if (curPhysics->scalarCounterpart)
-		    flexprint(N->Fe, N->Fm, N->Fperr, "scalarCounterpart %s\n", curPhysics->scalarCounterpart->identifier);
+		    flexprint(N->Fe, N->Fm, N->Fpinfo, "scalarCounterpart %s\n", curPhysics->scalarCounterpart->identifier);
         
         Dimension * curDimension = curPhysics->numeratorDimensions;
         while (curDimension != NULL) {
-	    	flexprint(N->Fe, N->Fm, N->Fperr, "numerator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
+	    	flexprint(N->Fe, N->Fm, N->Fpinfo, "numerator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
             curDimension = curDimension->next;
         }
         
         curDimension = curPhysics->denominatorDimensions;
         while (curDimension != NULL) {
-	    	flexprint(N->Fe, N->Fm, N->Fperr, "denominator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
+	    	flexprint(N->Fe, N->Fm, N->Fpinfo, "denominator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
             curDimension = curDimension->next;
         }
+		
+        flexprint(N->Fe, N->Fm, N->Fpinfo, "==============================================================================================\n");
         
         curPhysics = curPhysics->next;
     }
@@ -128,7 +132,7 @@ recursePhysics(NoisyState * N, NoisyScope * topScope)
         Physics * curIntegralPhysics = curVectorIntegralList->head;
         while (curIntegralPhysics != NULL)
         {
-	    	flexprint(N->Fe, N->Fm, N->Fperr, "vector integral element %s\n", curIntegralPhysics->identifier);
+	    	flexprint(N->Fe, N->Fm, N->Fpinfo, "vector integral element %s\n", curIntegralPhysics->identifier);
             curIntegralPhysics = curIntegralPhysics->next;
         }
     
@@ -141,7 +145,7 @@ recursePhysics(NoisyState * N, NoisyScope * topScope)
         Physics * curIntegralPhysics = curScalarIntegralList->head;
         while (curIntegralPhysics != NULL)
         {
-	    	flexprint(N->Fe, N->Fm, N->Fperr, "scalar integral element %s\n", curIntegralPhysics->identifier);
+	    	flexprint(N->Fe, N->Fm, N->Fpinfo, "scalar integral element %s\n", curIntegralPhysics->identifier);
             curIntegralPhysics = curIntegralPhysics->next;
         }
     
@@ -340,7 +344,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-    processConfigFile(N);
+    processNewtonFile(N);
 
 	if (optind < argc)
 	{
@@ -380,21 +384,21 @@ main(int argc, char *argv[])
  * https://github.com/phillipstanleymarbell/Noisy-lang-compiler/issues/28
  */
 static void
-processConfigFile(NoisyState *  N)
+processNewtonFile(NoisyState *  N)
 {
 
-    char * fileName = "Examples/fullExamples2.nc";
+    char * fileName = "Examples/invariants.nt";
 
 	/*
 	 *	Tokenize input, then parse it and build AST + symbol table.
 	 */
-	noisyConfigLexInit(N, fileName);
+	newtonLexInit(N, fileName);
 
 	/*
 	 *	Create a top-level scope, then parse.
 	 */
-	N->noisyConfigIrTopScope = noisyConfigSymbolTableAllocScope(N);
-	N->noisyConfigIrRoot = noisyConfigParse(N, N->noisyConfigIrTopScope);
+	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
+	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
 
     recurseDimensions(N, N->noisyConfigIrTopScope);
     recursePhysics(N, N->noisyConfigIrTopScope);
