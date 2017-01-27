@@ -1,3 +1,40 @@
+/*
+	Authored 2015. Jonathan Lim.
+
+	All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions
+	are met:
+
+	*	Redistributions of source code must retain the above
+		copyright notice, this list of conditions and the following
+		disclaimer.
+
+	*	Redistributions in binary form must reproduce the above
+		copyright notice, this list of conditions and the following
+		disclaimer in the documentation and/or other materials
+		provided with the distribution.
+
+	*	Neither the name of the author nor the names of its
+		contributors may be used to endorse or promote products
+		derived from this software without specific prior written
+		permission.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+	POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,22 +52,18 @@
 #include "noisy.h"
 #include "noisyconfig-parser.h"
 #include "noisy-parser.h"
+#include "noisy-lexers-helpers.h"
 #include "noisyconfig-lexer.h"
 
 
 extern const char *	gReservedConfigTokenDescriptions[];
 
 
-static inline void	checkTokenLength(NoisyState *  N, int  count);
-static inline char	cur(NoisyState *  N);
-static void		gobble(NoisyState *  N, int count);
-static void		done(NoisyState *  N, NoisyToken *  newToken);
 static void		checkComment(NoisyState *  N);
 static void		checkSingle(NoisyState *  N, NoisyIrNodeType tokenType);
 static void		checkDoubleQuote(NoisyState *  N);
 // static void		checkMinus(NoisyState *  N);
 static void		finishToken(NoisyState *  N);
-static bool		isOperatorOrSeparator(NoisyState *  N, char c);
 
 
 
@@ -565,46 +598,6 @@ noisyConfigLexPrintToken(NoisyState *  N, NoisyToken *  t)
 
 
 
-static inline void
-checkTokenLength(NoisyState *  N, int  count)
-{
-	if (N->currentTokenLength+count >= kNoisyMaxBufferLength)
-	{
-		noisyFatal(N, EtokenTooLong);
-	}
-}
-
-static inline char
-cur(NoisyState *  N)
-{
-	return N->lineBuffer[N->columnNumber];
-}
-
-
-static void
-gobble(NoisyState *  N, int count)
-{
-	checkTokenLength(N, count);
-	strncpy(N->currentToken, &N->lineBuffer[N->columnNumber], count);
-
-	N->columnNumber += count;
-}
-
-
-static void
-done(NoisyState *  N, NoisyToken *  newToken)
-{
-	newToken->sourceInfo = noisyConfigLexAllocateSourceInfo(N,	NULL				/*   genealogy 	*/,
-								N->fileName			/*   fileName 	*/,
-								N->lineNumber			/*   lineNumber */,
-								N->columnNumber - N->currentTokenLength /* columnNumber */,
-								N->currentTokenLength		/*   length 	*/);
-
-	bzero(N->currentToken, kNoisyMaxBufferLength);
-	N->currentTokenLength = 0;
-	noisyConfigLexPut(N, newToken);
-}
-
 
 static void
 checkComment(NoisyState *  N)
@@ -725,31 +718,6 @@ checkDoubleQuote(NoisyState *  N)
 	done(N, newToken);
 }
 
-
-// static void
-// checkMinus(NoisyState *  N)
-// {
-// 	/*
-// 	 *	Gobble any extant chars.
-// 	 */
-// 	finishToken(N);
-// 
-//     gobble(N, 1);
-//     NoisyIrNodeType type = kNoisyConfigIrNodeType_Tminus;
-// 
-// 	NoisyToken *		newToken = noisyConfigLexAllocateToken(N,	type	/* type		*/,
-// 									NULL	/* identifier	*/,
-// 									0	/* integerConst	*/,
-// 									0.0	/* realConst	*/,
-// 									NULL	/* stringConst	*/,
-// 									NULL	/* sourceInfo	*/);
-// 
-// 	/*
-// 	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
-// 	 */
-// 	done(N, newToken);
-// }
-
 static void
 finishToken(NoisyState *  N)
 {
@@ -815,49 +783,3 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 	done(N, newToken);
 }
 
-
-static bool
-isOperatorOrSeparator(NoisyState *  N, char c)
-{
-	/*
-	 *	Unlike in our Yacc-driven compielers, we don't use a "stickies" array
-	 */
-	switch (c)
-	{
-		case '~':
-		case '!':
-		case '%':
-		case '^':
-		case '&':
-		case '*':
-		case '(':
-		case ')':
-		case '-':
-		case '+':
-		case '=':
-		case '/':
-		case '>':
-		case '<':
-		case ';':
-		case ':':
-		case '\'':
-		case '\"':
-		case '{':
-		case '}':
-		case '[':
-		case ']':
-		case '|':
-		case ',':
-		case '.':
-		case ' ':
-		case '\n':
-		case '\r':
-		case '\t':
-		case '#':
-		{
-			return true;
-		}
-	}
-
-	return false;
-}

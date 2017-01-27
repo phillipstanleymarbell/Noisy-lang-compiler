@@ -35,4 +35,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-char *		noisyIrPassDotBackend(NoisyState *  N);
+char * noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNode * noisyIrRoot);

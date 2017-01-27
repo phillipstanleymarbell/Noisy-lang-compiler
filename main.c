@@ -341,7 +341,6 @@ main(int argc, char *argv[])
 	}
 
     processConfigFile(N);
-	flexprint(N->Fe, N->Fm, N->Fperr, "\nhellohello\n");
 
 	if (optind < argc)
 	{
@@ -397,12 +396,6 @@ processConfigFile(NoisyState *  N)
 	N->noisyConfigIrTopScope = noisyConfigSymbolTableAllocScope(N);
 	N->noisyConfigIrRoot = noisyConfigParse(N, N->noisyConfigIrTopScope);
 
-
-	/*
-	 *	Run passes requested in the command line flags.
-	 */
-	noisyRunPasses(N);
-
     recurseDimensions(N, N->noisyConfigIrTopScope);
     recursePhysics(N, N->noisyConfigIrTopScope);
 
@@ -421,7 +414,7 @@ processConfigFile(NoisyState *  N)
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
 	{
-		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N));
+		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N, N->noisyIrTopScope, N->noisyIrRoot));
 	}
     
 
@@ -474,7 +467,7 @@ processFile(NoisyState *  N, char *  fileName)
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
 	{
-		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N));
+		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N, N->noisyIrTopScope, N->noisyIrRoot));
 	}
 
 

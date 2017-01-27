@@ -654,11 +654,11 @@ noisyParseTypeExpression(NoisyState *  N, NoisyScope *  currentScope)
          * TODO fix this. N needs to have NC stuff in it
          */
         // NoisyToken * nextToken = noisyLexPeek(N, 1);
-        // Physics * physicsType = noisyConfigPhysicsTablePhysicsForIdentifier(N, N->noisyConfigIrTopScope, nextToken->identifier);
+        // Physics * physics = noisyConfigPhysicsTablePhysicsForIdentifier(N, N->noisyConfigIrTopScope, nextToken->identifier);
         // 
-        // if (physicsType != NULL)
+        // if (physics!= NULL)
         // {
-        //     n->physicsType = physicsType;
+        //     n->physics = physics;
         // }
         // else 
         // {
