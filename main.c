@@ -400,8 +400,8 @@ processNewtonFile(NoisyState *  N)
 	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
 	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
 
-    recurseDimensions(N, N->noisyConfigIrTopScope);
-    recursePhysics(N, N->noisyConfigIrTopScope);
+    recurseDimensions(N, N->newtonIrTopScope);
+    recursePhysics(N, N->newtonIrTopScope);
 
 	/*
 	 *	Bytecode backend. Emit IR in protobuf.
