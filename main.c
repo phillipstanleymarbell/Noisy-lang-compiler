@@ -400,14 +400,8 @@ processNewtonFile(NoisyState *  N)
 	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
 	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
 
-
-	/*
-	 *	Run passes requested in the command line flags.
-	 */
-	noisyRunPasses(N);
-
-    recurseDimensions(N, N->newtonIrTopScope);
-    recursePhysics(N, N->newtonIrTopScope);
+    recurseDimensions(N, N->noisyConfigIrTopScope);
+    recursePhysics(N, N->noisyConfigIrTopScope);
 
 	/*
 	 *	Bytecode backend. Emit IR in protobuf.
@@ -424,7 +418,7 @@ processNewtonFile(NoisyState *  N)
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
 	{
-		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N));
+		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N, N->noisyIrTopScope, N->noisyIrRoot));
 	}
     
 
@@ -477,7 +471,7 @@ processFile(NoisyState *  N, char *  fileName)
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
 	{
-		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N));
+		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N, N->noisyIrTopScope, N->noisyIrRoot));
 	}
 
 

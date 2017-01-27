@@ -389,7 +389,7 @@ noisyIrPassDotSymbolTablePrintWalk(NoisyState *  N, NoisyScope *  scope, char * 
 
 
 char *
-noisyIrPassDotBackend(NoisyState *  N)
+noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNode * noisyIrRoot)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotBackend);
 
@@ -407,8 +407,8 @@ noisyIrPassDotBackend(NoisyState *  N)
 	/*
 	 *	Heuristic
 	 */
-	irAndSymbolTableSize += noisyIrPassHelperIrSize(N, N->noisyIrRoot);
-	irAndSymbolTableSize += noisyIrPassHelperSymbolTableSize(N, N->noisyIrTopScope);
+	irAndSymbolTableSize += noisyIrPassHelperIrSize(N, noisyIrRoot);
+	irAndSymbolTableSize += noisyIrPassHelperSymbolTableSize(N, noisyIrTopScope);
 	bufferLength = irAndSymbolTableSize*kNoisyChunkBufferLength;
 
 	/*
@@ -468,13 +468,13 @@ noisyIrPassDotBackend(NoisyState *  N)
 	 *	which nodes have been visited, in case when
 	 *	the graph is not a tree.
 	 */
-	noisyIrPassHelperColorIr(N, N->noisyIrRoot, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
-	noisyIrPassHelperColorSymbolTable(N, N->noisyIrTopScope, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
+	noisyIrPassHelperColorIr(N, noisyIrRoot, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
+	noisyIrPassHelperColorSymbolTable(N, noisyIrTopScope, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
 
-	n += noisyIrPassDotAstPrintWalk(N, N->noisyIrRoot, &buf[n], bufferLength);
+	n += noisyIrPassDotAstPrintWalk(N, noisyIrRoot, &buf[n], bufferLength);
 	bufferLength -= n;
 
-	n += noisyIrPassDotSymbolTablePrintWalk(N, N->noisyIrTopScope, &buf[n], bufferLength);
+	n += noisyIrPassDotSymbolTablePrintWalk(N, noisyIrTopScope, &buf[n], bufferLength);
 	bufferLength -= n;
 
 	n += snprintf(&buf[n], bufferLength, "}\n");
@@ -487,8 +487,8 @@ noisyIrPassDotBackend(NoisyState *  N)
 	 *	colors of nodes above anyway. If/when we decide to get rid of
 	 *	this, be sure to document the associated gain.
 	 */
-	noisyIrPassHelperColorIr(N, N->noisyIrRoot, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
-	noisyIrPassHelperColorSymbolTable(N, N->noisyIrTopScope, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
+	noisyIrPassHelperColorIr(N, noisyIrRoot, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
+	noisyIrPassHelperColorSymbolTable(N, noisyIrTopScope, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
 #endif
 
 	return buf;

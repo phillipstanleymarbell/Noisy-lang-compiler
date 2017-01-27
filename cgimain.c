@@ -608,7 +608,7 @@ main(void)
 		 */
 		if (noisyCgiState->irBackends & kNoisyIrBackendDot)
 		{
-			noisyPrintToFile(noisyCgiState, noisyIrPassDotBackend(noisyCgiState), "tmpdot", kNoisyPostFileWriteActionRenderDot);
+			noisyPrintToFile(noisyCgiState, noisyIrPassDotBackend(noisyCgiState, noisyCgiState->noisyIrTopScope, noisyCgiState->noisyIrRoot), "tmpdot", kNoisyPostFileWriteActionRenderDot);
 		}
 
 

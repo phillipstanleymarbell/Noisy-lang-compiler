@@ -49,12 +49,6 @@
 #include "noisy.h"
 #include "noisy-lexer.h"
 
-extern int	gNoisyFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
-extern int	gNoisyFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
-extern char *	gProductionStrings[];
-extern char *	gTerminalStrings[];
-
-
 /*
  *	NOTE: Unlike in our previous compilers (e.g., Crayon), we do
  *
@@ -65,7 +59,7 @@ extern char *	gTerminalStrings[];
  *		inFirst(NoisyIrNodeType productionOrToken, NoisyIrNodeType token)
  */
 bool
-noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken)
+noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFirst);
 
@@ -76,20 +70,12 @@ noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken)
 		noisyFatal(N, Esanity);
 	}
 
-	//flexprint(N->Fe, N->Fm, N->Fperr, "noisyInFirst(): productionOrToken=[%d], gProductionStrings[%d]=[%s],"
-	//		"token->type=[%d], gTerminalStrings[%d]=[%s]...\n",
-	//		productionOrToken, productionOrToken, gProductionStrings[productionOrToken],
-	//		token->type, token->type, gTerminalStrings[token->type]);
-
 	/*
 	 *	NOTE: The arrays created by ffi2code have a kNoisyIrNodeTypeMax element at the end of each sub-array
 	 */
-	for (int i = 0; i < kNoisyIrNodeTypeMax && gNoisyFirsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
+	for (int i = 0; i < kNoisyIrNodeTypeMax && firsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
-		//flexprint(N->Fe, N->Fm, N->Fperr, "--->gNoisyFirsts[%d][%d] = %s...\n",
-		//	productionOrToken, i, gTerminalStrings[gNoisyFirsts[productionOrToken][i]]);
-
-		if (gNoisyFirsts[productionOrToken][i] == token->type)
+		if (firsts[productionOrToken][i] == token->type)
 		{
 			return true;
 		}
@@ -109,7 +95,7 @@ noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken)
  *		inFollow(NoisyIrNodeType productionOrToken, NoisyIrNodeType token)
  */
 bool
-noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken)
+noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFollow);
 
@@ -123,9 +109,9 @@ noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken)
 	/*
 	 *	NOTE: The arrays created by ffi2code have a kNoisyIrNodeTypeMax element at the end of each sub-array
 	 */
-	for (int i = 0; i < kNoisyIrNodeTypeMax && gNoisyFollows[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
+	for (int i = 0; i < kNoisyIrNodeTypeMax && follows[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
-		if (gNoisyFollows[productionOrToken][i] == token->type)
+		if (follows[productionOrToken][i] == token->type)
 		{
 			return true;
 		}
