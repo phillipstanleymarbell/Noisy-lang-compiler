@@ -52,22 +52,18 @@
 #include "noisy.h"
 #include "noisyconfig-parser.h"
 #include "noisy-parser.h"
+#include "noisy-lexers-helpers.h"
 #include "noisyconfig-lexer.h"
 
 
 extern const char *	gReservedConfigTokenDescriptions[];
 
 
-static inline void	checkTokenLength(NoisyState *  N, int  count);
-static inline char	cur(NoisyState *  N);
-static void		gobble(NoisyState *  N, int count);
-static void		done(NoisyState *  N, NoisyToken *  newToken);
 static void		checkComment(NoisyState *  N);
 static void		checkSingle(NoisyState *  N, NoisyIrNodeType tokenType);
 static void		checkDoubleQuote(NoisyState *  N);
 // static void		checkMinus(NoisyState *  N);
 static void		finishToken(NoisyState *  N);
-static bool		isOperatorOrSeparator(NoisyState *  N, char c);
 
 
 
@@ -602,46 +598,6 @@ noisyConfigLexPrintToken(NoisyState *  N, NoisyToken *  t)
 
 
 
-static inline void
-checkTokenLength(NoisyState *  N, int  count)
-{
-	if (N->currentTokenLength+count >= kNoisyMaxBufferLength)
-	{
-		noisyFatal(N, EtokenTooLong);
-	}
-}
-
-static inline char
-cur(NoisyState *  N)
-{
-	return N->lineBuffer[N->columnNumber];
-}
-
-
-static void
-gobble(NoisyState *  N, int count)
-{
-	checkTokenLength(N, count);
-	strncpy(N->currentToken, &N->lineBuffer[N->columnNumber], count);
-
-	N->columnNumber += count;
-}
-
-
-static void
-done(NoisyState *  N, NoisyToken *  newToken)
-{
-	newToken->sourceInfo = noisyConfigLexAllocateSourceInfo(N,	NULL				/*   genealogy 	*/,
-								N->fileName			/*   fileName 	*/,
-								N->lineNumber			/*   lineNumber */,
-								N->columnNumber - N->currentTokenLength /* columnNumber */,
-								N->currentTokenLength		/*   length 	*/);
-
-	bzero(N->currentToken, kNoisyMaxBufferLength);
-	N->currentTokenLength = 0;
-	noisyConfigLexPut(N, newToken);
-}
-
 
 static void
 checkComment(NoisyState *  N)
@@ -762,31 +718,6 @@ checkDoubleQuote(NoisyState *  N)
 	done(N, newToken);
 }
 
-
-// static void
-// checkMinus(NoisyState *  N)
-// {
-// 	/*
-// 	 *	Gobble any extant chars.
-// 	 */
-// 	finishToken(N);
-// 
-//     gobble(N, 1);
-//     NoisyIrNodeType type = kNoisyConfigIrNodeType_Tminus;
-// 
-// 	NoisyToken *		newToken = noisyConfigLexAllocateToken(N,	type	/* type		*/,
-// 									NULL	/* identifier	*/,
-// 									0	/* integerConst	*/,
-// 									0.0	/* realConst	*/,
-// 									NULL	/* stringConst	*/,
-// 									NULL	/* sourceInfo	*/);
-// 
-// 	/*
-// 	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
-// 	 */
-// 	done(N, newToken);
-// }
-
 static void
 finishToken(NoisyState *  N)
 {
@@ -852,49 +783,3 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 	done(N, newToken);
 }
 
-
-static bool
-isOperatorOrSeparator(NoisyState *  N, char c)
-{
-	/*
-	 *	Unlike in our Yacc-driven compielers, we don't use a "stickies" array
-	 */
-	switch (c)
-	{
-		case '~':
-		case '!':
-		case '%':
-		case '^':
-		case '&':
-		case '*':
-		case '(':
-		case ')':
-		case '-':
-		case '+':
-		case '=':
-		case '/':
-		case '>':
-		case '<':
-		case ';':
-		case ':':
-		case '\'':
-		case '\"':
-		case '{':
-		case '}':
-		case '[':
-		case ']':
-		case '|':
-		case ',':
-		case '.':
-		case ' ':
-		case '\n':
-		case '\r':
-		case '\t':
-		case '#':
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
