@@ -53,7 +53,6 @@
 #include "noisy-symbolTable.h"
 #include "noisy-irHelpers.h"
 #include "noisy-firstAndFollow.h"
-#include "noisyconfig-symbolTable.h"
 
 
 /*
