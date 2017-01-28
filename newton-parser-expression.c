@@ -27,115 +27,6 @@ extern int		gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 extern void		noisyFatal(NoisyState *  N, const char *  msg);
 extern void		noisyError(NoisyState *  N, const char *  msg);
 
-NoisyIrNode *
-newtonParseUnitExpression(NoisyState * N, NoisyScope * currentScope)
-{
-    return newtonParseUnitTerm(N, currentScope);
-}
-
-NoisyIrNode *
-newtonParseUnitTerm(NoisyState * N, NoisyScope * currentScope)
-{
-    NoisyIrNode *   intermediate = genNoisyIrNode(N,  kNewtonIrNodeType_PunitTerm,
-                        NULL /* left child */,
-                        NULL /* right child */,
-                        newtonLexPeek(N, 1)->sourceInfo /* source info */);
-
-
-    if (newtonInFirst(N, kNewtonIrNodeType_PunaryOp))
-    {
-        addLeaf(N, intermediate, newtonParseUnaryOp(N, currentScope));
-    }
-
-    bool hasDimensions = peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier);
-    NoisyIrNode * leftFactor = newtonParseUnitFactor(N, currentScope);
-    addLeaf(N, intermediate, leftFactor);
-
-    if (hasDimensions)
-    {
-        intermediate->physics = (Physics *) calloc(1, sizeof(Physics));
-        intermediate->physics->numeratorPrimeProduct = 1;
-        intermediate->physics->denominatorPrimeProduct = 1;
-
-        newtonPhysicsCopyNumeratorDimensions(N, intermediate->physics, leftFactor->physics);
-        newtonPhysicsCopyDenominatorDimensions(N, intermediate->physics, leftFactor->physics);
-        
-        if (leftFactor->physics->isVector)
-        {
-            noisyFatal(N, "newton-parser-expression.c: newtonParseUnitTerm leftFactor shouldn't be a vector");
-        }
-    }
-    
-    NoisyIrNode * rightFactor;
-
-    while (newtonInFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp))
-    {
-        NoisyIrNode * binOp = newtonParseMidPrecedenceBinaryOp(N, currentScope);
-        addLeafWithChainingSeqNewton(N, intermediate, binOp);
-        
-        hasDimensions = peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier);
-        rightFactor = newtonParseUnitFactor(N, currentScope);
-        addLeafWithChainingSeqNewton(N, intermediate, rightFactor);
-        
-        if (rightFactor->physics->isVector)
-        {
-            noisyFatal(N, "newton-parser-expression.c: newtonParseUnitTerm rightFactor shouldn't be a vector");
-        }
-
-        if (hasDimensions)
-        {
-            if (binOp->type == kNewtonIrNodeType_Tmul) 
-            {
-                newtonPhysicsCopyNumeratorDimensions(N, intermediate->physics, rightFactor->physics);
-                newtonPhysicsCopyDenominatorDimensions(N, intermediate->physics, rightFactor->physics);
-            }
-            else if (binOp->type == kNewtonIrNodeType_Tdiv)
-            {
-                newtonPhysicsCopyNumeratorToDenominatorDimensions(N, intermediate->physics, rightFactor->physics);
-                newtonPhysicsCopyDenominatorToNumeratorDimensions(N, intermediate->physics, rightFactor->physics);
-            }
-        }
-    }
-
-    return intermediate;
-}
-
-NoisyIrNode *
-newtonParseUnitFactor(NoisyState * N, NoisyScope * currentScope)
-{
-    NoisyIrNode *   n;
-
-    if (peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier))
-    {
-        n = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
-        if (newtonInFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp))
-        {
-            addLeaf(N, n, newtonParseHighPrecedenceBinaryOp(N, currentScope));
-
-            // TODO https://github.com/phillipstanleymarbell/Noisy-lang-compiler/issues/74
-            // this should technically be something other than newtonParseUnitExpression
-            // Make a new expression for only numbers
-            // because we shouldn't allow meter ^ (something other than expression of numbers)
-            addLeaf(N, n, newtonParseInteger(N, currentScope));
-        }
-    }
-    else if (peekCheck(N, 1, kNewtonIrNodeType_Tnumber))
-    {
-        n = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
-    }
-    else if (peekCheck(N, 1, kNewtonIrNodeType_TleftParen))
-    {
-        newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
-        n = newtonParseUnitExpression(N, currentScope);
-        newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
-    }
-    else
-    {
-        noisyFatal(N, "newtonParseQuantityFactor: missed a case in factor\n");
-    }
-
-    return n;
-}
 
 NoisyIrNode *
 newtonParseQuantityExpression(NoisyState * N, NoisyScope * currentScope)
@@ -228,7 +119,7 @@ newtonParseQuantityTerm(NoisyState * N, NoisyScope * currentScope)
 
     bool isPhysics /*not a number*/ = peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier);
     NoisyIrNode * leftFactor = newtonParseQuantityFactor(N, currentScope);
-    addLeaf(N, intermediate, leftFactor);
+    addLeafWithChainingSeqNewton(N, intermediate, leftFactor);
     
     int numVectorsInTerm = 0;
 
@@ -441,12 +332,12 @@ newtonParseQuantityFactor(NoisyState * N, NoisyScope * currentScope)
         if (newtonInFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp))
         {
             addLeaf(N, node, newtonParseHighPrecedenceBinaryOp(N, currentScope));
-
-            // TODO https://github.com/phillipstanleymarbell/Noisy-lang-compiler/issues/74
-            // this should technically be something other than newtonParseUnitExpression
-            // Make a new expression for only numbers
-            // because we shouldn't allow meter ** (something other than expression of numbers)
-            addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
+            
+            /* exponents are automatically just one integer unless wrapped in parens*/
+            NoisyIrNode * exponentExpression = peekCheckNewton(N, 1, kNewtonIrNodeType_TleftParen) ? 
+                newtonParseQuantityExpression(N, currentScope) : 
+                newtonParseInteger(N, currentScope);
+            addLeaf(N, node, exponentExpression);
         }
     }
     else if (peekCheck(N, 1, kNewtonIrNodeType_Tnumber))
