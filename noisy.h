@@ -365,10 +365,6 @@ typedef enum
 	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
 	kNewtonIrNodeType_PunaryOp,
 	kNewtonIrNodeType_PtimeOp,
-	kNewtonIrNodeType_Punit,
-	kNewtonIrNodeType_PunitFactor,
-    kNewtonIrNodeType_PunitTerm,
-	kNewtonIrNodeType_PunitExpression,
 	kNewtonIrNodeType_Pquantity,
 	kNewtonIrNodeType_PquantityFactor,
 	kNewtonIrNodeType_PquantityTerm,
@@ -561,6 +557,8 @@ struct Physics
     Physics * vectorCounterpart; // non-NULL if a scalar AND counterpart defined in vectorScalarPairScope
     Physics * scalarCounterpart; // non-NULl if a vector AND counterpart defined in vectorScalarPairScope
 
+    double value; /* for constants like Pi or gravitational acceleration */
+
     /*
      * numeratorPrimeProduct and denominatorPrimeProduct == 1 means
      * the Physics is dimensionless. e.g. constants like Pi
@@ -607,6 +605,11 @@ struct NoisyIrNode
      * Used for evaluating dimensions in expressions
      */
     Physics * physics;
+
+    /* 
+     * only if this node belongs to a ParseNumericExpression subtree
+     */
+    double value; 
 	
     /*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation

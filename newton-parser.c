@@ -423,6 +423,15 @@ newtonParseTerminal(NoisyState *  N, NoisyIrNodeType expectedType, NoisyScope * 
     
     n->token = t;
     n->tokenString = t->identifier;
+
+    if (t->type == kNewtonIrNodeType_Tnumber)
+    {
+        n->value = 0.0;
+        if (t->integerConst != 0)
+            n->value = t->integerConst;
+        else if (t->realConst != 0)
+            n->value = t->realConst;
+    }
    
     return n;
 }
@@ -555,4 +564,16 @@ newtonParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expect
 	n->tokenString = t->identifier;
 
 	return n;
+}
+
+bool
+newtonIsConstant(Physics * physics)
+{
+    /* sanity check */
+    if (physics->numeratorDimensions == NULL)
+        assert(physics->numberOfNumerators == 0 && physics->numeratorPrimeProduct == 1);
+    if (physics->denominatorDimensions == NULL)
+        assert(physics->numberOfDenominators == 0 && physics->denominatorPrimeProduct == 1);
+    
+    return physics->numeratorDimensions == NULL && physics->denominatorDimensions;
 }

@@ -50,6 +50,7 @@ work : signal =
 Pi : constant = 3.14159;
 g : constant = 9.8 * meter * second ** -2;
 G : constant = 6.674 * meter ** 3 * kilogram ** -1 * second ** -2;
+myConstant : constant = -1.11 * meter ** (3 ** (8 + 2));
 
 SimplePendulum : invariant(L: distance, period: time) =
 {

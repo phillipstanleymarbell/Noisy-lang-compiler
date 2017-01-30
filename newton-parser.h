@@ -55,3 +55,11 @@ newtonParseCompareOp(NoisyState * N, NoisyScope * currentScope);
 char *
 newtonParseGetPhysicsTypeStringByBoundIdentifier(NoisyState * N, NoisyIrNode * root, char* boundVariableIdentifier);
 
+bool
+newtonIsConstant(Physics * physics);
+
+
+
+
+
+

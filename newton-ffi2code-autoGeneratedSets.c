@@ -82,19 +82,6 @@ int    gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
                                                                  kNewtonIrNodeType_Tintegral,
                                                                  kNoisyIrNodeTypeMax
                                                             },
-            [kNewtonIrNodeType_Punit         ]            = {kNewtonIrNodeType_Tidentifier, kNoisyIrNodeTypeMax},
-            [kNewtonIrNodeType_PunitFactor   ]            = {
-                                                                 kNewtonIrNodeType_Tminus,
-                                                                 kNewtonIrNodeType_Tidentifier,
-                                                                 kNewtonIrNodeType_TleftParen,
-                                                                 kNoisyIrNodeTypeMax
-                                                            },
-            [kNewtonIrNodeType_PunitExpression]            = {
-                                                                 kNewtonIrNodeType_Tminus,
-                                                                 kNewtonIrNodeType_Tidentifier,
-                                                                 kNewtonIrNodeType_TleftParen,
-                                                                 kNoisyIrNodeTypeMax
-                                                            },
             [kNewtonIrNodeType_Pquantity     ]            = {
                                                                  kNewtonIrNodeType_Tnumber,
                                                                  kNewtonIrNodeType_Tidentifier,
@@ -238,22 +225,6 @@ int    gNewtonFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
                                                                  kNewtonIrNodeType_Tidentifier,
                                                                  kNoisyIrNodeTypeMax
                                                             },
-            [kNewtonIrNodeType_Punit         ]            = {
-                                                                 kNewtonIrNodeType_Texponent,
-                                                                 kNewtonIrNodeType_TrightBrace,
-                                                                 kNewtonIrNodeType_TrightParen,
-                                                                 kNoisyIrNodeTypeMax
-                                                            },
-            [kNewtonIrNodeType_PunitFactor   ]            = {
-                                                                 kNewtonIrNodeType_Tmul,
-                                                                 kNewtonIrNodeType_Tdiv,
-                                                                 kNoisyIrNodeTypeMax
-                                                            },
-            [kNewtonIrNodeType_PunitExpression]            = {
-                                                                 kNewtonIrNodeType_TrightBrace,
-                                                                 kNewtonIrNodeType_TrightParen,
-                                                                 kNoisyIrNodeTypeMax
-                                                            },
             [kNewtonIrNodeType_Pquantity     ]            = {
                                                                  kNewtonIrNodeType_Texponent,
                                                                  kNewtonIrNodeType_Tlt,
@@ -365,9 +336,6 @@ char	*gNewtonAstNodeStrings[kNoisyIrNodeTypeMax]	= {
                                                [kNewtonIrNodeType_PlowPrecedenceBinaryOp]            = "kNewtonIrNodeType_PlowPrecedenceBinaryOp",
                                                [      kNewtonIrNodeType_PunaryOp]            = "kNewtonIrNodeType_PunaryOp",
                                                [       kNewtonIrNodeType_PtimeOp]            = "kNewtonIrNodeType_PtimeOp",
-                                               [         kNewtonIrNodeType_Punit]            = "kNewtonIrNodeType_Punit",
-                                               [   kNewtonIrNodeType_PunitFactor]            = "kNewtonIrNodeType_PunitFactor",
-                                               [kNewtonIrNodeType_PunitExpression]            = "kNewtonIrNodeType_PunitExpression",
                                                [     kNewtonIrNodeType_Pquantity]            = "kNewtonIrNodeType_Pquantity",
                                                [kNewtonIrNodeType_PquantityFactor]            = "kNewtonIrNodeType_PquantityFactor",
                                                [ kNewtonIrNodeType_PquantityTerm]            = "kNewtonIrNodeType_PquantityTerm",
