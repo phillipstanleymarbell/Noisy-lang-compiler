@@ -537,7 +537,10 @@ newtonParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType
     }
     else 
     {
-        n->physics = physicsSearchResult;
+        // n->physics = physicsSearchResult;
+        
+        /* defensive copying to keep the Physics list in NoisyState immutable */
+        n->physics = deepCopyPhysicsNode(physicsSearchResult);
     }
 
     return n;

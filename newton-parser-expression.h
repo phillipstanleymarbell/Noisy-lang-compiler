@@ -39,3 +39,6 @@ newtonParseVectorOp(NoisyState * N, NoisyScope * currentScope);
 
 NoisyIrNode *
 newtonParseInteger(NoisyState * N, NoisyScope * currentScope);
+
+NoisyIrNode *
+newtonParseExponentialExpression(NoisyState * N, NoisyScope * currentScope, NoisyIrNode * exponentBase);

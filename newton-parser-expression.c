@@ -35,7 +35,8 @@ extern void		noisyError(NoisyState *  N, const char *  msg);
  * expressions inside exponents is necessary for compile time dimensional checking.
  * e.g.) The expression, mass ** 2, yields two "mass" dimensions in numeratorDimensions.
  * If we use ParseQuantityExpression, then sometimes not all the terms and factors have
- * numeric values known.
+ * numeric values known. To distinguish the two cases, we can either pass in a flag to quantity parsing methods
+ * or just use ParseNumericExpression. 
  * e.g.) Pi == 3.14 but mass might not have a numeric value.
  *
  * We use kNewtonIrNodeType_PquantityTerm and kNewtonIrNodeType_PquantityFactor because
@@ -270,9 +271,9 @@ newtonParseQuantityTerm(NoisyState * N, NoisyScope * currentScope)
         }
         else if (isPhysics && binOp->type == kNewtonIrNodeType_Tdiv)
         {
-            if (rightFactor->physics->denominatorDimensions)
-                newtonPhysicsCopyNumeratorToDenominatorDimensions(N, intermediate->physics, rightFactor->physics);
             if (rightFactor->physics->numeratorDimensions)
+                newtonPhysicsCopyNumeratorToDenominatorDimensions(N, intermediate->physics, rightFactor->physics);
+            if (rightFactor->physics->denominatorDimensions)
                 newtonPhysicsCopyDenominatorToNumeratorDimensions(N, intermediate->physics, rightFactor->physics);
         }
     }
@@ -283,59 +284,125 @@ newtonParseQuantityTerm(NoisyState * N, NoisyScope * currentScope)
 NoisyIrNode *
 newtonParseQuantityFactor(NoisyState * N, NoisyScope * currentScope)
 {
-    NoisyIrNode *   node;
+    NoisyIrNode *   intermediate;
+
+    // intermediate->physics = (Physics *) calloc(1, sizeof(Physics));
+    // intermediate->physics->numeratorPrimeProduct = 1;
+    // intermediate->physics->denominatorPrimeProduct = 1;
 
     if (peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier))
     {
-        node = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
-        if (newtonInFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp))
-        {
-            addLeaf(N, node, newtonParseHighPrecedenceBinaryOp(N, currentScope));
-            
-            /* exponents are automatically just one integer unless wrapped in parens */
-            NoisyIrNode * exponentExpression = peekCheckNewton(N, 1, kNewtonIrNodeType_TleftParen) ? 
-                newtonParseNumericExpression(N, currentScope) : 
-                newtonParseInteger(N, currentScope);
-            addLeaf(N, node, exponentExpression);
-        }
+        intermediate = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
+        intermediate->physics = deepCopyPhysicsNode(intermediate->physics);
     }
     else if (peekCheck(N, 1, kNewtonIrNodeType_Tnumber))
     {
-        node = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
+        intermediate = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
     }
-    else if (newtonInFirst(N, kNewtonIrNodeType_PtimeOp))
-    {
-        node = newtonParseTimeOp(N, currentScope);
-    }
-    else if (newtonInFirst(N, kNewtonIrNodeType_PvectorOp) && peekCheck(N, 2, kNewtonIrNodeType_TleftParen) && peekCheck(N, 4, kNewtonIrNodeType_Tcomma))
-    {
-		node = newtonParseVectorOp(N, currentScope);
-    }
+    // else if (newtonInFirst(N, kNewtonIrNodeType_PtimeOp))
+    // {
+    //     intermediate = newtonParseTimeOp(N, currentScope);
+    // }
+    // else if (newtonInFirst(N, kNewtonIrNodeType_PvectorOp) && peekCheck(N, 2, kNewtonIrNodeType_TleftParen) && peekCheck(N, 4, kNewtonIrNodeType_Tcomma))
+    // {
+	// 	intermediate = newtonParseVectorOp(N, currentScope);
+    // }
     else if (peekCheck(N, 1, kNewtonIrNodeType_TleftParen))
     {
         newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
-        node = newtonParseQuantityExpression(N, currentScope);
+        intermediate = newtonParseQuantityExpression(N, currentScope);
         newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
-        
-        /*
-         * e.g.) (acceleration * mass) ** (3 + 5)
-         */
-        if (newtonInFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp))
-        {
-            addLeaf(N, node, newtonParseHighPrecedenceBinaryOp(N, currentScope));
-            /* exponents are automatically just one integer unless wrapped in parens */
-            NoisyIrNode * exponentExpression = peekCheckNewton(N, 1, kNewtonIrNodeType_TleftParen) ? 
-                newtonParseNumericExpression(N, currentScope) : 
-                newtonParseInteger(N, currentScope);
-            addLeaf(N, node, exponentExpression);
-        }
     }
     else
     {
         noisyFatal(N, "newtonParseQuantityFactor: missed a case in factor\n");
     }
 
-    return node;
+    /*
+     * e.g.) (acceleration * mass) ** (3 + 5)
+     */
+    if (newtonInFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp))
+    {
+        addLeaf(N, intermediate, newtonParseHighPrecedenceBinaryOp(N, currentScope));
+        addLeafWithChainingSeqNewton(N, intermediate, newtonParseExponentialExpression(N, currentScope, intermediate));
+    }
+
+    return intermediate;
+}
+
+NoisyIrNode *
+newtonParseExponentialExpression(NoisyState * N, NoisyScope * currentScope, NoisyIrNode * baseNode)
+{
+    /* exponents are automatically just one integer unless wrapped in parens */
+    NoisyIrNode * exponent = peekCheckNewton(N, 1, kNewtonIrNodeType_TleftParen) ? 
+        newtonParseNumericExpression(N, currentScope) : 
+        newtonParseInteger(N, currentScope);
+    Physics * newExponentBase = shallowCopyPhysicsNode(baseNode->physics);
+
+    if (exponent->value == 0)
+    {
+        /* any dimension raised to zero power has dimensions removed */
+        newExponentBase->value = 1;
+        baseNode->physics = newExponentBase;
+
+        return exponent;
+    }
+
+    /*
+     * This copying is necessary because we don't want to append the same node multiple times
+     * to the numerator or denominator linked list
+     */
+    Physics* copy = deepCopyPhysicsNode(baseNode->physics);
+
+    if (baseNode->physics->numberOfNumerators > 0)
+    {
+        /* If the base is a Physics quantity, the exponent must be an integer */
+        assert(exponent->value == (int) exponent->value); 
+        
+        /* e.g.) mass ** -2 : mass is copied to denominator, not numerator */
+        if (exponent->value < 0)
+        {
+            for (int power = 0; power > exponent->value; power--)
+            {
+                newtonPhysicsCopyNumeratorToDenominatorDimensions(N, newExponentBase, copy);
+                copy = deepCopyPhysicsNode(copy);
+            }
+        }
+        else
+        {
+            for (int power = 0; power < exponent->value; power++)
+            {
+                newtonPhysicsCopyNumeratorDimensions(N, newExponentBase, copy);
+                copy = deepCopyPhysicsNode(copy);
+            }
+        }
+    }
+    
+    if (baseNode->physics->numberOfDenominators > 0)
+    {
+        assert(exponent->value == (int) exponent->value); 
+        
+        if (exponent->value < 0)
+        {
+            for (int power = 0; power > exponent->value; power--)
+            {
+                newtonPhysicsCopyDenominatorToNumeratorDimensions(N, newExponentBase, copy);
+                copy = deepCopyPhysicsNode(copy);
+            }
+        }
+        else
+        {
+            for (int power = 0; power < exponent->value; power++)
+            {
+                newtonPhysicsCopyDenominatorDimensions(N, newExponentBase, copy);
+                copy = deepCopyPhysicsNode(copy);
+            }
+        }
+    }
+
+    baseNode->physics = newExponentBase;
+
+    return exponent;
 }
 
 NoisyIrNode *
