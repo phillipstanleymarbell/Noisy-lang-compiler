@@ -146,7 +146,7 @@ newtonParseInvariant(NoisyState * N, NoisyScope * currentScope)
     newScope->invariantParameterList = invariant->parameterList;
 
 	addLeafWithChainingSeqNewton(N, node, newtonParseConstraint(N, newScope));
-    while (newtonInFirst(N, kNewtonIrNodeType_Pconstraint))
+    while (peekCheckNewton(N, 1, kNewtonIrNodeType_Tcomma))
 	{
         newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, newScope);
 		addLeafWithChainingSeqNewton(N, node, newtonParseConstraint(N, newScope));
@@ -245,16 +245,11 @@ newtonParseConstant(NoisyState * N, NoisyScope * currentScope)
     addLeaf(N, node, constantIdentifier);
     Physics * constantPhysics = newtonPhysicsTableAddPhysicsForToken(N, currentScope, constantIdentifier->token);
 
-    NoisyIrNode * number = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
-    addLeaf(N, node, number);
-    
-    if (peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier))
+    if (newtonInFirst(N, kNewtonIrNodeType_PquantityExpression))
     {
-        NoisyIrNode * expression = newtonParseUnitExpression(N, currentScope);
-        addLeaf(N, node, expression);
-                
-        newtonPhysicsCopyNumeratorDimensions(N, constantPhysics, expression->physics);
-        newtonPhysicsCopyDenominatorDimensions(N, constantPhysics, expression->physics);
+        NoisyIrNode * constantExpression = newtonParseQuantityExpression(N, currentScope);
+        newtonPhysicsCopyNumeratorDimensions(N, constantPhysics, constantExpression->physics);
+        newtonPhysicsCopyDenominatorDimensions(N, constantPhysics, constantExpression->physics);
 
         /*
          * If LHS is declared a vector in vectorScalarPairScope, then 
@@ -262,8 +257,12 @@ newtonParseConstant(NoisyState * N, NoisyScope * currentScope)
          */
         if (constantPhysics->isVector)
         {
-            assert(expression->physics->isVector);
+            assert(constantExpression->physics->isVector);
         }
+    }
+    else
+    {
+        noisyFatal(N, "newton-parser.c: newtonParseConstant after equal sign, there is no quantity expression");
     }
     
     newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
