@@ -8,6 +8,15 @@ NoisyIrNode *
 newtonParseQuantityFactor(NoisyState * N, NoisyScope * currentScope);
 
 NoisyIrNode *
+newtonParseNumericExpression(NoisyState * N, NoisyScope * currentScope);
+
+NoisyIrNode *
+newtonParseNumericTerm(NoisyState * N, NoisyScope * currentScope);
+
+NoisyIrNode *
+newtonParseNumericFactor(NoisyState * N, NoisyScope * currentScope);
+
+NoisyIrNode *
 newtonParseHighPrecedenceBinaryOp(NoisyState * N, NoisyScope * currentScope);
 
 NoisyIrNode * 
@@ -30,3 +39,6 @@ newtonParseVectorOp(NoisyState * N, NoisyScope * currentScope);
 
 NoisyIrNode *
 newtonParseInteger(NoisyState * N, NoisyScope * currentScope);
+
+NoisyIrNode *
+newtonParseExponentialExpression(NoisyState * N, NoisyScope * currentScope, NoisyIrNode * exponentBase);

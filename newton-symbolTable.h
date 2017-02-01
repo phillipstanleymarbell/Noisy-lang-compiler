@@ -10,6 +10,8 @@ Physics * newtonPhysicsTablePhysicsForIdentifier(NoisyState *  N, NoisyScope *  
 Physics * newtonPhysicsTablePhysicsForDimensionAlias(NoisyState *  N, NoisyScope *  scope, const char * dimensionAliasIdentifier);
 Physics * newtonPhysicsTableAddPhysics(NoisyState * N, NoisyScope * scope);
 
+Physics* deepCopyPhysicsNode(Physics* node);
+Physics* shallowCopyPhysicsNode(Physics* node);
 Physics* copyPhysicsNode(Physics* list);
 Physics* getTailPhysics(Physics* list);
 

@@ -161,6 +161,57 @@ copyDimensionList(Dimension* source)
 }
 
 Physics*
+shallowCopyPhysicsNode(Physics* node)
+{
+    Physics * copy = (Physics *) calloc(1, sizeof(Physics));
+
+    copy->identifier = node->identifier;
+    copy->scope = node->scope;
+    copy->sourceInfo = node->sourceInfo;
+
+    copy->isVector = node->isVector;
+    copy->value = node->value;
+
+    copy->numeratorPrimeProduct = 1;
+    copy->denominatorPrimeProduct = 1;
+
+    copy->dimensionAlias = node->dimensionAlias;
+    copy->dimensionAliasAbbreviation = node->dimensionAliasAbbreviation;
+
+    copy->definition = node->definition;
+    copy->next = NULL;
+
+    return copy;
+}
+
+Physics*
+deepCopyPhysicsNode(Physics* node)
+{
+    Physics * copy = (Physics *) calloc(1, sizeof(Physics));
+    copy->numeratorDimensions = copyDimensionList(node->numeratorDimensions);
+    copy->denominatorDimensions = copyDimensionList(node->denominatorDimensions);
+
+    copy->identifier = node->identifier;
+    copy->scope = node->scope;
+    copy->sourceInfo = node->sourceInfo;
+
+    copy->isVector = node->isVector;
+    copy->value = node->value;
+
+    copy->numberOfNumerators = node->numberOfNumerators;
+    copy->numeratorPrimeProduct = node->numeratorPrimeProduct;
+    copy->numberOfDenominators = node->numberOfDenominators;
+    copy->denominatorPrimeProduct = node->denominatorPrimeProduct;
+    copy->dimensionAlias = node->dimensionAlias;
+    copy->dimensionAliasAbbreviation = node->dimensionAliasAbbreviation;
+
+    copy->definition = node->definition;
+    copy->next = NULL;
+
+    return copy;
+}
+
+Physics*
 copyPhysicsNode(Physics* list)
 {
     Physics * copy = (Physics*) calloc(1, sizeof(Physics));
