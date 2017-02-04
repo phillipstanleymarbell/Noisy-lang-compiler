@@ -27,6 +27,7 @@ CCFLAGS		+= -std=gnu99 -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
 
 WFLAGS		= -Wall -Werror
 INCDIRS		= -I. -I$(LIBFLEXPATH) -I$(NOISYPATH) -I$(NEWTONPATH)
+LINKDIRS    = -L. -L$(LIBFLEXPATH) #-L$(NOISYPATH) -L$(NEWTONPATH) 
 PROTOC		= protoc-c
 
 NEWTONEXTENSION	= nt
@@ -57,14 +58,6 @@ SOURCES		=\
 #	-l$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N)
 #
 OBJS		=\
-		$(NOISYPATH)/noisy-errors$(NOISY_L10N).$(OBJECTEXTENSION)\
-		$(NOISYPATH)/noisy-timeStamps.$(OBJECTEXTENSION)\
-		$(NOISYPATH)/noisy.$(OBJECTEXTENSION)\
-		$(NOISYPATH)/noisy-parser.$(OBJECTEXTENSION)\
-		$(NOISYPATH)/noisy-lexer.$(OBJECTEXTENSION)\
-		$(NOISYPATH)/noisy-symbolTable.$(OBJECTEXTENSION)\
-		$(NOISYPATH)/noisy-irHelpers.$(OBJECTEXTENSION)\
-		$(NOISYPATH)/noisy-irPass-dotBackend.$(OBJECTEXTENSION)\
 		main.$(OBJECTEXTENSION)\
 		newton-primenumbers.$(OBJECTEXTENSION)\
 		newton-tokens.$(OBJECTEXTENSION)\
@@ -118,7 +111,7 @@ HEADERS		=\
 
 
 
-all: installhooks lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a  target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+all: installhooks lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
 
 installhooks:
 	cp $(TREEROOT)/precommitStatisticsHook.sh $(TREEROOT)/.git/hooks/pre-commit
@@ -136,20 +129,19 @@ lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a: $(LIBNOISYOBJS) $(CONFIGPATH)/config.$
 lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a: $(LIBNEWTONOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
 	$(AR) $(ARFLAGS) $@ $(LIBNEWTONOBJS)
 
-
 #
 #			Executables
 #
 target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
-	$(LD) -L. -L$(LIBFLEXPATH) -L$(NOISYPATH) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -lm -o $(TARGET)
+	$(LD) $(LINKDIRS) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -lm -o $(TARGET)
 
 
 #
 #			Objects
 #
 %.$(OBJECTEXTENSION): %.c $(HEADERS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
-	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) -c $(LINTFLAGS) $<
-	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) -c $<
+	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
+	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
 version.c: $(HEADERS) Makefile
 	echo 'char kNewtonVersion[] = "0.1-alpha-'`git rev-list --count HEAD`' ('`git rev-parse HEAD`') (build '`date '+%m-%d-%Y-%H:%M'`-`whoami`@`hostname -s`-`uname -s`-`uname -r`-`uname -m`\)\"\; > version.c
