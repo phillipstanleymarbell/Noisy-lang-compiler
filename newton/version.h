@@ -35,5 +35,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-extern char kNoisyVersion[];
 extern char kNewtonVersion[];

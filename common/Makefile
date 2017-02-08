@@ -1,9 +1,6 @@
 LIBFLEXPATH=/Users/jonathanlim/Documents/Compiler/libflex
 CONFIGPATH=/Users/jonathanlim/Documents/Compiler/libflex
 TREEROOT=..
-NOISYPATH=../noisy
-NEWTONPATH=../newton
-COMMONPATH=./common
 MACHTYPE=x86_64
 COMPILERVARIANT=clang
 OSTYPE=darwin
@@ -15,57 +12,66 @@ MAKEFLAGS	+= -j
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
 
-LIBNOISY	= Noisy
-NOISY_L10N	= EN
+LIBCOMMON = Common
+COMMON_L10N	= EN
+
+LINKDIRS    = -L. -L$(LIBFLEXPATH) 
+TARGET		= common-$(OSTYPE)-$(COMMON_L10N)
 
 #	-std=gnu99 because we use anonymous unions and induction variable defintions in loop head.
-CCFLAGS		+= -std=gnu99 -DkNoisyL10N="\"$(NOISY_L10N)\"" -DNOISY_L10N_EN
-
-TARGET		= noisy-$(OSTYPE)-$(NOISY_L10N)
-CGI_TARGET	= noisycgi-$(OSTYPE)-$(NOISY_L10N)
+CCFLAGS		+= -c -std=gnu99 -DkCommonL10N="\"$(COMMON_L10N)\"" -DCOMMON_L10N_EN
 
 WFLAGS		= -Wall -Werror
-INCDIRS		= -I. -I$(LIBFLEXPATH) -I$(NOISYPATH) -I$(NEWTONPATH)
+INCDIRS		= -I. -I$(LIBFLEXPATH) 
 PROTOC		= protoc-c
 
-NOISYEXTENSION	= n
-NEWTONEXTENSION	= nt
-
 SOURCES		=\
-		version.c\
-		cgimain.c\
+		noisy.c\
+		primenumbers.c\
+		noisy-lexers-helpers.c\
+		noisy-firstAndFollow.c\
+		noisy-errors.c\
+		noisy-timeStamps.c\
+		general-irHelpers.c\
 
 
 #
 #	Clang seems to be unable to do LTO unless we have all the objects
 #	not tucked into a library, so we don't just simply link maain against
-#	-l$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N)
+#	-l$(LIBCOMMON)-$(OSTYPE)-$(COMMON_L10N)
 #
 OBJS		=\
-		version.$(OBJECTEXTENSION)\
+		noisy.$(OBJECTEXTENSION)\
+		primenumbers.$(OBJECTEXTENSION)\
+		noisy-firstAndFollow.$(OBJECTEXTENSION)\
+		noisy-lexers-helpers.$(OBJECTEXTENSION)\
+		noisy-errors$(COMMON_L10N).$(OBJECTEXTENSION)\
+		noisy-timeStamps.$(OBJECTEXTENSION)\
+		general-irHelpers.$(OBJECTEXTENSION)\
 
 
-#
-#	Clang seems to be unable to do LTO unless we have all the objects
-#	not tucked into a library, so we don't just simply link maain against
-#	-l$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N)
-#
-CGIOBJS		=\
-		version.$(OBJECTEXTENSION)\
-		cgimain.$(OBJECTEXTENSION)\
-
-
-LIBNOISYOBJS =\
-		version.$(OBJECTEXTENSION)\
+LIBCOMMONOBJS =\
+		noisy.$(OBJECTEXTENSION)\
+		primenumbers.$(OBJECTEXTENSION)\
+		noisy-firstAndFollow.$(OBJECTEXTENSION)\
+		noisy-lexers-helpers.$(OBJECTEXTENSION)\
+		noisy-errors$(COMMON_L10N).$(OBJECTEXTENSION)\
+		noisy-timeStamps.$(OBJECTEXTENSION)\
+		general-irHelpers.$(OBJECTEXTENSION)\
 
 
 HEADERS		=\
 		$(LIBFLEXPATH)/flex.h\
-		version.h\
+		noisy-lexers-helpers.h\
+		noisy-firstAndFollow.h\
+		noisy-errors.h\
+		noisy-timeStamps.h\
+		noisy.h\
+		general-irHelpers.h\
 
 
 
-all: installhooks lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile
+all: installhooks lib$(LIBCOMMON)-$(OSTYPE)-$(COMMON_L10N).a $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile
 
 #
 #			Install the pre-commit hooks. There doesn't seem to be any other way to force people to install the hook when comitting on Noisy.
@@ -80,22 +86,8 @@ installhooks:
 #
 #			Libraries
 #
-lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a: $(LIBNOISYOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
-	$(AR) $(ARFLAGS) $@ $(LIBNOISYOBJS)
-
-
-#
-#			Executables
-#
-target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
-	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -lm -o $(TARGET)
-
-
-cgi:lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
-	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) -o $(CGI_TARGET)
-
-
-full: scan README.sloccount
+lib$(LIBCOMMON)-$(OSTYPE)-$(COMMON_L10N).a: $(LIBCOMMONOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+	$(AR) $(ARFLAGS) $@ $(LIBCOMMONOBJS)
 
 
 #
@@ -105,36 +97,6 @@ full: scan README.sloccount
 	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) -c $(LINTFLAGS) $<
 	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) -c $<
 
-noisy.pb-c.c: noisy.proto Makefile
-	$(PROTOC) --c_out=. noisy.proto
-
-noisy.pb-c.h: noisy.pb-c.c
-
-noisy-irPass-protobufBackend.$(OBJECTEXTENSION): noisy-irPass-protobufBackend.c
-	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) `pkg-config --cflags 'libprotobuf-c >= 1.0.0'` $(WFLAGS) $(OPTFLAGS) -c $<
-
-noisy.pb-c.$(OBJECTEXTENSION): noisy.pb-c.c noisy.proto Makefile
-	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) `pkg-config --cflags 'libprotobuf-c >= 1.0.0'` $(WFLAGS) $(OPTFLAGS) -c $<
-
-version.c: $(HEADERS) Makefile
-	echo 'char kNoisyVersion[] = "0.1-alpha-'`git rev-list --count HEAD`' ('`git rev-parse HEAD`') (build '`date '+%m-%d-%Y-%H:%M'`-`whoami`@`hostname -s`-`uname -s`-`uname -r`-`uname -m`\)\"\; > version.c
-
-
-
-scan:	clean
-	scan-build --use-cc=$(CC) -k -V make -j4
-
-
-README.sloccount: $(HEADERS) $(SOURCES)
-	sloccount *.c *.h *.grammar *.ffi *.$(NOISYEXTENSION) */*.$(NOISYEXTENSION) > README.sloccount
-
-
-installcgi: cgi
-	sudo cp $(CGI_TARGET) $(CGI_BIN)
-	
-test:
-	./noisy-darwin-EN --dot examples/helloWorld.n | dot -Tpdf -O ; open noname.gv.pdf 
-
 
 clean:
-	rm -rf version.c $(OBJS) $(CGIOBJS) $(LIBNOISYOBJS) $(TARGET) $(TARGET).dSYM $(CGI_TARGET) $(CGI_TARGET).dsym lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a *.o *.plist 
+	rm -rf $(OBJS) $(LIBCOMMONOBJS) lib$(LIBCOMMON)-$(OSTYPE)-$(COMMON_L10N).a *.o *.plist 

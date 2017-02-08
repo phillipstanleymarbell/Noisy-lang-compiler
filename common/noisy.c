@@ -63,8 +63,6 @@
 #include "noisy-timeStamps.h"
 #include "noisy.h"
 #include "noisy-errors.h"
-#include "noisy-irPass-helpers.h"
-#include "noisy-irPass-dotBackend.h"
 
 /*
  *	NOTE / TODO / BUG: (delete this once th eimplementation settles)

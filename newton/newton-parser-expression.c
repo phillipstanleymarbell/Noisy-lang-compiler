@@ -13,13 +13,15 @@
 #include "noisy-timeStamps.h"
 #include "noisy-errors.h"
 #include "noisy.h"
+#include "general-irHelpers.h"
 #include "noisy-irHelpers.h"
 #include "noisy-parser.h"
 #include "newton-parser-expression.h"
 #include "newton-parser.h"
+#include "noisy-lexers-helpers.h"
 #include "newton-lexer.h"
 #include "newton-symbolTable.h"
-#include "newton-firstAndFollow.h"
+#include "noisy-firstAndFollow.h"
 
 
 extern char *		gNewtonAstNodeStrings[];
@@ -48,17 +50,17 @@ newtonParseNumericExpression(NoisyState * N, NoisyScope * currentScope)
     NoisyIrNode * leftTerm;
     NoisyIrNode * rightTerm;
 
-    if (newtonInFirst(N, kNewtonIrNodeType_PquantityTerm))
+    if (noisyInFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts))
     {
         leftTerm = newtonParseNumericTerm(N, currentScope);
 
-        while (newtonInFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp))
+        while (noisyInFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFirsts))
         {
             NoisyIrNode * binOp = newtonParseLowPrecedenceBinaryOp(N, currentScope);
             addLeaf(N, leftTerm, binOp);
             
             rightTerm = newtonParseNumericTerm(N, currentScope);
-            addLeafWithChainingSeqNewton(N, leftTerm, rightTerm);
+            addLeafWithChainingSeq(N, leftTerm, rightTerm);
 
             if (binOp->type == kNewtonIrNodeType_Tplus) 
             {
@@ -72,7 +74,6 @@ newtonParseNumericExpression(NoisyState * N, NoisyScope * currentScope)
     }
     else
     {
-        noisyParserSyntaxError(N, kNewtonIrNodeType_PquantityExpression, kNoisyIrNodeTypeMax);
         noisyFatal(N, Esanity);
     }
     
@@ -85,9 +86,9 @@ newtonParseNumericTerm(NoisyState * N, NoisyScope * currentScope)
     NoisyIrNode *   intermediate = genNoisyIrNode(N,   kNewtonIrNodeType_PquantityTerm,
                         NULL /* left child */,
                         NULL /* right child */,
-                        newtonLexPeek(N, 1)->sourceInfo /* source info */);
+                        noisyLexPeek(N, 1)->sourceInfo /* source info */);
     intermediate->value = 1;
-    if (newtonInFirst(N, kNewtonIrNodeType_PunaryOp))
+    if (noisyInFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts))
     {
         addLeaf(N, intermediate, newtonParseUnaryOp(N, currentScope));
         intermediate->value *= -1;
@@ -96,15 +97,15 @@ newtonParseNumericTerm(NoisyState * N, NoisyScope * currentScope)
     NoisyIrNode * leftFactor = newtonParseNumericFactor(N, currentScope);
     intermediate->value *= leftFactor->value;
 
-    addLeafWithChainingSeqNewton(N, intermediate, leftFactor);
+    addLeafWithChainingSeq(N, intermediate, leftFactor);
     
-    while (newtonInFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp))
+    while (noisyInFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts))
     {
         NoisyIrNode * binOp = newtonParseMidPrecedenceBinaryOp(N, currentScope);
-        addLeafWithChainingSeqNewton(N, intermediate, binOp);
+        addLeafWithChainingSeq(N, intermediate, binOp);
         
         NoisyIrNode * rightFactor = newtonParseNumericFactor(N, currentScope);
-        addLeafWithChainingSeqNewton(N, intermediate, rightFactor);
+        addLeafWithChainingSeq(N, intermediate, rightFactor);
         
         if (binOp->type == kNewtonIrNodeType_Tmul) 
         {
@@ -124,7 +125,7 @@ newtonParseNumericFactor(NoisyState * N, NoisyScope * currentScope)
 {
     NoisyIrNode *   node;
 
-    if (peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier))
+    if (peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
     {
         node = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
         assert(newtonIsConstant(node->physics));
@@ -145,12 +146,12 @@ newtonParseNumericFactor(NoisyState * N, NoisyScope * currentScope)
         noisyFatal(N, "newtonParseQuantityFactor: missed a case in factor\n");
     }
 
-    if (newtonInFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp))
+    if (noisyInFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts))
     {
         addLeaf(N, node, newtonParseHighPrecedenceBinaryOp(N, currentScope));
         
         /* exponents are automatically just one integer unless wrapped in parens */
-        NoisyIrNode * exponentExpression = peekCheckNewton(N, 1, kNewtonIrNodeType_TleftParen) ? 
+        NoisyIrNode * exponentExpression = peekCheck(N, 1, kNewtonIrNodeType_TleftParen) ? 
             newtonParseNumericExpression(N, currentScope) : 
             newtonParseInteger(N, currentScope);
         addLeaf(N, node, exponentExpression);
@@ -169,16 +170,16 @@ newtonParseQuantityExpression(NoisyState * N, NoisyScope * currentScope)
     NoisyIrNode * leftTerm;
     NoisyIrNode * rightTerm;
 
-    if (newtonInFirst(N, kNewtonIrNodeType_PquantityTerm))
+    if (noisyInFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts))
     {
         leftTerm = newtonParseQuantityTerm(N, currentScope);
 
-        while (newtonInFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp))
+        while (noisyInFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFirsts))
         {
             addLeaf(N, leftTerm, newtonParseLowPrecedenceBinaryOp(N, currentScope));
             
             rightTerm = newtonParseQuantityTerm(N, currentScope);
-            addLeafWithChainingSeqNewton(N, leftTerm, rightTerm);
+            addLeafWithChainingSeq(N, leftTerm, rightTerm);
             
             // compare LHS and RHS prime numbers and make sure they're equal
             assert(leftTerm->physics->numeratorPrimeProduct == rightTerm->physics->numeratorPrimeProduct);
@@ -187,7 +188,6 @@ newtonParseQuantityExpression(NoisyState * N, NoisyScope * currentScope)
     }
     else
     {
-        noisyParserSyntaxError(N, kNewtonIrNodeType_PquantityExpression, kNoisyIrNodeTypeMax);
         noisyFatal(N, Esanity);
     }
     
@@ -201,21 +201,21 @@ newtonParseQuantityTerm(NoisyState * N, NoisyScope * currentScope)
     NoisyIrNode *   intermediate = genNoisyIrNode(N,   kNewtonIrNodeType_PquantityTerm,
                         NULL /* left child */,
                         NULL /* right child */,
-                        newtonLexPeek(N, 1)->sourceInfo /* source info */);
+                        noisyLexPeek(N, 1)->sourceInfo /* source info */);
 
     intermediate->physics = (Physics *) calloc(1, sizeof(Physics));
     intermediate->physics->numeratorPrimeProduct = 1;
     intermediate->physics->denominatorPrimeProduct = 1;
 
 
-    if (newtonInFirst(N, kNewtonIrNodeType_PunaryOp))
+    if (noisyInFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts))
     {
         addLeaf(N, intermediate, newtonParseUnaryOp(N, currentScope));
     }
 
-    bool isPhysics /*not a number*/ = peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier);
+    bool isPhysics /*not a number*/ = peekCheck(N, 1, kNewtonIrNodeType_Tidentifier);
     NoisyIrNode * leftFactor = newtonParseQuantityFactor(N, currentScope);
-    addLeafWithChainingSeqNewton(N, intermediate, leftFactor);
+    addLeafWithChainingSeq(N, intermediate, leftFactor);
     
     int numVectorsInTerm = 0;
 
@@ -238,14 +238,14 @@ newtonParseQuantityTerm(NoisyState * N, NoisyScope * currentScope)
     
     NoisyIrNode * rightFactor;
 
-    while (newtonInFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp))
+    while (noisyInFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts))
     {
         NoisyIrNode * binOp = newtonParseMidPrecedenceBinaryOp(N, currentScope);
-        addLeafWithChainingSeqNewton(N, intermediate, binOp);
+        addLeafWithChainingSeq(N, intermediate, binOp);
         
-        bool isPhysics = peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier);
+        bool isPhysics = peekCheck(N, 1, kNewtonIrNodeType_Tidentifier);
         rightFactor = newtonParseQuantityFactor(N, currentScope);
-        addLeafWithChainingSeqNewton(N, intermediate, rightFactor);
+        addLeafWithChainingSeq(N, intermediate, rightFactor);
         
         // TODO double check this logic when I'm more awake
         if (isPhysics && rightFactor->physics->isVector)
@@ -290,7 +290,7 @@ newtonParseQuantityFactor(NoisyState * N, NoisyScope * currentScope)
     // intermediate->physics->numeratorPrimeProduct = 1;
     // intermediate->physics->denominatorPrimeProduct = 1;
 
-    if (peekCheckNewton(N, 1, kNewtonIrNodeType_Tidentifier))
+    if (peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
     {
         intermediate = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
         intermediate->physics = deepCopyPhysicsNode(intermediate->physics);
@@ -299,11 +299,11 @@ newtonParseQuantityFactor(NoisyState * N, NoisyScope * currentScope)
     {
         intermediate = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
     }
-    // else if (newtonInFirst(N, kNewtonIrNodeType_PtimeOp))
+    // else if (noisyInFirst(N, kNewtonIrNodeType_PtimeOp, gNewtonFirsts))
     // {
     //     intermediate = newtonParseTimeOp(N, currentScope);
     // }
-    // else if (newtonInFirst(N, kNewtonIrNodeType_PvectorOp) && peekCheck(N, 2, kNewtonIrNodeType_TleftParen) && peekCheck(N, 4, kNewtonIrNodeType_Tcomma))
+    // else if (noisyInFirst(N, kNewtonIrNodeType_PvectorOp, gNewtonFirsts) && peekCheck(N, 2, kNewtonIrNodeType_TleftParen) && peekCheck(N, 4, kNewtonIrNodeType_Tcomma))
     // {
 	// 	intermediate = newtonParseVectorOp(N, currentScope);
     // }
@@ -321,10 +321,10 @@ newtonParseQuantityFactor(NoisyState * N, NoisyScope * currentScope)
     /*
      * e.g.) (acceleration * mass) ** (3 + 5)
      */
-    if (newtonInFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp))
+    if (noisyInFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts))
     {
         addLeaf(N, intermediate, newtonParseHighPrecedenceBinaryOp(N, currentScope));
-        addLeafWithChainingSeqNewton(N, intermediate, newtonParseExponentialExpression(N, currentScope, intermediate));
+        addLeafWithChainingSeq(N, intermediate, newtonParseExponentialExpression(N, currentScope, intermediate));
     }
 
     return intermediate;
@@ -334,7 +334,7 @@ NoisyIrNode *
 newtonParseExponentialExpression(NoisyState * N, NoisyScope * currentScope, NoisyIrNode * baseNode)
 {
     /* exponents are automatically just one integer unless wrapped in parens */
-    NoisyIrNode * exponent = peekCheckNewton(N, 1, kNewtonIrNodeType_TleftParen) ? 
+    NoisyIrNode * exponent = peekCheck(N, 1, kNewtonIrNodeType_TleftParen) ? 
         newtonParseNumericExpression(N, currentScope) : 
         newtonParseInteger(N, currentScope);
     Physics * newExponentBase = shallowCopyPhysicsNode(baseNode->physics);
@@ -411,7 +411,7 @@ newtonParseVectorOp(NoisyState *  N, NoisyScope * currentScope)
     NoisyIrNode *   intermediate = genNoisyIrNode(N,   kNewtonIrNodeType_PvectorOp,
                         NULL /* left child */,
                         NULL /* right child */,
-                        newtonLexPeek(N, 1)->sourceInfo /* source info */);
+                        noisyLexPeek(N, 1)->sourceInfo /* source info */);
 
     intermediate->physics = (Physics *) calloc(1, sizeof(Physics));
     intermediate->physics->numeratorPrimeProduct = 1;
@@ -437,7 +437,7 @@ newtonParseVectorOp(NoisyState *  N, NoisyScope * currentScope)
     
     NoisyIrNode * left;
     left = newtonParseQuantityExpression(N, currentScope);
-    addLeafWithChainingSeqNewton(N, intermediate, left);
+    addLeafWithChainingSeq(N, intermediate, left);
 
     newtonPhysicsCopyNumeratorDimensions(N, intermediate->physics, left->physics);
     newtonPhysicsCopyDenominatorDimensions(N, intermediate->physics, left->physics);
@@ -446,7 +446,7 @@ newtonParseVectorOp(NoisyState *  N, NoisyScope * currentScope)
     
     NoisyIrNode * right;
     right = newtonParseQuantityExpression(N, currentScope);
-    addLeafWithChainingSeqNewton(N, intermediate, right);
+    addLeafWithChainingSeq(N, intermediate, right);
 
     assert(left->physics->isVector && right->physics->isVector);
 
@@ -470,17 +470,16 @@ newtonParseLowPrecedenceBinaryOp(NoisyState *  N, NoisyScope * currentScope)
 {
     NoisyIrNode *   n;
 
-    if (peekCheckNewton(N, 1, kNewtonIrNodeType_Tplus))
+    if (peekCheck(N, 1, kNewtonIrNodeType_Tplus))
     {
         n = newtonParseTerminal(N, kNewtonIrNodeType_Tplus, currentScope);
     }
-    else if (peekCheckNewton(N, 1, kNewtonIrNodeType_Tminus))
+    else if (peekCheck(N, 1, kNewtonIrNodeType_Tminus))
     {
         n = newtonParseTerminal(N, kNewtonIrNodeType_Tminus, currentScope);
     }
     else
     {
-        noisyParserSyntaxError(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, kNoisyIrNodeTypeMax);
         // noisyParserErrorRecovery(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp);
         return NULL;
     }
@@ -493,13 +492,13 @@ newtonParseUnaryOp(NoisyState *  N, NoisyScope * currentScope)
 {
     NoisyIrNode *   n = NULL;
 
-    if (peekCheckNewton(N, 1, kNewtonIrNodeType_Tminus))
+    if (peekCheck(N, 1, kNewtonIrNodeType_Tminus))
     {
         n = newtonParseTerminal(N, kNewtonIrNodeType_Tminus, currentScope);
     }
     else
     {
-        noisyParserSyntaxError(N, kNewtonIrNodeType_PunaryOp, kNoisyIrNodeTypeMax);
+        noisyFatal(N, "newton-parser-expression.c: newtonParseUnaryOp: did not detect minus as unary op\n");
     }
 
     return n;
@@ -513,25 +512,25 @@ newtonParseTimeOp(NoisyState * N, NoisyScope * currentScope)
         kNewtonIrNodeType_PtimeOp,
 		NULL /* left child */,
 		NULL /* right child */,
-		newtonLexPeek(N, 1)->sourceInfo /* source info */
+		noisyLexPeek(N, 1)->sourceInfo /* source info */
     );
     
     NoisyIrNodeType type;
-    if ((type = newtonLexPeek(N, 1)->type) == kNewtonIrNodeType_Tintegral || 
+    if ((type = noisyLexPeek(N, 1)->type) == kNewtonIrNodeType_Tintegral || 
          type == kNewtonIrNodeType_Tderivative)
     {
 		addLeaf(N, node, newtonParseTerminal(N, type, currentScope));
     }
     else
     {
-        noisyParserSyntaxError(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, kNoisyIrNodeTypeMax);
+        noisyFatal(N, "newton-parser-expression.c:newtonParseTimeOp: did not detect derivative or integral\n");
     }
 
-    while ((type = newtonLexPeek(N, 1)->type) == kNewtonIrNodeType_Tintegral || 
+    while ((type = noisyLexPeek(N, 1)->type) == kNewtonIrNodeType_Tintegral || 
             type == kNewtonIrNodeType_Tderivative)
     {
-		addLeafWithChainingSeqNewton(N, node, newtonParseTerminal(N, type, currentScope));
-        addLeafWithChainingSeqNewton(N, node, newtonParseQuantityExpression(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseTerminal(N, type, currentScope));
+        addLeafWithChainingSeq(N, node, newtonParseQuantityExpression(N, currentScope));
     }
 
 
@@ -543,7 +542,7 @@ newtonParseCompareOp(NoisyState * N, NoisyScope * currentScope)
 {
     
     NoisyIrNodeType type;
-    if ((type = newtonLexPeek(N, 1)->type) == kNewtonIrNodeType_Tlt || 
+    if ((type = noisyLexPeek(N, 1)->type) == kNewtonIrNodeType_Tlt || 
          type == kNewtonIrNodeType_Tle ||
          type == kNewtonIrNodeType_Tge ||
          type == kNewtonIrNodeType_Tgt ||
@@ -567,16 +566,16 @@ newtonParseHighPrecedenceBinaryOp(NoisyState * N, NoisyScope * currentScope)
         kNewtonIrNodeType_PhighPrecedenceBinaryOp,
 		NULL /* left child */,
 		NULL /* right child */,
-		newtonLexPeek(N, 1)->sourceInfo /* source info */
+		noisyLexPeek(N, 1)->sourceInfo /* source info */
     );
     
-    if (peekCheckNewton(N, 1, kNewtonIrNodeType_Texponent))
+    if (peekCheck(N, 1, kNewtonIrNodeType_Texponent))
     {
 		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Texponent, currentScope));
     }
     else
     {
-        noisyParserSyntaxError(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, kNoisyIrNodeTypeMax);
+        noisyFatal(N, "newton-parser-expression.c:newtonParseHighPrecedenceBinaryOp: no exponent token\n");
     }
     return node;
 }
@@ -586,17 +585,16 @@ newtonParseMidPrecedenceBinaryOp(NoisyState *  N, NoisyScope * currentScope)
 {
     NoisyIrNode *   n;
 
-    if (peekCheckNewton(N, 1, kNewtonIrNodeType_Tmul))
+    if (peekCheck(N, 1, kNewtonIrNodeType_Tmul))
     {
         n = newtonParseTerminal(N, kNewtonIrNodeType_Tmul, currentScope);
     }
-    else if (peekCheckNewton(N, 1, kNewtonIrNodeType_Tdiv))
+    else if (peekCheck(N, 1, kNewtonIrNodeType_Tdiv))
     {
         n = newtonParseTerminal(N, kNewtonIrNodeType_Tdiv, currentScope);
     }
     else
     {
-        noisyParserSyntaxError(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, kNoisyIrNodeTypeMax);
         noisyFatal(N, "newton-parser-expression.c: newtonParseMidPrecedenceBinaryOp not a mid precedence binop\n");
     }
 
@@ -609,9 +607,9 @@ newtonParseInteger(NoisyState * N, NoisyScope * currentScope)
 	NoisyIrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pinteger,
 						NULL /* left child */,
 						NULL /* right child */,
-						newtonLexPeek(N, 1)->sourceInfo /* source info */);
+						noisyLexPeek(N, 1)->sourceInfo /* source info */);
     
-    if (newtonInFirst(N, kNewtonIrNodeType_PunaryOp))
+    if (noisyInFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts))
     {
         addLeaf(N, node, newtonParseUnaryOp(N, currentScope));
         node->value = -1;

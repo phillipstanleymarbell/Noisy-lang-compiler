@@ -376,12 +376,10 @@ static void
 processNewtonFile(NoisyState *  N, char *  filename)
 {
 
-    char * fileName = "Examples/invariants.nt";
-
 	/*
 	 *	Tokenize input, then parse it and build AST + symbol table.
 	 */
-	newtonLexInit(N, fileName);
+	newtonLexInit(N, filename);
 
 	/*
 	 *	Create a top-level scope, then parse.
@@ -397,7 +395,7 @@ processNewtonFile(NoisyState *  N, char *  filename)
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
 	{
-		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N, N->noisyIrTopScope, N->noisyIrRoot));
+		// fprintf(stdout, "%s\n", noisyIrPassDotBackend(N, N->noisyIrTopScope, N->noisyIrRoot));
 	}
     
 
@@ -414,7 +412,7 @@ processNewtonFile(NoisyState *  N, char *  filename)
 static void
 version(NoisyState *  N)
 {
-	flexprint(N->Fe, N->Fm, N->Fperr, "\nNewton version %s.\n\n", kNoisyVersion);
+	flexprint(N->Fe, N->Fm, N->Fperr, "\nNewton version %s.\n\n", kNewtonVersion);
 }
 
 

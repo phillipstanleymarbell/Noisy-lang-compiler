@@ -49,8 +49,10 @@
 #include "noisy-timeStamps.h"
 #include "noisy.h"
 #include "noisy-parser.h"
+#include "noisy-lexers-helpers.h"
 #include "noisy-lexer.h"
 #include "noisy-symbolTable.h"
+#include "general-irHelpers.h"
 #include "noisy-irHelpers.h"
 #include "noisy-firstAndFollow.h"
 
@@ -95,8 +97,8 @@
 
 extern char *		gProductionStrings[];
 extern char *		gProductionDescriptions[];
-extern char *		gReservedTokenDescriptions[];
-extern char *		gTerminalStrings[];
+extern const char *		gReservedTokenDescriptions[];
+extern const char *		gTerminalStrings[];
 extern char *		gNoisyAstNodeStrings[];
 extern int		gNoisyFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 extern int	    gNoisyFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
@@ -2611,7 +2613,7 @@ noisyParseTerminal(NoisyState *  N, NoisyIrNodeType expectedType)
 		noisyParserErrorRecovery(N, expectedType);
 	}
 
-	NoisyToken *	t = noisyLexGet(N);
+	NoisyToken *	t = noisyLexGet(N, gReservedTokenDescriptions);
 	NoisyIrNode *	n = genNoisyIrNode(N,	t->type,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2638,7 +2640,7 @@ noisyParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType,
 		noisyParserErrorRecovery(N, expectedType);
 	}
 
-	NoisyToken *	t = noisyLexGet(N);
+	NoisyToken *	t = noisyLexGet(N, gReservedTokenDescriptions);
 	NoisyIrNode *	n = genNoisyIrNode(N,	t->type,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2674,7 +2676,7 @@ noisyParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expecte
 		noisyParserErrorRecovery(N, expectedType);
 	}
 
-	NoisyToken *	t = noisyLexGet(N);
+	NoisyToken *	t = noisyLexGet(N, gReservedTokenDescriptions);
 	NoisyIrNode *	n = genNoisyIrNode(N,	t->type,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2737,7 +2739,7 @@ noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType currentlyParsingTokenOrP
 						noisyLexPeek(N, 1)->sourceInfo->columnNumber,
 						EsyntaxD,
 						kNoisyErrorTokenHtmlTagOpen);
-		noisyLexPrintToken(N, noisyLexPeek(N, 1));
+		noisyLexPrintToken(N, noisyLexPeek(N, 1), gReservedTokenDescriptions);
 		flexprint(N->Fe, N->Fm, N->Fperr, "\"%s %s %s.<br><br>%s%s", kNoisyErrorTokenHtmlTagClose, EsyntaxB, gProductionDescriptions[currentlyParsingTokenOrProduction], kNoisyErrorDetailHtmlTagOpen, EsyntaxC);
 	}
 	else
@@ -2748,7 +2750,7 @@ noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType currentlyParsingTokenOrP
 						noisyLexPeek(N, 1)->sourceInfo->lineNumber,
 						noisyLexPeek(N, 1)->sourceInfo->columnNumber,
 						EsyntaxD);
-		noisyLexPrintToken(N, noisyLexPeek(N, 1));
+		noisyLexPrintToken(N, noisyLexPeek(N, 1), gReservedTokenDescriptions);
 		flexprint(N->Fe, N->Fm, N->Fperr, "\" %s %s.\n\n\t%s", EsyntaxB, gProductionDescriptions[currentlyParsingTokenOrProduction], EsyntaxC);
 	}
 
@@ -2777,7 +2779,7 @@ noisyParserSyntaxError(NoisyState *  N, NoisyIrNodeType currentlyParsingTokenOrP
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fperr, ".\n\n\tInstead, saw:\n\n");
-	noisyLexPeekPrint(N, 5, 0);
+	noisyLexPeekPrint(N, 5, 0, gReservedTokenDescriptions);
 	
 	if (N->mode & kNoisyModeCGI)
 	{

@@ -58,10 +58,6 @@
 #include "noisy-irPass-dotBackend.h"
 #include "noisy-irPass-protobufBackend.h"
 
-#include "newton-parser.h"
-#include "newton-lexer.h"
-#include "newton-symbolTable.h"
-
 //extern const char	gNoisyEol[];
 //extern const char	gNoisyWhitespace[];
 //extern const char	gNoisyStickies[];

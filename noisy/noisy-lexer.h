@@ -35,17 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-NoisySourceInfo *	noisyLexAllocateSourceInfo(	NoisyState *  N, char **  genealogy, 
-							char *  fileName, uint64_t lineNumber,
-							uint64_t columnNumber, uint64_t length);
-NoisyToken *		noisyLexAllocateToken(		NoisyState *  N, NoisyIrNodeType type, 
-							char *  identifier, uint64_t integerConst,
-							double realConst, char * stringConst,
-							NoisySourceInfo *  sourceInfo);
-void			noisyLexPut(NoisyState *  N, NoisyToken *  newToken);
-NoisyToken *		noisyLexGet(NoisyState *  N);
-NoisyToken *		noisyLexPeek(NoisyState *  N, int lookAhead);
 void			noisyLexInit(NoisyState *  N, char *  fileName);
-void			noisyLexPrintToken(NoisyState *  N, NoisyToken *  t);
-void			noisyLexDebugPrintToken(NoisyState *  N, NoisyToken *  t);
-void			noisyLexPeekPrint(NoisyState *  N, int maxTokens, int formatCharacters);
+void		makeNumericConst(NoisyState *  N);
+bool		isOperatorOrSeparator(NoisyState *  N, char c);
+void		finishToken(NoisyState *  N);

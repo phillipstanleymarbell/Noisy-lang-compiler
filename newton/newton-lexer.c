@@ -15,17 +15,13 @@
 #include "noisy.h"
 #include "newton-parser.h"
 #include "noisy-parser.h"
+#include "noisy-lexers-helpers.h"
 #include "newton-lexer.h"
 
 
 extern const char *	gNewtonTokenDescriptions[];
 
 
-static inline void	checkTokenLength(NoisyState *  N, int  count);
-static inline char	cur(NoisyState *  N);
-static bool     eqf(NoisyState *  N);
-static void		gobble(NoisyState *  N, int count);
-static void		done(NoisyState *  N, NoisyToken *  newToken);
 static void		checkComment(NoisyState *  N);
 static void		checkSingle(NoisyState *  N, NoisyIrNodeType tokenType);
 static void		checkDoubleQuote(NoisyState *  N);
@@ -35,240 +31,16 @@ static void		finishToken(NoisyState *  N);
 static void		checkGt(NoisyState *  N);
 static void		checkLt(NoisyState *  N);
 static void     checkMul(NoisyState * N);
-static bool checkProportionality(NoisyState * N);
-static void checkDot(NoisyState *  N);
+static bool     checkProportionality(NoisyState * N);
+static void     checkDot(NoisyState *  N);
 
 static void		makeNumericConst(NoisyState *  N);
-static bool		isDecimal(NoisyState *  N, char *  string);
-static char *		stringAtLeft(NoisyState *  N, char *  string, char  character);
-static char *		stringAtRight(NoisyState *  N, char *  string, char  character);
-static bool		isDecimalSeparatedWithChar(NoisyState *  N, char *  string, char  character);
-static bool		isDecimalOrRealSeparatedWithChar(NoisyState *  N, char *  string, char  character);
-static bool		isRadixConst(NoisyState *  N, char *  string);
-static bool		isRealConst(NoisyState *  N, char *  string);
-static bool		isEngineeringRealConst(NoisyState *  N, char *  string);
-static uint64_t		stringToRadixConst(NoisyState *  N, char *  string);
-static double		stringToRealConst(NoisyState *  N, char *  string);
-static double		stringToEngineeringRealConst(NoisyState *  N, char *  string);
 
 static bool		isOperatorOrSeparator(NoisyState *  N, char c);
 
 
 
 
-NoisySourceInfo *
-newtonLexAllocateSourceInfo(	NoisyState *  N, char **  genealogy, char *  fileName,
-				uint64_t lineNumber, uint64_t columnNumber, uint64_t length)
-{
-	NoisySourceInfo *	newSourceInfo;
-
-	newSourceInfo = (NoisySourceInfo *) calloc(1, sizeof(NoisySourceInfo));
-	if (newSourceInfo == NULL)
-	{
-		noisyFatal(N, Emalloc);
-	}
-
-	newSourceInfo->genealogy	= genealogy;
-	newSourceInfo->fileName		= (fileName == NULL ? NULL : strdup(fileName));
-	newSourceInfo->lineNumber	= lineNumber;
-	newSourceInfo->columnNumber	= columnNumber;
-	newSourceInfo->length		= length;
-
-	return newSourceInfo;
-}
-
-
-NoisyToken *
-newtonLexAllocateToken(	
-    NoisyState *  N, 
-    NoisyIrNodeType type, 
-    char *  identifier,
-    uint64_t integerConst,
-    double realConst, 
-    char * stringConst,
-	NoisySourceInfo *  sourceInfo
-) {
-	NoisyToken *	newToken;
-
-	newToken = (NoisyToken *) calloc(1, sizeof(NoisyToken));
-	if (newToken == NULL)
-	{
-		noisyFatal(N, Emalloc);
-	}
-	
-	newToken->type		= type;
-	newToken->identifier	= (identifier == NULL ? NULL : strdup(identifier));
-	newToken->realConst	= realConst;
-	newToken->integerConst= integerConst;
-	newToken->stringConst	= (stringConst == NULL ? NULL : strdup(stringConst));
-	newToken->sourceInfo	= sourceInfo;
-
-	return newToken;
-}
-
-
-
-void
-newtonLexPut(NoisyState *  N, NoisyToken *  newToken)
-{
-	if (newToken == NULL)
-	{
-		noisyFatal(N, Esanity);
-	}
-
-	/*
-	 *	If the token list is empty, we allocate and put on an EOF node, which we never remove.
-	 */	
-	if (N->tokenList == NULL)
-	{
-		N->lastToken = N->tokenList = newToken;
-	}
-	else
-	{
-		newToken->prev = N->lastToken;
-		N->lastToken->next = newToken;
-		N->lastToken = newToken;
-	}
-}
-
-
-NoisyToken *
-newtonLexGet(NoisyState *  N)
-{
-	if (N->tokenList == NULL)
-	{
-		noisyFatal(N, Esanity);
-	}
-
-	NoisyToken *	t = N->tokenList;
-	
-	if (t->next != NULL)
-	{
-		N->tokenList = N->tokenList->next;
-	}
-	else if (t->type != kNewtonIrNodeType_Zeof)
-	{
-		noisyFatal(N, Esanity);
-	}
-
-	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
-	{
-		newtonLexDebugPrintToken(N, t);	
-	}
-
-	return t;
-}
-
-
-NoisyToken *
-newtonLexPeek(NoisyState *  N, int lookAhead)
-{
-	if (N->tokenList == NULL)
-	{
-		noisyFatal(N, Esanity);
-	}
-
-	NoisyToken *	tmp = N->tokenList;
-	int 		which = 1;
-	while ((tmp != NULL) && (which++ < lookAhead))
-	{
-		tmp = tmp->next;
-	}
-
-	return tmp;
-}
-
-void
-newtonLexPeekPrint(NoisyState *  N, int maxTokens, int formatCharacters)
-{
-	if (N->tokenList == NULL)
-	{
-		noisyFatal(N, Esanity);
-	}
-
-	int		tripCharacters = 0, done = 0;
-	NoisyToken *	tmp = N->tokenList;
-
-	flexprint(N->Fe, N->Fm, N->Fperr, "\t\tline %5d, token %3d\t", tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
-	while (tmp != NULL)
-	{
-		if (maxTokens > 0 && (done++ > maxTokens))
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "...");
-			break;
-		}
-
-		{
-			/*
-			 *	NOTE: We currently don't keep newlines and whitespace on the token list...
-			 */
-			switch (tmp->type)
-			{
-                // TODO filter cases
-				case kNewtonIrNodeType_Tidentifier:
-				{
-					flexprint(N->Fe, N->Fm, N->Fperr, "'%s' (identifier) ", tmp->identifier);
-
-					/*
-					 *	Account for the output string and the
-					 *	two guarding "'" quotes.
-					 */
-					tripCharacters += strlen(tmp->identifier) + 14;
-
-					break;
-				}
-
-				case kNewtonIrNodeType_TstringConst:
-				{
-					flexprint(N->Fe, N->Fm, N->Fperr, "'\"%s\"' ", tmp->stringConst);
-
-					/*
-					 *	Account for the output string and the
-					 *	two guarding "'" quotes.
-					 */
-					tripCharacters += strlen(tmp->stringConst) + 2;
-
-					break;
-				}
-				
-				default:
-				{
-					if (gNewtonTokenDescriptions[tmp->type] != NULL)
-					{
-						flexprint(N->Fe, N->Fm, N->Fperr, "%s ", gNewtonTokenDescriptions[tmp->type]);
-
-						/*
-						 *	Account for the trailing space
-						 */
-						tripCharacters += strlen(gNewtonTokenDescriptions[tmp->type]) + 1;
-
-					}
-					else
-					{
-						flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG/TODO: un-handled type %s in newtonLexPeekPrint <<<", gNewtonTokenDescriptions[tmp->type]);
-						noisyFatal(N, Esanity);
-					}
-				}
-			}
-
-			if ((tmp->next != NULL) && (tmp->sourceInfo->lineNumber != tmp->next->sourceInfo->lineNumber))
-			{
-				//flexprint(N->Fe, N->Fm, N->Fperr, "(newlines)");
-				tripCharacters = 0;
-
-				flexprint(N->Fe, N->Fm, N->Fperr, "\n\t\tline %5d\t\t", tmp->next->sourceInfo->lineNumber);
-			}
-			else if (tripCharacters >= formatCharacters)
-			{
-				tripCharacters = 0;
-				flexprint(N->Fe, N->Fm, N->Fperr, "\n\t\t\t\t\t");
-			}
-		}
-
-		tmp = tmp->next;
-	}
-	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
-}
 
 
 void
@@ -491,19 +263,19 @@ newtonLexInit(NoisyState *  N, char *  fileName)
 
 	fclose(filePointer);
 
-	NoisySourceInfo *	eofSourceInfo = newtonLexAllocateSourceInfo(N,	NULL /* genealogy */,
+	NoisySourceInfo *	eofSourceInfo = noisyLexAllocateSourceInfo(N,	NULL /* genealogy */,
 										N->fileName /* fileName */,
 										N->lineNumber /* lineNumber */,
 										N->columnNumber /* columnNumber */,
 										0 /* length */);
 	  								
-	 NoisyToken *		eofToken = newtonLexAllocateToken(N,	kNewtonIrNodeType_Zeof /* type */,
+	 NoisyToken *		eofToken = noisyLexAllocateToken(N,	kNewtonIrNodeType_Zeof /* type */,
 	 								NULL /* identifier */,
 	 								0 /* integerConst */,
 	 								0.0 /* realConst */,
 	 								NULL /* stringConst */,
 	 								eofSourceInfo /* sourceInfo */);
-	 newtonLexPut(N, eofToken);
+	 noisyLexPut(N, eofToken);
 
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
@@ -513,7 +285,7 @@ newtonLexInit(NoisyState *  N, char *  fileName)
 		NoisyToken *	p = N->tokenList;
 		while (p != NULL)
 		{
-			newtonLexDebugPrintToken(N, p);
+			noisyLexDebugPrintToken(N, p, gNewtonTokenDescriptions);
 			p = p->next;
 		}
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
@@ -524,122 +296,10 @@ newtonLexInit(NoisyState *  N, char *  fileName)
 }
 
 
-void
-newtonLexDebugPrintToken(NoisyState *  N, NoisyToken *  t)
-{
-	switch (t->type)
-	{
-        // TODO handle all the cases
-		case kNewtonIrNodeType_Tidentifier:
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\"%20s\", ", t->identifier);
-			break;
-		}
-
-		case kNewtonIrNodeType_TstringConst:
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\"%20s\", ", t->stringConst);
-			break;
-		}
-
-		default:
-		{
-			if (gNewtonTokenDescriptions[t->type] != NULL)
-			{
-				flexprint(N->Fe, N->Fm, N->Fperr, "%22s, ", gNewtonTokenDescriptions[t->type]);
-			}
-			else
-			{
-				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in newtonLexDebugPrintToken <<<", t->type);
-				noisyFatal(N, Esanity);
-			}
-		}
-	}
-
-	flexprint(N->Fe, N->Fm, N->Fperr, "source file: %16s, line %3d, pos %3d, length %3d\n",
-		t->sourceInfo->fileName, t->sourceInfo->lineNumber, t->sourceInfo->columnNumber, t->sourceInfo->length);
-}
-
-
-void
-newtonLexPrintToken(NoisyState *  N, NoisyToken *  t)
-{
-	switch (t->type)
-	{
-		case kNewtonIrNodeType_Tidentifier:
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\"%s\"", t->identifier);
-			break;
-		}
-
-		case kNewtonIrNodeType_TstringConst:
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\"%s\"", t->stringConst);
-			break;
-		}
-
-		default:
-		{
-			if (gNewtonTokenDescriptions[t->type] != NULL)
-			{
-				flexprint(N->Fe, N->Fm, N->Fperr, "%s", gNewtonTokenDescriptions[t->type]);
-			}
-			else
-			{
-				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled iii type [%d] in noisyLexPrintToken <<<", t->type);
-				//noisyFatal(N, Esanity);
-			}
-		}
-	}
-}
-
-
 
 /*
  *	Local non-exposed routines.
  */
-
-
-
-static inline void
-checkTokenLength(NoisyState *  N, int  count)
-{
-	if (N->currentTokenLength+count >= kNoisyMaxBufferLength)
-	{
-		noisyFatal(N, EtokenTooLong);
-	}
-}
-
-static inline char
-cur(NoisyState *  N)
-{
-	return N->lineBuffer[N->columnNumber];
-}
-
-
-static void
-gobble(NoisyState *  N, int count)
-{
-	checkTokenLength(N, count);
-	strncpy(N->currentToken, &N->lineBuffer[N->columnNumber], count);
-
-	N->columnNumber += count;
-}
-
-
-static void
-done(NoisyState *  N, NoisyToken *  newToken)
-{
-	newToken->sourceInfo = newtonLexAllocateSourceInfo(N,	NULL				/*   genealogy 	*/,
-								N->fileName			/*   fileName 	*/,
-								N->lineNumber			/*   lineNumber */,
-								N->columnNumber - N->currentTokenLength /* columnNumber */,
-								N->currentTokenLength		/*   length 	*/);
-
-	bzero(N->currentToken, kNoisyMaxBufferLength);
-	N->currentTokenLength = 0;
-	newtonLexPut(N, newToken);
-}
 
 
 static void
@@ -674,7 +334,7 @@ checkSingle(NoisyState *  N, NoisyIrNodeType tokenType)
 //fprintf(stderr, "checkSingle(), tokenType = %d\n", tokenType);
 	}
 
-	NoisyToken *		newToken = newtonLexAllocateToken(N,	tokenType /* type	*/,
+	NoisyToken *		newToken = noisyLexAllocateToken(N,	tokenType /* type	*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -709,7 +369,7 @@ checkDoubleQuote(NoisyState *  N)
 	 */
 	if (strchr(&N->lineBuffer[N->columnNumber+1], '"') == NULL)
 	{
-		newToken = newtonLexAllocateToken(N,	kNewtonIrNodeType_ZbadStringConst	/* type		*/,
+		newToken = noisyLexAllocateToken(N,	kNewtonIrNodeType_ZbadStringConst	/* type		*/,
 							NULL					/* identifier	*/,
 							0					/* integerConst	*/,
 							0.0					/* realConst	*/,
@@ -747,7 +407,7 @@ checkDoubleQuote(NoisyState *  N)
 			N->columnNumber++;
 		}
 
-		newToken = newtonLexAllocateToken(N,	kNewtonIrNodeType_TstringConst	/* type		*/,
+		newToken = noisyLexAllocateToken(N,	kNewtonIrNodeType_TstringConst	/* type		*/,
 							NULL				/* identifier	*/,
 							0				/* integerConst	*/,
 							0.0				/* realConst	*/,
@@ -760,31 +420,6 @@ checkDoubleQuote(NoisyState *  N)
 	 */
 	done(N, newToken);
 }
-
-
-// static void
-// checkMinus(NoisyState *  N)
-// {
-// 	/*
-// 	 *	Gobble any extant chars.
-// 	 */
-// 	finishToken(N);
-// 
-//     gobble(N, 1);
-//     NoisyIrNodeType type = kNewtonIrNodeType_Tminus;
-// 
-// 	NoisyToken *		newToken = newtonLexAllocateToken(N,	type	/* type		*/,
-// 									NULL	/* identifier	*/,
-// 									0	/* integerConst	*/,
-// 									0.0	/* realConst	*/,
-// 									NULL	/* stringConst	*/,
-// 									NULL	/* sourceInfo	*/);
-// 
-// 	/*
-// 	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
-// 	 */
-// 	done(N, newToken);
-// }
 
 static void
 finishToken(NoisyState *  N)
@@ -809,7 +444,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 	{
 		if ((gNewtonTokenDescriptions[i] != NULL) && !strcmp(gNewtonTokenDescriptions[i], N->currentToken))
 		{
-			NoisyToken *	newToken = newtonLexAllocateToken(N,	i	/* type		*/,
+			NoisyToken *	newToken = noisyLexAllocateToken(N,	i	/* type		*/,
 										NULL	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -836,7 +471,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 	 *	since we would have halted the building of the token on seing them
 	 *	and gotten called here.
 	 */
-	NoisyToken *	newToken = newtonLexAllocateToken(N,	kNewtonIrNodeType_Tidentifier	/* type		*/,
+	NoisyToken *	newToken = noisyLexAllocateToken(N,	kNewtonIrNodeType_Tidentifier	/* type		*/,
 								N->currentToken			/* identifier	*/,
 								0	/* integerConst	*/,
 								0.0	/* realConst	*/,
@@ -872,7 +507,7 @@ makeNumericConst(NoisyState *  N)
 	{
 		if (N->currentTokenLength == 1)
 		{
-			NoisyToken *	newToken = newtonLexAllocateToken(N,	kNewtonIrNodeType_Tnumber	/* type		*/,
+			NoisyToken *	newToken = noisyLexAllocateToken(N,	kNewtonIrNodeType_Tnumber	/* type		*/,
 										NULL	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -888,7 +523,7 @@ makeNumericConst(NoisyState *  N)
 		}
 		else if (N->currentToken[1] != '.')
 		{
-			NoisyToken *	newToken = newtonLexAllocateToken(N,	kNewtonIrNodeType_ZbadIdentifier	/* type		*/,
+			NoisyToken *	newToken = noisyLexAllocateToken(N,	kNewtonIrNodeType_ZbadIdentifier	/* type		*/,
 										N->currentToken	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -912,7 +547,7 @@ makeNumericConst(NoisyState *  N)
 	 */
 	if (isEngineeringRealConst(N, N->currentToken))
 	{
-		NoisyToken *	newToken = newtonLexAllocateToken(N,	kNewtonIrNodeType_Tnumber /* type		*/,
+		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNewtonIrNodeType_Tnumber /* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
 									stringToEngineeringRealConst(N, N->currentToken) /* realConst	*/,
@@ -932,7 +567,7 @@ makeNumericConst(NoisyState *  N)
 	 */
 	if (isRealConst(N, N->currentToken))
 	{
-		NoisyToken *	newToken = newtonLexAllocateToken(N,	kNewtonIrNodeType_Tnumber /* type		*/,
+		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNewtonIrNodeType_Tnumber /* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
 									stringToRealConst(N, N->currentToken)	/* realConst	*/,
@@ -952,7 +587,7 @@ makeNumericConst(NoisyState *  N)
 	 */
 	if (isRadixConst(N, N->currentToken))
 	{
-		NoisyToken *	newToken = newtonLexAllocateToken(N,	kNewtonIrNodeType_Tnumber/* type		*/,
+		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNewtonIrNodeType_Tnumber/* type		*/,
 									NULL				/* identifier	*/,
 									stringToRadixConst(N, N->currentToken)	/* integerConst	*/,
 									0				/* realConst	*/,
@@ -972,7 +607,7 @@ makeNumericConst(NoisyState *  N)
 	 */
 	if (!isDecimal(N, N->currentToken))
 	{
-		NoisyToken *	newToken = newtonLexAllocateToken(N,	kNewtonIrNodeType_ZbadIdentifier	/* type		*/,
+		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNewtonIrNodeType_ZbadIdentifier	/* type		*/,
 									N->currentToken			/* identifier	*/,
 									0				/* integerConst	*/,
 									0				/* realConst	*/,
@@ -995,7 +630,7 @@ makeNumericConst(NoisyState *  N)
 	uint64_t 	decimalValue = strtoul(N->currentToken, &ep, 0);
 	if (*ep == '\0')
 	{
-		NoisyToken *	newToken = newtonLexAllocateToken(N,	kNewtonIrNodeType_Tnumber/* type		*/,
+		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNewtonIrNodeType_Tnumber/* type		*/,
 									NULL				/* identifier	*/,
 									decimalValue			/* integerConst	*/,
 									0				/* realConst	*/,
@@ -1013,352 +648,6 @@ makeNumericConst(NoisyState *  N)
 	}
 }
 
-
-static bool
-isDecimal(NoisyState *  N, char *  string)
-{
-	if (string == NULL)
-	{
-		return false;
-	}
-
-	size_t	stringLength = strlen(string);
-	for (int i = 0; i < stringLength; i++)
-	{
-		if (string[i] < '0' || string[i] > '9')
-		{
-			return false;
-		}
-	}
-
-	return (string != NULL);
-}
-
-
-
-static char *
-stringAtLeft(NoisyState *  N, char *  string, char character)
-{
-	if (string == NULL)
-	{
-		return string;
-	}
-
-	/*
-	 *	NOTE: stringAtLeft (but not stringAtRight) makes
-	 *	a copy, because it will modify 'string' by inserting
-	 *	a '\0' at the position of 'character' and this has
-	 *	to be freed by caller.
-	 */
-	char *	left = strdup(string);
-	char *	right = strchr(string, character);
-
-	if (right == NULL)
-	{
-		return left;
-	}
-
-	/*
-	 *	right - string. Since left is a strdup, its address could be anywhere...
-	 */
-	left[right - string] = '\0';
-
-	return left;
-}
-
-static char *
-stringAtRight(NoisyState *  N, char *  string, char character)
-{
-	if (string == NULL)
-	{
-		return string;
-	}
-
-	char *	right = strchr(string, character);
-
-	if (right == NULL)
-	{
-		return NULL;
-	}
-
-	return &right[1];
-}
-
-
-static bool
-isDecimalSeparatedWithChar(NoisyState *  N, char *  string, char  character)
-{
-	if (string == NULL)
-	{
-		return false;
-	}
-
-	if (!strchr(string, character))
-	{
-		return false;
-	}
-
-	char *	left = stringAtLeft(N, string, character);
-	char *	right = stringAtRight(N, string, character);
-	bool	result = isDecimal(N, left) && isDecimal(N, right);
-
-	/*
-	 *	stringAtLeft() makes a copy, which needs to be freed.
-	 *	(stringAtRight on the other hand does not need to make
-	 *	a copy, and doesn't).
-	 */
-	free(left);
-
-
-	return result;
-}
-
-static bool
-isDecimalOrRealSeparatedWithChar(NoisyState *  N, char *  string, char  character)
-{
-	if (string == NULL)
-	{
-		return false;
-	}
-
-	if (!strchr(string, character))
-	{
-		return false;
-	}
-
-	char *	left = stringAtLeft(N, string, character);
-	char *	right = stringAtRight(N, string, character);
-	bool	result = (isDecimal(N, left)  || isRealConst(N, left))
-			&&
-			(isDecimal(N, right) || isRealConst(N, right));
-
-	/*
-	 *	stringAtLeft() makes a copy, which needs to be freed.
-	 *	(stringAtRight on the other hand does not need to make
-	 *	a copy, and doesn't).
-	 */
-	free(left);
-
-
-	return result;
-}
-
-
-static bool
-isRadixConst(NoisyState *  N, char *  string)
-{
-	if (string == NULL || !strchr(string, 'r'))
-	{
-		return false;
-	}
-
-	return isDecimalSeparatedWithChar(N, string, 'r');
-}
-
-
-static bool
-isRealConst(NoisyState *  N, char *  string)
-{
-	if (string == NULL || !strchr(string, '.'))
-	{
-		return false;
-	}
-
-	return isDecimalSeparatedWithChar(N, string, '.');
-}
-
-
-static bool
-isEngineeringRealConst(NoisyState *  N, char *  string)
-{
-	if (string == NULL || (!strchr(string, 'e') && !strchr(string, 'E')))
-	{
-		return false;
-	}
-
-//fprintf(stderr, "isEngineeringRealConst(N, %s)...\n", string);
-	return (isDecimalOrRealSeparatedWithChar(N, string, 'e') || isDecimalOrRealSeparatedWithChar(N, string, 'E'));
-}
-
-
-static uint64_t
-stringToRadixConst(NoisyState *  N, char *  string)
-{
-	char		tmp;
-	char *		ep = &tmp;
-	char *		left;
-	char *		right;
-	int		rightLength;
-	uint64_t	base, value, p;
-
-
-	left		= stringAtLeft(N, string, 'r');
-	right		= stringAtRight(N, string, 'r');
-	rightLength	= strlen(right);
-
-	base = strtoul(left, &ep, 0);
-	if (*ep != '\0')
-	{
-		/*
-		 *	BUG/TODO: We should make sure that errorRecovery uses setjmp to eject
-		 *	us out of here.
-		 */
-		noisyFatal(N, Esanity);
-
-		/* Not reached */
-	}
-
-	value = 0;
-
-	for (int i = 0; i < rightLength; i++)
-	{
-		char	digitChar;
-		char	digitValue;
-
-		if (i == 0)
-		{
-			p = 1;
-		}
-		else
-		{
-			p = base;
-			for (int j = 0; j < i-1; j++)
-			{
-				p *= base;
-			}
-		}
-
-		/*
-		 *	Noisy supports up to base 36 (e.g., 36rZZZ), which is the most
-		 *	human friendly range. We could in principle support, e.g., base64,
-		 *	but that would lead to value strings that would unecessarily
-		 *	complicate the lexer and prser (e.g., "37r{{{").
-		 */
-		digitChar = right[rightLength - 1 - i];
-		if (digitChar >= '0' && digitChar <= '9')
-		{
-			digitValue = digitChar - '0';
-		}
-		else if (digitChar >= 'A' && digitChar <= 'Z')
-		{
-			digitValue = digitChar - 'A' + 10;
-		}
-		else if (digitChar >= 'a' && digitChar <= 'z')
-		{
-			digitValue = digitChar - 'a' + 10;
-		}
-		else
-		{
-			noisyFatal(N, Esanity);
-		}
-
-		value += p * digitValue;
-	}
-
-	/*
-	 *	stringAtLeft() makes a copy, which needs to be freed.
-	 *	(stringAtRight on the other hand does not need to make
-	 *	a copy, and doesn't).
-	 */
-	free(left);
-
-
-	return value;
-}
-
-
-static double
-stringToRealConst(NoisyState *  N, char *  string)
-{
-	char		tmp;
-	char *		ep = &tmp;
-	char *		left;
-	char *		right;
-	int		rightLength;
-	uint64_t	integerPart, fractionalPart;
-
-
-	left		= stringAtLeft(N, string, '.');
-	right		= stringAtRight(N, string, '.');
-	if (right != NULL)
-	{
-		rightLength	= strlen(right);
-	}
-
-	integerPart = strtoul(left, &ep, 0);
-	if (*ep != '\0')
-	{
-		noisyFatal(N, Esanity);
-
-		/* Not reached */
-	}
-
-	
-	if (right == NULL)
-	{
-		/*
-		 *	stringAtLeft() makes a copy, which needs to be freed.
-		 *	(stringAtRight on the other hand does not need to make
-		 *	a copy, and doesn't).
-		 */
-		free(left);
-
-		return (double)integerPart;
-	}
-	fractionalPart	= strtoul(right, &ep, 0);
-	if (*ep != '\0')
-	{
-		noisyFatal(N, Esanity);
-
-		/* Not reached */
-	}
-
-	/*
-	 *	stringAtLeft() makes a copy, which needs to be freed.
-	 *	(stringAtRight on the other hand does not need to make
-	 *	a copy, and doesn't).
-	 */
-	free(left);
-
-
-	return (double)integerPart + ((double)fractionalPart/pow(10.0, rightLength));
-}
-
-
-static double
-stringToEngineeringRealConst(NoisyState *  N, char *  string)
-{
-	char		engineeringChar;
-	char *		left;
-	char *		right;
-	double		mantissa, exponent;
-
-
-	if (strchr(string, 'e'))
-	{
-		engineeringChar = 'e';
-	}
-	else
-	{
-		engineeringChar = 'E';
-	}
-
-	left		= stringAtLeft(N, string, engineeringChar);
-	right		= stringAtRight(N, string, engineeringChar);
-
-	mantissa 	= stringToRealConst(N, left);
-	exponent 	= stringToRealConst(N, right);
-
-	/*
-	 *	stringAtLeft() makes a copy, which needs to be freed.
-	 *	(stringAtRight on the other hand does not need to make
-	 *	a copy, and doesn't).
-	 */
-	free(left);
-
-
-	return (mantissa * pow(10.0, exponent));
-}
 
 static void
 checkGt(NoisyState *  N)
@@ -1381,7 +670,7 @@ checkGt(NoisyState *  N)
 		type = kNewtonIrNodeType_Tgt;
 	}
 
-	NoisyToken *		newToken = newtonLexAllocateToken(N,	type	/* type		*/,
+	NoisyToken *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -1416,7 +705,7 @@ checkLt(NoisyState *  N)
 		type = kNewtonIrNodeType_Tlt;
 	}
 
-	NoisyToken *		newToken = newtonLexAllocateToken(N,	type	/* type		*/,
+	NoisyToken *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -1449,7 +738,7 @@ checkProportionality(NoisyState * N)
         return false; // starting with 'o' but not an operator
 	}
 
-	NoisyToken *		newToken = newtonLexAllocateToken(N,	type	/* type		*/,
+	NoisyToken *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -1485,7 +774,7 @@ checkMul(NoisyState *  N)
 		type = kNewtonIrNodeType_Tmul;
 	}
 
-	NoisyToken *		newToken = newtonLexAllocateToken(N,	type	/* type		*/,
+	NoisyToken *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -1523,7 +812,7 @@ checkDot(NoisyState *  N)
 
 	gobble(N, 1);
 
-	NoisyToken *		newToken = newtonLexAllocateToken(N,	kNewtonIrNodeType_Tdot /* type	*/,
+	NoisyToken *		newToken = noisyLexAllocateToken(N,	kNewtonIrNodeType_Tdot /* type	*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -1583,10 +872,3 @@ isOperatorOrSeparator(NoisyState *  N, char c)
 	return false;
 }
 
-static bool
-eqf(NoisyState *  N)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerEqf);
-
-	return (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '=');
-}

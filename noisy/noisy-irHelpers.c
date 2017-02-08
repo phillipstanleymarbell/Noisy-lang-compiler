@@ -49,51 +49,11 @@
 #include "noisy-timeStamps.h"
 #include "noisy.h"
 #include "noisy-irHelpers.h"
+#include "noisy-lexers-helpers.h"
 #include "noisy-lexer.h"
-#include "newton-lexer.h"
 
 
 
-NoisyIrNode *
-genNoisyIrNode(NoisyState *  N, NoisyIrNodeType type, NoisyIrNode *  irLeftChild, NoisyIrNode *  irRightChild, NoisySourceInfo *  sourceInfo)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyGenNoisyIrNode);
-
-	NoisyIrNode *		node;
-
-	node = (NoisyIrNode *) calloc(1, sizeof(NoisyIrNode));
-	if (node == NULL)
-	{
-		noisyFatal(N, Emalloc);
-
-		/*	Not reached	*/
-	}
-
-	node->type		= type;
-	node->sourceInfo	= sourceInfo;
-	node->irLeftChild	= irLeftChild;
-	node->irRightChild	= irRightChild;
-
-	if (irLeftChild != NULL)
-	{
-		irLeftChild->irParent = node;
-	}
-
-	if (irRightChild != NULL)
-	{
-		irRightChild->irParent = node;
-	}
-
-	/*
-	 *	Not madatory, but provides higher-fidelity attribution, by making 
-	 *	sure that any time between here and next stamping is not attributed
-	 *	to genNoisyIrNode().
-	 */
-	//NoisyTimeStampTraceMacro(kNoisyTimeStampKeyUnknown);
-
-
-	return node;
-}
 
 NoisyScope *
 progtypeName2scope(NoisyState *  N, const char *  identifier)
@@ -122,121 +82,6 @@ progtypeName2scope(NoisyState *  N, const char *  identifier)
 }
 
 
-void
-errorUseBeforeDefinition(NoisyState *  N, const char *  identifier)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorUseBeforeDefinition);
-
-	flexprint(N->Fe, N->Fm, N->Fperr, "Saw identifier \"%s\" in use before definition\n", identifier);
-}
-
-void
-errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
-}
-
-bool
-peekCheckNewton(NoisyState *  N, int lookAhead, NoisyIrNodeType expectedType)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
-
-	if (newtonLexPeek(N, lookAhead) == NULL)
-	{
-		return false;
-	}
-
-	return (newtonLexPeek(N, lookAhead)->type == expectedType);
-}
-
-bool
-peekCheck(NoisyState *  N, int lookAhead, NoisyIrNodeType expectedType)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
-
-	if (noisyLexPeek(N, lookAhead) == NULL)
-	{
-		return false;
-	}
-
-	return (noisyLexPeek(N, lookAhead)->type == expectedType);
-}
-
-
-NoisyIrNode *
-depthFirstWalk(NoisyState *  N, NoisyIrNode *  node)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserDepthFirstWalk);
-
-	if (node->irLeftChild == NULL || node->irRightChild == NULL)
-	{
-		return node;
-	}
-
-	return depthFirstWalk(N, node->irRightChild);
-}
-
-void
-addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
-
-	NoisyIrNode *	node = depthFirstWalk(N, parent);
-
-	if (node == NULL)
-	{
-		noisyFatal(N, Esanity);
-	}
-	
-	if (node->irLeftChild == NULL)
-	{
-		node->irLeftChild = newNode;
-		
-		return;
-	}
-
-	node->irRightChild = newNode;
-}
-
-void
-addLeafWithChainingSeqNewton(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
-
-	NoisyIrNode *	node = depthFirstWalk(N, parent);
-
-	if (node->irLeftChild == NULL)
-	{
-		node->irLeftChild = newNode;
-
-		return;
-	}
-	
-	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
-						newNode /* left child */,
-						NULL /* right child */,
-						newtonLexPeek(N, 1)->sourceInfo /* source info */);
-}
-
-void
-addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
-
-	NoisyIrNode *	node = depthFirstWalk(N, parent);
-
-	if (node->irLeftChild == NULL)
-	{
-		node->irLeftChild = newNode;
-
-		return;
-	}
-	
-	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
-						newNode /* left child */,
-						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
-}
 
 void
 addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeScope)

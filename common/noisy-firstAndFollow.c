@@ -1,6 +1,5 @@
-
 /*
-	Authored 2016. Jonathan Lim.
+	Authored 2015. Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -45,16 +44,10 @@
 #include "flexerror.h"
 #include "flex.h"
 #include "noisy-errors.h"
-#include "version.h"
 #include "noisy-timeStamps.h"
 #include "noisy.h"
-#include "newton-lexer.h"
-
-extern int	gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
-extern int	gNewtonFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
-extern char *	gProductionStrings[];
-extern char *	gTerminalStrings[];
-
+#include "noisy-lexers-helpers.h"
+#include "noisy-firstAndFollow.h"
 
 /*
  *	NOTE: Unlike in our previous compilers (e.g., Crayon), we do
@@ -66,31 +59,23 @@ extern char *	gTerminalStrings[];
  *		inFirst(NoisyIrNodeType productionOrToken, NoisyIrNodeType token)
  */
 bool
-newtonInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken)
+noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFirst);
 
-	NoisyToken *	token = newtonLexPeek(N, 1);
+	NoisyToken *	token = noisyLexPeek(N, 1);
 
 	if (productionOrToken > kNoisyIrNodeTypeMax)
 	{
 		noisyFatal(N, Esanity);
 	}
 
-	//flexprint(N->Fe, N->Fm, N->Fperr, "noisyInFirst(): productionOrToken=[%d], gProductionStrings[%d]=[%s],"
-	//		"token->type=[%d], gTerminalStrings[%d]=[%s]...\n",
-	//		productionOrToken, productionOrToken, gProductionStrings[productionOrToken],
-	//		token->type, token->type, gTerminalStrings[token->type]);
-
 	/*
 	 *	NOTE: The arrays created by ffi2code have a kNoisyIrNodeTypeMax element at the end of each sub-array
 	 */
-	for (int i = 0; i < kNoisyIrNodeTypeMax && gNewtonFirsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
+	for (int i = 0; i < kNoisyIrNodeTypeMax && firsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
-		//flexprint(N->Fe, N->Fm, N->Fperr, "--->gNoisyFirsts[%d][%d] = %s...\n",
-		//	productionOrToken, i, gTerminalStrings[gNoisyFirsts[productionOrToken][i]]);
-
-		if (gNewtonFirsts[productionOrToken][i] == token->type)
+		if (firsts[productionOrToken][i] == token->type)
 		{
 			return true;
 		}
@@ -110,11 +95,11 @@ newtonInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken)
  *		inFollow(NoisyIrNodeType productionOrToken, NoisyIrNodeType token)
  */
 bool
-newtonInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken)
+noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFollow);
 
-	NoisyToken *	token = newtonLexPeek(N, 1);
+	NoisyToken *	token = noisyLexPeek(N, 1);
 
 	if (productionOrToken > kNoisyIrNodeTypeMax)
 	{
@@ -124,9 +109,9 @@ newtonInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken)
 	/*
 	 *	NOTE: The arrays created by ffi2code have a kNoisyIrNodeTypeMax element at the end of each sub-array
 	 */
-	for (int i = 0; i < kNoisyIrNodeTypeMax && gNewtonFollows[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
+	for (int i = 0; i < kNoisyIrNodeTypeMax && follows[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
-		if (gNewtonFollows[productionOrToken][i] == token->type)
+		if (follows[productionOrToken][i] == token->type)
 		{
 			return true;
 		}

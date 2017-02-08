@@ -1,20 +1,18 @@
 DIRS =\
-    noisy\
-    newton\
     common\
-	include\
+    newton\
+    noisy\
 
 all:
-    @set -e; for dir in $(DIRS); do \
-        (cd $$dir; \
-            $(MAKE)\
-        ); \
-    done
+	@set -e; for dir in $(DIRS); do \
+	(cd $$dir; \
+		$(MAKE)\
+	); \
+	done
 
 clean:
-    @set -e; for dir in $(DIRS); do \
-        (cd $$dir; \
-            ($(MAKE) clean) \
-        ); \
-    done; \
-
+	@set -e; for dir in $(DIRS); do \
+	(cd $$dir; \
+		($(MAKE) clean) \
+	); \
+	done; \
