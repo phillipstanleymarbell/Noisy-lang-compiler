@@ -516,6 +516,16 @@ typedef struct Dimension Dimension;
 typedef struct Physics Physics;
 typedef struct IntegralList IntegralList;
 typedef struct Invariant Invariant;
+typedef struct NewtonAPIReport NewtonAPIReport;
+
+struct NewtonAPIReport
+{
+    char * failureMessage;
+    bool violatesDimensionConstraint;
+    bool violatesValueConstraint;
+    
+    NoisySourceInfo * failedNewtonFileLocation;
+};
 
 struct Dimension
 {

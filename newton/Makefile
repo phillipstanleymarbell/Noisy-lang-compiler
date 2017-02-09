@@ -3,6 +3,7 @@ CONFIGPATH=/Users/jonathanlim/Documents/Compiler/libflex
 TREEROOT=..
 NOISYPATH=../noisy
 COMMONPATH=../common
+INCLUDEPATH=../include
 MACHTYPE=x86_64
 COMPILERVARIANT=clang
 OSTYPE=darwin
@@ -28,7 +29,7 @@ TARGET		= newton-$(OSTYPE)-$(NEWTON_L10N)
 CCFLAGS		+= -c -std=gnu99 -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
 
 WFLAGS		= -Wall -Werror
-INCDIRS		= -I. -I$(LIBFLEXPATH) -I$(COMMONPATH) -I$(NOISYPATH)
+INCDIRS		= -I. -I$(LIBFLEXPATH) -I$(COMMONPATH) -I$(NOISYPATH) -I$(INCLUDEPATH)
 LINKDIRS    = -L. -L$(LIBFLEXPATH) -L$(COMMONPATH) -lCommon-darwin-EN
 PROTOC		= protoc-c
 
@@ -78,10 +79,7 @@ HEADERS		=\
 		newton-lexer.h                  \
 		newton-parser.h                 \
 		newton-parser-expression.h      \
-		$(NOISYPATH)/noisy-parser.h\
-		$(NOISYPATH)/noisy-lexer.h\
-		$(NOISYPATH)/noisy-symbolTable.h\
-		$(NOISYPATH)/noisy-irHelpers.h\
+		$(INCLUDEPATH)/newton-api.h     \
 
 
 

@@ -56,6 +56,7 @@
 #include "newton-lexer.h"
 #include "newton-symbolTable.h"
 
+
 //extern const char	gNoisyEol[];
 //extern const char	gNoisyWhitespace[];
 //extern const char	gNoisyStickies[];
