@@ -44,10 +44,10 @@
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
-#include "noisy-errors.h"
+#include "common-errors.h"
 #include "version.h"
-#include "noisy-timeStamps.h"
-#include "noisy.h"
+#include "common-timeStamps.h"
+#include "data-structures.h"
 
 
 

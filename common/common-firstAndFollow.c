@@ -43,11 +43,11 @@
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
-#include "noisy-errors.h"
-#include "noisy-timeStamps.h"
-#include "noisy.h"
-#include "noisy-lexers-helpers.h"
-#include "noisy-firstAndFollow.h"
+#include "common-errors.h"
+#include "common-timeStamps.h"
+#include "data-structures.h"
+#include "common-lexers-helpers.h"
+#include "common-firstAndFollow.h"
 
 /*
  *	NOTE: Unlike in our previous compilers (e.g., Crayon), we do

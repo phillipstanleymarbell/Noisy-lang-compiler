@@ -26,13 +26,13 @@ INCDIRS		= -I. -I$(LIBFLEXPATH)
 PROTOC		= protoc-c
 
 SOURCES		=\
-		noisy.c\
+		common-utils.c\
 		primenumbers.c\
-		noisy-lexers-helpers.c\
-		noisy-firstAndFollow.c\
-		noisy-errors.c\
-		noisy-timeStamps.c\
-		general-irHelpers.c\
+		common-lexers-helpers.c\
+		common-firstAndFollow.c\
+		common-errors.c\
+		common-timeStamps.c\
+		common-irHelpers.c\
 
 
 #
@@ -41,33 +41,33 @@ SOURCES		=\
 #	-l$(LIBCOMMON)-$(OSTYPE)-$(COMMON_L10N)
 #
 OBJS		=\
-		noisy.$(OBJECTEXTENSION)\
 		primenumbers.$(OBJECTEXTENSION)\
-		noisy-firstAndFollow.$(OBJECTEXTENSION)\
-		noisy-lexers-helpers.$(OBJECTEXTENSION)\
-		noisy-errors$(COMMON_L10N).$(OBJECTEXTENSION)\
-		noisy-timeStamps.$(OBJECTEXTENSION)\
-		general-irHelpers.$(OBJECTEXTENSION)\
+		common-utils.$(OBJECTEXTENSION)\
+		common-firstAndFollow.$(OBJECTEXTENSION)\
+		common-lexers-helpers.$(OBJECTEXTENSION)\
+		common-errors$(COMMON_L10N).$(OBJECTEXTENSION)\
+		common-timeStamps.$(OBJECTEXTENSION)\
+		common-irHelpers.$(OBJECTEXTENSION)\
 
 
 LIBCOMMONOBJS =\
-		noisy.$(OBJECTEXTENSION)\
+		common-utils.$(OBJECTEXTENSION)\
 		primenumbers.$(OBJECTEXTENSION)\
-		noisy-firstAndFollow.$(OBJECTEXTENSION)\
-		noisy-lexers-helpers.$(OBJECTEXTENSION)\
-		noisy-errors$(COMMON_L10N).$(OBJECTEXTENSION)\
-		noisy-timeStamps.$(OBJECTEXTENSION)\
-		general-irHelpers.$(OBJECTEXTENSION)\
+		common-firstAndFollow.$(OBJECTEXTENSION)\
+		common-lexers-helpers.$(OBJECTEXTENSION)\
+		common-errors$(COMMON_L10N).$(OBJECTEXTENSION)\
+		common-timeStamps.$(OBJECTEXTENSION)\
+		common-irHelpers.$(OBJECTEXTENSION)\
 
 
 HEADERS		=\
 		$(LIBFLEXPATH)/flex.h\
-		noisy-lexers-helpers.h\
-		noisy-firstAndFollow.h\
-		noisy-errors.h\
-		noisy-timeStamps.h\
-		noisy.h\
-		general-irHelpers.h\
+		common-lexers-helpers.h\
+		common-firstAndFollow.h\
+		common-errors.h\
+		common-timeStamps.h\
+		data-structures.h\
+		common-irHelpers.h\
 
 
 

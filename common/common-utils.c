@@ -60,9 +60,9 @@
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
-#include "noisy-timeStamps.h"
-#include "noisy.h"
-#include "noisy-errors.h"
+#include "common-timeStamps.h"
+#include "data-structures.h"
+#include "common-errors.h"
 
 /*
  *	NOTE / TODO / BUG: (delete this once th eimplementation settles)

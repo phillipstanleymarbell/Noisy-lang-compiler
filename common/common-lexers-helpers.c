@@ -8,10 +8,10 @@
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
-#include "noisy-errors.h"
-#include "noisy-timeStamps.h"
-#include "noisy.h"
-#include "noisy-lexers-helpers.h"
+#include "common-errors.h"
+#include "common-timeStamps.h"
+#include "data-structures.h"
+#include "common-lexers-helpers.h"
 
 void
 checkTokenLength(NoisyState *  N, int  count)
