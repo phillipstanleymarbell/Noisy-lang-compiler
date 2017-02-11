@@ -136,6 +136,7 @@ newtonParseInvariant(NoisyState * N, NoisyScope * currentScope)
     
     NoisyIrNode * invariantName = newtonParseIdentifier(N, currentScope);
     addLeaf(N, node, invariantName);
+    invariant->identifier = invariantName->tokenString;
     
     newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
     newtonParseTerminal(N, kNewtonIrNodeType_Tinvariant, currentScope);
@@ -156,6 +157,8 @@ newtonParseInvariant(NoisyState * N, NoisyScope * currentScope)
 	}
     
     invariant->constraints = node->irRightChild;
+    invariant->id = newtonGetInvariantIdByParameters(N, invariant->parameterList, 1);
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n invariant id %s %llu.\n\n", invariant->identifier, invariant->id);
 
     // TODO calculate the invariant id somewhere here
     
@@ -223,9 +226,9 @@ newtonParseParameter(NoisyState * N, NoisyScope * currentScope)
     /*
      * By convention the left child is the name, and the right child is the name of the Physics
      */
-    addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+    addLeaf(N, node, newtonParseIdentifier(N, currentScope));
     newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
-    addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+    addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
 
     return node;
 }
@@ -327,6 +330,7 @@ newtonParseBaseSignal(NoisyState * N, NoisyScope * currentScope)
     newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g.) m, Pa*/
 
     newPhysics->id = newtonGetPhysicsId(N, newPhysics);
+    assert(newPhysics->id > 1);
 	
     newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
 
@@ -510,15 +514,15 @@ newtonGetInvariantIdByParameters(NoisyState * N, NoisyIrNode * parameterTreeRoot
     {
         assert(parameterTreeRoot->irLeftChild != NULL && parameterTreeRoot->irRightChild != NULL);
         assert(parameterTreeRoot->irRightChild->physics->id > 1);
-		
+        
         return invariantId * parameterTreeRoot->irRightChild->physics->id;
     }
 
     if (parameterTreeRoot->irLeftChild != NULL)
-        invariantId *= newtonGetInvariantIdByParameters(N, parameterTreeRoot->irLeftChild, invariantId);
+        invariantId *= newtonGetInvariantIdByParameters(N, parameterTreeRoot->irLeftChild, 1);
 
     if (parameterTreeRoot->irRightChild != NULL)
-        invariantId *= newtonGetInvariantIdByParameters(N, parameterTreeRoot->irRightChild, invariantId);
+        invariantId *= newtonGetInvariantIdByParameters(N, parameterTreeRoot->irRightChild, 1);
 
     return invariantId;
 }
@@ -626,7 +630,13 @@ newtonGetPhysicsId(NoisyState * N, Physics * physics)
         return primeNumbers[N->primeNumbersIndex++];
     }
 
-    int numeratorIdProduct = 1;
+    /* 
+     * Basic Physics struct's don't have offsets applied to their id calculation
+     * because we want to see the effect of bigNumberOffset only once for
+     * derived Physics id calculation. 
+     * This is why we set the product to 0 in basic cases.
+     */
+    int numeratorIdProduct = physics->numeratorPrimeProduct > 1 ? 1 : 0;
     Dimension * current = physics->numeratorDimensions;
     while (current != NULL)
     {
@@ -634,7 +644,7 @@ newtonGetPhysicsId(NoisyState * N, Physics * physics)
         current = current->next;
     }
 
-    int denominatorIdProduct = 1;
+    int denominatorIdProduct = physics->denominatorPrimeProduct > 1 ? 1 : 0;
     current = physics->denominatorDimensions;
     while (current != NULL)
     {

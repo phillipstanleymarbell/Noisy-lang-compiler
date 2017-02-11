@@ -21,25 +21,22 @@
 
 int tests_run = 0;
 
-char * test_newtonApiInit_notNull() {
+char * test_newtonApiInit_notNull() 
+{
 	mu_assert(
-        "newtonApiInit returns NULL!", 
+        "test_newtonApiInit_notNull: newtonApiInit returns NULL!", 
         newtonApiInit("../Examples/invariants.nt") != NULL
     );
     return 0;
 }
 
-char * test_newtonApiInit_notNullInvariant() {
+char * test_newtonApiInit_notNullInvariant() 
+{
     NoisyState* N = newtonApiInit("../Examples/invariants.nt");
 	mu_assert(
-        "invariantList is NULL!", 
+        "test_newtonApiInit_notNullInvariant: invariantList is NULL!", 
          N->invariantList != NULL
     );
     return 0;
 }
 
-char * all_tests() {
-    mu_run_test(test_newtonApiInit_notNull);
-    mu_run_test(test_newtonApiInit_notNullInvariant);
-    return 0;
-}

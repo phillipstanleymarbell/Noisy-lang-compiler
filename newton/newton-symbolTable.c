@@ -197,6 +197,7 @@ deepCopyPhysicsNode(Physics* node)
 
     copy->isVector = node->isVector;
     copy->value = node->value;
+    copy->id = node->id;
 
     copy->numberOfNumerators = node->numberOfNumerators;
     copy->numeratorPrimeProduct = node->numeratorPrimeProduct;
@@ -276,7 +277,7 @@ void
 newtonAddInvariant(NoisyState * N, Invariant * invariant)
 {
     Invariant * tail;
-    if ((tail = getTailInvariant(invariant)) == NULL)
+    if ((tail = getTailInvariant(N->invariantList)) == NULL)
         N->invariantList = invariant;
     else
         tail->next = invariant;

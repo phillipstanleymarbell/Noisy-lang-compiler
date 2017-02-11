@@ -41,6 +41,7 @@ NEWTONEXTENSION	= nt
 SOURCES		=\
 		test-driver.c\
 		test-newton-api.c\
+		test-newton-parser.c\
 
 #
 #	Clang seems to be unable to do LTO unless we have all the objects
@@ -50,17 +51,20 @@ SOURCES		=\
 OBJS		=\
 		test-driver.$(OBJECTEXTENSION)\
 		test-newton-api.$(OBJECTEXTENSION)\
+		test-newton-parser.$(OBJECTEXTENSION)\
 
 
 
 
 LIBTESTOBJS =\
 		test-newton-api.$(OBJECTEXTENSION)\
+		test-newton-parser.$(OBJECTEXTENSION)\
 
 
 HEADERS		=\
 		$(LIBFLEXPATH)/flex.h           \
 		test-newton-api.h               \
+		test-newton-parser.h            \
 		minunit.h                       \
 
 
