@@ -50,7 +50,7 @@
 #include "data-structures.h"
 #include "noisy-parser.h"
 #include "noisy-lexer.h"
-#include "common-irPass-helpers.h"
+#include "noisy-irPass-helpers.h"
 #include "noisy-types.h"
 
 extern char *	gNoisyAstNodeStrings[];

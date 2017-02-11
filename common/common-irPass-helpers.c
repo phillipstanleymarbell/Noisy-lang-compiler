@@ -45,7 +45,6 @@
 #include "flexerror.h"
 #include "flex.h"
 #include "common-errors.h"
-#include "version.h"
 #include "common-timeStamps.h"
 #include "data-structures.h"
 

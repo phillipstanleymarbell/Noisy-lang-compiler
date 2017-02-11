@@ -1,80 +1,94 @@
-GTEST_DIR = /Users/jonathanlim/Documents/Compiler/googletest/googletest
-
+LIBFLEXPATH=/Users/jonathanlim/Documents/Compiler/libflex
+CONFIGPATH=/Users/jonathanlim/Documents/Compiler/libflex
+TREEROOT=..
+NOISYPATH=../noisy
 NEWTONPATH=../newton
+COMMONPATH=../common
 INCLUDEPATH=../include
+MACHTYPE=x86_64
+COMPILERVARIANT=clang
+OSTYPE=darwin
+include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
+include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 
-USER_DIR = ./
-INCDIRS		= -I. -I$(NEWTONPATH)
-LINKDIRS    = -L. -L$(NEWTONPATH) -lNewton-darwin-EN
+MAKEFLAGS	+= -j
 
-# Flags passed to the preprocessor.
-# Set Google Test's header directory as a system directory, such that
-# the compiler doesn't generate warnings in Google Test headers.
-CPPFLAGS += -isystem $(GTEST_DIR)/include
+CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
+LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
 
-# Flags passed to the C++ compiler.
-CXXFLAGS += -g -Wall -Wextra
-OBJECTEXTENSION=o
+LIBNEWTON = Newton
+LIBNOISY	= Noisy
+LIBCOMMON = Common
+LIBTEST = Test
 
-# All tests produced by this Makefile.  Remember to add new tests you
-# created to the list.
-TESTS = all_tests
+NEWTON_L10N	= EN
+TEST_L10N	= EN
+NOISY_L10N	= EN
+COMMON_L10N	= EN
 
-# All Google Test headers.  Usually you shouldn't change this
-# definition.
-GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
-                $(GTEST_DIR)/include/gtest/internal/*.h
+TARGET		= test-$(OSTYPE)-$(TEST_L10N)
 
-# House-keeping build targets.
+#	-std=gnu99 because we use anonymous unions and induction variable defintions in loop head.
+CCFLAGS		+= -c -std=gnu99 -DkTestL10N="\"$(TEST_L10N)\"" -DTEST_L10N_EN
 
-all : $(TESTS)
+WFLAGS		= -Wall -Werror
+INCDIRS		= -I. -I$(LIBFLEXPATH) -I$(COMMONPATH) -I$(NOISYPATH) -I$(NEWTONPATH) -I$(INCLUDEPATH)
+LINKDIRS    = -L. -L$(LIBFLEXPATH) -L$(COMMONPATH) -lCommon-darwin-EN -L$(NEWTONPATH) -lNewton-darwin-EN
+PROTOC		= protoc-c
 
-# Builds gtest.a and gtest_main.a.
-
-# Usually you shouldn't tweak such internal variables, indicated by a
-# trailing _.
-GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
-
-# For simplicity and to avoid depending on Google Test's
-# implementation details, the dependencies specified below are
-# conservative and not optimized.  This is fine as Google Test
-# compiles fast and for ordinary users its source rarely changes.
-gtest-all.o : $(GTEST_SRCS_)
-	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest-all.cc
-
-gtest_main.o : $(GTEST_SRCS_)
-	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest_main.cc
-
-gtest.a : gtest-all.o
-	$(AR) $(ARFLAGS) $@ $^
-
-gtest_main.a : gtest-all.o gtest_main.o
-	$(AR) $(ARFLAGS) $@ $^
+NEWTONEXTENSION	= nt
 
 SOURCES		=\
-		test-newton-api.cc\
+		test-driver.c\
+		test-newton-api.c\
 
+#
+#	Clang seems to be unable to do LTO unless we have all the objects
+#	not tucked into a library, so we don't just simply link main against
+#	-l$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N)
+#
 OBJS		=\
+		test-driver.$(OBJECTEXTENSION)\
 		test-newton-api.$(OBJECTEXTENSION)\
 
+
+
+
+LIBTESTOBJS =\
+		test-newton-api.$(OBJECTEXTENSION)\
+
+
 HEADERS		=\
-		test-newton-api.h           \
-		$(INCLUDEPATH)/newton-api.h \
+		$(LIBFLEXPATH)/flex.h           \
+		test-newton-api.h               \
+		minunit.h                       \
+
+
+
+all: lib$(LIBTEST)-$(OSTYPE)-$(TEST_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+
+
+#
+#			Libraries
+#
+
+lib$(LIBTEST)-$(OSTYPE)-$(TEST_L10N).a: $(LIBTESTOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+	$(AR) $(ARFLAGS) $@ $(LIBTESTOBJS)
+
+#
+#			Executables
+#
+target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+	$(LD) $(LINKDIRS) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -lm -o $(TARGET)
+
 
 #
 #			Objects
 #
-%.$(OBJECTEXTENSION): %.cc $(HEADERS) $(GTEST_HEADERS)
-	$(CXX) $(INCDIRS) $(CPPFLAGS) $(CXXFLAGS) -c $<
-
-# Builds a sample test.  A test should link with either gtest.a or
-# gtest_main.a, depending on whether it defines its own main()
-# function.
-
-all_tests : $(OBJS) gtest_main.a
-	$(CXX) $(LINKDIRS) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+%.$(OBJECTEXTENSION): %.c $(HEADERS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
+	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
 clean:
-	rm -rf $(OBJS) $(TESTS) gtest.a gtest_main.a *.o *.plist 
+	rm -rf version.c $(OBJS) $(LIBTESTOBJS) $(TARGET) $(TARGET).dSYM lib$(LIBTEST)-$(OSTYPE)-$(TEST_L10N).a *.o *.plist 
+

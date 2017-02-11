@@ -549,7 +549,7 @@ struct Invariant
     NoisySourceInfo *	sourceInfo;
 
     NoisyIrNode * parameterList; // this is just bunch of NoisyIrNode's in Xseq
-    int id; // TODO calculate id by multiplying all the prime numbers of parameterList
+    unsigned long long int id;
 
     NoisyIrNode * constraints;
 
@@ -559,6 +559,7 @@ struct Invariant
 struct Physics 
 {
     char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
+    unsigned long long int id;
     
     NoisyScope *		scope;
     NoisySourceInfo *	sourceInfo;

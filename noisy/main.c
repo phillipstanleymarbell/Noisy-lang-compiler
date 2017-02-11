@@ -54,7 +54,7 @@
 #include "noisy-parser.h"
 #include "noisy-lexer.h"
 #include "noisy-symbolTable.h"
-#include "noisy-irPass-helpers.h"
+#include "common-irPass-helpers.h"
 #include "noisy-irPass-dotBackend.h"
 #include "noisy-irPass-protobufBackend.h"
 

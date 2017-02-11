@@ -1,5 +1,5 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2016. Jonathan Lim.
 
 	All rights reserved.
 
@@ -55,4 +55,56 @@
 #include "newton-parser.h"
 #include "newton-lexer.h"
 #include "newton-symbolTable.h"
+#include "newton.h"
+#include "newton-api.h"
+
+
+NoisyState *
+newtonApiInit(char *  newtonFileName)
+{
+    NoisyState * N = noisyInit(kNoisyModeDefault);
+    processNewtonFile(N, newtonFileName);
+    return N;
+}
+
+Physics *
+getPhysicsTypeByName(NoisyState* N, char* nameOfType)
+{
+    Physics* current = N->newtonIrTopScope->firstPhysics;
+    while (current != NULL)
+    {
+        if (!strcmp(current->identifier, nameOfType))
+        {
+            return current;
+        }
+        current = current->next;
+    }
+    return NULL;
+}
+
+
+Invariant * 
+getInvariantByParameters(NoisyState* N, NoisyIrNode* parameterTreeRoot)
+{
+    unsigned long long int targetId = newtonGetInvariantIdByParameters(N, parameterTreeRoot, 1);
+    Invariant * current = N->invariantList;
+    while (current != NULL)
+    {
+        if (current->id == targetId)
+        {
+            return current;
+        }
+        current = current->next;
+    }
+    return NULL;
+}
+
+NewtonAPIReport * 
+satisfiesConstraints(NoisyState* N, NoisyIrNode* parameterList)
+{
+    return NULL;
+}
+
+
+
 

@@ -55,6 +55,7 @@
 #include "newton-parser.h"
 #include "newton-lexer.h"
 #include "newton-symbolTable.h"
+#include "newton.h"
 
 
 //extern const char	gNoisyEol[];
@@ -66,7 +67,6 @@ static void		version(NoisyState *  N);
 
 
 // static void		usage(NoisyState *  N);
-static void		processNewtonFile(NoisyState *  N, char *  filename);
 // static void		version(NoisyState *  N);
 
 static void     recurseDimensions(NoisyState * N, NoisyScope * topScope);
@@ -339,6 +339,8 @@ main(int argc, char *argv[])
 			if (!jumpParameter)
 			{
                 processNewtonFile(N, argv[optind++]);
+                recurseDimensions(N, N->newtonIrTopScope);
+                recursePhysics(N, N->newtonIrTopScope);
 			}
 			else
 			{
@@ -364,45 +366,6 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-/*
- * TODO: change this to be more flexible and take an arg from command line
- * https://github.com/phillipstanleymarbell/Noisy-lang-compiler/issues/28
- */
-static void		
-processNewtonFile(NoisyState *  N, char *  filename)
-{
-
-	/*
-	 *	Tokenize input, then parse it and build AST + symbol table.
-	 */
-	newtonLexInit(N, filename);
-
-	/*
-	 *	Create a top-level scope, then parse.
-	 */
-	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
-	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
-
-    recurseDimensions(N, N->newtonIrTopScope);
-    recursePhysics(N, N->newtonIrTopScope);
-
-	/*
-	 *	Dot backend.
-	 */
-	if (N->irBackends & kNoisyIrBackendDot)
-	{
-		// fprintf(stdout, "%s\n", noisyIrPassDotBackend(N, N->noisyIrTopScope, N->noisyIrRoot));
-	}
-    
-
-
-	// if (N->mode & kNoisyConfigModeCallTracing)
-	// {
-	// 	noisyConfigTimeStampDumpTimeline(N);
-	// }
-    
-    noisyConsolePrintBuffers(N);
-}
 
 
 static void

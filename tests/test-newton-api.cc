@@ -1,4 +1,27 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <setjmp.h>
+#include <string.h>
+#include <stdint.h>
+#include "flextypes.h"
+#include "flexerror.h"
+#include "flex.h"
+
+#include "common-timeStamps.h"
+#include "data-structures.h"
+#include "newton-parser.h"
+#include "newton-parser-expression.h"
+#include "newton-lexer.h"
+#include "newton-symbolTable.h"
+#include "newton-api.h"
+#include "test-newton-api.h"
+
 #include "gtest/gtest.h"
+
+TEST(newtonApiInit, successfulInit) {
+    EXPECT_TRUE(newtonApiInit("../Examples/invariants.nt") != NULL);
+}
 
 TEST(sampletest, positive) {
   // This test is named "Negative", and belongs to the "FactorialTest"

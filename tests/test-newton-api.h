@@ -1,5 +1,4 @@
-#ifndef NEWTON_API_H_
-#define NEWTON_API_H_
-
-#endif 
+char * test_newtonApiInit_notNull();
+char * test_newtonApiInit_notNullInvariant();
+char * all_tests();
 

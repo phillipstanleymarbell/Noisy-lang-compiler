@@ -58,8 +58,11 @@ newtonParseGetPhysicsTypeStringByBoundIdentifier(NoisyState * N, NoisyIrNode * r
 bool
 newtonIsConstant(Physics * physics);
 
+unsigned long long int
+newtonGetInvariantIdByParameters(NoisyState * N, NoisyIrNode * parameterTreeRoot, unsigned long long int invariantId);
 
-
+int
+newtonGetPhysicsId(NoisyState * N, Physics * physics);
 
 
 

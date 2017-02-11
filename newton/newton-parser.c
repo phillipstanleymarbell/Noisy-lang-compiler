@@ -13,7 +13,6 @@
 #include "common-errors.h"
 #include "data-structures.h"
 #include "common-irHelpers.h"
-#include "common-irHelpers.h"
 #include "newton-parser.h"
 #include "newton-parser-expression.h"
 #include "common-lexers-helpers.h"
@@ -22,6 +21,8 @@
 #include "common-firstAndFollow.h"
 
 
+extern unsigned long int bigNumberOffset;
+extern int primeNumbers[168];
 extern const char * gNewtonTokenDescriptions[kNoisyIrNodeTypeMax];
 extern char *		gNewtonAstNodeStrings[];
 extern int		gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
@@ -324,6 +325,8 @@ newtonParseBaseSignal(NoisyState * N, NoisyScope * currentScope)
     
     newPhysics->dimensionAlias = unitName->token->stringConst; /* e.g.) meter, Pascal*/
     newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g.) m, Pa*/
+
+    newPhysics->id = newtonGetPhysicsId(N, newPhysics);
 	
     newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
 
@@ -495,6 +498,31 @@ newtonParseGetPhysicsTypeStringByBoundIdentifier(NoisyState * N, NoisyIrNode * r
     return "";
 }
 
+/*
+ * The caller of this function passes in 1 for invariantId
+ * TODO: move this method, newtonParseGetPhysicsTypeStringByBoundIdentifier, and newtonIsConstant
+ * to a helper file, don't put them here
+ */
+unsigned long long int
+newtonGetInvariantIdByParameters(NoisyState * N, NoisyIrNode * parameterTreeRoot, unsigned long long int invariantId)
+{
+    if (parameterTreeRoot->type == kNewtonIrNodeType_Pparameter)
+    {
+        assert(parameterTreeRoot->irLeftChild != NULL && parameterTreeRoot->irRightChild != NULL);
+        assert(parameterTreeRoot->irRightChild->physics->id > 1);
+		
+        return invariantId * parameterTreeRoot->irRightChild->physics->id;
+    }
+
+    if (parameterTreeRoot->irLeftChild != NULL)
+        invariantId *= newtonGetInvariantIdByParameters(N, parameterTreeRoot->irLeftChild, invariantId);
+
+    if (parameterTreeRoot->irRightChild != NULL)
+        invariantId *= newtonGetInvariantIdByParameters(N, parameterTreeRoot->irRightChild, invariantId);
+
+    return invariantId;
+}
+
 
 /*
  *  Remove an identifier _usage_ terminal, performing symtab lookup
@@ -582,3 +610,46 @@ newtonIsConstant(Physics * physics)
     
     return physics->numeratorDimensions == NULL && physics->denominatorDimensions;
 }
+
+int 
+newtonGetPhysicsId(NoisyState * N, Physics * physics)
+{
+    /* 
+     * Prime number id's are assigned to Dimension struct's, and
+     * Physics struct's construct its own id as a multiple of all of 
+     * its numerator Dimension's and denominator Dimension's.
+     * However, if Physics is a constant and does not have any Dimension's
+     * we just assign the next prime number from our prime numbers array.
+     */
+    if (physics->numeratorDimensions == NULL && physics->denominatorDimensions == NULL)
+    {
+        return primeNumbers[N->primeNumbersIndex++];
+    }
+
+    int numeratorIdProduct = 1;
+    Dimension * current = physics->numeratorDimensions;
+    while (current != NULL)
+    {
+        numeratorIdProduct *= current->primeNumber;
+        current = current->next;
+    }
+
+    int denominatorIdProduct = 1;
+    current = physics->denominatorDimensions;
+    while (current != NULL)
+    {
+        denominatorIdProduct *= current->primeNumber;
+        current = current->next;
+    }
+    
+    /* 
+     * TODO: This is not a robust design... no guarantee that bigNumberOffset is
+     * bigger than numeratorIdProduct in all cases (for most Newton files, yes). 
+     * Could replace a single number
+     * id with an id tuple scheme, but we could just make bigNumberOffset bigger.
+     * Data type of Physics->id is unsigned long long int which can contain up to
+     * this number: 18,446,744,073,709,551,615.
+     */
+    return numeratorIdProduct + bigNumberOffset * denominatorIdProduct;
+}
+
