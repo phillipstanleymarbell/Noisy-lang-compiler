@@ -21,13 +21,16 @@
 #include "test-newton-parser.h"
 #include "test-newton-api.h"
 
-char * all_tests() 
+char * all_tests()
 {
     mu_run_test(test_newtonApiInit_notNull);
     mu_run_test(test_newtonApiInit_notNullInvariant);
-    mu_run_test(test_getPhysicsTypeByName_Valid);
+    mu_run_test(test_newtonApiGetInvariantByParameters_Valid);
+    mu_run_test(test_newtonApiGetPhysicsTypeByName_Valid);
+
     mu_run_test(test_newtonGetPhysicsId);
     mu_run_test(test_newtonGetInvariantIdByParameters);
+    mu_run_test(test_newtonApiPhysicsTypeUsageExample);
     return 0;
 }
 

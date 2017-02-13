@@ -33,7 +33,7 @@ CCFLAGS		+= -c -std=gnu99 -DkTestL10N="\"$(TEST_L10N)\"" -DTEST_L10N_EN
 
 WFLAGS		= -Wall -Werror
 INCDIRS		= -I. -I$(LIBFLEXPATH) -I$(COMMONPATH) -I$(NOISYPATH) -I$(NEWTONPATH) -I$(INCLUDEPATH)
-LINKDIRS    = -L. -L$(LIBFLEXPATH) -L$(COMMONPATH) -lCommon-darwin-EN -L$(NEWTONPATH) -lNewton-darwin-EN
+LINKDIRS    = -L. -L$(LIBFLEXPATH) -L$(COMMONPATH) -lCommon-darwin-EN -L$(NEWTONPATH) -lNewton-darwin-EN -L$(NOISYPATH) -lNoisy-darwin-EN
 PROTOC		= protoc-c
 
 NEWTONEXTENSION	= nt

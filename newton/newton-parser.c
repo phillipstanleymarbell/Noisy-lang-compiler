@@ -144,7 +144,6 @@ newtonParseInvariant(NoisyState * N, NoisyScope * currentScope)
     invariant->parameterList = newtonParseParameterTuple(N, currentScope);
 
     newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
-	
     NoisyIrNode * scopeBegin = newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, currentScope);
 	NoisyScope * newScope	= newtonSymbolTableOpenScope(N, currentScope, scopeBegin);
     newScope->invariantParameterList = invariant->parameterList;
@@ -158,14 +157,10 @@ newtonParseInvariant(NoisyState * N, NoisyScope * currentScope)
     
     invariant->constraints = node->irRightChild;
     invariant->id = newtonGetInvariantIdByParameters(N, invariant->parameterList, 1);
-	flexprint(N->Fe, N->Fm, N->Fperr, "\n invariant id %s %llu.\n\n", invariant->identifier, invariant->id);
 
-    // TODO calculate the invariant id somewhere here
-    
 	NoisyIrNode *	scopeEnd = newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, newScope);
 	newtonSymbolTableCloseScope(N, newScope, scopeEnd);
 
-    // TODO add the invariant struct to NoisyState somewhere here
     newtonAddInvariant(N, invariant);
     
     return node;
@@ -562,7 +557,7 @@ newtonParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType
         if ((physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, physicsTypeString)) == NULL)
         {
             physicsSearchResult = newtonPhysicsTablePhysicsForDimensionAlias(N, scope, physicsTypeString);
-        } 
+        }
     }
     
     if (physicsSearchResult == NULL)

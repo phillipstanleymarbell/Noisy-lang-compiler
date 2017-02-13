@@ -1,3 +1,4 @@
 NoisyState * newtonApiInit(char *  newtonFileName);
-Physics* getPhysicsTypeByName(NoisyState* N, char* nameOfType);
-NewtonAPIReport* satisfiesConstraints(NoisyState* N, NoisyIrNode* parameterTreeRoot);
+Physics* newtonApiGetPhysicsTypeByName(NoisyState* N, char* nameOfType);
+NewtonAPIReport* newtonApiSatisfiesConstraints(NoisyState* N, NoisyIrNode* parameterTreeRoot);
+Invariant * newtonApiGetInvariantByParameters(NoisyState* N, NoisyIrNode* parameterTreeRoot);

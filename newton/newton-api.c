@@ -68,7 +68,7 @@ newtonApiInit(char *  newtonFileName)
 }
 
 Physics *
-getPhysicsTypeByName(NoisyState* N, char* nameOfType)
+newtonApiGetPhysicsTypeByName(NoisyState* N, char* nameOfType)
 {
     Physics* current = N->newtonIrTopScope->firstPhysics;
     while (current != NULL)
@@ -84,7 +84,7 @@ getPhysicsTypeByName(NoisyState* N, char* nameOfType)
 
 
 Invariant * 
-getInvariantByParameters(NoisyState* N, NoisyIrNode* parameterTreeRoot)
+newtonApiGetInvariantByParameters(NoisyState* N, NoisyIrNode* parameterTreeRoot)
 {
     unsigned long long int targetId = newtonGetInvariantIdByParameters(N, parameterTreeRoot, 1);
     Invariant * current = N->invariantList;
@@ -100,7 +100,7 @@ getInvariantByParameters(NoisyState* N, NoisyIrNode* parameterTreeRoot)
 }
 
 NewtonAPIReport * 
-satisfiesConstraints(NoisyState* N, NoisyIrNode* parameterList)
+newtonApiSatisfiesConstraints(NoisyState* N, NoisyIrNode* parameterList)
 {
     return NULL;
 }

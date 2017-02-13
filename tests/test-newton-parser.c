@@ -21,54 +21,33 @@
 
 extern unsigned long int bigNumberOffset;
 
-char * test_getPhysicsTypeByName_Valid() 
-{
-    NoisyState* N = newtonApiInit("../Examples/invariants.nt");
-    mu_assert(
-        "getPhysicsTypeByName: distance not found",
-        !strcmp(
-            getPhysicsTypeByName(N, "distance")->identifier,
-            "distance"
-        )
-    );
-
-    mu_assert(
-        "getPhysicsTypeByName: acceleration not found",
-        !strcmp(
-            getPhysicsTypeByName(N, "acceleration")->identifier,
-            "acceleration"
-        )
-    );
-
-    return 0;
-}
 
 char * test_newtonGetPhysicsId()
 {
     NoisyState* N = newtonApiInit("../Examples/invariants.nt");
     mu_assert(
         "test_newtonGetPhysicsId: first Physics struct should have first prime number as id",
-        getPhysicsTypeByName(N, "time")->id == 2
+        newtonApiGetPhysicsTypeByName(N, "time")->id == 2
     );
     
     mu_assert(
         "test_newtonGetPhysicsId: second Physics struct should have second prime number as id",
-        getPhysicsTypeByName(N, "distance")->id == 3
+        newtonApiGetPhysicsTypeByName(N, "distance")->id == 3
     );
     
     mu_assert(
         "test_newtonGetPhysicsId: speed should have distance->id + offset * time->id as id",
-        getPhysicsTypeByName(N, "speed")->id == 3 + bigNumberOffset * 2
+        newtonApiGetPhysicsTypeByName(N, "speed")->id == 3 + bigNumberOffset * 2
     );
     
     mu_assert(
         "test_newtonGetPhysicsId: acceleration should have distance->id + offset * time->id * time->id as id",
-        getPhysicsTypeByName(N, "acceleration")->id == 3 + bigNumberOffset * 2 * 2
+        newtonApiGetPhysicsTypeByName(N, "acceleration")->id == 3 + bigNumberOffset * 2 * 2
     );
     
     mu_assert(
         "test_newtonGetPhysicsId: force should have mass * distance + offset * time * time as id",
-        getPhysicsTypeByName(N, "force")->id == 3 * 5 + bigNumberOffset * 2 * 2
+        newtonApiGetPhysicsTypeByName(N, "force")->id == 3 * 5 + bigNumberOffset * 2 * 2
     );
     return 0;
 }
