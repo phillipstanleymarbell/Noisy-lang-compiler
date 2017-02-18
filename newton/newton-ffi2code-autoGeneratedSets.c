@@ -50,7 +50,7 @@
 #include "data-structures.h"
 
 
-int    gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
+int gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
             [kNewtonIrNodeType_PcompareOp    ]            = {
                                                                  kNewtonIrNodeType_Tlt,
                                                                  kNewtonIrNodeType_Tle,
@@ -159,7 +159,7 @@ int    gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
             [kNewtonIrNodeType_PnewtonFile   ]            = {kNewtonIrNodeType_Tidentifier, kNoisyIrNodeTypeMax}
  };
 
-int    gNewtonFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
+int gNewtonFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
             [kNewtonIrNodeType_PcompareOp    ]            = {
                                                                  kNewtonIrNodeType_Tminus,
                                                                  kNewtonIrNodeType_Tderivative,
@@ -328,7 +328,7 @@ int    gNewtonFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
             // [kNewtonIrNodeType_Tidentifier   ]            = {T_XXX, kNoisyIrNodeTypeMax}
 };
 
-char	*gNewtonAstNodeStrings[kNoisyIrNodeTypeMax]	= {
+char* gNewtonAstNodeStrings[kNoisyIrNodeTypeMax]	= {
                                                [    kNewtonIrNodeType_PcompareOp]            = "kNewtonIrNodeType_PcompareOp",
                                                [     kNewtonIrNodeType_PvectorOp]            = "kNewtonIrNodeType_PvectorOp",
                                                [kNewtonIrNodeType_PhighPrecedenceBinaryOp]            = "kNewtonIrNodeType_PhighPrecedenceBinaryOp",

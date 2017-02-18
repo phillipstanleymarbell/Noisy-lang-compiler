@@ -52,9 +52,6 @@ newtonParseConstant(NoisyState * N, NoisyScope * currentScope);
 NoisyIrNode *
 newtonParseCompareOp(NoisyState * N, NoisyScope * currentScope);
 
-char *
-newtonParseGetPhysicsTypeStringByBoundIdentifier(NoisyState * N, NoisyIrNode * root, char* boundVariableIdentifier);
-
 bool
 newtonIsConstant(Physics * physics);
 
@@ -64,5 +61,14 @@ newtonGetInvariantIdByParameters(NoisyState * N, NoisyIrNode * parameterTreeRoot
 int
 newtonGetPhysicsId(NoisyState * N, Physics * physics);
 
+char *
+newtonParseGetPhysicsTypeStringByBoundIdentifier(NoisyState * N, NoisyIrNode * root, char* boundVariableIdentifier);
+
+/* TODO currently this is unused... remove if still unused */
+char *
+newtonParseGetIdentifierByBoundPhysicsString(NoisyState * N, NoisyIrNode * root, char* physicsTypeString);
+
+NoisyIrNode *
+newtonParseFindNodeByPhysicsId(NoisyState *N, NoisyIrNode * root, int physicsId);
 
 

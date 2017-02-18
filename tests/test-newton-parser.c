@@ -20,6 +20,7 @@
 #include "test-newton-parser.h"
 
 extern unsigned long int bigNumberOffset;
+extern int tests_run;
 
 
 char * test_newtonGetPhysicsId()

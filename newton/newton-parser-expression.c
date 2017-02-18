@@ -285,10 +285,6 @@ newtonParseQuantityFactor(NoisyState * N, NoisyScope * currentScope)
 {
     NoisyIrNode *   intermediate;
 
-    // intermediate->physics = (Physics *) calloc(1, sizeof(Physics));
-    // intermediate->physics->numeratorPrimeProduct = 1;
-    // intermediate->physics->denominatorPrimeProduct = 1;
-
     if (peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
     {
         intermediate = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
@@ -298,6 +294,7 @@ newtonParseQuantityFactor(NoisyState * N, NoisyScope * currentScope)
     {
         intermediate = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
     }
+    // TODO implement these later
     // else if (noisyInFirst(N, kNewtonIrNodeType_PtimeOp, gNewtonFirsts))
     // {
     //     intermediate = newtonParseTimeOp(N, currentScope);

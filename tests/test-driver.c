@@ -20,6 +20,9 @@
 #include "test-driver.h"
 #include "test-newton-parser.h"
 #include "test-newton-api.h"
+#include "test-common.h"
+
+int tests_run = 0;
 
 char * all_tests()
 {
@@ -31,6 +34,8 @@ char * all_tests()
     mu_run_test(test_newtonGetPhysicsId);
     mu_run_test(test_newtonGetInvariantIdByParameters);
     mu_run_test(test_newtonApiPhysicsTypeUsageExample);
+    mu_run_test(test_testNthIrNodeOfType);
+    mu_run_test(test_testNthIrNodeOfTypes);
     return 0;
 }
 

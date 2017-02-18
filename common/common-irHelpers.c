@@ -41,6 +41,7 @@
 #include <setjmp.h>
 #include <string.h>
 #include <stdint.h>
+#include <assert.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -50,6 +51,62 @@
 #include "common-irHelpers.h"
 #include "common-lexers-helpers.h"
 
+char* gNewtonAstNodeStrin[kNoisyIrNodeTypeMax]	= {
+                                               [    kNewtonIrNodeType_PcompareOp]            = "kNewtonIrNodeType_PcompareOp",
+                                               [     kNewtonIrNodeType_PvectorOp]            = "kNewtonIrNodeType_PvectorOp",
+                                               [kNewtonIrNodeType_PhighPrecedenceBinaryOp]            = "kNewtonIrNodeType_PhighPrecedenceBinaryOp",
+                                               [kNewtonIrNodeType_PmidPrecedenceBinaryOp]            = "kNewtonIrNodeType_PmidPrecedenceBinaryOp",
+                                               [kNewtonIrNodeType_PlowPrecedenceBinaryOp]            = "kNewtonIrNodeType_PlowPrecedenceBinaryOp",
+                                               [      kNewtonIrNodeType_PunaryOp]            = "kNewtonIrNodeType_PunaryOp",
+                                               [       kNewtonIrNodeType_PtimeOp]            = "kNewtonIrNodeType_PtimeOp",
+                                               [     kNewtonIrNodeType_Pquantity]            = "kNewtonIrNodeType_Pquantity",
+                                               [kNewtonIrNodeType_PquantityFactor]            = "kNewtonIrNodeType_PquantityFactor",
+                                               [ kNewtonIrNodeType_PquantityTerm]            = "kNewtonIrNodeType_PquantityTerm",
+                                               [kNewtonIrNodeType_PquantityExpression]            = "kNewtonIrNodeType_PquantityExpression",
+                                               [    kNewtonIrNodeType_Pparameter]            = "kNewtonIrNodeType_Pparameter",
+                                               [kNewtonIrNodeType_PparameterTuple]            = "kNewtonIrNodeType_PparameterTuple",
+                                               [   kNewtonIrNodeType_Pderivation]            = "kNewtonIrNodeType_Pderivation",
+                                               [       kNewtonIrNodeType_Psymbol]            = "kNewtonIrNodeType_Psymbol",
+                                               [         kNewtonIrNodeType_Pname]            = "kNewtonIrNodeType_Pname",
+                                               [   kNewtonIrNodeType_Pconstraint]            = "kNewtonIrNodeType_Pconstraint",
+                                               [kNewtonIrNodeType_PconstraintList]            = "kNewtonIrNodeType_PconstraintList",
+                                               [   kNewtonIrNodeType_PbaseSignal]            = "kNewtonIrNodeType_PbaseSignal",
+                                               [    kNewtonIrNodeType_Pinvariant]            = "kNewtonIrNodeType_Pinvariant",
+                                               [     kNewtonIrNodeType_Pconstant]            = "kNewtonIrNodeType_Pconstant",
+                                               [         kNewtonIrNodeType_Prule]            = "kNewtonIrNodeType_Prule",
+                                               [     kNewtonIrNodeType_PruleList]            = "kNewtonIrNodeType_PruleList",
+                                               [   kNewtonIrNodeType_PnewtonFile]            = "kNewtonIrNodeType_PnewtonFile",
+                                               //[                           T_XXX]            = "T_XXX",
+                                               [          kNewtonIrNodeType_Tnil]            = "kNewtonIrNodeType_Tnil",
+                                               [kNewtonIrNodeType_ZbadIdentifier]            = "kNewtonIrNodeType_ZbadIdentifier",
+                                               [kNewtonIrNodeType_ZbadStringConst]            = "kNewtonIrNodeType_ZbadStringConst",
+                                               [      kNewtonIrNodeType_Zepsilon]            = "kNewtonIrNodeType_Zepsilon",
+                                               [          kNewtonIrNodeType_Zeof]            = "kNewtonIrNodeType_Zeof",
+                                               [        kNewtonIrNodeType_Tcross]            = "kNewtonIrNodeType_Tcross",
+                                               [          kNewtonIrNodeType_Tdot]            = "kNewtonIrNodeType_Tdot",
+                                               [          kNewtonIrNodeType_Texponent]            = "kNewtonIrNodeType_Texponent",
+                                               [     kNewtonIrNodeType_Tintegral]            = "kNewtonIrNodeType_Tintegral",
+                                               [   kNewtonIrNodeType_Tderivative]            = "kNewtonIrNodeType_Tderivative",
+                                               [kNoisyIrNodeType_Xseq]                       = "kNoisyIrNodeType_Xseq",
+                                               [      kNewtonIrNodeType_TSpanish]            = "kNewtonIrNodeType_TSpanish",
+                                               [      kNewtonIrNodeType_TEnglish]            = "kNewtonIrNodeType_TEnglish",
+                                               [   kNewtonIrNodeType_Tsignal]            = "kNewtonIrNodeType_Tsignal",
+                                               [    kNewtonIrNodeType_Tinvariant]            = "kNewtonIrNodeType_Tinvariant",
+                                               [     kNewtonIrNodeType_Tconstant]            = "kNewtonIrNodeType_Tconstant",
+                                               [   kNewtonIrNodeType_Tderivation]            = "kNewtonIrNodeType_Tderivation",
+                                               [       kNewtonIrNodeType_Tsymbol]            = "kNewtonIrNodeType_Tsymbol",
+                                               [       kNewtonIrNodeType_Tequals]            = "kNewtonIrNodeType_Tequals",
+                                               [       kNewtonIrNodeType_Tnone]            = "kNewtonIrNodeType_Tnone",
+                                               [       kNewtonIrNodeType_Tnumber]            = "kNewtonIrNodeType_Tnumber",
+                                               [       kNewtonIrNodeType_Tplus]            = "kNewtonIrNodeType_Tplus",
+                                               [       kNewtonIrNodeType_Tminus]            = "kNewtonIrNodeType_Tminus",
+                                               [         kNewtonIrNodeType_Tname]            = "kNewtonIrNodeType_Tname",
+                                               [    kNewtonIrNodeType_TrightBrace]            = "kNewtonIrNodeType_TrightBrace",
+                                               [     kNewtonIrNodeType_TleftBrace]            = "kNewtonIrNodeType_TleftBrace",
+                                               [   kNewtonIrNodeType_TrightParen]            = "kNewtonIrNodeType_TrightParen",
+                                               [    kNewtonIrNodeType_TleftParen]            = "kNewtonIrNodeType_TleftParen",
+                                               [   kNewtonIrNodeType_Tidentifier]            = "kNewtonIrNodeType_Tidentifier",
+                                   };
 
 NoisyIrNode *
 genNoisyIrNode(NoisyState *  N, NoisyIrNodeType type, NoisyIrNode *  irLeftChild, NoisyIrNode *  irRightChild, NoisySourceInfo *  sourceInfo)
@@ -107,6 +164,54 @@ errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
 }
 
+NoisyIrNode*
+findNthIrNodeOfTypes(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int* nth)
+{
+    assert(root != NULL);
+	for (int i = 0; i < kNoisyIrNodeTypeMax && firsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
+	{
+		if (firsts[productionOrToken][i] == root->type)
+		{
+            if(*nth == 0)
+                return root;
+            *nth = *nth - 1;
+		}
+	}
+
+  NoisyIrNode * nthNode;
+  if (root->irLeftChild != NULL &&\
+      (nthNode = findNthIrNodeOfTypes(N, root->irLeftChild, productionOrToken, firsts, nth)) != NULL)
+      return nthNode;
+
+  if (root->irRightChild != NULL &&\
+      (nthNode = findNthIrNodeOfTypes(N, root->irRightChild, productionOrToken, firsts, nth)) != NULL)
+      return nthNode;
+
+  return NULL;
+}
+
+NoisyIrNode*
+findNthIrNodeOfType(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType expectedType, int* nth)
+{
+    if (root->type == expectedType)
+    {
+        if(*nth == 0)
+            return root;
+        *nth = *nth - 1;
+    }
+
+    NoisyIrNode * nthNode;
+    if (root->irLeftChild != NULL &&\
+        (nthNode = findNthIrNodeOfType(N, root->irLeftChild, expectedType, nth)) != NULL)
+        return nthNode;
+
+    if (root->irRightChild != NULL &&\
+        (nthNode = findNthIrNodeOfType(N, root->irRightChild, expectedType, nth)) != NULL)
+        return nthNode;
+
+    return NULL;
+}
+
 NoisyIrNode *
 depthFirstWalk(NoisyState *  N, NoisyIrNode *  node)
 {
@@ -155,11 +260,31 @@ addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  ne
 
 		return;
 	}
-	
+
 	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
 						newNode /* left child */,
 						NULL /* right child */,
 						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+}
+
+void
+addLeafWithChainingSeqNoLexer(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
+
+	NoisyIrNode *	node = depthFirstWalk(N, parent);
+
+	if (node->irLeftChild == NULL)
+    {
+      node->irLeftChild = newNode;
+
+      return;
+    }
+
+	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
+                                      newNode /* left child */,
+                                      NULL /* right child */,
+                                      NULL/* source info */);
 }
 
 bool

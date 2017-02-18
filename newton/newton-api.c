@@ -57,6 +57,7 @@
 #include "newton-symbolTable.h"
 #include "newton.h"
 #include "newton-api.h"
+#include "newton-check-pass.h"
 
 
 NoisyState *
@@ -100,11 +101,12 @@ newtonApiGetInvariantByParameters(NoisyState* N, NoisyIrNode* parameterTreeRoot)
 }
 
 NewtonAPIReport * 
-newtonApiSatisfiesConstraints(NoisyState* N, NoisyIrNode* parameterList)
+newtonApiSatisfiesConstraints(NoisyState* N, NoisyIrNode* parameterTreeRoot)
 {
-    return NULL;
+    Invariant* invariant = newtonApiGetInvariantByParameters(N, parameterTreeRoot);
+    NewtonAPIReport* report = (NewtonAPIReport*) calloc(1, sizeof(NewtonAPIReport));
+    iterateConstraints(N, invariant->constraints, parameterTreeRoot, report);
+    return report;
 }
-
-
 
 

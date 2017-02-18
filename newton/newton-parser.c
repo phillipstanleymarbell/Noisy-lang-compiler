@@ -466,6 +466,74 @@ newtonParseIdentifier(NoisyState *  N, NoisyScope *  currentScope)
     return NULL;
 }
 
+/*
+ * This method is used by the Newton API to search through the parameters
+ * that correspond to each Physics node in the invariant tree.
+ * TODO: can add nth like findNthNodeType method to accommodate multiple 
+ * parameters with same Physics
+ */
+NoisyIrNode *
+newtonParseFindNodeByPhysicsId(NoisyState *N, NoisyIrNode * root, int physicsId)
+{
+    // do DFS and find the node whose right child node has given identifier
+    // and return the left node's identifier
+    if (root->physics != NULL)
+    {
+        assert(root->physics->id > 1);
+		if (root->physics->id == physicsId)
+        {
+            return root;
+        }
+    }
+
+    NoisyIrNode* targetNode = NULL;
+    
+    if (root->irLeftChild != NULL)
+        targetNode = newtonParseFindNodeByPhysicsId(N, root->irLeftChild, physicsId);
+
+    if (targetNode != NULL)
+        return targetNode;
+    
+    if (root->irRightChild != NULL)
+        targetNode = newtonParseFindNodeByPhysicsId(N, root->irRightChild, physicsId);
+
+    if (targetNode != NULL)
+        return targetNode;
+
+    return targetNode;
+}
+
+char *
+newtonParseGetIdentifierByBoundPhysicsString(NoisyState * N, NoisyIrNode * root, char* physicsTypeString)
+{
+    // do DFS and find the node whose right child node has given identifier
+    // and return the left node's identifier
+    if (root->type == kNewtonIrNodeType_Pparameter)
+    {
+        assert(root->irLeftChild != NULL && root->irRightChild != NULL);
+		if (!strcmp(root->irRightChild->tokenString, physicsTypeString))
+        {
+            return root->irLeftChild->tokenString;
+        }
+    }
+
+    char * stringResult = "";
+    
+    if (root->irLeftChild != NULL)
+        stringResult = newtonParseGetIdentifierByBoundPhysicsString(N, root->irLeftChild, physicsTypeString);
+
+    if (strcmp(stringResult, ""))
+        return stringResult;
+    
+    if (root->irRightChild != NULL)
+        stringResult = newtonParseGetIdentifierByBoundPhysicsString(N, root->irRightChild, physicsTypeString);
+
+    if (strcmp(stringResult, ""))
+        return stringResult;
+
+    return "";
+}
+
 char *
 newtonParseGetPhysicsTypeStringByBoundIdentifier(NoisyState * N, NoisyIrNode * root, char* boundVariableIdentifier)
 {
@@ -602,12 +670,15 @@ bool
 newtonIsConstant(Physics * physics)
 {
     /* sanity check */
+    if (physics == NULL)
+        return true;
+
     if (physics->numeratorDimensions == NULL)
         assert(physics->numberOfNumerators == 0 && physics->numeratorPrimeProduct == 1);
     if (physics->denominatorDimensions == NULL)
         assert(physics->numberOfDenominators == 0 && physics->denominatorPrimeProduct == 1);
     
-    return physics->numeratorDimensions == NULL && physics->denominatorDimensions;
+    return physics->numeratorDimensions == NULL && physics->denominatorDimensions == NULL;
 }
 
 int 

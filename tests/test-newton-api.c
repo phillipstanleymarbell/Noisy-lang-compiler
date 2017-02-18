@@ -21,37 +21,28 @@
 #include "minunit.h"
 #include "test-newton-api.h"
 
-static NoisyIrNode *
-makeNoisyIrNodeSetToken(
-    NoisyState * N,
-    NoisyIrNodeType nodeType, 
-    char * identifier, 
-    char * stringConst, 
-    double realConst
-);
+extern int tests_run;
 
-int tests_run = 0;
-
-char * test_newtonApiInit_notNull() 
+char * test_newtonApiInit_notNull()
 {
 	mu_assert(
-        "test_newtonApiInit_notNull: newtonApiInit returns NULL!", 
+        "test_newtonApiInit_notNull: newtonApiInit returns NULL!",
         newtonApiInit("../Examples/invariants.nt") != NULL
     );
     return 0;
 }
 
-char * test_newtonApiInit_notNullInvariant() 
+char * test_newtonApiInit_notNullInvariant()
 {
     NoisyState* N = newtonApiInit("../Examples/invariants.nt");
 	mu_assert(
-        "test_newtonApiInit_notNullInvariant: invariantList is NULL!", 
+        "test_newtonApiInit_notNullInvariant: invariantList is NULL!",
          N->invariantList != NULL
     );
     return 0;
 }
 
-char * test_newtonApiGetPhysicsTypeByName_Valid() 
+char * test_newtonApiGetPhysicsTypeByName_Valid()
 {
     NoisyState* N = newtonApiInit("../Examples/invariants.nt");
     mu_assert(
@@ -104,23 +95,23 @@ char * test_newtonApiPhysicsTypeUsageExample()
 
     NoisyIrNode * distanceNode = makeNoisyIrNodeSetToken(
         noisy,
-        kNoisyIrNodeType_Tidentifier, 
-        "distance", 
-        NULL, 
-        0.0 
+        kNoisyIrNodeType_Tidentifier,
+        "distance",
+        NULL,
+        0.0
     );
-    
+
     NoisyIrNode * timeNode = makeNoisyIrNodeSetToken(
         noisy,
-        kNoisyIrNodeType_Tidentifier, 
-        "time", 
-        NULL, 
-        0.0 
+        kNoisyIrNodeType_Tidentifier,
+        "time",
+        NULL,
+        0.0
     );
 
     distanceNode->physics = newtonApiGetPhysicsTypeByName(newton, distanceNode->token->identifier);
     timeNode->physics = newtonApiGetPhysicsTypeByName(newton, timeNode->token->identifier);
-    
+
     mu_assert(
         "test_newtonApiTypeExpressionExample: time and distance id's should be different and cannot be used in add or subtract",
         distanceNode->physics->id != timeNode->physics->id
@@ -129,7 +120,7 @@ char * test_newtonApiPhysicsTypeUsageExample()
     return 0;
 }
 
-static NoisyIrNode *
+NoisyIrNode *
 makeNoisyIrNodeSetToken(
     NoisyState * N,
     NoisyIrNodeType nodeType, 

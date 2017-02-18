@@ -520,11 +520,12 @@ typedef struct NewtonAPIReport NewtonAPIReport;
 
 struct NewtonAPIReport
 {
-    char * failureMessage;
-    bool violatesDimensionConstraint;
-    bool violatesValueConstraint;
+    bool satisfiesDimensionConstraint;
+    char dimensionErrorMessage[1024];
+    bool satisfiesValueConstraint;
+    char valueErrorMessage[1024];
     
-    NoisySourceInfo * failedNewtonFileLocation;
+    NoisySourceInfo * failedLocation;
 };
 
 struct Dimension
