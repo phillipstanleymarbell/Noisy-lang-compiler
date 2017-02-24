@@ -517,15 +517,23 @@ typedef struct Physics Physics;
 typedef struct IntegralList IntegralList;
 typedef struct Invariant Invariant;
 typedef struct NewtonAPIReport NewtonAPIReport;
+typedef struct ConstraintReport ConstraintReport;
+
+struct ConstraintReport
+{
+  bool satisfiesDimensionConstraint;
+  char dimensionErrorMessage[1024];
+  bool satisfiesValueConstraint;
+  char valueErrorMessage[1024];
+
+  NoisySourceInfo * failedLocation;
+
+  ConstraintReport* next;
+};
 
 struct NewtonAPIReport
 {
-    bool satisfiesDimensionConstraint;
-    char dimensionErrorMessage[1024];
-    bool satisfiesValueConstraint;
-    char valueErrorMessage[1024];
-    
-    NoisySourceInfo * failedLocation;
+  ConstraintReport* firstConstraintReport;
 };
 
 struct Dimension

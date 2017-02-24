@@ -63,14 +63,36 @@
 
 extern int		gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 
+static void
+addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintReport * constraintReport);
+
+static void
+addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintReport * constraintReport)
+{
+  if (newtonReport->firstConstraintReport == NULL)
+	{
+	  newtonReport->firstConstraintReport = constraintReport;
+	  return;
+	}
+
+  ConstraintReport* current = newtonReport->firstConstraintReport;
+  while (current->next != NULL)
+	{
+	  current = current->next;
+	}
+
+  current->next = constraintReport;
+}
+
 void
 newtonCheckCompareOp(
     NoisyState* N,
-    NoisyIrNode * leftExpression, 
+    NoisyIrNode * leftExpression,
     NoisyIrNode * rightExpression,
     NoisyIrNodeType compareOpType,
-    NewtonAPIReport * report
+    ConstraintReport * report
 ) {
+
     switch(compareOpType)
     {
         case kNewtonIrNodeType_Tge:
@@ -128,8 +150,8 @@ newtonCheckCompareOp(
             noisyFatal(N, "newton-api.c:newtonCheckCompareOp: no compareOp detected");
             break;
     }
-	assert(report->satisfiesValueConstraint);
-	assert(report->satisfiesDimensionConstraint);
+	// assert(constraintReport->satisfiesValueConstraint);
+	// assert(constraintReport->satisfiesDimensionConstraint);
 }
 
 void
@@ -138,7 +160,7 @@ newtonCheckBinOp(
     NoisyIrNode * left,
     NoisyIrNode * right,
     NoisyIrNodeType binOpType,
-    NewtonAPIReport * report
+    ConstraintReport * report
 ) {
 	if (left == NULL || right == NULL)
 	    noisyFatal(N, "newton-check-pass.c:newtonCheckBinOp: left or right is null");
@@ -205,7 +227,6 @@ iterateConstraints(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrNode
 {
     if (constraintTreeRoot->type == kNewtonIrNodeType_Pconstraint)
     {
-      printf("iterateConstraints: base case\n");
       checkSingleConstraint(N, constraintTreeRoot, parameterTreeRoot, report);
     }
 
@@ -217,9 +238,10 @@ iterateConstraints(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrNode
 }
 
 void
-checkSingleConstraint(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrNode* parameterTreeRoot, NewtonAPIReport* report)
+checkSingleConstraint(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrNode* parameterTreeRoot, NewtonAPIReport* newtonReport)
 {
     int expressionIndex = 0;
+	ConstraintReport * constraintReport = (ConstraintReport*) calloc(1, sizeof(ConstraintReport));
 
     /* check LHS expression */
     NoisyIrNode* leftExpression = findNthIrNodeOfType(
@@ -233,7 +255,7 @@ checkSingleConstraint(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrN
         N,
         leftExpression,
         parameterTreeRoot,
-        report
+        constraintReport
     );
 
     /* find the compareOp between LHS and RHS*/
@@ -259,7 +281,7 @@ checkSingleConstraint(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrN
         N,
         rightExpression,
         parameterTreeRoot,
-        report
+        constraintReport
     );
 
     newtonCheckCompareOp(
@@ -267,8 +289,10 @@ checkSingleConstraint(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrN
         leftExpression,
         rightExpression,
         compareOp->token->type,
-        report
+        constraintReport
     );
+
+	addConstraintReportToNewtonAPIReport(newtonReport, constraintReport);
 }
 
 double
@@ -276,7 +300,7 @@ checkQuantityExpression(
     NoisyState * N,
     NoisyIrNode * expressionRoot,
     NoisyIrNode * parameterTreeRoot,
-    NewtonAPIReport * report
+    ConstraintReport * report
 ) {
     int termIndex = 0;
     NoisyIrNode* leftTerm = findNthIrNodeOfType(
@@ -346,7 +370,7 @@ checkQuantityTerm(
     NoisyState * N,
     NoisyIrNode * termRoot,
     NoisyIrNode * parameterTreeRoot,
-    NewtonAPIReport * report
+    ConstraintReport * report
 ) {
     int factorIndex = 0;
 
@@ -433,7 +457,7 @@ checkQuantityFactor(
     NoisyState * N,
     NoisyIrNode * factorRoot,
     NoisyIrNode * parameterTreeRoot,
-    NewtonAPIReport * report
+    ConstraintReport * report
 ) {
   // find a factor and then look it up in parameters
   // to assign a value
@@ -454,7 +478,7 @@ checkQuantityFactor(
 	  //factor->value = factor->physics->value;
 	  // assert(factor->value != 0); // TODO remove later
 	}
-  else if (factor->physics)
+  else
 	{
 	  /*
 	   * Suppose the caller of the API has supplied a NoisyIrNode Tidentifier "L" with numeric value 5.
@@ -468,6 +492,7 @@ checkQuantityFactor(
 	  if (matchingParameter == NULL)
 		{
 		  sprintf(report->dimensionErrorMessage, "newton-check-pass.c:checkQuantityFactor: did not find a parameter with physics id %llu", factor->physics->id);
+
 		  noisyFatal(N, "newton-check-pass.c:checkQuantity: matchingParameter is null\n");
 		  return;
 		}

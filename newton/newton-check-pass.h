@@ -4,7 +4,7 @@ newtonCheckCompareOp(
     NoisyIrNode * leftExpression, 
     NoisyIrNode * rightExpression,
     NoisyIrNodeType compareOpType,
-    NewtonAPIReport * report
+    ConstraintReport * report
 );
 
 void
@@ -13,7 +13,7 @@ newtonCheckBinOp(
     NoisyIrNode * leftTerm, 
     NoisyIrNode * rightTerm,
     NoisyIrNodeType binOpType,
-    NewtonAPIReport * report
+    ConstraintReport * report
 ); 
 
 void
@@ -29,7 +29,7 @@ checkQuantityExpression(
     NoisyState * N,
     NoisyIrNode * constraintTreeRoot,
     NoisyIrNode * parameterTreeRoot,
-    NewtonAPIReport * report
+    ConstraintReport * report
 );
 
 double
@@ -37,7 +37,7 @@ checkQuantityTerm(
     NoisyState * N,
     NoisyIrNode * constraintTreeRoot,
     NoisyIrNode * parameterTreeRoot,
-    NewtonAPIReport * report
+    ConstraintReport * report
 );
 
 void
@@ -45,6 +45,6 @@ checkQuantityFactor(
     NoisyState * N,
     NoisyIrNode * constraintTreeRoot,
     NoisyIrNode * parameterTreeRoot,
-    NewtonAPIReport * report
+    ConstraintReport * report
 );
 

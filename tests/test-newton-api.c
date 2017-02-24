@@ -23,6 +23,28 @@
 
 extern int tests_run;
 
+static int numberOfConstraintsPassed(NewtonAPIReport* newtonReport);
+
+static int
+numberOfConstraintsPassed(NewtonAPIReport* newtonReport)
+{
+  int count = 0;
+  ConstraintReport* current = newtonReport->firstConstraintReport;
+
+  while (current != NULL)
+    {
+      // printf("satisfiesValueConstraint %d\n", current->satisfiesValueConstraint);
+      // printf("satisfiesDimensionConstraint %d\n\n", current->satisfiesDimensionConstraint);
+      // printf("valueErrorMessage %s\n", current->valueErrorMessage);
+      // printf("dimensionErrorMessage %s\n\n", current->dimensionErrorMessage);
+      if (current->satisfiesValueConstraint && current->satisfiesDimensionConstraint)
+        count++;
+      current = current->next;
+    }
+
+  return count;
+}
+
 char * test_newtonApiInit_notNull()
 {
 	mu_assert(
@@ -85,13 +107,15 @@ char * test_newtonCheckSingleInvariant()
 {
   NoisyState * newton = newtonApiInit("../Examples/invariants.nt");
   NoisyIrNode* parameterTree = makeTestParameterTuple(newton);
-  NewtonAPIReport* report = newtonApiSatisfiesConstraints(
+  NewtonAPIReport* newtonReport = newtonApiSatisfiesConstraints(
 													   newton,
 													   parameterTree
 													   );
+  int numberPassed = numberOfConstraintsPassed(newtonReport);
+
   mu_assert(
-			"test_newtonCheckSingleInvariant: the report should say success",
-			report->satisfiesDimensionConstraint && report->satisfiesValueConstraint
+			"test_newtonCheckSingleInvariant: number passed should be 5",
+      numberPassed == 5
 			);
   return 0;
 }
