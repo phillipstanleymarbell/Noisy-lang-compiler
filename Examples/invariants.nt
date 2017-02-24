@@ -51,14 +51,14 @@ Pi : constant = 3.14159;
 g : constant = 9.8 * meter ** 2 * second ** -2;
 # G : constant = 6.674 * meter ** 3 * kilogram ** -1 * second ** -2;
 # myConstant : constant = -1.11 * meter ** (3 ** (8 + 2)); this line causes infinite loop.... maybe because exponent was too big..
-# myConstant : constant = -1.11 * meter ** (2 ** (1 + 1));
+myConstant : constant = -1.11 * meter ** (2 ** (1 + 1));
 
 SimplePendulum : invariant(L: distance, period: time) =
 {
-    period ~ (4*Pi*Pi*L/g) ** 3,
-	distance @< 5,
-    L >= 0 * meter,
+    L >= 2.2 * meter,
     L <=  10 * meter,
+	  L @< 5 * meter,
+    period ~ (4 * Pi * Pi * L / g) ** 3,
     period >= 3 * second,
     period <= 9 * second
 }

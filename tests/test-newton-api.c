@@ -81,6 +81,21 @@ char * test_newtonApiGetInvariantByParameters_Valid()
     return 0;
 }
 
+char * test_newtonCheckSingleInvariant()
+{
+  NoisyState * newton = newtonApiInit("../Examples/invariants.nt");
+  NoisyIrNode* parameterTree = makeTestParameterTuple(newton);
+  NewtonAPIReport* report = newtonApiSatisfiesConstraints(
+													   newton,
+													   parameterTree
+													   );
+  mu_assert(
+			"test_newtonCheckSingleInvariant: the report should say success",
+			report->satisfiesDimensionConstraint && report->satisfiesValueConstraint
+			);
+  return 0;
+}
+
 /*
  * This example shows how a host language compiler (e.g. Noisy compiler) would check 
  * if two IR nodes are dimensionally equivalent during the parsing step.
@@ -120,12 +135,70 @@ char * test_newtonApiPhysicsTypeUsageExample()
     return 0;
 }
 
+
+NoisyIrNode *
+makeTestParameterTuple(NoisyState * newton)
+{
+  NoisyIrNode *	root = genNoisyIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
+									  NULL /* left child */,
+									  NULL /* right child */,
+									  NULL /* source info */);
+  NoisyIrNode * firstParameter = genNoisyIrNode(newton,	kNewtonIrNodeType_Pparameter,
+												NULL /* left child */,
+												NULL /* right child */,
+												NULL /* source info */);
+  NoisyIrNode * distanceIdentifier = makeNoisyIrNodeSetToken(
+													   newton,
+													   kNoisyIrNodeType_Tidentifier,
+													   "L",
+													   NULL,
+													   5
+													   );
+  NoisyIrNode * distanceNode = makeNoisyIrNodeSetToken(
+													   newton,
+													   kNoisyIrNodeType_Tidentifier,
+													   "distance",
+													   NULL,
+													   0.0
+													   );
+  distanceNode->physics = newtonApiGetPhysicsTypeByName(newton, distanceNode->token->identifier);
+  addLeaf(newton, firstParameter, distanceIdentifier);
+  addLeaf(newton, firstParameter, distanceNode);
+
+  NoisyIrNode * secondParameter = genNoisyIrNode(newton,	kNewtonIrNodeType_Pparameter,
+												 NULL /* left child */,
+												 NULL /* right child */,
+												 NULL /* source info */);
+  NoisyIrNode * timeIdentifier = makeNoisyIrNodeSetToken(
+															 newton,
+															 kNoisyIrNodeType_Tidentifier,
+															 "period",
+															 NULL,
+															 6.6
+															 );
+  NoisyIrNode * timeNode = makeNoisyIrNodeSetToken(
+												   newton,
+												   kNoisyIrNodeType_Tidentifier,
+												   "time",
+												   NULL,
+												   0.0
+												   );
+  timeNode->physics = newtonApiGetPhysicsTypeByName(newton, timeNode->token->identifier);
+  addLeaf(newton, secondParameter, timeIdentifier);
+  addLeaf(newton, secondParameter, timeNode);
+
+  addLeaf(newton, root, firstParameter);
+  addLeafWithChainingSeqNoLexer(newton, root, secondParameter);
+
+  return root;
+}
+
 NoisyIrNode *
 makeNoisyIrNodeSetToken(
     NoisyState * N,
-    NoisyIrNodeType nodeType, 
-    char * identifier, 
-    char * stringConst, 
+    NoisyIrNodeType nodeType,
+    char * identifier,
+    char * stringConst,
     double realConst
 ) {
 	NoisyIrNode * node = genNoisyIrNode(
@@ -136,15 +209,17 @@ makeNoisyIrNodeSetToken(
 	    NULL /* source info */
     );
 
-    node->token = noisyLexAllocateToken(
-        N,
-        nodeType /* type */,
-		identifier /* identifier */,
-		0	/* integerConst	*/,
-		realConst	/* realConst	*/,
-		stringConst /* stringConst	*/,
-		NULL	/* sourceInfo	*/
-    );
+  node->token = noisyLexAllocateToken(
+                                      N,
+                                      nodeType /* type */,
+                                      identifier /* identifier */,
+                                      0	/* integerConst	*/,
+                                      realConst	/* realConst	*/,
+                                      stringConst /* stringConst	*/,
+                                      NULL	/* sourceInfo	*/
+                                      );
+
+    node->value = node->token->integerConst || node->token->realConst;
 
     return node;
 }

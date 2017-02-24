@@ -76,7 +76,6 @@ char* gNewtonAstNodeStrin[kNoisyIrNodeTypeMax]	= {
                                                [         kNewtonIrNodeType_Prule]            = "kNewtonIrNodeType_Prule",
                                                [     kNewtonIrNodeType_PruleList]            = "kNewtonIrNodeType_PruleList",
                                                [   kNewtonIrNodeType_PnewtonFile]            = "kNewtonIrNodeType_PnewtonFile",
-                                               //[                           T_XXX]            = "T_XXX",
                                                [          kNewtonIrNodeType_Tnil]            = "kNewtonIrNodeType_Tnil",
                                                [kNewtonIrNodeType_ZbadIdentifier]            = "kNewtonIrNodeType_ZbadIdentifier",
                                                [kNewtonIrNodeType_ZbadStringConst]            = "kNewtonIrNodeType_ZbadStringConst",
@@ -100,6 +99,8 @@ char* gNewtonAstNodeStrin[kNoisyIrNodeTypeMax]	= {
                                                [       kNewtonIrNodeType_Tnumber]            = "kNewtonIrNodeType_Tnumber",
                                                [       kNewtonIrNodeType_Tplus]            = "kNewtonIrNodeType_Tplus",
                                                [       kNewtonIrNodeType_Tminus]            = "kNewtonIrNodeType_Tminus",
+                                               [       kNewtonIrNodeType_Tmul]            = "kNewtonIrNodeType_Tmul",
+                                               [       kNewtonIrNodeType_Tdiv]            = "kNewtonIrNodeType_Tdiv",
                                                [         kNewtonIrNodeType_Tname]            = "kNewtonIrNodeType_Tname",
                                                [    kNewtonIrNodeType_TrightBrace]            = "kNewtonIrNodeType_TrightBrace",
                                                [     kNewtonIrNodeType_TleftBrace]            = "kNewtonIrNodeType_TleftBrace",
@@ -167,11 +168,13 @@ errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol)
 NoisyIrNode*
 findNthIrNodeOfTypes(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int* nth)
 {
-    assert(root != NULL);
+  assert(root != NULL && nth != NULL);
+  // printf("findNthIrNodeOfTypes %d\n", *nth);
 	for (int i = 0; i < kNoisyIrNodeTypeMax && firsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
 		if (firsts[productionOrToken][i] == root->type)
 		{
+      //printf("inside for: root:%s firsts:%s expected:%s token:%s\n", gNewtonAstNodeStrin[root->type], gNewtonAstNodeStrin[firsts[productionOrToken][i]], gNewtonAstNodeStrin[productionOrToken], root->token->identifier);
             if(*nth == 0)
                 return root;
             *nth = *nth - 1;
@@ -179,13 +182,21 @@ findNthIrNodeOfTypes(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType product
 	}
 
   NoisyIrNode * nthNode;
+  if (root->irLeftChild == root || root->irRightChild == root)
+    noisyFatal(N, "findNthIrNodeOfTypes: cycle!! \n");
   if (root->irLeftChild != NULL &&\
       (nthNode = findNthIrNodeOfTypes(N, root->irLeftChild, productionOrToken, firsts, nth)) != NULL)
+    {
+      //printf("returning left: root:%s expected:%s return:%s \n", gNewtonAstNodeStrin[root->type], gNewtonAstNodeStrin[productionOrToken], gNewtonAstNodeStrin[nthNode->type]);
       return nthNode;
+    }
 
   if (root->irRightChild != NULL &&\
       (nthNode = findNthIrNodeOfTypes(N, root->irRightChild, productionOrToken, firsts, nth)) != NULL)
+    {
+      // printf("returning right: root:%s expected:%s return:%s \n", gNewtonAstNodeStrin[root->type], gNewtonAstNodeStrin[productionOrToken], gNewtonAstNodeStrin[nthNode->type]);
       return nthNode;
+    }
 
   return NULL;
 }

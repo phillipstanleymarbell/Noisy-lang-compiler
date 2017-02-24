@@ -613,17 +613,22 @@ struct NoisyIrNode
 
 	NoisySymbol *		symbol;
 
-    /*
-     * Used for evaluating dimensions in expressions
-     */
-    Physics * physics;
+  /*
+   * Used for evaluating dimensions in expressions
+   */
+  Physics * physics;
 
-    /* 
-     * only if this node belongs to a ParseNumericExpression subtree
-     */
-    double value; 
-	
-    /*
+  /*
+   * only if this node belongs to a ParseNumericExpression subtree
+   */
+  double value; 
+
+  /*
+   * When doing an API check of the invariant tree given a parameter tree,
+   * the method looks up all instances of 
+   */
+
+  /*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
 	 */
 	NoisyIrNodeColor	nodeColor;

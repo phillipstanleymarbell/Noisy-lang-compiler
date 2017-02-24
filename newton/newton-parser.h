@@ -1,55 +1,55 @@
-NoisyIrNode *
+NoisyIrNode * 
 newtonParse(NoisyState *  N, NoisyScope *  currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseFile(NoisyState *  N, NoisyScope *  currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseRuleList(NoisyState *  N, NoisyScope *  currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseRule(NoisyState * N, NoisyScope * currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseInvariant(NoisyState * N, NoisyScope * currentScope);
-    
-NoisyIrNode *
+
+NoisyIrNode * 
 newtonParseParameter(NoisyState * N, NoisyScope * currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseParameterTuple(NoisyState * N, NoisyScope * currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseConstraint(NoisyState * N, NoisyScope * currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseBaseSignal(NoisyState * N, NoisyScope * currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseName(NoisyState * N, NoisyScope * currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseSymbol(NoisyState * N, NoisyScope * currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseDerivation(NoisyState * N, NoisyScope * currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseTerminal(NoisyState *  N, NoisyIrNodeType expectedType, NoisyScope * currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseIdentifier(NoisyState *  N, NoisyScope *  currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType, NoisyScope *  scope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expectedType, NoisyScope *  scope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseConstant(NoisyState * N, NoisyScope * currentScope);
 
-NoisyIrNode *
+NoisyIrNode * 
 newtonParseCompareOp(NoisyState * N, NoisyScope * currentScope);
 
 bool
@@ -71,4 +71,6 @@ newtonParseGetIdentifierByBoundPhysicsString(NoisyState * N, NoisyIrNode * root,
 NoisyIrNode *
 newtonParseFindNodeByPhysicsId(NoisyState *N, NoisyIrNode * root, int physicsId);
 
+NoisyIrNode *
+newtonParseFindNodeByBoundPhysicsString(NoisyState *N, NoisyIrNode * root, char* physicsTypeString);
 

@@ -11,6 +11,8 @@ OSTYPE=darwin
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 
+PLATFORM_CFLAGS	= -Wno-gnu-designator
+OBJECTEXTENSION = o
 MAKEFLAGS	+= -j
 
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
@@ -43,7 +45,6 @@ SOURCES		=\
 		test-newton-api.c\
 		test-newton-parser.c\
 		test-common.c\
-		test-newtonfirsts.c\
 
 #
 #	Clang seems to be unable to do LTO unless we have all the objects
@@ -55,7 +56,6 @@ OBJS		=\
 		test-newton-api.$(OBJECTEXTENSION)\
 		test-newton-parser.$(OBJECTEXTENSION)\
 		test-common.$(OBJECTEXTENSION)\
-		test-newtonfirsts.$(OBJECTEXTENSION)\
 
 
 
@@ -64,7 +64,6 @@ LIBTESTOBJS =\
 		test-newton-api.$(OBJECTEXTENSION)\
 		test-newton-parser.$(OBJECTEXTENSION)\
 		test-common.$(OBJECTEXTENSION)\
-		test-newtonfirsts.$(OBJECTEXTENSION)\
 
 
 HEADERS		=\

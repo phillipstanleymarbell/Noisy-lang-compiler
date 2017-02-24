@@ -8,6 +8,8 @@
 	are met:
 
 	*	Redistributions of source code must retain the above
+
+
 		copyright notice, this list of conditions and the following
 		disclaimer.
 
@@ -35,4 +37,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-char * noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNode * noisyIrRoot);
+char * irPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNode * noisyIrRoot, char* astNodeStrings[]);

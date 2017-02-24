@@ -19,11 +19,11 @@
 #include "newton-lexer.h"
 #include "newton-symbolTable.h"
 #include "newton.h"
+#include "newton-irPass-dotBackend.h"
 
-/*
- * TODO: change this to be more flexible and take an arg from command line
- * https://github.com/phillipstanleymarbell/Noisy-lang-compiler/issues/28
- */
+extern char* gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
+
+
 void		
 processNewtonFile(NoisyState *  N, char *  filename)
 {
@@ -43,17 +43,15 @@ processNewtonFile(NoisyState *  N, char *  filename)
 	 *	Dot backend.
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
-	{
-		// fprintf(stdout, "%s\n", noisyIrPassDotBackend(N, N->noisyIrTopScope, N->noisyIrRoot));
-	}
-    
+    fprintf(stdout, "%s\n", irPassDotBackend(N, N->newtonIrTopScope, N->newtonIrRoot, gNewtonAstNodeStrings));
+
 
 
 	// if (N->mode & kNoisyConfigModeCallTracing)
 	// {
 	// 	noisyConfigTimeStampDumpTimeline(N);
 	// }
-    
+
     noisyConsolePrintBuffers(N);
 }
 
