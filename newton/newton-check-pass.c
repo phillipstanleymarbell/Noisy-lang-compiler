@@ -75,7 +75,7 @@ newtonCheckCompareOp(
     {
         case kNewtonIrNodeType_Tge:
             report->satisfiesValueConstraint = leftExpression->value >= rightExpression->value;
-            report->satisfiesDimensionConstraint = (newtonIsConstant(leftExpression->physics) && newtonIsConstant(rightExpression->physics)) ||\
+            report->satisfiesDimensionConstraint = (newtonIsDimensionless(leftExpression->physics) && newtonIsDimensionless(rightExpression->physics)) ||\
               (leftExpression->physics->id == rightExpression->physics->id);
             if (!report->satisfiesValueConstraint)
                 sprintf(report->valueErrorMessage, "%f should be >= %f", leftExpression->value, rightExpression->value);
@@ -84,7 +84,7 @@ newtonCheckCompareOp(
             break;
         case kNewtonIrNodeType_Tgt:
             report->satisfiesValueConstraint = leftExpression->value > rightExpression->value;
-            report->satisfiesDimensionConstraint = (newtonIsConstant(leftExpression->physics) && newtonIsConstant(rightExpression->physics)) ||\
+            report->satisfiesDimensionConstraint = (newtonIsDimensionless(leftExpression->physics) && newtonIsDimensionless(rightExpression->physics)) ||\
 			  (leftExpression->physics->id == rightExpression->physics->id);
             if (!report->satisfiesValueConstraint)
                 sprintf(report->valueErrorMessage, "%f should be > %f", leftExpression->value, rightExpression->value);
@@ -93,7 +93,7 @@ newtonCheckCompareOp(
             break;
         case kNewtonIrNodeType_Tle:
             report->satisfiesValueConstraint = leftExpression->value <= rightExpression->value;
-            report->satisfiesDimensionConstraint = (newtonIsConstant(leftExpression->physics) && newtonIsConstant(rightExpression->physics)) ||\
+            report->satisfiesDimensionConstraint = (newtonIsDimensionless(leftExpression->physics) && newtonIsDimensionless(rightExpression->physics)) ||\
                 (leftExpression->physics->id == rightExpression->physics->id);
             if (!report->satisfiesValueConstraint)
                 sprintf(report->valueErrorMessage, "%f should be <= %f", leftExpression->value, rightExpression->value);
@@ -102,7 +102,7 @@ newtonCheckCompareOp(
             break;
         case kNewtonIrNodeType_Tlt:
             report->satisfiesValueConstraint = leftExpression->value < rightExpression->value;
-            report->satisfiesDimensionConstraint = (newtonIsConstant(leftExpression->physics) && newtonIsConstant(rightExpression->physics)) ||\
+            report->satisfiesDimensionConstraint = (newtonIsDimensionless(leftExpression->physics) && newtonIsDimensionless(rightExpression->physics)) ||\
                 (leftExpression->physics->id == rightExpression->physics->id);
             if (!report->satisfiesValueConstraint)
                 sprintf(report->valueErrorMessage, "%f should be < %f", leftExpression->value, rightExpression->value);
@@ -111,11 +111,13 @@ newtonCheckCompareOp(
             break;
         case kNewtonIrNodeType_Tproportionality:
             /* TODO figure out how to check proportionality */
-            break;
+		  report->satisfiesValueConstraint = true;
+		  report->satisfiesDimensionConstraint = true;
+			break;
         case kNewtonIrNodeType_Tequivalent:
             /* TODO change == to incorporate an epsilon */
             report->satisfiesValueConstraint = leftExpression->value == rightExpression->value;
-            report->satisfiesDimensionConstraint = (newtonIsConstant(leftExpression->physics) && newtonIsConstant(rightExpression->physics)) ||\
+            report->satisfiesDimensionConstraint = (newtonIsDimensionless(leftExpression->physics) && newtonIsDimensionless(rightExpression->physics)) ||\
                 (leftExpression->physics->id == rightExpression->physics->id);
             if (!report->satisfiesValueConstraint)
                 sprintf(report->valueErrorMessage, "%f should be == %f", leftExpression->value, rightExpression->value);
@@ -126,6 +128,8 @@ newtonCheckCompareOp(
             noisyFatal(N, "newton-api.c:newtonCheckCompareOp: no compareOp detected");
             break;
     }
+	assert(report->satisfiesValueConstraint);
+	assert(report->satisfiesDimensionConstraint);
 }
 
 void
@@ -143,7 +147,7 @@ newtonCheckBinOp(
         case kNewtonIrNodeType_Tplus:
             left->value += right->value;
             report->satisfiesDimensionConstraint =
-                (newtonIsConstant(left->physics) && newtonIsConstant(right->physics)) ||\
+                (newtonIsDimensionless(left->physics) && newtonIsDimensionless(right->physics)) ||\
                 (left->physics->id == right->physics->id);
             if (!report->satisfiesDimensionConstraint)
                 sprintf(report->dimensionErrorMessage, "dimensions do not match");
@@ -152,7 +156,7 @@ newtonCheckBinOp(
         case kNewtonIrNodeType_Tminus:
             left->value -= right->value;
             report->satisfiesDimensionConstraint =
-                (newtonIsConstant(left->physics) && newtonIsConstant(right->physics)) ||\
+                (newtonIsDimensionless(left->physics) && newtonIsDimensionless(right->physics)) ||\
 			  (left->physics->id == right->physics->id);
             if (!report->satisfiesDimensionConstraint)
                 sprintf(report->dimensionErrorMessage, "dimensions do not match");
@@ -164,11 +168,15 @@ newtonCheckBinOp(
          */
         case kNewtonIrNodeType_Tmul:
             assert(left->value != 0); /* TODO this is not true, if it's actually 0. remove after debugging */
+			left->value = left->value == 0 ? 1 : left->value;
+			right->value = right->value == 0 ? 1 : right->value;
             left->value *= right->value;
             report->satisfiesDimensionConstraint = true;
             break;
 
         case kNewtonIrNodeType_Tdiv:
+		  left->value = left->value == 0 ? 1 : left->value;
+		  right->value = right->value == 0 ? 1 : right->value;
             left->value /= right->value;
             report->satisfiesValueConstraint = right->value != 0;
             report->satisfiesDimensionConstraint = true;
@@ -218,10 +226,10 @@ checkSingleConstraint(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrN
         N,
         constraintTreeRoot,
         kNewtonIrNodeType_PquantityExpression,
-        &expressionIndex
+        expressionIndex
     );
     expressionIndex++;
-    checkQuantityExpression(
+    leftExpression->value = checkQuantityExpression(
         N,
         leftExpression,
         parameterTreeRoot,
@@ -235,7 +243,7 @@ checkSingleConstraint(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrN
         constraintTreeRoot,
         kNewtonIrNodeType_PcompareOp,
         gNewtonFirsts,
-        &compareOpIndex
+        compareOpIndex
     );
     /* There must be one compareOp per constraint */
     assert(compareOp != NULL);
@@ -244,10 +252,10 @@ checkSingleConstraint(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrN
         N,
         constraintTreeRoot,
         kNewtonIrNodeType_PquantityExpression,
-        &expressionIndex
+        expressionIndex
     );
     expressionIndex++;
-    checkQuantityExpression(
+    rightExpression->value = checkQuantityExpression(
         N,
         rightExpression,
         parameterTreeRoot,
@@ -263,7 +271,7 @@ checkSingleConstraint(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrN
     );
 }
 
-void
+double
 checkQuantityExpression(
     NoisyState * N,
     NoisyIrNode * expressionRoot,
@@ -275,11 +283,11 @@ checkQuantityExpression(
         N,
         expressionRoot,
         kNewtonIrNodeType_PquantityTerm,
-        &termIndex
+        termIndex
     );
     termIndex++;
     assert(leftTerm != NULL);
-    checkQuantityTerm(
+    leftTerm->value = checkQuantityTerm(
         N,
         leftTerm,
         parameterTreeRoot,
@@ -292,7 +300,7 @@ checkQuantityExpression(
         expressionRoot,
         kNewtonIrNodeType_PlowPrecedenceBinaryOp,
         gNewtonFirsts,
-        &lowBinOpIndex
+        lowBinOpIndex
     );
     lowBinOpIndex++;
 
@@ -302,11 +310,11 @@ checkQuantityExpression(
             N,
             expressionRoot,
             kNewtonIrNodeType_PquantityTerm,
-            &termIndex
+            termIndex
         );
         termIndex++;
         assert(	rightTerm != NULL );
-        checkQuantityTerm(
+        rightTerm->value = checkQuantityTerm(
             N,
             rightTerm,
             parameterTreeRoot,
@@ -326,13 +334,14 @@ checkQuantityExpression(
             expressionRoot,
             kNewtonIrNodeType_PlowPrecedenceBinaryOp,
             gNewtonFirsts,
-            &lowBinOpIndex
+            lowBinOpIndex
         );
         lowBinOpIndex++;
     }
+	return leftTerm->value;
 }
 
-void
+double
 checkQuantityTerm(
     NoisyState * N,
     NoisyIrNode * termRoot,
@@ -340,12 +349,22 @@ checkQuantityTerm(
     NewtonAPIReport * report
 ) {
     int factorIndex = 0;
+
+	/*
+	 * This is part of value propagation. Some factor may have a value set, some may not. For example, in the term  3 * meter, 3 has a value of 3 and meter has value of 0.
+	 * If at least one factor in a term has a value set, then the value for the entire term must be set as well.
+	 * If nothing has any value set, set the value of the entire term to 0.
+	 * Note that having a value set to 0 and not having any value set at all will have the same effect since the value for the entire term will be 0.
+	 *
+	 * This is also how the values are propagated in newtonParseQuantityExpression.
+	 */
+
     NoisyIrNode* leftFactor = findNthIrNodeOfTypes(
         N,
         termRoot,
         kNewtonIrNodeType_PquantityFactor,
         gNewtonFirsts,
-        &factorIndex
+        factorIndex
     );
     factorIndex++;
     assert(leftFactor != NULL);
@@ -356,6 +375,7 @@ checkQuantityTerm(
         parameterTreeRoot,
         report
     );
+	bool noFactorHasValueSet = leftFactor->value == 0;
 
     int midBinOpIndex = 0;
     NoisyIrNode* midBinOpNode = findNthIrNodeOfTypes(
@@ -363,19 +383,18 @@ checkQuantityTerm(
         termRoot,
         kNewtonIrNodeType_PmidPrecedenceBinaryOp,
         gNewtonFirsts,
-        &midBinOpIndex
+        midBinOpIndex
     );
     midBinOpIndex++;
 
     while (midBinOpNode != NULL)
     {
-      printf("checkQuantityTerm: inside while loop %d %d\n", factorIndex, midBinOpIndex);
         NoisyIrNode* rightFactor = findNthIrNodeOfTypes(
             N,
             termRoot,
             kNewtonIrNodeType_PquantityFactor,
             gNewtonFirsts,
-            &factorIndex
+            factorIndex
         );
         factorIndex++;
         checkQuantityFactor(
@@ -384,7 +403,9 @@ checkQuantityTerm(
             parameterTreeRoot,
             report
         );
+		noFactorHasValueSet = noFactorHasValueSet && (rightFactor->value == 0);
 
+		/* checking for high precedence binop just sets the values by multiplying or dividing */
         newtonCheckBinOp(N, leftFactor, rightFactor, midBinOpNode->type, report);
 
         midBinOpNode = findNthIrNodeOfTypes(
@@ -392,11 +413,19 @@ checkQuantityTerm(
             termRoot,
             kNewtonIrNodeType_PmidPrecedenceBinaryOp,
             gNewtonFirsts,
-            &midBinOpIndex
+            midBinOpIndex
         );
         midBinOpIndex++;
     }
-    printf("checkQuantityTerm: end while loop\n");
+
+	assert(!noFactorHasValueSet); // TODO remove later, but this is probably true in all cases
+	if (!noFactorHasValueSet)
+	  assert(leftFactor->value != 0);
+
+	if (noFactorHasValueSet)
+	  leftFactor->value = 0;
+
+	return leftFactor->value;
 }
 
 void
@@ -416,18 +445,26 @@ checkQuantityFactor(
 	  factorRoot,
 	  kNewtonIrNodeType_PquantityFactor,
 	  gNewtonFirsts,
-    &factorIndex
+    factorIndex
   );
 
-  if (newtonIsConstant(factor->physics))
+  if (newtonIsDimensionless(factor->physics) || factor->physics->isConstant ||  newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) != NULL)
 	{
 	  // printf("hellooooo %f", factor->value);
 	  //factor->value = factor->physics->value;
-	  assert(factor->value != 0);
+	  // assert(factor->value != 0); // TODO remove later
 	}
   else if (factor->physics)
 	{
-	  NoisyIrNode * matchingParameter = newtonParseFindNodeByBoundPhysicsString(N, parameterTreeRoot, factor->physics->identifier);
+	  /*
+	   * Suppose the caller of the API has supplied a NoisyIrNode Tidentifier "L" with numeric value 5.
+	   * The constraint is L < 2 * meter.
+	   *
+	   * Currently, searching the symbol table for a unit returns that NoisyIrNode with its corresponding Physics struct.
+	   * A matching parameter must correspond to the Physics struct bound by the token string (e.g. L : distance),
+	   * but we do not want to raise an error a node that just is a unit (e.g. meter), not a Physics.
+	   */
+	  NoisyIrNode * matchingParameter = newtonParseFindNodeByTokenString(N, parameterTreeRoot, factor->tokenString);
 	  if (matchingParameter == NULL)
 		{
 		  sprintf(report->dimensionErrorMessage, "newton-check-pass.c:checkQuantityFactor: did not find a parameter with physics id %llu", factor->physics->id);
@@ -441,7 +478,7 @@ checkQuantityFactor(
 		}
 	}
 
-  assert(factor->value != 0); /* TODO remove after debugging: value might actually be 0 */
+  // assert(factor->value != 0); /* TODO remove after debugging: value might actually be 0 */
 
 	int highBinOpIndex = 0;
 	NoisyIrNode* highBinOpNode = findNthIrNodeOfTypes(
@@ -449,7 +486,7 @@ checkQuantityFactor(
 		factorRoot,
 		kNewtonIrNodeType_PhighPrecedenceBinaryOp,
 		gNewtonFirsts,
-		&highBinOpIndex
+		highBinOpIndex
 	);
 	highBinOpIndex++;
 
@@ -460,7 +497,7 @@ checkQuantityFactor(
                                                    N,
                                                    factorRoot,
                                                    kNewtonIrNodeType_PquantityExpression,
-                                                   &expressionIndex
+                                                   expressionIndex
                                                    );
     expressionIndex++;
 		checkQuantityExpression(	N,
@@ -475,7 +512,7 @@ checkQuantityFactor(
                                          factorRoot,
                                          kNewtonIrNodeType_PhighPrecedenceBinaryOp,
                                          gNewtonFirsts,
-                                         &highBinOpIndex
+                                         highBinOpIndex
                                          );
 		highBinOpIndex++;
 	}

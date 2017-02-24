@@ -244,6 +244,8 @@ newtonParseConstant(NoisyState * N, NoisyScope * currentScope)
     {
         NoisyIrNode * constantExpression = newtonParseQuantityExpression(N, currentScope);
         constantPhysics->value = constantExpression->value;
+        constantPhysics->isConstant = true;
+
         node->value = constantExpression->value;
         assert(node->value != 0); // TODO remove later
 
@@ -503,29 +505,23 @@ newtonParseFindNodeByPhysicsId(NoisyState *N, NoisyIrNode * root, int physicsId)
 }
 
 NoisyIrNode *
-newtonParseFindNodeByBoundPhysicsString(NoisyState *N, NoisyIrNode * root, char* physicsTypeString)
+newtonParseFindNodeByTokenString(NoisyState *N, NoisyIrNode * root, char* tokenString)
 {
-  // do DFS and find the node whose right child node has given identifier
-  // and return the left node's identifier
-  if (root->type == kNewtonIrNodeType_Pparameter)
+  if (root->token && !strcmp(root->token->identifier, tokenString))
     {
-      assert(root->irLeftChild != NULL && root->irRightChild != NULL);
-      if (!strcmp(root->irRightChild->token->identifier, physicsTypeString))
-        {
-          return root->irLeftChild;
-        }
+      return root;
     }
 
   NoisyIrNode* targetNode = NULL;
 
   if (root->irLeftChild != NULL)
-    targetNode = newtonParseFindNodeByBoundPhysicsString(N, root->irLeftChild, physicsTypeString);
+    targetNode = newtonParseFindNodeByTokenString(N, root->irLeftChild, tokenString);
 
   if (targetNode != NULL)
     return targetNode;
 
   if (root->irRightChild != NULL)
-    targetNode = newtonParseFindNodeByBoundPhysicsString(N, root->irRightChild, physicsTypeString);
+    targetNode = newtonParseFindNodeByTokenString(N, root->irRightChild, tokenString);
 
   if (targetNode != NULL)
     return targetNode;
@@ -697,18 +693,18 @@ newtonParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expect
 }
 
 bool
-newtonIsConstant(Physics * physics)
+newtonIsDimensionless(Physics * physics)
 {
-    /* sanity check */
-    if (physics == NULL)
-        return true;
+  if (physics == NULL)
+    return true;
 
-    if (physics->numeratorDimensions == NULL)
-        assert(physics->numberOfNumerators == 0 && physics->numeratorPrimeProduct == 1);
-    if (physics->denominatorDimensions == NULL)
-        assert(physics->numberOfDenominators == 0 && physics->denominatorPrimeProduct == 1);
+  /* sanity check */
+  if (physics->numeratorDimensions == NULL)
+    assert(physics->numberOfNumerators == 0 && physics->numeratorPrimeProduct == 1);
+  if (physics->denominatorDimensions == NULL)
+    assert(physics->numberOfDenominators == 0 && physics->denominatorPrimeProduct == 1);
 
-    return physics->numeratorDimensions == NULL && physics->denominatorDimensions == NULL;
+  return physics->isConstant && physics->numeratorDimensions == NULL && physics->denominatorDimensions == NULL;
 }
 
 int 

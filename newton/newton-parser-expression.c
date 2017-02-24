@@ -127,8 +127,7 @@ newtonParseNumericFactor(NoisyState * N, NoisyScope * currentScope)
     if (peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
     {
         node = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
-        assert(newtonIsConstant(node->physics));
-
+        assert(node->physics->isConstant);
     }
     else if (peekCheck(N, 1, kNewtonIrNodeType_Tnumber))
     {
@@ -234,7 +233,7 @@ newtonParseQuantityTerm(NoisyState * N, NoisyScope * currentScope)
     bool isPhysics /*not a number*/ = peekCheck(N, 1, kNewtonIrNodeType_Tidentifier);
     NoisyIrNode * leftFactor = newtonParseQuantityFactor(N, currentScope);
     addLeafWithChainingSeq(N, intermediate, leftFactor);
-    hasNumberInTerm = hasNumberInTerm || newtonIsConstant(leftFactor->physics);
+    hasNumberInTerm = hasNumberInTerm || leftFactor->physics == NULL || leftFactor->physics->isConstant;
     if (hasNumberInTerm)
       {
         intermediate->value = isUnary ? leftFactor->value * -1 : leftFactor->value;
@@ -269,11 +268,18 @@ newtonParseQuantityTerm(NoisyState * N, NoisyScope * currentScope)
         bool isPhysics = peekCheck(N, 1, kNewtonIrNodeType_Tidentifier);
         rightFactor = newtonParseQuantityFactor(N, currentScope);
         addLeafWithChainingSeq(N, intermediate, rightFactor);
-        hasNumberInTerm = hasNumberInTerm || newtonIsConstant(rightFactor->physics);
+        hasNumberInTerm = hasNumberInTerm || leftFactor->physics == NULL || leftFactor->physics->isConstant;
 
         if (hasNumberInTerm)
           {
-            intermediate->value = rightFactor->value == 0 ? 1 : intermediate->value * rightFactor->value;
+            if (binOp->type == kNewtonIrNodeType_Tmul)
+              {
+                intermediate->value = rightFactor->value == 0 ? intermediate->value : intermediate->value * rightFactor->value;
+              }
+            else if (binOp->type == kNewtonIrNodeType_Tdiv)
+              {
+                intermediate->value = rightFactor->value == 0 ? intermediate->value : intermediate->value / rightFactor->value;
+              }
           }
 
         // TODO double check this logic when I'm more awake

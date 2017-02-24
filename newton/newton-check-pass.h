@@ -24,7 +24,7 @@ checkSingleConstraint(
     NewtonAPIReport* report
 );
 
-void
+double
 checkQuantityExpression(
     NoisyState * N,
     NoisyIrNode * constraintTreeRoot,
@@ -32,7 +32,7 @@ checkQuantityExpression(
     NewtonAPIReport * report
 );
 
-void
+double
 checkQuantityTerm(
     NoisyState * N,
     NoisyIrNode * constraintTreeRoot,

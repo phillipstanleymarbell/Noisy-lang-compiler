@@ -219,7 +219,7 @@ makeNoisyIrNodeSetToken(
                                       NULL	/* sourceInfo	*/
                                       );
 
-    node->value = node->token->integerConst || node->token->realConst;
+  node->value = node->token->integerConst + node->token->realConst; /* this works because either one is always zero */
 
     return node;
 }

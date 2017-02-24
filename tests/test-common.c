@@ -83,7 +83,7 @@ char * test_testNthIrNodeOfTypes()
                                              numberNode,
                                              kNewtonIrNodeType_PquantityTerm,
                                              gNewtonFirsts,
-                                             &termIndex
+                                             termIndex
                                              )->type == kNewtonIrNodeType_Tnumber
 			  );
 
@@ -95,7 +95,7 @@ char * test_testNthIrNodeOfTypes()
    							 numberNode,
    							 kNewtonIrNodeType_PquantityTerm,
    							 gNewtonFirsts,
-   							 &termIndex
+   							 termIndex
    							 )->type == kNewtonIrNodeType_Tidentifier
    		);
 
@@ -107,7 +107,7 @@ char * test_testNthIrNodeOfTypes()
 								   numberNode,
 								   kNewtonIrNodeType_PquantityFactor,
 								   gNewtonFirsts,
-								   &factorIndex
+								   factorIndex
 								   )->type == kNewtonIrNodeType_Tidentifier
 			  );
     int expressionIndex = 1;
@@ -118,7 +118,7 @@ char * test_testNthIrNodeOfTypes()
 								   numberNode,
 								   kNewtonIrNodeType_PquantityExpression,
 								   gNewtonFirsts,
-								   &expressionIndex
+								   expressionIndex
 								   )->type == kNewtonIrNodeType_Tidentifier
 			  );
     int lowBinOpIndex = 0;
@@ -129,19 +129,20 @@ char * test_testNthIrNodeOfTypes()
 								   numberNode,
 								   kNewtonIrNodeType_PlowPrecedenceBinaryOp,
 								   gNewtonFirsts,
-								   &lowBinOpIndex
+								   lowBinOpIndex
 								   )->type == kNewtonIrNodeType_Tplus
 			  );
     lowBinOpIndex = 1;
+    NoisyIrNode* n = findNthIrNodeOfTypes(
+                                          noisy,
+                                          numberNode,
+                                          kNewtonIrNodeType_PlowPrecedenceBinaryOp,
+                                          gNewtonFirsts,
+                                          lowBinOpIndex
+                                          );
     mu_assert(
 			  "test_testNthIrNodeOfTypes: the second low binop should be minus",
-			  findNthIrNodeOfTypes(
-								   noisy,
-								   numberNode,
-								   kNewtonIrNodeType_PlowPrecedenceBinaryOp,
-								   gNewtonFirsts,
-								   &lowBinOpIndex
-								   )->type == kNewtonIrNodeType_Tminus
+			  n->type == kNewtonIrNodeType_Tminus
 			  );
     int highBinOpIndex = 0;
     mu_assert(
@@ -151,7 +152,7 @@ char * test_testNthIrNodeOfTypes()
 								   numberNode,
 								   kNewtonIrNodeType_PhighPrecedenceBinaryOp,
 								   gNewtonFirsts,
-								   &highBinOpIndex
+								   highBinOpIndex
 								   )->type == kNewtonIrNodeType_Texponent
 			  );
     return 0;

@@ -197,6 +197,7 @@ deepCopyPhysicsNode(Physics* node)
 
     copy->isVector = node->isVector;
     copy->value = node->value;
+    copy->isConstant = node->isConstant;
     copy->id = node->id;
 
     copy->numberOfNumerators = node->numberOfNumerators;

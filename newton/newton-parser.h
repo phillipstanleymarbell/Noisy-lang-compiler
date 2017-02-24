@@ -53,7 +53,7 @@ NoisyIrNode *
 newtonParseCompareOp(NoisyState * N, NoisyScope * currentScope);
 
 bool
-newtonIsConstant(Physics * physics);
+newtonIsDimensionless(Physics * physics);
 
 unsigned long long int
 newtonGetInvariantIdByParameters(NoisyState * N, NoisyIrNode * parameterTreeRoot, unsigned long long int invariantId);
@@ -72,5 +72,5 @@ NoisyIrNode *
 newtonParseFindNodeByPhysicsId(NoisyState *N, NoisyIrNode * root, int physicsId);
 
 NoisyIrNode *
-newtonParseFindNodeByBoundPhysicsString(NoisyState *N, NoisyIrNode * root, char* physicsTypeString);
+newtonParseFindNodeByTokenString(NoisyState *N, NoisyIrNode * root, char* tokenString);
 

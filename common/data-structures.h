@@ -570,6 +570,7 @@ struct Physics
     Physics * scalarCounterpart; // non-NULl if a vector AND counterpart defined in vectorScalarPairScope
 
     double value; /* for constants like Pi or gravitational acceleration */
+  bool isConstant;
 
     /*
      * numeratorPrimeProduct and denominatorPrimeProduct == 1 means

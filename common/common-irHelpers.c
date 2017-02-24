@@ -166,35 +166,37 @@ errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol)
 }
 
 NoisyIrNode*
-findNthIrNodeOfTypes(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int* nth)
+findNthIrNodeOfTypes(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int nth)
 {
-  assert(root != NULL && nth != NULL);
-  // printf("findNthIrNodeOfTypes %d\n", *nth);
+  int ith = nth; // copy so we do not modify the caller's count variable
+  return findNthIrNodeOfTypesHelper(N, root, productionOrToken, firsts, &ith);
+}
+
+NoisyIrNode*
+findNthIrNodeOfTypesHelper(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int *nth)
+{
+  assert(root != NULL);
 	for (int i = 0; i < kNoisyIrNodeTypeMax && firsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
 		if (firsts[productionOrToken][i] == root->type)
 		{
-      //printf("inside for: root:%s firsts:%s expected:%s token:%s\n", gNewtonAstNodeStrin[root->type], gNewtonAstNodeStrin[firsts[productionOrToken][i]], gNewtonAstNodeStrin[productionOrToken], root->token->identifier);
             if(*nth == 0)
                 return root;
             *nth = *nth - 1;
+            break;
 		}
 	}
 
   NoisyIrNode * nthNode;
-  if (root->irLeftChild == root || root->irRightChild == root)
-    noisyFatal(N, "findNthIrNodeOfTypes: cycle!! \n");
   if (root->irLeftChild != NULL &&\
-      (nthNode = findNthIrNodeOfTypes(N, root->irLeftChild, productionOrToken, firsts, nth)) != NULL)
+      (nthNode = findNthIrNodeOfTypesHelper(N, root->irLeftChild, productionOrToken, firsts, nth)) != NULL)
     {
-      //printf("returning left: root:%s expected:%s return:%s \n", gNewtonAstNodeStrin[root->type], gNewtonAstNodeStrin[productionOrToken], gNewtonAstNodeStrin[nthNode->type]);
       return nthNode;
     }
 
   if (root->irRightChild != NULL &&\
-      (nthNode = findNthIrNodeOfTypes(N, root->irRightChild, productionOrToken, firsts, nth)) != NULL)
+      (nthNode = findNthIrNodeOfTypesHelper(N, root->irRightChild, productionOrToken, firsts, nth)) != NULL)
     {
-      // printf("returning right: root:%s expected:%s return:%s \n", gNewtonAstNodeStrin[root->type], gNewtonAstNodeStrin[productionOrToken], gNewtonAstNodeStrin[nthNode->type]);
       return nthNode;
     }
 
@@ -202,25 +204,33 @@ findNthIrNodeOfTypes(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType product
 }
 
 NoisyIrNode*
-findNthIrNodeOfType(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType expectedType, int* nth)
+findNthIrNodeOfType(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType expectedType, int nth)
 {
-    if (root->type == expectedType)
+  int ith = nth;
+  return findNthIrNodeOfTypeHelper(N, root, expectedType, &ith);
+}
+
+
+NoisyIrNode*
+findNthIrNodeOfTypeHelper(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType expectedType, int* nth)
+{
+  if (root->type == expectedType)
     {
-        if(*nth == 0)
-            return root;
-        *nth = *nth - 1;
+      if(*nth == 0)
+        return root;
+      *nth = *nth - 1;
     }
 
-    NoisyIrNode * nthNode;
-    if (root->irLeftChild != NULL &&\
-        (nthNode = findNthIrNodeOfType(N, root->irLeftChild, expectedType, nth)) != NULL)
-        return nthNode;
+  NoisyIrNode * nthNode;
+  if (root->irLeftChild != NULL &&\
+      (nthNode = findNthIrNodeOfTypeHelper(N, root->irLeftChild, expectedType, nth)) != NULL)
+    return nthNode;
 
-    if (root->irRightChild != NULL &&\
-        (nthNode = findNthIrNodeOfType(N, root->irRightChild, expectedType, nth)) != NULL)
-        return nthNode;
+  if (root->irRightChild != NULL &&\
+      (nthNode = findNthIrNodeOfTypeHelper(N, root->irRightChild, expectedType, nth)) != NULL)
+    return nthNode;
 
-    return NULL;
+  return NULL;
 }
 
 NoisyIrNode *
