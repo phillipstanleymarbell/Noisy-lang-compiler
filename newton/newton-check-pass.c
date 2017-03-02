@@ -66,6 +66,7 @@ extern int		gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 static void
 addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintReport * constraintReport);
 
+
 static void
 addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintReport * constraintReport)
 {
@@ -83,6 +84,7 @@ addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintR
 
   current->next = constraintReport;
 }
+
 
 void
 newtonCheckCompareOp(
@@ -189,7 +191,6 @@ newtonCheckBinOp(
          * because they are already filled in. Same for division and exponents
          */
         case kNewtonIrNodeType_Tmul:
-            assert(left->value != 0); /* TODO this is not true, if it's actually 0. remove after debugging */
 			left->value = left->value == 0 ? 1 : left->value;
 			right->value = right->value == 0 ? 1 : right->value;
             left->value *= right->value;
@@ -200,10 +201,7 @@ newtonCheckBinOp(
 		  left->value = left->value == 0 ? 1 : left->value;
 		  right->value = right->value == 0 ? 1 : right->value;
             left->value /= right->value;
-            report->satisfiesValueConstraint = right->value != 0;
-            report->satisfiesDimensionConstraint = true;
-            if (!report->satisfiesValueConstraint)
-                sprintf(report->valueErrorMessage, "division by zero");
+            report->satisfiesDimensionConstraint = true; /* The drawback of this approach is that we can't catch divide by 0 */
             break;
 
         case kNewtonIrNodeType_Texponent:
@@ -375,10 +373,12 @@ checkQuantityTerm(
     int factorIndex = 0;
 
 	/*
-	 * This is part of value propagation. Some factor may have a value set, some may not. For example, in the term  3 * meter, 3 has a value of 3 and meter has value of 0.
+	 * This is part of value propagation. Some factor may have a value set, some may not.
+	 * For example, in the term  3 * meter, 3 has a value of 3 and meter has value of 0.
 	 * If at least one factor in a term has a value set, then the value for the entire term must be set as well.
 	 * If nothing has any value set, set the value of the entire term to 0.
-	 * Note that having a value set to 0 and not having any value set at all will have the same effect since the value for the entire term will be 0.
+	 * Note that having a value set to 0 and not having any value set at all will have the same effect
+	 * since the value for the entire term will be 0.
 	 *
 	 * This is also how the values are propagated in newtonParseQuantityExpression.
 	 */
@@ -442,7 +442,7 @@ checkQuantityTerm(
         midBinOpIndex++;
     }
 
-	assert(!noFactorHasValueSet); // TODO remove later, but this is probably true in all cases
+	assert(!noFactorHasValueSet);
 	if (!noFactorHasValueSet)
 	  assert(leftFactor->value != 0);
 
@@ -472,13 +472,7 @@ checkQuantityFactor(
     factorIndex
   );
 
-  if (newtonIsDimensionless(factor->physics) || factor->physics->isConstant ||  newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) != NULL)
-	{
-	  // printf("hellooooo %f", factor->value);
-	  //factor->value = factor->physics->value;
-	  // assert(factor->value != 0); // TODO remove later
-	}
-  else
+  if (!newtonIsDimensionless(factor->physics) && !factor->physics->isConstant && newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) == NULL)
 	{
 	  /*
 	   * Suppose the caller of the API has supplied a NoisyIrNode Tidentifier "L" with numeric value 5.
@@ -498,12 +492,10 @@ checkQuantityFactor(
 		}
 	  else
 		{
-		  assert(matchingParameter->value != 0); /* TODO remove after debugging: value might actually be 0 */
 		  factor->value = matchingParameter->value;
 		}
 	}
 
-  // assert(factor->value != 0); /* TODO remove after debugging: value might actually be 0 */
 
 	int highBinOpIndex = 0;
 	NoisyIrNode* highBinOpNode = findNthIrNodeOfTypes(
