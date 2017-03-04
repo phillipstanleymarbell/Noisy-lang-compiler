@@ -1,8 +1,10 @@
 void
 newtonCheckCompareOp(
-    NoisyState* N,
+    NoisyState * N,
     NoisyIrNode * leftExpression, 
     NoisyIrNode * rightExpression,
+    char * leftErrorMessage,
+    char * rightErrorMessage,
     NoisyIrNodeType compareOpType,
     ConstraintReport * report
 );
@@ -10,11 +12,11 @@ newtonCheckCompareOp(
 void
 newtonCheckBinOp(
     NoisyState* N,
-    NoisyIrNode * leftTerm, 
+    NoisyIrNode * leftTerm,
     NoisyIrNode * rightTerm,
     NoisyIrNodeType binOpType,
     ConstraintReport * report
-); 
+);
 
 void
 checkSingleConstraint(
@@ -29,6 +31,7 @@ checkQuantityExpression(
     NoisyState * N,
     NoisyIrNode * constraintTreeRoot,
     NoisyIrNode * parameterTreeRoot,
+    char * errorMessage,
     ConstraintReport * report
 );
 
@@ -37,6 +40,7 @@ checkQuantityTerm(
     NoisyState * N,
     NoisyIrNode * constraintTreeRoot,
     NoisyIrNode * parameterTreeRoot,
+    char * errorMessage,
     ConstraintReport * report
 );
 
@@ -45,6 +49,7 @@ checkQuantityFactor(
     NoisyState * N,
     NoisyIrNode * constraintTreeRoot,
     NoisyIrNode * parameterTreeRoot,
+    char * errorMessage,
     ConstraintReport * report
 );
 
