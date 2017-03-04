@@ -2,6 +2,7 @@ DIRS =\
     common\
     newton\
     noisy\
+	tests\
 
 all:
 	@set -e; for dir in $(DIRS); do \

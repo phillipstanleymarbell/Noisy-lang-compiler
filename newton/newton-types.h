@@ -1,5 +1,5 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2017. Jonathan Lim
 
 	All rights reserved.
 
@@ -34,8 +34,7 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-bool noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
-bool noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
 
-bool irInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken, NoisyToken* token, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
-bool irInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken, NoisyToken* token, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
+NoisyIrNode *	newtonTypeValidateIrSubtree(NoisyState *  N, NoisyIrNode *  subtree);
+bool 		newtonTypeEqualsSubtreeTypes(NoisyState *  N, NoisyIrNode *  subtreeA, NoisyIrNode *  subtreeB);
+char *	newtonTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree);

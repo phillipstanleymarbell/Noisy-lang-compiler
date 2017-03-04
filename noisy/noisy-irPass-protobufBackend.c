@@ -51,7 +51,7 @@
 #include "data-structures.h"
 #include "noisy-parser.h"
 #include "noisy-lexer.h"
-#include "noisy-irPass-helpers.h"
+#include "common-irPass-helpers.h"
 #include "noisy-irPass-protobufBackend.h"
 #include "noisy-types.h"
 #include "noisy.pb-c.h"

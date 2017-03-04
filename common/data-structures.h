@@ -29,8 +29,7 @@
 	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
 	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
@@ -539,7 +538,7 @@ struct Invariant
     NoisySourceInfo *	sourceInfo;
 
     NoisyIrNode * parameterList; // this is just bunch of NoisyIrNode's in Xseq
-    int id; // TODO calculate id by multiplying all the prime numbers of parameterList
+    unsigned long long int id;
 
     NoisyIrNode * constraints;
 
@@ -549,6 +548,7 @@ struct Invariant
 struct Physics 
 {
     char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
+    unsigned long long int id;
     
     NoisyScope *		scope;
     NoisySourceInfo *	sourceInfo;
@@ -558,6 +558,7 @@ struct Physics
     Physics * scalarCounterpart; // non-NULl if a vector AND counterpart defined in vectorScalarPairScope
 
     double value; /* for constants like Pi or gravitational acceleration */
+  bool isConstant;
 
     /*
      * numeratorPrimeProduct and denominatorPrimeProduct == 1 means
@@ -601,17 +602,22 @@ struct NoisyIrNode
 
 	NoisySymbol *		symbol;
 
-    /*
-     * Used for evaluating dimensions in expressions
-     */
-    Physics * physics;
+  /*
+   * Used for evaluating dimensions in expressions
+   */
+  Physics * physics;
 
-    /* 
-     * only if this node belongs to a ParseNumericExpression subtree
-     */
-    double value; 
-	
-    /*
+  /*
+   * only if this node belongs to a ParseNumericExpression subtree
+   */
+  double value; 
+
+  /*
+   * When doing an API check of the invariant tree given a parameter tree,
+   * the method looks up all instances of 
+   */
+
+  /*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
 	 */
 	NoisyIrNodeColor	nodeColor;

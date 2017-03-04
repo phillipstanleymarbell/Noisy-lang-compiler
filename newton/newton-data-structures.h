@@ -1,5 +1,5 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2016. Jonathan Lim.
 
 	All rights reserved.
 
@@ -34,8 +34,22 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-bool noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
-bool noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
 
-bool irInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken, NoisyToken* token, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
-bool irInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken, NoisyToken* token, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
+typedef struct NewtonAPIReport NewtonAPIReport;
+typedef struct ConstraintReport ConstraintReport;
+
+struct ConstraintReport
+{
+  bool satisfiesDimensionConstraint;
+  char dimensionErrorMessage[1024];
+  bool satisfiesValueConstraint;
+  char valueErrorMessage[1024];
+
+  ConstraintReport* next;
+};
+
+struct NewtonAPIReport
+{
+  ConstraintReport* firstConstraintReport;
+};
+

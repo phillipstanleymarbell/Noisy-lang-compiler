@@ -1,5 +1,6 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2017. Phillip Stanley-Marbell. Jonathan Lim
+
 
 	All rights reserved.
 
@@ -36,6 +37,7 @@
 */
 #include <stdio.h>
 #include <stdbool.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <setjmp.h>
 #include <sys/time.h>
@@ -51,9 +53,8 @@
 #include "noisy-parser.h"
 #include "noisy-lexer.h"
 #include "common-irPass-helpers.h"
-#include "noisy-types.h"
+#include "newton-types.h"
 
-extern char *	gNoisyAstNodeStrings[];
 
 
 static bool	isType(NoisyState *  N, NoisyIrNode *  node);
@@ -63,7 +64,7 @@ static char *	symbol2id(NoisyState *  N, NoisySymbol *  symbol);
 
 
 int
-noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrNode *  irNode)
+irPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrNode *  irNode, char* astNodeStrings[])
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotAstDotFmt);
 
@@ -96,12 +97,12 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrN
 	nilFormatString		= "style=filled,color=\"#003333\",fontcolor=white,fontname=\"LucidaSans-Typewriter\",fontsize=8,width=0.3,height=0.16,fixedsize=true,label=\"nil\", shape=record";
 	nodePropertiesString	= "";
 	nodeBorderString	= "M";
-	typeString		= &gNoisyAstNodeStrings[irNode->type][strlen("kNoisyIrNodeType_")];
+	typeString		= astNodeStrings[irNode->type];
 
 	/*
 	 *	For identifiers, different graph node properties
 	 */
-	if (irNode->type == kNoisyIrNodeType_Tidentifier)
+	if (irNode->type == kNewtonIrNodeType_Tidentifier)
 	{
 		nodePropertiesString = "style=filled,color=\"#ccff66\",";
 		nodeBorderString = "";
@@ -143,11 +144,11 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrN
 	else
 	{
 		n += snprintf(&buf[n], bufferLength,
-			"\tP" FLEX_PTRFMTH " [%sfontsize=8,height=0.8,fontname=\"LucidaSans-Typewriter\","
-			"label=\"{P" FLEX_PTRFMTH "\\ntype=%s\\n%s%s\\n%s %s%s%s| {<left> | <right> }}\",shape=%srecord];\n",
-			(FlexAddr)irNode, nodePropertiesString, (FlexAddr)irNode, typeString, 
-			((tokenString == NULL || strlen(tokenString) == 0) ? "" : " tokenString="), tokenString,
-			src, (isType(N, irNode) ? "#" : ""), (isType(N, irNode) ? noisyTypeMakeTypeSignature(N, irNode) : ""), (isType(N, irNode) ? "#" : ""), nodeBorderString);
+                  "\tP" FLEX_PTRFMTH " [%sfontsize=8,height=0.8,fontname=\"LucidaSans-Typewriter\","
+                  "label=\"{P" FLEX_PTRFMTH "\\ntype=%s\\n%s%s\\n%s %s%s%s| {<left> | <right> }}\",shape=%srecord];\n",
+                  (FlexAddr)irNode, nodePropertiesString, (FlexAddr)irNode, typeString,
+                  ((tokenString == NULL || ((size_t) strlen(tokenString)) == 0) ? "" : " tokenString="), tokenString,
+                  src, (isType(N, irNode) ? "#" : ""), (isType(N, irNode) ? newtonTypeMakeTypeSignature(N, irNode) : ""), (isType(N, irNode) ? "#" : ""), nodeBorderString);
 	}
 
 	bufferLength -= n;
@@ -218,7 +219,7 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrN
 
 
 int
-noisyIrPassDotSymbolTableDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyScope *  scope)
+irPassDotSymbolTableDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyScope *  scope)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotSymbotTableDotFmt);
 
@@ -313,7 +314,7 @@ noisyIrPassDotSymbolTableDotFmt(NoisyState *  N, char *  buf, int bufferLength, 
 
 
 int
-noisyIrPassDotAstPrintWalk(NoisyState *  N, NoisyIrNode *  irNode, char *  buf, int bufferLength)
+irPassDotAstPrintWalk(NoisyState *  N, NoisyIrNode *  irNode, char *  buf, int bufferLength, char* astNodeStrings[])
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassAstDotPrintWalk);
 
@@ -338,15 +339,16 @@ noisyIrPassDotAstPrintWalk(NoisyState *  N, NoisyIrNode *  irNode, char *  buf, 
 	 *	For DOT, we walk tree in postorder, though it doesn't matter
 	 *	either way.
 	 */
-	n0 = noisyIrPassDotAstPrintWalk(N, L(irNode), &buf[0], bufferLength);
-	n1 = noisyIrPassDotAstPrintWalk(N, R(irNode), &buf[n0], bufferLength-n0);
+	n0 = irPassDotAstPrintWalk(N, L(irNode), &buf[n0], bufferLength, astNodeStrings);
+	n1 = irPassDotAstPrintWalk(N, R(irNode), &buf[n0], bufferLength-n0, astNodeStrings);
 
 	/*
 	 *	Only process nodes once.
 	 */
 	if (irNode->nodeColor & kNoisyIrNodeColorDotBackendColoring)
 	{
-		n2 = noisyIrPassDotAstDotFmt(N, &buf[n0+n1], bufferLength-(n0+n1), irNode);
+    assert(astNodeStrings[irNode->type] != NULL);
+		n2 = irPassDotAstDotFmt(N, &buf[n0+n1], bufferLength-(n0+n1), irNode, astNodeStrings);
 		irNode->nodeColor &= ~kNoisyIrNodeColorDotBackendColoring;
 	}
 
@@ -355,7 +357,7 @@ noisyIrPassDotAstPrintWalk(NoisyState *  N, NoisyIrNode *  irNode, char *  buf, 
 
 
 int
-noisyIrPassDotSymbolTablePrintWalk(NoisyState *  N, NoisyScope *  scope, char *  buf, int bufferLength)
+irPassDotSymbolTablePrintWalk(NoisyState *  N, NoisyScope *  scope, char *  buf, int bufferLength)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassSymbolTableDotPrintWalk);
 
@@ -369,7 +371,7 @@ noisyIrPassDotSymbolTablePrintWalk(NoisyState *  N, NoisyScope *  scope, char * 
 	NoisyScope *	tmp = scope->firstChild;
 	while (tmp != NULL)
 	{
-		n0 += noisyIrPassDotSymbolTablePrintWalk(N, tmp, &buf[n0], (bufferLength-n0));
+		n0 += irPassDotSymbolTablePrintWalk(N, tmp, &buf[n0], (bufferLength-n0));
 		tmp = tmp->next;
 	}
 
@@ -378,29 +380,24 @@ noisyIrPassDotSymbolTablePrintWalk(NoisyState *  N, NoisyScope *  scope, char * 
 	 */
 	if (scope->nodeColor & kNoisyIrNodeColorDotBackendColoring)
 	{
-		n1 = noisyIrPassDotSymbolTableDotFmt(N, &buf[n0], (bufferLength-n0), scope);
+		n1 = irPassDotSymbolTableDotFmt(N, &buf[n0], (bufferLength-n0), scope);
 		scope->nodeColor &= ~kNoisyIrNodeColorDotBackendColoring;
 	}
 
-	n2 += noisyIrPassDotSymbolTablePrintWalk(N, scope->next, &buf[n0+n1], (bufferLength-(n0+n1)));
+	n2 += irPassDotSymbolTablePrintWalk(N, scope->next, &buf[n0+n1], (bufferLength-(n0+n1)));
 
 	return (n0+n1+n2);
 }
 
 
 char *
-noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNode * noisyIrRoot)
+irPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNode * noisyIrRoot, char* astNodeStrings[])
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotBackend);
 
-	int			bufferLength, irAndSymbolTableSize = 0, n = 0;
+	int			bufferLength, irAndSymbolTableSize = 0;
 	char *			buf = NULL;
-	struct timeval		t;
 
-	/*
-	 *	Length is required to be 26 chars by ctime_r.
-	 */
-	char			dateString[26];
 
 
 
@@ -420,7 +417,11 @@ noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNod
 		noisyFatal(N, Emalloc);
 	}
 
-#ifdef NoisyOsMacOSX
+	/*
+	 *	Length is required to be 26 chars by ctime_r.
+	 */
+	char			dateString[26];
+	struct timeval		t;
 	gettimeofday(&t, NULL);
 	ctime_r(&t.tv_sec, dateString);
 
@@ -429,6 +430,7 @@ noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNod
 	 */
 	dateString[24] = '.';
 
+  int n = 0;
 	n += snprintf(&buf[n], bufferLength, "digraph Noisy\n{\n");
 //TODO: here and elsewhere, should be taking bufferLength = max(bufferLength - n, 0)
 //n = max(MAX_PRINT_BUF - strlen(buf), 0); like we do for universe_print in sal
@@ -449,7 +451,7 @@ noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNod
 //TODO: take the whole of this following string as one of the arguments, called, e.g., "dotplotlabel",
 //so we are not calling gettimeofday() from here, and don't need to have the VM_VERSION symbol here either.
 	n += snprintf(&buf[n], bufferLength, "\tlabel = \"\\nAuto-generated by Noisy compiler, version %s, on %s\";\n",
-			kNoisyVersion, dateString);
+			kNewtonVersion, dateString);
 	bufferLength -= n;
 	n += snprintf(&buf[n], bufferLength, "\tsplines = true;\n");
 	bufferLength -= n;
@@ -471,10 +473,10 @@ noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNod
 	noisyIrPassHelperColorIr(N, noisyIrRoot, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
 	noisyIrPassHelperColorSymbolTable(N, noisyIrTopScope, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
 
-	n += noisyIrPassDotAstPrintWalk(N, noisyIrRoot, &buf[n], bufferLength);
+	n += irPassDotAstPrintWalk(N, noisyIrRoot, &buf[n], bufferLength, astNodeStrings);
 	bufferLength -= n;
 
-	n += noisyIrPassDotSymbolTablePrintWalk(N, noisyIrTopScope, &buf[n], bufferLength);
+	n += irPassDotSymbolTablePrintWalk(N, noisyIrTopScope, &buf[n], bufferLength);
 	bufferLength -= n;
 
 	n += snprintf(&buf[n], bufferLength, "}\n");
@@ -489,7 +491,6 @@ noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNod
 	 */
 	noisyIrPassHelperColorIr(N, noisyIrRoot, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
 	noisyIrPassHelperColorSymbolTable(N, noisyIrTopScope, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
-#endif
 
 	return buf;
 }
@@ -504,39 +505,6 @@ noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNod
  */
 
 
-
-
-static bool
-isType(NoisyState *  N, NoisyIrNode *  node)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotIsType);
-
-	switch (node->type)
-	{
-		case kNoisyIrNodeType_PconstantDeclaration:
-		case kNoisyIrNodeType_PtypeDeclaration:
-		case kNoisyIrNodeType_PnamegenDeclaration:
-		case kNoisyIrNodeType_PfixedType:
-		case kNoisyIrNodeType_PanonAggregateType:
-		case kNoisyIrNodeType_Tbool:
-		case kNoisyIrNodeType_Tnybble:
-		case kNoisyIrNodeType_Tbyte:
-		case kNoisyIrNodeType_Tint:
-		case kNoisyIrNodeType_Tstring:
-		case kNoisyIrNodeType_Treal:
- 		case kNoisyIrNodeType_Ttype:
-		{
-			return true;
-		}
-		
-		default:
-		{
-			return false;
-		}
-	}
-
-	return false;
-}
 
 
 static char *
@@ -626,5 +594,88 @@ symbol2id(NoisyState *  N, NoisySymbol *  symbol)
 		symbol->sourceInfo->lineNumber, symbol->sourceInfo->columnNumber);
 
 	return buf;
-	
+
+}
+
+
+static bool
+isType(NoisyState *  N, NoisyIrNode *  node)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotIsType);
+
+	switch (node->type)
+    {
+		case    kNewtonIrNodeType_Tlt:
+		case    kNewtonIrNodeType_Tle:
+		case    kNewtonIrNodeType_Tgt:
+		case    kNewtonIrNodeType_Tge:
+		case    kNewtonIrNodeType_Tproportionality:
+		case    kNewtonIrNodeType_Tequivalent:
+		case    kNewtonIrNodeType_Tsemicolon:
+		case    kNewtonIrNodeType_Tcolon:
+		case    kNewtonIrNodeType_Tcomma:
+		case    kNewtonIrNodeType_Tdot:
+		case	kNewtonIrNodeType_Tdiv:
+		case	kNewtonIrNodeType_Tmul:
+		case	kNewtonIrNodeType_Tplus:
+		case	kNewtonIrNodeType_Tminus:
+		case    kNewtonIrNodeType_Texponent:
+		case	kNewtonIrNodeType_Tequals:
+		case    kNewtonIrNodeType_TintConst:
+		case    kNewtonIrNodeType_TrealConst:	
+		case	kNewtonIrNodeType_TstringConst:
+		case	kNewtonIrNodeType_Tcross:
+		case	kNewtonIrNodeType_Tintegral:
+		case	kNewtonIrNodeType_Tderivative:
+		case	kNewtonIrNodeType_TSpanish:
+		case	kNewtonIrNodeType_TEnglish:
+		case	kNewtonIrNodeType_Tinvariant:
+		case	kNewtonIrNodeType_Tconstant:
+		case	kNewtonIrNodeType_Tsignal:
+		case	kNewtonIrNodeType_Tderivation:
+		case	kNewtonIrNodeType_Tsymbol:
+		case	kNewtonIrNodeType_Tname:
+		case	kNewtonIrNodeType_Pinteger:
+		case	kNewtonIrNodeType_Tnumber:
+		case	kNewtonIrNodeType_TrightBrace:
+		case	kNewtonIrNodeType_TleftBrace:
+		case	kNewtonIrNodeType_TrightParen:
+		case	kNewtonIrNodeType_TleftParen:
+		case	kNewtonIrNodeType_Tidentifier:
+		case    kNewtonIrNodeType_PlanguageSetting:
+		case	kNewtonIrNodeType_PcompareOp:
+		case	kNewtonIrNodeType_PvectorOp:
+		case	kNewtonIrNodeType_PhighPrecedenceBinaryOp:
+		case	kNewtonIrNodeType_PmidPrecedenceBinaryOp:
+		case	kNewtonIrNodeType_PlowPrecedenceBinaryOp:
+		case	kNewtonIrNodeType_PunaryOp:
+		case	kNewtonIrNodeType_PtimeOp:
+		case	kNewtonIrNodeType_Pquantity:
+		case	kNewtonIrNodeType_PquantityFactor:
+		case	kNewtonIrNodeType_PquantityTerm:
+		case	kNewtonIrNodeType_PquantityExpression:
+		case	kNewtonIrNodeType_Pparameter:
+		case	kNewtonIrNodeType_PparameterTuple:
+		case	kNewtonIrNodeType_Pderivation:
+		case	kNewtonIrNodeType_Psymbol:
+		case	kNewtonIrNodeType_Pname:
+		case	kNewtonIrNodeType_Pconstraint:
+		case	kNewtonIrNodeType_PconstraintList:
+		case	kNewtonIrNodeType_PbaseSignal:
+		case	kNewtonIrNodeType_Pinvariant:
+		case	kNewtonIrNodeType_Pconstant:
+		case	kNewtonIrNodeType_Prule:
+		case	kNewtonIrNodeType_PruleList:
+		case	kNewtonIrNodeType_PnewtonFile:
+      {
+        return true;
+      }
+
+		default:
+      {
+        return false;
+      }
+    }
+
+	return false;
 }

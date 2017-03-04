@@ -55,6 +55,8 @@
 #include "newton-parser.h"
 #include "newton-lexer.h"
 #include "newton-symbolTable.h"
+#include "newton.h"
+
 
 //extern const char	gNoisyEol[];
 //extern const char	gNoisyWhitespace[];
@@ -65,7 +67,6 @@ static void		version(NoisyState *  N);
 
 
 // static void		usage(NoisyState *  N);
-static void		processNewtonFile(NoisyState *  N, char *  filename);
 // static void		version(NoisyState *  N);
 
 static void     recurseDimensions(NoisyState * N, NoisyScope * topScope);
@@ -75,11 +76,11 @@ static void
 recurseDimensions(NoisyState * N, NoisyScope * topScope)
 {
     Dimension * curDimension = topScope->firstDimension;
-    if (curDimension == NULL)
-		flexprint(N->Fe, N->Fm, N->Fpinfo, "topscope dimension doesn't exist\n");
+    // if (curDimension == NULL)
+		// flexprint(N->Fe, N->Fm, N->Fpinfo, "topscope dimension doesn't exist\n");
 
     while (curDimension != NULL) {
-		flexprint(N->Fe, N->Fm, N->Fpinfo, "dimension %s %s %x\n", curDimension->identifier, curDimension->abbreviation, curDimension);
+      //flexprint(N->Fe, N->Fm, N->Fpinfo, "dimension %s %s %x\n", curDimension->identifier, curDimension->abbreviation, curDimension);
         curDimension = curDimension->next;
     }
 }
@@ -88,33 +89,33 @@ static void
 recursePhysics(NoisyState * N, NoisyScope * topScope)
 {
     Physics * curPhysics = topScope->firstPhysics;
-    if (curPhysics == NULL)
-		flexprint(N->Fe, N->Fm, N->Fpinfo, "topscope physics doesn't exist\n");
+    //if (curPhysics == NULL)
+      // flexprint(N->Fe, N->Fm, N->Fpinfo, "topscope physics doesn't exist\n");
     
     while (curPhysics != NULL) 
     {
-		flexprint(N->Fe, N->Fm, N->Fpinfo, "physics %s\n", curPhysics->identifier);
-		flexprint(N->Fe, N->Fm, N->Fpinfo, "alias %s\n", curPhysics->dimensionAlias);
-		flexprint(N->Fe, N->Fm, N->Fpinfo, "alias abbreviation %s\n", curPhysics->dimensionAliasAbbreviation);
-		flexprint(N->Fe, N->Fm, N->Fpinfo, "isvector %d\n", curPhysics->isVector);
-        if (curPhysics->vectorCounterpart)
-		    flexprint(N->Fe, N->Fm, N->Fpinfo, "vectorCounterpart %s\n", curPhysics->vectorCounterpart->identifier);
-        if (curPhysics->scalarCounterpart)
-		    flexprint(N->Fe, N->Fm, N->Fpinfo, "scalarCounterpart %s\n", curPhysics->scalarCounterpart->identifier);
+      // flexprint(N->Fe, N->Fm, N->Fpinfo, "physics %s\n", curPhysics->identifier);
+      // flexprint(N->Fe, N->Fm, N->Fpinfo, "alias %s\n", curPhysics->dimensionAlias);
+      // flexprint(N->Fe, N->Fm, N->Fpinfo, "alias abbreviation %s\n", curPhysics->dimensionAliasAbbreviation);
+      // flexprint(N->Fe, N->Fm, N->Fpinfo, "isvector %d\n", curPhysics->isVector);
+      //if (curPhysics->vectorCounterpart)
+          // flexprint(N->Fe, N->Fm, N->Fpinfo, "vectorCounterpart %s\n", curPhysics->vectorCounterpart->identifier);
+      //if (curPhysics->scalarCounterpart)
+          // flexprint(N->Fe, N->Fm, N->Fpinfo, "scalarCounterpart %s\n", curPhysics->scalarCounterpart->identifier);
         
         Dimension * curDimension = curPhysics->numeratorDimensions;
         while (curDimension != NULL) {
-	    	flexprint(N->Fe, N->Fm, N->Fpinfo, "numerator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
+          // flexprint(N->Fe, N->Fm, N->Fpinfo, "numerator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
             curDimension = curDimension->next;
         }
         
         curDimension = curPhysics->denominatorDimensions;
         while (curDimension != NULL) {
-	    	flexprint(N->Fe, N->Fm, N->Fpinfo, "denominator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
+          // flexprint(N->Fe, N->Fm, N->Fpinfo, "denominator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
             curDimension = curDimension->next;
         }
 		
-        flexprint(N->Fe, N->Fm, N->Fpinfo, "==============================================================================================\n");
+        // flexprint(N->Fe, N->Fm, N->Fpinfo, "==============================================================================================\n");
         
         curPhysics = curPhysics->next;
     }
@@ -125,7 +126,7 @@ recursePhysics(NoisyState * N, NoisyScope * topScope)
         Physics * curIntegralPhysics = curVectorIntegralList->head;
         while (curIntegralPhysics != NULL)
         {
-	    	flexprint(N->Fe, N->Fm, N->Fpinfo, "vector integral element %s\n", curIntegralPhysics->identifier);
+          // flexprint(N->Fe, N->Fm, N->Fpinfo, "vector integral element %s\n", curIntegralPhysics->identifier);
             curIntegralPhysics = curIntegralPhysics->next;
         }
     
@@ -138,7 +139,7 @@ recursePhysics(NoisyState * N, NoisyScope * topScope)
         Physics * curIntegralPhysics = curScalarIntegralList->head;
         while (curIntegralPhysics != NULL)
         {
-	    	flexprint(N->Fe, N->Fm, N->Fpinfo, "scalar integral element %s\n", curIntegralPhysics->identifier);
+          //flexprint(N->Fe, N->Fm, N->Fpinfo, "scalar integral element %s\n", curIntegralPhysics->identifier);
             curIntegralPhysics = curIntegralPhysics->next;
         }
     
@@ -338,6 +339,8 @@ main(int argc, char *argv[])
 			if (!jumpParameter)
 			{
                 processNewtonFile(N, argv[optind++]);
+                recurseDimensions(N, N->newtonIrTopScope);
+                recursePhysics(N, N->newtonIrTopScope);
 			}
 			else
 			{
@@ -363,45 +366,6 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-/*
- * TODO: change this to be more flexible and take an arg from command line
- * https://github.com/phillipstanleymarbell/Noisy-lang-compiler/issues/28
- */
-static void		
-processNewtonFile(NoisyState *  N, char *  filename)
-{
-
-	/*
-	 *	Tokenize input, then parse it and build AST + symbol table.
-	 */
-	newtonLexInit(N, filename);
-
-	/*
-	 *	Create a top-level scope, then parse.
-	 */
-	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
-	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
-
-    recurseDimensions(N, N->newtonIrTopScope);
-    recursePhysics(N, N->newtonIrTopScope);
-
-	/*
-	 *	Dot backend.
-	 */
-	if (N->irBackends & kNoisyIrBackendDot)
-	{
-		// fprintf(stdout, "%s\n", noisyIrPassDotBackend(N, N->noisyIrTopScope, N->noisyIrRoot));
-	}
-    
-
-
-	// if (N->mode & kNoisyConfigModeCallTracing)
-	// {
-	// 	noisyConfigTimeStampDumpTimeline(N);
-	// }
-    
-    noisyConsolePrintBuffers(N);
-}
 
 
 static void

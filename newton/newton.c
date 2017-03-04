@@ -1,5 +1,5 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2017. Jonathan Lim
 
 	All rights reserved.
 
@@ -34,8 +34,61 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-bool noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
-bool noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
 
-bool irInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken, NoisyToken* token, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
-bool irInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken, NoisyToken* token, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <sys/time.h>
+#include <getopt.h>
+#include <setjmp.h>
+#include <stdint.h>
+#include "flextypes.h"
+#include "flexerror.h"
+#include "flex.h"
+#include "common-errors.h"
+#include "version.h"
+#include "common-timeStamps.h"
+#include "data-structures.h"
+
+#include "newton-parser.h"
+#include "newton-lexer.h"
+#include "newton-symbolTable.h"
+#include "newton.h"
+#include "newton-irPass-dotBackend.h"
+
+extern char* gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
+
+
+void		
+processNewtonFile(NoisyState *  N, char *  filename)
+{
+
+	/*
+	 *	Tokenize input, then parse it and build AST + symbol table.
+	 */
+	newtonLexInit(N, filename);
+
+	/*
+	 *	Create a top-level scope, then parse.
+	 */
+	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
+	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
+
+	/*
+	 *	Dot backend.
+	 */
+	if (N->irBackends & kNoisyIrBackendDot)
+    fprintf(stdout, "%s\n", irPassDotBackend(N, N->newtonIrTopScope, N->newtonIrRoot, gNewtonAstNodeStrings));
+
+
+
+	// if (N->mode & kNoisyConfigModeCallTracing)
+	// {
+	// 	noisyConfigTimeStampDumpTimeline(N);
+	// }
+
+    noisyConsolePrintBuffers(N);
+}
+

@@ -119,3 +119,39 @@ noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken, int follows[kN
 
 	return false;
 }
+
+bool irInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken, NoisyToken* token, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
+{
+	if (productionOrToken > kNoisyIrNodeTypeMax)
+	{
+		noisyFatal(N, Esanity);
+	}
+
+	for (int i = 0; i < kNoisyIrNodeTypeMax && firsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
+	{
+		if (firsts[productionOrToken][i] == token->type)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool irInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken, NoisyToken* token, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
+{
+	if (productionOrToken > kNoisyIrNodeTypeMax)
+	{
+		noisyFatal(N, Esanity);
+	}
+
+	for (int i = 0; i < kNoisyIrNodeTypeMax && follows[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
+	{
+		if (follows[productionOrToken][i] == token->type)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}

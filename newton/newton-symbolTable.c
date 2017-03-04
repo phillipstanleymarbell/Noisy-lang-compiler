@@ -197,6 +197,8 @@ deepCopyPhysicsNode(Physics* node)
 
     copy->isVector = node->isVector;
     copy->value = node->value;
+    copy->isConstant = node->isConstant;
+    copy->id = node->id;
 
     copy->numberOfNumerators = node->numberOfNumerators;
     copy->numeratorPrimeProduct = node->numeratorPrimeProduct;
@@ -276,7 +278,7 @@ void
 newtonAddInvariant(NoisyState * N, Invariant * invariant)
 {
     Invariant * tail;
-    if ((tail = getTailInvariant(invariant)) == NULL)
+    if ((tail = getTailInvariant(N->invariantList)) == NULL)
         N->invariantList = invariant;
     else
         tail->next = invariant;
@@ -416,28 +418,28 @@ newtonPhysicsTableAddPhysicsForToken(NoisyState *  N, NoisyScope *  scope, Noisy
 
 	newPhysics = (Physics *)calloc(1, sizeof(Physics));
 	if (newPhysics == NULL)
-	{
-		noisyFatal(N, Emalloc);
-	}
+    {
+      noisyFatal(N, Emalloc);
+    }
 
 	newPhysics->identifier	= token->identifier;
 	newPhysics->sourceInfo	= token->sourceInfo;
 	newPhysics->scope	= scope;
-    
-    newPhysics->numeratorPrimeProduct = 1;
-    newPhysics->denominatorPrimeProduct = 1;
+
+  newPhysics->numeratorPrimeProduct = 1;
+  newPhysics->denominatorPrimeProduct = 1;
 
 	newPhysics->definition	= newtonPhysicsTablePhysicsForIdentifier(N, scope, token->identifier);
 
-    if (scope->firstPhysics == NULL) {
-        scope->firstPhysics = newPhysics;        
-    } else {
-        Physics * curPhysics = scope->firstPhysics;
-        while (curPhysics->next != NULL) {
-            curPhysics = curPhysics->next;
-        }
-        curPhysics->next = newPhysics;
+  if (scope->firstPhysics == NULL) {
+    scope->firstPhysics = newPhysics;
+  } else {
+    Physics * curPhysics = scope->firstPhysics;
+    while (curPhysics->next != NULL) {
+      curPhysics = curPhysics->next;
     }
+    curPhysics->next = newPhysics;
+  }
 
 	return newPhysics;
 }

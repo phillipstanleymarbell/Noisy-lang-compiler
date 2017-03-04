@@ -87,7 +87,7 @@ newtonLexInit(NoisyState *  N, char *  fileName)
 		while (N->columnNumber < N->lineLength)
 		{
 
-	        flexprint(N->Fe, N->Fm, N->Fperr, "%c", cur(N));
+      // flexprint(N->Fe, N->Fm, N->Fperr, "%c", cur(N));
 			if (isOperatorOrSeparator(N, cur(N)))
 			{
 				switch (cur(N))
@@ -278,16 +278,16 @@ newtonLexInit(NoisyState *  N, char *  fileName)
 
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "Done lexing...\n");
+		// flexprint(N->Fe, N->Fm, N->Fperr, "Done lexing...\n");
 		
-		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
+		// flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
 		NoisyToken *	p = N->tokenList;
 		while (p != NULL)
 		{
 			noisyLexDebugPrintToken(N, p, gNewtonTokenDescriptions);
 			p = p->next;
 		}
-		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
+		// flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
 	}
 
 
@@ -528,12 +528,13 @@ makeNumericConst(NoisyState *  N)
 										0.0	/* realConst	*/,
 										NULL	/* stringConst	*/,
 										NULL	/* sourceInfo	*/);
-			
+
 
 			/*
 			 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
 			 */
 			done(N, newToken);
+      noisyFatal(N, "something gone wrong with newton lexer decimals\n");
 
 			return;
 		}

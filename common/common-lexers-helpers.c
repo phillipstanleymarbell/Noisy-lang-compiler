@@ -493,7 +493,7 @@ noisyLexAllocateToken(	NoisyState *  N, NoisyIrNodeType type, char *  identifier
 	{
 		noisyFatal(N, Emalloc);
 	}
-	
+
 	newToken->type		= type;
 	newToken->identifier	= (identifier == NULL ? NULL : strdup(identifier));
 	newToken->integerConst	= integerConst;

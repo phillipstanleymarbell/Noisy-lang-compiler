@@ -7,6 +7,8 @@ OSTYPE=darwin
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 include		config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 
+PLATFORM_CFLAGS	= -Wno-gnu-designator
+OBJECTEXTENSION = o
 MAKEFLAGS	+= -j
 
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
@@ -30,6 +32,7 @@ SOURCES		=\
 		primenumbers.c\
 		common-lexers-helpers.c\
 		common-firstAndFollow.c\
+		common-irPass-helpers.c\
 		common-errors.c\
 		common-timeStamps.c\
 		common-irHelpers.c\
@@ -48,6 +51,7 @@ OBJS		=\
 		common-errors$(COMMON_L10N).$(OBJECTEXTENSION)\
 		common-timeStamps.$(OBJECTEXTENSION)\
 		common-irHelpers.$(OBJECTEXTENSION)\
+		common-irPass-helpers.$(OBJECTEXTENSION)\
 
 
 LIBCOMMONOBJS =\
@@ -58,6 +62,7 @@ LIBCOMMONOBJS =\
 		common-errors$(COMMON_L10N).$(OBJECTEXTENSION)\
 		common-timeStamps.$(OBJECTEXTENSION)\
 		common-irHelpers.$(OBJECTEXTENSION)\
+		common-irPass-helpers.$(OBJECTEXTENSION)\
 
 
 HEADERS		=\
@@ -68,6 +73,7 @@ HEADERS		=\
 		common-timeStamps.h\
 		data-structures.h\
 		common-irHelpers.h\
+		common-irPass-helpers.h\
 
 
 
