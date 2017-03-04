@@ -29,8 +29,7 @@
 	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
 	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
 	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
@@ -516,23 +515,6 @@ typedef struct Dimension Dimension;
 typedef struct Physics Physics;
 typedef struct IntegralList IntegralList;
 typedef struct Invariant Invariant;
-typedef struct NewtonAPIReport NewtonAPIReport;
-typedef struct ConstraintReport ConstraintReport;
-
-struct ConstraintReport
-{
-  bool satisfiesDimensionConstraint;
-  char dimensionErrorMessage[1024];
-  bool satisfiesValueConstraint;
-  char valueErrorMessage[1024];
-
-  ConstraintReport* next;
-};
-
-struct NewtonAPIReport
-{
-  ConstraintReport* firstConstraintReport;
-};
 
 struct Dimension
 {

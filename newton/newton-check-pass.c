@@ -52,6 +52,7 @@
 #include "version.h"
 #include "common-timeStamps.h"
 #include "data-structures.h"
+#include "newton-data-structures.h"
 
 #include "newton-parser.h"
 #include "newton-lexer.h"
