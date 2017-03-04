@@ -33,10 +33,10 @@ numberOfConstraintsPassed(NewtonAPIReport* newtonReport)
 
   while (current != NULL)
     {
-      // printf("satisfiesValueConstraint %d\n", current->satisfiesValueConstraint);
-      // printf("satisfiesDimensionConstraint %d\n\n", current->satisfiesDimensionConstraint);
-      // printf("valueErrorMessage %s\n", current->valueErrorMessage);
-      // printf("dimensionErrorMessage %s\n\n", current->dimensionErrorMessage);
+      printf("satisfiesValueConstraint %d\n", current->satisfiesValueConstraint);
+      printf("satisfiesDimensionConstraint %d\n\n", current->satisfiesDimensionConstraint);
+      printf("valueErrorMessage %s\n", current->valueErrorMessage);
+      printf("dimensionErrorMessage %s\n\n", current->dimensionErrorMessage);
       if (current->satisfiesValueConstraint && current->satisfiesDimensionConstraint)
         count++;
       current = current->next;

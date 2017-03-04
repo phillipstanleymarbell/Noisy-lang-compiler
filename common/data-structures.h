@@ -526,8 +526,6 @@ struct ConstraintReport
   bool satisfiesValueConstraint;
   char valueErrorMessage[1024];
 
-  NoisySourceInfo * failedLocation;
-
   ConstraintReport* next;
 };
 
@@ -540,11 +538,11 @@ struct Dimension
 {
     char * identifier;
     char * abbreviation;
-	
+
     NoisyScope *		scope;
-	
+
     NoisySourceInfo *	sourceInfo;
-    
+
     int primeNumber;
 
     Dimension * next;
@@ -553,7 +551,7 @@ struct Dimension
 struct Invariant
 {
     char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
-    
+
     NoisyScope *		scope;
     NoisySourceInfo *	sourceInfo;
 
@@ -565,20 +563,20 @@ struct Invariant
     Invariant * next;
 };
 
-struct Physics 
+struct Physics
 {
     char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
     unsigned long long int id;
-    
+
     NoisyScope *		scope;
     NoisySourceInfo *	sourceInfo;
-    
+
     bool isVector;
     Physics * vectorCounterpart; // non-NULL if a scalar AND counterpart defined in vectorScalarPairScope
     Physics * scalarCounterpart; // non-NULl if a vector AND counterpart defined in vectorScalarPairScope
 
     double value; /* for constants like Pi or gravitational acceleration */
-  bool isConstant;
+    bool isConstant;
 
     /*
      * numeratorPrimeProduct and denominatorPrimeProduct == 1 means
@@ -587,7 +585,7 @@ struct Physics
     Dimension * numeratorDimensions;
     int numberOfNumerators;
     int numeratorPrimeProduct;
-    
+
     Dimension * denominatorDimensions;
     int numberOfDenominators;
     int denominatorPrimeProduct;
@@ -621,6 +619,7 @@ struct NoisyIrNode
 	NoisyIrNode *		irRightChild;
 
 	NoisySymbol *		symbol;
+
 
   /*
    * Used for evaluating dimensions in expressions
