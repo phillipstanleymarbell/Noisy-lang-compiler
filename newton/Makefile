@@ -95,6 +95,7 @@ LIBNEWTONOBJS =\
 
 HEADERS		=\
 		$(LIBFLEXPATH)/flex.h           \
+		newton-data-structures.h        \
 		version.h                       \
 		newton-lexer.h                  \
 		newton-parser.h                 \

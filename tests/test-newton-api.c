@@ -10,6 +10,7 @@
 
 #include "common-timeStamps.h"
 #include "data-structures.h"
+#include "newton-data-structures.h"
 #include "common-irHelpers.h"
 #include "common-lexers-helpers.h"
 #include "newton-parser.h"
