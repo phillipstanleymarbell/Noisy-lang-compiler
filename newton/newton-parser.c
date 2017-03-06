@@ -603,7 +603,7 @@ newtonGetInvariantIdByParameters(NoisyState * N, NoisyIrNode * parameterTreeRoot
     {
         assert(parameterTreeRoot->irLeftChild != NULL && parameterTreeRoot->irRightChild != NULL);
         assert(parameterTreeRoot->irRightChild->physics->id > 1);
-        
+
         return invariantId * parameterTreeRoot->irRightChild->physics->id;
     }
 
@@ -637,13 +637,13 @@ newtonParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType
 
     n->token = t;
     n->tokenString = t->identifier;
-    
+
     // TODO rewrite this logic in a cleaner way.... make a new method or something
     Physics * physicsSearchResult;
     if ((physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, t->identifier)) == NULL)
     {
         physicsSearchResult = newtonPhysicsTablePhysicsForDimensionAlias(N, scope, t->identifier);
-    } 
+    }
 
     if (physicsSearchResult == NULL)
     {
@@ -653,15 +653,15 @@ newtonParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType
             physicsSearchResult = newtonPhysicsTablePhysicsForDimensionAlias(N, scope, physicsTypeString);
         }
     }
-    
+
     if (physicsSearchResult == NULL)
     {
         errorUseBeforeDefinition(N, t->identifier);
     }
-    else 
+    else
     {
         // n->physics = physicsSearchResult;
-        
+
         /* defensive copying to keep the Physics list in NoisyState immutable */
         n->physics = deepCopyPhysicsNode(physicsSearchResult);
     }

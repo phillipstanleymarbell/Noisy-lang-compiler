@@ -15,3 +15,4 @@ iterateConstraints(
 
 void		newtonApiAddLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);
 void		newtonApiAddLeafWithChainingSeqNoLexer(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);
+void    newtonApiNumberParametersZeroToN(NoisyState * N, NoisyIrNode * parameterTreeRoot);

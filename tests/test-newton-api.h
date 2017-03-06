@@ -4,6 +4,7 @@ char * test_newtonApiGetInvariantByParameters_Valid();
 char * test_newtonApiGetPhysicsTypeByName_Valid();
 char * test_newtonApiPhysicsTypeUsageExample();
 char * test_newtonCheckSingleInvariant();
+char * test_newtonApiNumberParametersZeroToN();
 
 /* just a small helper method */
 NoisyIrNode *

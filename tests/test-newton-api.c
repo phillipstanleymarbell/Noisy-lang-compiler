@@ -158,6 +158,21 @@ char * test_newtonApiPhysicsTypeUsageExample()
     return 0;
 }
 
+char * test_newtonApiNumberParametersZeroToN()
+{
+  NoisyState * newton = newtonApiInit("../Examples/invariants.nt");
+  NoisyIrNode* parameterTree = makeTestParameterTuple(newton);
+  mu_assert(
+            "test_newtonApiNumberParametersZeroToN: the first left child should have number of 0",
+            parameterTree->irLeftChild->value == 0
+            );
+  mu_assert(
+            "test_newtonApiNumberParametersZeroToN: the first right child should have number of 1",
+            parameterTree->irRightChild->irLeftChild->value == 1
+            );
+  return 0;
+}
+
 
 NoisyIrNode *
 makeTestParameterTuple(NoisyState * newton)
@@ -209,6 +224,7 @@ makeTestParameterTuple(NoisyState * newton)
   newtonApiAddLeaf(newton, root, firstParameter);
   newtonApiAddLeafWithChainingSeqNoLexer(newton, root, secondParameter);
 
+  newtonApiNumberParametersZeroToN(newton, root);
   return root;
 }
 

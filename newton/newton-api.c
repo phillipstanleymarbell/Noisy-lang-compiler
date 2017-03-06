@@ -153,3 +153,20 @@ newtonApiAddLeafWithChainingSeqNoLexer(NoisyState *  N, NoisyIrNode *  parent, N
                                       NULL /* right child */,
                                       NULL/* source info */);
 }
+
+
+void
+newtonApiNumberParametersZeroToN(NoisyState * N, NoisyIrNode * parameterTreeRoot)
+{
+  NoisyIrNode * parameter;
+  int parameterNumber = 0;
+
+  while((parameter = findNthIrNodeOfType(N, parameterTreeRoot, kNewtonIrNodeType_Pparameter, parameterNumber)) != NULL)
+    {
+      parameter->value = parameterNumber;
+      parameterNumber++;
+    }
+}
+
+
+
