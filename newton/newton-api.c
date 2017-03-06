@@ -163,7 +163,7 @@ newtonApiNumberParametersZeroToN(NoisyState * N, NoisyIrNode * parameterTreeRoot
 
   while((parameter = findNthIrNodeOfType(N, parameterTreeRoot, kNewtonIrNodeType_Pparameter, parameterNumber)) != NULL)
     {
-      parameter->value = parameterNumber;
+      parameter->parameterNumber = parameterNumber;
       parameterNumber++;
     }
 }

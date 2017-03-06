@@ -162,31 +162,31 @@ char * test_testNthIrNodeOfTypes()
 static NoisyIrNode *
 setupNthIrNodeType(NoisyState* noisy)
 {
-  NoisyIrNode * numberNode = makeNoisyIrNodeSetToken(
+  NoisyIrNode * numberNode = makeNoisyIrNodeSetValue(
 													 noisy,
 													 kNewtonIrNodeType_Tnumber,
 													 NULL,
 													 5.0
 													 );
-  NoisyIrNode * distanceNode = makeNoisyIrNodeSetToken(
+  NoisyIrNode * distanceNode = makeNoisyIrNodeSetValue(
 													   noisy,
 													   kNewtonIrNodeType_Tidentifier,
 													   "distance",
 													   0.0
 													   );
-  NoisyIrNode * plus = makeNoisyIrNodeSetToken(
+  NoisyIrNode * plus = makeNoisyIrNodeSetValue(
 											   noisy,
 											   kNewtonIrNodeType_Tplus,
 											   NULL,
 											   0.0
 											   );
-  NoisyIrNode * minus = makeNoisyIrNodeSetToken(
+  NoisyIrNode * minus = makeNoisyIrNodeSetValue(
 												noisy,
 												kNewtonIrNodeType_Tminus,
 												NULL,
 												0.0
 												);
-  NoisyIrNode * exponent = makeNoisyIrNodeSetToken(
+  NoisyIrNode * exponent = makeNoisyIrNodeSetValue(
 												   noisy,
 												   kNewtonIrNodeType_Texponent,
 												   NULL,

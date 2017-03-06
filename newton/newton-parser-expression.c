@@ -175,6 +175,8 @@ newtonParseQuantityExpression(NoisyState * N, NoisyScope * currentScope)
     expression->physics->numeratorPrimeProduct = 1;
     expression->physics->denominatorPrimeProduct = 1;
 
+    N->currentParameterNumber = 0;
+
     NoisyIrNode * leftTerm;
     NoisyIrNode * rightTerm;
 
@@ -329,11 +331,18 @@ newtonParseQuantityFactor(NoisyState * N, NoisyScope * currentScope)
         factor = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
         factor->physics = deepCopyPhysicsNode(factor->physics);
         factor->value = factor->physics->value;
+
+        assert(factor->tokenString != NULL);
+
+        /* Is a matchable parameter corresponding the invariant parameter */
+        if (!newtonIsDimensionless(factor->physics) && !factor->physics->isConstant && newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) == NULL)
+        {
+          factor->parameterNumber = N->currentParameterNumber++;
+        }
     }
     else if (peekCheck(N, 1, kNewtonIrNodeType_Tnumber))
     {
         factor = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
-        assert(factor->value != 0); /* TODO: remove later */
     }
     // TODO implement these later
     // else if (noisyInFirst(N, kNewtonIrNodeType_PtimeOp, gNewtonFirsts))
@@ -460,9 +469,9 @@ newtonParseVectorOp(NoisyState *  N, NoisyScope * currentScope)
     intermediate->physics = (Physics *) calloc(1, sizeof(Physics));
     intermediate->physics->numeratorPrimeProduct = 1;
     intermediate->physics->denominatorPrimeProduct = 1;
-    
+
     bool addAngleToDenominator = false;
-    
+
     if (peekCheck(N, 1, kNewtonIrNodeType_Tdot))
     {
         addLeaf(N, intermediate, newtonParseTerminal(N, kNewtonIrNodeType_Tdot, currentScope));

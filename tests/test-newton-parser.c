@@ -18,6 +18,7 @@
 #include "newton-api.h"
 
 #include "minunit.h"
+#include "test-newton-api.h"
 #include "test-newton-parser.h"
 
 extern unsigned long int bigNumberOffset;
@@ -56,13 +57,13 @@ char * test_newtonGetPhysicsId()
 
 char * test_newtonGetInvariantIdByParameters()
 {
-    NoisyState* N = newtonApiInit("../Examples/invariants.nt");
+    NoisyState* newton = newtonApiInit("../Examples/invariants.nt");
 
     mu_assert(
         "test_newtonGetInvariantIdByParameters: invariant id should be distance * time",
         newtonGetInvariantIdByParameters(
-            N, 
-            N->invariantList->parameterList,
+            newton,
+            makeTestParameterTuple(newton),
             1
         ) == 3 * 2
     );
