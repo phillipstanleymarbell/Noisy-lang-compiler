@@ -11,7 +11,6 @@ makeNoisyIrNodeSetToken(
                         NoisyState * N,
                         NoisyIrNodeType nodeType,
                         char * identifier,
-                        char * stringConst,
                         double realConst
                         );
 

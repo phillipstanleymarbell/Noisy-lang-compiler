@@ -1,5 +1,5 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2017. Phillip Stanley-Marbell. Jonathan Lim
 
 	All rights reserved.
 
@@ -201,11 +201,11 @@ addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
 	{
 		noisyFatal(N, Esanity);
 	}
-	
+
 	if (node->irLeftChild == NULL)
 	{
 		node->irLeftChild = newNode;
-		
+
 		return;
 	}
 
@@ -232,25 +232,6 @@ addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  ne
 						noisyLexPeek(N, 1)->sourceInfo /* source info */);
 }
 
-void
-addLeafWithChainingSeqNoLexer(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
-{
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
-
-	NoisyIrNode *	node = depthFirstWalk(N, parent);
-
-	if (node->irLeftChild == NULL)
-    {
-      node->irLeftChild = newNode;
-
-      return;
-    }
-
-	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
-                                      newNode /* left child */,
-                                      NULL /* right child */,
-                                      NULL/* source info */);
-}
 
 bool
 peekCheck(NoisyState *  N, int lookAhead, NoisyIrNodeType expectedType)

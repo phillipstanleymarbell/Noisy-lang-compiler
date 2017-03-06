@@ -52,6 +52,7 @@
 #include "common-timeStamps.h"
 #include "data-structures.h"
 #include "newton-data-structures.h"
+#include "common-irHelpers.h"
 
 #include "newton-parser.h"
 #include "newton-lexer.h"
@@ -111,3 +112,44 @@ newtonApiSatisfiesConstraints(NoisyState* N, NoisyIrNode* parameterTreeRoot)
 }
 
 
+void
+newtonApiAddLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
+
+	NoisyIrNode *	node = depthFirstWalk(N, parent);
+
+	if (node == NULL)
+    {
+      noisyFatal(N, Esanity);
+    }
+
+	if (node->irLeftChild == NULL)
+    {
+      node->irLeftChild = newNode;
+
+      return;
+    }
+
+	node->irRightChild = newNode;
+}
+
+void
+newtonApiAddLeafWithChainingSeqNoLexer(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
+{
+	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
+
+	NoisyIrNode *	node = depthFirstWalk(N, parent);
+
+	if (node->irLeftChild == NULL)
+    {
+      node->irLeftChild = newNode;
+
+      return;
+    }
+
+	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
+                                      newNode /* left child */,
+                                      NULL /* right child */,
+                                      NULL/* source info */);
+}

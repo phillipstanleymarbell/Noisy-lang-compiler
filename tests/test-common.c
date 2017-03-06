@@ -166,20 +166,17 @@ setupNthIrNodeType(NoisyState* noisy)
 													 noisy,
 													 kNewtonIrNodeType_Tnumber,
 													 NULL,
-													 NULL,
 													 5.0
 													 );
   NoisyIrNode * distanceNode = makeNoisyIrNodeSetToken(
 													   noisy,
 													   kNewtonIrNodeType_Tidentifier,
 													   "distance",
-													   NULL,
 													   0.0
 													   );
   NoisyIrNode * plus = makeNoisyIrNodeSetToken(
 											   noisy,
 											   kNewtonIrNodeType_Tplus,
-											   NULL,
 											   NULL,
 											   0.0
 											   );
@@ -187,22 +184,20 @@ setupNthIrNodeType(NoisyState* noisy)
 												noisy,
 												kNewtonIrNodeType_Tminus,
 												NULL,
-												NULL,
 												0.0
 												);
   NoisyIrNode * exponent = makeNoisyIrNodeSetToken(
 												   noisy,
 												   kNewtonIrNodeType_Texponent,
 												   NULL,
-												   NULL,
 												   0.0
 												   );
 
 
-  addLeaf(noisy, numberNode, distanceNode);
-  addLeafWithChainingSeqNoLexer(noisy, numberNode, plus);
-  addLeafWithChainingSeqNoLexer(noisy, numberNode, minus);
-  addLeafWithChainingSeqNoLexer(noisy, numberNode, exponent);
+  newtonApiAddLeaf(noisy, numberNode, distanceNode);
+  newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, plus);
+  newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, minus);
+  newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, exponent);
 
   return numberNode;
 }

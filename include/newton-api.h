@@ -12,3 +12,6 @@ iterateConstraints(
     NewtonAPIReport* report
 );
 
+
+void		newtonApiAddLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);
+void		newtonApiAddLeafWithChainingSeqNoLexer(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);

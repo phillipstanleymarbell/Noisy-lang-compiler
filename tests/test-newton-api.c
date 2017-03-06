@@ -137,7 +137,6 @@ char * test_newtonApiPhysicsTypeUsageExample()
         noisy,
         kNoisyIrNodeType_Tidentifier,
         "distance",
-        NULL,
         0.0
     );
 
@@ -145,7 +144,6 @@ char * test_newtonApiPhysicsTypeUsageExample()
         noisy,
         kNoisyIrNodeType_Tidentifier,
         "time",
-        NULL,
         0.0
     );
 
@@ -176,19 +174,17 @@ makeTestParameterTuple(NoisyState * newton)
 													   newton,
 													   kNoisyIrNodeType_Tidentifier,
 													   "L",
-													   NULL,
 													   5
 													   );
   NoisyIrNode * distanceNode = makeNoisyIrNodeSetToken(
 													   newton,
 													   kNoisyIrNodeType_Tidentifier,
 													   "distance",
-													   NULL,
 													   0.0
 													   );
   distanceNode->physics = newtonApiGetPhysicsTypeByName(newton, distanceNode->token->identifier);
-  addLeaf(newton, firstParameter, distanceIdentifier);
-  addLeaf(newton, firstParameter, distanceNode);
+  newtonApiAddLeaf(newton, firstParameter, distanceIdentifier);
+  newtonApiAddLeaf(newton, firstParameter, distanceNode);
 
   NoisyIrNode * secondParameter = genNoisyIrNode(newton,	kNewtonIrNodeType_Pparameter,
 												 NULL /* left child */,
@@ -198,22 +194,20 @@ makeTestParameterTuple(NoisyState * newton)
 															 newton,
 															 kNoisyIrNodeType_Tidentifier,
 															 "period",
-															 NULL,
 															 6.6
 															 );
   NoisyIrNode * timeNode = makeNoisyIrNodeSetToken(
 												   newton,
 												   kNoisyIrNodeType_Tidentifier,
 												   "time",
-												   NULL,
 												   0.0
 												   );
   timeNode->physics = newtonApiGetPhysicsTypeByName(newton, timeNode->token->identifier);
-  addLeaf(newton, secondParameter, timeIdentifier);
-  addLeaf(newton, secondParameter, timeNode);
+  newtonApiAddLeaf(newton, secondParameter, timeIdentifier);
+  newtonApiAddLeaf(newton, secondParameter, timeNode);
 
-  addLeaf(newton, root, firstParameter);
-  addLeafWithChainingSeqNoLexer(newton, root, secondParameter);
+  newtonApiAddLeaf(newton, root, firstParameter);
+  newtonApiAddLeafWithChainingSeqNoLexer(newton, root, secondParameter);
 
   return root;
 }
@@ -223,7 +217,6 @@ makeNoisyIrNodeSetToken(
     NoisyState * N,
     NoisyIrNodeType nodeType,
     char * identifier,
-    char * stringConst,
     double realConst
 ) {
 	NoisyIrNode * node = genNoisyIrNode(
@@ -240,7 +233,7 @@ makeNoisyIrNodeSetToken(
                                       identifier /* identifier */,
                                       0	/* integerConst	*/,
                                       realConst	/* realConst	*/,
-                                      stringConst /* stringConst	*/,
+                                      NULL  /* stringConst	*/,
                                       NULL	/* sourceInfo	*/
                                       );
 
@@ -248,4 +241,3 @@ makeNoisyIrNodeSetToken(
 
     return node;
 }
-
