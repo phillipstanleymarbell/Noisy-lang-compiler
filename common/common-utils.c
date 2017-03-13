@@ -92,7 +92,7 @@ static char	kNoisyRenderExtensionSVG[]	= ".svg";
 
 
 void
-noisyTimestampsInit(NoisyState *  N)
+noisyTimestampsInit(State *  N)
 {
 	N->timestamps = (NoisyTimeStamp *) calloc(kNoisyTimestampTimelineLength, sizeof(NoisyTimeStamp));
 	if (N->timestamps == NULL)
@@ -124,12 +124,12 @@ noisyTimestampsInit(NoisyState *  N)
 	return;
 }
 
-NoisyState *
+State *
 noisyInit(NoisyMode mode)
 {
-	NoisyState *	N;
+	State *	N;
 
-	N = (NoisyState *)calloc(1, sizeof(NoisyState));
+	N = (State *)calloc(1, sizeof(State));
 	if (N == NULL)
 	{
 		noisyFatal(NULL, Emalloc);
@@ -225,7 +225,7 @@ noisyInit(NoisyMode mode)
 
 
 void
-noisyDealloc(NoisyState *  N)
+noisyDealloc(State *  N)
 {
 	free(N->Fe);
 	free(N->Fm);
@@ -258,7 +258,7 @@ noisyDealloc(NoisyState *  N)
 
 
 void
-noisyRunPasses(NoisyState *  N)
+noisyRunPasses(State *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyRunPasses);
 
@@ -274,7 +274,7 @@ noisyRunPasses(NoisyState *  N)
 
 
 uint64_t
-noisyCheckRss(NoisyState *  N)
+noisyCheckRss(State *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyCheckRss);
 
@@ -313,7 +313,7 @@ noisyCheckRss(NoisyState *  N)
 
 
 void
-noisyConsolePrintBuffers(NoisyState *  N)
+noisyConsolePrintBuffers(State *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyConsolePrintBuffers);
 
@@ -344,7 +344,7 @@ noisyConsolePrintBuffers(NoisyState *  N)
 
 
 void
-noisyPrintToFile(NoisyState *  N, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action)
+noisyPrintToFile(State *  N, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyPrintToFile);
 
@@ -445,7 +445,7 @@ noisyPrintToFile(NoisyState *  N, const char *  msg, const char *  fileName, Noi
 
 
 void
-noisyRenderDotInFile(NoisyState *  N, char *  pathName, char *  randomizedFileName)
+noisyRenderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyRenderDotInFile);
 
@@ -532,7 +532,7 @@ noisyRenderDotInFile(NoisyState *  N, char *  pathName, char *  randomizedFileNa
 
 //TODO/NOTE: this is not a bulletproof check for render success. it simply checks if the desired file is there and can be opened...
 void
-noisyCheckCgiCompletion(NoisyState *  N, const char *  pathName, const char *  renderExtension)
+noisyCheckCgiCompletion(State *  N, const char *  pathName, const char *  renderExtension)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyCheckCgiCompletion);
 
@@ -567,7 +567,7 @@ noisyCheckCgiCompletion(NoisyState *  N, const char *  pathName, const char *  r
 
 
 void
-noisyFatal(NoisyState *  N, const char *  msg)
+noisyFatal(State *  N, const char *  msg)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyFatal);
 
@@ -646,7 +646,7 @@ noisyFatal(NoisyState *  N, const char *  msg)
 
 
 void
-noisyError(NoisyState *  N, const char *  msg)
+noisyError(State *  N, const char *  msg)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyError);
 

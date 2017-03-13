@@ -35,15 +35,15 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-NoisyIrNode *	genNoisyIrNode(NoisyState *  N, NoisyIrNodeType type, NoisyIrNode *  irLeftChild, NoisyIrNode *  irRightChild, NoisySourceInfo *  sourceInfo);
-void		errorUseBeforeDefinition(NoisyState *  N, const char *  identifier);
-void		errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol);
-NoisyIrNode *	depthFirstWalk(NoisyState *  N, NoisyIrNode *  node);
-void		addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);
-void		addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);
-void		addLeafWithChainingSeqNoLexer(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode);
-bool		peekCheck(NoisyState *  N, int lookAhead, NoisyIrNodeType expectedType);
-NoisyIrNode* findNthIrNodeOfType(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType expectedType, int nth);
-NoisyIrNode* findNthIrNodeOfTypes(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int nth);
-NoisyIrNode* findNthIrNodeOfTypeHelper(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType expectedType, int* nth);
-NoisyIrNode* findNthIrNodeOfTypesHelper(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int* nth);
+IrNode *	genNoisyIrNode(State *  N, IrNodeType type, IrNode *  irLeftChild, IrNode *  irRightChild, SourceInfo *  sourceInfo);
+void		errorUseBeforeDefinition(State *  N, const char *  identifier);
+void		errorMultiDefinition(State *  N, Symbol *  symbol);
+IrNode *	depthFirstWalk(State *  N, IrNode *  node);
+void		addLeaf(State *  N, IrNode *  parent, IrNode *  newNode);
+void		addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode);
+void		addLeafWithChainingSeqNoLexer(State *  N, IrNode *  parent, IrNode *  newNode);
+bool		peekCheck(State *  N, int lookAhead, IrNodeType expectedType);
+IrNode* findNthIrNodeOfType(State * N, IrNode * root, IrNodeType expectedType, int nth);
+IrNode* findNthIrNodeOfTypes(State * N, IrNode * root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int nth);
+IrNode* findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int* nth);
+IrNode* findNthIrNodeOfTypesHelper(State * N, IrNode * root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int* nth);

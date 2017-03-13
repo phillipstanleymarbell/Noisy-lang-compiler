@@ -234,7 +234,7 @@ machtimeToNanoseconds(uint64_t machTime)
 }
 
 void
-noisyTimeStampDumpTimeline(NoisyState *  N)
+noisyTimeStampDumpTimeline(State *  N)
 {
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "\nNoisy routine invocation trace (%d calls):\n\n",
 						N->timestampCount);
@@ -248,7 +248,7 @@ noisyTimeStampDumpTimeline(NoisyState *  N)
 }
 
 void
-noisyTimeStampDumpResidencies(NoisyState *  N)
+noisyTimeStampDumpResidencies(State *  N)
 {
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "\nNon-zero Noisy routine residency time upper bounds and counts (%d calls, total of %-02.4f us):\n\n",
 						N->callAggregateTotal, (double)machtimeToNanoseconds(N->timeAggregateTotal)/1000.0);

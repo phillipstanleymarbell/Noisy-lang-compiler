@@ -58,21 +58,21 @@ extern const char *	gTerminalStrings[];
 extern const char *	gReservedTokenDescriptions[];
 
 
-static void		checkComment(NoisyState *  N);
-static void		checkWeq(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2);
-static void		checkWeq3(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2, char char2, NoisyIrNodeType type3);
-static void		checkSingle(NoisyState *  N, NoisyIrNodeType tokenType);
-static void		checkDot(NoisyState *  N);
-static void		checkGt(NoisyState *  N);
-static void		checkLt(NoisyState *  N);
-static void		checkSingleQuote(NoisyState *  N);
-static void		checkDoubleQuote(NoisyState *  N);
-static void		checkMinus(NoisyState *  N);
+static void		checkComment(State *  N);
+static void		checkWeq(State *  N, IrNodeType type1, IrNodeType type2);
+static void		checkWeq3(State *  N, IrNodeType type1, IrNodeType type2, char char2, IrNodeType type3);
+static void		checkSingle(State *  N, IrNodeType tokenType);
+static void		checkDot(State *  N);
+static void		checkGt(State *  N);
+static void		checkLt(State *  N);
+static void		checkSingleQuote(State *  N);
+static void		checkDoubleQuote(State *  N);
+static void		checkMinus(State *  N);
 
 
 
 void
-noisyLexInit(NoisyState *  N, char *  fileName)
+noisyLexInit(State *  N, char *  fileName)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexInit);
 
@@ -96,7 +96,7 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 	/*
 	 *	Notes:
 	 *
-	 *	(1)	The way we handle lexing in M and Noisy compilers does not use the
+	 *	(1)	The way we handle lexing in M and  compilers does not use the
 	 *		'stickies' as we do in our Yacc-based parsers.
 	 *
 	 *	(2)	We currently split up the input by '\n'-separated newline. This is
@@ -349,13 +349,13 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 
 	fclose(filePointer);
 
-	NoisySourceInfo *	eofSourceInfo = noisyLexAllocateSourceInfo(N,	NULL /* genealogy */,
+	SourceInfo *	eofSourceInfo = noisyLexAllocateSourceInfo(N,	NULL /* genealogy */,
 										N->fileName /* fileName */,
 										N->lineNumber /* lineNumber */,
 										N->columnNumber /* columnNumber */,
 										0 /* length */);
 										
-	NoisyToken *		eofToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_Zeof /* type */,
+	Token *		eofToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_Zeof /* type */,
 									NULL /* identifier */,
 									0 /* integerConst */,
 									0.0 /* realConst */,
@@ -368,7 +368,7 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 		flexprint(N->Fe, N->Fm, N->Fperr, "Done lexing...\n");
 		
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
-		NoisyToken *	p = N->tokenList;
+		Token *	p = N->tokenList;
 		while (p != NULL)
 		{
 			noisyLexDebugPrintToken(N, p, gReservedTokenDescriptions);
@@ -401,7 +401,7 @@ noisyLexInit(NoisyState *  N, char *  fileName)
 
 
 static void
-checkComment(NoisyState *  N)
+checkComment(State *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckComment);
 
@@ -419,11 +419,11 @@ checkComment(NoisyState *  N)
 
 
 static void
-checkWeq(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2)
+checkWeq(State *  N, IrNodeType type1, IrNodeType type2)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckWeq);
 
-	NoisyIrNodeType		type;
+	IrNodeType		type;
 
 	/*
 	 *	Gobble any extant chars
@@ -441,7 +441,7 @@ checkWeq(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2)
 		type = type2;
 	}
 
-	NoisyToken *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -456,11 +456,11 @@ checkWeq(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2)
 
 
 static void
-checkWeq3(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2, char char2, NoisyIrNodeType type3)
+checkWeq3(State *  N, IrNodeType type1, IrNodeType type2, char char2, IrNodeType type3)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckWeq3);
 
-	NoisyIrNodeType		type;
+	IrNodeType		type;
 
 	/*
 	 *	Gobble any extant chars.
@@ -483,7 +483,7 @@ checkWeq3(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2, char ch
 		type = type3;
 	}
 
-	NoisyToken *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -498,7 +498,7 @@ checkWeq3(NoisyState *  N, NoisyIrNodeType type1, NoisyIrNodeType type2, char ch
 
 
 static void
-checkSingle(NoisyState *  N, NoisyIrNodeType tokenType)
+checkSingle(State *  N, IrNodeType tokenType)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckSingle);
 
@@ -515,7 +515,7 @@ checkSingle(NoisyState *  N, NoisyIrNodeType tokenType)
 //fprintf(stderr, "checkSingle(), tokenType = %d\n", tokenType);
 	}
 
-	NoisyToken *		newToken = noisyLexAllocateToken(N,	tokenType /* type	*/,
+	Token *		newToken = noisyLexAllocateToken(N,	tokenType /* type	*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -530,7 +530,7 @@ checkSingle(NoisyState *  N, NoisyIrNodeType tokenType)
 
 
 static void
-checkDot(NoisyState *  N)
+checkDot(State *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckDot);
 
@@ -554,7 +554,7 @@ checkDot(NoisyState *  N)
 
 	gobble(N, 1);
 
-	NoisyToken *		newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_Tdot /* type	*/,
+	Token *		newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_Tdot /* type	*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -569,11 +569,11 @@ checkDot(NoisyState *  N)
 
 
 static void
-checkGt(NoisyState *  N)
+checkGt(State *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckGt);
 
-	NoisyIrNodeType		type;
+	IrNodeType		type;
 
 	/*
 	 *	Gobble any extant chars.
@@ -604,7 +604,7 @@ checkGt(NoisyState *  N)
 		type = kNoisyIrNodeType_Tgt;
 	}
 
-	NoisyToken *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -619,11 +619,11 @@ checkGt(NoisyState *  N)
 
 
 static void
-checkLt(NoisyState *  N)
+checkLt(State *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckLt);
 
-	NoisyIrNodeType		type;
+	IrNodeType		type;
 
 	/*
 	 *	Gobble any extant chars.
@@ -667,7 +667,7 @@ checkLt(NoisyState *  N)
 		type = kNoisyIrNodeType_Tlt;
 	}
 
-	NoisyToken *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -682,14 +682,14 @@ checkLt(NoisyState *  N)
 
 
 static void
-checkSingleQuote(NoisyState *  N)
+checkSingleQuote(State *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckSingleQuote);
 
 	/*
 	 *	TODO/BUG: we do not handle escaped squotes in a charconst
 	 */
-	NoisyIrNodeType		type;
+	IrNodeType		type;
 	char			quotedChar;
 
 
@@ -719,7 +719,7 @@ checkSingleQuote(NoisyState *  N)
 		gobble(N, 1);
 	}
 
-	NoisyToken *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									quotedChar	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -734,14 +734,14 @@ checkSingleQuote(NoisyState *  N)
 
 
 static void
-checkDoubleQuote(NoisyState *  N)
+checkDoubleQuote(State *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckDoubleQuote);
 
 	/*
 	 *	TODO/BUG: we do not handle escaped dquotes in a strconst
 	 */
-	NoisyToken *	newToken;
+	Token *	newToken;
 
 
 	/*
@@ -810,11 +810,11 @@ checkDoubleQuote(NoisyState *  N)
 
 
 static void
-checkMinus(NoisyState *  N)
+checkMinus(State *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckMinus);
 
-	NoisyIrNodeType		type;
+	IrNodeType		type;
 
 	/*
 	 *	Gobble any extant chars.
@@ -842,7 +842,7 @@ checkMinus(NoisyState *  N)
 		type = kNoisyIrNodeType_Tminus;
 	}
 
-	NoisyToken *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -857,7 +857,7 @@ checkMinus(NoisyState *  N)
 
 
 void
-makeNumericConst(NoisyState *  N)
+makeNumericConst(State *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerMakeNumericConst);
 
@@ -883,7 +883,7 @@ makeNumericConst(NoisyState *  N)
 	{
 		if (N->currentTokenLength == 1)
 		{
-			NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
+			Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
 										NULL	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -899,7 +899,7 @@ makeNumericConst(NoisyState *  N)
 		}
 		else if (N->currentToken[1] != '.')
 		{
-			NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_ZbadIdentifier	/* type		*/,
+			Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_ZbadIdentifier	/* type		*/,
 										N->currentToken	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -923,7 +923,7 @@ makeNumericConst(NoisyState *  N)
 	 */
 	if (isEngineeringRealConst(N, N->currentToken))
 	{
-		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
+		Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
 									stringToEngineeringRealConst(N, N->currentToken) /* realConst	*/,
@@ -943,7 +943,7 @@ makeNumericConst(NoisyState *  N)
 	 */
 	if (isRealConst(N, N->currentToken))
 	{
-		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
+		Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
 									stringToRealConst(N, N->currentToken)	/* realConst	*/,
@@ -963,7 +963,7 @@ makeNumericConst(NoisyState *  N)
 	 */
 	if (isRadixConst(N, N->currentToken))
 	{
-		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
+		Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
 									NULL				/* identifier	*/,
 									stringToRadixConst(N, N->currentToken)	/* integerConst	*/,
 									0				/* realConst	*/,
@@ -983,7 +983,7 @@ makeNumericConst(NoisyState *  N)
 	 */
 	if (!isDecimal(N, N->currentToken))
 	{
-		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_ZbadIdentifier	/* type		*/,
+		Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_ZbadIdentifier	/* type		*/,
 									N->currentToken			/* identifier	*/,
 									0				/* integerConst	*/,
 									0				/* realConst	*/,
@@ -1006,7 +1006,7 @@ makeNumericConst(NoisyState *  N)
 	uint64_t 	decimalValue = strtoul(N->currentToken, &ep, 0);
 	if (*ep == '\0')
 	{
-		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
+		Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
 									NULL				/* identifier	*/,
 									decimalValue			/* integerConst	*/,
 									0				/* realConst	*/,
@@ -1025,7 +1025,7 @@ makeNumericConst(NoisyState *  N)
 }
 
 bool
-isOperatorOrSeparator(NoisyState *  N, char c)
+isOperatorOrSeparator(State *  N, char c)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsOperatorOrSeparator);
 
@@ -1073,7 +1073,7 @@ isOperatorOrSeparator(NoisyState *  N, char c)
 }
 
 void
-finishToken(NoisyState *  N)
+finishToken(State *  N)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerFinishToken);
 
@@ -1101,7 +1101,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 		/*
 		 *	Booleans are kept in the 'integerConst' field of the token.
 		 */
-		NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TboolConst	/*	type		*/,
+		Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TboolConst	/*	type		*/,
 									NULL				/*	identifier	*/,
 									!strcmp(N->currentToken, "true")/*	integerConst	*/,
 									0.0	/* realConst	*/,
@@ -1120,7 +1120,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 	{
 		if ((gReservedTokenDescriptions[i] != NULL) && !strcmp(gReservedTokenDescriptions[i], N->currentToken))
 		{
-			NoisyToken *	newToken = noisyLexAllocateToken(N,	i	/* type		*/,
+			Token *	newToken = noisyLexAllocateToken(N,	i	/* type		*/,
 										NULL	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -1147,7 +1147,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 	 *	since we would have halted the building of the token on seing them
 	 *	and gotten called here.
 	 */
-	NoisyToken *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_Tidentifier	/* type		*/,
+	Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_Tidentifier	/* type		*/,
 								N->currentToken			/* identifier	*/,
 								0	/* integerConst	*/,
 								0.0	/* realConst	*/,

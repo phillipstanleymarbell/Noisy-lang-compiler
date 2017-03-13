@@ -35,7 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void			noisyLexInit(NoisyState *  N, char *  fileName);
-void		makeNumericConst(NoisyState *  N);
-bool		isOperatorOrSeparator(NoisyState *  N, char c);
-void		finishToken(NoisyState *  N);
+void			noisyLexInit(State *  N, char *  fileName);
+void		makeNumericConst(State *  N);
+bool		isOperatorOrSeparator(State *  N, char c);
+void		finishToken(State *  N);

@@ -62,15 +62,15 @@
 //extern const char	gNoisyWhitespace[];
 //extern const char	gNoisyStickies[];
 
-static void		usage(NoisyState *  N);
-static void		processFile(NoisyState *  N, char *  filename);
-static void		version(NoisyState *  N);
+static void		usage(State *  N);
+static void		processFile(State *  N, char *  filename);
+static void		version(State *  N);
 
 int
 main(int argc, char *argv[])
 {
 	int			jumpParameter;
-	NoisyState *		N;
+	State *		N;
 
 	N = noisyInit(kNoisyModeDefault);
 	
@@ -290,7 +290,7 @@ main(int argc, char *argv[])
 
 
 static void
-processFile(NoisyState *  N, char *  fileName)
+processFile(State *  N, char *  fileName)
 {
 	/*
 	 *	Tokenize input, then parse it and build AST + symbol table.
@@ -365,14 +365,14 @@ processFile(NoisyState *  N, char *  fileName)
 
 
 static void
-version(NoisyState *  N)
+version(State *  N)
 {
 	flexprint(N->Fe, N->Fm, N->Fperr, "\nNoisy version %s.\n\n", kNoisyVersion);
 }
 
 
 static void
-usage(NoisyState *  N)
+usage(State *  N)
 {
 	version(N);
 	flexprint(N->Fe, N->Fm, N->Fperr,	"Usage:    noisy [ (--help, -h)                                       \n"

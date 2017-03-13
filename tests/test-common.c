@@ -64,7 +64,7 @@ extern int gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 extern int tests_run;
 
 
-static NoisyIrNode * setupNthIrNodeType(NoisyState* noisy);
+static IrNode * setupNthIrNodeType(State* noisy);
 
 char * test_testNthIrNodeOfType()
 {
@@ -73,8 +73,8 @@ char * test_testNthIrNodeOfType()
 
 char * test_testNthIrNodeOfTypes()
 {
-  NoisyState * noisy = noisyInit(kNoisyModeDefault);
-	NoisyIrNode * numberNode = setupNthIrNodeType(noisy);
+  State * noisy = noisyInit(kNoisyModeDefault);
+	IrNode * numberNode = setupNthIrNodeType(noisy);
 
   int termIndex = 0;
   mu_assert(
@@ -134,7 +134,7 @@ char * test_testNthIrNodeOfTypes()
 								   )->type == kNewtonIrNodeType_Tplus
 			  );
     lowBinOpIndex = 1;
-    NoisyIrNode* n = findNthIrNodeOfTypes(
+    IrNode* n = findNthIrNodeOfTypes(
                                           noisy,
                                           numberNode,
                                           kNewtonIrNodeType_PlowPrecedenceBinaryOp,
@@ -159,34 +159,34 @@ char * test_testNthIrNodeOfTypes()
     return 0;
 }
 
-static NoisyIrNode *
-setupNthIrNodeType(NoisyState* noisy)
+static IrNode *
+setupNthIrNodeType(State* noisy)
 {
-  NoisyIrNode * numberNode = makeNoisyIrNodeSetValue(
+  IrNode * numberNode = makeNoisyIrNodeSetValue(
 													 noisy,
 													 kNewtonIrNodeType_Tnumber,
 													 NULL,
 													 5.0
 													 );
-  NoisyIrNode * distanceNode = makeNoisyIrNodeSetValue(
+  IrNode * distanceNode = makeNoisyIrNodeSetValue(
 													   noisy,
 													   kNewtonIrNodeType_Tidentifier,
 													   "distance",
 													   0.0
 													   );
-  NoisyIrNode * plus = makeNoisyIrNodeSetValue(
+  IrNode * plus = makeNoisyIrNodeSetValue(
 											   noisy,
 											   kNewtonIrNodeType_Tplus,
 											   NULL,
 											   0.0
 											   );
-  NoisyIrNode * minus = makeNoisyIrNodeSetValue(
+  IrNode * minus = makeNoisyIrNodeSetValue(
 												noisy,
 												kNewtonIrNodeType_Tminus,
 												NULL,
 												0.0
 												);
-  NoisyIrNode * exponent = makeNoisyIrNodeSetValue(
+  IrNode * exponent = makeNoisyIrNodeSetValue(
 												   noisy,
 												   kNewtonIrNodeType_Texponent,
 												   NULL,

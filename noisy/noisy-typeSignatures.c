@@ -88,10 +88,3 @@ const char gNoisyTypeNodeSignatures[kNoisyIrNodeTypeMax] = {
 								[kNoisyIrNodeType_Xseq]				= ':',
 };
 
-/*
- *  Type signatures of nodes that can appear in a subtree representing a type.
- */
-const char gNoisyConfigTypeNodeSignatures[kNoisyIrNodeTypeMax] = {
-                                [kNoisyConfigIrNodeType_Tidentifier]            = 'n',
-                                [kNoisyConfigIrNodeType_Xseq]               = ':',
-};

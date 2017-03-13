@@ -62,18 +62,18 @@
 //extern const char	gNoisyWhitespace[];
 //extern const char	gNoisyStickies[];
 
-static void		usage(NoisyState *  N);
-static void		version(NoisyState *  N);
+static void		usage(State *  N);
+static void		version(State *  N);
 
 
-// static void		usage(NoisyState *  N);
-// static void		version(NoisyState *  N);
+// static void		usage(State *  N);
+// static void		version(State *  N);
 
-static void     recurseDimensions(NoisyState * N, NoisyScope * topScope);
-static void     recursePhysics(NoisyState * N, NoisyScope * topScope);
+static void     recurseDimensions(State * N, Scope * topScope);
+static void     recursePhysics(State * N, Scope * topScope);
 
 static void
-recurseDimensions(NoisyState * N, NoisyScope * topScope)
+recurseDimensions(State * N, Scope * topScope)
 {
     Dimension * curDimension = topScope->firstDimension;
     // if (curDimension == NULL)
@@ -86,7 +86,7 @@ recurseDimensions(NoisyState * N, NoisyScope * topScope)
 }
 
 static void
-recursePhysics(NoisyState * N, NoisyScope * topScope)
+recursePhysics(State * N, Scope * topScope)
 {
     Physics * curPhysics = topScope->firstPhysics;
     //if (curPhysics == NULL)
@@ -153,7 +153,7 @@ int
 main(int argc, char *argv[])
 {
 	int			jumpParameter;
-	NoisyState *		N;
+	State *		N;
 
 	N = noisyInit(kNoisyModeDefault);
 	
@@ -369,14 +369,14 @@ main(int argc, char *argv[])
 
 
 static void
-version(NoisyState *  N)
+version(State *  N)
 {
 	flexprint(N->Fe, N->Fm, N->Fperr, "\nNewton version %s.\n\n", kNewtonVersion);
 }
 
 
 static void
-usage(NoisyState *  N)
+usage(State *  N)
 {
 	version(N);
 	flexprint(N->Fe, N->Fm, N->Fperr,	"Usage:    noisy [ (--help, -h)                                       \n"

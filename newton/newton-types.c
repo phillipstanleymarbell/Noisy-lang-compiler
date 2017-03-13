@@ -54,8 +54,8 @@ extern const char	gNewtonTypeNodeSignatures[kNoisyIrNodeType_TMax];
 extern const char	gNewtonAstNodeStrings[kNoisyIrNodeType_TMax];
 
 
-NoisyIrNode *
-newtonTypeValidateIrSubtree(NoisyState *  N, NoisyIrNode *  subtree)
+IrNode *
+newtonTypeValidateIrSubtree(State *  N, IrNode *  subtree)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeValidateIrSubtree);
 
@@ -64,7 +64,7 @@ newtonTypeValidateIrSubtree(NoisyState *  N, NoisyIrNode *  subtree)
 
 
 bool
-newtonTypeEqualsSubtreeTypes(NoisyState *  N, NoisyIrNode *  subtreeA, NoisyIrNode *  subtreeB)
+newtonTypeEqualsSubtreeTypes(State *  N, IrNode *  subtreeA, IrNode *  subtreeB)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeEqualsSubtreeTypes);
 
@@ -73,7 +73,7 @@ newtonTypeEqualsSubtreeTypes(NoisyState *  N, NoisyIrNode *  subtreeA, NoisyIrNo
 
 
 char *
-newtonTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
+newtonTypeMakeTypeSignature(State *  N, IrNode *  subtree)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeMakeTypeSignature);
 

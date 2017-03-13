@@ -89,10 +89,10 @@ addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintR
 
 void
 newtonCheckCompareOp(
-    NoisyState* N,
-    NoisyIrNode * leftExpression,
-    NoisyIrNode * rightExpression,
-    NoisyIrNodeType compareOpType,
+    State* N,
+    IrNode * leftExpression,
+    IrNode * rightExpression,
+    IrNodeType compareOpType,
     ConstraintReport * report
 ) {
 
@@ -159,10 +159,10 @@ newtonCheckCompareOp(
 
 void
 newtonCheckBinOp(
-    NoisyState* N,
-    NoisyIrNode * left,
-    NoisyIrNode * right,
-    NoisyIrNodeType binOpType,
+    State* N,
+    IrNode * left,
+    IrNode * right,
+    IrNodeType binOpType,
     ConstraintReport * report
 ) {
 	if (left == NULL || right == NULL)
@@ -222,7 +222,7 @@ newtonCheckBinOp(
 }
 
 void
-iterateConstraints(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrNode* parameterTreeRoot, NewtonAPIReport* report)
+iterateConstraints(State * N, IrNode * constraintTreeRoot, IrNode* parameterTreeRoot, NewtonAPIReport* report)
 {
     if (constraintTreeRoot->type == kNewtonIrNodeType_Pconstraint)
     {
@@ -237,13 +237,13 @@ iterateConstraints(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrNode
 }
 
 void
-checkSingleConstraint(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrNode* parameterTreeRoot, NewtonAPIReport* newtonReport)
+checkSingleConstraint(State * N, IrNode * constraintTreeRoot, IrNode* parameterTreeRoot, NewtonAPIReport* newtonReport)
 {
     int expressionIndex = 0;
 	ConstraintReport * constraintReport = (ConstraintReport*) calloc(1, sizeof(ConstraintReport));
 
     /* check LHS expression */
-    NoisyIrNode* leftExpression = findNthIrNodeOfType(
+    IrNode* leftExpression = findNthIrNodeOfType(
         N,
         constraintTreeRoot,
         kNewtonIrNodeType_PquantityExpression,
@@ -259,7 +259,7 @@ checkSingleConstraint(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrN
 
     /* find the compareOp between LHS and RHS*/
     int compareOpIndex = 0;
-    NoisyIrNode* compareOp = findNthIrNodeOfTypes(
+    IrNode* compareOp = findNthIrNodeOfTypes(
         N,
         constraintTreeRoot,
         kNewtonIrNodeType_PcompareOp,
@@ -269,7 +269,7 @@ checkSingleConstraint(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrN
     /* There must be one compareOp per constraint */
     assert(compareOp != NULL);
 
-    NoisyIrNode* rightExpression = findNthIrNodeOfType(
+    IrNode* rightExpression = findNthIrNodeOfType(
         N,
         constraintTreeRoot,
         kNewtonIrNodeType_PquantityExpression,
@@ -296,13 +296,13 @@ checkSingleConstraint(NoisyState * N, NoisyIrNode * constraintTreeRoot, NoisyIrN
 
 double
 checkQuantityExpression(
-    NoisyState * N,
-    NoisyIrNode * expressionRoot,
-    NoisyIrNode * parameterTreeRoot,
+    State * N,
+    IrNode * expressionRoot,
+    IrNode * parameterTreeRoot,
     ConstraintReport * report
 ) {
     int termIndex = 0;
-    NoisyIrNode* leftTerm = findNthIrNodeOfType(
+    IrNode* leftTerm = findNthIrNodeOfType(
         N,
         expressionRoot,
         kNewtonIrNodeType_PquantityTerm,
@@ -318,7 +318,7 @@ checkQuantityExpression(
     );
 
     int lowBinOpIndex = 0;
-    NoisyIrNode* lowBinOpNode = findNthIrNodeOfTypes(
+    IrNode* lowBinOpNode = findNthIrNodeOfTypes(
         N,
         expressionRoot,
         kNewtonIrNodeType_PlowPrecedenceBinaryOp,
@@ -329,7 +329,7 @@ checkQuantityExpression(
 
     while (lowBinOpNode != NULL)
     {
-        NoisyIrNode* rightTerm = findNthIrNodeOfType(
+        IrNode* rightTerm = findNthIrNodeOfType(
             N,
             expressionRoot,
             kNewtonIrNodeType_PquantityTerm,
@@ -366,9 +366,9 @@ checkQuantityExpression(
 
 double
 checkQuantityTerm(
-    NoisyState * N,
-    NoisyIrNode * termRoot,
-    NoisyIrNode * parameterTreeRoot,
+    State * N,
+    IrNode * termRoot,
+    IrNode * parameterTreeRoot,
     ConstraintReport * report
 ) {
     int factorIndex = 0;
@@ -384,7 +384,7 @@ checkQuantityTerm(
 	 * This is also how the values are propagated in newtonParseQuantityExpression.
 	 */
 
-    NoisyIrNode* leftFactor = findNthIrNodeOfTypes(
+    IrNode* leftFactor = findNthIrNodeOfTypes(
         N,
         termRoot,
         kNewtonIrNodeType_PquantityFactor,
@@ -403,7 +403,7 @@ checkQuantityTerm(
 	bool noFactorHasValueSet = leftFactor->value == 0;
 
     int midBinOpIndex = 0;
-    NoisyIrNode* midBinOpNode = findNthIrNodeOfTypes(
+    IrNode* midBinOpNode = findNthIrNodeOfTypes(
         N,
         termRoot,
         kNewtonIrNodeType_PmidPrecedenceBinaryOp,
@@ -414,7 +414,7 @@ checkQuantityTerm(
 
     while (midBinOpNode != NULL)
     {
-        NoisyIrNode* rightFactor = findNthIrNodeOfTypes(
+        IrNode* rightFactor = findNthIrNodeOfTypes(
             N,
             termRoot,
             kNewtonIrNodeType_PquantityFactor,
@@ -455,9 +455,9 @@ checkQuantityTerm(
 
 void
 checkQuantityFactor(
-    NoisyState * N,
-    NoisyIrNode * factorRoot,
-    NoisyIrNode * parameterTreeRoot,
+    State * N,
+    IrNode * factorRoot,
+    IrNode * parameterTreeRoot,
     ConstraintReport * report
 ) {
   // find a factor and then look it up in parameters
@@ -465,7 +465,7 @@ checkQuantityFactor(
   //
   // if there is an highBinOp, check Expression
   int factorIndex = 0;
-  NoisyIrNode * factor = findNthIrNodeOfTypes(
+  IrNode * factor = findNthIrNodeOfTypes(
 	  N,
 	  factorRoot,
 	  kNewtonIrNodeType_PquantityFactor,
@@ -476,14 +476,14 @@ checkQuantityFactor(
   if (!newtonIsDimensionless(factor->physics) && !factor->physics->isConstant && newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) == NULL)
 	{
 	  /*
-	   * Suppose the caller of the API has supplied a NoisyIrNode Tidentifier "L" with numeric value 5.
+	   * Suppose the caller of the API has supplied a IrNode Tidentifier "L" with numeric value 5.
 	   * The constraint is L < 2 * meter.
 	   *
-	   * Currently, searching the symbol table for a unit returns that NoisyIrNode with its corresponding Physics struct.
+	   * Currently, searching the symbol table for a unit returns that IrNode with its corresponding Physics struct.
 	   * A matching parameter must correspond to the Physics struct bound by the token string (e.g. L : distance),
 	   * but we do not want to raise an error a node that just is a unit (e.g. meter), not a Physics.
 	   */
-	  NoisyIrNode * matchingParameter = newtonParseFindNodeByParameterNumber(N, parameterTreeRoot, factor->parameterNumber);
+	  IrNode * matchingParameter = newtonParseFindNodeByParameterNumber(N, parameterTreeRoot, factor->parameterNumber);
 	  if (matchingParameter == NULL)
 		{
 		  sprintf(report->dimensionErrorMessage, "newton-check-pass.c:checkQuantityFactor: did not find a parameter with physics id %llu", factor->physics->id);
@@ -499,7 +499,7 @@ checkQuantityFactor(
 
 
 	int highBinOpIndex = 0;
-	NoisyIrNode* highBinOpNode = findNthIrNodeOfTypes(
+	IrNode* highBinOpNode = findNthIrNodeOfTypes(
 		N,
 		factorRoot,
 		kNewtonIrNodeType_PhighPrecedenceBinaryOp,
@@ -511,7 +511,7 @@ checkQuantityFactor(
 	int expressionIndex = 0;
 	while  (highBinOpNode != NULL)
 	{
-	  NoisyIrNode* expression = findNthIrNodeOfType(
+	  IrNode* expression = findNthIrNodeOfType(
                                                    N,
                                                    factorRoot,
                                                    kNewtonIrNodeType_PquantityExpression,

@@ -59,7 +59,7 @@
 
 
 void
-noisyIrPassProtobufBackend(NoisyState *  N)
+noisyIrPassProtobufBackend(State *  N)
 {
 	/*
 	 *	Temporarily color the graph, so we can know
@@ -75,7 +75,7 @@ noisyIrPassProtobufBackend(NoisyState *  N)
 
 
 void
-noisyIrPassProtobufSymbolTableNodeEmitter(NoisyState *  N, NoisyScope *  scope)
+noisyIrPassProtobufSymbolTableNodeEmitter(State *  N, Scope *  scope)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufSymbotTableEmitter);
 
@@ -83,29 +83,30 @@ noisyIrPassProtobufSymbolTableNodeEmitter(NoisyState *  N, NoisyScope *  scope)
 
 
 void
-noisyIrPassProtobufAstNodeEmitter(NoisyState *  N, NoisyIrNode *  irNode)
+noisyIrPassProtobufAstNodeEmitter(State *  N, IrNode *  irNode)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufAstEmitter);
 
-	Noisy__NoisyIrNode	node = NOISY__NOISY_IR_NODE__INIT;
-	void *			buffer;
-	unsigned		bufferLength;
+  // TODO fix this
+	//IrNode*	node = irNode; fix this NOISY__NOISY_IR_NODE__INIT();
+	// void *			buffer;
+	// unsigned		bufferLength;
 
-	node.type = irNode->type;
-	bufferLength = noisy__noisy_ir_node__get_packed_size(&node);
+	// node.type = irNode->type;
+	// bufferLength = noisy__noisy_ir_node__get_packed_size(&node);
 
-	buffer = malloc(bufferLength);
-	noisy__noisy_ir_node__pack(&node, buffer);
+	// buffer = malloc(bufferLength);
+	// noisy__noisy_ir_node__pack(&node, buffer);
 
-	fprintf(stderr,"Writing %d serialized bytes\n", bufferLength);
-	fwrite(buffer, bufferLength, 1, stdout);
+	// fprintf(stderr,"Writing %d serialized bytes\n", bufferLength);
+	// fwrite(buffer, bufferLength, 1, stdout);
 
-	free(buffer);
+	// free(buffer);
 }
 
 
 void
-noisyIrPassProtobufAstSerializeWalk(NoisyState *  N, NoisyIrNode *  irNode)
+noisyIrPassProtobufAstSerializeWalk(State *  N, IrNode *  irNode)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufAstSerializeWalk);
 
@@ -137,7 +138,7 @@ noisyIrPassProtobufAstSerializeWalk(NoisyState *  N, NoisyIrNode *  irNode)
 
 
 void
-noisyIrPassProtobufSymbolTableSerializeWalk(NoisyState *  N, NoisyScope *  scope)
+noisyIrPassProtobufSymbolTableSerializeWalk(State *  N, Scope *  scope)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufSymbolTableSerializeWalk);
 
@@ -146,7 +147,7 @@ noisyIrPassProtobufSymbolTableSerializeWalk(NoisyState *  N, NoisyScope *  scope
 		return;
 	}
 
-	NoisyScope *	tmp = scope->firstChild;
+	Scope *	tmp = scope->firstChild;
 	while (tmp != NULL)
 	{
 		noisyIrPassProtobufSymbolTableSerializeWalk(N, tmp);

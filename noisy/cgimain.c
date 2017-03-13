@@ -73,7 +73,7 @@ static uint64_t			startRss, endRss;
 static char *			noisyCodeBuffer = NULL;
 
 
-NoisyState *			noisyCgiState;
+State *			noisyCgiState;
 
 
 enum
@@ -592,7 +592,7 @@ main(void)
 		/*
 		 *	Create a top-level scope, then parse.
 		 */
-		noisyCgiState->noisyIrTopScope = noisySymbolTableAllocScope(noisyCgiState);
+		noisyCgiState->noisyIrTopScope = SymbolTableAllocScope(noisyCgiState);
 		noisyCgiState->noisyIrRoot = noisyParse(noisyCgiState, noisyCgiState->noisyIrTopScope);
 		noisyRunPasses(noisyCgiState);
 

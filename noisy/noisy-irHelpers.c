@@ -55,8 +55,8 @@
 
 
 
-NoisyScope *
-progtypeName2scope(NoisyState *  N, const char *  identifier)
+Scope *
+progtypeName2scope(State *  N, const char *  identifier)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserProgtypeName2scope);
 
@@ -84,7 +84,7 @@ progtypeName2scope(NoisyState *  N, const char *  identifier)
 
 
 void
-addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeScope)
+addToProgtypeScopes(State *  N, char *  identifier, Scope *  progtypeScope)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddToProgtypeScopes);
 
@@ -97,7 +97,7 @@ addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeS
 		return;
 	}
 
-	NoisyScope *	p = N->progtypeScopes;
+	Scope *	p = N->progtypeScopes;
 	while (p->next != NULL)
 	{
 		p = p->next;
@@ -119,7 +119,7 @@ addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeS
  *		node.right	= Xseq of kNoisyIrNodeType_Tidentifier
  */
 void
-assignTypes(NoisyState *  N, NoisyIrNode *  node, NoisyIrNode *  typeExpression)
+assignTypes(State *  N, IrNode *  node, IrNode *  typeExpression)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAssignTypes);
 

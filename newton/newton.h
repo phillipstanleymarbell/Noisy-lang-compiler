@@ -1,1 +1,1 @@
-void		processNewtonFile(NoisyState *  N, char *  filename);
+void		processNewtonFile(State *  N, char *  filename);

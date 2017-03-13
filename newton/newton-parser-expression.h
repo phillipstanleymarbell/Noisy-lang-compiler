@@ -1,44 +1,44 @@
-NoisyIrNode *
-newtonParseQuantityExpression(NoisyState * N, NoisyScope * currentScope);
+IrNode *
+newtonParseQuantityExpression(State * N, Scope * currentScope);
 
-NoisyIrNode *
-newtonParseQuantityTerm(NoisyState * N, NoisyScope * currentScope);
+IrNode *
+newtonParseQuantityTerm(State * N, Scope * currentScope);
 
-NoisyIrNode *
-newtonParseQuantityFactor(NoisyState * N, NoisyScope * currentScope);
+IrNode *
+newtonParseQuantityFactor(State * N, Scope * currentScope);
 
-NoisyIrNode *
-newtonParseNumericExpression(NoisyState * N, NoisyScope * currentScope);
+IrNode *
+newtonParseNumericExpression(State * N, Scope * currentScope);
 
-NoisyIrNode *
-newtonParseNumericTerm(NoisyState * N, NoisyScope * currentScope);
+IrNode *
+newtonParseNumericTerm(State * N, Scope * currentScope);
 
-NoisyIrNode *
-newtonParseNumericFactor(NoisyState * N, NoisyScope * currentScope);
+IrNode *
+newtonParseNumericFactor(State * N, Scope * currentScope);
 
-NoisyIrNode *
-newtonParseHighPrecedenceBinaryOp(NoisyState * N, NoisyScope * currentScope);
+IrNode *
+newtonParseHighPrecedenceBinaryOp(State * N, Scope * currentScope);
 
-NoisyIrNode * 
-newtonParseLowPrecedenceBinaryOp(NoisyState * N, NoisyScope * currentScope);
+IrNode * 
+newtonParseLowPrecedenceBinaryOp(State * N, Scope * currentScope);
 
-NoisyIrNode *
-newtonParseUnaryOp(NoisyState * N, NoisyScope * currentScope);
+IrNode *
+newtonParseUnaryOp(State * N, Scope * currentScope);
 
-NoisyIrNode *
-newtonParseCompareOp(NoisyState * N, NoisyScope * currentScope);
+IrNode *
+newtonParseCompareOp(State * N, Scope * currentScope);
 
-NoisyIrNode *
-newtonParseMidPrecedenceBinaryOp(NoisyState * N, NoisyScope * currentScope);
+IrNode *
+newtonParseMidPrecedenceBinaryOp(State * N, Scope * currentScope);
 
-NoisyIrNode *
-newtonParseTimeOp(NoisyState * N, NoisyScope * currentScope);
+IrNode *
+newtonParseTimeOp(State * N, Scope * currentScope);
 
-NoisyIrNode *
-newtonParseVectorOp(NoisyState * N, NoisyScope * currentScope);
+IrNode *
+newtonParseVectorOp(State * N, Scope * currentScope);
 
-NoisyIrNode *
-newtonParseInteger(NoisyState * N, NoisyScope * currentScope);
+IrNode *
+newtonParseInteger(State * N, Scope * currentScope);
 
-NoisyIrNode *
-newtonParseExponentialExpression(NoisyState * N, NoisyScope * currentScope, NoisyIrNode * exponentBase);
+IrNode *
+newtonParseExponentialExpression(State * N, Scope * currentScope, IrNode * exponentBase);

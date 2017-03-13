@@ -62,7 +62,7 @@ extern char* gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
 
 
 void		
-processNewtonFile(NoisyState *  N, char *  filename)
+processNewtonFile(State *  N, char *  filename)
 {
 
 	/*

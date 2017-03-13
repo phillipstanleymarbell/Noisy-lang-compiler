@@ -256,7 +256,7 @@ getTailPhysics(Physics* list)
 }
 
 Physics * 
-newtonPhysicsTableCopyAndAddPhysics(NoisyState * N, NoisyScope * scope, Physics * source)
+newtonPhysicsTableCopyAndAddPhysics(State * N, Scope * scope, Physics * source)
 {
     Physics * dest = (Physics *) calloc(1, sizeof(Physics));
     dest->numeratorPrimeProduct = 1;
@@ -275,7 +275,7 @@ newtonPhysicsTableCopyAndAddPhysics(NoisyState * N, NoisyScope * scope, Physics 
 }
 
 void
-newtonAddInvariant(NoisyState * N, Invariant * invariant)
+newtonAddInvariant(State * N, Invariant * invariant)
 {
     Invariant * tail;
     if ((tail = getTailInvariant(N->invariantList)) == NULL)
@@ -286,7 +286,7 @@ newtonAddInvariant(NoisyState * N, Invariant * invariant)
 
 // TODO clean up the code. make helper methods
 void 
-newtonPhysicsCopyDenominatorToNumeratorDimensions(NoisyState * N, Physics * dest, Physics * source)
+newtonPhysicsCopyDenominatorToNumeratorDimensions(State * N, Physics * dest, Physics * source)
 {
     if (dest->numeratorDimensions == NULL)
     {
@@ -302,7 +302,7 @@ newtonPhysicsCopyDenominatorToNumeratorDimensions(NoisyState * N, Physics * dest
 }
 
 void 
-newtonPhysicsCopyNumeratorToDenominatorDimensions(NoisyState * N, Physics * dest, Physics * source)
+newtonPhysicsCopyNumeratorToDenominatorDimensions(State * N, Physics * dest, Physics * source)
 {
     if (dest->denominatorDimensions == NULL)
     {
@@ -319,7 +319,7 @@ newtonPhysicsCopyNumeratorToDenominatorDimensions(NoisyState * N, Physics * dest
 }
 
 // TODO change method name from copy to transfer
-void newtonPhysicsCopyNumeratorDimensions(NoisyState * N, Physics * dest, Physics * source) 
+void newtonPhysicsCopyNumeratorDimensions(State * N, Physics * dest, Physics * source) 
 {
     if (dest->numeratorDimensions == NULL)
     {
@@ -334,7 +334,7 @@ void newtonPhysicsCopyNumeratorDimensions(NoisyState * N, Physics * dest, Physic
     dest->numeratorPrimeProduct *= source->numeratorPrimeProduct;
 }
 
-void newtonPhysicsCopyDenominatorDimensions(NoisyState * N, Physics * dest, Physics * source)
+void newtonPhysicsCopyDenominatorDimensions(State * N, Physics * dest, Physics * source)
 {
     if (dest->denominatorDimensions == NULL)
     {
@@ -350,7 +350,7 @@ void newtonPhysicsCopyDenominatorDimensions(NoisyState * N, Physics * dest, Phys
 }
 
 void 
-newtonPhysicsAddNumeratorDimension(NoisyState * N, Physics * dest, Dimension * numerator)
+newtonPhysicsAddNumeratorDimension(State * N, Physics * dest, Dimension * numerator)
 {
     if (dest->numeratorDimensions == NULL)
     {
@@ -366,7 +366,7 @@ newtonPhysicsAddNumeratorDimension(NoisyState * N, Physics * dest, Dimension * n
 }
 
 void 
-newtonPhysicsAddDenominatorDimension(NoisyState * N, Physics * dest, Dimension * denominator)
+newtonPhysicsAddDenominatorDimension(State * N, Physics * dest, Dimension * denominator)
 {
     if (dest->denominatorDimensions == NULL)
     {
@@ -382,7 +382,7 @@ newtonPhysicsAddDenominatorDimension(NoisyState * N, Physics * dest, Dimension *
 }
 
 Dimension *
-newtonDimensionTableAddDimensionForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  nameToken, NoisyToken * abbrevToken)
+newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  nameToken, Token * abbrevToken)
 {
 	Dimension *	newDimension;
 
@@ -412,7 +412,7 @@ newtonDimensionTableAddDimensionForToken(NoisyState *  N, NoisyScope *  scope, N
 }
 
 Physics *
-newtonPhysicsTableAddPhysicsForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token)
+newtonPhysicsTableAddPhysicsForToken(State *  N, Scope *  scope, Token *  token)
 {
 	Physics *	newPhysics;
 
@@ -445,7 +445,7 @@ newtonPhysicsTableAddPhysicsForToken(NoisyState *  N, NoisyScope *  scope, Noisy
 }
 
 Dimension *
-newtonDimensionTableDimensionForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier)
+newtonDimensionTableDimensionForIdentifier(State *  N, Scope *  scope, const char *  identifier)
 {
 	if (scope == NULL)
 	{
@@ -466,7 +466,7 @@ newtonDimensionTableDimensionForIdentifier(NoisyState *  N, NoisyScope *  scope,
 }
 
 Physics *
-newtonPhysicsTablePhysicsForDimensionAlias(NoisyState *  N, NoisyScope *  scope, const char * dimensionAliasIdentifier)
+newtonPhysicsTablePhysicsForDimensionAlias(State *  N, Scope *  scope, const char * dimensionAliasIdentifier)
 {
 	if (scope == NULL)
 	{
@@ -490,7 +490,7 @@ newtonPhysicsTablePhysicsForDimensionAlias(NoisyState *  N, NoisyScope *  scope,
 }
 
 Physics *
-newtonPhysicsTablePhysicsForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier)
+newtonPhysicsTablePhysicsForIdentifier(State *  N, Scope *  scope, const char *  identifier)
 {
 	if (scope == NULL)
 	{
@@ -511,7 +511,7 @@ newtonPhysicsTablePhysicsForIdentifier(NoisyState *  N, NoisyScope *  scope, con
 }
 
 // NoisySymbol *
-// newtonSymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier)
+// newtonSymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  identifier)
 // {
 // 	/*
 // 	 *	Recursion falls out when we reach root which has nil parent
@@ -539,7 +539,7 @@ newtonPhysicsTablePhysicsForIdentifier(NoisyState *  N, NoisyScope *  scope, con
 // 
 // 
 // NoisySymbol *
-// newtonSymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token)
+// newtonSymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  token)
 // {
 // 	NoisySymbol *	newSymbol;
 // 
@@ -579,12 +579,12 @@ newtonPhysicsTablePhysicsForIdentifier(NoisyState *  N, NoisyScope *  scope, con
 // 	return newSymbol;
 // }
 
-NoisyScope *
-newtonSymbolTableAllocScope(NoisyState *  N)
+Scope *
+newtonSymbolTableAllocScope(State *  N)
 {
-	NoisyScope *	newScope;
+	Scope *	newScope;
 
-	newScope = (NoisyScope *)calloc(1, sizeof(NoisyScope));
+	newScope = (Scope *)calloc(1, sizeof(Scope));
 	if (newScope == NULL)
 	{
 		noisyFatal(N, Emalloc);
@@ -594,10 +594,10 @@ newtonSymbolTableAllocScope(NoisyState *  N)
 }
 
 
-NoisyScope *
-newtonSymbolTableOpenScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subTree)
+Scope *
+newtonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
-	NoisyScope *	newScope = newtonSymbolTableAllocScope(N);
+	Scope *	newScope = newtonSymbolTableAllocScope(N);
 
 	newScope->parent = scope;
 	newScope->begin = subTree->sourceInfo;
@@ -608,7 +608,7 @@ newtonSymbolTableOpenScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  
 
 
 void
-newtonSymbolTableCloseScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subTree)
+newtonSymbolTableCloseScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
 	scope->end = subTree->sourceInfo;
 }

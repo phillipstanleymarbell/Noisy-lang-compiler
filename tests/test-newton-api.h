@@ -7,12 +7,12 @@ char * test_newtonCheckSingleInvariant();
 char * test_newtonApiNumberParametersZeroToN();
 
 /* just a small helper method */
-NoisyIrNode *
+IrNode *
 makeNoisyIrNodeSetValue(
-                        NoisyState * N,
-                        NoisyIrNodeType nodeType,
+                        State * N,
+                        IrNodeType nodeType,
                         char * identifier,
                         double realConst
                         );
 
-NoisyIrNode * makeTestParameterTuple();
+IrNode * makeTestParameterTuple();
