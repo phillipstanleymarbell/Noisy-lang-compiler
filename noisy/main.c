@@ -345,8 +345,8 @@ processFile(State *  N, char *  fileName)
 
 		noisyTimeStampDumpResidencies(N);
 
-		irNodeCount = noisyIrPassHelperIrSize(N, N->noisyIrRoot);
-		symbolTableNodeCount = noisyIrPassHelperSymbolTableSize(N, N->noisyIrTopScope);
+		irNodeCount = irPassHelperIrSize(N, N->noisyIrRoot);
+		symbolTableNodeCount = irPassHelperSymbolTableSize(N, N->noisyIrTopScope);
 
 
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "Intermediate Representation Information:\n\n");

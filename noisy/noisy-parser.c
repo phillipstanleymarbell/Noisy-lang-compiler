@@ -138,16 +138,16 @@ noisyParseProgram(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseProgram);
 
 
-	IrNode *	n = genNoisyIrNode(N, 	kNoisyIrNodeType_Pprogram,
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pprogram,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	/*
 	 *	Before we start parsing, set begin source line of toplevel scope.
 	 */
-	currentScope->begin = noisyLexPeek(N, 1)->sourceInfo;
+	currentScope->begin = lexPeek(N, 1)->sourceInfo;
 
 	addLeaf(N, n, noisyParseProgtypeDeclaration(N, currentScope));
 	while (!noisyInFollow(N, kNoisyIrNodeType_Pprogram, gNoisyFollows))
@@ -158,7 +158,7 @@ noisyParseProgram(State *  N, Scope *  currentScope)
 	/*
 	 *	We can now fill in end src info for toplevel scope.
 	 */
-	currentScope->end = noisyLexPeek(N, 1)->sourceInfo;
+	currentScope->end = lexPeek(N, 1)->sourceInfo;
 
 
 	return n;
@@ -180,10 +180,10 @@ noisyParseProgtypeDeclaration(State *  N, Scope *  scope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeDeclaration);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PprogtypeDeclaration,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PprogtypeDeclaration,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	IrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
@@ -224,10 +224,10 @@ noisyParseProgtypeBody(State *  N, Scope *  scope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeBody);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PprogtypeBody,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PprogtypeBody,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	while (!noisyInFollow(N, kNoisyIrNodeType_PprogtypeBody, gNoisyFollows))
@@ -254,10 +254,10 @@ noisyParseProgtypeTypenameDeclaration(State *  N, Scope *  scope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeTypenameDeclaration);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PprogtypeTypenameDeclaration,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PprogtypeTypenameDeclaration,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	IrNode *	identifierList = noisyParseIdentifierList(N, scope);
@@ -348,10 +348,10 @@ noisyParseTypeDeclaration(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTypeDeclaration);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PtypeDeclaration,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PtypeDeclaration,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Ttype))
@@ -387,10 +387,10 @@ noisyParseAdtTypeDeclaration(State *  N, Scope *  scope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseAdtTypeDeclaration);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PadtTypeDeclaration,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PadtTypeDeclaration,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tadt);
@@ -436,10 +436,10 @@ noisyParseVectorType(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseVectorType);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PvectorType,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PvectorType,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tvector);
@@ -472,10 +472,10 @@ noisyParseNamegenDeclaration(State *  N, Scope *  scope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseNamegenDeclaration);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PnamegenDeclaration,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PnamegenDeclaration,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tnamegen);
@@ -654,7 +654,7 @@ noisyParseTypeExpression(State *  N, Scope *  currentScope)
          * Here, we compile the "Physics type"
          * TODO fix this. N needs to have NC stuff in it
          */
-        // Token * nextToken = noisyLexPeek(N, 1);
+        // Token * nextToken = lexPeek(N, 1);
         // Physics * physics = noisyConfigPhysicsTablePhysicsForIdentifier(N, N->noisyConfigIrTopScope, nextToken->identifier);
         // 
         // if (physics!= NULL)
@@ -691,10 +691,10 @@ noisyParseTypeName(State *  N, Scope *  scope)
 	IrNode *	id1;
 	IrNode *	id2;
 	Symbol *	idsym;
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Ptypename,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_Ptypename,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	/*
@@ -809,10 +809,10 @@ noisyParseErrorMagnitudeTolerance(State *  N)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseErrorMagnitudeTolerance);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PerrorMagnitudeTolerance,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PerrorMagnitudeTolerance,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tepsilon);
@@ -839,10 +839,10 @@ noisyParseLossTolerance(State *  N)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseLossTolerance);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PerrorMagnitudeTolerance,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PerrorMagnitudeTolerance,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Talpha);
@@ -869,10 +869,10 @@ noisyParseLatencyTolerance(State *  N)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseLatencyTolerance);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PlatencyTolerance,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PlatencyTolerance,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Ttau);
@@ -985,10 +985,10 @@ noisyParseFixedType(State *  N)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseFixedType);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PfixedType,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PfixedType,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tfixed);
@@ -1056,10 +1056,10 @@ noisyParseArrayType(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseArrayType);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_ParrayType,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_ParrayType,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tarray);
@@ -1095,10 +1095,10 @@ noisyParseListType(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseListType);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PlistType,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PlistType,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tlist);
@@ -1122,10 +1122,10 @@ noisyParseTupleType(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTupleType);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PtupleType,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PtupleType,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_TleftParen);
@@ -1154,10 +1154,10 @@ noisyParseSetType(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseSetType);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PsetType,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PsetType,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tset);
@@ -1184,10 +1184,10 @@ noisyParseInitList(State *  N, Scope *  scope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseInitList);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PinitList,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PinitList,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
@@ -1216,10 +1216,10 @@ noisyParseIdxInitList(State *  N, Scope *  scope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIdxInitList);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PinitList,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PinitList,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
@@ -1248,10 +1248,10 @@ noisyParseStarInitList(State *  N, Scope *  scope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseStarInitList);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PinitList,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PinitList,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
@@ -1300,10 +1300,10 @@ noisyParseElement(State *  N, Scope *  scope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseElement);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Pelement,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_Pelement,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	addLeaf(N, n, noisyParseExpression(N, scope));
@@ -1330,10 +1330,10 @@ noisyParseNamegenDefinition(State *  N, Scope *  scope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseNamegenDefinition);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PnamegenDefinition,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PnamegenDefinition,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	IrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
@@ -1400,10 +1400,10 @@ noisyParseScopedStatementList(State *  N, Scope *  scope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseScopedStatementList);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PscopedStatementList,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PscopedStatementList,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
@@ -1429,10 +1429,10 @@ noisyParseStatementList(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseStatementList);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PstatementList,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PstatementList,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	/*
@@ -1462,10 +1462,10 @@ noisyParseStatement(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseStatement);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Pstatement,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_Pstatement,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tsemicolon))
@@ -1692,10 +1692,10 @@ noisyParseIterStatement(State *  N, Scope *  scope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIterStatement);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PiterationStatement,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PiterationStatement,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Titer));
@@ -1722,10 +1722,10 @@ noisyParseGuardBody(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseGuardBody);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PguardBody,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PguardBody,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	if (noisyInFollow(N, kNoisyIrNodeType_PguardBody, gNoisyFollows))
@@ -1742,7 +1742,7 @@ noisyParseGuardBody(State *  N, Scope *  currentScope)
 		 */
 		return NULL;
 	}
-//fprintf(stderr, "In noisyParseGuardBody(), about to loop through parsing the expression + =>..., Source file line %llu\n", noisyLexPeek(N, 1)->sourceInfo->lineNumber);
+//fprintf(stderr, "In noisyParseGuardBody(), about to loop through parsing the expression + =>..., Source file line %llu\n", lexPeek(N, 1)->sourceInfo->lineNumber);
 	while (noisyInFirst(N, kNoisyIrNodeType_Pexpression, gNoisyFirsts))
 	{
 		addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
@@ -1777,8 +1777,8 @@ noisyParseExpression(State *  N, Scope *  currentScope)
 
 	IrNode *	n;
 
-//fprintf(stderr, "In noisyParseExpression()... Source file line %llu\n", noisyLexPeek(N, 1)->sourceInfo->lineNumber);
-//noisyLexPeekPrint(N, 5, 0);
+//fprintf(stderr, "In noisyParseExpression()... Source file line %llu\n", lexPeek(N, 1)->sourceInfo->lineNumber);
+//lexPeekPrint(N, 5, 0);
 
 	if (noisyInFirst(N, kNoisyIrNodeType_Pterm, gNoisyFirsts))
 	{
@@ -1833,10 +1833,10 @@ noisyParseListCastExpression(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseListCastExpression);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PlistCastExpression,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PlistCastExpression,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tlist);
@@ -1860,10 +1860,10 @@ noisyParseSetCastExpression(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseSetCastExpression);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PsetCastExpression,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PsetCastExpression,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tset);
@@ -1887,10 +1887,10 @@ noisyParseArrayCastExpression(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseArrayCastExpression);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_ParrayCastExpression,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_ParrayCastExpression,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tarray);
@@ -1970,10 +1970,10 @@ noisyParseChanEventExpression(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseChanEventExpression);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_PchanEventExpression,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PchanEventExpression,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Terasures))
@@ -2016,10 +2016,10 @@ noisyParseChan2nameExpression(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseChan2nameExpression);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Pchan2nameExpression,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_Pchan2nameExpression,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tchan2name);
@@ -2047,10 +2047,10 @@ noisyParseVar2nameExpression(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseVar2nameExpression);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Pvar2nameExpression,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_Pvar2nameExpression,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tvar2name);
@@ -2078,10 +2078,10 @@ noisyParseName2chanExpression(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseName2chanExpression);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Pname2chanExpression,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_Pname2chanExpression,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tname2chan);
@@ -2106,10 +2106,10 @@ noisyParseTerm(State *  N, Scope *  currentScope)
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTerm);
 
 
-	IrNode *	n = genNoisyIrNode(N,	kNoisyIrNodeType_Pterm,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_Pterm,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	/*
@@ -2613,8 +2613,8 @@ noisyParseTerminal(State *  N, IrNodeType expectedType)
 		noisyParserErrorRecovery(N, expectedType);
 	}
 
-	Token *	t = noisyLexGet(N, gReservedTokenDescriptions);
-	IrNode *	n = genNoisyIrNode(N,	t->type,
+	Token *	t = lexGet(N, gReservedTokenDescriptions);
+	IrNode *	n = genIrNode(N,	t->type,
 						NULL /* left child */,
 						NULL /* right child */,
 						t->sourceInfo /* source info */);
@@ -2640,8 +2640,8 @@ noisyParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  
 		noisyParserErrorRecovery(N, expectedType);
 	}
 
-	Token *	t = noisyLexGet(N, gReservedTokenDescriptions);
-	IrNode *	n = genNoisyIrNode(N,	t->type,
+	Token *	t = lexGet(N, gReservedTokenDescriptions);
+	IrNode *	n = genIrNode(N,	t->type,
 						NULL /* left child */,
 						NULL /* right child */,
 						t->sourceInfo /* source info */);
@@ -2676,8 +2676,8 @@ noisyParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sco
 		noisyParserErrorRecovery(N, expectedType);
 	}
 
-	Token *	t = noisyLexGet(N, gReservedTokenDescriptions);
-	IrNode *	n = genNoisyIrNode(N,	t->type,
+	Token *	t = lexGet(N, gReservedTokenDescriptions);
+	IrNode *	n = genIrNode(N,	t->type,
 						NULL /* left child */,
 						NULL /* right child */,
 						t->sourceInfo /* source info */);
@@ -2735,22 +2735,22 @@ noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction,
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\t%s, line %d position %d, %s %s\"",
 						EsyntaxA,
-						noisyLexPeek(N, 1)->sourceInfo->lineNumber,
-						noisyLexPeek(N, 1)->sourceInfo->columnNumber,
+						lexPeek(N, 1)->sourceInfo->lineNumber,
+						lexPeek(N, 1)->sourceInfo->columnNumber,
 						EsyntaxD,
 						kNoisyErrorTokenHtmlTagOpen);
-		noisyLexPrintToken(N, noisyLexPeek(N, 1), gReservedTokenDescriptions);
+		lexPrintToken(N, lexPeek(N, 1), gReservedTokenDescriptions);
 		flexprint(N->Fe, N->Fm, N->Fperr, "\"%s %s %s.<br><br>%s%s", kNoisyErrorTokenHtmlTagClose, EsyntaxB, gProductionDescriptions[currentlyParsingTokenOrProduction], kNoisyErrorDetailHtmlTagOpen, EsyntaxC);
 	}
 	else
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\t%s, %s line %d position %d, %s \"",
 						EsyntaxA,
-						noisyLexPeek(N, 1)->sourceInfo->fileName,
-						noisyLexPeek(N, 1)->sourceInfo->lineNumber,
-						noisyLexPeek(N, 1)->sourceInfo->columnNumber,
+						lexPeek(N, 1)->sourceInfo->fileName,
+						lexPeek(N, 1)->sourceInfo->lineNumber,
+						lexPeek(N, 1)->sourceInfo->columnNumber,
 						EsyntaxD);
-		noisyLexPrintToken(N, noisyLexPeek(N, 1), gReservedTokenDescriptions);
+		lexPrintToken(N, lexPeek(N, 1), gReservedTokenDescriptions);
 		flexprint(N->Fe, N->Fm, N->Fperr, "\" %s %s.\n\n\t%s", EsyntaxB, gProductionDescriptions[currentlyParsingTokenOrProduction], EsyntaxC);
 	}
 
@@ -2779,7 +2779,7 @@ noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction,
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fperr, ".\n\n\tInstead, saw:\n\n");
-	noisyLexPeekPrint(N, 5, 0, gReservedTokenDescriptions);
+	lexPeekPrint(N, 5, 0, gReservedTokenDescriptions);
 	
 	if (N->mode & kNoisyModeCGI)
 	{
@@ -2804,7 +2804,7 @@ noisyParserSemanticError(State *  N, const char * format, ...)
 	if (N->verbosityLevel & kNoisyVerbosityDebugParser)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParserSemanticError(), Ignoring semantic error...\n");
-		flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParserSemanticError(), Source file line %llu\n", noisyLexPeek(N, 1)->sourceInfo->lineNumber);
+		flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParserSemanticError(), Source file line %llu\n", lexPeek(N, 1)->sourceInfo->lineNumber);
 	}
 
 	va_start(arg, format);
@@ -2829,10 +2829,10 @@ noisyParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToken)
 		 *
 		 *	Retrieve token and discard...
 		 *
-		Token *	token = noisyLexGet(N);
+		Token *	token = lexGet(N);
 		if (N->verbosityLevel & kNoisyVerbosityDebugParser)
 		{
-			noisyLexDebugPrintToken(N, token);
+			lexDebugPrintToken(N, token);
 		}
 	}
 	*/

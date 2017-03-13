@@ -349,19 +349,19 @@ noisyLexInit(State *  N, char *  fileName)
 
 	fclose(filePointer);
 
-	SourceInfo *	eofSourceInfo = noisyLexAllocateSourceInfo(N,	NULL /* genealogy */,
+	SourceInfo *	eofSourceInfo = lexAllocateSourceInfo(N,	NULL /* genealogy */,
 										N->fileName /* fileName */,
 										N->lineNumber /* lineNumber */,
 										N->columnNumber /* columnNumber */,
 										0 /* length */);
 										
-	Token *		eofToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_Zeof /* type */,
+	Token *		eofToken = lexAllocateToken(N,	kNoisyIrNodeType_Zeof /* type */,
 									NULL /* identifier */,
 									0 /* integerConst */,
 									0.0 /* realConst */,
 									NULL /* stringConst */,
 									eofSourceInfo /* sourceInfo */);
-	noisyLexPut(N, eofToken);
+	lexPut(N, eofToken);
 
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
@@ -371,7 +371,7 @@ noisyLexInit(State *  N, char *  fileName)
 		Token *	p = N->tokenList;
 		while (p != NULL)
 		{
-			noisyLexDebugPrintToken(N, p, gReservedTokenDescriptions);
+			lexDebugPrintToken(N, p, gReservedTokenDescriptions);
 			p = p->next;
 		}
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
@@ -441,7 +441,7 @@ checkWeq(State *  N, IrNodeType type1, IrNodeType type2)
 		type = type2;
 	}
 
-	Token *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = lexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -483,7 +483,7 @@ checkWeq3(State *  N, IrNodeType type1, IrNodeType type2, char char2, IrNodeType
 		type = type3;
 	}
 
-	Token *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = lexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -515,7 +515,7 @@ checkSingle(State *  N, IrNodeType tokenType)
 //fprintf(stderr, "checkSingle(), tokenType = %d\n", tokenType);
 	}
 
-	Token *		newToken = noisyLexAllocateToken(N,	tokenType /* type	*/,
+	Token *		newToken = lexAllocateToken(N,	tokenType /* type	*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -554,7 +554,7 @@ checkDot(State *  N)
 
 	gobble(N, 1);
 
-	Token *		newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_Tdot /* type	*/,
+	Token *		newToken = lexAllocateToken(N,	kNoisyIrNodeType_Tdot /* type	*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -604,7 +604,7 @@ checkGt(State *  N)
 		type = kNoisyIrNodeType_Tgt;
 	}
 
-	Token *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = lexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -667,7 +667,7 @@ checkLt(State *  N)
 		type = kNoisyIrNodeType_Tlt;
 	}
 
-	Token *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = lexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -719,7 +719,7 @@ checkSingleQuote(State *  N)
 		gobble(N, 1);
 	}
 
-	Token *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = lexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									quotedChar	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -756,7 +756,7 @@ checkDoubleQuote(State *  N)
 	 */
 	if (strchr(&N->lineBuffer[N->columnNumber+1], '\"') == NULL)
 	{
-		newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_ZbadStringConst	/* type		*/,
+		newToken = lexAllocateToken(N,	kNoisyIrNodeType_ZbadStringConst	/* type		*/,
 							NULL					/* identifier	*/,
 							0					/* integerConst	*/,
 							0.0					/* realConst	*/,
@@ -794,7 +794,7 @@ checkDoubleQuote(State *  N)
 			N->columnNumber++;
 		}
 
-		newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TstringConst	/* type		*/,
+		newToken = lexAllocateToken(N,	kNoisyIrNodeType_TstringConst	/* type		*/,
 							NULL				/* identifier	*/,
 							0				/* integerConst	*/,
 							0.0				/* realConst	*/,
@@ -842,7 +842,7 @@ checkMinus(State *  N)
 		type = kNoisyIrNodeType_Tminus;
 	}
 
-	Token *		newToken = noisyLexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = lexAllocateToken(N,	type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -883,7 +883,7 @@ makeNumericConst(State *  N)
 	{
 		if (N->currentTokenLength == 1)
 		{
-			Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
+			Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
 										NULL	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -899,7 +899,7 @@ makeNumericConst(State *  N)
 		}
 		else if (N->currentToken[1] != '.')
 		{
-			Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_ZbadIdentifier	/* type		*/,
+			Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_ZbadIdentifier	/* type		*/,
 										N->currentToken	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -923,7 +923,7 @@ makeNumericConst(State *  N)
 	 */
 	if (isEngineeringRealConst(N, N->currentToken))
 	{
-		Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
 									stringToEngineeringRealConst(N, N->currentToken) /* realConst	*/,
@@ -943,7 +943,7 @@ makeNumericConst(State *  N)
 	 */
 	if (isRealConst(N, N->currentToken))
 	{
-		Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_TrealConst	/* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
 									stringToRealConst(N, N->currentToken)	/* realConst	*/,
@@ -963,7 +963,7 @@ makeNumericConst(State *  N)
 	 */
 	if (isRadixConst(N, N->currentToken))
 	{
-		Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
 									NULL				/* identifier	*/,
 									stringToRadixConst(N, N->currentToken)	/* integerConst	*/,
 									0				/* realConst	*/,
@@ -983,7 +983,7 @@ makeNumericConst(State *  N)
 	 */
 	if (!isDecimal(N, N->currentToken))
 	{
-		Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_ZbadIdentifier	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_ZbadIdentifier	/* type		*/,
 									N->currentToken			/* identifier	*/,
 									0				/* integerConst	*/,
 									0				/* realConst	*/,
@@ -1006,7 +1006,7 @@ makeNumericConst(State *  N)
 	uint64_t 	decimalValue = strtoul(N->currentToken, &ep, 0);
 	if (*ep == '\0')
 	{
-		Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
 									NULL				/* identifier	*/,
 									decimalValue			/* integerConst	*/,
 									0				/* realConst	*/,
@@ -1101,7 +1101,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 		/*
 		 *	Booleans are kept in the 'integerConst' field of the token.
 		 */
-		Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_TboolConst	/*	type		*/,
+		Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_TboolConst	/*	type		*/,
 									NULL				/*	identifier	*/,
 									!strcmp(N->currentToken, "true")/*	integerConst	*/,
 									0.0	/* realConst	*/,
@@ -1120,7 +1120,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 	{
 		if ((gReservedTokenDescriptions[i] != NULL) && !strcmp(gReservedTokenDescriptions[i], N->currentToken))
 		{
-			Token *	newToken = noisyLexAllocateToken(N,	i	/* type		*/,
+			Token *	newToken = lexAllocateToken(N,	i	/* type		*/,
 										NULL	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -1147,7 +1147,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 	 *	since we would have halted the building of the token on seing them
 	 *	and gotten called here.
 	 */
-	Token *	newToken = noisyLexAllocateToken(N,	kNoisyIrNodeType_Tidentifier	/* type		*/,
+	Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_Tidentifier	/* type		*/,
 								N->currentToken			/* identifier	*/,
 								0	/* integerConst	*/,
 								0.0	/* realConst	*/,

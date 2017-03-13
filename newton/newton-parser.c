@@ -50,18 +50,18 @@ newtonParse(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseFile(State *  N, Scope *  currentScope)
 {
-	IrNode *	node = genNoisyIrNode(
+	IrNode *	node = genIrNode(
         N,
         kNewtonIrNodeType_PnewtonFile,
 		NULL /* left child */,
 		NULL /* right child */,
-		noisyLexPeek(N, 1)->sourceInfo /* source info */
+		lexPeek(N, 1)->sourceInfo /* source info */
     );
 
 	addLeaf(N, node, newtonParseRuleList(N, currentScope));
 
-    assert(noisyLexPeek(N, 1)->type == kNewtonIrNodeType_Zeof);
-	N->tokenList = N->tokenList->next; /* skip eof token without using noisyLexGet*/
+    assert(lexPeek(N, 1)->type == kNewtonIrNodeType_Zeof);
+	N->tokenList = N->tokenList->next; /* skip eof token without using lexGet*/
 
 	return node;
 }
@@ -69,12 +69,12 @@ newtonParseFile(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseRuleList(State *  N, Scope *  currentScope)
 {
-	IrNode *	node = genNoisyIrNode(
+	IrNode *	node = genIrNode(
         N,
         kNewtonIrNodeType_PruleList,
 		NULL /* left child */,
 		NULL /* right child */,
-		noisyLexPeek(N, 1)->sourceInfo /* source info */
+		lexPeek(N, 1)->sourceInfo /* source info */
     );
     
     if (noisyInFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts))
@@ -95,9 +95,9 @@ newtonParseRule(State * N, Scope * currentScope)
 {
 	  IrNode *	node;
 
-    currentScope->begin = noisyLexPeek(N, 1)->sourceInfo;
+    currentScope->begin = lexPeek(N, 1)->sourceInfo;
 
-    switch(noisyLexPeek(N, 3)->type)
+    switch(lexPeek(N, 3)->type)
     {
         case kNewtonIrNodeType_Tsignal:
             node = newtonParseBaseSignal(N, currentScope);
@@ -112,7 +112,7 @@ newtonParseRule(State * N, Scope * currentScope)
             noisyFatal(N, "newton-parser.c:newtonParseRule neither signal, constant, nor invariant\n");
     }
 
-    currentScope->end = noisyLexPeek(N, 1)->sourceInfo;
+    currentScope->end = lexPeek(N, 1)->sourceInfo;
 
     return node;
 }
@@ -120,10 +120,10 @@ newtonParseRule(State * N, Scope * currentScope)
 IrNode *
 newtonParseInvariant(State * N, Scope * currentScope)
 {
-	IrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pinvariant,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pinvariant,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
     Invariant * invariant = (Invariant *) calloc(1, sizeof(Invariant));
@@ -163,10 +163,10 @@ newtonParseInvariant(State * N, Scope * currentScope)
 IrNode *
 newtonParseConstraint(State * N, Scope * currentScope)
 {
-	IrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pconstraint,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pconstraint,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
     if (noisyInFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts))
     {
@@ -187,10 +187,10 @@ newtonParseConstraint(State * N, Scope * currentScope)
 IrNode *
 newtonParseParameterTuple(State * N, Scope * currentScope)
 {
-	IrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_PparameterTuple,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PparameterTuple,
                                       NULL /* left child */,
                                       NULL /* right child */,
-                                      noisyLexPeek(N, 1)->sourceInfo /* source info */);
+                                      lexPeek(N, 1)->sourceInfo /* source info */);
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
 
@@ -211,10 +211,10 @@ newtonParseParameterTuple(State * N, Scope * currentScope)
 IrNode *
 newtonParseParameter(State * N, Scope * currentScope, int parameterNumber)
 {
-	IrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pparameter,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pparameter,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
     /*
      * By convention the left child is the name, and the right child is the name of the Physics
@@ -233,10 +233,10 @@ newtonParseParameter(State * N, Scope * currentScope, int parameterNumber)
 IrNode *
 newtonParseConstant(State * N, Scope * currentScope)
 {
-	  IrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pconstant,
+	  IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pconstant,
 				NULL /* left child */,
 				NULL /* right child */,
-				noisyLexPeek(N, 1)->sourceInfo /* source info */);
+				lexPeek(N, 1)->sourceInfo /* source info */);
 
     IrNode * constantIdentifier = newtonParseIdentifier(N, currentScope);
 
@@ -281,10 +281,10 @@ newtonParseConstant(State * N, Scope * currentScope)
 IrNode *
 newtonParseBaseSignal(State * N, Scope * currentScope)
 {
-	IrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_PbaseSignal,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PbaseSignal,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
     IrNode * basicPhysicsIdentifier = newtonParseIdentifier(N, currentScope);
     addLeaf(N, node, basicPhysicsIdentifier);
@@ -342,10 +342,10 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 IrNode *
 newtonParseName(State * N, Scope * currentScope)
 {
-	IrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pname,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pname,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
     addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tname, currentScope));
     addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope));
@@ -355,10 +355,10 @@ newtonParseName(State * N, Scope * currentScope)
     
     addLeafWithChainingSeq(N, node, baseSignalName);
     
-    if (noisyLexPeek(N, 1)->type == kNewtonIrNodeType_TEnglish || 
-        noisyLexPeek(N, 1)->type == kNewtonIrNodeType_TSpanish)
+    if (lexPeek(N, 1)->type == kNewtonIrNodeType_TEnglish || 
+        lexPeek(N, 1)->type == kNewtonIrNodeType_TSpanish)
 	{
-		addLeafWithChainingSeq(N, node, newtonParseTerminal(N, noisyLexPeek(N, 1)->type, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseTerminal(N, lexPeek(N, 1)->type, currentScope));
 	}
     else
     {
@@ -371,10 +371,10 @@ newtonParseName(State * N, Scope * currentScope)
 IrNode *
 newtonParseSymbol(State * N, Scope * currentScope)
 {
-	IrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Psymbol,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Psymbol,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
     
     newtonParseTerminal(N, kNewtonIrNodeType_Tsymbol, currentScope);
     newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
@@ -391,15 +391,15 @@ newtonParseSymbol(State * N, Scope * currentScope)
 IrNode *
 newtonParseDerivation(State * N, Scope * currentScope)
 {
-	IrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pderivation,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pderivation,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
     newtonParseTerminal(N, kNewtonIrNodeType_Tderivation, currentScope);
     newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 
-    if (noisyLexPeek(N, 1)->type == kNewtonIrNodeType_Tnone)
+    if (lexPeek(N, 1)->type == kNewtonIrNodeType_Tnone)
 	{
 		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tnone, currentScope));
 	}
@@ -426,8 +426,8 @@ newtonParseTerminal(State *  N, IrNodeType expectedType, Scope * currentScope)
         noisyFatal(N, "newton-parser.c: newtonParseTerminal");
     }
 
-    Token *  t = noisyLexGet(N, gNewtonTokenDescriptions);
-    IrNode * n = genNoisyIrNode(N, t->type,
+    Token *  t = lexGet(N, gNewtonTokenDescriptions);
+    IrNode * n = genIrNode(N, t->type,
                         NULL /* left child */,
                         NULL /* right child */,
                         t->sourceInfo /* source info */);
@@ -660,8 +660,8 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
         return NULL;
     }
 
-    Token *    t = noisyLexGet(N, gNewtonTokenDescriptions);
-    IrNode *   n = genNoisyIrNode(N,   t->type,
+    Token *    t = lexGet(N, gNewtonTokenDescriptions);
+    IrNode *   n = genIrNode(N,   t->type,
                         NULL /* left child */,
                         NULL /* right child */,
                         t->sourceInfo /* source info */);
@@ -711,8 +711,8 @@ newtonParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sc
         noisyFatal(N, "newton-parser.c:newtonParseIdentifierDefinitionTerminal: not an expected type\n");
 	}
 
-	Token *	t = noisyLexGet(N, gNewtonTokenDescriptions);
-	IrNode *	n = genNoisyIrNode(N,	t->type,
+	Token *	t = lexGet(N, gNewtonTokenDescriptions);
+	IrNode *	n = genIrNode(N,	t->type,
 						NULL /* left child */,
 						NULL /* right child */,
 						t->sourceInfo /* source info */);

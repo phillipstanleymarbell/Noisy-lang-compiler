@@ -53,7 +53,7 @@ done(State *  N, Token *  newToken)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerDone);
 
-	newToken->sourceInfo = noisyLexAllocateSourceInfo(N,	NULL				/*   genealogy 	*/,
+	newToken->sourceInfo = lexAllocateSourceInfo(N,	NULL				/*   genealogy 	*/,
 								N->fileName			/*   fileName 	*/,
 								N->lineNumber			/*   lineNumber */,
 								N->columnNumber - N->currentTokenLength /* columnNumber */,
@@ -61,7 +61,7 @@ done(State *  N, Token *  newToken)
 
 	bzero(N->currentToken, kNoisyMaxBufferLength);
 	N->currentTokenLength = 0;
-	noisyLexPut(N, newToken);
+	lexPut(N, newToken);
 }
 
 bool
@@ -456,7 +456,7 @@ stringToEngineeringRealConst(State *  N, char *  string)
 
 
 SourceInfo *
-noisyLexAllocateSourceInfo(	State *  N, char **  genealogy, char *  fileName,
+lexAllocateSourceInfo(	State *  N, char **  genealogy, char *  fileName,
 				uint64_t lineNumber, uint64_t columnNumber, uint64_t length)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexAllocateSourceInfo);
@@ -480,7 +480,7 @@ noisyLexAllocateSourceInfo(	State *  N, char **  genealogy, char *  fileName,
 
 
 Token *
-noisyLexAllocateToken(	State *  N, IrNodeType type, char *  identifier,
+lexAllocateToken(	State *  N, IrNodeType type, char *  identifier,
 			uint64_t integerConst, double realConst, char * stringConst,
 			SourceInfo *  sourceInfo)
 {
@@ -507,7 +507,7 @@ noisyLexAllocateToken(	State *  N, IrNodeType type, char *  identifier,
 
 
 void
-noisyLexPut(State *  N, Token *  newToken)
+lexPut(State *  N, Token *  newToken)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPut);
 
@@ -533,7 +533,7 @@ noisyLexPut(State *  N, Token *  newToken)
 
 
 Token *
-noisyLexGet(State *  N, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
+lexGet(State *  N, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexGet);
 
@@ -555,7 +555,7 @@ noisyLexGet(State *  N, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
 
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
-		noisyLexDebugPrintToken(N, t, tokenDescriptionArray);	
+		lexDebugPrintToken(N, t, tokenDescriptionArray);	
 	}
 
 	return t;
@@ -563,7 +563,7 @@ noisyLexGet(State *  N, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
 
 
 Token *
-noisyLexPeek(State *  N, int lookAhead)
+lexPeek(State *  N, int lookAhead)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPeek);
 
@@ -585,7 +585,7 @@ noisyLexPeek(State *  N, int lookAhead)
 
 
 void
-noisyLexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
+lexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPrintToken);
 
@@ -631,7 +631,7 @@ noisyLexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kNo
 }
 
 void
-noisyLexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
+lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexDebugPrintToken);
 
@@ -672,7 +672,7 @@ noisyLexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArra
 			}
 			else
 			{
-				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in noisyLexDebugPrintToken <<<", t->type);
+				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in lexDebugPrintToken <<<", t->type);
 				//noisyFatal(N, Esanity);
 			}
 		}
@@ -683,7 +683,7 @@ noisyLexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArra
 }
 
 void
-noisyLexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
+lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPeekPrint);
 

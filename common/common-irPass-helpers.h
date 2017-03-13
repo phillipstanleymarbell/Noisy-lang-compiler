@@ -35,10 +35,10 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void			noisyIrPassHelperColorIr(State *  N, IrNode *  p, IrNodeColor nodeColor, bool setNotClear, bool recurseFlag);
-void			noisyIrPassHelperColorSymbolTable(State *  N, Scope *  p, IrNodeColor nodeColor, bool setNotClear, bool recurseFlag);
-uint64_t		noisyIrPassHelperIrSize(State *  N, IrNode *  p);
-uint64_t		noisyIrPassHelperSymbolTableSize(State *  N, Scope *  p);
+void			irPassHelperColorIr(State *  N, IrNode *  p, IrNodeColor nodeColor, bool setNotClear, bool recurseFlag);
+void			irPassHelperColorSymbolTable(State *  N, Scope *  p, IrNodeColor nodeColor, bool setNotClear, bool recurseFlag);
+uint64_t		irPassHelperIrSize(State *  N, IrNode *  p);
+uint64_t		irPassHelperSymbolTableSize(State *  N, Scope *  p);
 
 #define L(node)		(node)->irLeftChild
 #define R(node)		(node)->irRightChild

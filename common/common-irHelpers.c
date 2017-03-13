@@ -54,7 +54,7 @@
 
 
 IrNode *
-genNoisyIrNode(State *  N, IrNodeType type, IrNode *  irLeftChild, IrNode *  irRightChild, SourceInfo *  sourceInfo)
+genIrNode(State *  N, IrNodeType type, IrNode *  irLeftChild, IrNode *  irRightChild, SourceInfo *  sourceInfo)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyGenNoisyIrNode);
 
@@ -86,7 +86,7 @@ genNoisyIrNode(State *  N, IrNodeType type, IrNode *  irLeftChild, IrNode *  irR
 	/*
 	 *	Not madatory, but provides higher-fidelity attribution, by making 
 	 *	sure that any time between here and next stamping is not attributed
-	 *	to genNoisyIrNode().
+	 *	to genIrNode().
 	 */
 	//NoisyTimeStampTraceMacro(kNoisyTimeStampKeyUnknown);
 
@@ -226,10 +226,10 @@ addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode)
 		return;
 	}
 
-	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
+	node->irRightChild = genIrNode(N,	kNoisyIrNodeType_Xseq,
 						newNode /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 }
 
 
@@ -238,10 +238,10 @@ peekCheck(State *  N, int lookAhead, IrNodeType expectedType)
 {
     NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
 
-    if (noisyLexPeek(N, lookAhead) == NULL)
+    if (lexPeek(N, lookAhead) == NULL)
     {
         return false;
     }
 
-    return (noisyLexPeek(N, lookAhead)->type == expectedType);
+    return (lexPeek(N, lookAhead)->type == expectedType);
 }

@@ -634,7 +634,7 @@ main(void)
 
 			noisyTimeStampDumpResidencies(noisyCgiState);
 
-			irNodeCount = noisyIrPassHelperIrSize(noisyCgiState, noisyCgiState->noisyIrRoot);
+			irNodeCount = irPassHelperIrSize(noisyCgiState, noisyCgiState->noisyIrRoot);
 			symbolTableNodeCount = noisyIrPassHelperSymbolTableSize(noisyCgiState, noisyCgiState->noisyIrTopScope);
 
 			flexprint(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fpinfo, "Intermediate Representation Information:\n\n");
@@ -822,7 +822,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("            editor.setTheme(\"ace/theme/solarized_light\");\n");
 	printf("            editor.session.setMode(\"ace/mode/c_cpp\");\n");
 	printf("            editor.setShowPrintMargin(false);\n");
-	printf("            editor.gotoLine(%llu, %llu, true);\n", noisyLexPeek(noisyCgiState, 1)->sourceInfo->lineNumber, noisyLexPeek(noisyCgiState, 1)->sourceInfo->columnNumber);
+	printf("            editor.gotoLine(%llu, %llu, true);\n", lexPeek(noisyCgiState, 1)->sourceInfo->lineNumber, lexPeek(noisyCgiState, 1)->sourceInfo->columnNumber);
 	/*
 	 *	Have ACE autosize the height, with an upper limit at maxLines
 	 */

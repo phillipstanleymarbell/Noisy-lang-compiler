@@ -50,7 +50,7 @@
 
 
 void
-noisyIrPassHelperColorIr(State *  N, IrNode *  p, IrNodeColor nodeColor, bool setNotClear, bool recurseFlag)
+irPassHelperColorIr(State *  N, IrNode *  p, IrNodeColor nodeColor, bool setNotClear, bool recurseFlag)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperColorIr);
 
@@ -76,8 +76,8 @@ noisyIrPassHelperColorIr(State *  N, IrNode *  p, IrNodeColor nodeColor, bool se
 
 	if (recurseFlag)
 	{
-		noisyIrPassHelperColorIr(N, p->irLeftChild, nodeColor, setNotClear, recurseFlag);
-		noisyIrPassHelperColorIr(N, p->irRightChild, nodeColor, setNotClear, recurseFlag);
+		irPassHelperColorIr(N, p->irLeftChild, nodeColor, setNotClear, recurseFlag);
+		irPassHelperColorIr(N, p->irRightChild, nodeColor, setNotClear, recurseFlag);
 	}
 
 	return;
@@ -85,7 +85,7 @@ noisyIrPassHelperColorIr(State *  N, IrNode *  p, IrNodeColor nodeColor, bool se
 
 
 void
-noisyIrPassHelperColorSymbolTable(State *  N, Scope *  p, IrNodeColor nodeColor, bool setNotClear, bool recurseFlag)
+irPassHelperColorSymbolTable(State *  N, Scope *  p, IrNodeColor nodeColor, bool setNotClear, bool recurseFlag)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperColorSymbolTable);
 
@@ -108,18 +108,18 @@ noisyIrPassHelperColorSymbolTable(State *  N, Scope *  p, IrNodeColor nodeColor,
 		Scope *	tmp = p->firstChild;
 		while (tmp != NULL)
 		{
-			noisyIrPassHelperColorSymbolTable(N, tmp, nodeColor, setNotClear, recurseFlag);
+			irPassHelperColorSymbolTable(N, tmp, nodeColor, setNotClear, recurseFlag);
 			tmp = tmp->next;
 		}
 	}
-	noisyIrPassHelperColorSymbolTable(N, p->next, nodeColor, setNotClear, recurseFlag);
+	irPassHelperColorSymbolTable(N, p->next, nodeColor, setNotClear, recurseFlag);
 
 	return;
 }
 
 
 uint64_t
-noisyIrPassHelperIrSize(State *  N, IrNode *  p)
+irPassHelperIrSize(State *  N, IrNode *  p)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperIrSize);
 
@@ -134,12 +134,12 @@ noisyIrPassHelperIrSize(State *  N, IrNode *  p)
 		return 0;
 	}
 
-	return (1 + noisyIrPassHelperIrSize(N, p->irLeftChild) + noisyIrPassHelperIrSize(N, p->irRightChild));
+	return (1 + irPassHelperIrSize(N, p->irLeftChild) + irPassHelperIrSize(N, p->irRightChild));
 }
 
 
 uint64_t
-noisyIrPassHelperSymbolTableSize(State *  N, Scope *  p)
+irPassHelperSymbolTableSize(State *  N, Scope *  p)
 {
 	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperSymbolTableSize);
 
@@ -152,9 +152,9 @@ noisyIrPassHelperSymbolTableSize(State *  N, Scope *  p)
 	Scope *	tmp = p->firstChild;
 	while (tmp != NULL)
 	{
-		n += noisyIrPassHelperSymbolTableSize(N, tmp);
+		n += irPassHelperSymbolTableSize(N, tmp);
 		tmp = tmp->next;
 	}
 
-	return (1 + n + noisyIrPassHelperSymbolTableSize(N, p->next));
+	return (1 + n + irPassHelperSymbolTableSize(N, p->next));
 }

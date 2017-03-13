@@ -66,8 +66,8 @@ noisyIrPassProtobufBackend(State *  N)
 	 *	which nodes have been visited, in case when
 	 *	the graph is not a tree.
 	 */
-	noisyIrPassHelperColorIr(N, N->noisyIrRoot, kNoisyIrNodeColorProtobufBackendColoring, true/* set */, true/* recurse flag */);
-	noisyIrPassHelperColorSymbolTable(N, N->noisyIrTopScope, kNoisyIrNodeColorProtobufBackendColoring, true/* set */, true/* recurse flag */);
+	irPassHelperColorIr(N, N->noisyIrRoot, kNoisyIrNodeColorProtobufBackendColoring, true/* set */, true/* recurse flag */);
+	irPassHelperColorSymbolTable(N, N->noisyIrTopScope, kNoisyIrNodeColorProtobufBackendColoring, true/* set */, true/* recurse flag */);
 
 	noisyIrPassProtobufAstSerializeWalk(N, N->noisyIrRoot);
 	noisyIrPassProtobufSymbolTableSerializeWalk(N, N->noisyIrTopScope);

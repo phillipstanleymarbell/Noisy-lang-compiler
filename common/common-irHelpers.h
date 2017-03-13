@@ -35,7 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-IrNode *	genNoisyIrNode(State *  N, IrNodeType type, IrNode *  irLeftChild, IrNode *  irRightChild, SourceInfo *  sourceInfo);
+IrNode *	genIrNode(State *  N, IrNodeType type, IrNode *  irLeftChild, IrNode *  irRightChild, SourceInfo *  sourceInfo);
 void		errorUseBeforeDefinition(State *  N, const char *  identifier);
 void		errorMultiDefinition(State *  N, Symbol *  symbol);
 IrNode *	depthFirstWalk(State *  N, IrNode *  node);

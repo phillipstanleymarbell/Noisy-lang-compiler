@@ -177,7 +177,7 @@ char * test_newtonApiNumberParametersZeroToN()
 IrNode *
 makeTestParameterTuple(State * newton)
 {
-  IrNode *	root = genNoisyIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
+  IrNode *	root = genIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
 									  NULL /* left child */,
 									  NULL /* right child */,
 									  NULL /* source info */);
@@ -210,7 +210,7 @@ makeNoisyIrNodeSetValue(
     char * identifier,
     double realConst
 ) {
-	IrNode * node = genNoisyIrNode(
+	IrNode * node = genIrNode(
         N,
         nodeType,
 	    NULL /* left child */,
@@ -218,7 +218,7 @@ makeNoisyIrNodeSetValue(
 	    NULL /* source info */
     );
 
-  node->token = noisyLexAllocateToken(
+  node->token = lexAllocateToken(
                                       N,
                                       nodeType /* type */,
                                       identifier /* identifier */,

@@ -407,8 +407,8 @@ noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot
 	/*
 	 *	Heuristic
 	 */
-	irAndSymbolTableSize += noisyIrPassHelperIrSize(N, noisyIrRoot);
-	irAndSymbolTableSize += noisyIrPassHelperSymbolTableSize(N, noisyIrTopScope);
+	irAndSymbolTableSize += irPassHelperIrSize(N, noisyIrRoot);
+	irAndSymbolTableSize += irPassHelperSymbolTableSize(N, noisyIrTopScope);
 	bufferLength = irAndSymbolTableSize*kNoisyChunkBufferLength;
 
 	/*
@@ -468,8 +468,8 @@ noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot
 	 *	which nodes have been visited, in case when
 	 *	the graph is not a tree.
 	 */
-	noisyIrPassHelperColorIr(N, noisyIrRoot, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
-	noisyIrPassHelperColorSymbolTable(N, noisyIrTopScope, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
+	irPassHelperColorIr(N, noisyIrRoot, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
+	irPassHelperColorSymbolTable(N, noisyIrTopScope, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
 
 	n += noisyIrPassDotAstPrintWalk(N, noisyIrRoot, &buf[n], bufferLength);
 	bufferLength -= n;
@@ -487,8 +487,8 @@ noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot
 	 *	colors of nodes above anyway. If/when we decide to get rid of
 	 *	this, be sure to document the associated gain.
 	 */
-	noisyIrPassHelperColorIr(N, noisyIrRoot, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
-	noisyIrPassHelperColorSymbolTable(N, noisyIrTopScope, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
+	irPassHelperColorIr(N, noisyIrRoot, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
+	irPassHelperColorSymbolTable(N, noisyIrTopScope, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
 #endif
 
 	return buf;

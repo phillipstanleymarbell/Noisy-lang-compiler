@@ -148,7 +148,7 @@ newtonApiAddLeafWithChainingSeqNoLexer(State *  N, IrNode *  parent, IrNode *  n
       return;
     }
 
-	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
+	node->irRightChild = genIrNode(N,	kNoisyIrNodeType_Xseq,
                                       newNode /* left child */,
                                       NULL /* right child */,
                                       NULL/* source info */);

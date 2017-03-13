@@ -82,10 +82,10 @@ newtonParseNumericExpression(State * N, Scope * currentScope)
 IrNode *
 newtonParseNumericTerm(State * N, Scope * currentScope)
 {
-    IrNode *   intermediate = genNoisyIrNode(N,   kNewtonIrNodeType_PquantityTerm,
+    IrNode *   intermediate = genIrNode(N,   kNewtonIrNodeType_PquantityTerm,
                         NULL /* left child */,
                         NULL /* right child */,
-                        noisyLexPeek(N, 1)->sourceInfo /* source info */);
+                        lexPeek(N, 1)->sourceInfo /* source info */);
     intermediate->value = 1;
     if (noisyInFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts))
     {
@@ -166,10 +166,10 @@ newtonParseNumericFactor(State * N, Scope * currentScope)
 IrNode *
 newtonParseQuantityExpression(State * N, Scope * currentScope)
 {
-    IrNode *   expression = genNoisyIrNode(N,   kNewtonIrNodeType_PquantityExpression,
+    IrNode *   expression = genIrNode(N,   kNewtonIrNodeType_PquantityExpression,
                                                   NULL /* left child */,
                                                   NULL /* right child */,
-                                                  noisyLexPeek(N, 1)->sourceInfo /* source info */);
+                                                  lexPeek(N, 1)->sourceInfo /* source info */);
 
     expression->physics = (Physics *) calloc(1, sizeof(Physics));
     expression->physics->numeratorPrimeProduct = 1;
@@ -213,10 +213,10 @@ newtonParseQuantityExpression(State * N, Scope * currentScope)
 IrNode *
 newtonParseQuantityTerm(State * N, Scope * currentScope)
 {
-    IrNode *   intermediate = genNoisyIrNode(N,   kNewtonIrNodeType_PquantityTerm,
+    IrNode *   intermediate = genIrNode(N,   kNewtonIrNodeType_PquantityTerm,
                         NULL /* left child */,
                         NULL /* right child */,
-                        noisyLexPeek(N, 1)->sourceInfo /* source info */);
+                        lexPeek(N, 1)->sourceInfo /* source info */);
 
     intermediate->physics = (Physics *) calloc(1, sizeof(Physics));
     intermediate->physics->numeratorPrimeProduct = 1;
@@ -461,10 +461,10 @@ newtonParseExponentialExpression(State * N, Scope * currentScope, IrNode * baseN
 IrNode *
 newtonParseVectorOp(State *  N, Scope * currentScope)
 {
-    IrNode *   intermediate = genNoisyIrNode(N,   kNewtonIrNodeType_PvectorOp,
+    IrNode *   intermediate = genIrNode(N,   kNewtonIrNodeType_PvectorOp,
                         NULL /* left child */,
                         NULL /* right child */,
-                        noisyLexPeek(N, 1)->sourceInfo /* source info */);
+                        lexPeek(N, 1)->sourceInfo /* source info */);
 
     intermediate->physics = (Physics *) calloc(1, sizeof(Physics));
     intermediate->physics->numeratorPrimeProduct = 1;
@@ -560,16 +560,16 @@ newtonParseUnaryOp(State *  N, Scope * currentScope)
 IrNode *
 newtonParseTimeOp(State * N, Scope * currentScope)
 {
-	IrNode *	node = genNoisyIrNode(
+	IrNode *	node = genIrNode(
         N,
         kNewtonIrNodeType_PtimeOp,
 		NULL /* left child */,
 		NULL /* right child */,
-		noisyLexPeek(N, 1)->sourceInfo /* source info */
+		lexPeek(N, 1)->sourceInfo /* source info */
     );
     
     IrNodeType type;
-    if ((type = noisyLexPeek(N, 1)->type) == kNewtonIrNodeType_Tintegral || 
+    if ((type = lexPeek(N, 1)->type) == kNewtonIrNodeType_Tintegral || 
          type == kNewtonIrNodeType_Tderivative)
     {
 		addLeaf(N, node, newtonParseTerminal(N, type, currentScope));
@@ -579,7 +579,7 @@ newtonParseTimeOp(State * N, Scope * currentScope)
         noisyFatal(N, "newton-parser-expression.c:newtonParseTimeOp: did not detect derivative or integral\n");
     }
 
-    while ((type = noisyLexPeek(N, 1)->type) == kNewtonIrNodeType_Tintegral || 
+    while ((type = lexPeek(N, 1)->type) == kNewtonIrNodeType_Tintegral || 
             type == kNewtonIrNodeType_Tderivative)
     {
 		addLeafWithChainingSeq(N, node, newtonParseTerminal(N, type, currentScope));
@@ -595,7 +595,7 @@ newtonParseCompareOp(State * N, Scope * currentScope)
 {
     
     IrNodeType type;
-    if ((type = noisyLexPeek(N, 1)->type) == kNewtonIrNodeType_Tlt || 
+    if ((type = lexPeek(N, 1)->type) == kNewtonIrNodeType_Tlt || 
          type == kNewtonIrNodeType_Tle ||
          type == kNewtonIrNodeType_Tge ||
          type == kNewtonIrNodeType_Tgt ||
@@ -614,12 +614,12 @@ newtonParseCompareOp(State * N, Scope * currentScope)
 IrNode *
 newtonParseHighPrecedenceBinaryOp(State * N, Scope * currentScope)
 {
-	IrNode *	node = genNoisyIrNode(
+	IrNode *	node = genIrNode(
         N,
         kNewtonIrNodeType_PhighPrecedenceBinaryOp,
 		NULL /* left child */,
 		NULL /* right child */,
-		noisyLexPeek(N, 1)->sourceInfo /* source info */
+		lexPeek(N, 1)->sourceInfo /* source info */
     );
     
     if (peekCheck(N, 1, kNewtonIrNodeType_Texponent))
@@ -657,10 +657,10 @@ newtonParseMidPrecedenceBinaryOp(State *  N, Scope * currentScope)
 IrNode *
 newtonParseInteger(State * N, Scope * currentScope)
 {
-	IrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pinteger,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pinteger,
 						NULL /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
     
     if (noisyInFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts))
     {
