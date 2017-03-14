@@ -461,6 +461,7 @@ struct Dimension
 	
     SourceInfo *	sourceInfo;
 
+
     int primeNumber;
 
     Dimension * next;
@@ -470,9 +471,11 @@ struct Invariant
 {
     char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
 
+
     
     Scope *		scope;
     SourceInfo *	sourceInfo;
+
 
 
     IrNode * parameterList; // this is just bunch of IrNode's in Xseq
@@ -491,6 +494,7 @@ struct Physics
     
     Scope *		scope;
     SourceInfo *	sourceInfo;
+
 
     bool isVector;
     Physics * vectorCounterpart; // non-NULL if a scalar AND counterpart defined in vectorScalarPairScope
@@ -540,6 +544,7 @@ struct IrNode
 	IrNode *		irRightChild;
 
 	Symbol *		symbol;
+
 
 
   /*

@@ -582,7 +582,6 @@ checkQuantityFactor(
 	int expressionIndex = 0;
 	while  (highBinOpNode != NULL)
 	{
-
 	  strcat(errorMessage, gNewtonTokenDescriptions[highBinOpNode->type]);
 	  strcat(errorMessage, "(");
 
