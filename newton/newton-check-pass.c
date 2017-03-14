@@ -231,7 +231,7 @@ newtonCheckBinOp(
 		    report->satisfiesValueConstraint = report->satisfiesValueConstraint && (left->value != 0 || right->value != 0);
 			if (!report->satisfiesValueConstraint)
 			  {
-				noisyFatal(N, "newton-check-pass.c:newtonCheckBinOp: cannot raise 0 to 0 power");
+				fatal(N, "newton-check-pass.c:newtonCheckBinOp: cannot raise 0 to 0 power");
 			  }
             left->value = pow(left->value, right->value);
 
