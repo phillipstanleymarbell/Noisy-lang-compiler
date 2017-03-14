@@ -52,22 +52,22 @@
 /*
  *	NOTE: Unlike in our previous compilers (e.g., Crayon), we do
  *
- *		inFirst(NoisyIrNodeType productionOrToken)
+ *		inFirst(IrNodeType productionOrToken)
  *
  *	with the token being checked implicit in the lexer state, rather than
  *
- *		inFirst(NoisyIrNodeType productionOrToken, NoisyIrNodeType token)
+ *		inFirst(IrNodeType productionOrToken, IrNodeType token)
  */
 bool
-noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
+inFirst(State *  N, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFirst);
+	TimeStampTraceMacro(kNoisyTimeStampKeyInFirst);
 
-	NoisyToken *	token = noisyLexPeek(N, 1);
+	Token *	token = lexPeek(N, 1);
 
 	if (productionOrToken > kNoisyIrNodeTypeMax)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
 	/*
@@ -88,63 +88,27 @@ noisyInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken, int firsts[kNoi
 /*
  *	NOTE: Unlike in our previous compilers (e.g., Crayon), we do
  *
- *		inFollow(NoisyIrNodeType productionOrToken)
+ *		inFollow(IrNodeType productionOrToken)
  *
  *	with the token being checked implicit in the lexer state, rather than
  *
- *		inFollow(NoisyIrNodeType productionOrToken, NoisyIrNodeType token)
+ *		inFollow(IrNodeType productionOrToken, IrNodeType token)
  */
 bool
-noisyInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
+inFollow(State *  N, IrNodeType productionOrToken, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFollow);
+	TimeStampTraceMacro(kNoisyTimeStampKeyInFollow);
 
-	NoisyToken *	token = noisyLexPeek(N, 1);
+	Token *	token = lexPeek(N, 1);
 
 	if (productionOrToken > kNoisyIrNodeTypeMax)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
 	/*
 	 *	NOTE: The arrays created by ffi2code have a kNoisyIrNodeTypeMax element at the end of each sub-array
 	 */
-	for (int i = 0; i < kNoisyIrNodeTypeMax && follows[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
-	{
-		if (follows[productionOrToken][i] == token->type)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool irInFirst(NoisyState *  N, NoisyIrNodeType productionOrToken, NoisyToken* token, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
-{
-	if (productionOrToken > kNoisyIrNodeTypeMax)
-	{
-		noisyFatal(N, Esanity);
-	}
-
-	for (int i = 0; i < kNoisyIrNodeTypeMax && firsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
-	{
-		if (firsts[productionOrToken][i] == token->type)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool irInFollow(NoisyState *  N, NoisyIrNodeType productionOrToken, NoisyToken* token, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
-{
-	if (productionOrToken > kNoisyIrNodeTypeMax)
-	{
-		noisyFatal(N, Esanity);
-	}
-
 	for (int i = 0; i < kNoisyIrNodeTypeMax && follows[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
 		if (follows[productionOrToken][i] == token->type)

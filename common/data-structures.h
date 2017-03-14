@@ -246,71 +246,6 @@ typedef enum
 
 
     /*
-     * Config file related node types
-     */
-	kNoisyConfigIrNodeType_Tnil,
-	kNoisyConfigIrNodeType_Tsemicolon,
-	kNoisyConfigIrNodeType_TrightParen,
-	kNoisyConfigIrNodeType_TleftParen,
-	kNoisyConfigIrNodeType_TrightBrace,
-	kNoisyConfigIrNodeType_TleftBrace,
-	kNoisyConfigIrNodeType_TrightBrac,
-	kNoisyConfigIrNodeType_TleftBrac,
-	kNoisyConfigIrNodeType_Tequals,
-	kNoisyConfigIrNodeType_Tcomma,
-	kNoisyConfigIrNodeType_Tcross,
-	kNoisyConfigIrNodeType_Tdot,
-	kNoisyConfigIrNodeType_Tdiv,
-	kNoisyConfigIrNodeType_Tmul,
-	kNoisyConfigIrNodeType_Tplus,
-	kNoisyConfigIrNodeType_Tminus,
-	kNoisyConfigIrNodeType_TstringConst,
-	kNoisyConfigIrNodeType_Tidentifier,
-	kNoisyConfigIrNodeType_TvectorScalarPairs,
-	kNoisyConfigIrNodeType_TscalarIntegrals,
-	kNoisyConfigIrNodeType_TvectorIntegrals,
-	kNoisyConfigIrNodeType_TdimensionAliases,
-	kNoisyConfigIrNodeType_Tlaw,
-	kNoisyConfigIrNodeType_TdimensionTypeNames,
-	kNoisyConfigIrNodeType_PanonAggregateCastExpression,
-	kNoisyConfigIrNodeType_ParrayCastExpression,
-	kNoisyConfigIrNodeType_PassignOp,
-	kNoisyConfigIrNodeType_PvectorOp,
-	kNoisyConfigIrNodeType_PhighPrecedenceBinaryOp,
-	kNoisyConfigIrNodeType_PlowPrecedenceBinaryOp,
-	kNoisyConfigIrNodeType_PunaryOp,
-	kNoisyConfigIrNodeType_Pfactor,
-	kNoisyConfigIrNodeType_Pterm,
-	kNoisyConfigIrNodeType_Pexpression,
-	kNoisyConfigIrNodeType_PvectorScalarPairStatement,
-	kNoisyConfigIrNodeType_PvectorIntegralList,
-	kNoisyConfigIrNodeType_PscalarIntegralList,
-	kNoisyConfigIrNodeType_PlawStatement,
-	kNoisyConfigIrNodeType_PdimensionTypeNameStatement,
-	kNoisyConfigIrNodeType_PdimensionAliasStatement,
-	kNoisyConfigIrNodeType_PvectorScalarPairStatementList,
-	kNoisyConfigIrNodeType_PvectorIntegralLists,
-	kNoisyConfigIrNodeType_PscalarIntegralLists,
-	kNoisyConfigIrNodeType_PlawStatementList,
-	kNoisyConfigIrNodeType_PdimensionTypeNameStatementList,
-	kNoisyConfigIrNodeType_PdimensionAliasStatementList,
-	kNoisyConfigIrNodeType_PvectorScalarPairScope,
-	kNoisyConfigIrNodeType_PscalarIntegralScope,
-	kNoisyConfigIrNodeType_PvectorIntegralScope,
-	kNoisyConfigIrNodeType_PdimensionAliasScope,
-	kNoisyConfigIrNodeType_PlawScope,
-	kNoisyConfigIrNodeType_PdimensionTypeNameScope,
-	kNoisyConfigIrNodeType_PconfigFile,
-
-	kNoisyConfigIrNodeType_Xseq,
-
-    kNoisyConfigIrNodeType_ZbadIdentifier,
-    kNoisyConfigIrNodeType_ZbadCharConst,
-	kNoisyConfigIrNodeType_Zepsilon,
-	kNoisyConfigIrNodeType_Zeof,
-    kNoisyConfigIrNodeType_ZbadStringConst,
-
-    /*
      * Newton related nodes
      */
 	kNewtonIrNodeType_Tnil,
@@ -386,7 +321,7 @@ typedef enum
 	 *	Code depends on this bringing up the rear.
 	 */
 	kNoisyIrNodeTypeMax,
-} NoisyIrNodeType;
+} IrNodeType;
 
 
 
@@ -453,7 +388,7 @@ typedef enum
 	 *	Code depends on this bringing up the rear.
 	 */
 	kNoisyIrNodeColor,
-} NoisyIrNodeColor;
+} IrNodeColor;
 
 
 
@@ -476,7 +411,7 @@ typedef enum
 	 *	Code depends on this bringing up the rear.
 	 */
 	kNoisyConstantMax,
-} NoisyConstant;
+} Constant;
 
 
 
@@ -506,11 +441,11 @@ typedef enum
 } NoisyPostFileWriteAction;
 
 
-typedef struct NoisyScope	NoisyScope;
-typedef struct NoisySymbol	NoisySymbol;
-typedef struct NoisyToken	NoisyToken;
-typedef struct NoisyIrNode	NoisyIrNode;
-typedef struct NoisySourceInfo	NoisySourceInfo;
+typedef struct Scope	Scope;
+typedef struct Symbol	Symbol;
+typedef struct Token	Token;
+typedef struct IrNode	IrNode;
+typedef struct SourceInfo	SourceInfo;
 typedef struct Dimension Dimension;
 typedef struct Physics Physics;
 typedef struct IntegralList IntegralList;
@@ -521,9 +456,11 @@ struct Dimension
     char * identifier;
     char * abbreviation;
 
-    NoisyScope *		scope;
+	
+    Scope *		scope;
+	
+    SourceInfo *	sourceInfo;
 
-    NoisySourceInfo *	sourceInfo;
 
     int primeNumber;
 
@@ -534,13 +471,17 @@ struct Invariant
 {
     char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
 
-    NoisyScope *		scope;
-    NoisySourceInfo *	sourceInfo;
 
-    NoisyIrNode * parameterList; // this is just bunch of NoisyIrNode's in Xseq
+    
+    Scope *		scope;
+    SourceInfo *	sourceInfo;
+
+
+
+    IrNode * parameterList; // this is just bunch of IrNode's in Xseq
     unsigned long long int id;
 
-    NoisyIrNode * constraints;
+    IrNode * constraints;
 
     Invariant * next;
 };
@@ -550,8 +491,10 @@ struct Physics
     char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
     unsigned long long int id;
 
-    NoisyScope *		scope;
-    NoisySourceInfo *	sourceInfo;
+    
+    Scope *		scope;
+    SourceInfo *	sourceInfo;
+
 
     bool isVector;
     Physics * vectorCounterpart; // non-NULL if a scalar AND counterpart defined in vectorScalarPairScope
@@ -586,21 +529,22 @@ struct IntegralList
     IntegralList * next;
 };
 
-struct NoisyIrNode
+struct IrNode
 {
-	NoisyIrNodeType		type;
+	IrNodeType		type;
 
 	/*
 	 *	Syntactic (AST) information.
 	 */
 	char *			tokenString;
-    NoisyToken * token;
-	NoisySourceInfo	*	sourceInfo;
-	NoisyIrNode *		irParent;
-	NoisyIrNode *		irLeftChild;
-	NoisyIrNode *		irRightChild;
+  Token * token;
+	SourceInfo	*	sourceInfo;
+	IrNode *		irParent;
+	IrNode *		irLeftChild;
+	IrNode *		irRightChild;
 
-	NoisySymbol *		symbol;
+	Symbol *		symbol;
+
 
 
   /*
@@ -626,11 +570,11 @@ struct NoisyIrNode
   /*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
 	 */
-	NoisyIrNodeColor	nodeColor;
+	IrNodeColor	nodeColor;
 };
 
 
-struct NoisySourceInfo
+struct SourceInfo
 {
 	/*
 	 *	Not yet used; for when we implement includes, this will be
@@ -645,22 +589,22 @@ struct NoisySourceInfo
 };
 
 
-struct NoisyToken
+struct Token
 {
-	NoisyIrNodeType		type;
+	IrNodeType		type;
 	char *			identifier;
 	uint64_t		integerConst;
 	double			realConst;
 	char *			stringConst;
-	NoisySourceInfo *	sourceInfo;
+	SourceInfo *	sourceInfo;
 	
-	NoisyToken *		prev;
-	NoisyToken *		next;
+	Token *		prev;
+	Token *		next;
 };
 
 
 
-struct NoisyScope
+struct Scope
 {
 	/*
 	 *	For named scopes (at the moment, only Progtypes)
@@ -670,18 +614,18 @@ struct NoisyScope
 	/*
 	 *	Hierarchy. The firstChild is used to access its siblings via firstChild->next
 	 */
-	NoisyScope *		parent;
-	NoisyScope *		firstChild;
+	Scope *		parent;
+	Scope *		firstChild;
 
 	/*
 	 *	Symbols in this scope. The list of symbols is accesed via firstSymbol->next
 	 */
-	NoisySymbol *		firstSymbol;
+	Symbol *		firstSymbol;
 
     /*
      * each invariant scope will have its own list of parameters
      */
-    NoisyIrNode * invariantParameterList; // this is just bunch of NoisyIrNode's in Xseq
+    IrNode * invariantParameterList; // this is just bunch of IrNode's in Xseq
     
     /*
      * For the config file, we only have one global scope that keeps track of all
@@ -693,24 +637,24 @@ struct NoisyScope
 	/*
 	 *	Where in source scope begins and ends
 	 */
-	NoisySourceInfo *	begin;
-	NoisySourceInfo *	end;
+	SourceInfo *	begin;
+	SourceInfo *	end;
 
 	/*
 	 *	For chaining together scopes (currently only used for Progtype
 	 *	scopes and for chaining together children).
 	 */
-	NoisyScope *		next;
-	NoisyScope *		prev;
+	Scope *		next;
+	Scope *		prev;
 
 	/*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
 	 */
-	NoisyIrNodeColor	nodeColor;
+	IrNodeColor	nodeColor;
 };
 
 
-struct NoisySymbol
+struct Symbol
 {
 	char *			identifier;
 
@@ -718,7 +662,7 @@ struct NoisySymbol
 	 *	This field is duplicated in the AST node, since only
 	 *	identifiers get into the symbol table:
 	 */
-	NoisySourceInfo *	sourceInfo;
+	SourceInfo *	sourceInfo;
 
 	/*
 	 *	Declaration, type definition, use, etc. (kNoisySymbolTypeXXX)
@@ -728,17 +672,17 @@ struct NoisySymbol
 	/*
 	 *	Scope within which sym appears
 	 */
-	NoisyScope *		scope;
+	Scope *		scope;
 
 	/*
 	 *	If an identifier use, definition's Sym, if any
 	 */
-	NoisySymbol *		definition;
+	Symbol *		definition;
 
 	/*
 	 *	Subtree in AST that represents typeexpr
 	 */
-	NoisyIrNode *		typeTree;
+	IrNode *		typeTree;
 
 	/*
 	 *	If an I_CONST, its value.
@@ -750,8 +694,8 @@ struct NoisySymbol
 	/*
 	 *	For chaining together sibling symbols in the same scope
 	 */
-	NoisySymbol *		next;
-	NoisySymbol *		prev;
+	Symbol *		next;
+	Symbol *		prev;
 };
 
 
@@ -761,7 +705,7 @@ typedef struct
 	 *	Timestamps to track lifecycle
 	 */
 	uint64_t		initializationTimestamp;
-	NoisyTimeStamp *	timestamps;
+	TimeStamp *	timestamps;
 	uint64_t		timestampCount;
 	uint64_t		timestampSlots;
 
@@ -771,7 +715,7 @@ typedef struct
 	 *	timeAggregates[timeAggregatesLastKey] by (now - timeAggregatesLastTimestamp)
 	 */
 	uint64_t *		timeAggregates;
-	NoisyTimeStampKey	timeAggregatesLastKey;
+	TimeStampKey	timeAggregatesLastKey;
 	uint64_t		timeAggregatesLastTimestamp;
 	uint64_t		timeAggregateTotal;
 	uint64_t *		callAggregates;
@@ -814,7 +758,7 @@ typedef struct
 	 *	In this use case, the node->identifier holds the scopes string name, and we
 	 *	chain then using their prev/next fields.
 	 */
-	NoisyScope *		progtypeScopes;
+	Scope *		progtypeScopes;
 
 
 	/*
@@ -827,17 +771,17 @@ typedef struct
 	uint64_t		lineLength;
 	char *			currentToken;
 	uint64_t		currentTokenLength;
-	NoisyToken *		tokenList;
-	NoisyToken *		lastToken;
+	Token *		tokenList;
+	Token *		lastToken;
 	
 
 	/*
 	 *	The root of the IR tree, and top scope
 	 */
-	NoisyIrNode *		noisyIrRoot;
-	NoisyIrNode *		newtonIrRoot;
-	NoisyScope *		noisyIrTopScope;
-    NoisyScope *        newtonIrTopScope;
+	IrNode *		noisyIrRoot;
+	IrNode *		newtonIrRoot;
+	Scope *		noisyIrTopScope;
+  Scope *        newtonIrTopScope;
 
 	/*
 	 *	Output file name when emitting bytecode/protobuf
@@ -879,19 +823,19 @@ typedef struct
 
     Invariant * invariantList;
 
-} NoisyState;
+} State;
 
 
-void				noisyFatal(NoisyState *  C, const char *  msg) __attribute__((noreturn));
-void				noisyError(NoisyState *  C, const char *  msg);
-void				noisyTimestampsInit(NoisyState *  C);
-void				noisyTimeStampDumpTimeline(NoisyState *  C);
-void				noisyTimeStampDumpResidencies(NoisyState *  C);
-NoisyState *			noisyInit(NoisyMode mode);
-void				noisyDealloc(NoisyState *  C);
-void				noisyRunPasses(NoisyState *  C);
-uint64_t			noisyCheckRss(NoisyState *  C);
-void				noisyConsolePrintBuffers(NoisyState *  C);
-void				noisyPrintToFile(NoisyState *  C, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action);
-void				noisyRenderDotInFile(NoisyState *  C, char *  pathName, char *  randomizedFileName);
-void				noisyCheckCgiCompletion(NoisyState *  C, const char *  pathName, const char *  renderExtension);
+void				fatal(State *  C, const char *  msg) __attribute__((noreturn));
+void				error(State *  C, const char *  msg);
+void				timestampsInit(State *  C);
+void				timeStampDumpTimeline(State *  C);
+void				timeStampDumpResidencies(State *  C);
+State *			init(NoisyMode mode);
+void				dealloc(State *  C);
+void				runPasses(State *  C);
+uint64_t		checkRss(State *  C);
+void				consolePrintBuffers(State *  C);
+void				printToFile(State *  C, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action);
+void				renderDotInFile(State *  C, char *  pathName, char *  randomizedFileName);
+void				checkCgiCompletion(State *  C, const char *  pathName, const char *  renderExtension);

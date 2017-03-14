@@ -57,7 +57,7 @@ char * test_newtonApiInit_notNull()
 
 char * test_newtonApiInit_notNullInvariant()
 {
-    NoisyState* N = newtonApiInit("../Examples/invariants.nt");
+    State* N = newtonApiInit("../Examples/invariants.nt");
 	mu_assert(
         "test_newtonApiInit_notNullInvariant: invariantList is NULL!",
          N->invariantList != NULL
@@ -67,7 +67,7 @@ char * test_newtonApiInit_notNullInvariant()
 
 char * test_newtonApiGetPhysicsTypeByName_Valid()
 {
-    NoisyState* N = newtonApiInit("../Examples/invariants.nt");
+    State* N = newtonApiInit("../Examples/invariants.nt");
     mu_assert(
         "newtonApiGetPhysicsTypeByName: distance not found",
         !strcmp(
@@ -89,7 +89,7 @@ char * test_newtonApiGetPhysicsTypeByName_Valid()
 
 char * test_newtonApiGetInvariantByParameters_Valid()
 {
-    NoisyState* N = newtonApiInit("../Examples/invariants.nt");
+    State* N = newtonApiInit("../Examples/invariants.nt");
 
     mu_assert(
         "test_newtonApiGetInvariantByParameters: the invariant is named SimplePendulum",
@@ -106,8 +106,8 @@ char * test_newtonApiGetInvariantByParameters_Valid()
 
 char * test_newtonCheckSingleInvariant()
 {
-  NoisyState * newton = newtonApiInit("../Examples/invariants.nt");
-  NoisyIrNode* parameterTree = makeTestParameterTuple(newton);
+  State * newton = newtonApiInit("../Examples/invariants.nt");
+  IrNode* parameterTree = makeTestParameterTuple(newton);
   NewtonAPIReport* newtonReport = newtonApiSatisfiesConstraints(
 													   newton,
 													   parameterTree
@@ -130,17 +130,17 @@ char * test_newtonCheckSingleInvariant()
  */
 char * test_newtonApiPhysicsTypeUsageExample()
 {
-    NoisyState * noisy = noisyInit(kNoisyModeDefault);
-    NoisyState * newton = newtonApiInit("../Examples/invariants.nt");
+    State * noisy = init(kNoisyModeDefault);
+    State * newton = newtonApiInit("../Examples/invariants.nt");
 
-    NoisyIrNode * distanceNode = makeNoisyIrNodeSetValue(
+    IrNode * distanceNode = makeIrNodeSetValue(
         noisy,
         kNoisyIrNodeType_Tidentifier,
         "distance",
         0.0
     );
 
-    NoisyIrNode * timeNode = makeNoisyIrNodeSetValue(
+    IrNode * timeNode = makeIrNodeSetValue(
         noisy,
         kNoisyIrNodeType_Tidentifier,
         "time",
@@ -160,8 +160,8 @@ char * test_newtonApiPhysicsTypeUsageExample()
 
 char * test_newtonApiNumberParametersZeroToN()
 {
-  NoisyState * newton = newtonApiInit("../Examples/invariants.nt");
-  NoisyIrNode* parameterTree = makeTestParameterTuple(newton);
+  State * newton = newtonApiInit("../Examples/invariants.nt");
+  IrNode* parameterTree = makeTestParameterTuple(newton);
   mu_assert(
             "test_newtonApiNumberParametersZeroToN: the first left child should have number of 0",
             parameterTree->irLeftChild->parameterNumber == 0
@@ -174,14 +174,14 @@ char * test_newtonApiNumberParametersZeroToN()
 }
 
 
-NoisyIrNode *
-makeTestParameterTuple(NoisyState * newton)
+IrNode *
+makeTestParameterTuple(State * newton)
 {
-  NoisyIrNode *	root = genNoisyIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
+  IrNode *	root = genIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
 									  NULL /* left child */,
 									  NULL /* right child */,
 									  NULL /* source info */);
-  NoisyIrNode * distanceParameter = makeNoisyIrNodeSetValue(
+  IrNode * distanceParameter = makeIrNodeSetValue(
 													   newton,
                              kNewtonIrNodeType_Pparameter,
                              "distance",
@@ -190,7 +190,7 @@ makeTestParameterTuple(NoisyState * newton)
   distanceParameter->physics = newtonApiGetPhysicsTypeByName(newton, distanceParameter->token->identifier);
   newtonApiAddLeaf(newton, root, distanceParameter);
 
-  NoisyIrNode * timeParameter = makeNoisyIrNodeSetValue(
+  IrNode * timeParameter = makeIrNodeSetValue(
 												   newton,
 												   kNewtonIrNodeType_Pparameter,
 												   "time",
@@ -203,14 +203,14 @@ makeTestParameterTuple(NoisyState * newton)
   return root;
 }
 
-NoisyIrNode *
-makeNoisyIrNodeSetValue(
-    NoisyState * N,
-    NoisyIrNodeType nodeType,
+IrNode *
+makeIrNodeSetValue(
+    State * N,
+    IrNodeType nodeType,
     char * identifier,
     double realConst
 ) {
-	NoisyIrNode * node = genNoisyIrNode(
+	IrNode * node = genIrNode(
         N,
         nodeType,
 	    NULL /* left child */,
@@ -218,7 +218,7 @@ makeNoisyIrNodeSetValue(
 	    NULL /* source info */
     );
 
-  node->token = noisyLexAllocateToken(
+  node->token = lexAllocateToken(
                                       N,
                                       nodeType /* type */,
                                       identifier /* identifier */,

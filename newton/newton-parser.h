@@ -1,79 +1,79 @@
-NoisyIrNode * 
-newtonParse(NoisyState *  N, NoisyScope *  currentScope);
+IrNode * 
+newtonParse(State *  N, Scope *  currentScope);
 
-NoisyIrNode * 
-newtonParseFile(NoisyState *  N, NoisyScope *  currentScope);
+IrNode * 
+newtonParseFile(State *  N, Scope *  currentScope);
 
-NoisyIrNode * 
-newtonParseRuleList(NoisyState *  N, NoisyScope *  currentScope);
+IrNode * 
+newtonParseRuleList(State *  N, Scope *  currentScope);
 
-NoisyIrNode * 
-newtonParseRule(NoisyState * N, NoisyScope * currentScope);
+IrNode * 
+newtonParseRule(State * N, Scope * currentScope);
 
-NoisyIrNode * 
-newtonParseInvariant(NoisyState * N, NoisyScope * currentScope);
+IrNode * 
+newtonParseInvariant(State * N, Scope * currentScope);
 
-NoisyIrNode * 
-newtonParseParameter(NoisyState * N, NoisyScope * currentScope, int parameterNumber);
+IrNode * 
+newtonParseParameter(State * N, Scope * currentScope, int parameterNumber);
 
-NoisyIrNode * 
-newtonParseParameterTuple(NoisyState * N, NoisyScope * currentScope);
+IrNode * 
+newtonParseParameterTuple(State * N, Scope * currentScope);
 
-NoisyIrNode * 
-newtonParseConstraint(NoisyState * N, NoisyScope * currentScope);
+IrNode * 
+newtonParseConstraint(State * N, Scope * currentScope);
 
-NoisyIrNode * 
-newtonParseBaseSignal(NoisyState * N, NoisyScope * currentScope);
+IrNode * 
+newtonParseBaseSignal(State * N, Scope * currentScope);
 
-NoisyIrNode * 
-newtonParseName(NoisyState * N, NoisyScope * currentScope);
+IrNode * 
+newtonParseName(State * N, Scope * currentScope);
 
-NoisyIrNode * 
-newtonParseSymbol(NoisyState * N, NoisyScope * currentScope);
+IrNode * 
+newtonParseSymbol(State * N, Scope * currentScope);
 
-NoisyIrNode * 
-newtonParseDerivation(NoisyState * N, NoisyScope * currentScope);
+IrNode * 
+newtonParseDerivation(State * N, Scope * currentScope);
 
-NoisyIrNode * 
-newtonParseTerminal(NoisyState *  N, NoisyIrNodeType expectedType, NoisyScope * currentScope);
+IrNode * 
+newtonParseTerminal(State *  N, IrNodeType expectedType, Scope * currentScope);
 
-NoisyIrNode * 
-newtonParseIdentifier(NoisyState *  N, NoisyScope *  currentScope);
+IrNode * 
+newtonParseIdentifier(State *  N, Scope *  currentScope);
 
-NoisyIrNode * 
-newtonParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType, NoisyScope *  scope);
+IrNode * 
+newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  scope);
 
-NoisyIrNode * 
-newtonParseIdentifierDefinitionTerminal(NoisyState *  N, NoisyIrNodeType  expectedType, NoisyScope *  scope);
+IrNode * 
+newtonParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Scope *  scope);
 
-NoisyIrNode * 
-newtonParseConstant(NoisyState * N, NoisyScope * currentScope);
+IrNode * 
+newtonParseConstant(State * N, Scope * currentScope);
 
-NoisyIrNode * 
-newtonParseCompareOp(NoisyState * N, NoisyScope * currentScope);
+IrNode * 
+newtonParseCompareOp(State * N, Scope * currentScope);
 
 bool
 newtonIsDimensionless(Physics * physics);
 
 unsigned long long int
-newtonGetInvariantIdByParameters(NoisyState * N, NoisyIrNode * parameterTreeRoot, unsigned long long int invariantId);
+newtonGetInvariantIdByParameters(State * N, IrNode * parameterTreeRoot, unsigned long long int invariantId);
 
 int
-newtonGetPhysicsId(NoisyState * N, Physics * physics);
+newtonGetPhysicsId(State * N, Physics * physics);
 
 char *
-newtonParseGetPhysicsTypeStringByBoundIdentifier(NoisyState * N, NoisyIrNode * root, char* boundVariableIdentifier);
+newtonParseGetPhysicsTypeStringByBoundIdentifier(State * N, IrNode * root, char* boundVariableIdentifier);
 
 /* TODO currently this is unused... remove if still unused */
 char *
-newtonParseGetIdentifierByBoundPhysicsString(NoisyState * N, NoisyIrNode * root, char* physicsTypeString);
+newtonParseGetIdentifierByBoundPhysicsString(State * N, IrNode * root, char* physicsTypeString);
 
-NoisyIrNode *
-newtonParseFindNodeByPhysicsId(NoisyState *N, NoisyIrNode * root, int physicsId);
+IrNode *
+newtonParseFindNodeByPhysicsId(State *N, IrNode * root, int physicsId);
 
 /* TODO don't think this is used... remove if still unused */
-NoisyIrNode *
-newtonParseFindNodeByTokenString(NoisyState *N, NoisyIrNode * root, char* tokenString);
+IrNode *
+newtonParseFindNodeByTokenString(State *N, IrNode * root, char* tokenString);
 
-NoisyIrNode *
-newtonParseFindNodeByParameterNumber(NoisyState *N, NoisyIrNode * root, int parameterNumber);
+IrNode *
+newtonParseFindNodeByParameterNumber(State *N, IrNode * root, int parameterNumber);

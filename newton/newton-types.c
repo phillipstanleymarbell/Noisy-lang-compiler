@@ -54,28 +54,28 @@ extern const char	gNewtonTypeNodeSignatures[kNoisyIrNodeType_TMax];
 extern const char	gNewtonAstNodeStrings[kNoisyIrNodeType_TMax];
 
 
-NoisyIrNode *
-newtonTypeValidateIrSubtree(NoisyState *  N, NoisyIrNode *  subtree)
+IrNode *
+newtonTypeValidateIrSubtree(State *  N, IrNode *  subtree)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeValidateIrSubtree);
+	TimeStampTraceMacro(kNoisyTimeStampKeyTypeValidateIrSubtree);
 
 	return NULL;
 }
 
 
 bool
-newtonTypeEqualsSubtreeTypes(NoisyState *  N, NoisyIrNode *  subtreeA, NoisyIrNode *  subtreeB)
+newtonTypeEqualsSubtreeTypes(State *  N, IrNode *  subtreeA, IrNode *  subtreeB)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeEqualsSubtreeTypes);
+	TimeStampTraceMacro(kNoisyTimeStampKeyTypeEqualsSubtreeTypes);
 
 	return false;
 }
 
 
 char *
-newtonTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
+newtonTypeMakeTypeSignature(State *  N, IrNode *  subtree)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeMakeTypeSignature);
+	TimeStampTraceMacro(kNoisyTimeStampKeyTypeMakeTypeSignature);
 
 	char *	signature;
 	char *	leftSignature;
@@ -96,7 +96,7 @@ newtonTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
 	if (s == 0)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "%s, node type is %d (%s)\n", EcannotFindTypeSignatureForNodeType, subtree->type, gNewtonAstNodeStrings[subtree->type]);
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
 	leftSignature	= newtonTypeMakeTypeSignature(N, subtree->irLeftChild);
@@ -105,7 +105,7 @@ newtonTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
 	signature = calloc(strlen(leftSignature) + strlen(rightSignature) + 2, sizeof(char));
 	if (signature == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	strcpy(signature, leftSignature);

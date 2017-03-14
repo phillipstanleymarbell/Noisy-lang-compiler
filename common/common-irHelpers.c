@@ -53,17 +53,17 @@
 
 
 
-NoisyIrNode *
-genNoisyIrNode(NoisyState *  N, NoisyIrNodeType type, NoisyIrNode *  irLeftChild, NoisyIrNode *  irRightChild, NoisySourceInfo *  sourceInfo)
+IrNode *
+genIrNode(State *  N, IrNodeType type, IrNode *  irLeftChild, IrNode *  irRightChild, SourceInfo *  sourceInfo)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyGenNoisyIrNode);
+	TimeStampTraceMacro(kNoisyTimeStampKeyGenNoisyIrNode);
 
-	NoisyIrNode *		node;
+	IrNode *		node;
 
-	node = (NoisyIrNode *) calloc(1, sizeof(NoisyIrNode));
+	node = (IrNode *) calloc(1, sizeof(IrNode));
 	if (node == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 
 		/*	Not reached	*/
 	}
@@ -86,7 +86,7 @@ genNoisyIrNode(NoisyState *  N, NoisyIrNodeType type, NoisyIrNode *  irLeftChild
 	/*
 	 *	Not madatory, but provides higher-fidelity attribution, by making 
 	 *	sure that any time between here and next stamping is not attributed
-	 *	to genNoisyIrNode().
+	 *	to genIrNode().
 	 */
 	//NoisyTimeStampTraceMacro(kNoisyTimeStampKeyUnknown);
 
@@ -96,28 +96,28 @@ genNoisyIrNode(NoisyState *  N, NoisyIrNodeType type, NoisyIrNode *  irLeftChild
 
 
 void
-errorUseBeforeDefinition(NoisyState *  N, const char *  identifier)
+errorUseBeforeDefinition(State *  N, const char *  identifier)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorUseBeforeDefinition);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserErrorUseBeforeDefinition);
 
 	flexprint(N->Fe, N->Fm, N->Fperr, "Saw identifier \"%s\" in use before definition\n", identifier);
 }
 
 void
-errorMultiDefinition(NoisyState *  N, NoisySymbol *  symbol)
+errorMultiDefinition(State *  N, Symbol *  symbol)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
 }
 
-NoisyIrNode*
-findNthIrNodeOfTypes(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int nth)
+IrNode*
+findNthIrNodeOfTypes(State * N, IrNode * root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int nth)
 {
   int ith = nth; // copy so we do not modify the caller's count variable
   return findNthIrNodeOfTypesHelper(N, root, productionOrToken, firsts, &ith);
 }
 
-NoisyIrNode*
-findNthIrNodeOfTypesHelper(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int *nth)
+IrNode*
+findNthIrNodeOfTypesHelper(State * N, IrNode * root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int *nth)
 {
   assert(root != NULL);
 	for (int i = 0; i < kNoisyIrNodeTypeMax && firsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
@@ -131,7 +131,7 @@ findNthIrNodeOfTypesHelper(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType p
 		}
 	}
 
-  NoisyIrNode * nthNode;
+  IrNode * nthNode;
   if (root->irLeftChild != NULL &&\
       (nthNode = findNthIrNodeOfTypesHelper(N, root->irLeftChild, productionOrToken, firsts, nth)) != NULL)
     {
@@ -147,16 +147,16 @@ findNthIrNodeOfTypesHelper(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType p
   return NULL;
 }
 
-NoisyIrNode*
-findNthIrNodeOfType(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType expectedType, int nth)
+IrNode*
+findNthIrNodeOfType(State * N, IrNode * root, IrNodeType expectedType, int nth)
 {
   int ith = nth;
   return findNthIrNodeOfTypeHelper(N, root, expectedType, &ith);
 }
 
 
-NoisyIrNode*
-findNthIrNodeOfTypeHelper(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType expectedType, int* nth)
+IrNode*
+findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int* nth)
 {
   if (root->type == expectedType)
     {
@@ -165,7 +165,7 @@ findNthIrNodeOfTypeHelper(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType ex
       *nth = *nth - 1;
     }
 
-  NoisyIrNode * nthNode;
+  IrNode * nthNode;
   if (root->irLeftChild != NULL &&\
       (nthNode = findNthIrNodeOfTypeHelper(N, root->irLeftChild, expectedType, nth)) != NULL)
     return nthNode;
@@ -177,10 +177,10 @@ findNthIrNodeOfTypeHelper(NoisyState * N, NoisyIrNode * root, NoisyIrNodeType ex
   return NULL;
 }
 
-NoisyIrNode *
-depthFirstWalk(NoisyState *  N, NoisyIrNode *  node)
+IrNode *
+depthFirstWalk(State *  N, IrNode *  node)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserDepthFirstWalk);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserDepthFirstWalk);
 
 	if (node->irLeftChild == NULL || node->irRightChild == NULL)
 	{
@@ -191,15 +191,15 @@ depthFirstWalk(NoisyState *  N, NoisyIrNode *  node)
 }
 
 void
-addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
+addLeaf(State *  N, IrNode *  parent, IrNode *  newNode)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
 
-	NoisyIrNode *	node = depthFirstWalk(N, parent);
+	IrNode *	node = depthFirstWalk(N, parent);
 
 	if (node == NULL)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
 	if (node->irLeftChild == NULL)
@@ -213,11 +213,11 @@ addLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
 }
 
 void
-addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
+addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
 
-	NoisyIrNode *	node = depthFirstWalk(N, parent);
+	IrNode *	node = depthFirstWalk(N, parent);
 
 	if (node->irLeftChild == NULL)
 	{
@@ -226,22 +226,22 @@ addLeafWithChainingSeq(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  ne
 		return;
 	}
 
-	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
+	node->irRightChild = genIrNode(N,	kNoisyIrNodeType_Xseq,
 						newNode /* left child */,
 						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+						lexPeek(N, 1)->sourceInfo /* source info */);
 }
 
 
 bool
-peekCheck(NoisyState *  N, int lookAhead, NoisyIrNodeType expectedType)
+peekCheck(State *  N, int lookAhead, IrNodeType expectedType)
 {
-    NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
+    TimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
 
-    if (noisyLexPeek(N, lookAhead) == NULL)
+    if (lexPeek(N, lookAhead) == NULL)
     {
         return false;
     }
 
-    return (noisyLexPeek(N, lookAhead)->type == expectedType);
+    return (lexPeek(N, lookAhead)->type == expectedType);
 }

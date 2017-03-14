@@ -35,6 +35,6 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-NoisyIrNode *	newtonTypeValidateIrSubtree(NoisyState *  N, NoisyIrNode *  subtree);
-bool 		newtonTypeEqualsSubtreeTypes(NoisyState *  N, NoisyIrNode *  subtreeA, NoisyIrNode *  subtreeB);
-char *	newtonTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree);
+IrNode *	newtonTypeValidateIrSubtree(State *  N, IrNode *  subtree);
+bool 		newtonTypeEqualsSubtreeTypes(State *  N, IrNode *  subtreeA, IrNode *  subtreeB);
+char *	newtonTypeMakeTypeSignature(State *  N, IrNode *  subtree);

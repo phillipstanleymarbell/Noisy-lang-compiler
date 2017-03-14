@@ -53,8 +53,8 @@ typedef enum
 } NoisySymbolType;
 
 
-NoisyScope *	noisySymbolTableAllocScope(NoisyState *  N);
-NoisySymbol *	noisySymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token);
-NoisySymbol *	noisySymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier);
-NoisyScope *	noisySymbolTableOpenScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subtree);
-void		noisySymbolTableCloseScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subtree);
+Scope *	noisySymbolTableAllocScope(State *  N);
+Symbol *	noisySymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  token);
+Symbol *	noisySymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  identifier);
+Scope *	noisySymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subtree);
+void		noisySymbolTableCloseScope(State *  N, Scope *  scope, IrNode *  subtree);

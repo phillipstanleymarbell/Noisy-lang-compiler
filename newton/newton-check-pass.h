@@ -1,54 +1,54 @@
 void
 newtonCheckCompareOp(
-    NoisyState * N,
-    NoisyIrNode * leftExpression, 
-    NoisyIrNode * rightExpression,
+    State * N,
+    IrNode * leftExpression, 
+    IrNode * rightExpression,
     char * leftErrorMessage,
     char * rightErrorMessage,
-    NoisyIrNodeType compareOpType,
+    IrNodeType compareOpType,
     ConstraintReport * report
 );
 
 void
 newtonCheckBinOp(
-    NoisyState* N,
-    NoisyIrNode * leftTerm,
-    NoisyIrNode * rightTerm,
-    NoisyIrNodeType binOpType,
+    State* N,
+    IrNode * leftTerm,
+    IrNode * rightTerm,
+    IrNodeType binOpType,
     ConstraintReport * report
 );
 
 void
 checkSingleConstraint(
-    NoisyState * N,
-    NoisyIrNode * constraintTreeRoot,
-    NoisyIrNode* parameterTreeRoot,
+    State * N,
+    IrNode * constraintTreeRoot,
+    IrNode* parameterTreeRoot,
     NewtonAPIReport* report
 );
 
 double
 checkQuantityExpression(
-    NoisyState * N,
-    NoisyIrNode * constraintTreeRoot,
-    NoisyIrNode * parameterTreeRoot,
+    State * N,
+    IrNode * constraintTreeRoot,
+    IrNode * parameterTreeRoot,
     char * errorMessage,
     ConstraintReport * report
 );
 
 double
 checkQuantityTerm(
-    NoisyState * N,
-    NoisyIrNode * constraintTreeRoot,
-    NoisyIrNode * parameterTreeRoot,
+    State * N,
+    IrNode * constraintTreeRoot,
+    IrNode * parameterTreeRoot,
     char * errorMessage,
     ConstraintReport * report
 );
 
 void
 checkQuantityFactor(
-    NoisyState * N,
-    NoisyIrNode * constraintTreeRoot,
-    NoisyIrNode * parameterTreeRoot,
+    State * N,
+    IrNode * constraintTreeRoot,
+    IrNode * parameterTreeRoot,
     char * errorMessage,
     ConstraintReport * report
 );

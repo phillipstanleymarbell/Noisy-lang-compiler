@@ -56,16 +56,16 @@
 extern char *	gNoisyAstNodeStrings[];
 
 
-static bool	isType(NoisyState *  N, NoisyIrNode *  node);
-static char *	scope2id(NoisyState *  N, NoisyScope *  scope);
-static char *	scope2id2(NoisyState *  N, NoisyScope *  scope);
-static char *	symbol2id(NoisyState *  N, NoisySymbol *  symbol);
+static bool	isType(State *  N, IrNode *  node);
+static char *	scope2id(State *  N, Scope *  scope);
+static char *	scope2id2(State *  N, Scope *  scope);
+static char *	symbol2id(State *  N, Symbol *  symbol);
 
 
 int
-noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrNode *  irNode)
+noisyIrPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irNode)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotAstDotFmt);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotAstDotFmt);
 
 	char *		nilFormatString;
 	char *		tokenString = "";
@@ -89,7 +89,7 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrN
 	}
 
 	/*
-	 *	We use the pointer address of the NoisyIrNode *  p to give a unique
+	 *	We use the pointer address of the IrNode *  p to give a unique
 	 *	string for each node in the graph. NOTE: dot renders _much_ faster
 	 *	if we don't supply a fontname (which it often cannot find anyway)...
 	 */
@@ -125,7 +125,7 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrN
 	src = (char *) calloc(kNoisyMaxPrintBufferLength, sizeof(char));
 	if (src == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	if (irNode->type != kNoisyIrNodeType_Xseq)
@@ -168,13 +168,13 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrN
 	l = (char *)calloc(kNoisyMaxPrintBufferLength, sizeof(char));
 	if (l == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	r = (char *)calloc(kNoisyMaxPrintBufferLength, sizeof(char));
 	if (r == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	if (!(N->dotDetailLevel & kNoisyDotDetailLevelNoNilNodes) && (L(irNode) == NULL))
@@ -218,9 +218,9 @@ noisyIrPassDotAstDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyIrN
 
 
 int
-noisyIrPassDotSymbolTableDotFmt(NoisyState *  N, char *  buf, int bufferLength, NoisyScope *  scope)
+noisyIrPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotSymbotTableDotFmt);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotSymbotTableDotFmt);
 
 	char *		nilFormatString;
 	char *		symbolFormatString;
@@ -250,7 +250,7 @@ noisyIrPassDotSymbolTableDotFmt(NoisyState *  N, char *  buf, int bufferLength, 
 		bufferLength -= n;
 	}
 
-	NoisyScope *	childScope  = scope->firstChild;
+	Scope *	childScope  = scope->firstChild;
 	while (childScope != NULL)
 	{
 		n += snprintf(	&buf[n], bufferLength, "\tscope%s [style=filled,color=\"#FFCC00\",fontname=\"LucidaSans-Typewriter\",fontsize=8,height=0.8,label=\"{%s | {<children> | <syms>}}\",shape=record];\n",
@@ -260,7 +260,7 @@ noisyIrPassDotSymbolTableDotFmt(NoisyState *  N, char *  buf, int bufferLength, 
 		childScope = childScope->next;
 	}
 
-	NoisySymbol *	childSymbol = scope->firstSymbol;
+	Symbol *	childSymbol = scope->firstSymbol;
 	while (childSymbol != NULL)
 	{
 		n += snprintf(&buf[n], bufferLength, "\tsym%s [%s,label=\"{%s}\",shape=rect];\n",
@@ -313,9 +313,9 @@ noisyIrPassDotSymbolTableDotFmt(NoisyState *  N, char *  buf, int bufferLength, 
 
 
 int
-noisyIrPassDotAstPrintWalk(NoisyState *  N, NoisyIrNode *  irNode, char *  buf, int bufferLength)
+noisyIrPassDotAstPrintWalk(State *  N, IrNode *  irNode, char *  buf, int bufferLength)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassAstDotPrintWalk);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassAstDotPrintWalk);
 
 	int	n0 = 0, n1 = 0, n2 = 0;
 
@@ -326,7 +326,7 @@ noisyIrPassDotAstPrintWalk(NoisyState *  N, NoisyIrNode *  irNode, char *  buf, 
 
 	if (L(irNode) == irNode || R(irNode) == irNode)
 	{
-		noisyFatal(N, "Immediate cycle in Ir, seen noisyIrPassAstDotPrintWalk()!!\n");
+		fatal(N, "Immediate cycle in Ir, seen noisyIrPassAstDotPrintWalk()!!\n");
 
 		/*
 		 *	Not reached
@@ -355,9 +355,9 @@ noisyIrPassDotAstPrintWalk(NoisyState *  N, NoisyIrNode *  irNode, char *  buf, 
 
 
 int
-noisyIrPassDotSymbolTablePrintWalk(NoisyState *  N, NoisyScope *  scope, char *  buf, int bufferLength)
+noisyIrPassDotSymbolTablePrintWalk(State *  N, Scope *  scope, char *  buf, int bufferLength)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassSymbolTableDotPrintWalk);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassSymbolTableDotPrintWalk);
 
 	int	n0 = 0, n1 = 0, n2 = 0;
 
@@ -366,7 +366,7 @@ noisyIrPassDotSymbolTablePrintWalk(NoisyState *  N, NoisyScope *  scope, char * 
 		return 0;
 	}
 
-	NoisyScope *	tmp = scope->firstChild;
+	Scope *	tmp = scope->firstChild;
 	while (tmp != NULL)
 	{
 		n0 += noisyIrPassDotSymbolTablePrintWalk(N, tmp, &buf[n0], (bufferLength-n0));
@@ -389,9 +389,9 @@ noisyIrPassDotSymbolTablePrintWalk(NoisyState *  N, NoisyScope *  scope, char * 
 
 
 char *
-noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNode * noisyIrRoot)
+noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotBackend);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotBackend);
 
 	int			bufferLength, irAndSymbolTableSize = 0, n = 0;
 	char *			buf = NULL;
@@ -407,8 +407,8 @@ noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNod
 	/*
 	 *	Heuristic
 	 */
-	irAndSymbolTableSize += noisyIrPassHelperIrSize(N, noisyIrRoot);
-	irAndSymbolTableSize += noisyIrPassHelperSymbolTableSize(N, noisyIrTopScope);
+	irAndSymbolTableSize += irPassHelperIrSize(N, noisyIrRoot);
+	irAndSymbolTableSize += irPassHelperSymbolTableSize(N, noisyIrTopScope);
 	bufferLength = irAndSymbolTableSize*kNoisyChunkBufferLength;
 
 	/*
@@ -417,7 +417,7 @@ noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNod
 	buf = calloc(bufferLength, sizeof(char));
 	if (buf == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 #ifdef NoisyOsMacOSX
@@ -468,8 +468,8 @@ noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNod
 	 *	which nodes have been visited, in case when
 	 *	the graph is not a tree.
 	 */
-	noisyIrPassHelperColorIr(N, noisyIrRoot, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
-	noisyIrPassHelperColorSymbolTable(N, noisyIrTopScope, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
+	irPassHelperColorIr(N, noisyIrRoot, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
+	irPassHelperColorSymbolTable(N, noisyIrTopScope, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
 
 	n += noisyIrPassDotAstPrintWalk(N, noisyIrRoot, &buf[n], bufferLength);
 	bufferLength -= n;
@@ -487,8 +487,8 @@ noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNod
 	 *	colors of nodes above anyway. If/when we decide to get rid of
 	 *	this, be sure to document the associated gain.
 	 */
-	noisyIrPassHelperColorIr(N, noisyIrRoot, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
-	noisyIrPassHelperColorSymbolTable(N, noisyIrTopScope, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
+	irPassHelperColorIr(N, noisyIrRoot, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
+	irPassHelperColorSymbolTable(N, noisyIrTopScope, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
 #endif
 
 	return buf;
@@ -507,9 +507,9 @@ noisyIrPassDotBackend(NoisyState *  N, NoisyScope *  noisyIrTopScope, NoisyIrNod
 
 
 static bool
-isType(NoisyState *  N, NoisyIrNode *  node)
+isType(State *  N, IrNode *  node)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotIsType);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotIsType);
 
 	switch (node->type)
 	{
@@ -540,13 +540,13 @@ isType(NoisyState *  N, NoisyIrNode *  node)
 
 
 static char *
-scope2id(NoisyState *  N, NoisyScope *  scope)
+scope2id(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotScope2Id);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotScope2Id);
 
 	if (scope == NULL)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 	if (scope->begin == NULL || scope->end == NULL)
 	{
@@ -570,13 +570,13 @@ scope2id(NoisyState *  N, NoisyScope *  scope)
 
 
 static char *
-scope2id2(NoisyState *  N, NoisyScope *  scope)
+scope2id2(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotScope2Id2);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotScope2Id2);
 
 	if (scope == NULL)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 	if (scope->begin == NULL || scope->end == NULL)
 	{
@@ -602,13 +602,13 @@ scope2id2(NoisyState *  N, NoisyScope *  scope)
 
 
 static char *
-symbol2id(NoisyState *  N, NoisySymbol *  symbol)
+symbol2id(State *  N, Symbol *  symbol)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotSymbol2Id);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotSymbol2Id);
 
 	if (symbol == NULL)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 	if (symbol->sourceInfo == NULL)
 	{

@@ -35,6 +35,6 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-NoisyIrNode *	noisyTypeValidateIrSubtree(NoisyState *  N, NoisyIrNode *  subtree);
-bool 		noisyTypeEqualsSubtreeTypes(NoisyState *  N, NoisyIrNode *  subtreeA, NoisyIrNode *  subtreeB);
-const char *	noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree);
+IrNode *	noisyTypeValidateIrSubtree(State *  N, IrNode *  subtree);
+bool 		noisyTypeEqualsSubtreeTypes(State *  N, IrNode *  subtreeA, IrNode *  subtreeB);
+const char *	noisyTypeMakeTypeSignature(State *  N, IrNode *  subtree);

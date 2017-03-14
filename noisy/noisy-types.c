@@ -53,28 +53,28 @@ extern const char	gNoisyTypeNodeSignatures[];
 extern const char	gNoisyAstNodeStrings[];
 
 
-NoisyIrNode *
-noisyTypeValidateIrSubtree(NoisyState *  N, NoisyIrNode *  subtree)
+IrNode *
+noisyTypeValidateIrSubtree(State *  N, IrNode *  subtree)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeValidateIrSubtree);
+	TimeStampTraceMacro(kNoisyTimeStampKeyTypeValidateIrSubtree);
 
 	return NULL;
 }
 
 
 bool
-noisyTypeEqualsSubtreeTypes(NoisyState *  N, NoisyIrNode *  subtreeA, NoisyIrNode *  subtreeB)
+noisyTypeEqualsSubtreeTypes(State *  N, IrNode *  subtreeA, IrNode *  subtreeB)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeEqualsSubtreeTypes);
+	TimeStampTraceMacro(kNoisyTimeStampKeyTypeEqualsSubtreeTypes);
 
 	return false;
 }
 
 
 char *
-noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
+noisyTypeMakeTypeSignature(State *  N, IrNode *  subtree)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyTypeMakeTypeSignature);
+	TimeStampTraceMacro(kNoisyTimeStampKeyTypeMakeTypeSignature);
 
 	char *	signature;
 	char *	leftSignature;
@@ -95,7 +95,7 @@ noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
 	if (s == 0)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "%s, node type is %d (%s)\n", EcannotFindTypeSignatureForNodeType, subtree->type, gNoisyAstNodeStrings[subtree->type]);
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
 	leftSignature	= noisyTypeMakeTypeSignature(N, subtree->irLeftChild);
@@ -104,7 +104,7 @@ noisyTypeMakeTypeSignature(NoisyState *  N, NoisyIrNode *  subtree)
 	signature = calloc(strlen(leftSignature) + strlen(rightSignature) + 2, sizeof(char));
 	if (signature == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	strcpy(signature, leftSignature);

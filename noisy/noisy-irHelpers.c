@@ -55,10 +55,10 @@
 
 
 
-NoisyScope *
-progtypeName2scope(NoisyState *  N, const char *  identifier)
+Scope *
+progtypeName2scope(State *  N, const char *  identifier)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserProgtypeName2scope);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserProgtypeName2scope);
 
 //	FlexListItem *	tmp = N->progtypeScopes->hd;
 
@@ -84,9 +84,9 @@ progtypeName2scope(NoisyState *  N, const char *  identifier)
 
 
 void
-addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeScope)
+addToProgtypeScopes(State *  N, char *  identifier, Scope *  progtypeScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddToProgtypeScopes);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddToProgtypeScopes);
 
 	progtypeScope->identifier = identifier;
 
@@ -97,7 +97,7 @@ addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeS
 		return;
 	}
 
-	NoisyScope *	p = N->progtypeScopes;
+	Scope *	p = N->progtypeScopes;
 	while (p->next != NULL)
 	{
 		p = p->next;
@@ -119,9 +119,9 @@ addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeS
  *		node.right	= Xseq of kNoisyIrNodeType_Tidentifier
  */
 void
-assignTypes(NoisyState *  N, NoisyIrNode *  node, NoisyIrNode *  typeExpression)
+assignTypes(State *  N, IrNode *  node, IrNode *  typeExpression)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAssignTypes);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserAssignTypes);
 
 	/*
 	 *	TODO: The typeExpr might be, say, an identifier that is an
@@ -133,7 +133,7 @@ assignTypes(NoisyState *  N, NoisyIrNode *  node, NoisyIrNode *  typeExpression)
 
 	if (node->type != kNoisyIrNodeType_Tidentifier)
 	{
-		noisyFatal(N, EassignTypeSanity);
+		fatal(N, EassignTypeSanity);
 	}
 
 	/*

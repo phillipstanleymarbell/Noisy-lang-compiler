@@ -55,7 +55,7 @@
 
 
 
-const char *	NoisyTimeStampKeyStrings[kNoisyTimeStampKeyMax] =
+const char *	TimeStampKeyStrings[kNoisyTimeStampKeyMax] =
 {
 	/*
 	 *	Generated from body of kNoisyTimeStampKey enum by piping through
@@ -234,7 +234,7 @@ machtimeToNanoseconds(uint64_t machTime)
 }
 
 void
-noisyTimeStampDumpTimeline(NoisyState *  N)
+timeStampDumpTimeline(State *  N)
 {
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "\nNoisy routine invocation trace (%d calls):\n\n",
 						N->timestampCount);
@@ -242,13 +242,13 @@ noisyTimeStampDumpTimeline(NoisyState *  N)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "    %-6d\t(init + %-06.1f us) in routine %s\n",
 							i, (double)machtimeToNanoseconds(N->timestamps[i].nanoseconds - N->initializationTimestamp)/1000.0,
-							NoisyTimeStampKeyStrings[N->timestamps[i].key]);
+							TimeStampKeyStrings[N->timestamps[i].key]);
 	}
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 }
 
 void
-noisyTimeStampDumpResidencies(NoisyState *  N)
+timeStampDumpResidencies(State *  N)
 {
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "\nNon-zero Noisy routine residency time upper bounds and counts (%d calls, total of %-02.4f us):\n\n",
 						N->callAggregateTotal, (double)machtimeToNanoseconds(N->timeAggregateTotal)/1000.0);
@@ -260,7 +260,7 @@ noisyTimeStampDumpResidencies(NoisyState *  N)
 		}
 
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "    Routine %45s, %9d calls (%-02.4f %%), total residency = %f us (%-02.4f %%)\n",
-							&NoisyTimeStampKeyStrings[i][strlen("kNoisyTimeStampKey")], N->callAggregates[i],
+							&TimeStampKeyStrings[i][strlen("kNoisyTimeStampKey")], N->callAggregates[i],
 							100*(double)N->callAggregates[i]/(double)N->callAggregateTotal,
 							(double)machtimeToNanoseconds(N->timeAggregates[i])/1000.0,
 							100.0*((double)machtimeToNanoseconds(N->timeAggregates[i])/(double)machtimeToNanoseconds(N->timeAggregateTotal)));

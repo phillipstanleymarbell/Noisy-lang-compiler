@@ -59,34 +59,34 @@
  */
 
 
-NoisyScope *
-noisySymbolTableAllocScope(NoisyState *  N)
+Scope *
+noisySymbolTableAllocScope(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAllocScope);
+	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAllocScope);
 
-	NoisyScope *	newScope;
+	Scope *	newScope;
 
-	newScope = (NoisyScope *)calloc(1, sizeof(NoisyScope));
+	newScope = (Scope *)calloc(1, sizeof(Scope));
 	if (newScope == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	return newScope;
 }
 
 
-NoisySymbol *
-noisySymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token)
+Symbol *
+noisySymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  token)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAddOrLookupSymbolForToken);
+	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAddOrLookupSymbolForToken);
 
-	NoisySymbol *	newSymbol;
+	Symbol *	newSymbol;
 
-	newSymbol = (NoisySymbol *)calloc(1, sizeof(NoisySymbol));
+	newSymbol = (Symbol *)calloc(1, sizeof(Symbol));
 	if (newSymbol == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	newSymbol->identifier	= token->identifier;
@@ -108,7 +108,7 @@ noisySymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, 
 	}
 	else
 	{
-		NoisySymbol *	p = scope->firstSymbol;
+		Symbol *	p = scope->firstSymbol;
 		while (p->next != NULL)
 		{
 			p = p->next;
@@ -120,10 +120,10 @@ noisySymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, 
 }
 
 
-NoisySymbol *
-noisySymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier)
+Symbol *
+noisySymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  identifier)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableSymbolForIdentifier);
+	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableSymbolForIdentifier);
 
 	/*
 	 *	Recursion falls out when we reach root which has nil parent
@@ -136,7 +136,7 @@ noisySymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const 
 	/*
 	 *	Search current and parent (not siblings or children)
 	 */
-	NoisySymbol *	p = scope->firstSymbol;
+	Symbol *	p = scope->firstSymbol;
 	while (p != NULL)
 	{
 		if (!strcmp(p->identifier, identifier))
@@ -150,12 +150,12 @@ noisySymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const 
 }
 
 
-NoisyScope *
-noisySymbolTableOpenScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subTree)
+Scope *
+noisySymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableOpenScope);
+	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableOpenScope);
 
-	NoisyScope *	newScope = noisySymbolTableAllocScope(N);
+	Scope *	newScope = noisySymbolTableAllocScope(N);
 
 	newScope->parent = scope;
 	newScope->begin = subTree->sourceInfo;
@@ -166,9 +166,9 @@ noisySymbolTableOpenScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  s
 
 
 void
-noisySymbolTableCloseScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subTree)
+noisySymbolTableCloseScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableCloseScope);
+	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableCloseScope);
 
 	scope->end = subTree->sourceInfo;
 }

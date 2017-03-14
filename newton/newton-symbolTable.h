@@ -1,14 +1,14 @@
 #include <string.h>
 
 
-Dimension * newtonDimensionTableAddDimensionForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  nameToken, NoisyToken * abbrevToken);
-Dimension * newtonDimensionTableDimensionForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier);
+Dimension * newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  nameToken, Token * abbrevToken);
+Dimension * newtonDimensionTableDimensionForIdentifier(State *  N, Scope *  scope, const char *  identifier);
 
 
-Physics * newtonPhysicsTableAddPhysicsForToken(NoisyState *  N, NoisyScope *  scope, struct NoisyToken *  token);
-Physics * newtonPhysicsTablePhysicsForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier);
-Physics * newtonPhysicsTablePhysicsForDimensionAlias(NoisyState *  N, NoisyScope *  scope, const char * dimensionAliasIdentifier);
-Physics * newtonPhysicsTableAddPhysics(NoisyState * N, NoisyScope * scope);
+Physics * newtonPhysicsTableAddPhysicsForToken(State *  N, Scope *  scope, struct Token *  token);
+Physics * newtonPhysicsTablePhysicsForIdentifier(State *  N, Scope *  scope, const char *  identifier);
+Physics * newtonPhysicsTablePhysicsForDimensionAlias(State *  N, Scope *  scope, const char * dimensionAliasIdentifier);
+Physics * newtonPhysicsTableAddPhysics(State * N, Scope * scope);
 
 Physics* deepCopyPhysicsNode(Physics* node);
 Physics* shallowCopyPhysicsNode(Physics* node);
@@ -19,17 +19,17 @@ IntegralList* getTailIntegralList(IntegralList* list);
 
 int countNumberTime(Dimension* head);
 
-void newtonPhysicsAddNumeratorDimension(NoisyState * N, Physics * physics, Dimension * numerator); 
-void newtonPhysicsAddDenominatorDimension(NoisyState * N, Physics * physics, Dimension * denominator);
+void newtonPhysicsAddNumeratorDimension(State * N, Physics * physics, Dimension * numerator); 
+void newtonPhysicsAddDenominatorDimension(State * N, Physics * physics, Dimension * denominator);
 
-void newtonPhysicsCopyNumeratorDimensions(NoisyState * N, Physics * dest, Physics * source);
-void newtonPhysicsCopyDenominatorDimensions(NoisyState * N, Physics * dest, Physics * source);
-void newtonPhysicsCopyNumeratorToDenominatorDimensions(NoisyState * N, Physics * dest, Physics * source);
-void newtonPhysicsCopyDenominatorToNumeratorDimensions(NoisyState * N, Physics * dest, Physics * source);
-void newtonAddInvariant(NoisyState * N, Invariant * invariant);
+void newtonPhysicsCopyNumeratorDimensions(State * N, Physics * dest, Physics * source);
+void newtonPhysicsCopyDenominatorDimensions(State * N, Physics * dest, Physics * source);
+void newtonPhysicsCopyNumeratorToDenominatorDimensions(State * N, Physics * dest, Physics * source);
+void newtonPhysicsCopyDenominatorToNumeratorDimensions(State * N, Physics * dest, Physics * source);
+void newtonAddInvariant(State * N, Invariant * invariant);
 
-NoisyScope *	newtonSymbolTableAllocScope(NoisyState *  N);
-NoisySymbol *	newtonSymbolTableAddOrLookupSymbolForToken(NoisyState *  N, NoisyScope *  scope, NoisyToken *  token);
-NoisySymbol *	newtonSymbolTableSymbolForIdentifier(NoisyState *  N, NoisyScope *  scope, const char *  identifier);
-NoisyScope *	newtonSymbolTableOpenScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subtree);
-void		        newtonSymbolTableCloseScope(NoisyState *  N, NoisyScope *  scope, NoisyIrNode *  subtree);
+Scope *	newtonSymbolTableAllocScope(State *  N);
+Symbol *	newtonSymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  token);
+Symbol *	newtonSymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  identifier);
+Scope *	newtonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subtree);
+void		        newtonSymbolTableCloseScope(State *  N, Scope *  scope, IrNode *  subtree);

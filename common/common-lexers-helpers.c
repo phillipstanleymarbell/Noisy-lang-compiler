@@ -14,27 +14,27 @@
 #include "common-lexers-helpers.h"
 
 void
-checkTokenLength(NoisyState *  N, int  count)
+checkTokenLength(State *  N, int  count)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckTokenLength);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckTokenLength);
 
 	if (N->currentTokenLength+count >= kNoisyMaxBufferLength)
 	{
-		noisyFatal(N, EtokenTooLong);
+		fatal(N, EtokenTooLong);
 	}
 }
 char
-cur(NoisyState *  N)
+cur(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCur);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCur);
 
 	return N->lineBuffer[N->columnNumber];
 }
 
 void
-gobble(NoisyState *  N, int count)
+gobble(State *  N, int count)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerGobble);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerGobble);
 
 	checkTokenLength(N, count);
 	strncpy(N->currentToken, &N->lineBuffer[N->columnNumber], count);
@@ -49,11 +49,11 @@ gobble(NoisyState *  N, int count)
 }
 
 void
-done(NoisyState *  N, NoisyToken *  newToken)
+done(State *  N, Token *  newToken)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerDone);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerDone);
 
-	newToken->sourceInfo = noisyLexAllocateSourceInfo(N,	NULL				/*   genealogy 	*/,
+	newToken->sourceInfo = lexAllocateSourceInfo(N,	NULL				/*   genealogy 	*/,
 								N->fileName			/*   fileName 	*/,
 								N->lineNumber			/*   lineNumber */,
 								N->columnNumber - N->currentTokenLength /* columnNumber */,
@@ -61,13 +61,13 @@ done(NoisyState *  N, NoisyToken *  newToken)
 
 	bzero(N->currentToken, kNoisyMaxBufferLength);
 	N->currentTokenLength = 0;
-	noisyLexPut(N, newToken);
+	lexPut(N, newToken);
 }
 
 bool
-eqf(NoisyState *  N)
+eqf(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerEqf);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerEqf);
 
 	return (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '=');
 }
@@ -75,9 +75,9 @@ eqf(NoisyState *  N)
 
 
 bool
-isDecimal(NoisyState *  N, char *  string)
+isDecimal(State *  N, char *  string)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimal);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimal);
 
 	if (string == NULL)
 	{
@@ -98,9 +98,9 @@ isDecimal(NoisyState *  N, char *  string)
 
 
 char *
-stringAtLeft(NoisyState *  N, char *  string, char character)
+stringAtLeft(State *  N, char *  string, char character)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerStringAtLeft);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerStringAtLeft);
 
 	if (string == NULL)
 	{
@@ -130,9 +130,9 @@ stringAtLeft(NoisyState *  N, char *  string, char character)
 }
 
 char *
-stringAtRight(NoisyState *  N, char *  string, char character)
+stringAtRight(State *  N, char *  string, char character)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerStringAtRight);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerStringAtRight);
 
 	if (string == NULL)
 	{
@@ -151,9 +151,9 @@ stringAtRight(NoisyState *  N, char *  string, char character)
 
 
 bool
-isDecimalSeparatedWithChar(NoisyState *  N, char *  string, char  character)
+isDecimalSeparatedWithChar(State *  N, char *  string, char  character)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar);
 
 //fprintf(stderr, "isDecimalSeparatedWithChar, string = [%s]\n", string);
 
@@ -186,9 +186,9 @@ isDecimalSeparatedWithChar(NoisyState *  N, char *  string, char  character)
 }
 
 bool
-isDecimalOrRealSeparatedWithChar(NoisyState *  N, char *  string, char  character)
+isDecimalOrRealSeparatedWithChar(State *  N, char *  string, char  character)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar);
 
 	if (string == NULL)
 	{
@@ -222,9 +222,9 @@ isDecimalOrRealSeparatedWithChar(NoisyState *  N, char *  string, char  characte
 
 
 bool
-isRadixConst(NoisyState *  N, char *  string)
+isRadixConst(State *  N, char *  string)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsRadixConst);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsRadixConst);
 
 	if (string == NULL || !strchr(string, 'r'))
 	{
@@ -237,9 +237,9 @@ isRadixConst(NoisyState *  N, char *  string)
 
 
 bool
-isRealConst(NoisyState *  N, char *  string)
+isRealConst(State *  N, char *  string)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsRealConst);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsRealConst);
 
 	if (string == NULL || !strchr(string, '.'))
 	{
@@ -253,9 +253,9 @@ isRealConst(NoisyState *  N, char *  string)
 
 
 bool
-isEngineeringRealConst(NoisyState *  N, char *  string)
+isEngineeringRealConst(State *  N, char *  string)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsEngineeringRealConst);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsEngineeringRealConst);
 
 	if (string == NULL || (!strchr(string, 'e') && !strchr(string, 'E')))
 	{
@@ -268,9 +268,9 @@ isEngineeringRealConst(NoisyState *  N, char *  string)
 
 
 uint64_t
-stringToRadixConst(NoisyState *  N, char *  string)
+stringToRadixConst(State *  N, char *  string)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerStringToRadixConst);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerStringToRadixConst);
 
 	char		tmp;
 	char *		ep = &tmp;
@@ -291,7 +291,7 @@ stringToRadixConst(NoisyState *  N, char *  string)
 		 *	BUG/TODO: We should make sure that errorRecovery uses setjmp to eject
 		 *	us out of here.
 		 */
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 
 		/* Not reached */
 	}
@@ -337,7 +337,7 @@ stringToRadixConst(NoisyState *  N, char *  string)
 		}
 		else
 		{
-			noisyFatal(N, Esanity);
+			fatal(N, Esanity);
 		}
 
 		value += p * digitValue;
@@ -356,9 +356,9 @@ stringToRadixConst(NoisyState *  N, char *  string)
 
 
 double
-stringToRealConst(NoisyState *  N, char *  string)
+stringToRealConst(State *  N, char *  string)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerStringToRealConst);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerStringToRealConst);
 
 	char		tmp;
 	char *		ep = &tmp;
@@ -378,7 +378,7 @@ stringToRealConst(NoisyState *  N, char *  string)
 	integerPart = strtoul(left, &ep, 0);
 	if (*ep != '\0')
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 
 		/* Not reached */
 	}
@@ -398,7 +398,7 @@ stringToRealConst(NoisyState *  N, char *  string)
 	fractionalPart	= strtoul(right, &ep, 0);
 	if (*ep != '\0')
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 
 		/* Not reached */
 	}
@@ -416,9 +416,9 @@ stringToRealConst(NoisyState *  N, char *  string)
 
 
 double
-stringToEngineeringRealConst(NoisyState *  N, char *  string)
+stringToEngineeringRealConst(State *  N, char *  string)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerStringToEngineeringRealConst);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerStringToEngineeringRealConst);
 
 	char		engineeringChar;
 	char *		left;
@@ -455,18 +455,18 @@ stringToEngineeringRealConst(NoisyState *  N, char *  string)
 
 
 
-NoisySourceInfo *
-noisyLexAllocateSourceInfo(	NoisyState *  N, char **  genealogy, char *  fileName,
+SourceInfo *
+lexAllocateSourceInfo(	State *  N, char **  genealogy, char *  fileName,
 				uint64_t lineNumber, uint64_t columnNumber, uint64_t length)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexAllocateSourceInfo);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexAllocateSourceInfo);
 
-	NoisySourceInfo *	newSourceInfo;
+	SourceInfo *	newSourceInfo;
 
-	newSourceInfo = (NoisySourceInfo *) calloc(1, sizeof(NoisySourceInfo));
+	newSourceInfo = (SourceInfo *) calloc(1, sizeof(SourceInfo));
 	if (newSourceInfo == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	newSourceInfo->genealogy	= genealogy;
@@ -479,19 +479,19 @@ noisyLexAllocateSourceInfo(	NoisyState *  N, char **  genealogy, char *  fileNam
 }
 
 
-NoisyToken *
-noisyLexAllocateToken(	NoisyState *  N, NoisyIrNodeType type, char *  identifier,
+Token *
+lexAllocateToken(	State *  N, IrNodeType type, char *  identifier,
 			uint64_t integerConst, double realConst, char * stringConst,
-			NoisySourceInfo *  sourceInfo)
+			SourceInfo *  sourceInfo)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexAllocateToken);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexAllocateToken);
 
-	NoisyToken *	newToken;
+	Token *	newToken;
 
-	newToken = (NoisyToken *) calloc(1, sizeof(NoisyToken));
+	newToken = (Token *) calloc(1, sizeof(Token));
 	if (newToken == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	newToken->type		= type;
@@ -507,13 +507,13 @@ noisyLexAllocateToken(	NoisyState *  N, NoisyIrNodeType type, char *  identifier
 
 
 void
-noisyLexPut(NoisyState *  N, NoisyToken *  newToken)
+lexPut(State *  N, Token *  newToken)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPut);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexPut);
 
 	if (newToken == NULL)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
 	/*
@@ -532,17 +532,17 @@ noisyLexPut(NoisyState *  N, NoisyToken *  newToken)
 }
 
 
-NoisyToken *
-noisyLexGet(NoisyState *  N, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
+Token *
+lexGet(State *  N, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexGet);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexGet);
 
 	if (N->tokenList == NULL)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
-	NoisyToken *	t = N->tokenList;
+	Token *	t = N->tokenList;
 	
 	if (t->next != NULL)
 	{
@@ -550,29 +550,29 @@ noisyLexGet(NoisyState *  N, const char *tokenDescriptionArray[kNoisyIrNodeTypeM
 	}
 	else if (t->type != kNoisyIrNodeType_Zeof)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
-		noisyLexDebugPrintToken(N, t, tokenDescriptionArray);	
+		lexDebugPrintToken(N, t, tokenDescriptionArray);	
 	}
 
 	return t;
 }
 
 
-NoisyToken *
-noisyLexPeek(NoisyState *  N, int lookAhead)
+Token *
+lexPeek(State *  N, int lookAhead)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPeek);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexPeek);
 
 	if (N->tokenList == NULL)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
-	NoisyToken *	tmp = N->tokenList;
+	Token *	tmp = N->tokenList;
 	int 		which = 1;
 	while ((tmp != NULL) && (which++ < lookAhead))
 	{
@@ -585,9 +585,9 @@ noisyLexPeek(NoisyState *  N, int lookAhead)
 
 
 void
-noisyLexPrintToken(NoisyState *  N, NoisyToken *  t, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
+lexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPrintToken);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexPrintToken);
 
 	switch (t->type)
 	{
@@ -624,16 +624,16 @@ noisyLexPrintToken(NoisyState *  N, NoisyToken *  t, const char *tokenDescriptio
 			else
 			{
 				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in noisyLexPrintToken <<<", t->type);
-				//noisyFatal(N, Esanity);
+				//fatal(N, Esanity);
 			}
 		}
 	}
 }
 
 void
-noisyLexDebugPrintToken(NoisyState *  N, NoisyToken *  t, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
+lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexDebugPrintToken);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexDebugPrintToken);
 
     /* for now replacing gterminalstrings with tokendescription array because Newton doesn't use it */
 	flexprint(N->Fe, N->Fm, N->Fperr, "Token %30s: ", tokenDescriptionArray[t->type]);
@@ -672,8 +672,8 @@ noisyLexDebugPrintToken(NoisyState *  N, NoisyToken *  t, const char *tokenDescr
 			}
 			else
 			{
-				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in noisyLexDebugPrintToken <<<", t->type);
-				//noisyFatal(N, Esanity);
+				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in lexDebugPrintToken <<<", t->type);
+				//fatal(N, Esanity);
 			}
 		}
 	}
@@ -683,17 +683,17 @@ noisyLexDebugPrintToken(NoisyState *  N, NoisyToken *  t, const char *tokenDescr
 }
 
 void
-noisyLexPeekPrint(NoisyState *  N, int maxTokens, int formatCharacters, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
+lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexPeekPrint);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexPeekPrint);
 
 	if (N->tokenList == NULL)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
 	int		tripCharacters = 0, done = 0;
-	NoisyToken *	tmp = N->tokenList;
+	Token *	tmp = N->tokenList;
 
 //flexprint(E, M, P, "\tline %5d, token %3d\t", tmp->linenum, tmp->colnum);
 	flexprint(N->Fe, N->Fm, N->Fperr, "\t\tline %5d, token %3d\t", tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
@@ -777,7 +777,7 @@ noisyLexPeekPrint(NoisyState *  N, int maxTokens, int formatCharacters, const ch
 					else
 					{
 						flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG/TODO: un-handled type [%d] in noisyLexPeekPrint <<<", tmp->type);
-						noisyFatal(N, Esanity);
+						fatal(N, Esanity);
 					}
 				}
 			}

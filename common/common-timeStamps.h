@@ -260,13 +260,13 @@ typedef enum
 	 *	Code depends on this being last.
 	 */
 	kNoisyTimeStampKeyMax,
-} NoisyTimeStampKey;
+} TimeStampKey;
 
 typedef struct
 {
 	uint64_t		nanoseconds;
-	NoisyTimeStampKey	key;
-} NoisyTimeStamp;
+	TimeStampKey	key;
+} TimeStamp;
 
 
 #ifdef NoisyOsMacOSX
@@ -282,7 +282,7 @@ typedef struct
  *	lets us validate our DTrace setup, while also providing a quick statistics in
  *	a self-contained mechanism.
  */
-#define NoisyTimeStampTraceMacro(routineKey)		if (N->mode & kNoisyModeCallStatistics)\
+#define TimeStampTraceMacro(routineKey)		if (N->mode & kNoisyModeCallStatistics)\
 							{\
 								uint64_t	now = mach_absolute_time();\
 								\
@@ -304,7 +304,7 @@ typedef struct
 							}\
 
 #else
-#define NoisyTimeStampTraceMacro(routineKey) 
+#define TimeStampTraceMacro(routineKey) 
 #endif /* #ifdef NoisyOsMacOSX */
 
-extern const char *     NoisyTimeStampKeyStrings[kNoisyTimeStampKeyMax];
+extern const char *     TimeStampKeyStrings[kNoisyTimeStampKeyMax];

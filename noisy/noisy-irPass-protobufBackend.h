@@ -34,8 +34,8 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-void	noisyIrPassProtobufBackend(NoisyState *  N);
-void	noisyIrPassProtobufSymbolTableNodeEmitter(NoisyState *  N, NoisyScope *  scope);
-void	noisyIrPassProtobufAstNodeEmitter(NoisyState *  N, NoisyIrNode *  irNode);
-void	noisyIrPassProtobufAstSerializeWalk(NoisyState *  N, NoisyIrNode *  irNode);
-void	noisyIrPassProtobufSymbolTableSerializeWalk(NoisyState *  N, NoisyScope *  scope);
+void	noisyIrPassProtobufBackend(State *  N);
+void	noisyIrPassProtobufSymbolTableNodeEmitter(State *  N, Scope *  scope);
+void	noisyIrPassProtobufAstNodeEmitter(State *  N, IrNode *  irNode);
+void	noisyIrPassProtobufAstSerializeWalk(State *  N, IrNode *  irNode);
+void	noisyIrPassProtobufSymbolTableSerializeWalk(State *  N, Scope *  scope);

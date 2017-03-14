@@ -73,7 +73,7 @@ static uint64_t			startRss, endRss;
 static char *			noisyCodeBuffer = NULL;
 
 
-NoisyState *			noisyCgiState;
+State *			noisyCgiState;
 
 
 enum
@@ -158,7 +158,7 @@ getCgiVars(void)
 	reqmethod= getenv("REQUEST_METHOD") ;
 	if (reqmethod == NULL)
 	{
-		noisyError(noisyCgiState, EbadCgiQuery);
+		error(noisyCgiState, EbadCgiQuery);
 		return NULL;
 	}
 
@@ -176,7 +176,7 @@ getCgiVars(void)
 	}
 	else
 	{
-		noisyError(noisyCgiState, EbadCgiQuery);
+		error(noisyCgiState, EbadCgiQuery);
 		return NULL;
 	}
 
@@ -198,7 +198,7 @@ getCgiVars(void)
 	pairlist = (char **) malloc(kNoisyCgiChunkCgiParse*sizeof(char *));
 	if (pairlist == NULL)
 	{
-		noisyFatal(noisyCgiState, Emalloc);
+		fatal(noisyCgiState, Emalloc);
 	}
 
 	paircount = 0;
@@ -226,7 +226,7 @@ getCgiVars(void)
 	vars = (char **) malloc((paircount*2+1)*sizeof(char *));
 	if (vars == NULL)
 	{
-		noisyFatal(noisyCgiState, Emalloc);
+		fatal(noisyCgiState, Emalloc);
 	}
 
 	for (i= 0; i<paircount; i++)
@@ -348,8 +348,8 @@ main(void)
 	sigaction(SIGVTALRM, &sa, NULL);
 
 
-	noisyCgiState = noisyInit(kNoisyModeDefault|kNoisyModeCallStatistics/* | kNoisyModeCallTracing */|kNoisyModeCGI);
-	noisyTimestampsInit(noisyCgiState);
+	noisyCgiState = init(kNoisyModeDefault|kNoisyModeCallStatistics/* | kNoisyModeCallTracing */|kNoisyModeCGI);
+	timestampsInit(noisyCgiState);
 
 
 	/*
@@ -547,7 +547,7 @@ main(void)
 
 	if (logFd == -1)
 	{
-		noisyFatal(noisyCgiState, Emkstemps);
+		fatal(noisyCgiState, Emkstemps);
 	}
 	else
 	{
@@ -572,7 +572,7 @@ main(void)
 		 *	rusage.ru_maxrss is always zero on MacOS 10.5, and on Linux
 		 *	so we determine the memory usage manually.
 		 */
-		startRss = noisyCheckRss(noisyCgiState);
+		startRss = checkRss(noisyCgiState);
 		getrusage(RUSAGE_SELF, &start);	
 
 		/*
@@ -581,7 +581,7 @@ main(void)
 		char inputFilePath[MAXPATHLEN];
 		if (fcntl(logFd, F_GETPATH, &inputFilePath) == -1)
 		{
-			noisyFatal(noisyCgiState, Efd2path);
+			fatal(noisyCgiState, Efd2path);
 		}
 
 		/*
@@ -592,13 +592,13 @@ main(void)
 		/*
 		 *	Create a top-level scope, then parse.
 		 */
-		noisyCgiState->noisyIrTopScope = noisySymbolTableAllocScope(noisyCgiState);
+		noisyCgiState->noisyIrTopScope = SymbolTableAllocScope(noisyCgiState);
 		noisyCgiState->noisyIrRoot = noisyParse(noisyCgiState, noisyCgiState->noisyIrTopScope);
-		noisyRunPasses(noisyCgiState);
+		runPasses(noisyCgiState);
 
 
 		/*
-		 *	We don't put the following into noisyRunPasses() because they
+		 *	We don't put the following into runPasses() because they
 		 *	are not general-purpose.
 		 */
 
@@ -608,7 +608,7 @@ main(void)
 		 */
 		if (noisyCgiState->irBackends & kNoisyIrBackendDot)
 		{
-			noisyPrintToFile(noisyCgiState, noisyIrPassDotBackend(noisyCgiState, noisyCgiState->noisyIrTopScope, noisyCgiState->noisyIrRoot), "tmpdot", kNoisyPostFileWriteActionRenderDot);
+			printToFile(noisyCgiState, noisyIrPassDotBackend(noisyCgiState, noisyCgiState->noisyIrTopScope, noisyCgiState->noisyIrRoot), "tmpdot", kNoisyPostFileWriteActionRenderDot);
 		}
 
 
@@ -624,7 +624,7 @@ main(void)
 
 		if (noisyCgiState->mode & kNoisyModeCallTracing)
 		{
-			noisyTimeStampDumpTimeline(noisyCgiState);
+			timeStampDumpTimeline(noisyCgiState);
 		}
 
 		if (noisyCgiState->mode & kNoisyModeCallStatistics)
@@ -632,9 +632,9 @@ main(void)
 			uint64_t	irNodeCount = 0, symbolTableNodeCount;
 
 
-			noisyTimeStampDumpResidencies(noisyCgiState);
+			timeStampDumpResidencies(noisyCgiState);
 
-			irNodeCount = noisyIrPassHelperIrSize(noisyCgiState, noisyCgiState->noisyIrRoot);
+			irNodeCount = irPassHelperIrSize(noisyCgiState, noisyCgiState->noisyIrRoot);
 			symbolTableNodeCount = noisyIrPassHelperSymbolTableSize(noisyCgiState, noisyCgiState->noisyIrTopScope);
 
 			flexprint(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fpinfo, "Intermediate Representation Information:\n\n");
@@ -660,7 +660,7 @@ main(void)
 		noisyCgiState->jmpbufIsValid = false;
 	}
 	getrusage(RUSAGE_SELF, &end);
-	endRss = noisyCheckRss(noisyCgiState);
+	endRss = checkRss(noisyCgiState);
 
 
 	/*
@@ -822,7 +822,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("            editor.setTheme(\"ace/theme/solarized_light\");\n");
 	printf("            editor.session.setMode(\"ace/mode/c_cpp\");\n");
 	printf("            editor.setShowPrintMargin(false);\n");
-	printf("            editor.gotoLine(%llu, %llu, true);\n", noisyLexPeek(noisyCgiState, 1)->sourceInfo->lineNumber, noisyLexPeek(noisyCgiState, 1)->sourceInfo->columnNumber);
+	printf("            editor.gotoLine(%llu, %llu, true);\n", lexPeek(noisyCgiState, 1)->sourceInfo->lineNumber, lexPeek(noisyCgiState, 1)->sourceInfo->columnNumber);
 	/*
 	 *	Have ACE autosize the height, with an upper limit at maxLines
 	 */

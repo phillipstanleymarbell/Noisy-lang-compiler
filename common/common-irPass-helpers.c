@@ -50,9 +50,9 @@
 
 
 void
-noisyIrPassHelperColorIr(NoisyState *  N, NoisyIrNode *  p, NoisyIrNodeColor nodeColor, bool setNotClear, bool recurseFlag)
+irPassHelperColorIr(State *  N, IrNode *  p, IrNodeColor nodeColor, bool setNotClear, bool recurseFlag)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperColorIr);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperColorIr);
 
 	if (p == NULL)
 	{
@@ -61,7 +61,7 @@ noisyIrPassHelperColorIr(NoisyState *  N, NoisyIrNode *  p, NoisyIrNodeColor nod
 
 	if (p->irLeftChild == p || p->irRightChild == p)
 	{
-		noisyFatal(N, "Immediate cycle in Ir, seen noisyTimeStampKeyIrPassHelperColorIr()!!\n");
+		fatal(N, "Immediate cycle in Ir, seen noisyTimeStampKeyIrPassHelperColorIr()!!\n");
 		return;
 	}
 
@@ -76,8 +76,8 @@ noisyIrPassHelperColorIr(NoisyState *  N, NoisyIrNode *  p, NoisyIrNodeColor nod
 
 	if (recurseFlag)
 	{
-		noisyIrPassHelperColorIr(N, p->irLeftChild, nodeColor, setNotClear, recurseFlag);
-		noisyIrPassHelperColorIr(N, p->irRightChild, nodeColor, setNotClear, recurseFlag);
+		irPassHelperColorIr(N, p->irLeftChild, nodeColor, setNotClear, recurseFlag);
+		irPassHelperColorIr(N, p->irRightChild, nodeColor, setNotClear, recurseFlag);
 	}
 
 	return;
@@ -85,9 +85,9 @@ noisyIrPassHelperColorIr(NoisyState *  N, NoisyIrNode *  p, NoisyIrNodeColor nod
 
 
 void
-noisyIrPassHelperColorSymbolTable(NoisyState *  N, NoisyScope *  p, NoisyIrNodeColor nodeColor, bool setNotClear, bool recurseFlag)
+irPassHelperColorSymbolTable(State *  N, Scope *  p, IrNodeColor nodeColor, bool setNotClear, bool recurseFlag)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperColorSymbolTable);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperColorSymbolTable);
 
 	if (p == NULL)
 	{
@@ -105,23 +105,23 @@ noisyIrPassHelperColorSymbolTable(NoisyState *  N, NoisyScope *  p, NoisyIrNodeC
 
 	if (recurseFlag)
 	{
-		NoisyScope *	tmp = p->firstChild;
+		Scope *	tmp = p->firstChild;
 		while (tmp != NULL)
 		{
-			noisyIrPassHelperColorSymbolTable(N, tmp, nodeColor, setNotClear, recurseFlag);
+			irPassHelperColorSymbolTable(N, tmp, nodeColor, setNotClear, recurseFlag);
 			tmp = tmp->next;
 		}
 	}
-	noisyIrPassHelperColorSymbolTable(N, p->next, nodeColor, setNotClear, recurseFlag);
+	irPassHelperColorSymbolTable(N, p->next, nodeColor, setNotClear, recurseFlag);
 
 	return;
 }
 
 
 uint64_t
-noisyIrPassHelperIrSize(NoisyState *  N, NoisyIrNode *  p)
+irPassHelperIrSize(State *  N, IrNode *  p)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperIrSize);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperIrSize);
 
 	if (p == NULL)
 	{
@@ -130,18 +130,18 @@ noisyIrPassHelperIrSize(NoisyState *  N, NoisyIrNode *  p)
 
 	if (p->irLeftChild == p || p->irRightChild == p)
 	{
-		noisyFatal(N, "Immediate cycle in AST, seen in noisyIrPassHelperIrSize()!!\n");
+		fatal(N, "Immediate cycle in AST, seen in noisyIrPassHelperIrSize()!!\n");
 		return 0;
 	}
 
-	return (1 + noisyIrPassHelperIrSize(N, p->irLeftChild) + noisyIrPassHelperIrSize(N, p->irRightChild));
+	return (1 + irPassHelperIrSize(N, p->irLeftChild) + irPassHelperIrSize(N, p->irRightChild));
 }
 
 
 uint64_t
-noisyIrPassHelperSymbolTableSize(NoisyState *  N, NoisyScope *  p)
+irPassHelperSymbolTableSize(State *  N, Scope *  p)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperSymbolTableSize);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassHelperSymbolTableSize);
 
 	if (p == NULL)
 	{
@@ -149,12 +149,12 @@ noisyIrPassHelperSymbolTableSize(NoisyState *  N, NoisyScope *  p)
 	}
 
 	int		n = 0;
-	NoisyScope *	tmp = p->firstChild;
+	Scope *	tmp = p->firstChild;
 	while (tmp != NULL)
 	{
-		n += noisyIrPassHelperSymbolTableSize(N, tmp);
+		n += irPassHelperSymbolTableSize(N, tmp);
 		tmp = tmp->next;
 	}
 
-	return (1 + n + noisyIrPassHelperSymbolTableSize(N, p->next));
+	return (1 + n + irPassHelperSymbolTableSize(N, p->next));
 }

@@ -62,24 +62,24 @@
 //extern const char	gNoisyWhitespace[];
 //extern const char	gNoisyStickies[];
 
-static void		usage(NoisyState *  N);
-static void		processFile(NoisyState *  N, char *  filename);
-static void		version(NoisyState *  N);
+static void		usage(State *  N);
+static void		processFile(State *  N, char *  filename);
+static void		version(State *  N);
 
 int
 main(int argc, char *argv[])
 {
 	int			jumpParameter;
-	NoisyState *		N;
+	State *		N;
 
-	N = noisyInit(kNoisyModeDefault);
+	N = init(kNoisyModeDefault);
 	
     if (N == NULL)
 	{
-		noisyFatal(NULL, Emalloc);
+		fatal(NULL, Emalloc);
 
 		/*	Not reached	*/
-		noisyConsolePrintBuffers(N);
+		consolePrintBuffers(N);
 		exit(EXIT_FAILURE);
 	}
 
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 			case 'h':
 			{
 				usage(N);
-				noisyConsolePrintBuffers(N);
+				consolePrintBuffers(N);
 				exit(EXIT_SUCCESS);
 
 				/*	Not reached 	*/
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 			case 'V':
 			{
 				version(N);
-				noisyConsolePrintBuffers(N);
+				consolePrintBuffers(N);
 				exit(EXIT_SUCCESS);
 
 				/*	Not reached 	*/
@@ -151,7 +151,7 @@ main(int argc, char *argv[])
 				else
 				{
 					usage(N);
-					noisyConsolePrintBuffers(N);
+					consolePrintBuffers(N);
 					exit(EXIT_FAILURE);
 				}
 
@@ -170,7 +170,7 @@ main(int argc, char *argv[])
 			{
 				N->mode |= kNoisyModeCallTracing;
 				N->mode |= kNoisyModeCallStatistics;
-				noisyTimestampsInit(N);
+				timestampsInit(N);
 
 				break;
 			}
@@ -178,7 +178,7 @@ main(int argc, char *argv[])
 			case 's':
 			{
 				N->mode |= kNoisyModeCallStatistics;
-				noisyTimestampsInit(N);
+				timestampsInit(N);
 
 				break;
 			}
@@ -202,7 +202,7 @@ main(int argc, char *argv[])
 				else
 				{
 					usage(N);
-					noisyConsolePrintBuffers(N);
+					consolePrintBuffers(N);
 					exit(EXIT_FAILURE);
 				}
 
@@ -227,7 +227,7 @@ main(int argc, char *argv[])
 				else
 				{
 					usage(N);
-					noisyConsolePrintBuffers(N);
+					consolePrintBuffers(N);
 					exit(EXIT_FAILURE);
 				}
 
@@ -240,7 +240,7 @@ main(int argc, char *argv[])
 				 *    getopt_long() should have already printed an error message.
 				 */
 				usage(N);
-				noisyConsolePrintBuffers(N);
+				consolePrintBuffers(N);
 				exit(EXIT_FAILURE);
 
 				break;
@@ -249,7 +249,7 @@ main(int argc, char *argv[])
 			default:
 			{
 				usage(N);
-				noisyConsolePrintBuffers(N);
+				consolePrintBuffers(N);
 				exit(EXIT_FAILURE);
 			}
 		}
@@ -276,13 +276,13 @@ main(int argc, char *argv[])
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n%s\n", Enoinput);
 		usage(N);
-		noisyConsolePrintBuffers(N);
+		consolePrintBuffers(N);
 		exit(EXIT_FAILURE);
 	}
 
 	if (!(N->mode & kNoisyModeCGI))
 	{
-		noisyConsolePrintBuffers(N);
+		consolePrintBuffers(N);
 	}
 
 	return 0;
@@ -290,7 +290,7 @@ main(int argc, char *argv[])
 
 
 static void
-processFile(NoisyState *  N, char *  fileName)
+processFile(State *  N, char *  fileName)
 {
 	/*
 	 *	Tokenize input, then parse it and build AST + symbol table.
@@ -307,11 +307,11 @@ processFile(NoisyState *  N, char *  fileName)
 	/*
 	 *	Run passes requested in the command line flags.
 	 */
-	noisyRunPasses(N);
+	runPasses(N);
 
 
 	/*
-	 *	We don't put the following into noisyRunPasses() because they are not general-purpose
+	 *	We don't put the following into runPasses() because they are not general-purpose
 	 */
 
 
@@ -335,7 +335,7 @@ processFile(NoisyState *  N, char *  fileName)
 
 	if (N->mode & kNoisyModeCallTracing)
 	{
-		noisyTimeStampDumpTimeline(N);
+		timeStampDumpTimeline(N);
 	}
 
 	if (N->mode & kNoisyModeCallStatistics)
@@ -343,10 +343,10 @@ processFile(NoisyState *  N, char *  fileName)
 		uint64_t	irNodeCount = 0, symbolTableNodeCount = 0;
 
 
-		noisyTimeStampDumpResidencies(N);
+		timeStampDumpResidencies(N);
 
-		irNodeCount = noisyIrPassHelperIrSize(N, N->noisyIrRoot);
-		symbolTableNodeCount = noisyIrPassHelperSymbolTableSize(N, N->noisyIrTopScope);
+		irNodeCount = irPassHelperIrSize(N, N->noisyIrRoot);
+		symbolTableNodeCount = irPassHelperSymbolTableSize(N, N->noisyIrTopScope);
 
 
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "Intermediate Representation Information:\n\n");
@@ -365,14 +365,14 @@ processFile(NoisyState *  N, char *  fileName)
 
 
 static void
-version(NoisyState *  N)
+version(State *  N)
 {
 	flexprint(N->Fe, N->Fm, N->Fperr, "\nNoisy version %s.\n\n", kNoisyVersion);
 }
 
 
 static void
-usage(NoisyState *  N)
+usage(State *  N)
 {
 	version(N);
 	flexprint(N->Fe, N->Fm, N->Fperr,	"Usage:    noisy [ (--help, -h)                                       \n"

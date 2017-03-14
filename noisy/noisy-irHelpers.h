@@ -36,6 +36,6 @@
 */
 
 
-NoisyScope *	progtypeName2scope(NoisyState *  N, const char *  identifier);
-void		addToProgtypeScopes(NoisyState *  N, char *  identifier, NoisyScope *  progtypeScope);
-void		assignTypes(NoisyState *  N, NoisyIrNode *  node, NoisyIrNode *  typeExpression);
+Scope *	progtypeName2scope(State *  N, const char *  identifier);
+void		addToProgtypeScopes(State *  N, char *  identifier, Scope *  progtypeScope);
+void		assignTypes(State *  N, IrNode *  node, IrNode *  typeExpression);

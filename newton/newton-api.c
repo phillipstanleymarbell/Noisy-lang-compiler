@@ -62,16 +62,16 @@
 #include "newton-check-pass.h"
 
 
-NoisyState *
+State *
 newtonApiInit(char *  newtonFileName)
 {
-    NoisyState * N = noisyInit(kNoisyModeDefault);
+    State * N = init(kNoisyModeDefault);
     processNewtonFile(N, newtonFileName);
     return N;
 }
 
 Physics *
-newtonApiGetPhysicsTypeByName(NoisyState* N, char* nameOfType)
+newtonApiGetPhysicsTypeByName(State* N, char* nameOfType)
 {
     Physics* current = N->newtonIrTopScope->firstPhysics;
     while (current != NULL)
@@ -87,7 +87,7 @@ newtonApiGetPhysicsTypeByName(NoisyState* N, char* nameOfType)
 
 
 Invariant * 
-newtonApiGetInvariantByParameters(NoisyState* N, NoisyIrNode* parameterTreeRoot)
+newtonApiGetInvariantByParameters(State* N, IrNode* parameterTreeRoot)
 {
     unsigned long long int targetId = newtonGetInvariantIdByParameters(N, parameterTreeRoot, 1);
     Invariant * current = N->invariantList;
@@ -103,7 +103,7 @@ newtonApiGetInvariantByParameters(NoisyState* N, NoisyIrNode* parameterTreeRoot)
 }
 
 NewtonAPIReport * 
-newtonApiSatisfiesConstraints(NoisyState* N, NoisyIrNode* parameterTreeRoot)
+newtonApiSatisfiesConstraints(State* N, IrNode* parameterTreeRoot)
 {
     Invariant* invariant = newtonApiGetInvariantByParameters(N, parameterTreeRoot);
     NewtonAPIReport* report = (NewtonAPIReport*) calloc(1, sizeof(NewtonAPIReport));
@@ -113,15 +113,15 @@ newtonApiSatisfiesConstraints(NoisyState* N, NoisyIrNode* parameterTreeRoot)
 
 
 void
-newtonApiAddLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
+newtonApiAddLeaf(State *  N, IrNode *  parent, IrNode *  newNode)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
 
-	NoisyIrNode *	node = depthFirstWalk(N, parent);
+	IrNode *	node = depthFirstWalk(N, parent);
 
 	if (node == NULL)
     {
-      noisyFatal(N, Esanity);
+      fatal(N, Esanity);
     }
 
 	if (node->irLeftChild == NULL)
@@ -135,11 +135,11 @@ newtonApiAddLeaf(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
 }
 
 void
-newtonApiAddLeafWithChainingSeqNoLexer(NoisyState *  N, NoisyIrNode *  parent, NoisyIrNode *  newNode)
+newtonApiAddLeafWithChainingSeqNoLexer(State *  N, IrNode *  parent, IrNode *  newNode)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
 
-	NoisyIrNode *	node = depthFirstWalk(N, parent);
+	IrNode *	node = depthFirstWalk(N, parent);
 
 	if (node->irLeftChild == NULL)
     {
@@ -148,7 +148,7 @@ newtonApiAddLeafWithChainingSeqNoLexer(NoisyState *  N, NoisyIrNode *  parent, N
       return;
     }
 
-	node->irRightChild = genNoisyIrNode(N,	kNoisyIrNodeType_Xseq,
+	node->irRightChild = genIrNode(N,	kNoisyIrNodeType_Xseq,
                                       newNode /* left child */,
                                       NULL /* right child */,
                                       NULL/* source info */);
@@ -156,9 +156,9 @@ newtonApiAddLeafWithChainingSeqNoLexer(NoisyState *  N, NoisyIrNode *  parent, N
 
 
 void
-newtonApiNumberParametersZeroToN(NoisyState * N, NoisyIrNode * parameterTreeRoot)
+newtonApiNumberParametersZeroToN(State * N, IrNode * parameterTreeRoot)
 {
-  NoisyIrNode * parameter;
+  IrNode * parameter;
   int parameterNumber = 0;
 
   while((parameter = findNthIrNodeOfType(N, parameterTreeRoot, kNewtonIrNodeType_Pparameter, parameterNumber)) != NULL)
