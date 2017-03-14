@@ -150,7 +150,7 @@ newtonCheckCompareOp(
                 sprintf(report->dimensionErrorMessage, "dimensions do not match");
             break;
         default:
-            noisyFatal(N, "newton-api.c:newtonCheckCompareOp: no compareOp detected");
+            fatal(N, "newton-api.c:newtonCheckCompareOp: no compareOp detected");
             break;
     }
 	// assert(constraintReport->satisfiesValueConstraint);
@@ -166,7 +166,7 @@ newtonCheckBinOp(
     ConstraintReport * report
 ) {
 	if (left == NULL || right == NULL)
-	    noisyFatal(N, "newton-check-pass.c:newtonCheckBinOp: left or right is null");
+	    fatal(N, "newton-check-pass.c:newtonCheckBinOp: left or right is null");
     switch(binOpType)
     {
         case kNewtonIrNodeType_Tplus:
@@ -216,7 +216,7 @@ newtonCheckBinOp(
 
             break;
         default:
-            noisyFatal(N, "newton-api.c:newtonCheckCompareOp: no binOp detected");
+            fatal(N, "newton-api.c:newtonCheckCompareOp: no binOp detected");
             break;
     }
 }
@@ -488,7 +488,7 @@ checkQuantityFactor(
 		{
 		  sprintf(report->dimensionErrorMessage, "newton-check-pass.c:checkQuantityFactor: did not find a parameter with physics id %llu", factor->physics->id);
 
-		  noisyFatal(N, "newton-check-pass.c:checkQuantity: matchingParameter is null\n");
+		  fatal(N, "newton-check-pass.c:checkQuantity: matchingParameter is null\n");
 		  return;
 		}
 	  else

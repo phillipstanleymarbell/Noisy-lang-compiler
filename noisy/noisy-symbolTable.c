@@ -62,14 +62,14 @@
 Scope *
 noisySymbolTableAllocScope(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAllocScope);
+	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAllocScope);
 
 	Scope *	newScope;
 
 	newScope = (Scope *)calloc(1, sizeof(Scope));
 	if (newScope == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	return newScope;
@@ -79,14 +79,14 @@ noisySymbolTableAllocScope(State *  N)
 Symbol *
 noisySymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  token)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAddOrLookupSymbolForToken);
+	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAddOrLookupSymbolForToken);
 
 	Symbol *	newSymbol;
 
 	newSymbol = (Symbol *)calloc(1, sizeof(Symbol));
 	if (newSymbol == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	newSymbol->identifier	= token->identifier;
@@ -123,7 +123,7 @@ noisySymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  t
 Symbol *
 noisySymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  identifier)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableSymbolForIdentifier);
+	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableSymbolForIdentifier);
 
 	/*
 	 *	Recursion falls out when we reach root which has nil parent
@@ -153,7 +153,7 @@ noisySymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  id
 Scope *
 noisySymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableOpenScope);
+	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableOpenScope);
 
 	Scope *	newScope = noisySymbolTableAllocScope(N);
 
@@ -168,7 +168,7 @@ noisySymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 void
 noisySymbolTableCloseScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeySymbolTableCloseScope);
+	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableCloseScope);
 
 	scope->end = subTree->sourceInfo;
 }

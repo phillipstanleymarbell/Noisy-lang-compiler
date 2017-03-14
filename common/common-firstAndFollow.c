@@ -59,15 +59,15 @@
  *		inFirst(IrNodeType productionOrToken, IrNodeType token)
  */
 bool
-noisyInFirst(State *  N, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
+inFirst(State *  N, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFirst);
+	TimeStampTraceMacro(kNoisyTimeStampKeyInFirst);
 
 	Token *	token = lexPeek(N, 1);
 
 	if (productionOrToken > kNoisyIrNodeTypeMax)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
 	/*
@@ -95,56 +95,20 @@ noisyInFirst(State *  N, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTy
  *		inFollow(IrNodeType productionOrToken, IrNodeType token)
  */
 bool
-noisyInFollow(State *  N, IrNodeType productionOrToken, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
+inFollow(State *  N, IrNodeType productionOrToken, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyInFollow);
+	TimeStampTraceMacro(kNoisyTimeStampKeyInFollow);
 
 	Token *	token = lexPeek(N, 1);
 
 	if (productionOrToken > kNoisyIrNodeTypeMax)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
 	/*
 	 *	NOTE: The arrays created by ffi2code have a kNoisyIrNodeTypeMax element at the end of each sub-array
 	 */
-	for (int i = 0; i < kNoisyIrNodeTypeMax && follows[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
-	{
-		if (follows[productionOrToken][i] == token->type)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool irInFirst(State *  N, IrNodeType productionOrToken, Token* token, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
-{
-	if (productionOrToken > kNoisyIrNodeTypeMax)
-	{
-		noisyFatal(N, Esanity);
-	}
-
-	for (int i = 0; i < kNoisyIrNodeTypeMax && firsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
-	{
-		if (firsts[productionOrToken][i] == token->type)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool irInFollow(State *  N, IrNodeType productionOrToken, Token* token, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
-{
-	if (productionOrToken > kNoisyIrNodeTypeMax)
-	{
-		noisyFatal(N, Esanity);
-	}
-
 	for (int i = 0; i < kNoisyIrNodeTypeMax && follows[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
 		if (follows[productionOrToken][i] == token->type)

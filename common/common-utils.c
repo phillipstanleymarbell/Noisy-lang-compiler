@@ -92,12 +92,12 @@ static char	kNoisyRenderExtensionSVG[]	= ".svg";
 
 
 void
-noisyTimestampsInit(State *  N)
+timestampsInit(State *  N)
 {
-	N->timestamps = (NoisyTimeStamp *) calloc(kNoisyTimestampTimelineLength, sizeof(NoisyTimeStamp));
+	N->timestamps = (TimeStamp *) calloc(kNoisyTimestampTimelineLength, sizeof(TimeStamp));
 	if (N->timestamps == NULL)
 	{
-		noisyFatal(NULL, Emalloc);
+		fatal(NULL, Emalloc);
 	}
 	N->timestampSlots = kNoisyTimestampTimelineLength;
 
@@ -111,28 +111,28 @@ noisyTimestampsInit(State *  N)
 	N->timeAggregates = (uint64_t *) calloc(kNoisyTimeStampKeyMax, sizeof(uint64_t));
 	if (N->timeAggregates == NULL)
 	{
-		noisyFatal(NULL, Emalloc);
+		fatal(NULL, Emalloc);
 	}
 
 	//TODO: revisit naming of timeAgregates/callAggregates, as well as the NoisyTimeStampKey prefix
 	N->callAggregates = (uint64_t *) calloc(kNoisyTimeStampKeyMax, sizeof(uint64_t));
 	if (N->callAggregates == NULL)
 	{
-		noisyFatal(NULL, Emalloc);
+		fatal(NULL, Emalloc);
 	}
 
 	return;
 }
 
 State *
-noisyInit(NoisyMode mode)
+init(NoisyMode mode)
 {
 	State *	N;
 
 	N = (State *)calloc(1, sizeof(State));
 	if (N == NULL)
 	{
-		noisyFatal(NULL, Emalloc);
+		fatal(NULL, Emalloc);
 	}
 	N->mode = mode;
 
@@ -144,22 +144,22 @@ noisyInit(NoisyMode mode)
 	 */
 	if (mode & kNoisyModeCallStatistics)
 	{
-		noisyTimestampsInit(N);
+		timestampsInit(N);
 	}
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyNoisyInit);
+	TimeStampTraceMacro(kNoisyTimeStampKeyNoisyInit);
 
 
 
 	N->Fe = (FlexErrState *)calloc(1, sizeof(FlexErrState));
 	if (N->Fe == NULL)
 	{
-		noisyFatal(NULL, Emalloc);
+		fatal(NULL, Emalloc);
 	}
 
 	N->Fm = (FlexMstate *)calloc(1, sizeof(FlexMstate));
 	if (N->Fm == NULL)
 	{
-		noisyFatal(NULL, Emalloc);
+		fatal(NULL, Emalloc);
 	}
 	N->Fm->debug = 0;
 
@@ -171,14 +171,14 @@ noisyInit(NoisyMode mode)
 	N->Fperr = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
 	if (N->Fperr == NULL)
 	{
-		noisyFatal(NULL, Emalloc);
+		fatal(NULL, Emalloc);
 	}
 
 	//TODO: need to figure out right buffer size dynamically. 
 	N->Fperr->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
 	if (N->Fperr->circbuf == NULL)
 	{
-		noisyFatal(NULL, Emalloc);
+		fatal(NULL, Emalloc);
 	}
 
 	/*
@@ -187,14 +187,14 @@ noisyInit(NoisyMode mode)
 	N->Fpinfo = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
 	if (N->Fpinfo == NULL)
 	{
-		noisyFatal(NULL, Emalloc);
+		fatal(NULL, Emalloc);
 	}
 
 	//TODO: need to figure out right buffer size dynamically. 
 	N->Fpinfo->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
 	if (N->Fpinfo->circbuf == NULL)
 	{
-		noisyFatal(NULL, Emalloc);
+		fatal(NULL, Emalloc);
 	}
 
 	/*
@@ -203,7 +203,7 @@ noisyInit(NoisyMode mode)
 	N->currentToken = calloc(kNoisyMaxBufferLength, sizeof(char));
 	if (N->currentToken == NULL)
 	{
-		noisyFatal(NULL, Emalloc);
+		fatal(NULL, Emalloc);
 	}
 
 #ifdef NoisyOsMacOSX
@@ -225,7 +225,7 @@ noisyInit(NoisyMode mode)
 
 
 void
-noisyDealloc(State *  N)
+dealloc(State *  N)
 {
 	free(N->Fe);
 	free(N->Fm);
@@ -258,9 +258,9 @@ noisyDealloc(State *  N)
 
 
 void
-noisyRunPasses(State *  N)
+runPasses(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyRunPasses);
+	TimeStampTraceMacro(kNoisyTimeStampKeyRunPasses);
 
 	/*
 	 *	Convert the literal strings in tree for numeric and real-valued constants into uint64_t / double.
@@ -274,9 +274,9 @@ noisyRunPasses(State *  N)
 
 
 uint64_t
-noisyCheckRss(State *  N)
+checkRss(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyCheckRss);
+	TimeStampTraceMacro(kNoisyTimeStampKeyCheckRss);
 
 	char		tmp, *ep = &tmp, buf[kNoisyMaxBufferLength];
 	FILE *		pipe;
@@ -296,7 +296,7 @@ noisyCheckRss(State *  N)
 	pipe = popen(buf, "r");
 	if (pipe == NULL)
 	{
-		noisyError(N, Epipe);
+		error(N, Epipe);
 		return 0;
 	}
 	
@@ -313,9 +313,9 @@ noisyCheckRss(State *  N)
 
 
 void
-noisyConsolePrintBuffers(State *  N)
+consolePrintBuffers(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyConsolePrintBuffers);
+	TimeStampTraceMacro(kNoisyTimeStampKeyConsolePrintBuffers);
 
 	//TODO: need a better thought out way to handle printing out the internal buffers when we are running from the command line	
 	if (N && N->Fpinfo && strlen(N->Fpinfo->circbuf))
@@ -344,9 +344,9 @@ noisyConsolePrintBuffers(State *  N)
 
 
 void
-noisyPrintToFile(State *  N, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action)
+printToFile(State *  N, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyPrintToFile);
+	TimeStampTraceMacro(kNoisyTimeStampKeyPrintToFile);
 
 	int	fd;
 	char *	endName;
@@ -372,7 +372,7 @@ noisyPrintToFile(State *  N, const char *  msg, const char *  fileName, NoisyPos
 		randomizedFileName = (char *) calloc(stubAndRandomDigitsNameLength, sizeof(char));
 		if (randomizedFileName == NULL)
 		{
-			noisyFatal(N, Emalloc);
+			fatal(N, Emalloc);
 		}
 
 		snprintf(randomizedFileName, stubAndRandomDigitsNameLength, "%s%0*d", fileName, kNoisyCgiRandomDigits, (int)random());
@@ -399,7 +399,7 @@ noisyPrintToFile(State *  N, const char *  msg, const char *  fileName, NoisyPos
 	pathName =  (char *) calloc(strlen(endName)+strlen(kNoisyBasePath) + 1, sizeof(char));
 	if (pathName == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	strcat(pathName, kNoisyBasePath);
@@ -432,7 +432,7 @@ noisyPrintToFile(State *  N, const char *  msg, const char *  fileName, NoisyPos
 	 */
 	if (action & kNoisyPostFileWriteActionRenderDot)
 	{
-		noisyRenderDotInFile(N, pathName, randomizedFileName);
+		renderDotInFile(N, pathName, randomizedFileName);
 	}
 	
 	free(pathName);
@@ -445,15 +445,15 @@ noisyPrintToFile(State *  N, const char *  msg, const char *  fileName, NoisyPos
 
 
 void
-noisyRenderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
+renderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyRenderDotInFile);
+	TimeStampTraceMacro(kNoisyTimeStampKeyRenderDotInFile);
 
 	/*	The N->lastrender purposefully does not contain VM_BASEPATH	*/
 	N->lastDotRender = realloc(N->lastDotRender, (strlen(randomizedFileName)+1) * sizeof(char));
 	if (N->lastDotRender == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	strcpy(N->lastDotRender, randomizedFileName);
@@ -469,7 +469,7 @@ noisyRenderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 
 		case -1:
 		{
-			noisyFatal(N, Efork);
+			fatal(N, Efork);
 			break;
 		}
 
@@ -477,7 +477,7 @@ noisyRenderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 		{
 			if (N->mode & kNoisyModeCGI)
 			{
-				noisyCheckCgiCompletion(N, pathName, kNoisyRenderExtensionPNG);
+				checkCgiCompletion(N, pathName, kNoisyRenderExtensionPNG);
 			}
 		}
 	}
@@ -492,7 +492,7 @@ noisyRenderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 
 		case -1:
 		{
-			noisyFatal(N, Efork);
+			fatal(N, Efork);
 			break;
 		}
 
@@ -500,7 +500,7 @@ noisyRenderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 		{
 			if (N->mode & kNoisyModeCGI)
 			{
-				noisyCheckCgiCompletion(N, pathName, kNoisyRenderExtensionPDF);
+				checkCgiCompletion(N, pathName, kNoisyRenderExtensionPDF);
 			}
 		}
 	}
@@ -514,7 +514,7 @@ noisyRenderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 
 		case -1:
 		{
-			noisyFatal(N, Efork);
+			fatal(N, Efork);
 			break;
 		}
 
@@ -522,7 +522,7 @@ noisyRenderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 		{
 			if (N->mode & kNoisyModeCGI)
 			{
-				noisyCheckCgiCompletion(N, pathName, kNoisyRenderExtensionSVG);
+				checkCgiCompletion(N, pathName, kNoisyRenderExtensionSVG);
 			}
 		}
 	}
@@ -532,9 +532,9 @@ noisyRenderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 
 //TODO/NOTE: this is not a bulletproof check for render success. it simply checks if the desired file is there and can be opened...
 void
-noisyCheckCgiCompletion(State *  N, const char *  pathName, const char *  renderExtension)
+checkCgiCompletion(State *  N, const char *  pathName, const char *  renderExtension)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyCheckCgiCompletion);
+	TimeStampTraceMacro(kNoisyTimeStampKeyCheckCgiCompletion);
 
 	char *	renderPathName;
 
@@ -544,7 +544,7 @@ noisyCheckCgiCompletion(State *  N, const char *  pathName, const char *  render
 	renderPathName = (char *) calloc(strlen(pathName)+strlen(renderExtension)+1, sizeof(char));
 	if (renderPathName == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	strcat(renderPathName, pathName);
@@ -567,9 +567,9 @@ noisyCheckCgiCompletion(State *  N, const char *  pathName, const char *  render
 
 
 void
-noisyFatal(State *  N, const char *  msg)
+fatal(State *  N, const char *  msg)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyFatal);
+	TimeStampTraceMacro(kNoisyTimeStampKeyFatal);
 
 	fflush(stdout);
 	fflush(stderr);
@@ -586,21 +586,21 @@ noisyFatal(State *  N, const char *  msg)
 	{
 		if (N->mode & kNoisyModeCallTracing)
 		{
-			noisyTimeStampDumpTimeline(N);
+			timeStampDumpTimeline(N);
 		}
 
 		if (N->mode & kNoisyModeCallStatistics)
 		{
-			noisyTimeStampDumpResidencies(N);
+			timeStampDumpResidencies(N);
 		}
 
-		NoisyTimeStampTraceMacro(kNoisyTimeStampKeyFatal);
+		TimeStampTraceMacro(kNoisyTimeStampKeyFatal);
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n%s%s\n\n", Efatal, msg);
 	}
 
 	if ((N != NULL) && (N->jmpbufIsValid))
 	{
-		noisyConsolePrintBuffers(N);
+		consolePrintBuffers(N);
 
 		/*
 		 *	Could pass in case-specific info here, but just
@@ -630,7 +630,7 @@ noisyFatal(State *  N, const char *  msg)
 		//flexprint(N->Fe, N->Fm, N->Fperr, "\nDump of Noisy IR at point of failure:\n%s\n", noisyIrDotBackend(N));
 	}
 
-	noisyConsolePrintBuffers(N);
+	consolePrintBuffers(N);
 
 	/*
 	 *	CGI depends on clean failure of cgi program
@@ -646,16 +646,16 @@ noisyFatal(State *  N, const char *  msg)
 
 
 void
-noisyError(State *  N, const char *  msg)
+error(State *  N, const char *  msg)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyError);
+	TimeStampTraceMacro(kNoisyTimeStampKeyError);
 
 	if (N == NULL)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyError);
+	TimeStampTraceMacro(kNoisyTimeStampKeyError);
 
 	if (!(N->verbosityLevel & kNoisyVerbosityVerbose))
 	{

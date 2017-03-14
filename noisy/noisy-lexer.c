@@ -74,7 +74,7 @@ static void		checkMinus(State *  N);
 void
 noisyLexInit(State *  N, char *  fileName)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexInit);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexInit);
 
 	FILE *			filePointer;
 	size_t			lineBufferSize;
@@ -89,7 +89,7 @@ noisyLexInit(State *  N, char *  fileName)
 	filePointer = fopen(fileName, "r");
 	if (filePointer == NULL)
 	{
-		noisyFatal(N, Eopen);
+		fatal(N, Eopen);
 	}
 
 
@@ -330,7 +330,7 @@ noisyLexInit(State *  N, char *  fileName)
 
 					default:
 					{
-						noisyFatal(N, Esanity);
+						fatal(N, Esanity);
 					}
 				}
 			}
@@ -403,7 +403,7 @@ noisyLexInit(State *  N, char *  fileName)
 static void
 checkComment(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckComment);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckComment);
 
 	/*
 	 *	Gobble any extant chars
@@ -421,7 +421,7 @@ checkComment(State *  N)
 static void
 checkWeq(State *  N, IrNodeType type1, IrNodeType type2)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckWeq);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckWeq);
 
 	IrNodeType		type;
 
@@ -458,7 +458,7 @@ checkWeq(State *  N, IrNodeType type1, IrNodeType type2)
 static void
 checkWeq3(State *  N, IrNodeType type1, IrNodeType type2, char char2, IrNodeType type3)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckWeq3);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckWeq3);
 
 	IrNodeType		type;
 
@@ -500,7 +500,7 @@ checkWeq3(State *  N, IrNodeType type1, IrNodeType type2, char char2, IrNodeType
 static void
 checkSingle(State *  N, IrNodeType tokenType)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckSingle);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckSingle);
 
 	/*
 	 *	Gobble any extant chars.
@@ -532,7 +532,7 @@ checkSingle(State *  N, IrNodeType tokenType)
 static void
 checkDot(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckDot);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckDot);
 
 	/*
 	 *	If token thus far is	"0" | onenine {zeronine}	then
@@ -571,7 +571,7 @@ checkDot(State *  N)
 static void
 checkGt(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckGt);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckGt);
 
 	IrNodeType		type;
 
@@ -621,7 +621,7 @@ checkGt(State *  N)
 static void
 checkLt(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckLt);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckLt);
 
 	IrNodeType		type;
 
@@ -684,7 +684,7 @@ checkLt(State *  N)
 static void
 checkSingleQuote(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckSingleQuote);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckSingleQuote);
 
 	/*
 	 *	TODO/BUG: we do not handle escaped squotes in a charconst
@@ -736,7 +736,7 @@ checkSingleQuote(State *  N)
 static void
 checkDoubleQuote(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckDoubleQuote);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckDoubleQuote);
 
 	/*
 	 *	TODO/BUG: we do not handle escaped dquotes in a strconst
@@ -784,7 +784,7 @@ checkDoubleQuote(State *  N)
 			/*
 			 *	We ran out of buffer space or reached end of lineBuffer
 			 */
-			noisyFatal(N, EstringTooLongOrWithNewline);
+			fatal(N, EstringTooLongOrWithNewline);
 		}
 		else
 		{
@@ -812,7 +812,7 @@ checkDoubleQuote(State *  N)
 static void
 checkMinus(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckMinus);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckMinus);
 
 	IrNodeType		type;
 
@@ -859,13 +859,13 @@ checkMinus(State *  N)
 void
 makeNumericConst(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerMakeNumericConst);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerMakeNumericConst);
 
 //fprintf(stderr, "in makeNumericConst(), N->currentToken = [%s]\n", N->currentToken);
 
 	if (N->currentTokenLength == 0)
 	{
-		noisyFatal(N, EruntTokenInNumericConst);
+		fatal(N, EruntTokenInNumericConst);
 	}
 
 	/*
@@ -1020,14 +1020,14 @@ makeNumericConst(State *  N)
 	}
 	else
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 }
 
 bool
 isOperatorOrSeparator(State *  N, char c)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerIsOperatorOrSeparator);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsOperatorOrSeparator);
 
 	/*
 	 *	Unlike in our Yacc-driven compielers, we don't use a "stickies" array
@@ -1075,7 +1075,7 @@ isOperatorOrSeparator(State *  N, char c)
 void
 finishToken(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerFinishToken);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerFinishToken);
 
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{

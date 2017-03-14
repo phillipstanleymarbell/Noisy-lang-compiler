@@ -389,7 +389,7 @@ newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  na
 	newDimension = (Dimension *)calloc(1, sizeof(Dimension));
 	if (newDimension == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
     newDimension->abbreviation  = abbrevToken->stringConst;
@@ -419,7 +419,7 @@ newtonPhysicsTableAddPhysicsForToken(State *  N, Scope *  scope, Token *  token)
 	newPhysics = (Physics *)calloc(1, sizeof(Physics));
 	if (newPhysics == NULL)
     {
-      noisyFatal(N, Emalloc);
+      fatal(N, Emalloc);
     }
 
 	newPhysics->identifier	= token->identifier;
@@ -510,75 +510,6 @@ newtonPhysicsTablePhysicsForIdentifier(State *  N, Scope *  scope, const char * 
 	return newtonPhysicsTablePhysicsForIdentifier(N, scope->parent, identifier);
 }
 
-// NoisySymbol *
-// newtonSymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  identifier)
-// {
-// 	/*
-// 	 *	Recursion falls out when we reach root which has nil parent
-// 	 */
-// 	if (scope == NULL)
-// 	{
-// 		return NULL;
-// 	}
-// 
-// 	/*
-// 	 *	Search current and parent (not siblings or children)
-// 	 */
-// 	NoisySymbol *	p = scope->firstSymbol;
-// 	while (p != NULL)
-// 	{
-// 		if (!strcmp(p->identifier, identifier))
-// 		{
-// 			return p;
-// 		}
-// 		p = p->next;
-// 	}
-// 
-// 	return newtonSymbolTableSymbolForIdentifier(N, scope->parent, identifier);
-// }
-// 
-// 
-// NoisySymbol *
-// newtonSymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  token)
-// {
-// 	NoisySymbol *	newSymbol;
-// 
-// 	newSymbol = (NoisySymbol *)calloc(1, sizeof(NoisySymbol));
-// 	if (newSymbol == NULL)
-// 	{
-// 		noisyFatal(N, Emalloc);
-// 	}
-// 
-// 	newSymbol->identifier	= token->identifier;
-// 	newSymbol->sourceInfo	= token->sourceInfo;
-// 	newSymbol->scope	= scope;
-// 
-// 	/*
-// 	 *	NOTE:	An extant definition might not exist.
-// 	 */
-// 	newSymbol->definition	= newtonSymbolTableSymbolForIdentifier(N, scope, token->identifier);
-// 
-// 	/*
-// 	 *	NOTE:	Caller sets (1) intconst/etc. fields, (2) type, based on context.
-// 	 *		Caller sets the typesig based on the parsed typeexpr for defns.
-// 	 */
-// 	if (scope->firstSymbol == NULL)
-// 	{
-// 		scope->firstSymbol = newSymbol;
-// 	}
-// 	else
-// 	{
-// 		NoisySymbol *	p = scope->firstSymbol;
-// 		while (p->next != NULL)
-// 		{
-// 			p = p->next;
-// 		}
-// 		p->next = newSymbol;
-// 	}
-// 
-// 	return newSymbol;
-// }
-
 Scope *
 newtonSymbolTableAllocScope(State *  N)
 {
@@ -587,7 +518,7 @@ newtonSymbolTableAllocScope(State *  N)
 	newScope = (Scope *)calloc(1, sizeof(Scope));
 	if (newScope == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 	}
 
 	return newScope;

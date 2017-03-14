@@ -155,14 +155,14 @@ main(int argc, char *argv[])
 	int			jumpParameter;
 	State *		N;
 
-	N = noisyInit(kNoisyModeDefault);
+	N = init(kNoisyModeDefault);
 	
     if (N == NULL)
 	{
-		noisyFatal(NULL, Emalloc);
+		fatal(NULL, Emalloc);
 
 		/*	Not reached	*/
-		noisyConsolePrintBuffers(N);
+		consolePrintBuffers(N);
 		exit(EXIT_FAILURE);
 	}
 
@@ -204,7 +204,7 @@ main(int argc, char *argv[])
 			case 'h':
 			{
 				usage(N);
-				noisyConsolePrintBuffers(N);
+				consolePrintBuffers(N);
 				exit(EXIT_SUCCESS);
 
 				/*	Not reached 	*/
@@ -214,7 +214,7 @@ main(int argc, char *argv[])
 			case 'V':
 			{
 				version(N);
-				noisyConsolePrintBuffers(N);
+				consolePrintBuffers(N);
 				exit(EXIT_SUCCESS);
 
 				/*	Not reached 	*/
@@ -234,7 +234,7 @@ main(int argc, char *argv[])
 				else
 				{
 					usage(N);
-					noisyConsolePrintBuffers(N);
+					consolePrintBuffers(N);
 					exit(EXIT_FAILURE);
 				}
 
@@ -245,7 +245,7 @@ main(int argc, char *argv[])
 			{
 				N->mode |= kNoisyModeCallTracing;
 				N->mode |= kNoisyModeCallStatistics;
-				noisyTimestampsInit(N);
+				timestampsInit(N);
 
 				break;
 			}
@@ -253,7 +253,7 @@ main(int argc, char *argv[])
 			case 's':
 			{
 				N->mode |= kNoisyModeCallStatistics;
-				noisyTimestampsInit(N);
+				timestampsInit(N);
 
 				break;
 			}
@@ -277,7 +277,7 @@ main(int argc, char *argv[])
 				else
 				{
 					usage(N);
-					noisyConsolePrintBuffers(N);
+					consolePrintBuffers(N);
 					exit(EXIT_FAILURE);
 				}
 
@@ -302,7 +302,7 @@ main(int argc, char *argv[])
 				else
 				{
 					usage(N);
-					noisyConsolePrintBuffers(N);
+					consolePrintBuffers(N);
 					exit(EXIT_FAILURE);
 				}
 
@@ -315,7 +315,7 @@ main(int argc, char *argv[])
 				 *    getopt_long() should have already printed an error message.
 				 */
 				usage(N);
-				noisyConsolePrintBuffers(N);
+				consolePrintBuffers(N);
 				exit(EXIT_FAILURE);
 
 				break;
@@ -324,7 +324,7 @@ main(int argc, char *argv[])
 			default:
 			{
 				usage(N);
-				noisyConsolePrintBuffers(N);
+				consolePrintBuffers(N);
 				exit(EXIT_FAILURE);
 			}
 		}
@@ -354,13 +354,13 @@ main(int argc, char *argv[])
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n%s\n", Enoinput);
 		usage(N);
-		noisyConsolePrintBuffers(N);
+		consolePrintBuffers(N);
 		exit(EXIT_FAILURE);
 	}
 
 	if (!(N->mode & kNoisyModeCGI))
 	{
-		noisyConsolePrintBuffers(N);
+		consolePrintBuffers(N);
 	}
 
 	return 0;

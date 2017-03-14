@@ -103,8 +103,8 @@ extern char *		gAstNodeStrings[];
 extern int		gNoisyFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 extern int	    gNoisyFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 
-extern void		noisyFatal(State *  N, const char *  msg);
-extern void		noisyError(State *  N, const char *  msg);
+extern void		fatal(State *  N, const char *  msg);
+extern void		error(State *  N, const char *  msg);
 
 
 
@@ -118,7 +118,7 @@ static char		kNoisyErrorDetailHtmlTagClose[]	= "</span>";
 IrNode *
 noisyParse(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParse);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParse);
 
 	return noisyParseProgram(N, currentScope);
 }
@@ -135,7 +135,7 @@ noisyParse(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseProgram(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseProgram);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseProgram);
 
 
 	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pprogram,
@@ -150,7 +150,7 @@ noisyParseProgram(State *  N, Scope *  currentScope)
 	currentScope->begin = lexPeek(N, 1)->sourceInfo;
 
 	addLeaf(N, n, noisyParseProgtypeDeclaration(N, currentScope));
-	while (!noisyInFollow(N, kNoisyIrNodeType_Pprogram, gNoisyFollows))
+	while (!inFollow(N, kNoisyIrNodeType_Pprogram, gNoisyFollows))
 	{
 		addLeafWithChainingSeq(N, n, noisyParseNamegenDefinition(N, currentScope));
 	}
@@ -177,7 +177,7 @@ noisyParseProgram(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseProgtypeDeclaration(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeDeclaration);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeDeclaration);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PprogtypeDeclaration,
@@ -221,7 +221,7 @@ noisyParseProgtypeDeclaration(State *  N, Scope *  scope)
 IrNode *
 noisyParseProgtypeBody(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeBody);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeBody);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PprogtypeBody,
@@ -230,7 +230,7 @@ noisyParseProgtypeBody(State *  N, Scope *  scope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	while (!noisyInFollow(N, kNoisyIrNodeType_PprogtypeBody, gNoisyFollows))
+	while (!inFollow(N, kNoisyIrNodeType_PprogtypeBody, gNoisyFollows))
 	{
 		addLeafWithChainingSeq(N, n, noisyParseProgtypeTypenameDeclaration(N, scope));
 		noisyParseTerminal(N, kNoisyIrNodeType_Tsemicolon);
@@ -251,7 +251,7 @@ noisyParseProgtypeBody(State *  N, Scope *  scope)
 IrNode *
 noisyParseProgtypeTypenameDeclaration(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeTypenameDeclaration);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeTypenameDeclaration);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PprogtypeTypenameDeclaration,
@@ -265,15 +265,15 @@ noisyParseProgtypeTypenameDeclaration(State *  N, Scope *  scope)
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 
 	IrNode *	typeExpression;
-	if (noisyInFirst(N, kNoisyIrNodeType_PconstantDeclaration, gNoisyFirsts))
+	if (inFirst(N, kNoisyIrNodeType_PconstantDeclaration, gNoisyFirsts))
 	{
 		typeExpression = noisyParseConstantDeclaration(N, scope);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PtypeDeclaration, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PtypeDeclaration, gNoisyFirsts))
 	{
 		typeExpression = noisyParseTypeDeclaration(N, scope);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PnamegenDeclaration, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PnamegenDeclaration, gNoisyFirsts))
 	{
 		typeExpression = noisyParseNamegenDeclaration(N, scope);
 	}
@@ -306,7 +306,7 @@ noisyParseProgtypeTypenameDeclaration(State *  N, Scope *  scope)
 IrNode *
 noisyParseConstantDeclaration(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseConstantDeclaration);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseConstantDeclaration);
 
 
 	IrNode *	n;
@@ -345,7 +345,7 @@ noisyParseConstantDeclaration(State *  N, Scope *  scope)
 IrNode *
 noisyParseTypeDeclaration(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTypeDeclaration);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseTypeDeclaration);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PtypeDeclaration,
@@ -384,7 +384,7 @@ noisyParseTypeDeclaration(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseAdtTypeDeclaration(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseAdtTypeDeclaration);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseAdtTypeDeclaration);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PadtTypeDeclaration,
@@ -433,7 +433,7 @@ noisyParseAdtTypeDeclaration(State *  N, Scope *  scope)
 IrNode *
 noisyParseVectorType(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseVectorType);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseVectorType);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PvectorType,
@@ -469,7 +469,7 @@ noisyParseVectorType(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseNamegenDeclaration(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseNamegenDeclaration);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseNamegenDeclaration);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PnamegenDeclaration,
@@ -498,7 +498,7 @@ noisyParseNamegenDeclaration(State *  N, Scope *  scope)
 IrNode *
 noisyParseIdentifierOrNil(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierOrNil);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierOrNil);
 
 	IrNode *	n;
 
@@ -509,7 +509,7 @@ noisyParseIdentifierOrNil(State *  N, Scope *  currentScope)
 		 */
 		n = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
 
-		while (noisyInFirst(N, kNoisyIrNodeType_PfieldSelect, gNoisyFirsts))
+		while (inFirst(N, kNoisyIrNodeType_PfieldSelect, gNoisyFirsts))
 		{
 			addLeafWithChainingSeq(N, n, noisyParseFieldSelect(N, currentScope));
 		}
@@ -539,7 +539,7 @@ noisyParseIdentifierOrNil(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseIdentifierOrNilList(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierOrNilList);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierOrNilList);
 
 
 	IrNode *	n;
@@ -554,7 +554,7 @@ noisyParseIdentifierOrNilList(State *  N, Scope *  currentScope)
 	 *	Could also have done
 	 *		while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 	 */
-	while (!noisyInFollow(N, kNoisyIrNodeType_PidentifierOrNilList, gNoisyFollows))
+	while (!inFollow(N, kNoisyIrNodeType_PidentifierOrNilList, gNoisyFollows))
 	{
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
 		addLeafWithChainingSeq(N, n, noisyParseIdentifierOrNil(N, currentScope));
@@ -576,7 +576,7 @@ noisyParseIdentifierOrNilList(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseIdentifierList(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierList);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierList);
 
 
 	IrNode *	n;
@@ -591,7 +591,7 @@ noisyParseIdentifierList(State *  N, Scope *  currentScope)
 	 *	Could also have done
 	 *		while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 	 */
-	while (!noisyInFollow(N, kNoisyIrNodeType_PidentifierList, gNoisyFollows))
+	while (!inFollow(N, kNoisyIrNodeType_PidentifierList, gNoisyFollows))
 	{
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
 		addLeafWithChainingSeq(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
@@ -613,17 +613,17 @@ noisyParseIdentifierList(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseTypeExpression(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTypeExpression);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseTypeExpression);
 
 
 	IrNode *	n;
 
 
-	if (noisyInFirst(N, kNoisyIrNodeType_PbasicType, gNoisyFirsts))
+	if (inFirst(N, kNoisyIrNodeType_PbasicType, gNoisyFirsts))
 	{
 		n = noisyParseBasicType(N, currentScope);
 
-		if (noisyInFollow(N, kNoisyIrNodeType_PtypeExpression, gNoisyFollows))
+		if (inFollow(N, kNoisyIrNodeType_PtypeExpression, gNoisyFollows))
 		{
 			return n;
 		}
@@ -632,7 +632,7 @@ noisyParseTypeExpression(State *  N, Scope *  currentScope)
 
 		/*
 		 *	Could also have done
-		 *		while (!noisyInFollow(N, kNoisyIrNodeType_PtypeExpression, gNoisyFollows))
+		 *		while (!inFollow(N, kNoisyIrNodeType_PtypeExpression, gNoisyFollows))
 		 */
 		while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 		{
@@ -640,11 +640,11 @@ noisyParseTypeExpression(State *  N, Scope *  currentScope)
 			addLeafWithChainingSeq(N, n, noisyParseTolerance(N, currentScope));
 		}
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PanonAggregateType, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PanonAggregateType, gNoisyFirsts))
 	{
 		n = noisyParseAnonAggregateType(N, currentScope);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_Ptypename, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_Ptypename, gNoisyFirsts))
 	{
 		n = noisyParseTypeName(N, currentScope);
 	}
@@ -685,7 +685,7 @@ noisyParseTypeExpression(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseTypeName(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTypeName);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseTypeName);
 
 
 	IrNode *	id1;
@@ -707,7 +707,7 @@ noisyParseTypeName(State *  N, Scope *  scope)
 		/*
 		 *	TODO: we need a comprehensive error-recovery strategy
 		 */
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
 	addLeaf(N, n, id1);
@@ -768,21 +768,21 @@ noisyParseTypeName(State *  N, Scope *  scope)
 IrNode *
 noisyParseTolerance(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTolerance);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseTolerance);
 
 
 	IrNode *	n;
 
 
-	if (noisyInFirst(N, kNoisyIrNodeType_PerrorMagnitudeTolerance, gNoisyFirsts))
+	if (inFirst(N, kNoisyIrNodeType_PerrorMagnitudeTolerance, gNoisyFirsts))
 	{
 		n = noisyParseErrorMagnitudeTolerance(N);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PlossTolerance, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PlossTolerance, gNoisyFirsts))
 	{
 		n = noisyParseLossTolerance(N);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PlatencyTolerance, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PlatencyTolerance, gNoisyFirsts))
 	{
 		n = noisyParseLatencyTolerance(N);
 	}
@@ -806,7 +806,7 @@ noisyParseTolerance(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseErrorMagnitudeTolerance(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseErrorMagnitudeTolerance);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseErrorMagnitudeTolerance);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PerrorMagnitudeTolerance,
@@ -836,7 +836,7 @@ noisyParseErrorMagnitudeTolerance(State *  N)
 IrNode *
 noisyParseLossTolerance(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseLossTolerance);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseLossTolerance);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PerrorMagnitudeTolerance,
@@ -866,7 +866,7 @@ noisyParseLossTolerance(State *  N)
 IrNode *
 noisyParseLatencyTolerance(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseLatencyTolerance);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseLatencyTolerance);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PlatencyTolerance,
@@ -897,7 +897,7 @@ noisyParseLatencyTolerance(State *  N)
 IrNode *
 noisyParseBasicType(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseBasicType);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseBasicType);
 
 
 	IrNode *	n;
@@ -919,7 +919,7 @@ noisyParseBasicType(State *  N, Scope *  currentScope)
 	{
 		n = noisyParseTerminal(N, kNoisyIrNodeType_Tint);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PrealType, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PrealType, gNoisyFirsts))
 	{
 		n = noisyParseRealType(N, currentScope);
 	}
@@ -948,7 +948,7 @@ noisyParseBasicType(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseRealType(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseRealType);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseRealType);
 
 
 	IrNode *	n;
@@ -958,7 +958,7 @@ noisyParseRealType(State *  N, Scope *  currentScope)
 	{
 		n = noisyParseTerminal(N, kNoisyIrNodeType_Treal);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PfixedType, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PfixedType, gNoisyFirsts))
 	{
 		n = noisyParseFixedType(N);
 	}
@@ -982,7 +982,7 @@ noisyParseRealType(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseFixedType(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseFixedType);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseFixedType);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PfixedType,
@@ -1011,25 +1011,25 @@ noisyParseFixedType(State *  N)
 IrNode *
 noisyParseAnonAggregateType(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseAnonAggregateType);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseAnonAggregateType);
 
 
 	IrNode *	n;
 
 
-	if (noisyInFirst(N, kNoisyIrNodeType_ParrayType, gNoisyFirsts))
+	if (inFirst(N, kNoisyIrNodeType_ParrayType, gNoisyFirsts))
 	{
 		n = noisyParseArrayType(N, currentScope);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PlistType, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PlistType, gNoisyFirsts))
 	{
 		n = noisyParseListType(N, currentScope);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PtupleType, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PtupleType, gNoisyFirsts))
 	{
 		n = noisyParseTupleType(N, currentScope);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PsetType, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PsetType, gNoisyFirsts))
 	{
 		n = noisyParseSetType(N, currentScope);
 	}
@@ -1053,7 +1053,7 @@ noisyParseAnonAggregateType(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseArrayType(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseArrayType);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseArrayType);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_ParrayType,
@@ -1092,7 +1092,7 @@ noisyParseArrayType(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseListType(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseListType);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseListType);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PlistType,
@@ -1119,7 +1119,7 @@ noisyParseListType(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseTupleType(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTupleType);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseTupleType);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PtupleType,
@@ -1151,7 +1151,7 @@ noisyParseTupleType(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseSetType(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseSetType);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseSetType);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PsetType,
@@ -1181,7 +1181,7 @@ noisyParseSetType(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseInitList(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseInitList);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseInitList);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PinitList,
@@ -1213,7 +1213,7 @@ noisyParseInitList(State *  N, Scope *  scope)
 IrNode *
 noisyParseIdxInitList(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIdxInitList);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseIdxInitList);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PinitList,
@@ -1245,7 +1245,7 @@ noisyParseIdxInitList(State *  N, Scope *  scope)
 IrNode *
 noisyParseStarInitList(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseStarInitList);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseStarInitList);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PinitList,
@@ -1263,7 +1263,7 @@ noisyParseStarInitList(State *  N, Scope *  scope)
 		/*
 		 *	BUG?: verify w/ grammar (fixed from a yuck version)
 		 */
-		if (noisyInFirst(N, kNoisyIrNodeType_Pelement, gNoisyFirsts))
+		if (inFirst(N, kNoisyIrNodeType_Pelement, gNoisyFirsts))
 		{
 			addLeafWithChainingSeq(N, n, noisyParseElement(N, scope));
 		}
@@ -1278,7 +1278,7 @@ noisyParseStarInitList(State *  N, Scope *  scope)
 		}
 		else
 		{
-			noisyFatal(N, EelementOrStar);
+			fatal(N, EelementOrStar);
 		}
 	}
 	noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
@@ -1297,7 +1297,7 @@ noisyParseStarInitList(State *  N, Scope *  scope)
 IrNode *
 noisyParseElement(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseElement);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseElement);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_Pelement,
@@ -1327,7 +1327,7 @@ noisyParseElement(State *  N, Scope *  scope)
 IrNode *
 noisyParseNamegenDefinition(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseNamegenDefinition);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseNamegenDefinition);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PnamegenDefinition,
@@ -1397,7 +1397,7 @@ noisyParseNamegenDefinition(State *  N, Scope *  scope)
 IrNode *
 noisyParseScopedStatementList(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseScopedStatementList);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseScopedStatementList);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PscopedStatementList,
@@ -1426,7 +1426,7 @@ noisyParseScopedStatementList(State *  N, Scope *  scope)
 IrNode *
 noisyParseStatementList(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseStatementList);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseStatementList);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PstatementList,
@@ -1437,9 +1437,9 @@ noisyParseStatementList(State *  N, Scope *  currentScope)
 
 	/*
 	 *	Could also have done
-	 *		while (!noisyInFollow(N, kNoisyIrNodeType_PstatementList, gNoisyFollows))
+	 *		while (!inFollow(N, kNoisyIrNodeType_PstatementList, gNoisyFollows))
 	 */
-	while (noisyInFirst(N, kNoisyIrNodeType_Pstatement, gNoisyFirsts))
+	while (inFirst(N, kNoisyIrNodeType_Pstatement, gNoisyFirsts))
 	{
 		addLeafWithChainingSeq(N, n, noisyParseStatement(N, currentScope));
 		noisyParseTerminal(N, kNoisyIrNodeType_Tsemicolon);
@@ -1459,7 +1459,7 @@ noisyParseStatementList(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseStatement(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseStatement);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseStatement);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_Pstatement,
@@ -1475,7 +1475,7 @@ noisyParseStatement(State *  N, Scope *  currentScope)
 		return n;
 	}
 
-	if (noisyInFirst(N, kNoisyIrNodeType_PidentifierOrNilList, gNoisyFirsts))
+	if (inFirst(N, kNoisyIrNodeType_PidentifierOrNilList, gNoisyFirsts))
 	{
 		IrNode *	identifierList = noisyParseIdentifierOrNilList(N, currentScope);
 		addLeaf(N, n, identifierList);
@@ -1485,17 +1485,17 @@ noisyParseStatement(State *  N, Scope *  currentScope)
 			IrNode *	typeExpr;
 
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
-			if (noisyInFirst(N, kNoisyIrNodeType_PconstantDeclaration, gNoisyFirsts))
+			if (inFirst(N, kNoisyIrNodeType_PconstantDeclaration, gNoisyFirsts))
 			{
 				typeExpr = noisyParseConstantDeclaration(N, currentScope);
 				addLeaf(N, n, typeExpr);
 			}
-			else if (noisyInFirst(N, kNoisyIrNodeType_PtypeDeclaration, gNoisyFirsts))
+			else if (inFirst(N, kNoisyIrNodeType_PtypeDeclaration, gNoisyFirsts))
 			{
 				typeExpr = noisyParseTypeDeclaration(N, currentScope);
 				addLeaf(N, n, typeExpr);
 			}
-			else if (noisyInFirst(N, kNoisyIrNodeType_PtypeExpression, gNoisyFirsts))
+			else if (inFirst(N, kNoisyIrNodeType_PtypeExpression, gNoisyFirsts))
 			{
 				typeExpr = noisyParseTypeExpression(N, currentScope);
 				addLeaf(N, n, typeExpr);
@@ -1511,7 +1511,7 @@ noisyParseStatement(State *  N, Scope *  currentScope)
 			 */
 			assignTypes(N, identifierList, typeExpr);
 		}
-		else if (noisyInFirst(N, kNoisyIrNodeType_PassignOp, gNoisyFirsts))
+		else if (inFirst(N, kNoisyIrNodeType_PassignOp, gNoisyFirsts))
 		{
 			addLeafWithChainingSeq(N, n, noisyParseAssignOp(N));
 			addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
@@ -1536,15 +1536,15 @@ noisyParseStatement(State *  N, Scope *  currentScope)
 		addLeafWithChainingSeq(N, n, noisyParseAssignOp(N));
 		addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PmatchStatement, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PmatchStatement, gNoisyFirsts))
 	{
 		addLeaf(N, n, noisyParseMatchStatement(N, currentScope));
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PiterationStatement, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PiterationStatement, gNoisyFirsts))
 	{
 		addLeaf(N, n, noisyParseIterStatement(N, currentScope));
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PscopedStatementList, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PscopedStatementList, gNoisyFirsts))
 	{
 		addLeaf(N, n, noisyParseScopedStatementList(N, currentScope));
 	}
@@ -1570,7 +1570,7 @@ noisyParseStatement(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseAssignOp(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseAssignOp);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseAssignOp);
 
 
 	IrNode *	n;
@@ -1649,7 +1649,7 @@ noisyParseAssignOp(State *  N)
 IrNode *
 noisyParseMatchStatement(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseMatchStatement);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseMatchStatement);
 
 
 	IrNode *	n;
@@ -1689,7 +1689,7 @@ noisyParseMatchStatement(State *  N, Scope *  scope)
 IrNode *
 noisyParseIterStatement(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIterStatement);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseIterStatement);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PiterationStatement,
@@ -1719,7 +1719,7 @@ noisyParseIterStatement(State *  N, Scope *  scope)
 IrNode *
 noisyParseGuardBody(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseGuardBody);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseGuardBody);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PguardBody,
@@ -1728,11 +1728,11 @@ noisyParseGuardBody(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	if (noisyInFollow(N, kNoisyIrNodeType_PguardBody, gNoisyFollows))
+	if (inFollow(N, kNoisyIrNodeType_PguardBody, gNoisyFollows))
 	{
 		if (N->verbosityLevel & kNoisyVerbosityDebugParser)
 		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParseGuardBody(), known bug (noisyInFollow(N, kNoisyIrNodeType_PguardBody, gNoisyFollows))\n");
+			flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParseGuardBody(), known bug (inFollow(N, kNoisyIrNodeType_PguardBody, gNoisyFollows))\n");
 		}
 
 		/*
@@ -1743,7 +1743,7 @@ noisyParseGuardBody(State *  N, Scope *  currentScope)
 		return NULL;
 	}
 //fprintf(stderr, "In noisyParseGuardBody(), about to loop through parsing the expression + =>..., Source file line %llu\n", lexPeek(N, 1)->sourceInfo->lineNumber);
-	while (noisyInFirst(N, kNoisyIrNodeType_Pexpression, gNoisyFirsts))
+	while (inFirst(N, kNoisyIrNodeType_Pexpression, gNoisyFirsts))
 	{
 		addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
 		noisyParseTerminal(N, kNoisyIrNodeType_Tgoes);
@@ -1772,7 +1772,7 @@ noisyParseGuardBody(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseExpression(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseExpression);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseExpression);
 
 
 	IrNode *	n;
@@ -1780,33 +1780,33 @@ noisyParseExpression(State *  N, Scope *  currentScope)
 //fprintf(stderr, "In noisyParseExpression()... Source file line %llu\n", lexPeek(N, 1)->sourceInfo->lineNumber);
 //lexPeekPrint(N, 5, 0);
 
-	if (noisyInFirst(N, kNoisyIrNodeType_Pterm, gNoisyFirsts))
+	if (inFirst(N, kNoisyIrNodeType_Pterm, gNoisyFirsts))
 	{
 		n = noisyParseTerm(N, currentScope);
 
-		while (noisyInFirst(N, kNoisyIrNodeType_PlowPrecedenceBinaryOp, gNoisyFirsts))
+		while (inFirst(N, kNoisyIrNodeType_PlowPrecedenceBinaryOp, gNoisyFirsts))
 		{
 			addLeafWithChainingSeq(N, n, noisyParseLowPrecedenceBinaryOp(N));
 			addLeafWithChainingSeq(N, n, noisyParseTerm(N, currentScope));
 		}
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PanonAggregateCastExpression, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PanonAggregateCastExpression, gNoisyFirsts))
 	{
 		n = noisyParseAnonAggregateCastExpression(N, currentScope);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PchanEventExpression, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PchanEventExpression, gNoisyFirsts))
 	{
 		n = noisyParseChanEventExpression(N, currentScope);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_Pchan2nameExpression, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_Pchan2nameExpression, gNoisyFirsts))
 	{
 		n = noisyParseChan2nameExpression(N, currentScope);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_Pvar2nameExpression, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_Pvar2nameExpression, gNoisyFirsts))
 	{
 		n = noisyParseVar2nameExpression(N, currentScope);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_Pname2chanExpression, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_Pname2chanExpression, gNoisyFirsts))
 	{
 		n = noisyParseName2chanExpression(N, currentScope);
 	}
@@ -1830,7 +1830,7 @@ noisyParseExpression(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseListCastExpression(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseListCastExpression);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseListCastExpression);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PlistCastExpression,
@@ -1857,7 +1857,7 @@ noisyParseListCastExpression(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseSetCastExpression(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseSetCastExpression);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseSetCastExpression);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PsetCastExpression,
@@ -1884,7 +1884,7 @@ noisyParseSetCastExpression(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseArrayCastExpression(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseArrayCastExpression);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseArrayCastExpression);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_ParrayCastExpression,
@@ -1929,21 +1929,21 @@ noisyParseArrayCastExpression(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseAnonAggregateCastExpression(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseAnonAggregateCastExpression);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseAnonAggregateCastExpression);
 
 
 	IrNode *	n;
 
 
-	if (noisyInFirst(N, kNoisyIrNodeType_PlistCastExpression, gNoisyFirsts))
+	if (inFirst(N, kNoisyIrNodeType_PlistCastExpression, gNoisyFirsts))
 	{
 		n = noisyParseListCastExpression(N, currentScope);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_PsetCastExpression, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_PsetCastExpression, gNoisyFirsts))
 	{
 		n = noisyParseSetCastExpression(N, currentScope);
 	}
-	else if (noisyInFirst(N, kNoisyIrNodeType_ParrayCastExpression, gNoisyFirsts))
+	else if (inFirst(N, kNoisyIrNodeType_ParrayCastExpression, gNoisyFirsts))
 	{
 		n = noisyParseArrayCastExpression(N, currentScope);
 	}
@@ -1967,7 +1967,7 @@ noisyParseAnonAggregateCastExpression(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseChanEventExpression(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseChanEventExpression);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseChanEventExpression);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PchanEventExpression,
@@ -2013,7 +2013,7 @@ noisyParseChanEventExpression(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseChan2nameExpression(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseChan2nameExpression);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseChan2nameExpression);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_Pchan2nameExpression,
@@ -2044,7 +2044,7 @@ noisyParseChan2nameExpression(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseVar2nameExpression(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseVar2nameExpression);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseVar2nameExpression);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_Pvar2nameExpression,
@@ -2075,7 +2075,7 @@ noisyParseVar2nameExpression(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseName2chanExpression(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseName2chanExpression);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseName2chanExpression);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_Pname2chanExpression,
@@ -2103,7 +2103,7 @@ noisyParseName2chanExpression(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseTerm(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTerm);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseTerm);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_Pterm,
@@ -2115,18 +2115,18 @@ noisyParseTerm(State *  N, Scope *  currentScope)
 	/*
 	 *	TODO/BUG: Double-check our handling of [basictype] and [unop] here
 	 */
-	if (noisyInFirst(N, kNoisyIrNodeType_PbasicType, gNoisyFirsts))
+	if (inFirst(N, kNoisyIrNodeType_PbasicType, gNoisyFirsts))
 	{
 		addLeaf(N, n, noisyParseBasicType(N, currentScope));
 	}
 
-	if (noisyInFirst(N, kNoisyIrNodeType_PunaryOp, gNoisyFirsts))
+	if (inFirst(N, kNoisyIrNodeType_PunaryOp, gNoisyFirsts))
 	{
 		addLeaf(N, n, noisyParseUnaryOp(N));
 	}
 
 	addLeaf(N, n, noisyParseFactor(N, currentScope));
-	while (noisyInFirst(N, kNoisyIrNodeType_PhighPrecedenceBinaryOp, gNoisyFirsts))
+	while (inFirst(N, kNoisyIrNodeType_PhighPrecedenceBinaryOp, gNoisyFirsts))
 	{
 		addLeafWithChainingSeq(N, n, noisyParseHighPrecedenceBinaryOp(N));
 		addLeafWithChainingSeq(N, n, noisyParseFactor(N, currentScope));
@@ -2147,7 +2147,7 @@ noisyParseTerm(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseFactor(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseFactor);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseFactor);
 
 
 	IrNode *	n;
@@ -2156,7 +2156,7 @@ noisyParseFactor(State *  N, Scope *  currentScope)
 	{
 		n = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
 
-		while (noisyInFirst(N, kNoisyIrNodeType_PfieldSelect, gNoisyFirsts))
+		while (inFirst(N, kNoisyIrNodeType_PfieldSelect, gNoisyFirsts))
 		{
 			/*
 			 *	TODO/BUG: This looks suspicious.
@@ -2200,7 +2200,7 @@ noisyParseFactor(State *  N, Scope *  currentScope)
 /*
  *	TODO/BUG: the following two should not be here. See grammar
  *
- *	else if (noisyInFirst(N, kNoisyIrNodeType_Punop, gNoisyFirsts))
+ *	else if (inFirst(N, kNoisyIrNodeType_Punop, gNoisyFirsts))
  *	{
  *		n = noisyParseunop(N, currentScope);
  *		addLeaf(N, n, noisyParseFactor(N, currentScope));
@@ -2237,7 +2237,7 @@ noisyParseFactor(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseTupleValue(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTupleValue);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseTupleValue);
 
 
 	IrNode *	n;
@@ -2266,7 +2266,7 @@ noisyParseTupleValue(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseFieldSelect(State *  N, Scope *  currentScope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseFieldSelect);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseFieldSelect);
 
 
 	IrNode *	n;
@@ -2315,7 +2315,7 @@ noisyParseFieldSelect(State *  N, Scope *  currentScope)
 IrNode *
 noisyParseHighPrecedenceBinaryOp(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseHighPrecedenceBinaryO);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseHighPrecedenceBinaryO);
 
 
 	IrNode *	n;
@@ -2362,7 +2362,7 @@ noisyParseHighPrecedenceBinaryOp(State *  N)
 IrNode *
 noisyParseLowPrecedenceBinaryOp(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseLowPrecedenceBinaryOp);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseLowPrecedenceBinaryOp);
 
 
 	IrNode *	n;
@@ -2441,7 +2441,7 @@ noisyParseLowPrecedenceBinaryOp(State *  N)
 IrNode *
 noisyParseCmpOp(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseCmpOp);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseCmpOp);
 
 
 	IrNode *	n;
@@ -2501,7 +2501,7 @@ noisyParseCmpOp(State *  N)
 IrNode *
 noisyParseBooleanOp(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseBooleanOp);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseBooleanOp);
 
 
 	IrNode *	n;
@@ -2537,7 +2537,7 @@ noisyParseBooleanOp(State *  N)
 IrNode *
 noisyParseUnaryOp(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseUnaryOp);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseUnaryOp);
 
 
 	IrNode *	n;
@@ -2601,7 +2601,7 @@ noisyParseUnaryOp(State *  N)
 IrNode *
 noisyParseTerminal(State *  N, IrNodeType expectedType)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseTerminal);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseTerminal);
 
 	if (!peekCheck(N, 1, expectedType))
 	{
@@ -2628,7 +2628,7 @@ noisyParseTerminal(State *  N, IrNodeType expectedType)
 IrNode *
 noisyParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierUsageTerminal);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierUsageTerminal);
 
 	if (!peekCheck(N, 1, expectedType))
 	{
@@ -2664,7 +2664,7 @@ noisyParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  
 IrNode *
 noisyParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierDefinitionTerminal);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierDefinitionTerminal);
 
 	if (!peekCheck(N, 1, expectedType))
 	{
@@ -2713,7 +2713,7 @@ noisyParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sco
 void
 noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction, IrNodeType expectedProductionOrToken)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserSyntaxError);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserSyntaxError);
 
 	int		seen = 0;
 
@@ -2775,7 +2775,7 @@ noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction,
 	}
 	else
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fperr, ".\n\n\tInstead, saw:\n\n");
@@ -2793,7 +2793,7 @@ noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction,
 void
 noisyParserSemanticError(State *  N, const char * format, ...)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserSemanticError);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserSemanticError);
 
 	va_list	arg;
 
@@ -2816,7 +2816,7 @@ noisyParserSemanticError(State *  N, const char * format, ...)
 void
 noisyParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToken)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorRecovery);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserErrorRecovery);
 
 	if (N->verbosityLevel & kNoisyVerbosityDebugParser)
 	{
@@ -2824,7 +2824,7 @@ noisyParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToken)
 	}
 
 	/*
-	while (!noisyInFollow(N, expectedProductionOrToken, gNoisyFollows) && N->tokenList != NULL)
+	while (!inFollow(N, expectedProductionOrToken, gNoisyFollows) && N->tokenList != NULL)
 	{
 		 *
 		 *	Retrieve token and discard...
@@ -2856,7 +2856,7 @@ fprintf(stderr, "doing longjmp");
 	/*
 	 *	Not reached if N->jmpbufIsValid
 	 */
-	noisyConsolePrintBuffers(N);
+	consolePrintBuffers(N);
 
 	exit(EXIT_SUCCESS);
 }

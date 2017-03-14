@@ -27,7 +27,7 @@ extern const char * gNewtonTokenDescriptions[kNoisyIrNodeTypeMax];
 extern char *		gNewtonAstNodeStrings[];
 extern int		gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 
-extern void		noisyFatal(State *  N, const char *  msg);
+extern void		fatal(State *  N, const char *  msg);
 extern void		noisyError(State *  N, const char *  msg);
 
 
@@ -77,12 +77,12 @@ newtonParseRuleList(State *  N, Scope *  currentScope)
 		lexPeek(N, 1)->sourceInfo /* source info */
     );
     
-    if (noisyInFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts))
+    if (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts))
 	{
 		addLeaf(N, node, newtonParseRule(N, currentScope));
 	}
 
-    while (noisyInFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts))
+    while (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts))
 	{
 		addLeafWithChainingSeq(N, node, newtonParseRule(N, currentScope));
 	}
@@ -109,7 +109,7 @@ newtonParseRule(State * N, Scope * currentScope)
             node = newtonParseInvariant(N, currentScope);
             break;
         default:
-            noisyFatal(N, "newton-parser.c:newtonParseRule neither signal, constant, nor invariant\n");
+            fatal(N, "newton-parser.c:newtonParseRule neither signal, constant, nor invariant\n");
     }
 
     currentScope->end = lexPeek(N, 1)->sourceInfo;
@@ -168,7 +168,7 @@ newtonParseConstraint(State * N, Scope * currentScope)
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
-    if (noisyInFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts))
+    if (inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts))
     {
         addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
         addLeafWithChainingSeq(N, node, newtonParseCompareOp(N, currentScope));
@@ -178,7 +178,7 @@ newtonParseConstraint(State * N, Scope * currentScope)
     }
     else
     {
-        noisyFatal(N, "newton-parser.c:newtonParseConstraint not a first of quantityExpression\n");
+        fatal(N, "newton-parser.c:newtonParseConstraint not a first of quantityExpression\n");
     }
 
     return node;
@@ -247,7 +247,7 @@ newtonParseConstant(State * N, Scope * currentScope)
     addLeaf(N, node, constantIdentifier);
     Physics * constantPhysics = newtonPhysicsTableAddPhysicsForToken(N, currentScope, constantIdentifier->token);
 
-    if (noisyInFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts))
+    if (inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts))
     {
         IrNode * constantExpression = newtonParseQuantityExpression(N, currentScope);
         constantPhysics->value = constantExpression->value;
@@ -270,7 +270,7 @@ newtonParseConstant(State * N, Scope * currentScope)
     }
     else
     {
-        noisyFatal(N, "newton-parser.c: newtonParseConstant after equal sign, there is no quantity expression");
+        fatal(N, "newton-parser.c: newtonParseConstant after equal sign, there is no quantity expression");
     }
 
     newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
@@ -362,7 +362,7 @@ newtonParseName(State * N, Scope * currentScope)
 	}
     else
     {
-        noisyFatal(N, "newton-parser.c:newtonParseName no language setting\n");
+        fatal(N, "newton-parser.c:newtonParseName no language setting\n");
     }
 
     return node;
@@ -423,7 +423,7 @@ newtonParseTerminal(State *  N, IrNodeType expectedType, Scope * currentScope)
 {
     if (!peekCheck(N, 1, expectedType))
     {
-        noisyFatal(N, "newton-parser.c: newtonParseTerminal");
+        fatal(N, "newton-parser.c: newtonParseTerminal");
     }
 
     Token *  t = lexGet(N, gNewtonTokenDescriptions);
@@ -469,7 +469,7 @@ newtonParseIdentifier(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-        noisyFatal(N, "newton-parser.c:newtonParseIdentifier: not an identifier token");
+        fatal(N, "newton-parser.c:newtonParseIdentifier: not an identifier token");
 	}
     return NULL;
 }
@@ -656,7 +656,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 {
     if (!peekCheck(N, 1, expectedType))
     {
-        noisyFatal(N, "newton-parser.c:newtonParseIdentifierUsageTerminal: not an expected type\n");
+        fatal(N, "newton-parser.c:newtonParseIdentifierUsageTerminal: not an expected type\n");
         return NULL;
     }
 
@@ -708,7 +708,7 @@ newtonParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sc
 {
 	if (!peekCheck(N, 1, expectedType))
 	{
-        noisyFatal(N, "newton-parser.c:newtonParseIdentifierDefinitionTerminal: not an expected type\n");
+        fatal(N, "newton-parser.c:newtonParseIdentifierDefinitionTerminal: not an expected type\n");
 	}
 
 	Token *	t = lexGet(N, gNewtonTokenDescriptions);

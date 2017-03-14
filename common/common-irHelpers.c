@@ -56,14 +56,14 @@
 IrNode *
 genIrNode(State *  N, IrNodeType type, IrNode *  irLeftChild, IrNode *  irRightChild, SourceInfo *  sourceInfo)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyGenNoisyIrNode);
+	TimeStampTraceMacro(kNoisyTimeStampKeyGenNoisyIrNode);
 
 	IrNode *		node;
 
 	node = (IrNode *) calloc(1, sizeof(IrNode));
 	if (node == NULL)
 	{
-		noisyFatal(N, Emalloc);
+		fatal(N, Emalloc);
 
 		/*	Not reached	*/
 	}
@@ -98,7 +98,7 @@ genIrNode(State *  N, IrNodeType type, IrNode *  irLeftChild, IrNode *  irRightC
 void
 errorUseBeforeDefinition(State *  N, const char *  identifier)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorUseBeforeDefinition);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserErrorUseBeforeDefinition);
 
 	flexprint(N->Fe, N->Fm, N->Fperr, "Saw identifier \"%s\" in use before definition\n", identifier);
 }
@@ -106,7 +106,7 @@ errorUseBeforeDefinition(State *  N, const char *  identifier)
 void
 errorMultiDefinition(State *  N, Symbol *  symbol)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
 }
 
 IrNode*
@@ -180,7 +180,7 @@ findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int
 IrNode *
 depthFirstWalk(State *  N, IrNode *  node)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserDepthFirstWalk);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserDepthFirstWalk);
 
 	if (node->irLeftChild == NULL || node->irRightChild == NULL)
 	{
@@ -193,13 +193,13 @@ depthFirstWalk(State *  N, IrNode *  node)
 void
 addLeaf(State *  N, IrNode *  parent, IrNode *  newNode)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
 
 	IrNode *	node = depthFirstWalk(N, parent);
 
 	if (node == NULL)
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 
 	if (node->irLeftChild == NULL)
@@ -215,7 +215,7 @@ addLeaf(State *  N, IrNode *  parent, IrNode *  newNode)
 void
 addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
 
 	IrNode *	node = depthFirstWalk(N, parent);
 
@@ -236,7 +236,7 @@ addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode)
 bool
 peekCheck(State *  N, int lookAhead, IrNodeType expectedType)
 {
-    NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
+    TimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
 
     if (lexPeek(N, lookAhead) == NULL)
     {

@@ -77,7 +77,7 @@ noisyIrPassProtobufBackend(State *  N)
 void
 noisyIrPassProtobufSymbolTableNodeEmitter(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufSymbotTableEmitter);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufSymbotTableEmitter);
 
 }
 
@@ -85,7 +85,7 @@ noisyIrPassProtobufSymbolTableNodeEmitter(State *  N, Scope *  scope)
 void
 noisyIrPassProtobufAstNodeEmitter(State *  N, IrNode *  irNode)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufAstEmitter);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufAstEmitter);
 
   // TODO fix this
 	//IrNode*	node = irNode; fix this NOISY__NOISY_IR_NODE__INIT();
@@ -108,7 +108,7 @@ noisyIrPassProtobufAstNodeEmitter(State *  N, IrNode *  irNode)
 void
 noisyIrPassProtobufAstSerializeWalk(State *  N, IrNode *  irNode)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufAstSerializeWalk);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufAstSerializeWalk);
 
 	if (irNode == NULL)
 	{
@@ -117,7 +117,7 @@ noisyIrPassProtobufAstSerializeWalk(State *  N, IrNode *  irNode)
 
 	if (L(irNode) == irNode || R(irNode) == irNode)
 	{
-		noisyFatal(N, "Immediate cycle in Ir, seen noisyIrPassProtobufAstSerializeWalk()!!\n");
+		fatal(N, "Immediate cycle in Ir, seen noisyIrPassProtobufAstSerializeWalk()!!\n");
 	}
 
 	/*
@@ -140,7 +140,7 @@ noisyIrPassProtobufAstSerializeWalk(State *  N, IrNode *  irNode)
 void
 noisyIrPassProtobufSymbolTableSerializeWalk(State *  N, Scope *  scope)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufSymbolTableSerializeWalk);
+	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufSymbolTableSerializeWalk);
 
 	if (scope == NULL)
 	{

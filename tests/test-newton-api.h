@@ -8,7 +8,7 @@ char * test_newtonApiNumberParametersZeroToN();
 
 /* just a small helper method */
 IrNode *
-makeNoisyIrNodeSetValue(
+makeIrNodeSetValue(
                         State * N,
                         IrNodeType nodeType,
                         char * identifier,

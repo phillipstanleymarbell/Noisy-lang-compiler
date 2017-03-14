@@ -65,7 +65,7 @@
 State *
 newtonApiInit(char *  newtonFileName)
 {
-    State * N = noisyInit(kNoisyModeDefault);
+    State * N = init(kNoisyModeDefault);
     processNewtonFile(N, newtonFileName);
     return N;
 }
@@ -115,13 +115,13 @@ newtonApiSatisfiesConstraints(State* N, IrNode* parameterTreeRoot)
 void
 newtonApiAddLeaf(State *  N, IrNode *  parent, IrNode *  newNode)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
 
 	IrNode *	node = depthFirstWalk(N, parent);
 
 	if (node == NULL)
     {
-      noisyFatal(N, Esanity);
+      fatal(N, Esanity);
     }
 
 	if (node->irLeftChild == NULL)
@@ -137,7 +137,7 @@ newtonApiAddLeaf(State *  N, IrNode *  parent, IrNode *  newNode)
 void
 newtonApiAddLeafWithChainingSeqNoLexer(State *  N, IrNode *  parent, IrNode *  newNode)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
 
 	IrNode *	node = depthFirstWalk(N, parent);
 

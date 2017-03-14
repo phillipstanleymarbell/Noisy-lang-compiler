@@ -89,6 +89,6 @@ processNewtonFile(State *  N, char *  filename)
 	// 	noisyConfigTimeStampDumpTimeline(N);
 	// }
 
-    noisyConsolePrintBuffers(N);
+    consolePrintBuffers(N);
 }
 

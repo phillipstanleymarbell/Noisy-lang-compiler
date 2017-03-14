@@ -695,7 +695,7 @@ typedef struct
 	 *	Timestamps to track lifecycle
 	 */
 	uint64_t		initializationTimestamp;
-	NoisyTimeStamp *	timestamps;
+	TimeStamp *	timestamps;
 	uint64_t		timestampCount;
 	uint64_t		timestampSlots;
 
@@ -705,7 +705,7 @@ typedef struct
 	 *	timeAggregates[timeAggregatesLastKey] by (now - timeAggregatesLastTimestamp)
 	 */
 	uint64_t *		timeAggregates;
-	NoisyTimeStampKey	timeAggregatesLastKey;
+	TimeStampKey	timeAggregatesLastKey;
 	uint64_t		timeAggregatesLastTimestamp;
 	uint64_t		timeAggregateTotal;
 	uint64_t *		callAggregates;
@@ -816,16 +816,16 @@ typedef struct
 } State;
 
 
-void				noisyFatal(State *  C, const char *  msg) __attribute__((noreturn));
-void				noisyError(State *  C, const char *  msg);
-void				noisyTimestampsInit(State *  C);
-void				noisyTimeStampDumpTimeline(State *  C);
-void				noisyTimeStampDumpResidencies(State *  C);
-State *			noisyInit(NoisyMode mode);
-void				noisyDealloc(State *  C);
-void				noisyRunPasses(State *  C);
-uint64_t			noisyCheckRss(State *  C);
-void				noisyConsolePrintBuffers(State *  C);
-void				noisyPrintToFile(State *  C, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action);
-void				noisyRenderDotInFile(State *  C, char *  pathName, char *  randomizedFileName);
-void				noisyCheckCgiCompletion(State *  C, const char *  pathName, const char *  renderExtension);
+void				fatal(State *  C, const char *  msg) __attribute__((noreturn));
+void				error(State *  C, const char *  msg);
+void				timestampsInit(State *  C);
+void				timeStampDumpTimeline(State *  C);
+void				timeStampDumpResidencies(State *  C);
+State *			init(NoisyMode mode);
+void				dealloc(State *  C);
+void				runPasses(State *  C);
+uint64_t		checkRss(State *  C);
+void				consolePrintBuffers(State *  C);
+void				printToFile(State *  C, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action);
+void				renderDotInFile(State *  C, char *  pathName, char *  randomizedFileName);
+void				checkCgiCompletion(State *  C, const char *  pathName, const char *  renderExtension);

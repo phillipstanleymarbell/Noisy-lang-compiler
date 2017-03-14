@@ -130,17 +130,17 @@ char * test_newtonCheckSingleInvariant()
  */
 char * test_newtonApiPhysicsTypeUsageExample()
 {
-    State * noisy = noisyInit(kNoisyModeDefault);
+    State * noisy = init(kNoisyModeDefault);
     State * newton = newtonApiInit("../Examples/invariants.nt");
 
-    IrNode * distanceNode = makeNoisyIrNodeSetValue(
+    IrNode * distanceNode = makeIrNodeSetValue(
         noisy,
         kNoisyIrNodeType_Tidentifier,
         "distance",
         0.0
     );
 
-    IrNode * timeNode = makeNoisyIrNodeSetValue(
+    IrNode * timeNode = makeIrNodeSetValue(
         noisy,
         kNoisyIrNodeType_Tidentifier,
         "time",
@@ -181,7 +181,7 @@ makeTestParameterTuple(State * newton)
 									  NULL /* left child */,
 									  NULL /* right child */,
 									  NULL /* source info */);
-  IrNode * distanceParameter = makeNoisyIrNodeSetValue(
+  IrNode * distanceParameter = makeIrNodeSetValue(
 													   newton,
                              kNewtonIrNodeType_Pparameter,
                              "distance",
@@ -190,7 +190,7 @@ makeTestParameterTuple(State * newton)
   distanceParameter->physics = newtonApiGetPhysicsTypeByName(newton, distanceParameter->token->identifier);
   newtonApiAddLeaf(newton, root, distanceParameter);
 
-  IrNode * timeParameter = makeNoisyIrNodeSetValue(
+  IrNode * timeParameter = makeIrNodeSetValue(
 												   newton,
 												   kNewtonIrNodeType_Pparameter,
 												   "time",
@@ -204,7 +204,7 @@ makeTestParameterTuple(State * newton)
 }
 
 IrNode *
-makeNoisyIrNodeSetValue(
+makeIrNodeSetValue(
     State * N,
     IrNodeType nodeType,
     char * identifier,

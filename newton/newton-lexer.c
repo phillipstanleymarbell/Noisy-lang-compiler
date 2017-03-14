@@ -58,7 +58,7 @@ newtonLexInit(State *  N, char *  fileName)
 	filePointer = fopen(fileName, "r");
 	if (filePointer == NULL)
 	{
-		noisyFatal(N, Eopen);
+		fatal(N, Eopen);
 	}
 
 
@@ -242,8 +242,8 @@ newtonLexInit(State *  N, char *  fileName)
 
 					default:
 					{
-                        noisyConsolePrintBuffers(N);
-						noisyFatal(N, Esanity);
+                        consolePrintBuffers(N);
+						fatal(N, Esanity);
 					}
 				}
 			}
@@ -396,7 +396,7 @@ checkDoubleQuote(State *  N)
 			/*
 			 *	We ran out of buffer space or reached end of lineBuffer
 			 */
-			noisyFatal(N, EstringTooLongOrWithNewline);
+			fatal(N, EstringTooLongOrWithNewline);
 		}
 		else
 		{
@@ -488,7 +488,7 @@ makeNumericConst(State *  N)
 {
 	if (N->currentTokenLength == 0)
 	{
-		noisyFatal(N, EruntTokenInNumericConst);
+		fatal(N, EruntTokenInNumericConst);
 	}
 
 	/*
@@ -534,7 +534,7 @@ makeNumericConst(State *  N)
 			 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
 			 */
 			done(N, newToken);
-      noisyFatal(N, "something gone wrong with newton lexer decimals\n");
+      fatal(N, "something gone wrong with newton lexer decimals\n");
 
 			return;
 		}
@@ -644,7 +644,7 @@ makeNumericConst(State *  N)
 	}
 	else
 	{
-		noisyFatal(N, Esanity);
+		fatal(N, Esanity);
 	}
 }
 
@@ -790,7 +790,7 @@ checkMul(State *  N)
 static void
 checkDot(State *  N)
 {
-	NoisyTimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckDot);
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckDot);
 
 	/*
 	 *	If token thus far is	"0" | onenine {zeronine}	then
