@@ -133,19 +133,17 @@ char * test_newtonApiPhysicsTypeUsageExample()
     NoisyState * noisy = noisyInit(kNoisyModeDefault);
     NoisyState * newton = newtonApiInit("../Examples/invariants.nt");
 
-    NoisyIrNode * distanceNode = makeNoisyIrNodeSetToken(
+    NoisyIrNode * distanceNode = makeNoisyIrNodeSetValue(
         noisy,
         kNoisyIrNodeType_Tidentifier,
         "distance",
-        NULL,
         0.0
     );
 
-    NoisyIrNode * timeNode = makeNoisyIrNodeSetToken(
+    NoisyIrNode * timeNode = makeNoisyIrNodeSetValue(
         noisy,
         kNoisyIrNodeType_Tidentifier,
         "time",
-        NULL,
         0.0
     );
 
@@ -160,6 +158,21 @@ char * test_newtonApiPhysicsTypeUsageExample()
     return 0;
 }
 
+char * test_newtonApiNumberParametersZeroToN()
+{
+  NoisyState * newton = newtonApiInit("../Examples/invariants.nt");
+  NoisyIrNode* parameterTree = makeTestParameterTuple(newton);
+  mu_assert(
+            "test_newtonApiNumberParametersZeroToN: the first left child should have number of 0",
+            parameterTree->irLeftChild->parameterNumber == 0
+            );
+  mu_assert(
+            "test_newtonApiNumberParametersZeroToN: the first right child should have number of 1",
+            parameterTree->irRightChild->irLeftChild->parameterNumber == 1
+            );
+  return 0;
+}
+
 
 NoisyIrNode *
 makeTestParameterTuple(NoisyState * newton)
@@ -168,62 +181,33 @@ makeTestParameterTuple(NoisyState * newton)
 									  NULL /* left child */,
 									  NULL /* right child */,
 									  NULL /* source info */);
-  NoisyIrNode * firstParameter = genNoisyIrNode(newton,	kNewtonIrNodeType_Pparameter,
-												NULL /* left child */,
-												NULL /* right child */,
-												NULL /* source info */);
-  NoisyIrNode * distanceIdentifier = makeNoisyIrNodeSetToken(
+  NoisyIrNode * distanceParameter = makeNoisyIrNodeSetValue(
 													   newton,
-													   kNoisyIrNodeType_Tidentifier,
-													   "L",
-													   NULL,
-													   5
+                             kNewtonIrNodeType_Pparameter,
+                             "distance",
+                             5
 													   );
-  NoisyIrNode * distanceNode = makeNoisyIrNodeSetToken(
-													   newton,
-													   kNoisyIrNodeType_Tidentifier,
-													   "distance",
-													   NULL,
-													   0.0
-													   );
-  distanceNode->physics = newtonApiGetPhysicsTypeByName(newton, distanceNode->token->identifier);
-  addLeaf(newton, firstParameter, distanceIdentifier);
-  addLeaf(newton, firstParameter, distanceNode);
+  distanceParameter->physics = newtonApiGetPhysicsTypeByName(newton, distanceParameter->token->identifier);
+  newtonApiAddLeaf(newton, root, distanceParameter);
 
-  NoisyIrNode * secondParameter = genNoisyIrNode(newton,	kNewtonIrNodeType_Pparameter,
-												 NULL /* left child */,
-												 NULL /* right child */,
-												 NULL /* source info */);
-  NoisyIrNode * timeIdentifier = makeNoisyIrNodeSetToken(
-															 newton,
-															 kNoisyIrNodeType_Tidentifier,
-															 "period",
-															 NULL,
-															 6.6
-															 );
-  NoisyIrNode * timeNode = makeNoisyIrNodeSetToken(
+  NoisyIrNode * timeParameter = makeNoisyIrNodeSetValue(
 												   newton,
-												   kNoisyIrNodeType_Tidentifier,
+												   kNewtonIrNodeType_Pparameter,
 												   "time",
-												   NULL,
-												   0.0
+                           6.6
 												   );
-  timeNode->physics = newtonApiGetPhysicsTypeByName(newton, timeNode->token->identifier);
-  addLeaf(newton, secondParameter, timeIdentifier);
-  addLeaf(newton, secondParameter, timeNode);
+  timeParameter->physics = newtonApiGetPhysicsTypeByName(newton, timeParameter->token->identifier);
+  newtonApiAddLeafWithChainingSeqNoLexer(newton, root, timeParameter);
 
-  addLeaf(newton, root, firstParameter);
-  addLeafWithChainingSeqNoLexer(newton, root, secondParameter);
-
+  newtonApiNumberParametersZeroToN(newton, root);
   return root;
 }
 
 NoisyIrNode *
-makeNoisyIrNodeSetToken(
+makeNoisyIrNodeSetValue(
     NoisyState * N,
     NoisyIrNodeType nodeType,
     char * identifier,
-    char * stringConst,
     double realConst
 ) {
 	NoisyIrNode * node = genNoisyIrNode(
@@ -240,7 +224,7 @@ makeNoisyIrNodeSetToken(
                                       identifier /* identifier */,
                                       0	/* integerConst	*/,
                                       realConst	/* realConst	*/,
-                                      stringConst /* stringConst	*/,
+                                      NULL  /* stringConst	*/,
                                       NULL	/* sourceInfo	*/
                                       );
 
@@ -248,4 +232,3 @@ makeNoisyIrNodeSetToken(
 
     return node;
 }
-

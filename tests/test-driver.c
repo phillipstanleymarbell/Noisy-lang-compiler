@@ -38,6 +38,7 @@ char * all_tests()
     mu_run_test(test_testNthIrNodeOfType);
     mu_run_test(test_testNthIrNodeOfTypes);
     mu_run_test(test_newtonCheckSingleInvariant);
+    mu_run_test(test_newtonApiNumberParametersZeroToN);
     return 0;
 }
 

@@ -1,5 +1,5 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+    Authored 2015, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim.
 
 	All rights reserved.
 

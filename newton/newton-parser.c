@@ -188,24 +188,28 @@ NoisyIrNode *
 newtonParseParameterTuple(NoisyState * N, NoisyScope * currentScope)
 {
 	NoisyIrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_PparameterTuple,
-						NULL /* left child */,
-						NULL /* right child */,
-						noisyLexPeek(N, 1)->sourceInfo /* source info */);
+                                      NULL /* left child */,
+                                      NULL /* right child */,
+                                      noisyLexPeek(N, 1)->sourceInfo /* source info */);
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
-    addLeaf(N, node, newtonParseParameter(N, currentScope));
-    while (peekCheck(N, 1, kNewtonIrNodeType_Tcomma))
-	{
-        newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
-		addLeafWithChainingSeq(N, node, newtonParseParameter(N, currentScope));
-	}
+
+  int parameterNumber = 0;
+  addLeaf(N, node, newtonParseParameter(N, currentScope, parameterNumber));
+
+  while (peekCheck(N, 1, kNewtonIrNodeType_Tcomma))
+    {
+      newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
+      addLeafWithChainingSeq(N, node, newtonParseParameter(N, currentScope, parameterNumber));
+      parameterNumber++;
+    }
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 
-    return node;
+  return node;
 }
 
 NoisyIrNode *
-newtonParseParameter(NoisyState * N, NoisyScope * currentScope)
+newtonParseParameter(NoisyState * N, NoisyScope * currentScope, int parameterNumber)
 {
 	NoisyIrNode *	node = genNoisyIrNode(N,	kNewtonIrNodeType_Pparameter,
 						NULL /* left child */,
@@ -217,7 +221,10 @@ newtonParseParameter(NoisyState * N, NoisyScope * currentScope)
      */
     addLeaf(N, node, newtonParseIdentifier(N, currentScope));
     newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
-    addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+    NoisyIrNode * physicsName = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
+    addLeaf(N, node, physicsName);
+    node->parameterNumber = parameterNumber;
+    node->physics = physicsName->physics;
 
     return node;
 }
@@ -505,7 +512,32 @@ newtonParseFindNodeByPhysicsId(NoisyState *N, NoisyIrNode * root, int physicsId)
 }
 
 NoisyIrNode *
-newtonParseFindNodeByTokenString(NoisyState *N, NoisyIrNode * root, char* tokenString)
+newtonParseFindNodeByParameterNumber(NoisyState *N, NoisyIrNode * root, int parameterNumber)
+{
+  if (root->type == kNewtonIrNodeType_Pparameter && root->parameterNumber == parameterNumber)
+    {
+      return root;
+    }
+
+  NoisyIrNode* targetNode = NULL;
+
+  if (root->irLeftChild != NULL)
+    targetNode = newtonParseFindNodeByParameterNumber(N, root->irLeftChild, parameterNumber);
+
+  if (targetNode != NULL)
+    return targetNode;
+
+  if (root->irRightChild != NULL)
+    targetNode = newtonParseFindNodeByParameterNumber(N, root->irRightChild, parameterNumber);
+
+  if (targetNode != NULL)
+    return targetNode;
+
+  return targetNode;
+}
+
+NoisyIrNode *
+newtonParseFindNodeByTokenString(NoisyState *N, NoisyIrNode * root, char * tokenString)
 {
   if (root->token && !strcmp(root->token->identifier, tokenString))
     {
@@ -601,10 +633,9 @@ newtonGetInvariantIdByParameters(NoisyState * N, NoisyIrNode * parameterTreeRoot
 {
     if (parameterTreeRoot->type == kNewtonIrNodeType_Pparameter)
     {
-        assert(parameterTreeRoot->irLeftChild != NULL && parameterTreeRoot->irRightChild != NULL);
-        assert(parameterTreeRoot->irRightChild->physics->id > 1);
-        
-        return invariantId * parameterTreeRoot->irRightChild->physics->id;
+        assert(parameterTreeRoot->physics->id > 1);
+
+        return invariantId * parameterTreeRoot->physics->id;
     }
 
     if (parameterTreeRoot->irLeftChild != NULL)
@@ -637,13 +668,13 @@ newtonParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType
 
     n->token = t;
     n->tokenString = t->identifier;
-    
+
     // TODO rewrite this logic in a cleaner way.... make a new method or something
     Physics * physicsSearchResult;
     if ((physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, t->identifier)) == NULL)
     {
         physicsSearchResult = newtonPhysicsTablePhysicsForDimensionAlias(N, scope, t->identifier);
-    } 
+    }
 
     if (physicsSearchResult == NULL)
     {
@@ -653,15 +684,15 @@ newtonParseIdentifierUsageTerminal(NoisyState *  N, NoisyIrNodeType expectedType
             physicsSearchResult = newtonPhysicsTablePhysicsForDimensionAlias(N, scope, physicsTypeString);
         }
     }
-    
+
     if (physicsSearchResult == NULL)
     {
         errorUseBeforeDefinition(N, t->identifier);
     }
-    else 
+    else
     {
         // n->physics = physicsSearchResult;
-        
+
         /* defensive copying to keep the Physics list in NoisyState immutable */
         n->physics = deepCopyPhysicsNode(physicsSearchResult);
     }

@@ -162,47 +162,42 @@ char * test_testNthIrNodeOfTypes()
 static NoisyIrNode *
 setupNthIrNodeType(NoisyState* noisy)
 {
-  NoisyIrNode * numberNode = makeNoisyIrNodeSetToken(
+  NoisyIrNode * numberNode = makeNoisyIrNodeSetValue(
 													 noisy,
 													 kNewtonIrNodeType_Tnumber,
 													 NULL,
-													 NULL,
 													 5.0
 													 );
-  NoisyIrNode * distanceNode = makeNoisyIrNodeSetToken(
+  NoisyIrNode * distanceNode = makeNoisyIrNodeSetValue(
 													   noisy,
 													   kNewtonIrNodeType_Tidentifier,
 													   "distance",
-													   NULL,
 													   0.0
 													   );
-  NoisyIrNode * plus = makeNoisyIrNodeSetToken(
+  NoisyIrNode * plus = makeNoisyIrNodeSetValue(
 											   noisy,
 											   kNewtonIrNodeType_Tplus,
 											   NULL,
-											   NULL,
 											   0.0
 											   );
-  NoisyIrNode * minus = makeNoisyIrNodeSetToken(
+  NoisyIrNode * minus = makeNoisyIrNodeSetValue(
 												noisy,
 												kNewtonIrNodeType_Tminus,
 												NULL,
-												NULL,
 												0.0
 												);
-  NoisyIrNode * exponent = makeNoisyIrNodeSetToken(
+  NoisyIrNode * exponent = makeNoisyIrNodeSetValue(
 												   noisy,
 												   kNewtonIrNodeType_Texponent,
-												   NULL,
 												   NULL,
 												   0.0
 												   );
 
 
-  addLeaf(noisy, numberNode, distanceNode);
-  addLeafWithChainingSeqNoLexer(noisy, numberNode, plus);
-  addLeafWithChainingSeqNoLexer(noisy, numberNode, minus);
-  addLeafWithChainingSeqNoLexer(noisy, numberNode, exponent);
+  newtonApiAddLeaf(noisy, numberNode, distanceNode);
+  newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, plus);
+  newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, minus);
+  newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, exponent);
 
   return numberNode;
 }

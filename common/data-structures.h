@@ -614,6 +614,11 @@ struct NoisyIrNode
   double value; 
 
   /*
+   * A parameter tuple of length n has ordering from zero to n - 1 
+   */
+  int parameterNumber;
+
+  /*
    * When doing an API check of the invariant tree given a parameter tree,
    * the method looks up all instances of 
    */
@@ -854,6 +859,13 @@ typedef struct
      * Global index of which prime numbers we have used for the dimension id's
      */
     int primeNumbersIndex;
+
+  /*
+   * When parsing invariant constraints, need to number the factors that correspond to the parameters passed in.
+   * This is so that finding matching Parameter doesn't depend either the identifier passed, or the physics type.
+   * That is a good idea because now we don't need to implicitly fill in the left identifier child of the parameter node.
+   */
+  int currentParameterNumber;
 
     /*
      * This is a group (linked list) of linked list of physics nodes

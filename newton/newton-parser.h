@@ -14,7 +14,7 @@ NoisyIrNode *
 newtonParseInvariant(NoisyState * N, NoisyScope * currentScope);
 
 NoisyIrNode * 
-newtonParseParameter(NoisyState * N, NoisyScope * currentScope);
+newtonParseParameter(NoisyState * N, NoisyScope * currentScope, int parameterNumber);
 
 NoisyIrNode * 
 newtonParseParameterTuple(NoisyState * N, NoisyScope * currentScope);
@@ -71,6 +71,9 @@ newtonParseGetIdentifierByBoundPhysicsString(NoisyState * N, NoisyIrNode * root,
 NoisyIrNode *
 newtonParseFindNodeByPhysicsId(NoisyState *N, NoisyIrNode * root, int physicsId);
 
+/* TODO don't think this is used... remove if still unused */
 NoisyIrNode *
 newtonParseFindNodeByTokenString(NoisyState *N, NoisyIrNode * root, char* tokenString);
 
+NoisyIrNode *
+newtonParseFindNodeByParameterNumber(NoisyState *N, NoisyIrNode * root, int parameterNumber);
