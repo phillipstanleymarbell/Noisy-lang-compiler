@@ -455,11 +455,12 @@ struct Dimension
 {
     char * identifier;
     char * abbreviation;
+
 	
     Scope *		scope;
 	
     SourceInfo *	sourceInfo;
-    
+
     int primeNumber;
 
     Dimension * next;
@@ -468,9 +469,11 @@ struct Dimension
 struct Invariant
 {
     char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
+
     
     Scope *		scope;
     SourceInfo *	sourceInfo;
+
 
     IrNode * parameterList; // this is just bunch of IrNode's in Xseq
     unsigned long long int id;
@@ -480,20 +483,21 @@ struct Invariant
     Invariant * next;
 };
 
-struct Physics 
+struct Physics
 {
     char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
     unsigned long long int id;
+
     
     Scope *		scope;
     SourceInfo *	sourceInfo;
-    
+
     bool isVector;
     Physics * vectorCounterpart; // non-NULL if a scalar AND counterpart defined in vectorScalarPairScope
     Physics * scalarCounterpart; // non-NULl if a vector AND counterpart defined in vectorScalarPairScope
 
     double value; /* for constants like Pi or gravitational acceleration */
-  bool isConstant;
+    bool isConstant;
 
     /*
      * numeratorPrimeProduct and denominatorPrimeProduct == 1 means
@@ -502,7 +506,7 @@ struct Physics
     Dimension * numeratorDimensions;
     int numberOfNumerators;
     int numeratorPrimeProduct;
-    
+
     Dimension * denominatorDimensions;
     int numberOfDenominators;
     int denominatorPrimeProduct;
@@ -536,6 +540,7 @@ struct IrNode
 	IrNode *		irRightChild;
 
 	Symbol *		symbol;
+
 
   /*
    * Used for evaluating dimensions in expressions

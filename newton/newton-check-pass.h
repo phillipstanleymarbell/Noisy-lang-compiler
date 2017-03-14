@@ -1,8 +1,10 @@
 void
 newtonCheckCompareOp(
-    State* N,
+    State * N,
     IrNode * leftExpression, 
     IrNode * rightExpression,
+    char * leftErrorMessage,
+    char * rightErrorMessage,
     IrNodeType compareOpType,
     ConstraintReport * report
 );
@@ -10,11 +12,11 @@ newtonCheckCompareOp(
 void
 newtonCheckBinOp(
     State* N,
-    IrNode * leftTerm, 
+    IrNode * leftTerm,
     IrNode * rightTerm,
     IrNodeType binOpType,
     ConstraintReport * report
-); 
+);
 
 void
 checkSingleConstraint(
@@ -29,6 +31,7 @@ checkQuantityExpression(
     State * N,
     IrNode * constraintTreeRoot,
     IrNode * parameterTreeRoot,
+    char * errorMessage,
     ConstraintReport * report
 );
 
@@ -37,6 +40,7 @@ checkQuantityTerm(
     State * N,
     IrNode * constraintTreeRoot,
     IrNode * parameterTreeRoot,
+    char * errorMessage,
     ConstraintReport * report
 );
 
@@ -45,6 +49,7 @@ checkQuantityFactor(
     State * N,
     IrNode * constraintTreeRoot,
     IrNode * parameterTreeRoot,
+    char * errorMessage,
     ConstraintReport * report
 );
 

@@ -224,7 +224,7 @@ main(int argc, char *argv[])
 			case 'd':
 			{
 				N->irBackends |= kNoisyIrBackendDot;
-				
+
 				//TODO: rather than accepting the raw enum value as integer, accept string and compare to table of options
 				uint64_t tmpInt = strtoul(optarg, &ep, 0);
 				if (*ep == '\0')
