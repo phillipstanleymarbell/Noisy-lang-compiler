@@ -57,8 +57,12 @@
 #include "newton-symbolTable.h"
 #include "newton.h"
 #include "newton-irPass-dotBackend.h"
+#include "newton-dimension-pass.h"
 
 extern char* gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
+
+static State*
+processNewtonFileDimensionPass(char * filename);
 
 
 void		
@@ -74,6 +78,11 @@ processNewtonFile(State *  N, char *  filename)
 	 *	Create a top-level scope, then parse.
 	 */
 	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
+
+  State * N_dim = processNewtonFileDimensionPass(filename);
+  N->newtonIrTopScope->firstPhysics = N_dim->newtonIrTopScope->firstPhysics;
+  N->newtonIrTopScope->firstDimension = N_dim->newtonIrTopScope->firstDimension;
+
 	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
 
 	/*
@@ -82,13 +91,23 @@ processNewtonFile(State *  N, char *  filename)
 	if (N->irBackends & kNoisyIrBackendDot)
     fprintf(stdout, "%s\n", irPassDotBackend(N, N->newtonIrTopScope, N->newtonIrRoot, gNewtonAstNodeStrings));
 
-
-
-	// if (N->mode & kNoisyConfigModeCallTracing)
-	// {
-	// 	noisyConfigTimeStampDumpTimeline(N);
-	// }
-
-    consolePrintBuffers(N);
+  consolePrintBuffers(N);
 }
+
+static State*
+processNewtonFileDimensionPass(char * filename)
+{
+  State* N = init(kNoisyModeDefault);
+	newtonLexInit(N, filename);
+
+	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
+	newtonDimensionPassParse(N, N->newtonIrTopScope);
+
+  return N;
+}
+
+
+
+
+
 
