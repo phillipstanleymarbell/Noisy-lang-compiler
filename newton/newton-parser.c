@@ -281,14 +281,13 @@ newtonParseConstant(State * N, Scope * currentScope)
 IrNode *
 newtonParseBaseSignal(State * N, Scope * currentScope)
 {
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PbaseSignal,
+	  IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PbaseSignal,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
     IrNode * basicPhysicsIdentifier = newtonParseIdentifier(N, currentScope);
     addLeaf(N, node, basicPhysicsIdentifier);
-    Physics * newPhysics = newtonPhysicsTableAddPhysicsForToken(N, currentScope, basicPhysicsIdentifier->token);
 
     newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
     newtonParseTerminal(N, kNewtonIrNodeType_Tsignal, currentScope);
@@ -308,32 +307,18 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
      */
     if (derivationExpression->type != kNewtonIrNodeType_Tnone)
     {
+        Physics * newPhysics = newtonPhysicsTableAddPhysicsForToken(N, currentScope, basicPhysicsIdentifier->token);
         newtonPhysicsCopyNumeratorDimensions(N, newPhysics, derivationExpression->physics);
         newtonPhysicsCopyDenominatorDimensions(N, newPhysics, derivationExpression->physics);
-    }
-    /*
-     * These are the base signals
-     */
-    else
-    {
-        newtonPhysicsAddNumeratorDimension(
-            N,
-            newPhysics,
-            newtonDimensionTableAddDimensionForToken(
-                N,
-                currentScope,
-                unitName->token,
-                unitAbbreviation->token
-            )
-        );
-    }
-    
-    newPhysics->dimensionAlias = unitName->token->stringConst; /* e.g.) meter, Pascal*/
-    newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g.) m, Pa*/
 
-    newPhysics->id = newtonGetPhysicsId(N, newPhysics);
-    assert(newPhysics->id > 1);
-	
+        newPhysics->dimensionAlias = unitName->token->stringConst; /* e.g.) meter, Pascal*/
+        newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g.) m, Pa*/
+
+        newPhysics->id = newtonGetPhysicsId(N, newPhysics);
+        assert(newPhysics->id > 1);
+    }
+
+
     newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
 
     return node;
@@ -392,25 +377,25 @@ IrNode *
 newtonParseDerivation(State * N, Scope * currentScope)
 {
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pderivation,
-						NULL /* left child */,
-						NULL /* right child */,
-						lexPeek(N, 1)->sourceInfo /* source info */);
+                             NULL /* left child */,
+                             NULL /* right child */,
+                             lexPeek(N, 1)->sourceInfo /* source info */);
 
-    newtonParseTerminal(N, kNewtonIrNodeType_Tderivation, currentScope);
-    newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
+  newtonParseTerminal(N, kNewtonIrNodeType_Tderivation, currentScope);
+  newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 
-    if (lexPeek(N, 1)->type == kNewtonIrNodeType_Tnone)
-	{
-		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tnone, currentScope));
-	}
-    else
+  if (lexPeek(N, 1)->type == kNewtonIrNodeType_Tnone)
     {
-		addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
+      addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tnone, currentScope));
+    }
+  else
+    {
+      addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
     }
 
-    newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
+  newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 
-    return node;
+  return node;
 }
 
 
