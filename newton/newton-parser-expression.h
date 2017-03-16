@@ -32,12 +32,6 @@ IrNode *
 newtonParseMidPrecedenceBinaryOp(State * N, Scope * currentScope);
 
 IrNode *
-newtonParseTimeOp(State * N, Scope * currentScope);
-
-IrNode *
-newtonParseVectorOp(State * N, Scope * currentScope);
-
-IrNode *
 newtonParseInteger(State * N, Scope * currentScope);
 
 IrNode *

@@ -194,7 +194,7 @@ newtonCheckBinOp(
             left->value += right->value;
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
 			    ((newtonIsDimensionless(left->physics) && newtonIsDimensionless(right->physics)) || \
-				 (left->physics->id == right->physics->id));
+				 (areTwoPhysicsEquivalent(N, left->physics, right->physics)));
 
             break;
 
@@ -202,7 +202,7 @@ newtonCheckBinOp(
             left->value -= right->value;
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
 			  ((newtonIsDimensionless(left->physics) && newtonIsDimensionless(right->physics)) || \
-			   (left->physics->id == right->physics->id));
+			   areTwoPhysicsEquivalent(N, left->physics, right->physics));
             break;
 
         /*

@@ -102,21 +102,14 @@ recursePhysics(State * N, Scope * topScope)
           // flexprint(N->Fe, N->Fm, N->Fpinfo, "vectorCounterpart %s\n", curPhysics->vectorCounterpart->identifier);
       //if (curPhysics->scalarCounterpart)
           // flexprint(N->Fe, N->Fm, N->Fpinfo, "scalarCounterpart %s\n", curPhysics->scalarCounterpart->identifier);
-        
-        Dimension * curDimension = curPhysics->numeratorDimensions;
+
+        Dimension * curDimension = curPhysics->dimensions;
         while (curDimension != NULL) {
           // flexprint(N->Fe, N->Fm, N->Fpinfo, "numerator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
             curDimension = curDimension->next;
         }
-        
-        curDimension = curPhysics->denominatorDimensions;
-        while (curDimension != NULL) {
-          // flexprint(N->Fe, N->Fm, N->Fpinfo, "denominator dimension %s %d %x\n", curDimension->identifier, curDimension->primeNumber, curDimension);
-            curDimension = curDimension->next;
-        }
-		
         // flexprint(N->Fe, N->Fm, N->Fpinfo, "==============================================================================================\n");
-        
+
         curPhysics = curPhysics->next;
     }
 

@@ -29,28 +29,28 @@ char * test_newtonGetPhysicsId()
 {
     State* N = newtonApiInit("../Examples/invariants.nt");
     mu_assert(
-        "test_newtonGetPhysicsId: first Physics struct should have first prime number as id",
+        "test_newtonGetPhysicsId: first Physics struct should have the first prime number as id",
         newtonApiGetPhysicsTypeByName(N, "time")->id == 2
     );
 
     mu_assert(
-        "test_newtonGetPhysicsId: second Physics struct should have second prime number as id",
+        "test_newtonGetPhysicsId: second Physics struct should have the second prime number as id",
         newtonApiGetPhysicsTypeByName(N, "distance")->id == 3
     );
 
     mu_assert(
-        "test_newtonGetPhysicsId: speed should have distance->id + offset * time->id as id",
-        newtonApiGetPhysicsTypeByName(N, "speed")->id == 3 + bigNumberOffset * 2
+        "test_newtonGetPhysicsId: speed should have the fourth prime number as id",
+        newtonApiGetPhysicsTypeByName(N, "speed")->id == 7
     );
 
     mu_assert(
-        "test_newtonGetPhysicsId: acceleration should have distance->id + offset * time->id * time->id as id",
-        newtonApiGetPhysicsTypeByName(N, "acceleration")->id == 3 + bigNumberOffset * 2 * 2
+        "test_newtonGetPhysicsId: acceleration should have the fifth prime number as id",
+        newtonApiGetPhysicsTypeByName(N, "acceleration")->id == 11
     );
 
     mu_assert(
-        "test_newtonGetPhysicsId: force should have mass * distance + offset * time * time as id",
-        newtonApiGetPhysicsTypeByName(N, "force")->id == 3 * 5 + bigNumberOffset * 2 * 2
+        "test_newtonGetPhysicsId: force should have the sixth prime number as id",
+        newtonApiGetPhysicsTypeByName(N, "force")->id == 13
     );
     return 0;
 }

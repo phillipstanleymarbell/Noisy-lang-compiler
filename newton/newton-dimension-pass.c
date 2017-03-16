@@ -92,8 +92,7 @@ newtonDimensionPassParseRule(State * N, Scope * currentScope)
 void
 newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 {
-  IrNode * basicPhysicsIdentifier = newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
-
+    newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
     newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
     newtonParseTerminal(N, kNewtonIrNodeType_Tsignal, currentScope);
     newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
@@ -103,23 +102,23 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
     IrNode * unitAbbreviation = newtonDimensionPassParseSymbol(N, currentScope);
     newtonParseTerminal(N, kNewtonIrNodeType_Tderivation, currentScope);
     newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
-    
+
     /*
      * These are the derived signals
      */
     if (lexPeek(N, 1)->type != kNewtonIrNodeType_Tnone)
     {
-      // just gobble tokens
-      while(inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts) ||
-            inFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFirsts) ||
-            inFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts) ||
-            inFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts) ||
-            inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts) ||
-            inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts) ||
-            inFirst(N, kNewtonIrNodeType_PquantityFactor, gNewtonFirsts)
+		/* just gobble tokens for expressions */
+		while(inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts) ||
+			  inFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFirsts) ||
+			  inFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts) ||
+			  inFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts) ||
+			  inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts) ||
+			  inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts) ||
+			  inFirst(N, kNewtonIrNodeType_PquantityFactor, gNewtonFirsts)
             )
         {
-          lexGet(N, gNewtonTokenDescriptions);
+			lexGet(N, gNewtonTokenDescriptions);
         }
     }
 
@@ -129,23 +128,12 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
     else
     {
         newtonParseTerminal(N, kNewtonIrNodeType_Tnone, currentScope);
-        Physics * newPhysics = newtonPhysicsTableAddPhysicsForToken(N, currentScope, basicPhysicsIdentifier->token);
-        newtonPhysicsAddNumeratorDimension(
-            N,
-            newPhysics,
-            newtonDimensionTableAddDimensionForToken(
-                N,
-                currentScope,
-                unitName->token,
-                unitAbbreviation->token
-            )
-        );
-
-        newPhysics->dimensionAlias = unitName->token->stringConst; /* e.g.) meter, Pascal*/
-        newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g.) m, Pa*/
-
-        newPhysics->id = newtonGetPhysicsId(N, newPhysics);
-        assert(newPhysics->id > 1);
+		newtonDimensionTableAddDimensionForToken(
+			N,
+			currentScope,
+			unitName->token,
+			unitAbbreviation->token
+			);
     }
 
     newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
@@ -156,9 +144,9 @@ IrNode *
 newtonDimensionPassParseName(State * N, Scope * currentScope)
 {
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pname,
-						NULL /* left child */,
-						NULL /* right child */,
-						lexPeek(N, 1)->sourceInfo /* source info */);
+								 NULL /* left child */,
+								 NULL /* right child */,
+								 lexPeek(N, 1)->sourceInfo /* source info */);
 
     newtonParseTerminal(N, kNewtonIrNodeType_Tname, currentScope);
     newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
@@ -168,13 +156,13 @@ newtonDimensionPassParseName(State * N, Scope * currentScope)
 
     if (lexPeek(N, 1)->type == kNewtonIrNodeType_TEnglish || 
         lexPeek(N, 1)->type == kNewtonIrNodeType_TSpanish)
-      {
+	{
         newtonParseTerminal(N, lexPeek(N, 1)->type, currentScope);
-      }
+	}
     else
-      {
+	{
         fatal(N, "newton-dimension-pass.c:newtonDimensionPassParseName no language setting\n");
-      }
+	}
 
     return node;
 }

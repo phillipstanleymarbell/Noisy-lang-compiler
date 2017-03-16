@@ -55,6 +55,7 @@ newtonParseCompareOp(State * N, Scope * currentScope);
 bool
 newtonIsDimensionless(Physics * physics);
 
+
 unsigned long long int
 newtonGetInvariantIdByParameters(State * N, IrNode * parameterTreeRoot, unsigned long long int invariantId);
 
@@ -77,3 +78,4 @@ newtonParseFindNodeByTokenString(State *N, IrNode * root, char* tokenString);
 
 IrNode *
 newtonParseFindNodeByParameterNumber(State *N, IrNode * root, int parameterNumber);
+

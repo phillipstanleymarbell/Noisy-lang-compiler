@@ -62,28 +62,7 @@ extern int primeNumbers[168];
 
 static Dimension* copyDimensionNode(Dimension* list);
 static Dimension* copyDimensionList(Dimension* list);
-static Dimension* getTailDimension(Dimension* list);
 
-
-/*
- * this function counts the number of dimensions in a physics struct
- * that has time
- */
-int countNumberTime(Dimension* dimensionHead)
-{
-    int numTimes = 0;
-    Dimension * current = dimensionHead;
-    while (current != NULL)
-    {
-		if (!strcmp(current->identifier, "s")) // TODO this is hard coded... fix it. use a method that finds physics named time
-        {
-            numTimes++;
-        }
-        current = current->next;
-    }
-
-    return numTimes;
-}
 
 static Invariant*
 getTailInvariant(Invariant * head)
@@ -101,22 +80,6 @@ getTailInvariant(Invariant * head)
     }
 }
 
-static Dimension*
-getTailDimension(Dimension* list)
-{
-    if (list == NULL)
-        return NULL;
-    else
-    {
-        Dimension* current = list;
-        while (current->next != NULL)
-        {
-            current = current->next;
-        }
-        return current;
-    }
-}
-
 
 static Dimension*
 copyDimensionNode(Dimension* list)
@@ -126,6 +89,7 @@ copyDimensionNode(Dimension* list)
     temp->scope = list->scope;
     temp->sourceInfo = list->sourceInfo;
     temp->primeNumber = list->primeNumber;
+	temp->exponent = list->exponent;
 
     if (list->next != NULL)
     {
@@ -172,9 +136,6 @@ shallowCopyPhysicsNode(Physics* node)
     copy->isVector = node->isVector;
     copy->value = node->value;
 
-    copy->numeratorPrimeProduct = 1;
-    copy->denominatorPrimeProduct = 1;
-
     copy->dimensionAlias = node->dimensionAlias;
     copy->dimensionAliasAbbreviation = node->dimensionAliasAbbreviation;
 
@@ -188,8 +149,7 @@ Physics*
 deepCopyPhysicsNode(Physics* node)
 {
     Physics * copy = (Physics *) calloc(1, sizeof(Physics));
-    copy->numeratorDimensions = copyDimensionList(node->numeratorDimensions);
-    copy->denominatorDimensions = copyDimensionList(node->denominatorDimensions);
+    copy->dimensions = copyDimensionList(node->dimensions);
 
     copy->identifier = node->identifier;
     copy->scope = node->scope;
@@ -200,10 +160,6 @@ deepCopyPhysicsNode(Physics* node)
     copy->isConstant = node->isConstant;
     copy->id = node->id;
 
-    copy->numberOfNumerators = node->numberOfNumerators;
-    copy->numeratorPrimeProduct = node->numeratorPrimeProduct;
-    copy->numberOfDenominators = node->numberOfDenominators;
-    copy->denominatorPrimeProduct = node->denominatorPrimeProduct;
     copy->dimensionAlias = node->dimensionAlias;
     copy->dimensionAliasAbbreviation = node->dimensionAliasAbbreviation;
 
@@ -213,15 +169,6 @@ deepCopyPhysicsNode(Physics* node)
     return copy;
 }
 
-Physics*
-copyPhysicsNode(Physics* list)
-{
-    Physics * copy = (Physics*) calloc(1, sizeof(Physics));
-    memcpy(copy, list, sizeof(Physics));
-    copy->next = NULL;
-
-    return copy;
-}
 
 IntegralList*
 getTailIntegralList(IntegralList* list)
@@ -258,12 +205,7 @@ getTailPhysics(Physics* list)
 Physics * 
 newtonPhysicsTableCopyAndAddPhysics(State * N, Scope * scope, Physics * source)
 {
-    Physics * dest = (Physics *) calloc(1, sizeof(Physics));
-    dest->numeratorPrimeProduct = 1;
-    dest->denominatorPrimeProduct = 1;
-    
-    newtonPhysicsCopyNumeratorDimensions(N, dest, source);
-    newtonPhysicsCopyDenominatorDimensions(N, dest, source);
+    Physics * dest = deepCopyPhysicsNode(source);
 
     Physics * tail;
     if ((tail = getTailPhysics(source)) == NULL)
@@ -284,101 +226,86 @@ newtonAddInvariant(State * N, Invariant * invariant)
         tail->next = invariant;
 }
 
-// TODO clean up the code. make helper methods
-void 
-newtonPhysicsCopyDenominatorToNumeratorDimensions(State * N, Physics * dest, Physics * source)
+
+void
+newtonPhysicsIncrementExponent(State * N, Physics * source, Dimension * added)
 {
-    if (dest->numeratorDimensions == NULL)
-    {
-        dest->numeratorDimensions = copyDimensionList(source->denominatorDimensions);
-    }
-    else
-    {
-        getTailDimension(dest->numeratorDimensions)->next = copyDimensionList(source->denominatorDimensions);
-    }
-    
-    dest->numberOfNumerators += source->numberOfDenominators;
-    dest->numeratorPrimeProduct *= source->denominatorPrimeProduct;
+	Dimension * current = source->dimensions;
+
+	bool somethingWasAdded = false;
+	while (current != NULL)
+	{
+		if (current->primeNumber == added->primeNumber)
+		{
+			current->exponent += 1;
+			somethingWasAdded = true;
+		}
+
+		current = current->next;
+	}
+
+	assert(somethingWasAdded); // TODO remove later
 }
 
-void 
-newtonPhysicsCopyNumeratorToDenominatorDimensions(State * N, Physics * dest, Physics * source)
-{
-    if (dest->denominatorDimensions == NULL)
-    {
-        dest->denominatorDimensions = copyDimensionList(source->numeratorDimensions);
-    }
-    else
-    {
-        getTailDimension(dest->denominatorDimensions)->next = copyDimensionList(source->numeratorDimensions);
-    }
-    
-    dest->numberOfDenominators += source->numberOfNumerators;
-    dest->denominatorPrimeProduct *= source->numeratorPrimeProduct;
 
+void newtonPhysicsAddExponents(State * N, Physics * left, Physics * right)
+{
+	Dimension * currentLeft = left->dimensions;
+	Dimension * currentRight = right->dimensions;
+
+	assert(currentLeft != NULL && currentRight != NULL);
+
+	while (currentLeft != NULL && currentRight != NULL)
+	{
+		currentLeft->exponent += currentRight->exponent;
+
+		currentLeft = currentLeft->next;
+		currentRight = currentRight->next;
+	}
 }
 
-// TODO change method name from copy to transfer
-void newtonPhysicsCopyNumeratorDimensions(State * N, Physics * dest, Physics * source) 
+
+void newtonPhysicsSubtractExponents(State * N, Physics * left, Physics * right)
 {
-    if (dest->numeratorDimensions == NULL)
-    {
-        dest->numeratorDimensions = copyDimensionList(source->numeratorDimensions);
-    }
-    else
-    {
-        getTailDimension(dest->numeratorDimensions)->next = copyDimensionList(source->numeratorDimensions);
-    }
-    
-    dest->numberOfNumerators += source->numberOfNumerators;
-    dest->numeratorPrimeProduct *= source->numeratorPrimeProduct;
+	Dimension * currentLeft = left->dimensions;
+	Dimension * currentRight = right->dimensions;
+
+	assert(currentLeft != NULL && currentRight != NULL);
+
+	while (currentLeft != NULL && currentRight != NULL)
+	{
+		currentLeft->exponent -= currentRight->exponent;
+
+		currentLeft = currentLeft->next;
+		currentRight = currentRight->next;
+	}
 }
 
-void newtonPhysicsCopyDenominatorDimensions(State * N, Physics * dest, Physics * source)
+
+void newtonPhysicsMultiplyExponents(State * N, Physics * source, double multiplier)
 {
-    if (dest->denominatorDimensions == NULL)
-    {
-        dest->denominatorDimensions = copyDimensionList(source->denominatorDimensions);
-    }
-    else
-    {
-        getTailDimension(dest->denominatorDimensions)->next = copyDimensionList(source->denominatorDimensions);
-    }
-    
-    dest->numberOfDenominators += source->numberOfDenominators;
-    dest->denominatorPrimeProduct *= source->denominatorPrimeProduct;
+	Dimension * current = source->dimensions;
+	assert(current != NULL);
+
+	while (current != NULL)
+	{
+		current->exponent *= multiplier;
+
+		current = current->next;
+	}
 }
 
-void 
-newtonPhysicsAddNumeratorDimension(State * N, Physics * dest, Dimension * numerator)
-{
-    if (dest->numeratorDimensions == NULL)
-    {
-        dest->numeratorDimensions = copyDimensionList(numerator);
-    }
-    else
-    {
-        getTailDimension(dest->numeratorDimensions)->next = copyDimensionList(numerator);
-    }
 
-    dest->numeratorPrimeProduct *= numerator->primeNumber;
-    dest->numberOfNumerators++;
-}
-
-void 
-newtonPhysicsAddDenominatorDimension(State * N, Physics * dest, Dimension * denominator)
+void
+newtonPhysicsZeroExponents(State * N, Physics * source)
 {
-    if (dest->denominatorDimensions == NULL)
-    {
-        dest->denominatorDimensions = copyDimensionList(denominator);
-    }
-    else
-    {
-        getTailDimension(dest->denominatorDimensions)->next = copyDimensionList(denominator);
-    }
-    
-    dest->denominatorPrimeProduct *= denominator->primeNumber;
-    dest->numberOfDenominators++;
+	Dimension * current = source->dimensions;
+	assert(current != NULL);
+
+	while(current != NULL)
+	{
+		current->exponent = 0;
+	}
 }
 
 Dimension *
@@ -387,6 +314,7 @@ newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  na
 	Dimension *	newDimension;
 
 	newDimension = (Dimension *)calloc(1, sizeof(Dimension));
+
 	if (newDimension == NULL)
 	{
 		fatal(N, Emalloc);
@@ -397,10 +325,14 @@ newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  na
 	newDimension->sourceInfo	= nameToken->sourceInfo;
 	newDimension->scope	= scope;
     newDimension->primeNumber = primeNumbers[N->primeNumbersIndex++];
+	newDimension->exponent = 1;
 
-    if (scope->firstDimension == NULL) {
+    if (scope->firstDimension == NULL)
+	{
         scope->firstDimension = newDimension;
-    } else {
+    }
+	else
+	{
         Dimension * curDimension = scope->firstDimension;
         while (curDimension->next != NULL) {
             curDimension = curDimension->next;
@@ -411,37 +343,83 @@ newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  na
 	return newDimension;
 }
 
+Physics * 
+newtonInitPhysics(State * N, Scope * scope, Token * token)
+{
+	Physics * newPhysics = (Physics *) calloc(1, sizeof(Physics));
+	if (newPhysics == NULL)
+		fatal(N, Emalloc);
+
+	assert(N->newtonIrTopScope->firstDimension != NULL);
+    newPhysics->dimensions = copyDimensionList(N->newtonIrTopScope->firstDimension);
+
+    newPhysics->scope = scope;
+
+	if (token != NULL)
+	{
+		newPhysics->identifier = token->identifier;
+		newPhysics->sourceInfo = token->sourceInfo;
+		// newPhysics->definition = newtonPhysicsTablePhysicsForIdentifier(N, scope, token->identifier);
+	}
+
+	return newPhysics;
+}
+
 Physics *
 newtonPhysicsTableAddPhysicsForToken(State *  N, Scope *  scope, Token *  token)
 {
-	Physics *	newPhysics;
+	Physics * newPhysics;
+	if (N->newtonIrTopScope->firstDimension == NULL)
+	{
+		newPhysics = (Physics *) calloc(1, sizeof(Physics));
+		newPhysics->scope = scope;
 
-	newPhysics = (Physics *)calloc(1, sizeof(Physics));
-	if (newPhysics == NULL)
-    {
-      fatal(N, Emalloc);
-    }
+		if (token != NULL)
+		{
+			newPhysics->identifier = token->identifier;
+			newPhysics->sourceInfo = token->sourceInfo;
+			// newPhysics->definition = newtonPhysicsTablePhysicsForIdentifier(N, scope, token->identifier);
+		}
+	}
+	else
+	{
+		newPhysics =  newtonInitPhysics(N, scope, token);
+	}
 
-	newPhysics->identifier	= token->identifier;
-	newPhysics->sourceInfo	= token->sourceInfo;
-	newPhysics->scope	= scope;
-
-  newPhysics->numeratorPrimeProduct = 1;
-  newPhysics->denominatorPrimeProduct = 1;
-
-	newPhysics->definition	= newtonPhysicsTablePhysicsForIdentifier(N, scope, token->identifier);
-
-  if (scope->firstPhysics == NULL) {
-    scope->firstPhysics = newPhysics;
-  } else {
-    Physics * curPhysics = scope->firstPhysics;
-    while (curPhysics->next != NULL) {
-      curPhysics = curPhysics->next;
-    }
-    curPhysics->next = newPhysics;
-  }
+	if (scope->firstPhysics == NULL)
+	{
+		scope->firstPhysics = newPhysics;
+	}
+	else
+	{
+		Physics * curPhysics = scope->firstPhysics;
+		while (curPhysics->next != NULL)
+		{
+			curPhysics = curPhysics->next;
+		}
+		curPhysics->next = newPhysics;
+	}
 
 	return newPhysics;
+}
+
+bool
+areTwoPhysicsEquivalent(State * N, Physics * left, Physics * right)
+{
+	Dimension * leftCurrent = left->dimensions;
+	Dimension * rightCurrent = right->dimensions;
+
+	assert(leftCurrent != NULL && rightCurrent != NULL);
+
+	while (leftCurrent != NULL && rightCurrent != NULL)
+	{
+		if (leftCurrent->exponent != rightCurrent->exponent)
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 Dimension *
@@ -481,6 +459,7 @@ newtonPhysicsTablePhysicsForDimensionAlias(State *  N, Scope *  scope, const cha
          */
 		if (curPhysics->dimensionAlias && !strcmp(curPhysics->dimensionAlias, dimensionAliasIdentifier))
 		{
+			assert(curPhysics->dimensions != NULL);
 			return curPhysics;
 		}
 		curPhysics = curPhysics->next;
@@ -502,6 +481,7 @@ newtonPhysicsTablePhysicsForIdentifier(State *  N, Scope *  scope, const char * 
 	{
 		if (!strcmp(curPhysics->identifier, identifier))
 		{
+			assert(curPhysics->dimensions != NULL);
 			return curPhysics;
 		}
 		curPhysics = curPhysics->next;

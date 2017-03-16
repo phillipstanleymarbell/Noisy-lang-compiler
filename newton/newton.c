@@ -44,6 +44,7 @@
 #include <getopt.h>
 #include <setjmp.h>
 #include <stdint.h>
+#include <assert.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -65,7 +66,7 @@ static State*
 processNewtonFileDimensionPass(char * filename);
 
 
-void		
+void
 processNewtonFile(State *  N, char *  filename)
 {
 
@@ -79,9 +80,10 @@ processNewtonFile(State *  N, char *  filename)
 	 */
 	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
 
-  State * N_dim = processNewtonFileDimensionPass(filename);
-  N->newtonIrTopScope->firstPhysics = N_dim->newtonIrTopScope->firstPhysics;
-  N->newtonIrTopScope->firstDimension = N_dim->newtonIrTopScope->firstDimension;
+	State * N_dim = processNewtonFileDimensionPass(filename);
+	N->newtonIrTopScope->firstDimension = N_dim->newtonIrTopScope->firstDimension;
+
+	assert(N->newtonIrTopScope->firstDimension != NULL);
 
 	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
 
@@ -89,9 +91,9 @@ processNewtonFile(State *  N, char *  filename)
 	 *	Dot backend.
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
-    fprintf(stdout, "%s\n", irPassDotBackend(N, N->newtonIrTopScope, N->newtonIrRoot, gNewtonAstNodeStrings));
+		fprintf(stdout, "%s\n", irPassDotBackend(N, N->newtonIrTopScope, N->newtonIrRoot, gNewtonAstNodeStrings));
 
-  consolePrintBuffers(N);
+	consolePrintBuffers(N);
 }
 
 static State*
@@ -105,9 +107,3 @@ processNewtonFileDimensionPass(char * filename)
 
   return N;
 }
-
-
-
-
-
-

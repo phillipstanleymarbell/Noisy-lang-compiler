@@ -162,44 +162,43 @@ char * test_testNthIrNodeOfTypes()
 static IrNode *
 setupNthIrNodeType(State* noisy)
 {
-  IrNode * numberNode = makeIrNodeSetValue(
-													 noisy,
-													 kNewtonIrNodeType_Tnumber,
-													 NULL,
-													 5.0
-													 );
-  IrNode * distanceNode = makeIrNodeSetValue(
-													   noisy,
-													   kNewtonIrNodeType_Tidentifier,
-													   "distance",
-													   0.0
-													   );
-  IrNode * plus = makeIrNodeSetValue(
-											   noisy,
-											   kNewtonIrNodeType_Tplus,
-											   NULL,
-											   0.0
-											   );
-  IrNode * minus = makeIrNodeSetValue(
-												noisy,
-												kNewtonIrNodeType_Tminus,
-												NULL,
-												0.0
-												);
-  IrNode * exponent = makeIrNodeSetValue(
-												   noisy,
-												   kNewtonIrNodeType_Texponent,
-												   NULL,
-												   0.0
-												   );
+	IrNode * numberNode = makeIrNodeSetValue(
+		noisy,
+		kNewtonIrNodeType_Tnumber,
+		NULL,
+		5.0
+		);
+	IrNode * distanceNode = makeIrNodeSetValue(
+		noisy,
+		kNewtonIrNodeType_Tidentifier,
+		"distance",
+		0.0
+		);
+	IrNode * plus = makeIrNodeSetValue(
+		noisy,
+		kNewtonIrNodeType_Tplus,
+		NULL,
+		0.0
+		);
+	IrNode * minus = makeIrNodeSetValue(
+		noisy,
+		kNewtonIrNodeType_Tminus,
+		NULL,
+		0.0
+		);
+	IrNode * exponent = makeIrNodeSetValue(
+		noisy,
+		kNewtonIrNodeType_Texponent,
+		NULL,
+		0.0
+		);
 
+	newtonApiAddLeaf(noisy, numberNode, distanceNode);
+	newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, plus);
+	newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, minus);
+	newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, exponent);
 
-  newtonApiAddLeaf(noisy, numberNode, distanceNode);
-  newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, plus);
-  newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, minus);
-  newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, exponent);
-
-  return numberNode;
+	return numberNode;
 }
 
 
