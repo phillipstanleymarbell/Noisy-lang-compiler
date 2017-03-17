@@ -160,47 +160,47 @@ char * test_newtonApiPhysicsTypeUsageExample()
 
 char * test_newtonApiNumberParametersZeroToN()
 {
-  State * newton = newtonApiInit("../Examples/invariants.nt");
-  IrNode* parameterTree = makeTestParameterTuple(newton);
-  mu_assert(
-            "test_newtonApiNumberParametersZeroToN: the first left child should have number of 0",
-            parameterTree->irLeftChild->parameterNumber == 0
-            );
-  mu_assert(
-            "test_newtonApiNumberParametersZeroToN: the first right child should have number of 1",
-            parameterTree->irRightChild->irLeftChild->parameterNumber == 1
-            );
-  return 0;
+	State * newton = newtonApiInit("../Examples/invariants.nt");
+	IrNode* parameterTree = makeTestParameterTuple(newton);
+	mu_assert(
+		"test_newtonApiNumberParametersZeroToN: the first left child should have number of 0",
+		parameterTree->irLeftChild->parameterNumber == 0
+		);
+	mu_assert(
+		"test_newtonApiNumberParametersZeroToN: the first right child should have number of 1",
+		parameterTree->irRightChild->irLeftChild->parameterNumber == 1
+		);
+	return 0;
 }
 
 
 IrNode *
 makeTestParameterTuple(State * newton)
 {
-  IrNode *	root = genIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
-									  NULL /* left child */,
-									  NULL /* right child */,
-									  NULL /* source info */);
-  IrNode * distanceParameter = makeIrNodeSetValue(
-													   newton,
-                             kNewtonIrNodeType_Pparameter,
-                             "distance",
-                             5
-													   );
-  distanceParameter->physics = newtonApiGetPhysicsTypeByName(newton, distanceParameter->token->identifier);
-  newtonApiAddLeaf(newton, root, distanceParameter);
+	IrNode *	root = genIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
+								 NULL /* left child */,
+								 NULL /* right child */,
+								 NULL /* source info */);
+	IrNode * distanceParameter = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Pparameter,
+		"distance",
+		5
+		);
+	distanceParameter->physics = newtonApiGetPhysicsTypeByName(newton, distanceParameter->token->identifier);
+	newtonApiAddLeaf(newton, root, distanceParameter);
 
-  IrNode * timeParameter = makeIrNodeSetValue(
-												   newton,
-												   kNewtonIrNodeType_Pparameter,
-												   "time",
-                           6.6
-												   );
-  timeParameter->physics = newtonApiGetPhysicsTypeByName(newton, timeParameter->token->identifier);
-  newtonApiAddLeafWithChainingSeqNoLexer(newton, root, timeParameter);
+	IrNode * timeParameter = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Pparameter,
+		"time",
+		6.6
+		);
+	timeParameter->physics = newtonApiGetPhysicsTypeByName(newton, timeParameter->token->identifier);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, root, timeParameter);
 
-  newtonApiNumberParametersZeroToN(newton, root);
-  return root;
+	newtonApiNumberParametersZeroToN(newton, root);
+	return root;
 }
 
 IrNode *
@@ -218,17 +218,17 @@ makeIrNodeSetValue(
 	    NULL /* source info */
     );
 
-  node->token = lexAllocateToken(
-                                      N,
-                                      nodeType /* type */,
-                                      identifier /* identifier */,
-                                      0	/* integerConst	*/,
-                                      realConst	/* realConst	*/,
-                                      NULL  /* stringConst	*/,
-                                      NULL	/* sourceInfo	*/
-                                      );
+	node->token = lexAllocateToken(
+		N,
+		nodeType /* type */,
+		identifier /* identifier */,
+		0	/* integerConst	*/,
+		realConst	/* realConst	*/,
+		NULL  /* stringConst	*/,
+		NULL	/* sourceInfo	*/
+		);
 
-  node->value = node->token->integerConst + node->token->realConst; /* this works because either one is always zero */
+	node->value = node->token->integerConst + node->token->realConst; /* this works because either one is always zero */
 
     return node;
 }

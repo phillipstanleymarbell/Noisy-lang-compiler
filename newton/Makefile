@@ -43,6 +43,7 @@ SOURCES		=\
 		newton-api.c\
 		newton-parser.c                 \
 		newton-parser-expression.c                 \
+		newton-dimension-pass.c          \
 		newton-irPass-dotBackend.c          \
 		newton-typeSignatures.c\
 		newton-check-pass.c  \
@@ -67,6 +68,7 @@ OBJS		=\
 		newton-lexer.$(OBJECTEXTENSION)                  \
 		newton-parser.$(OBJECTEXTENSION)                 \
 		newton-parser-expression.$(OBJECTEXTENSION)                 \
+		newton-dimension-pass.$(OBJECTEXTENSION)          \
 		newton-types.$(OBJECTEXTENSION)\
 		newton-typeSignatures.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)          \
@@ -85,6 +87,7 @@ LIBNEWTONOBJS =\
 		newton-lexer.$(OBJECTEXTENSION)                  \
 		newton-parser.$(OBJECTEXTENSION)                 \
 		newton-parser-expression.$(OBJECTEXTENSION)                 \
+		newton-dimension-pass.$(OBJECTEXTENSION)          \
 		newton-typeSignatures.$(OBJECTEXTENSION)\
 		newton-types.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)          \
@@ -104,6 +107,7 @@ HEADERS		=\
 		newton-irPass-dotBackend.h          \
 		newton.h                        \
 		newton-check-pass.h             \
+		newton-dimension-pass.h         \
 		$(INCLUDEPATH)/newton-api.h     \
 
 

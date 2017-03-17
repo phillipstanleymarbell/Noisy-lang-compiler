@@ -456,9 +456,10 @@ struct Dimension
     char * identifier;
     char * abbreviation;
 
-	
+    double exponent; // default value is 1 if exists
+
     Scope *		scope;
-	
+
     SourceInfo *	sourceInfo;
 
 
@@ -491,7 +492,6 @@ struct Physics
     char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
     unsigned long long int id;
 
-    
     Scope *		scope;
     SourceInfo *	sourceInfo;
 
@@ -507,13 +507,7 @@ struct Physics
      * numeratorPrimeProduct and denominatorPrimeProduct == 1 means
      * the Physics is dimensionless. e.g. constants like Pi
      */
-    Dimension * numeratorDimensions;
-    int numberOfNumerators;
-    int numeratorPrimeProduct;
-
-    Dimension * denominatorDimensions;
-    int numberOfDenominators;
-    int denominatorPrimeProduct;
+    Dimension * dimensions;
 
     char * dimensionAlias;
     char * dimensionAliasAbbreviation;
@@ -773,7 +767,7 @@ typedef struct
 	uint64_t		currentTokenLength;
 	Token *		tokenList;
 	Token *		lastToken;
-	
+
 
 	/*
 	 *	The root of the IR tree, and top scope
@@ -781,7 +775,7 @@ typedef struct
 	IrNode *		noisyIrRoot;
 	IrNode *		newtonIrRoot;
 	Scope *		noisyIrTopScope;
-  Scope *        newtonIrTopScope;
+    Scope *        newtonIrTopScope;
 
 	/*
 	 *	Output file name when emitting bytecode/protobuf
