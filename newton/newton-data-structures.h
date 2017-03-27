@@ -40,16 +40,16 @@ typedef struct ConstraintReport ConstraintReport;
 
 struct ConstraintReport
 {
-  bool satisfiesDimensionConstraint;
-  char dimensionErrorMessage[1024];
-  bool satisfiesValueConstraint;
-  char valueErrorMessage[1024];
+	bool satisfiesDimensionConstraint;
+	char dimensionErrorMessage[1024];
+	bool satisfiesValueConstraint;
+	char valueErrorMessage[1024];
 
-  ConstraintReport* next;
+	ConstraintReport* next;
 };
 
 struct NewtonAPIReport
 {
-  ConstraintReport* firstConstraintReport;
+	ConstraintReport* firstConstraintReport;
 };
 

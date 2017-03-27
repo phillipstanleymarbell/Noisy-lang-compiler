@@ -4,6 +4,7 @@
 #include <setjmp.h>
 #include <string.h>
 #include <stdint.h>
+#include <assert.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -106,19 +107,40 @@ char * test_newtonApiGetInvariantByParameters_Valid()
 
 char * test_newtonCheckSingleInvariant()
 {
-  State * newton = newtonApiInit("../Examples/invariants.nt");
-  IrNode* parameterTree = makeTestParameterTuple(newton);
-  NewtonAPIReport* newtonReport = newtonApiSatisfiesConstraints(
-													   newton,
-													   parameterTree
-													   );
-  int numberPassed = numberOfConstraintsPassed(newtonReport);
+	State * newton = newtonApiInit("../Examples/invariants.nt");
+	IrNode* parameterTree = makeTestParameterTuple(newton);
+	NewtonAPIReport* newtonReport = newtonApiSatisfiesConstraints(
+		newton,
+		parameterTree
+		);
+	int numberPassed = numberOfConstraintsPassed(newtonReport);
 
-  mu_assert(
-			"test_newtonCheckSingleInvariant: number passed should be 5",
-      numberPassed == 5
-			);
-  return 0;
+	mu_assert(
+		"test_newtonCheckSingleInvariant: number passed should be 5",
+		numberPassed == 5
+		);
+	return 0;
+}
+
+char * test_newtonApiDimensionCheckTree()
+{
+	State * newton = newtonApiInit("../Examples/invariants.nt");
+
+	ConstraintReport* report = newtonApiDimensionCheckTree(newton, makeSampleCorrectTestStatement());
+	assert(report->satisfiesDimensionConstraint);
+	mu_assert(
+		"correct test statements should pass dimension constraint",
+		report->satisfiesDimensionConstraint
+		);
+
+	report = newtonApiDimensionCheckTree(newton, makeSampleIncorrectTestStatement());
+	assert(!report->satisfiesDimensionConstraint);
+	mu_assert(
+		"incorrect test statements should not pass dimension constraint",
+		!report->satisfiesDimensionConstraint
+		);
+
+	return 0;
 }
 
 /*
@@ -158,6 +180,7 @@ char * test_newtonApiPhysicsTypeUsageExample()
     return 0;
 }
 
+
 char * test_newtonApiNumberParametersZeroToN()
 {
 	State * newton = newtonApiInit("../Examples/invariants.nt");
@@ -171,6 +194,260 @@ char * test_newtonApiNumberParametersZeroToN()
 		parameterTree->irRightChild->irLeftChild->parameterNumber == 1
 		);
 	return 0;
+}
+
+/*
+ * Constructs an example tree for the statement
+ * foo / bar + fizz / bazz = foo / bar + fizz * bazz, where
+ * distance foo, bar = 8;
+ * time fizz, bazz = 2;
+ *
+ */
+IrNode *
+makeSampleIncorrectTestStatement()
+{
+    State * newton = newtonApiInit("../Examples/invariants.nt");
+	IrNode * root = genIrNode(newton,
+							  kNewtonIrNodeType_PquantityStatement,
+							  NULL,
+							  NULL,
+							  NULL);
+
+	newtonApiAddLeaf(newton,
+					 root,
+					 makeSampleCorrectTestExpression()
+		);
+
+	newtonApiAddLeafWithChainingSeqNoLexer(newton,
+					 root,
+					 genIrNode(newton,
+							   kNewtonIrNodeType_Tequals,
+							   NULL,
+							   NULL,
+							   NULL)
+		);
+
+	newtonApiAddLeaf(newton,
+					 root,
+					 makeSampleIncorrectTestExpression()
+		);
+	return root;
+}
+
+/*
+ * Constructs an example tree for the expression
+ * foo / bar + fizz * bazz, where
+ * distance foo, bar = 8;
+ * time fizz, bazz = 2;
+ */
+IrNode *
+makeSampleIncorrectTestExpression()
+{
+    State * newton = newtonApiInit("../Examples/invariants.nt");
+	IrNode * root = genIrNode(newton,
+							  kNewtonIrNodeType_PquantityExpression,
+							  NULL,
+							  NULL,
+							  NULL);
+
+	IrNode * leftTerm = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_PquantityTerm,
+		NULL,
+		0
+		);
+	IrNode * foo = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"distance",
+		8
+		);
+	IrNode * div = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tdiv,
+		NULL,
+		0
+		);
+	IrNode * bar = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"time",
+		2
+		);
+    foo->physics = newtonApiGetPhysicsTypeByName(newton, foo->token->identifier);
+	newtonApiAddLeaf(newton, leftTerm, foo);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, leftTerm, div);
+    bar->physics = newtonApiGetPhysicsTypeByName(newton, bar->token->identifier);
+	newtonApiAddLeaf(newton, leftTerm, bar);
+
+	IrNode * add = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tplus,
+		NULL,
+		0
+		);
+	IrNode * rightTerm = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_PquantityTerm,
+		NULL,
+		0
+		);
+	IrNode * fizz = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"distance",
+		8
+		);
+	IrNode * mul = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tmul,
+		NULL,
+		0
+		);
+	IrNode * bazz = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"time",
+		2
+		);
+    fizz->physics = newtonApiGetPhysicsTypeByName(newton, fizz->token->identifier);
+	newtonApiAddLeaf(newton, rightTerm, fizz);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, rightTerm, mul);
+    bazz->physics = newtonApiGetPhysicsTypeByName(newton, bazz->token->identifier);
+	newtonApiAddLeaf(newton, rightTerm, bazz);
+
+	newtonApiAddLeaf(newton, root, leftTerm);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, root, add);
+	newtonApiAddLeaf(newton, root, rightTerm);
+
+	return root;
+}
+
+/*
+ * Constructs an example tree for the statement
+ * foo / bar + fizz / bazz = foo / bar + fizz / bazz, where
+ * distance foo, bar = 8;
+ * time fizz, bazz = 2;
+ *
+ */
+IrNode *
+makeSampleCorrectTestStatement()
+{
+    State * newton = newtonApiInit("../Examples/invariants.nt");
+	IrNode * root = genIrNode(newton,
+							  kNewtonIrNodeType_PquantityStatement,
+							  NULL,
+							  NULL,
+							  NULL);
+
+	newtonApiAddLeaf(newton,
+					 root,
+					 makeSampleCorrectTestExpression()
+		);
+
+	newtonApiAddLeafWithChainingSeqNoLexer(newton,
+					 root,
+					 genIrNode(newton,
+							   kNewtonIrNodeType_Tequals,
+							   NULL,
+							   NULL,
+							   NULL)
+		);
+
+	newtonApiAddLeaf(newton,
+					 root,
+					 makeSampleCorrectTestExpression()
+		);
+	return root;
+}
+
+/*
+ * Constructs an example tree for the expression
+ * foo / bar + fizz / bazz, where
+ * distance foo, bar = 8;
+ * time fizz, bazz = 2;
+ */
+IrNode *
+makeSampleCorrectTestExpression()
+{
+    State * newton = newtonApiInit("../Examples/invariants.nt");
+	IrNode * root = genIrNode(newton,
+							  kNewtonIrNodeType_PquantityExpression,
+							  NULL,
+							  NULL,
+							  NULL);
+
+	IrNode * leftTerm = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_PquantityTerm,
+		NULL,
+		0
+		);
+	IrNode * foo = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"distance",
+		8
+		);
+	IrNode * div = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tdiv,
+		NULL,
+		0
+		);
+	IrNode * bar = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"time",
+		2
+		);
+    foo->physics = newtonApiGetPhysicsTypeByName(newton, foo->token->identifier);
+	newtonApiAddLeaf(newton, leftTerm, foo);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, leftTerm, div);
+    bar->physics = newtonApiGetPhysicsTypeByName(newton, bar->token->identifier);
+	newtonApiAddLeaf(newton, leftTerm, bar);
+
+	IrNode * add = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tplus,
+		NULL,
+		0
+		);
+	IrNode * rightTerm = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_PquantityTerm,
+		NULL,
+		0
+		);
+	IrNode * fizz = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"distance",
+		8
+		);
+	IrNode * div2 = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tdiv,
+		NULL,
+		0
+		);
+	IrNode * bazz = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"time",
+		2
+		);
+    fizz->physics = newtonApiGetPhysicsTypeByName(newton, fizz->token->identifier);
+	newtonApiAddLeaf(newton, rightTerm, fizz);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, rightTerm, div2);
+    bazz->physics = newtonApiGetPhysicsTypeByName(newton, bazz->token->identifier);
+	newtonApiAddLeaf(newton, rightTerm, bazz);
+
+	newtonApiAddLeaf(newton, root, leftTerm);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, root, add);
+	newtonApiAddLeaf(newton, root, rightTerm);
+
+	return root;
 }
 
 

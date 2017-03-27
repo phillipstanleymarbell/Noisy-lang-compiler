@@ -5,6 +5,8 @@ char * test_newtonApiGetPhysicsTypeByName_Valid();
 char * test_newtonApiPhysicsTypeUsageExample();
 char * test_newtonCheckSingleInvariant();
 char * test_newtonApiNumberParametersZeroToN();
+char * tests_newtonApiDimensionCheckTree();
+char * test_newtonApiDimensionCheckTree();
 
 /* just a small helper method */
 IrNode *
@@ -16,3 +18,7 @@ makeIrNodeSetValue(
                         );
 
 IrNode * makeTestParameterTuple();
+IrNode * makeSampleCorrectTestExpression();
+IrNode * makeSampleCorrectTestStatement();
+IrNode * makeSampleIncorrectTestExpression();
+IrNode * makeSampleIncorrectTestStatement();

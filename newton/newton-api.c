@@ -60,6 +60,7 @@
 #include "newton.h"
 #include "newton-api.h"
 #include "newton-check-pass.h"
+#include "newton-dimension-check-pass.h"
 
 
 State *
@@ -169,4 +170,9 @@ newtonApiNumberParametersZeroToN(State * N, IrNode * parameterTreeRoot)
 }
 
 
+ConstraintReport*
+newtonApiDimensionCheckTree(State * N, IrNode* tree)
+{
+    return newtonDimensionCheckExpressionOrStatement(N, tree);
+}
 

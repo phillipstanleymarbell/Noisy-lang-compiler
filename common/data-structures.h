@@ -303,6 +303,7 @@ typedef enum
 	kNewtonIrNodeType_PquantityFactor,
 	kNewtonIrNodeType_PquantityTerm,
 	kNewtonIrNodeType_PquantityExpression,
+	kNewtonIrNodeType_PquantityStatement,
 	kNewtonIrNodeType_Pparameter,
 	kNewtonIrNodeType_PparameterTuple,
 	kNewtonIrNodeType_Pderivation,
