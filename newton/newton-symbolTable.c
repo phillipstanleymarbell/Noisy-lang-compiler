@@ -457,6 +457,31 @@ newtonDimensionTableDimensionForIdentifier(State *  N, Scope *  scope, const cha
 }
 
 Physics *
+newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(State *  N, Scope *  scope, const char * dimensionAliasAbbreviation)
+{
+	if (scope == NULL)
+	{
+		return NULL;
+	}
+
+	Physics * curPhysics = scope->firstPhysics;
+	while (curPhysics != NULL)
+	{
+        /*
+         * NOTE: not all physics structs have a dimensionAlias...
+         */
+		if (curPhysics->dimensionAliasAbbreviation && !strcmp(curPhysics->dimensionAliasAbbreviation, dimensionAliasAbbreviation))
+		{
+			assert(curPhysics->dimensions != NULL);
+			return curPhysics;
+		}
+		curPhysics = curPhysics->next;
+	}
+
+	return newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(N, scope->parent, dimensionAliasAbbreviation);
+}
+
+Physics *
 newtonPhysicsTablePhysicsForDimensionAlias(State *  N, Scope *  scope, const char * dimensionAliasIdentifier)
 {
 	if (scope == NULL)

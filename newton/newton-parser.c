@@ -31,7 +31,8 @@
 	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+	ANY WAY OUT OF THE USE OF THIS SOF    expressionIndex++;
+TWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
 #include <stdbool.h>
@@ -676,6 +677,10 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
     {
         physicsSearchResult = newtonPhysicsTablePhysicsForDimensionAlias(N, scope, t->identifier);
     }
+	if (physicsSearchResult == NULL)
+    {
+        physicsSearchResult = newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(N, scope, t->identifier);
+    }
 
     if (physicsSearchResult == NULL)
     {
@@ -723,10 +728,6 @@ newtonParseConstraint(State * N, Scope * currentScope)
 
     return node;
 }
-
-
-
-
 
 
 /*
