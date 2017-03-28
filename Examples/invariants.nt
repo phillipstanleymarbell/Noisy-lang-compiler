@@ -21,15 +21,11 @@ mass : signal =
 
 speed : signal =
 {
-        name = "MegaSpeed" English
-        symbol = "MegS";
         derivation = distance / time;
 }
 
 acceleration : signal =
 {
-        name = "MegaAcceleration" English
-        symbol = "MegA";
         derivation = speed / time;
 }
 

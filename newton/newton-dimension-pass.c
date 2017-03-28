@@ -134,8 +134,23 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
     newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 	  newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, currentScope);
 
-    IrNode * unitName = newtonDimensionPassParseName(N, currentScope);
-    IrNode * unitAbbreviation = newtonDimensionPassParseSymbol(N, currentScope);
+	/*
+	 * name syntax is optional
+	 */
+	IrNode * unitName;
+	if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts))
+	{
+	  unitName = newtonParseName(N, currentScope);
+	}
+
+	/*
+	 * abbreviation syntax is also optional
+	 */
+	IrNode * unitAbbreviation;
+	if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts))
+	{
+	  unitAbbreviation = newtonParseSymbol(N, currentScope);
+	}
     newtonParseTerminal(N, kNewtonIrNodeType_Tderivation, currentScope);
     newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 
@@ -163,6 +178,7 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
      */
     else
     {
+		assert(unitName != NULL && unitAbbreviation != NULL);
         newtonParseTerminal(N, kNewtonIrNodeType_Tnone, currentScope);
 		newtonDimensionTableAddDimensionForToken(
 			N,

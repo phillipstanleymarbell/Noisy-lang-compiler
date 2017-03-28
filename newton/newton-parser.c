@@ -299,21 +299,40 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 
     IrNode * basicPhysicsIdentifier = newtonParseIdentifier(N, currentScope);
     addLeaf(N, node, basicPhysicsIdentifier);
+	Physics * newPhysics = newtonPhysicsTableAddPhysicsForToken(N, currentScope, basicPhysicsIdentifier->token);
 
     newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
     newtonParseTerminal(N, kNewtonIrNodeType_Tsignal, currentScope);
     newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, currentScope);
 
-    IrNode * unitName = newtonParseName(N, currentScope);
-    addLeafWithChainingSeq(N, node, unitName);
-    IrNode * unitAbbreviation = newtonParseSymbol(N, currentScope);
-    addLeafWithChainingSeq(N, node, unitAbbreviation);
+	/*
+	 * name syntax is optional
+	 */
+	IrNode * unitName;
+	if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts))
+	{
+		unitName = newtonParseName(N, currentScope);
+		addLeafWithChainingSeq(N, node, unitName);
+		newPhysics->dimensionAlias = unitName->token->stringConst; /* e.g.) meter, Pascal*/
+	}
 
+	/*
+	 * abbreviation syntax is also optional
+	 */
+	IrNode * unitAbbreviation;
+	if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts))
+	{
+		unitAbbreviation = newtonParseSymbol(N, currentScope);
+		addLeafWithChainingSeq(N, node, unitAbbreviation);
+		newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g.) m, Pa*/
+	}
+
+	/*
+	 * derivation syntax is required
+	 */
     IrNode * derivationExpression = newtonParseDerivation(N, currentScope)->irLeftChild;
     addLeafWithChainingSeq(N, node, derivationExpression);
-
-	Physics * newPhysics = newtonPhysicsTableAddPhysicsForToken(N, currentScope, basicPhysicsIdentifier->token);
 
     if (derivationExpression->type != kNewtonIrNodeType_Tnone)
     {
@@ -322,15 +341,13 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 	else
 	{
 		assert(basicPhysicsIdentifier->token->identifier != NULL);
+		assert(unitName != NULL && unitName->token);
         newtonPhysicsIncrementExponent(
             N,
             newPhysics,
 			newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, unitName->token->stringConst)
 			);
 	}
-
-	newPhysics->dimensionAlias = unitName->token->stringConst; /* e.g.) meter, Pascal*/
-	newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g.) m, Pa*/
 
 	newPhysics->id = newtonGetPhysicsId(N, newPhysics);
 	assert(newPhysics->id > 1);
