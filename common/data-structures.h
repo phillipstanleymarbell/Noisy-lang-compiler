@@ -284,6 +284,8 @@ typedef enum
 	kNewtonIrNodeType_Tderivation,
 	kNewtonIrNodeType_Tsymbol,
 	kNewtonIrNodeType_Tname,
+	kNewtonIrNodeType_Tto,
+	kNewtonIrNodeType_TatSign,
 	kNewtonIrNodeType_Pinteger,
 	kNewtonIrNodeType_Tnumber,
 	kNewtonIrNodeType_TrightBrace,
@@ -306,6 +308,8 @@ typedef enum
 	kNewtonIrNodeType_PquantityStatement,
 	kNewtonIrNodeType_Pparameter,
 	kNewtonIrNodeType_PparameterTuple,
+	kNewtonIrNodeType_Psubindex,
+	kNewtonIrNodeType_PsubindexTuple,
 	kNewtonIrNodeType_Pderivation,
 	kNewtonIrNodeType_Psymbol,
 	kNewtonIrNodeType_Pname,
@@ -449,7 +453,8 @@ typedef struct IrNode	IrNode;
 typedef struct SourceInfo	SourceInfo;
 typedef struct Dimension Dimension;
 typedef struct Physics Physics;
-typedef struct IntegralList IntegralList;
+typedef struct IntegralList IntegralList
+;
 typedef struct Invariant Invariant;
 
 struct Dimension
@@ -492,6 +497,7 @@ struct Physics
 {
     char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
     unsigned long long int id;
+	int subindex; /* index for further identification. e.g.) acceleration along x, y, z axes */
 
     Scope *		scope;
     SourceInfo *	sourceInfo;
@@ -504,10 +510,6 @@ struct Physics
     double value; /* for constants like Pi or gravitational acceleration */
     bool isConstant;
 
-    /*
-     * numeratorPrimeProduct and denominatorPrimeProduct == 1 means
-     * the Physics is dimensionless. e.g. constants like Pi
-     */
     Dimension * dimensions;
 
     char * dimensionAlias;
@@ -532,7 +534,7 @@ struct IrNode
 	 *	Syntactic (AST) information.
 	 */
 	char *			tokenString;
-  Token * token;
+	Token * token;
 	SourceInfo	*	sourceInfo;
 	IrNode *		irParent;
 	IrNode *		irLeftChild;
@@ -542,27 +544,30 @@ struct IrNode
 
 
 
-  /*
-   * Used for evaluating dimensions in expressions
-   */
-  Physics * physics;
+	/*
+	 * Used for evaluating dimensions in expressions
+	 */
+	Physics * physics;
 
-  /*
-   * only if this node belongs to a ParseNumericExpression subtree
-   */
-  double value; 
+	/*
+	 * only if this node belongs to a ParseNumericExpression subtree
+	 */
+	double value;
 
-  /*
-   * A parameter tuple of length n has ordering from zero to n - 1 
-   */
-  int parameterNumber;
+	int subindexStart;
+	int subindexEnd;
 
-  /*
-   * When doing an API check of the invariant tree given a parameter tree,
-   * the method looks up all instances of 
-   */
+	/*
+	 * A parameter tuple of length n has ordering from zero to n - 1
+	 */
+	int parameterNumber;
 
-  /*
+	/*
+	 * When doing an API check of the invariant tree given a parameter tree,
+	 * the method looks up all instances of
+	 */
+
+	/*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
 	 */
 	IrNodeColor	nodeColor;
@@ -606,6 +611,8 @@ struct Scope
 	 */
 	char *			identifier;
 
+    int currentSubindex;
+
 	/*
 	 *	Hierarchy. The firstChild is used to access its siblings via firstChild->next
 	 */
@@ -621,7 +628,7 @@ struct Scope
      * each invariant scope will have its own list of parameters
      */
     IrNode * invariantParameterList; // this is just bunch of IrNode's in Xseq
-    
+
     /*
      * For the config file, we only have one global scope that keeps track of all
      * dimensions ad physics quantities.

@@ -315,7 +315,7 @@ newtonLexInit(State *  N, char *  fileName)
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		// flexprint(N->Fe, N->Fm, N->Fperr, "Done lexing...\n");
-		
+
 		// flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
 		Token *	p = N->tokenList;
 		while (p != NULL)
@@ -771,7 +771,8 @@ checkProportionality(State * N)
 	}
 	else
 	{
-        return false; // starting with 'o' but not an operator
+		gobble(N, 1);
+		type = kNewtonIrNodeType_TatSign;
 	}
 
 	Token *		newToken = lexAllocateToken(N,	type	/* type		*/,
@@ -785,7 +786,7 @@ checkProportionality(State * N)
 	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
 	 */
 	done(N, newToken);
-    
+
     return true;
 }
 
@@ -872,7 +873,7 @@ isOperatorOrSeparator(State *  N, char c)
 		case '~':
 		case '!':
 		case '%':
-        case '@': // only to check 'o<' kNewtonIrNodeType_Tproportionality
+        case '@':
 		case '^':
 		case '&':
 		case '*':

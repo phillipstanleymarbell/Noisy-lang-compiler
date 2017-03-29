@@ -159,6 +159,7 @@ deepCopyPhysicsNode(Physics* node)
     copy->value = node->value;
     copy->isConstant = node->isConstant;
     copy->id = node->id;
+	copy->subindex = node->subindex;
 
     copy->dimensionAlias = node->dimensionAlias;
     copy->dimensionAliasAbbreviation = node->dimensionAliasAbbreviation;
@@ -504,6 +505,28 @@ newtonPhysicsTablePhysicsForDimensionAlias(State *  N, Scope *  scope, const cha
 	}
 
 	return newtonPhysicsTablePhysicsForDimensionAlias(N, scope->parent, dimensionAliasIdentifier);
+}
+
+Physics *
+newtonPhysicsTablePhysicsForIdentifierAndSubindex(State *  N, Scope *  scope, const char *  identifier, int subindex)
+{
+	if (scope == NULL)
+	{
+		return NULL;
+	}
+
+	Physics * curPhysics = scope->firstPhysics;
+	while (curPhysics != NULL)
+	{
+		if (!strcmp(curPhysics->identifier, identifier) && curPhysics->subindex == subindex)
+		{
+			assert(curPhysics->dimensions != NULL);
+			return curPhysics;
+		}
+		curPhysics = curPhysics->next;
+	}
+
+	return newtonPhysicsTablePhysicsForIdentifier(N, scope->parent, identifier);
 }
 
 Physics *

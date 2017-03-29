@@ -539,7 +539,7 @@ checkQuantityFactor(
 	   * A matching parameter must correspond to the Physics struct bound by the token string (e.g. L : distance),
 	   * but we do not want to raise an error a node that just is a unit (e.g. meter), not a Physics.
 	   */
-	  IrNode * matchingParameter = newtonParseFindNodeByParameterNumber(N, parameterTreeRoot, factor->parameterNumber);
+		IrNode * matchingParameter = newtonParseFindNodeByParameterNumberAndSubindex(N, parameterTreeRoot, factor->parameterNumber, factor->physics->subindex);
 	  if (matchingParameter == NULL)
 		{
 		  sprintf(report->dimensionErrorMessage, "newton-check-pass.c:checkQuantityFactor: did not find a parameter with physics id %llu", factor->physics->id);
