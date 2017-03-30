@@ -350,7 +350,6 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
 
         assert(factor->tokenString != NULL);
 
-		/* TODO check for subindex @ int here*/
 		if (peekCheck(N, 1, kNewtonIrNodeType_TatSign))
 		{
 			newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);

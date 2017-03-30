@@ -270,6 +270,14 @@ newtonParseParameter(State * N, Scope * currentScope, int parameterNumber)
     newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
     IrNode * physicsName = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
     addLeaf(N, node, physicsName);
+
+	if (lexPeek(N, 1)->type == kNewtonIrNodeType_TatSign)
+	{
+		newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
+
+		physicsName->physics->subindex = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope)->value;
+	}
+
     node->parameterNumber = parameterNumber;
     node->physics = physicsName->physics;
 
@@ -408,6 +416,7 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 	}
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
+	currentScope->currentSubindex = 0;
 
     return node;
 }
@@ -678,6 +687,7 @@ newtonParseGetPhysicsTypeStringByBoundIdentifier(State * N, IrNode * root, char*
         assert(root->irLeftChild != NULL && root->irRightChild != NULL);
 		if (!strcmp(root->irLeftChild->tokenString, boundVariableIdentifier))
         {
+			assert(root->irRightChild->tokenString != NULL);
             return root->irRightChild->tokenString;
         }
     }
@@ -748,6 +758,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 
     // TODO rewrite this logic in a cleaner way.... make a new method or something
     Physics * physicsSearchResult;
+
     if ((physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, t->identifier)) == NULL)
     {
         physicsSearchResult = newtonPhysicsTablePhysicsForDimensionAlias(N, scope, t->identifier);

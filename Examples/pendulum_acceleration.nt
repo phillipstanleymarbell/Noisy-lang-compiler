@@ -14,15 +14,15 @@ distance : signal(n: 0 to 2) =
 
 speed : signal(n: 0 to 2) =
 {
-    derivation = distance[n] / time;
+    derivation = distance@n / time;
 }
 
 acceleration : signal(n: 0 to 2) =
 {
-    derivation = speed[n] / time;
+    derivation = speed@n / time;
 }
 
-AccelerationRange : invariant(X: acceleration[3], Y: accelerationY, Z: accelerationZ)
+AccelerationRange : invariant(X: acceleration@0, Y: acceleration@1, Z: acceleration@2)
 {
     X >= -2 * meter / second ** 2,
     X <= 2 * meter / second ** 2,

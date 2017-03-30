@@ -49,7 +49,7 @@ g : constant = 9.8 * meter ** 2 * second ** -2;
 # myConstant : constant = -1.11 * meter ** (3 ** (8 + 2)); this line causes infinite loop.... maybe because exponent was too big..
 myConstant : constant = -1.11 * meter ** (2 ** (1 + 1));
 
-SimplePendulum : invariant(L: distance, period: time) =
+SimplePendulum : invariant(L: distance@0, period: time) =
 {
     L >= 2.2 * meter,
     L <=  10 * meter,

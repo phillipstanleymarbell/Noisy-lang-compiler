@@ -107,7 +107,7 @@ newtonCheckCompareOp(
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
 			  ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   (leftExpression->physics->id == rightExpression->physics->id));
+			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be >= RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
             if (!report->satisfiesDimensionConstraint)
@@ -119,7 +119,7 @@ newtonCheckCompareOp(
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
 			  ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   (leftExpression->physics->id == rightExpression->physics->id));
+			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be > RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
             if (!report->satisfiesDimensionConstraint)
@@ -131,7 +131,7 @@ newtonCheckCompareOp(
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
 			  ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   (leftExpression->physics->id == rightExpression->physics->id));
+			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be <= RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
             if (!report->satisfiesDimensionConstraint)
@@ -143,7 +143,7 @@ newtonCheckCompareOp(
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
 			  ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   (leftExpression->physics->id == rightExpression->physics->id));
+			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be < RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
             if (!report->satisfiesDimensionConstraint)
@@ -162,7 +162,7 @@ newtonCheckCompareOp(
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
 			  ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   (leftExpression->physics->id == rightExpression->physics->id));
+			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be == RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
             if (!report->satisfiesDimensionConstraint)
