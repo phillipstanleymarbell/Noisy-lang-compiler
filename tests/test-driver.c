@@ -40,6 +40,7 @@ char * all_tests()
     mu_run_test(test_newtonCheckSingleInvariant);
     mu_run_test(test_newtonApiNumberParametersZeroToN);
     mu_run_test(test_newtonApiDimensionCheckTree);
+    mu_run_test(test_newtonApiGetPhysicsTypeByNameAndSubindex_Valid);
 
     return 0;
 }

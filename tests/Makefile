@@ -44,6 +44,7 @@ SOURCES		=\
 		test-driver.c\
 		test-newton-api.c\
 		test-newton-parser.c\
+		test-utils.c\
 		test-common.c\
 
 #
@@ -55,6 +56,7 @@ OBJS		=\
 		test-driver.$(OBJECTEXTENSION)\
 		test-newton-api.$(OBJECTEXTENSION)\
 		test-newton-parser.$(OBJECTEXTENSION)\
+		test-utils.$(OBJECTEXTENSION)\
 		test-common.$(OBJECTEXTENSION)\
 
 
@@ -63,6 +65,7 @@ OBJS		=\
 LIBTESTOBJS =\
 		test-newton-api.$(OBJECTEXTENSION)\
 		test-newton-parser.$(OBJECTEXTENSION)\
+		test-utils.$(OBJECTEXTENSION)\
 		test-common.$(OBJECTEXTENSION)\
 
 
@@ -72,6 +75,7 @@ HEADERS		=\
 		test-newton-api.h               \
 		test-newton-parser.h            \
 		test-common.h                   \
+		test-utils.h                    \
 		minunit.h                       \
 
 

@@ -1,7 +1,10 @@
 /*
-	Authored 2016. Jonathan Lim.
+	Authored 2017. Jonathan Lim.
 
-	All rights reserved.
+
+	
+
+All rights reserved.
 
 
 	Redistribution and use in source and binary forms, with or without
@@ -59,12 +62,12 @@
 #include "minunit.h"
 #include "test-newton-api.h"
 #include "test-common.h"
+#include "test-utils.h"
 
 extern int gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 extern int tests_run;
 
 
-static IrNode * setupNthIrNodeType(State* noisy);
 
 char * test_testNthIrNodeOfType()
 {
@@ -158,54 +161,3 @@ char * test_testNthIrNodeOfTypes()
 			  );
     return 0;
 }
-
-static IrNode *
-setupNthIrNodeType(State* noisy)
-{
-	IrNode * numberNode = makeIrNodeSetValue(
-		noisy,
-		kNewtonIrNodeType_Tnumber,
-		NULL,
-		5.0
-		);
-	IrNode * distanceNode = makeIrNodeSetValue(
-		noisy,
-		kNewtonIrNodeType_Tidentifier,
-		"distance",
-		0.0
-		);
-	IrNode * plus = makeIrNodeSetValue(
-		noisy,
-		kNewtonIrNodeType_Tplus,
-		NULL,
-		0.0
-		);
-	IrNode * minus = makeIrNodeSetValue(
-		noisy,
-		kNewtonIrNodeType_Tminus,
-		NULL,
-		0.0
-		);
-	IrNode * exponent = makeIrNodeSetValue(
-		noisy,
-		kNewtonIrNodeType_Texponent,
-		NULL,
-		0.0
-		);
-
-	newtonApiAddLeaf(noisy, numberNode, distanceNode);
-	newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, plus);
-	newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, minus);
-	newtonApiAddLeafWithChainingSeqNoLexer(noisy, numberNode, exponent);
-
-	return numberNode;
-}
-
-
-
-
-
-
-
-
-

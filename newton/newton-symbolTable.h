@@ -11,6 +11,7 @@ Physics * newtonPhysicsTablePhysicsForIdentifierAndSubindex(State *  N, Scope * 
 Physics * newtonPhysicsTablePhysicsForDimensionAlias(State *  N, Scope *  scope, const char * dimensionAliasIdentifier);
 Physics * newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(State *  N, Scope *  scope, const char * dimensionAliasAbbreviation);
 Physics * newtonPhysicsTableAddPhysics(State * N, Scope * scope);
+Physics * newtonPhysicsTableCopyAndAddPhysics(State * N, Scope * scope, Physics * source);
 
 Physics* deepCopyPhysicsNode(Physics* node);
 Physics* shallowCopyPhysicsNode(Physics* node);

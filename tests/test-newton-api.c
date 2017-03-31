@@ -1,3 +1,40 @@
+/*
+	Authored 2017. Jonathan Lim.
+
+	All rights reserved.
+
+
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions
+	are met:
+
+	*	Redistributions of source code must retain the above
+		copyright notice, this list of conditions and the following
+		disclaimer.
+
+	*	Redistributions in binary form must reproduce the above
+		copyright notice, this list of conditions and the following
+		disclaimer in the documentation and/or other materials
+		provided with the distribution.
+
+	*	Neither the name of the author nor the names of its
+		contributors may be used to endorse or promote products
+		derived from this software without specific prior written
+		permission.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+	POSSIBILITY OF SUCH DAMAGE.
+*/
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -21,31 +58,12 @@
 #include "newton-api.h"
 
 #include "minunit.h"
+#include "test-utils.h"
 #include "test-newton-api.h"
 
 extern int tests_run;
 
-static int numberOfConstraintsPassed(NewtonAPIReport* newtonReport);
 
-static int
-numberOfConstraintsPassed(NewtonAPIReport* newtonReport)
-{
-  int count = 0;
-  ConstraintReport* current = newtonReport->firstConstraintReport;
-
-  while (current != NULL)
-    {
-      printf("satisfiesValueConstraint %d\n", current->satisfiesValueConstraint);
-      printf("satisfiesDimensionConstraint %d\n\n", current->satisfiesDimensionConstraint);
-      printf("valueErrorMessage %s\n", current->valueErrorMessage);
-      printf("dimensionErrorMessage %s\n\n", current->dimensionErrorMessage);
-      if (current->satisfiesValueConstraint && current->satisfiesDimensionConstraint)
-        count++;
-      current = current->next;
-    }
-
-  return count;
-}
 
 char * test_newtonApiInit_notNull()
 {
@@ -58,29 +76,49 @@ char * test_newtonApiInit_notNull()
 
 char * test_newtonApiInit_notNullInvariant()
 {
-    State* N = newtonApiInit("../Examples/invariants.nt");
+    State* newton = newtonApiInit("../Examples/invariants.nt");
 	mu_assert(
-        "test_newtonApiInit_notNullInvariant: invariantList is NULL!",
-         N->invariantList != NULL
+        "test_newtonApiInit_notNullInvariant: invariantList for invariants.nt is NULL!",
+         newton->invariantList != NULL
     );
+
+    newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+	mu_assert(
+        "test_newtonApiInit_notNullInvariant: invariantList is pendulum_acceleration.nt is NULL!",
+		newton->invariantList != NULL
+		);
+    return 0;
+}
+
+char * test_newtonApiGetPhysicsTypeByNameAndSubindex_Valid()
+{
+    State* newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+    mu_assert(
+        "newtonApiGetPhysicsTypeByNameAndSubindex: distance on Y axis not found",
+        newtonApiGetPhysicsTypeByNameAndSubindex(newton, "distance", 1) != NULL
+		);
+    mu_assert(
+        "newtonApiGetPhysicsTypeByNameAndSubindex: acceleration on Z axis not found",
+        newtonApiGetPhysicsTypeByNameAndSubindex(newton, "acceleration", 2) != NULL
+		);
+
     return 0;
 }
 
 char * test_newtonApiGetPhysicsTypeByName_Valid()
 {
-    State* N = newtonApiInit("../Examples/invariants.nt");
+    State* newton = newtonApiInit("../Examples/invariants.nt");
     mu_assert(
         "newtonApiGetPhysicsTypeByName: distance not found",
         !strcmp(
-            newtonApiGetPhysicsTypeByName(N, "distance")->identifier,
+            newtonApiGetPhysicsTypeByName(newton, "distance")->identifier,
             "distance"
         )
     );
-
     mu_assert(
         "newtonApiGetPhysicsTypeByName: acceleration not found",
         !strcmp(
-            newtonApiGetPhysicsTypeByName(N, "acceleration")->identifier,
+            newtonApiGetPhysicsTypeByName(newton, "acceleration")->identifier,
             "acceleration"
         )
     );
@@ -90,18 +128,30 @@ char * test_newtonApiGetPhysicsTypeByName_Valid()
 
 char * test_newtonApiGetInvariantByParameters_Valid()
 {
-    State* N = newtonApiInit("../Examples/invariants.nt");
+    State* newton = newtonApiInit("../Examples/invariants.nt");
 
     mu_assert(
         "test_newtonApiGetInvariantByParameters: the invariant is named SimplePendulum",
         !strcmp(
             newtonApiGetInvariantByParameters(
-                N,
-                N->invariantList->parameterList
+                newton,
+                newton->invariantList->parameterList
             )->identifier,
             "SimplePendulum"
         )
     );
+
+    newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+    mu_assert(
+        "test_newtonApiGetInvariantByParameters: the invariant is named AccelerationRange",
+        !strcmp(
+            newtonApiGetInvariantByParameters(
+                newton,
+                newton->invariantList->parameterList
+				)->identifier,
+            "AccelerationRange"
+			)
+		);
     return 0;
 }
 
@@ -173,9 +223,19 @@ char * test_newtonApiPhysicsTypeUsageExample()
     timeNode->physics = newtonApiGetPhysicsTypeByName(newton, timeNode->token->identifier);
 
     mu_assert(
-        "test_newtonApiTypeExpressionExample: time and distance id's should be different and cannot be used in add or subtract",
+        "test_newtonApiTypeExpressionExample invariants.nt: time and distance id's should be different and cannot be used in add or subtract",
         distanceNode->physics->id != timeNode->physics->id
     );
+
+    newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+    distanceNode->physics = newtonApiGetPhysicsTypeByName(newton, distanceNode->token->identifier);
+    timeNode->physics = newtonApiGetPhysicsTypeByName(newton, timeNode->token->identifier);
+
+    mu_assert(
+        "test_newtonApiTypeExpressionExample pendulum_acceleration.nt: time and distance id's should be different and cannot be used in add or subtract",
+        distanceNode->physics->id != timeNode->physics->id
+		);
+
 
     return 0;
 }
@@ -193,319 +253,16 @@ char * test_newtonApiNumberParametersZeroToN()
 		"test_newtonApiNumberParametersZeroToN: the first right child should have number of 1",
 		parameterTree->irRightChild->irLeftChild->parameterNumber == 1
 		);
+
+	parameterTree = makeTestParameterTuplePendulumCase();
+	mu_assert(
+		"test_newtonApiNumberParametersZeroToN: the first left child should have number of 0",
+		parameterTree->irLeftChild->parameterNumber == 0
+		);
+	mu_assert(
+		"test_newtonApiNumberParametersZeroToN: the first right child should have number of 1",
+		parameterTree->irRightChild->irLeftChild->parameterNumber == 1
+		);
 	return 0;
 }
 
-/*
- * Constructs an example tree for the statement
- * foo / bar + fizz / bazz = foo / bar + fizz * bazz, where
- * distance foo, bar = 8;
- * time fizz, bazz = 2;
- *
- */
-IrNode *
-makeSampleIncorrectTestStatement()
-{
-    State * newton = newtonApiInit("../Examples/invariants.nt");
-	IrNode * root = genIrNode(newton,
-							  kNewtonIrNodeType_PquantityStatement,
-							  NULL,
-							  NULL,
-							  NULL);
-
-	newtonApiAddLeaf(newton,
-					 root,
-					 makeSampleCorrectTestExpression()
-		);
-
-	newtonApiAddLeafWithChainingSeqNoLexer(newton,
-					 root,
-					 genIrNode(newton,
-							   kNewtonIrNodeType_Tequals,
-							   NULL,
-							   NULL,
-							   NULL)
-		);
-
-	newtonApiAddLeaf(newton,
-					 root,
-					 makeSampleIncorrectTestExpression()
-		);
-	return root;
-}
-
-/*
- * Constructs an example tree for the expression
- * foo / bar + fizz * bazz, where
- * distance foo, bar = 8;
- * time fizz, bazz = 2;
- */
-IrNode *
-makeSampleIncorrectTestExpression()
-{
-    State * newton = newtonApiInit("../Examples/invariants.nt");
-	IrNode * root = genIrNode(newton,
-							  kNewtonIrNodeType_PquantityExpression,
-							  NULL,
-							  NULL,
-							  NULL);
-
-	IrNode * leftTerm = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_PquantityTerm,
-		NULL,
-		0
-		);
-	IrNode * foo = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tidentifier,
-		"distance",
-		8
-		);
-	IrNode * div = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tdiv,
-		NULL,
-		0
-		);
-	IrNode * bar = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tidentifier,
-		"time",
-		2
-		);
-    foo->physics = newtonApiGetPhysicsTypeByName(newton, foo->token->identifier);
-	newtonApiAddLeaf(newton, leftTerm, foo);
-	newtonApiAddLeafWithChainingSeqNoLexer(newton, leftTerm, div);
-    bar->physics = newtonApiGetPhysicsTypeByName(newton, bar->token->identifier);
-	newtonApiAddLeaf(newton, leftTerm, bar);
-
-	IrNode * add = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tplus,
-		NULL,
-		0
-		);
-	IrNode * rightTerm = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_PquantityTerm,
-		NULL,
-		0
-		);
-	IrNode * fizz = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tidentifier,
-		"distance",
-		8
-		);
-	IrNode * mul = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tmul,
-		NULL,
-		0
-		);
-	IrNode * bazz = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tidentifier,
-		"time",
-		2
-		);
-    fizz->physics = newtonApiGetPhysicsTypeByName(newton, fizz->token->identifier);
-	newtonApiAddLeaf(newton, rightTerm, fizz);
-	newtonApiAddLeafWithChainingSeqNoLexer(newton, rightTerm, mul);
-    bazz->physics = newtonApiGetPhysicsTypeByName(newton, bazz->token->identifier);
-	newtonApiAddLeaf(newton, rightTerm, bazz);
-
-	newtonApiAddLeaf(newton, root, leftTerm);
-	newtonApiAddLeafWithChainingSeqNoLexer(newton, root, add);
-	newtonApiAddLeaf(newton, root, rightTerm);
-
-	return root;
-}
-
-/*
- * Constructs an example tree for the statement
- * foo / bar + fizz / bazz = foo / bar + fizz / bazz, where
- * distance foo, bar = 8;
- * time fizz, bazz = 2;
- *
- */
-IrNode *
-makeSampleCorrectTestStatement()
-{
-    State * newton = newtonApiInit("../Examples/invariants.nt");
-	IrNode * root = genIrNode(newton,
-							  kNewtonIrNodeType_PquantityStatement,
-							  NULL,
-							  NULL,
-							  NULL);
-
-	newtonApiAddLeaf(newton,
-					 root,
-					 makeSampleCorrectTestExpression()
-		);
-
-	newtonApiAddLeafWithChainingSeqNoLexer(newton,
-					 root,
-					 genIrNode(newton,
-							   kNewtonIrNodeType_Tequals,
-							   NULL,
-							   NULL,
-							   NULL)
-		);
-
-	newtonApiAddLeaf(newton,
-					 root,
-					 makeSampleCorrectTestExpression()
-		);
-	return root;
-}
-
-/*
- * Constructs an example tree for the expression
- * foo / bar + fizz / bazz, where
- * distance foo, bar = 8;
- * time fizz, bazz = 2;
- */
-IrNode *
-makeSampleCorrectTestExpression()
-{
-    State * newton = newtonApiInit("../Examples/invariants.nt");
-	IrNode * root = genIrNode(newton,
-							  kNewtonIrNodeType_PquantityExpression,
-							  NULL,
-							  NULL,
-							  NULL);
-
-	IrNode * leftTerm = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_PquantityTerm,
-		NULL,
-		0
-		);
-	IrNode * foo = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tidentifier,
-		"distance",
-		8
-		);
-	IrNode * div = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tdiv,
-		NULL,
-		0
-		);
-	IrNode * bar = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tidentifier,
-		"time",
-		2
-		);
-    foo->physics = newtonApiGetPhysicsTypeByName(newton, foo->token->identifier);
-	newtonApiAddLeaf(newton, leftTerm, foo);
-	newtonApiAddLeafWithChainingSeqNoLexer(newton, leftTerm, div);
-    bar->physics = newtonApiGetPhysicsTypeByName(newton, bar->token->identifier);
-	newtonApiAddLeaf(newton, leftTerm, bar);
-
-	IrNode * add = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tplus,
-		NULL,
-		0
-		);
-	IrNode * rightTerm = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_PquantityTerm,
-		NULL,
-		0
-		);
-	IrNode * fizz = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tidentifier,
-		"distance",
-		8
-		);
-	IrNode * div2 = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tdiv,
-		NULL,
-		0
-		);
-	IrNode * bazz = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Tidentifier,
-		"time",
-		2
-		);
-    fizz->physics = newtonApiGetPhysicsTypeByName(newton, fizz->token->identifier);
-	newtonApiAddLeaf(newton, rightTerm, fizz);
-	newtonApiAddLeafWithChainingSeqNoLexer(newton, rightTerm, div2);
-    bazz->physics = newtonApiGetPhysicsTypeByName(newton, bazz->token->identifier);
-	newtonApiAddLeaf(newton, rightTerm, bazz);
-
-	newtonApiAddLeaf(newton, root, leftTerm);
-	newtonApiAddLeafWithChainingSeqNoLexer(newton, root, add);
-	newtonApiAddLeaf(newton, root, rightTerm);
-
-	return root;
-}
-
-
-IrNode *
-makeTestParameterTuple(State * newton)
-{
-	IrNode *	root = genIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
-								 NULL /* left child */,
-								 NULL /* right child */,
-								 NULL /* source info */);
-	IrNode * distanceParameter = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Pparameter,
-		"distance",
-		5
-		);
-	distanceParameter->physics = newtonApiGetPhysicsTypeByName(newton, distanceParameter->token->identifier);
-	newtonApiAddLeaf(newton, root, distanceParameter);
-
-	IrNode * timeParameter = makeIrNodeSetValue(
-		newton,
-		kNewtonIrNodeType_Pparameter,
-		"time",
-		6.6
-		);
-	timeParameter->physics = newtonApiGetPhysicsTypeByName(newton, timeParameter->token->identifier);
-	newtonApiAddLeafWithChainingSeqNoLexer(newton, root, timeParameter);
-
-	newtonApiNumberParametersZeroToN(newton, root);
-	return root;
-}
-
-IrNode *
-makeIrNodeSetValue(
-    State * N,
-    IrNodeType nodeType,
-    char * identifier,
-    double realConst
-) {
-	IrNode * node = genIrNode(
-        N,
-        nodeType,
-	    NULL /* left child */,
-	    NULL /* right child */,
-	    NULL /* source info */
-    );
-
-	node->token = lexAllocateToken(
-		N,
-		nodeType /* type */,
-		identifier /* identifier */,
-		0	/* integerConst	*/,
-		realConst	/* realConst	*/,
-		NULL  /* stringConst	*/,
-		NULL	/* sourceInfo	*/
-		);
-
-	node->value = node->token->integerConst + node->token->realConst; /* this works because either one is always zero */
-
-    return node;
-}

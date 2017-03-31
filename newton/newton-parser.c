@@ -224,7 +224,11 @@ newtonParseSubindexTuple(State * N, Scope * currentScope)
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
 
-	addLeaf(N, node, newtonParseSubindex(N, currentScope));
+	IrNode * subindexNode = newtonParseSubindex(N, currentScope);
+	addLeaf(N, node, subindexNode);
+
+	node->subindexStart = subindexNode->subindexStart;
+	node->subindexEnd = subindexNode->subindexEnd;
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 
@@ -358,61 +362,72 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 		subindexNode = newtonParseSubindexTuple(N, currentScope);
 		subindexStart = subindexNode->subindexStart;
 		subindexEnd = subindexNode->subindexEnd;
+
+		assert(subindexEnd > 0);
 	}
 
 
     newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, currentScope);
 
-	for (currentScope->currentSubindex = subindexStart; currentScope->currentSubindex <= subindexEnd; currentScope->currentSubindex++)
+	/*
+	 * name syntax is optional
+	 */
+	IrNode * unitName = NULL;
+	if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts))
 	{
-		/*
-		 * name syntax is optional
-		 */
-		IrNode * unitName = NULL;
-		if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts))
-		{
-			unitName = newtonParseName(N, currentScope);
-			addLeafWithChainingSeq(N, node, unitName);
-			newPhysics->dimensionAlias = unitName->token->stringConst; /* e.g.) meter, Pascal*/
-		}
+		unitName = newtonParseName(N, currentScope);
+		addLeafWithChainingSeq(N, node, unitName);
+		newPhysics->dimensionAlias = unitName->token->stringConst; /* e.g.) meter, Pascal*/
+	}
 
-		/*
-		 * abbreviation syntax is also optional
-		 */
-		IrNode * unitAbbreviation = NULL;
-		if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts))
-		{
-			unitAbbreviation = newtonParseSymbol(N, currentScope);
-			addLeafWithChainingSeq(N, node, unitAbbreviation);
-			newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g.) m, Pa*/
-		}
+	/*
+	 * abbreviation syntax is also optional
+	 */
+	IrNode * unitAbbreviation = NULL;
+	if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts))
+	{
+		unitAbbreviation = newtonParseSymbol(N, currentScope);
+		addLeafWithChainingSeq(N, node, unitAbbreviation);
+		newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g.) m, Pa*/
+	}
 
-		/*
-		 * derivation syntax is required
-		 */
-		IrNode * derivationExpression = newtonParseDerivation(N, currentScope)->irLeftChild;
-		addLeafWithChainingSeq(N, node, derivationExpression);
+	/*
+	 * derivation syntax is required
+	 */
+	IrNode * derivationExpression = newtonParseDerivation(N, currentScope)->irLeftChild;
+	addLeafWithChainingSeq(N, node, derivationExpression);
 
-		if (derivationExpression->type != kNewtonIrNodeType_Tnone)
-		{
-			newtonPhysicsAddExponents(N, newPhysics, derivationExpression->physics);
-		}
-		else
-		{
-			assert(basicPhysicsIdentifier->token->identifier != NULL);
-			assert(unitName != NULL && unitName->token);
-			newtonPhysicsIncrementExponent(
-				N,
-				newPhysics,
-				newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, unitName->token->stringConst)
-				);
-		}
+	if (derivationExpression->type != kNewtonIrNodeType_Tnone)
+	{
+		newtonPhysicsAddExponents(N, newPhysics, derivationExpression->physics);
+	}
+	else
+	{
+		assert(basicPhysicsIdentifier->token->identifier != NULL);
+		assert(unitName != NULL && unitName->token);
+		newtonPhysicsIncrementExponent(
+			N,
+			newPhysics,
+			newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, unitName->token->stringConst)
+			);
+	}
 
-		newPhysics->id = newtonGetPhysicsId(N, newPhysics);
-		newPhysics->subindex = currentScope->currentSubindex;
+	newPhysics->id = newtonGetPhysicsId(N, newPhysics);
+	newPhysics->subindex = currentScope->currentSubindex;
 
-		assert(newPhysics->id > 1);
+	assert(newPhysics->id > 1);
+
+	for (currentScope->currentSubindex = subindexStart + 1; currentScope->currentSubindex <= subindexEnd; currentScope->currentSubindex++)
+	{
+		Physics * newSubindexPhysics = newtonPhysicsTableCopyAndAddPhysics(N, currentScope, newPhysics);
+		assert(newSubindexPhysics != newPhysics);
+
+		newSubindexPhysics->id = newtonGetPhysicsId(N, newSubindexPhysics);
+		newSubindexPhysics->subindex = currentScope->currentSubindex;
+
+		assert(newSubindexPhysics->id > 1);
+		assert(newSubindexPhysics->subindex > 0);
 	}
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);

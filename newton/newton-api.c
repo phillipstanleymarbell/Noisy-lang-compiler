@@ -72,6 +72,21 @@ newtonApiInit(char *  newtonFileName)
 }
 
 Physics *
+newtonApiGetPhysicsTypeByNameAndSubindex(State* N, char* nameOfType, int subindex)
+{
+    Physics* current = N->newtonIrTopScope->firstPhysics;
+    while (current != NULL)
+    {
+        if (!strcmp(current->identifier, nameOfType) && current->subindex == subindex)
+        {
+            return current;
+        }
+        current = current->next;
+    }
+    return NULL;
+}
+
+Physics *
 newtonApiGetPhysicsTypeByName(State* N, char* nameOfType)
 {
     Physics* current = N->newtonIrTopScope->firstPhysics;

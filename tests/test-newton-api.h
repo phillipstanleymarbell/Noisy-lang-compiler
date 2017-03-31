@@ -7,18 +7,5 @@ char * test_newtonCheckSingleInvariant();
 char * test_newtonApiNumberParametersZeroToN();
 char * tests_newtonApiDimensionCheckTree();
 char * test_newtonApiDimensionCheckTree();
+char * test_newtonApiGetPhysicsTypeByNameAndSubindex_Valid();
 
-/* just a small helper method */
-IrNode *
-makeIrNodeSetValue(
-                        State * N,
-                        IrNodeType nodeType,
-                        char * identifier,
-                        double realConst
-                        );
-
-IrNode * makeTestParameterTuple();
-IrNode * makeSampleCorrectTestExpression();
-IrNode * makeSampleCorrectTestStatement();
-IrNode * makeSampleIncorrectTestExpression();
-IrNode * makeSampleIncorrectTestStatement();
