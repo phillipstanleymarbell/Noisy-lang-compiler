@@ -158,16 +158,24 @@ char * test_newtonApiGetInvariantByParameters_Valid()
 char * test_newtonCheckSingleInvariant()
 {
 	State * newton = newtonApiInit("../Examples/invariants.nt");
-	IrNode* parameterTree = makeTestParameterTuple(newton);
-	NewtonAPIReport* newtonReport = newtonApiSatisfiesConstraints(
-		newton,
-		parameterTree
+	mu_assert(
+		"test_newtonCheckSingleInvariant invariants.nt: number passed should be 5",
+	    numberOfConstraintsPassed(
+			newtonApiSatisfiesConstraints(
+				newton,
+				makeTestParameterTuple(newton)
+				)
+			) == 5
 		);
-	int numberPassed = numberOfConstraintsPassed(newtonReport);
 
 	mu_assert(
-		"test_newtonCheckSingleInvariant: number passed should be 5",
-		numberPassed == 5
+		"test_newtonCheckSingleInvariant pendulum_acceleration.nt: number passed should be 4",
+	    numberOfConstraintsPassed(
+			newtonApiSatisfiesConstraints(
+				newtonApiInit("../Examples/pendulum_acceleration.nt"),
+				makeTestParameterTuplePendulumCase()
+				)
+			) == 4
 		);
 	return 0;
 }

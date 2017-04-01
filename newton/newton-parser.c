@@ -279,7 +279,13 @@ newtonParseParameter(State * N, Scope * currentScope, int parameterNumber)
 	{
 		newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
 
-		physicsName->physics->subindex = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope)->value;
+		newtonParseResetPhysicsWithCorrectSubindex(
+			N,
+			physicsName,
+			currentScope,
+			physicsName->token->identifier,
+			newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope)->value
+			);
 	}
 
     node->parameterNumber = parameterNumber;

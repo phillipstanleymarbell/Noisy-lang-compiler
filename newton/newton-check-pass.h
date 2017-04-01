@@ -40,6 +40,7 @@ checkQuantityTerm(
     State * N,
     IrNode * constraintTreeRoot,
     IrNode * parameterTreeRoot,
+	bool * containsUnaryOp,
     char * errorMessage,
     ConstraintReport * report
 );

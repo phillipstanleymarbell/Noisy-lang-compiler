@@ -25,7 +25,6 @@ void newtonPhysicsIncrementExponent(State * N, Physics * source, Dimension * add
 void newtonPhysicsAddExponents(State * N, Physics * left, Physics * right);
 void newtonPhysicsSubtractExponents(State * N, Physics * left, Physics * right);
 void newtonPhysicsMultiplyExponents(State * N, Physics * source, double multiplier);
-void newtonPhysicsZeroExponents(State * N, Physics * source);
 
 void newtonAddInvariant(State * N, Invariant * invariant);
 

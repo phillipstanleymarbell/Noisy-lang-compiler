@@ -22,7 +22,7 @@
 		derived from this software without specific prior written
 		permission.
 
-	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+	THIS SOFTWARE IS PROVIDED BY THnewtonApiAddLeafWithChainingSeqNoLexerE COPYRIGHT HOLDERS AND CONTRIBUTORS
 	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
@@ -76,7 +76,7 @@ makeTestParameterTuplePendulumCase()
 		newton,
 		kNewtonIrNodeType_Pparameter,
 		"acceleration",
-		5
+		1
 		);
 	accelerationX->physics = newtonApiGetPhysicsTypeByNameAndSubindex(newton, accelerationX->token->identifier, 0);
 	accelerationX->physics->subindex = 0;
@@ -86,7 +86,7 @@ makeTestParameterTuplePendulumCase()
 		newton,
 		kNewtonIrNodeType_Pparameter,
 		"acceleration",
-		6
+		5
 		);
 	accelerationY->physics = newtonApiGetPhysicsTypeByNameAndSubindex(newton, accelerationY->token->identifier, 1);
 	accelerationY->physics->subindex = 1;
@@ -96,7 +96,7 @@ makeTestParameterTuplePendulumCase()
 		newton,
 		kNewtonIrNodeType_Pparameter,
 		"acceleration",
-		7
+		0
 		);
 	accelerationZ->physics = newtonApiGetPhysicsTypeByNameAndSubindex(newton, accelerationZ->token->identifier, 2);
 	accelerationZ->physics->subindex = 2;

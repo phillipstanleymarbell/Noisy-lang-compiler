@@ -342,15 +342,18 @@ checkQuantityExpression(
     );
     termIndex++;
     assert(leftTerm != NULL);
+
+	bool containsUnaryOp = false;
     leftTerm->value = checkQuantityTerm(
         N,
         leftTerm,
         parameterTreeRoot,
+		&containsUnaryOp,
 		errorMessage,
         report
     );
 
-    int lowBinOpIndex = 0;
+    int lowBinOpIndex = (int)(containsUnaryOp);
     IrNode* lowBinOpNode = findNthIrNodeOfTypes(
         N,
         expressionRoot,
@@ -371,13 +374,17 @@ checkQuantityExpression(
         );
         termIndex++;
         assert(	rightTerm != NULL );
+
+		containsUnaryOp = false;
         rightTerm->value = checkQuantityTerm(
             N,
             rightTerm,
             parameterTreeRoot,
+			&containsUnaryOp,
 			errorMessage,
             report
         );
+		lowBinOpIndex += (int)(containsUnaryOp);
 		strcat(errorMessage, gNewtonTokenDescriptions[lowBinOpNode->type]);
 
         newtonCheckBinOp(
@@ -405,6 +412,7 @@ checkQuantityTerm(
     State * N,
     IrNode * termRoot,
     IrNode * parameterTreeRoot,
+	bool * containsUnaryOp,
     char * errorMessage,
     ConstraintReport * report
 ) {
@@ -426,7 +434,7 @@ checkQuantityTerm(
 		termRoot,
 		kNewtonIrNodeType_PunaryOp,
 		gNewtonFirsts,
-		factorIndex
+		0 /* allow only one unary op per term*/
 		);
     IrNode* leftFactor = findNthIrNodeOfTypes(
         N,
@@ -448,6 +456,7 @@ checkQuantityTerm(
 
 	if (unaryOp != NULL)
 	{
+		*containsUnaryOp = true;
 		leftFactor->value *= -1;
 	}
 
@@ -498,12 +507,11 @@ checkQuantityTerm(
         midBinOpIndex++;
     }
 
-	assert(!noFactorHasValueSet);
 	if (!noFactorHasValueSet)
-	  assert(leftFactor->value != 0);
+		assert(leftFactor->value != 0);
 
 	if (noFactorHasValueSet)
-	  leftFactor->value = 0;
+		leftFactor->value = 0;
 
 	return leftFactor->value;
 }

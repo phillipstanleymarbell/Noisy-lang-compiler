@@ -222,7 +222,7 @@ newtonParseQuantityExpression(State * N, Scope * currentScope)
             addLeafWithChainingSeq(N, expression, newtonParseLowPrecedenceBinaryOp(N, currentScope));
 
             IrNode * rightTerm = newtonParseQuantityTerm(N, currentScope);
-            addLeafWithChainingSeq(N, leftTerm, rightTerm);
+            addLeafWithChainingSeq(N, expression, rightTerm);
             expression->value += rightTerm->value;
 
             assert(areTwoPhysicsEquivalent(N, leftTerm->physics, rightTerm->physics));
@@ -392,6 +392,7 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
         addLeaf(N, factor, newtonParseHighPrecedenceBinaryOp(N, currentScope));
 
         IrNode * exponentialExpression = newtonParseExponentialExpression(N, currentScope, factor);
+		assert(exponentialExpression->type == kNewtonIrNodeType_PquantityExpression);
         addLeafWithChainingSeq(N, factor, exponentialExpression);
 
         if (factor->value != 0)
@@ -406,28 +407,26 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
 IrNode *
 newtonParseExponentialExpression(State * N, Scope * currentScope, IrNode * baseNode)
 {
+    IrNode *   expression = genIrNode(N,   kNewtonIrNodeType_PquantityExpression,
+									  NULL /* left child */,
+									  NULL /* right child */,
+									  lexPeek(N, 1)->sourceInfo /* source info */);
+    expression->physics = newtonInitPhysics(N, currentScope, NULL);
+
     /* exponents are automatically just one integer unless wrapped in parens */
     IrNode * exponent = peekCheck(N, 1, kNewtonIrNodeType_TleftParen) ?
         newtonParseNumericExpression(N, currentScope) :
         newtonParseInteger(N, currentScope);
+	addLeaf(N, expression, exponent);
 
-    if (exponent->value == 0)
-    {
-        baseNode->physics->value = 1;
-		newtonPhysicsZeroExponents(N, baseNode->physics);
-
-        return exponent;
-    }
-    else
-    {
-        baseNode->physics->value = pow(baseNode->physics->value, exponent->value);
-    }
+    baseNode->physics->value = pow(baseNode->physics->value, exponent->value);
 
     /* If the base is a Physics quantity, the exponent must be an integer */
     assert(exponent->value == (int) exponent->value);
-	newtonPhysicsMultiplyExponents(N, baseNode->physics, exponent->value);
+	expression->value = exponent->value;
+	newtonPhysicsMultiplyExponents(N, baseNode->physics, expression->value);
 
-    return exponent;
+    return expression;
 }
 
 
@@ -538,11 +537,11 @@ newtonParseMidPrecedenceBinaryOp(State *  N, Scope * currentScope)
 IrNode *
 newtonParseInteger(State * N, Scope * currentScope)
 {
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pinteger,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PquantityTerm,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
-    
+
     if (inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts))
     {
         addLeaf(N, node, newtonParseUnaryOp(N, currentScope));
@@ -552,7 +551,7 @@ newtonParseInteger(State * N, Scope * currentScope)
     IrNode * number = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
     addLeaf(N, node, number);
     node->value = node->value == -1 ? node->value * number->value : number->value;
-        
+
     assert(node->value != 0); // TODO remove this assertion later bc value MIGHT be 0
 
     return node;

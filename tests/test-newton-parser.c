@@ -86,7 +86,7 @@ char * test_newtonGetInvariantIdByParameters()
             newton,
             makeTestParameterTuplePendulumCase(),
             1
-			) == 19 * 23 * 29
+			) == primeNumbers[7] * primeNumbers[8] * primeNumbers[9]
 		);
     return 0;
 }
