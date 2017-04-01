@@ -20,9 +20,17 @@ IrNode * makeSampleIncorrectTestStatement();
 
 
 /* These methods are for pendulum_acceleration.nt */
-IrNode *
-makeTestParameterTuplePendulumCase();
+IrNode * makeTestParameterTuplePendulumCase();
 IrNode * makeSampleCorrectTestExpressionPendulumCase();
 IrNode * makeSampleCorrectTestStatementPendulumCase();
 IrNode * makeSampleIncorrectTestExpressionPendulumCase();
 IrNode * makeSampleIncorrectTestStatementPendulumCase();
+
+/* These methods are for pendulum_acceleration.nt */
+IrNode * makeTestParameterTuplePressureCaseBoyles();
+IrNode * makeTestParameterTuplePressureCaseGayLussac();
+IrNode * makeTestParameterTuplePressureCaseAvogadro();
+IrNode * makeSampleCorrectTestExpressionPressureCase();
+IrNode * makeSampleCorrectTestStatementPressureCase();
+IrNode * makeSampleIncorrectTestExpressionPressureCase();
+IrNode * makeSampleIncorrectTestStatementPressureCase();

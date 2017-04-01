@@ -177,6 +177,42 @@ char * test_newtonCheckSingleInvariant()
 				)
 			) == 4
 		);
+
+	mu_assert(
+		"test_newtonCheckSingleInvariant pressure_sensors.nt Boyles: number passed should be 1",
+	    numberOfConstraintsPassed(
+			newtonApiSatisfiesConstraints(
+				newtonApiInit("../Examples/pressure_sensors.nt"),
+				makeTestParameterTuplePressureCaseBoyles()
+				)
+			) == 1
+		);
+	assert(
+	    numberOfConstraintsPassed(
+			newtonApiSatisfiesConstraints(
+				newtonApiInit("../Examples/pressure_sensors.nt"),
+				makeTestParameterTuplePressureCaseGayLussac()
+				)
+			) == 1
+		);
+	mu_assert(
+		"test_newtonCheckSingleInvariant pressure_sensors.nt Gay Lussac: number passed should be 1",
+	    numberOfConstraintsPassed(
+			newtonApiSatisfiesConstraints(
+				newtonApiInit("../Examples/pressure_sensors.nt"),
+				makeTestParameterTuplePressureCaseGayLussac()
+				)
+			) == 1
+		);
+	mu_assert(
+		"test_newtonCheckSingleInvariant pressure_sensors.nt Avogadro: number passed should be 1",
+	    numberOfConstraintsPassed(
+			newtonApiSatisfiesConstraints(
+				newtonApiInit("../Examples/pressure_sensors.nt"),
+				makeTestParameterTuplePressureCaseAvogadro()
+				)
+			) == 0
+		);
 	return 0;
 }
 
@@ -187,17 +223,46 @@ char * test_newtonApiDimensionCheckTree()
 	ConstraintReport* report = newtonApiDimensionCheckTree(newton, makeSampleCorrectTestStatement());
 	assert(report->satisfiesDimensionConstraint);
 	mu_assert(
-		"correct test statements should pass dimension constraint",
+		"invariants.nt: correct test statements should pass dimension constraint",
 		report->satisfiesDimensionConstraint
 		);
 
 	report = newtonApiDimensionCheckTree(newton, makeSampleIncorrectTestStatement());
 	assert(!report->satisfiesDimensionConstraint);
 	mu_assert(
-		"incorrect test statements should not pass dimension constraint",
+		"invariants.nt: incorrect test statements should not pass dimension constraint",
 		!report->satisfiesDimensionConstraint
 		);
 
+	newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+	report = newtonApiDimensionCheckTree(newton, makeSampleCorrectTestStatementPendulumCase());
+	assert(report->satisfiesDimensionConstraint);
+	mu_assert(
+		"pendulum_acceleration.nt: correct test statements should pass dimension constraint",
+		report->satisfiesDimensionConstraint
+		);
+
+	report = newtonApiDimensionCheckTree(newton, makeSampleIncorrectTestStatementPendulumCase());
+	assert(!report->satisfiesDimensionConstraint);
+	mu_assert(
+		"pendulum_acceleration.nt: incorrect test statements should not pass dimension constraint",
+		!report->satisfiesDimensionConstraint
+		);
+
+	newton = newtonApiInit("../Examples/pressure_sensors.nt");
+	report = newtonApiDimensionCheckTree(newton, makeSampleCorrectTestStatementPressureCase());
+	assert(report->satisfiesDimensionConstraint);
+	mu_assert(
+		"pressure_sensors.nt: correct test statements should pass dimension constraint",
+		report->satisfiesDimensionConstraint
+		);
+
+	report = newtonApiDimensionCheckTree(newton, makeSampleIncorrectTestStatementPressureCase());
+	assert(!report->satisfiesDimensionConstraint);
+	mu_assert(
+		"pressure_sensors.nt: incorrect test statements should not pass dimension constraint",
+		!report->satisfiesDimensionConstraint
+		);
 	return 0;
 }
 
@@ -245,6 +310,29 @@ char * test_newtonApiPhysicsTypeUsageExample()
 		);
 
 
+    IrNode * pressure = makeIrNodeSetValue(
+        noisy,
+        kNoisyIrNodeType_Tidentifier,
+        "pressure",
+        0.0
+		);
+
+    IrNode * temperature= makeIrNodeSetValue(
+        noisy,
+        kNoisyIrNodeType_Tidentifier,
+        "temperature",
+        0.0
+		);
+
+    newton = newtonApiInit("../Examples/pressure_sensors.nt");
+    pressure->physics = newtonApiGetPhysicsTypeByName(newton, pressure->token->identifier);
+    temperature->physics = newtonApiGetPhysicsTypeByName(newton, temperature->token->identifier);
+
+    mu_assert(
+        "test_newtonApiTypeExpressionExample pendulum_acceleration.nt: time and distance id's should be different and cannot be used in add or subtract",
+        pressure->physics->id != temperature->physics->id
+		);
+
     return 0;
 }
 
@@ -264,13 +352,31 @@ char * test_newtonApiNumberParametersZeroToN()
 
 	parameterTree = makeTestParameterTuplePendulumCase();
 	mu_assert(
-		"test_newtonApiNumberParametersZeroToN: the first left child should have number of 0",
+		"test_newtonApiNumberParametersZeroToN: Pendulum Case the first left child should have number of 0",
 		parameterTree->irLeftChild->parameterNumber == 0
 		);
 	mu_assert(
-		"test_newtonApiNumberParametersZeroToN: the first right child should have number of 1",
+		"test_newtonApiNumberParametersZeroToN: Pendulum Case the first right child should have number of 1",
 		parameterTree->irRightChild->irLeftChild->parameterNumber == 1
 		);
+
+	IrNode* parameterTrees[3] = {
+		makeTestParameterTuplePressureCaseBoyles(),
+		makeTestParameterTuplePressureCaseGayLussac(),
+		makeTestParameterTuplePressureCaseAvogadro(),
+	};
+
+	for (int index = 0; index < 3; index++)
+	{
+		mu_assert(
+			"test_newtonApiNumberParametersZeroToN: Pressure Case the first left child should have number of 0",
+			parameterTrees[index]->irLeftChild->parameterNumber == 0
+			);
+		mu_assert(
+			"test_newtonApiNumberParametersZeroToN: Pressure Case the first right child should have number of 1",
+			parameterTrees[index]->irRightChild->irLeftChild->parameterNumber == 1
+			);
+	}
 	return 0;
 }
 

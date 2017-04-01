@@ -776,6 +776,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 
     n->token = t;
     n->tokenString = t->identifier;
+	assert(!strcmp(n->token->identifier, n->tokenString));
 
     // TODO rewrite this logic in a cleaner way.... make a new method or something
     Physics * physicsSearchResult;
@@ -798,16 +799,10 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
         }
     }
 
-    if (physicsSearchResult == NULL)
-    {
-        errorUseBeforeDefinition(N, t->identifier);
-    }
-    else
-    {
-        /* defensive copying to keep the Physics list in State immutable */
-        n->physics = deepCopyPhysicsNode(physicsSearchResult);
-		assert(n->physics->dimensions != NULL);
-    }
+	assert(physicsSearchResult != NULL);
+
+    n->physics = deepCopyPhysicsNode(physicsSearchResult);
+	assert(n->physics->dimensions != NULL);
 
     return n;
 }

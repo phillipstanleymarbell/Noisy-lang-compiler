@@ -364,7 +364,7 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
 		}
 
         /* Is a matchable parameter corresponding the invariant parameter */
-        if (!newtonIsDimensionless(factor->physics) && !factor->physics->isConstant && newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) == NULL)
+        if (!newtonIsDimensionless(factor->physics) && !factor->physics->isConstant && newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(N, N->newtonIrTopScope, factor->tokenString) == NULL && newtonPhysicsTablePhysicsForDimensionAlias(N, N->newtonIrTopScope, factor->tokenString) == NULL)
         {
           factor->parameterNumber = N->currentParameterNumber++;
         }

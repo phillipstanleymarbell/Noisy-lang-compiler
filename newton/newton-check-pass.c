@@ -537,7 +537,7 @@ checkQuantityFactor(
       factorIndex
   );
 
-  if (!newtonIsDimensionless(factor->physics) && !factor->physics->isConstant && newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) == NULL)
+  if (!newtonIsDimensionless(factor->physics) && !factor->physics->isConstant && newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(N, N->newtonIrTopScope, factor->tokenString) == NULL && newtonPhysicsTablePhysicsForDimensionAlias(N, N->newtonIrTopScope, factor->tokenString) == NULL)
 	{
 	  /*
 	   * Suppose the caller of the API has supplied a IrNode Tidentifier "L" with numeric value 5.
