@@ -270,6 +270,7 @@ newtonParseQuantityTerm(State * N, Scope * currentScope)
 
     if (isPhysics)
     {
+		assert(leftFactor->physics != NULL);
 		newtonPhysicsAddExponents(N, intermediate->physics, leftFactor->physics);
 
         /*
@@ -348,6 +349,19 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
         factor->value = factor->physics->value;
 
         assert(factor->tokenString != NULL);
+
+		if (peekCheck(N, 1, kNewtonIrNodeType_TatSign))
+		{
+			newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
+			newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
+			newtonParseResetPhysicsWithCorrectSubindex(
+				N,
+				factor,
+				currentScope,
+				factor->token->identifier,
+				currentScope->currentSubindex);
+
+		}
 
         /* Is a matchable parameter corresponding the invariant parameter */
         if (!newtonIsDimensionless(factor->physics) && !factor->physics->isConstant && newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) == NULL)

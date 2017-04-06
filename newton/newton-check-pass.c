@@ -107,7 +107,7 @@ newtonCheckCompareOp(
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
 			  ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   (leftExpression->physics->id == rightExpression->physics->id));
+			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be >= RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
             if (!report->satisfiesDimensionConstraint)
@@ -119,7 +119,7 @@ newtonCheckCompareOp(
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
 			  ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   (leftExpression->physics->id == rightExpression->physics->id));
+			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be > RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
             if (!report->satisfiesDimensionConstraint)
@@ -131,7 +131,7 @@ newtonCheckCompareOp(
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
 			  ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   (leftExpression->physics->id == rightExpression->physics->id));
+			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be <= RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
             if (!report->satisfiesDimensionConstraint)
@@ -143,7 +143,7 @@ newtonCheckCompareOp(
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
 			  ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   (leftExpression->physics->id == rightExpression->physics->id));
+			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be < RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
             if (!report->satisfiesDimensionConstraint)
@@ -162,7 +162,7 @@ newtonCheckCompareOp(
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
 			  ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   (leftExpression->physics->id == rightExpression->physics->id));
+			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be == RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
             if (!report->satisfiesDimensionConstraint)
@@ -539,7 +539,7 @@ checkQuantityFactor(
 	   * A matching parameter must correspond to the Physics struct bound by the token string (e.g. L : distance),
 	   * but we do not want to raise an error a node that just is a unit (e.g. meter), not a Physics.
 	   */
-	  IrNode * matchingParameter = newtonParseFindNodeByParameterNumber(N, parameterTreeRoot, factor->parameterNumber);
+		IrNode * matchingParameter = newtonParseFindNodeByParameterNumberAndSubindex(N, parameterTreeRoot, factor->parameterNumber, factor->physics->subindex);
 	  if (matchingParameter == NULL)
 		{
 		  sprintf(report->dimensionErrorMessage, "newton-check-pass.c:checkQuantityFactor: did not find a parameter with physics id %llu", factor->physics->id);

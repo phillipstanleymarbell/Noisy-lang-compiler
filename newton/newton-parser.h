@@ -19,6 +19,12 @@ newtonParseParameter(State * N, Scope * currentScope, int parameterNumber);
 IrNode * 
 newtonParseParameterTuple(State * N, Scope * currentScope);
 
+IrNode *
+newtonParseSubindex(State * N, Scope * currentScope);
+
+IrNode *
+newtonParseSubindexTuple(State * N, Scope * currentScope);
+
 IrNode * 
 newtonParseConstraint(State * N, Scope * currentScope);
 
@@ -55,6 +61,13 @@ newtonParseCompareOp(State * N, Scope * currentScope);
 bool
 newtonIsDimensionless(Physics * physics);
 
+void newtonParseResetPhysicsWithCorrectSubindex(
+	State * N,
+	IrNode * node,
+	Scope * scope,
+	char * identifier,
+	int subindex);
+
 
 unsigned long long int
 newtonGetInvariantIdByParameters(State * N, IrNode * parameterTreeRoot, unsigned long long int invariantId);
@@ -77,5 +90,5 @@ IrNode *
 newtonParseFindNodeByTokenString(State *N, IrNode * root, char* tokenString);
 
 IrNode *
-newtonParseFindNodeByParameterNumber(State *N, IrNode * root, int parameterNumber);
+newtonParseFindNodeByParameterNumberAndSubindex(State *N, IrNode * root, int parameterNumber, int subindex);
 

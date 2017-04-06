@@ -5,7 +5,7 @@ time : signal =
         derivation = none;
 }
 
-distance : signal =
+distance : signal(i: 0 to 2) =
 {
         name = "meter" English
         symbol = "m";
@@ -19,32 +19,28 @@ mass : signal =
         derivation = none;
 }
 
-speed : signal =
+speed : signal(i: 0 to 2) =
 {
-        name = "MegaSpeed" English
-        symbol = "MegS";
-        derivation = distance / time;
+        derivation = distance@i / time;
 }
 
-acceleration : signal =
+acceleration : signal(i: 0 to 2) =
 {
-        name = "MegaAcceleration" English
-        symbol = "MegA";
-        derivation = speed / time;
+        derivation = speed@i / time;
 }
 
-force : signal = 
+force : signal(i: 0 to 2) = 
 {
         name = "Newton" English
         symbol = "N" ;
-        derivation = mass * acceleration;
+        derivation = mass * acceleration@i;
 }
 
-work : signal = 
+work : signal(i: 0 to 2) = 
 {
         name = "Joule" English
         symbol = "J";
-        derivation = force * distance;
+        derivation = force * distance@i;
 }
 
 Pi : constant = 3.14159;
@@ -53,7 +49,7 @@ g : constant = 9.8 * meter ** 2 * second ** -2;
 # myConstant : constant = -1.11 * meter ** (3 ** (8 + 2)); this line causes infinite loop.... maybe because exponent was too big..
 myConstant : constant = -1.11 * meter ** (2 ** (1 + 1));
 
-SimplePendulum : invariant(L: distance, period: time) =
+SimplePendulum : invariant(L: distance@0, period: time) =
 {
     L >= 2.2 * meter,
     L <=  10 * meter,

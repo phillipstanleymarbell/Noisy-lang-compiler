@@ -7,7 +7,9 @@ Dimension * newtonDimensionTableDimensionForIdentifier(State *  N, Scope *  scop
 Physics * newtonInitPhysics(State * N, Scope * scope, Token * token);
 Physics * newtonPhysicsTableAddPhysicsForToken(State *  N, Scope *  scope, struct Token *  token);
 Physics * newtonPhysicsTablePhysicsForIdentifier(State *  N, Scope *  scope, const char *  identifier);
+Physics * newtonPhysicsTablePhysicsForIdentifierAndSubindex(State *  N, Scope *  scope, const char *  identifier, int subindex);
 Physics * newtonPhysicsTablePhysicsForDimensionAlias(State *  N, Scope *  scope, const char * dimensionAliasIdentifier);
+Physics * newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(State *  N, Scope *  scope, const char * dimensionAliasAbbreviation);
 Physics * newtonPhysicsTableAddPhysics(State * N, Scope * scope);
 
 Physics* deepCopyPhysicsNode(Physics* node);

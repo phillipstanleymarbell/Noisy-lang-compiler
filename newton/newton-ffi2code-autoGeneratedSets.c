@@ -124,6 +124,8 @@ int gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
                                                             },
             [kNewtonIrNodeType_Pparameter    ]            = {kNewtonIrNodeType_Tidentifier, kNoisyIrNodeTypeMax},
             [kNewtonIrNodeType_PparameterTuple]            = {kNewtonIrNodeType_TleftParen, kNoisyIrNodeTypeMax},
+            [kNewtonIrNodeType_Psubindex    ]            = {kNewtonIrNodeType_Tidentifier, kNoisyIrNodeTypeMax},
+            [kNewtonIrNodeType_PsubindexTuple]            = {kNewtonIrNodeType_TleftParen, kNoisyIrNodeTypeMax},
             [kNewtonIrNodeType_Pderivation   ]            = {kNewtonIrNodeType_Tderivation, kNoisyIrNodeTypeMax},
             [kNewtonIrNodeType_Psymbol       ]            = {kNewtonIrNodeType_Tsymbol, kNoisyIrNodeTypeMax},
             [kNewtonIrNodeType_Pname         ]            = {kNewtonIrNodeType_Tname, kNoisyIrNodeTypeMax},
@@ -284,7 +286,12 @@ int gNewtonFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
                                                                  kNewtonIrNodeType_TrightBrace,
                                                                  kNoisyIrNodeTypeMax
                                                             },
+            [kNewtonIrNodeType_Psubindex    ]            = {
+				kNewtonIrNodeType_TrightBrace,
+				kNoisyIrNodeTypeMax
+			},
             [kNewtonIrNodeType_PparameterTuple]            = {kNewtonIrNodeType_TleftBrace, kNoisyIrNodeTypeMax},
+            [kNewtonIrNodeType_PsubindexTuple]            = {kNewtonIrNodeType_TleftBrace, kNoisyIrNodeTypeMax},
             [kNewtonIrNodeType_Pderivation   ]            = {kNewtonIrNodeType_TrightBrace, kNoisyIrNodeTypeMax},
             [kNewtonIrNodeType_Psymbol       ]            = {kNewtonIrNodeType_Tderivation, kNoisyIrNodeTypeMax},
             [kNewtonIrNodeType_Pname         ]            = {kNewtonIrNodeType_Tsymbol, kNoisyIrNodeTypeMax},
