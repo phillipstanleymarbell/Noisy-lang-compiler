@@ -250,6 +250,11 @@ newtonPhysicsIncrementExponent(State * N, Physics * source, Dimension * added)
 
 void newtonPhysicsAddExponents(State * N, Physics * left, Physics * right)
 {
+	if (right == NULL)
+	{
+		return;
+	}
+
 	Dimension * currentLeft = left->dimensions;
 	Dimension * currentRight = right->dimensions;
 
@@ -325,7 +330,7 @@ newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  na
 	newDimension->sourceInfo	= nameToken->sourceInfo;
 	newDimension->scope	= scope;
     newDimension->primeNumber = primeNumbers[N->primeNumbersIndex++];
-	newDimension->exponent = 1;
+	newDimension->exponent = 0;
 
     if (scope->firstDimension == NULL)
 	{
@@ -361,6 +366,7 @@ newtonInitPhysics(State * N, Scope * scope, Token * token)
 		newPhysics->sourceInfo = token->sourceInfo;
 		// newPhysics->definition = newtonPhysicsTablePhysicsForIdentifier(N, scope, token->identifier);
 	}
+	newPhysics->next = NULL;
 
 	return newPhysics;
 }
@@ -417,6 +423,13 @@ areTwoPhysicsEquivalent(State * N, Physics * left, Physics * right)
 		{
 			return false;
 		}
+		leftCurrent = leftCurrent->next;
+		rightCurrent = rightCurrent->next;
+	}
+
+	if (leftCurrent != NULL || rightCurrent != NULL)
+	{
+		return false;
 	}
 
 	return true;

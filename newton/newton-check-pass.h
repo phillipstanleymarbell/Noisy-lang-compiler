@@ -53,3 +53,5 @@ checkQuantityFactor(
     ConstraintReport * report
 );
 
+void
+addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintReport * constraintReport);

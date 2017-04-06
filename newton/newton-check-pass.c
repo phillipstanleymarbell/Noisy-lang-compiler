@@ -66,28 +66,25 @@ extern int		gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 extern char* gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
 extern const char *	gNewtonTokenDescriptions[kNoisyIrNodeTypeMax];
 
-static void
-addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintReport * constraintReport);
 
 
-static void
+void
 addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintReport * constraintReport)
 {
-  if (newtonReport->firstConstraintReport == NULL)
+	if (newtonReport->firstConstraintReport == NULL)
 	{
-	  newtonReport->firstConstraintReport = constraintReport;
-	  return;
+		newtonReport->firstConstraintReport = constraintReport;
+		return;
 	}
 
-  ConstraintReport* current = newtonReport->firstConstraintReport;
-  while (current->next != NULL)
+	ConstraintReport* current = newtonReport->firstConstraintReport;
+	while (current->next != NULL)
 	{
-	  current = current->next;
+		current = current->next;
 	}
 
-  current->next = constraintReport;
+	current->next = constraintReport;
 }
-
 
 void
 newtonCheckCompareOp(
@@ -424,6 +421,13 @@ checkQuantityTerm(
 	 * This is also how the values are propagated in newtonParseQuantityExpression.
 	 */
 
+	IrNode* unaryOp = findNthIrNodeOfTypes(
+		N,
+		termRoot,
+		kNewtonIrNodeType_PunaryOp,
+		gNewtonFirsts,
+		factorIndex
+		);
     IrNode* leftFactor = findNthIrNodeOfTypes(
         N,
         termRoot,
@@ -441,6 +445,12 @@ checkQuantityTerm(
 		errorMessage,
         report
     );
+
+	if (unaryOp != NULL)
+	{
+		leftFactor->value *= -1;
+	}
+
 	bool noFactorHasValueSet = leftFactor->value == 0;
 
     int midBinOpIndex = 0;

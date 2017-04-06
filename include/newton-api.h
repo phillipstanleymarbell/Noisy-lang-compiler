@@ -3,6 +3,9 @@ Physics* newtonApiGetPhysicsTypeByName(State* N, char* nameOfType);
 NewtonAPIReport* newtonApiSatisfiesConstraints(State* N, IrNode* parameterTreeRoot);
 Invariant * newtonApiGetInvariantByParameters(State* N, IrNode* parameterTreeRoot);
 
+ConstraintReport*
+newtonApiDimensionCheckTree(State * N, IrNode* tree);
+
 
 void
 iterateConstraints(
