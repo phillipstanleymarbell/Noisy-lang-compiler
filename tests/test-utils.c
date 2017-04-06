@@ -61,6 +61,340 @@
 #include "test-utils.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// setup for electricity.nt ///////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+IrNode *
+makeTestParameterTupleElectricityCaseCurrent()
+{
+    State * newton = newtonApiInit("../Examples/electricity.nt");
+	IrNode *	root = genIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
+								 NULL /* left child */,
+								 NULL /* right child */,
+								 NULL /* source info */);
+	IrNode * current = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Pparameter,
+		"current",
+		2
+		);
+	current->physics = newtonApiGetPhysicsTypeByNameAndSubindex(newton, current->token->identifier, 0);
+	assert(current->physics->subindex == 0);
+	newtonApiAddLeaf(newton, root, current);
+
+	newtonApiNumberParametersZeroToN(newton, root);
+	return root;
+}
+
+IrNode *
+makeTestParameterTupleElectricityCaseCapacitance()
+{
+    State * newton = newtonApiInit("../Examples/electricity.nt");
+	IrNode *	root = genIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
+								 NULL /* left child */,
+								 NULL /* right child */,
+								 NULL /* source info */);
+	IrNode * capacitance = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Pparameter,
+		"capacitance",
+		1
+		);
+	capacitance->physics = newtonApiGetPhysicsTypeByNameAndSubindex(newton, capacitance->token->identifier, 0);
+	assert(capacitance->physics->subindex == 0);
+	newtonApiAddLeaf(newton, root, capacitance);
+
+	newtonApiNumberParametersZeroToN(newton, root);
+	return root;
+}
+
+IrNode *
+makeTestParameterTupleElectricityCasePower()
+{
+    State * newton = newtonApiInit("../Examples/electricity.nt");
+	IrNode *	root = genIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
+								 NULL /* left child */,
+								 NULL /* right child */,
+								 NULL /* source info */);
+	IrNode * current = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Pparameter,
+		"current",
+		1
+		);
+	current->physics = newtonApiGetPhysicsTypeByNameAndSubindex(newton, current->token->identifier, 0);
+	assert(current->physics->subindex == 0);
+	newtonApiAddLeaf(newton, root, current);
+
+	IrNode * voltage = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Pparameter,
+		"voltage",
+		3.5
+		);
+	voltage->physics = newtonApiGetPhysicsTypeByNameAndSubindex(newton, voltage->token->identifier, 0);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, root, voltage);
+
+	newtonApiNumberParametersZeroToN(newton, root);
+	return root;
+}
+
+/*
+ * Constructs an example tree for the statement
+ * foo / bar + fizz / bazz = foo / bar + fizz * bazz, where
+ * charge foo, bar = 8;
+ * time fizz, bazz = 2;
+ *
+ */
+IrNode *
+makeSampleIncorrectTestStatementElectricityCase()
+{
+    State * newton = newtonApiInit("../Examples/electricity.nt");
+	IrNode * root = genIrNode(newton,
+							  kNewtonIrNodeType_PquantityStatement,
+							  NULL,
+							  NULL,
+							  NULL);
+
+	newtonApiAddLeaf(newton,
+					 root,
+					 makeSampleCorrectTestExpressionElectricityCase()
+		);
+
+	newtonApiAddLeafWithChainingSeqNoLexer(newton,
+					 root,
+					 genIrNode(newton,
+							   kNewtonIrNodeType_Tequals,
+							   NULL,
+							   NULL,
+							   NULL)
+		);
+
+	newtonApiAddLeaf(newton,
+					 root,
+					 makeSampleIncorrectTestExpressionElectricityCase()
+		);
+	return root;
+}
+
+/*
+ * Constructs an example tree for the expression
+ * foo / bar + fizz / bazz, where
+ * charge foo, fizz = 8;
+ * time bar, bazz = 2;
+ */
+// TODO make this method take in two identifiers (and maybe an operator) and do it that way
+IrNode *
+makeSampleIncorrectTestExpressionElectricityCase()
+{
+    State * newton = newtonApiInit("../Examples/electricity.nt");
+	IrNode * root = genIrNode(newton,
+							  kNewtonIrNodeType_PquantityExpression,
+							  NULL,
+							  NULL,
+							  NULL);
+
+	IrNode * leftTerm = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_PquantityTerm,
+		NULL,
+		0
+		);
+	IrNode * foo = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"charge",
+		8
+		);
+	IrNode * div = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tdiv,
+		NULL,
+		0
+		);
+	IrNode * bar = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"time",
+		2
+		);
+    foo->physics = newtonApiGetPhysicsTypeByName(newton, foo->token->identifier);
+	newtonApiAddLeaf(newton, leftTerm, foo);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, leftTerm, div);
+    bar->physics = newtonApiGetPhysicsTypeByName(newton, bar->token->identifier);
+	newtonApiAddLeaf(newton, leftTerm, bar);
+
+	IrNode * add = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tplus,
+		NULL,
+		0
+		);
+	IrNode * rightTerm = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_PquantityTerm,
+		NULL,
+		0
+		);
+	IrNode * fizz = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"charge",
+		8
+		);
+	IrNode * mul = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tmul,
+		NULL,
+		0
+		);
+	IrNode * bazz = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"time",
+		2
+		);
+    fizz->physics = newtonApiGetPhysicsTypeByName(newton, fizz->token->identifier);
+	newtonApiAddLeaf(newton, rightTerm, fizz);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, rightTerm, mul);
+    bazz->physics = newtonApiGetPhysicsTypeByName(newton, bazz->token->identifier);
+	newtonApiAddLeaf(newton, rightTerm, bazz);
+
+	newtonApiAddLeaf(newton, root, leftTerm);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, root, add);
+	newtonApiAddLeaf(newton, root, rightTerm);
+
+	return root;
+}
+
+/*
+ * Constructs an example tree for the statement
+ * foo / bar + fizz / bazz = foo / bar + fizz / bazz, where
+ * charge foo, bar = 8;
+ * time fizz, bazz = 2;
+ *
+ */
+IrNode *
+makeSampleCorrectTestStatementElectricityCase()
+{
+    State * newton = newtonApiInit("../Examples/electricity.nt");
+	IrNode * root = genIrNode(newton,
+							  kNewtonIrNodeType_PquantityStatement,
+							  NULL,
+							  NULL,
+							  NULL);
+
+	newtonApiAddLeaf(newton,
+					 root,
+					 makeSampleCorrectTestExpressionElectricityCase()
+		);
+
+	newtonApiAddLeafWithChainingSeqNoLexer(newton,
+					 root,
+					 genIrNode(newton,
+							   kNewtonIrNodeType_Tequals,
+							   NULL,
+							   NULL,
+							   NULL)
+		);
+
+	newtonApiAddLeaf(newton,
+					 root,
+					 makeSampleCorrectTestExpressionElectricityCase()
+		);
+	return root;
+}
+
+/*
+ * Constructs an example tree for the expression
+ * foo / bar + fizz / bazz, where
+ * acceleration foo, bar = 8;
+ * time fizz, bazz = 2;
+ */
+IrNode *
+makeSampleCorrectTestExpressionElectricityCase()
+{
+    State * newton = newtonApiInit("../Examples/electricity.nt");
+	IrNode * root = genIrNode(newton,
+							  kNewtonIrNodeType_PquantityExpression,
+							  NULL,
+							  NULL,
+							  NULL);
+
+	IrNode * leftTerm = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_PquantityTerm,
+		NULL,
+		0
+		);
+	IrNode * foo = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"charge",
+		8
+		);
+	IrNode * div = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tdiv,
+		NULL,
+		0
+		);
+	IrNode * bar = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"time",
+		2
+		);
+    foo->physics = newtonApiGetPhysicsTypeByName(newton, foo->token->identifier);
+	newtonApiAddLeaf(newton, leftTerm, foo);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, leftTerm, div);
+    bar->physics = newtonApiGetPhysicsTypeByName(newton, bar->token->identifier);
+	newtonApiAddLeaf(newton, leftTerm, bar);
+
+	IrNode * add = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tplus,
+		NULL,
+		0
+		);
+	IrNode * rightTerm = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_PquantityTerm,
+		NULL,
+		0
+		);
+	IrNode * fizz = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"charge",
+		8
+		);
+	IrNode * div2 = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tdiv,
+		NULL,
+		0
+		);
+	IrNode * bazz = makeIrNodeSetValue(
+		newton,
+		kNewtonIrNodeType_Tidentifier,
+		"time",
+		2
+		);
+    fizz->physics = newtonApiGetPhysicsTypeByName(newton, fizz->token->identifier);
+	newtonApiAddLeaf(newton, rightTerm, fizz);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, rightTerm, div2);
+    bazz->physics = newtonApiGetPhysicsTypeByName(newton, bazz->token->identifier);
+	newtonApiAddLeaf(newton, rightTerm, bazz);
+
+	newtonApiAddLeaf(newton, root, leftTerm);
+	newtonApiAddLeafWithChainingSeqNoLexer(newton, root, add);
+	newtonApiAddLeaf(newton, root, rightTerm);
+
+	return root;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// setup for pressure_sensors.nt ///////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 IrNode *
@@ -302,7 +636,7 @@ makeSampleCorrectTestStatementPressureCase()
 
 	newtonApiAddLeaf(newton,
 					 root,
-					 makeSampleCorrectTestExpressionPendulumCase()
+					 makeSampleCorrectTestExpressionPressureCase()
 		);
 
 	newtonApiAddLeafWithChainingSeqNoLexer(newton,
@@ -316,7 +650,7 @@ makeSampleCorrectTestStatementPressureCase()
 
 	newtonApiAddLeaf(newton,
 					 root,
-					 makeSampleCorrectTestExpressionPendulumCase()
+					 makeSampleCorrectTestExpressionPressureCase()
 		);
 	return root;
 }
@@ -451,6 +785,7 @@ makeTestParameterTuplePendulumCase()
 	accelerationZ->physics = newtonApiGetPhysicsTypeByNameAndSubindex(newton, accelerationZ->token->identifier, 2);
 	accelerationZ->physics->subindex = 2;
 	newtonApiAddLeaf(newton, root, accelerationZ);
+
 	newtonApiNumberParametersZeroToN(newton, root);
 	return root;
 }

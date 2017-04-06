@@ -26,7 +26,7 @@ IrNode * makeSampleCorrectTestStatementPendulumCase();
 IrNode * makeSampleIncorrectTestExpressionPendulumCase();
 IrNode * makeSampleIncorrectTestStatementPendulumCase();
 
-/* These methods are for pendulum_acceleration.nt */
+/* These methods are for pressure_sensors.nt */
 IrNode * makeTestParameterTuplePressureCaseBoyles();
 IrNode * makeTestParameterTuplePressureCaseGayLussac();
 IrNode * makeTestParameterTuplePressureCaseAvogadro();
@@ -34,3 +34,12 @@ IrNode * makeSampleCorrectTestExpressionPressureCase();
 IrNode * makeSampleCorrectTestStatementPressureCase();
 IrNode * makeSampleIncorrectTestExpressionPressureCase();
 IrNode * makeSampleIncorrectTestStatementPressureCase();
+
+/* These methods are for electricity.nt */
+IrNode * makeTestParameterTupleElectricityCaseCurrent();
+IrNode * makeTestParameterTupleElectricityCaseCapacitance();
+IrNode * makeTestParameterTupleElectricityCasePower();
+IrNode * makeSampleCorrectTestExpressionElectricityCase();
+IrNode * makeSampleCorrectTestStatementElectricityCase();
+IrNode * makeSampleIncorrectTestExpressionElectricityCase();
+IrNode * makeSampleIncorrectTestStatementElectricityCase();

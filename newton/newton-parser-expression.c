@@ -345,8 +345,17 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
     if (peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
     {
         factor = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
-        factor->physics = deepCopyPhysicsNode(factor->physics);
         factor->value = factor->physics->value;
+
+		// TODO remove later
+		if (! strcmp(factor->token->identifier, "Y"))
+		{
+			assert(factor->physics->subindex == 1);
+		}
+		if (! strcmp(factor->token->identifier, "Z"))
+		{
+			assert(factor->physics->subindex == 2);
+		}
 
         assert(factor->tokenString != NULL);
 
@@ -354,20 +363,15 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
 		{
 			newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
 			newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
-			newtonParseResetPhysicsWithCorrectSubindex(
+			factor->physics = newtonParseResetPhysicsWithCorrectSubindex(
 				N,
-				factor,
+				factor->physics,
 				currentScope,
 				factor->token->identifier,
 				currentScope->currentSubindex);
 
 		}
 
-        /* Is a matchable parameter corresponding the invariant parameter */
-        if (!newtonIsDimensionless(factor->physics) && !factor->physics->isConstant && newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(N, N->newtonIrTopScope, factor->tokenString) == NULL && newtonPhysicsTablePhysicsForDimensionAlias(N, N->newtonIrTopScope, factor->tokenString) == NULL)
-        {
-          factor->parameterNumber = N->currentParameterNumber++;
-        }
     }
     else if (peekCheck(N, 1, kNewtonIrNodeType_Tnumber))
     {
@@ -391,13 +395,14 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
     {
         addLeaf(N, factor, newtonParseHighPrecedenceBinaryOp(N, currentScope));
 
+
         IrNode * exponentialExpression = newtonParseExponentialExpression(N, currentScope, factor);
 		assert(exponentialExpression->type == kNewtonIrNodeType_PquantityExpression);
         addLeafWithChainingSeq(N, factor, exponentialExpression);
 
-        if (factor->value != 0)
+		if (factor->physics != NULL)
 		{
-			factor->value = pow(factor->value, exponentialExpression->value);
+			newtonPhysicsMultiplyExponents(N, factor->physics, exponentialExpression->value);
 		}
     }
 
@@ -418,13 +423,13 @@ newtonParseExponentialExpression(State * N, Scope * currentScope, IrNode * baseN
         newtonParseNumericExpression(N, currentScope) :
         newtonParseInteger(N, currentScope);
 	addLeaf(N, expression, exponent);
-
-    baseNode->physics->value = pow(baseNode->physics->value, exponent->value);
-
-    /* If the base is a Physics quantity, the exponent must be an integer */
-    assert(exponent->value == (int) exponent->value);
 	expression->value = exponent->value;
-	newtonPhysicsMultiplyExponents(N, baseNode->physics, expression->value);
+
+	if (baseNode->physics != NULL)
+	{
+		/* If the base is a Physics quantity, the exponent must be an integer */
+		assert(exponent->value == (int) exponent->value);
+	}
 
     return expression;
 }

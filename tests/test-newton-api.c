@@ -152,12 +152,44 @@ char * test_newtonApiGetInvariantByParameters_Valid()
             "AccelerationRange"
 			)
 		);
+
+    newton = newtonApiInit("../Examples/pressure_sensors.nt");
+    mu_assert(
+        "test_newtonApiGetInvariantByParameters: the invariant is named Boyles Law",
+        !strcmp(
+            newtonApiGetInvariantByParameters(
+                newton,
+                newton->invariantList->parameterList
+				)->identifier,
+            "BoylesLaw"
+			)
+		);
+
+    newton = newtonApiInit("../Examples/electricity.nt");
+    mu_assert(
+        "test_newtonApiGetInvariantByParameters: the invariant is named currentRange",
+        !strcmp(
+            newtonApiGetInvariantByParameters(
+                newton,
+                newton->invariantList->parameterList
+				)->identifier,
+            "currentRange"
+			)
+		);
     return 0;
 }
 
 char * test_newtonCheckSingleInvariant()
 {
 	State * newton = newtonApiInit("../Examples/invariants.nt");
+	assert(
+	    numberOfConstraintsPassed(
+			newtonApiSatisfiesConstraints(
+				newton,
+				makeTestParameterTuple(newton)
+				)
+			) == 5
+		);
 	mu_assert(
 		"test_newtonCheckSingleInvariant invariants.nt: number passed should be 5",
 	    numberOfConstraintsPassed(
@@ -168,8 +200,16 @@ char * test_newtonCheckSingleInvariant()
 			) == 5
 		);
 
+	assert(numberOfConstraintsPassed(
+			   newtonApiSatisfiesConstraints(
+				   newtonApiInit("../Examples/pendulum_acceleration.nt"),
+				   makeTestParameterTuplePendulumCase()
+				   )
+			   ) == 4
+		);
+
 	mu_assert(
-		"test_newtonCheckSingleInvariant pendulum_acceleration.nt: number passed should be 4",
+		"test_newtonCheckSingleInvariant pendulum_acceleration.nt: number passed should be 3",
 	    numberOfConstraintsPassed(
 			newtonApiSatisfiesConstraints(
 				newtonApiInit("../Examples/pendulum_acceleration.nt"),
@@ -178,23 +218,6 @@ char * test_newtonCheckSingleInvariant()
 			) == 4
 		);
 
-	mu_assert(
-		"test_newtonCheckSingleInvariant pressure_sensors.nt Boyles: number passed should be 1",
-	    numberOfConstraintsPassed(
-			newtonApiSatisfiesConstraints(
-				newtonApiInit("../Examples/pressure_sensors.nt"),
-				makeTestParameterTuplePressureCaseBoyles()
-				)
-			) == 1
-		);
-	assert(
-	    numberOfConstraintsPassed(
-			newtonApiSatisfiesConstraints(
-				newtonApiInit("../Examples/pressure_sensors.nt"),
-				makeTestParameterTuplePressureCaseGayLussac()
-				)
-			) == 1
-		);
 	mu_assert(
 		"test_newtonCheckSingleInvariant pressure_sensors.nt Gay Lussac: number passed should be 1",
 	    numberOfConstraintsPassed(
@@ -205,13 +228,59 @@ char * test_newtonCheckSingleInvariant()
 			) == 1
 		);
 	mu_assert(
-		"test_newtonCheckSingleInvariant pressure_sensors.nt Avogadro: number passed should be 1",
+		"test_newtonCheckSingleInvariant pressure_sensors.nt Avogadro: number passed should be 0",
 	    numberOfConstraintsPassed(
 			newtonApiSatisfiesConstraints(
 				newtonApiInit("../Examples/pressure_sensors.nt"),
 				makeTestParameterTuplePressureCaseAvogadro()
 				)
 			) == 0
+		);
+
+    assert(
+	    numberOfConstraintsPassed(
+			newtonApiSatisfiesConstraints(
+				newtonApiInit("../Examples/electricity.nt"),
+				makeTestParameterTupleElectricityCaseCurrent()
+				)
+			) == 0
+            );
+	mu_assert(
+		"test_newtonCheckSingleInvariant electricity.nt currentRange: number passed should be 0",
+	    numberOfConstraintsPassed(
+			newtonApiSatisfiesConstraints(
+				newtonApiInit("../Examples/electricity.nt"),
+				makeTestParameterTupleElectricityCaseCurrent()
+				)
+			) == 0
+		);
+
+    assert(
+	    numberOfConstraintsPassed(
+			newtonApiSatisfiesConstraints(
+				newtonApiInit("../Examples/electricity.nt"),
+				makeTestParameterTupleElectricityCaseCapacitance()
+				)
+			) == 1
+            );
+	mu_assert(
+		"test_newtonCheckSingleInvariant electricity.nt capacitanceRange: number passed should be 1",
+	    numberOfConstraintsPassed(
+			newtonApiSatisfiesConstraints(
+				newtonApiInit("../Examples/electricity.nt"),
+				makeTestParameterTupleElectricityCaseCapacitance()
+				)
+			) == 1
+		);
+
+	mu_assert(
+		"test_newtonCheckSingleInvariant electricity.nt powerRange: number passed should be 1",
+	    numberOfConstraintsPassed(
+			newtonApiSatisfiesConstraints(
+				newtonApiInit("../Examples/electricity.nt"),
+				makeTestParameterTupleElectricityCasePower()
+				)
+			) == 1
 		);
 	return 0;
 }

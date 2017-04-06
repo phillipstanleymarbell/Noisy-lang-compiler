@@ -35,29 +35,21 @@ amount : signal =
 
 area : signal =
 {
-        name = "square meter" English
-        symbol = "m^2";
         derivation = distance ** 2;
 }
 
 volume : signal =
 {
-        name = "cube meter" English
-        symbol = "m^3";
         derivation = distance ** 3;
 }
 
 speed : signal =
 {
-        name = "MegaSpeed" English
-        symbol = "MegS";
         derivation = distance / time;
 }
 
 acceleration : signal =
 {
-        name = "MegaAcceleration" English
-        symbol = "MegA";
         derivation = speed / time;
 }
 

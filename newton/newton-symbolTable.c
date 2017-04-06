@@ -514,7 +514,7 @@ newtonPhysicsTablePhysicsForIdentifierAndSubindex(State *  N, Scope *  scope, co
 		curPhysics = curPhysics->next;
 	}
 
-	return newtonPhysicsTablePhysicsForIdentifier(N, scope->parent, identifier);
+	return newtonPhysicsTablePhysicsForIdentifierAndSubindex(N, scope->parent, identifier, subindex);
 }
 
 Physics *

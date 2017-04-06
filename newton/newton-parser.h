@@ -61,9 +61,9 @@ newtonParseCompareOp(State * N, Scope * currentScope);
 bool
 newtonIsDimensionless(Physics * physics);
 
-void newtonParseResetPhysicsWithCorrectSubindex(
+Physics * newtonParseResetPhysicsWithCorrectSubindex(
 	State * N,
-	IrNode * node,
+	Physics * physics,
 	Scope * scope,
 	char * identifier,
 	int subindex);
@@ -77,6 +77,12 @@ newtonGetPhysicsId(State * N, Physics * physics);
 
 char *
 newtonParseGetPhysicsTypeStringByBoundIdentifier(State * N, IrNode * root, char* boundVariableIdentifier);
+
+int
+newtonParseGetPhysicsSubindexByBoundIdentifier(State * N, IrNode * root, char* boundVariableIdentifier);
+
+int
+newtonParseGetParameterNumberByBoundIdentifier(State * N, IrNode * parameterRoot, char* boundVariableIdentifier);
 
 /* TODO currently this is unused... remove if still unused */
 char *

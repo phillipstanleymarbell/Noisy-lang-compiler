@@ -23,7 +23,7 @@
 
 	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+	LIMITED TO, THE IMPLIED WARRANTIES OF factorMERCHANTABILITY AND FITNESS
 	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
 	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
@@ -453,14 +453,13 @@ checkQuantityTerm(
 		errorMessage,
         report
     );
+	bool noFactorHasValueSet = leftFactor->value == 0;
 
 	if (unaryOp != NULL)
 	{
 		*containsUnaryOp = true;
 		leftFactor->value *= -1;
 	}
-
-	bool noFactorHasValueSet = leftFactor->value == 0;
 
     int midBinOpIndex = 0;
     IrNode* midBinOpNode = findNthIrNodeOfTypes(
@@ -492,7 +491,7 @@ checkQuantityTerm(
 			errorMessage,
             report
         );
-		noFactorHasValueSet = noFactorHasValueSet && (rightFactor->value == 0);
+		noFactorHasValueSet = noFactorHasValueSet && rightFactor->value == 0;
 
 		/* checking for high precedence binop just sets the values by multiplying or dividing */
         newtonCheckBinOp(N, leftFactor, rightFactor, midBinOpNode->type, report);
@@ -537,27 +536,33 @@ checkQuantityFactor(
       factorIndex
   );
 
-  if (!newtonIsDimensionless(factor->physics) && !factor->physics->isConstant && newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(N, N->newtonIrTopScope, factor->tokenString) == NULL && newtonPhysicsTablePhysicsForDimensionAlias(N, N->newtonIrTopScope, factor->tokenString) == NULL)
+    if (!newtonIsDimensionless(factor->physics) && !factor->physics->isConstant && newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(N, N->newtonIrTopScope, factor->tokenString) == NULL && newtonPhysicsTablePhysicsForDimensionAlias(N, N->newtonIrTopScope, factor->tokenString) == NULL)
 	{
-	  /*
-	   * Suppose the caller of the API has supplied a IrNode Tidentifier "L" with numeric value 5.
-	   * The constraint is L < 2 * meter.
-	   *
-	   * Currently, searching the symbol table for a unit returns that IrNode with its corresponding Physics struct.
-	   * A matching parameter must correspond to the Physics struct bound by the token string (e.g. L : distance),
-	   * but we do not want to raise an error a node that just is a unit (e.g. meter), not a Physics.
-	   */
+		/*
+		 * Suppose the caller of the API has supplied a IrNode Tidentifier "L" with numeric value 5.
+		 * The constraint is L < 2 * meter.
+		 *
+		 * Currently, searching the symbol table for a unit returns that IrNode with its corresponding Physics struct.
+		 * A matching parameter must correspond to the Physics struct bound by the token string (e.g. L : distance),
+		 * but we do not want to raise an error a node that just is a unit (e.g. meter), not a Physics.
+		 */
 		IrNode * matchingParameter = newtonParseFindNodeByParameterNumberAndSubindex(N, parameterTreeRoot, factor->parameterNumber, factor->physics->subindex);
-	  if (matchingParameter == NULL)
-		{
-		  sprintf(report->dimensionErrorMessage, "newton-check-pass.c:checkQuantityFactor: did not find a parameter with physics id %llu", factor->physics->id);
 
-		  fatal(N, "newton-check-pass.c:checkQuantity: matchingParameter is null\n");
-		  return;
-		}
-	  else
+		if (matchingParameter == NULL)
 		{
-		  factor->value = matchingParameter->value;
+			sprintf(report->dimensionErrorMessage, "newton-check-pass.c:checkQuantityFactor: did not find a parameter with physics id %llu", factor->physics->id);
+
+			fatal(N, "newton-check-pass.c:checkQuantity: matchingParameter is null\n");
+		}
+		else
+		{
+            // TODO remove later
+            if (!strcmp(N->fileName, "../Examples/electricity.nt") && !strcmp(factor->tokenString, "Ca"))
+            {
+                assert(matchingParameter->value == 1);
+            }
+
+			factor->value = matchingParameter->value;
 		}
 	}
 
@@ -600,34 +605,34 @@ checkQuantityFactor(
 	int expressionIndex = 0;
 	while  (highBinOpNode != NULL)
 	{
-	  strcat(errorMessage, gNewtonTokenDescriptions[highBinOpNode->type]);
-	  strcat(errorMessage, "(");
+		strcat(errorMessage, gNewtonTokenDescriptions[highBinOpNode->type]);
+		strcat(errorMessage, "(");
 
-	  IrNode* expression = findNthIrNodeOfType(
-                                                   N,
-                                                   factorRoot,
-                                                   kNewtonIrNodeType_PquantityExpression,
-                                                   expressionIndex
-                                                   );
+		IrNode* expression = findNthIrNodeOfType(
+			N,
+			factorRoot,
+			kNewtonIrNodeType_PquantityExpression,
+			expressionIndex
+			);
 
-      expressionIndex++;
-	  checkQuantityExpression(N,
-                              expression,
-                              parameterTreeRoot,
-							  errorMessage,
-                              report);
+		expressionIndex++;
+		checkQuantityExpression(N,
+								expression,
+								parameterTreeRoot,
+								errorMessage,
+								report);
 
-	  strcat(errorMessage, ")");
+		strcat(errorMessage, ")");
 
-      newtonCheckBinOp(N, factor, expression, highBinOpNode->type, report);
+		newtonCheckBinOp(N, factor, expression, highBinOpNode->type, report);
 
-	  highBinOpNode = findNthIrNodeOfTypes(
-                                         N,
-                                         factorRoot,
-                                         kNewtonIrNodeType_PhighPrecedenceBinaryOp,
-                                         gNewtonFirsts,
-                                         highBinOpIndex
-                                         );
-	  highBinOpIndex++;
+		highBinOpNode = findNthIrNodeOfTypes(
+			N,
+			factorRoot,
+			kNewtonIrNodeType_PhighPrecedenceBinaryOp,
+			gNewtonFirsts,
+			highBinOpIndex
+			);
+		highBinOpIndex++;
 	}
 }
