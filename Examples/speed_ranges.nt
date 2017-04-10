@@ -1,0 +1,86 @@
+time : signal =
+{
+    name = "minute" English
+    symbol = "m";
+    derivation = none;
+}
+
+time : signal =
+{
+    name = "second" English
+    symbol = "s";
+    derivation = none;
+}
+
+distance : signal(i: 0 to 2) =
+{
+        name = "meter" English
+        symbol = "m";
+        derivation = none;
+}
+
+mass : signal =
+{
+        name = "kilogram" English
+        symbol = "kg";
+        derivation = none;
+}
+
+speed : signal(i: 0 to 2) =
+{
+        derivation = distance@i / second;
+}
+
+acceleration : signal(i: 0 to 2) =
+{
+        derivation = speed@i / second;
+}
+
+force : signal(i: 0 to 2) = 
+{
+        name = "Newton" English
+        symbol = "N" ;
+        derivation = mass * acceleration@i;
+}
+
+Pi : constant = 3.14159;
+
+r / time * N * m / r
+N * m / time
+
+angular_displacement : signal = 
+{
+    name = "radian" English
+    symbol = "rad";
+    derivation = none;
+}
+
+angular_velocity : signal =
+{
+    derivation = angular_displacement / time;
+}
+
+torque : signal(i: 0 to 2) = 
+{
+        name = "Joule" English
+        symbol = "J";
+        derivation = force * distance@i / angular_displacement;
+}
+
+power : signal = 
+{
+    name = "Watts" English
+    symbol = "W";
+    derivation = torque * angular_velocity;
+}
+
+VelocityRange : invariant(engine_velocity: angular_velocity, ) = 
+{
+    engine_velocity < 18000 * r / m
+}
+
+
+
+
+
+

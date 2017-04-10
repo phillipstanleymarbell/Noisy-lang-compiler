@@ -1,0 +1,76 @@
+time : signal =
+{
+        name = "second" English
+        symbol = "s";
+        derivation = none;
+}
+
+mass : signal =
+{
+        name = "kilogram" English
+        symbol = "kg";
+        derivation = none;
+}
+
+distance : signal =
+{
+        name = "meter" English
+        symbol = "m";
+        derivation = none;
+}
+
+temperature : signal =
+{
+        name = "Kelvin" English
+        symbol = "K";
+        derivation = none;
+}
+
+amount : signal =
+{
+        name = "mole" English
+        symbol = "mol";
+        derivation = none;
+}
+
+area : signal =
+{
+        derivation = distance ** 2;
+}
+
+volume : signal =
+{
+        derivation = distance ** 3;
+}
+
+speed : signal =
+{
+        derivation = distance / time;
+}
+
+acceleration : signal =
+{
+        derivation = speed / time;
+}
+
+force : signal = 
+{
+        name = "Newton" English
+        symbol = "N" ;
+        derivation = mass * acceleration;
+}
+
+pressure: signal = 
+{
+        name = "Pascal" English
+        symbol = "Pa" ;
+        derivation = force / area;
+}
+
+
+TirePressureRange: invariant(tire_pressure: pressure) =
+{
+    tire_pressure > 206843 * Pa,
+    tire_pressure < 241317 * Pa
+}
+

@@ -1,0 +1,14 @@
+temperature : signal = 
+{
+        name = "Celsius" English
+        symbol = "C";
+        derivation = none;
+}
+
+EngineTemperatureRange : invariant(engine_temperature: temperature) =
+{
+    engine_temperature < 90,
+    engine_temperature > -50
+}
+
+

@@ -1,0 +1,13 @@
+temperature : signal = 
+{
+        name = "Celsius" English
+        symbol = "C";
+        derivation = none;
+}
+
+TransmissionTemperatureRange : invariant(transmission_temperature: temperature) =
+{
+    transmission_temperature < 90,
+    transmission_temperature > -50
+}
+
