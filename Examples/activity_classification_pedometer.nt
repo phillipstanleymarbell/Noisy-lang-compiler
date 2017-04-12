@@ -57,12 +57,12 @@ angular_velocity : signal =
     derivation = angular_displacement / time;
 }
 
-# TODO https://github.com/phillipstanleymarbell/Noisy-lang-compiler/issues/114
-torque : signal(i: 0 to 2) = 
+# TODO Newton baseSignal does not yet support a multiple index.
+torque : signal(i: 0 to 2, j: 0 to 2) = 
 {
         name = "Joule" English
         symbol = "J";
-        derivation = force * distance@i / angular_displacement@i;
+        derivation = force * distance@i / angular_displacement@j;
 }
 
 power : signal = 
@@ -72,14 +72,44 @@ power : signal =
     derivation = torque * angular_velocity;
 }
 
+charge : signal =
+{
+        name = "Coulomb" English
+        symbol = "C";
+        derivation = none;
+}
+
+current : signal = 
+{
+    name = "Ampere" English
+    symbol = "A";
+    derivation = charge / time;
+}
+
+magnetic_field : signal(i: 0 to 2) =
+{
+    name = "Tesla" English
+    symbol = "T";
+    derivation = force / (distance@i * current@i);
+}
+
+TimeBetweenSensors: constant = 5 * 10 ** -6 * s;
+
+# Tolerance will be used by Newton as default in proportionality comparison as an epsilon
+# Hardware manufacturer must define this constant.
+Tolerance: constant = 10 ** -5; 
+
 accelerationAndGyro : invariant(
-    x: speed@0, 
-    y: speed@1, 
-    z: speed@2, 
+    x: acceleration@0, 
+    y: acceleration@1, 
+    z: acceleration@2, 
     row: angular_velocity@0, 
     pitch: angular_velocity@1, 
-    yaw: angular_velocity@2) = 
+    yaw: angular_velocity@2,
+    time: 
+    ) = 
 {
-    (x ** 2 + y ** 2 + z ** 2) @< (row ** 2 + pitch ** 2 + yaw ** 2)
+    ((x * TimeBetweenSensors) ** 2 + (y * TimeBetweenSensors) ** 2 + (z * TimeBetweenSensors) ** 2) @< (row ** 2 + pitch ** 2 + yaw ** 2)
 }
+
 

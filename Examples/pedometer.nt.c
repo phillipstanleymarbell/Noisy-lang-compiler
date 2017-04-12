@@ -10,6 +10,11 @@
 #define SAMPLE_SIZE 50 
 #define PRECISION_THRESHOLD 0.1
 
+/*
+ * Let this variable be the result of Newton API call NewtonAPIReport->satisfiesDimensionConstraint && NewtonAPIReport->satisfiesValueConstraint
+ */
+bool INVALID = false;
+
 enum RegulationMode { SEARCHING, FOUNDOUT };
 
 void run_step_counter()
@@ -39,7 +44,7 @@ void run_step_counter()
 
         dynamic_threshold = get_dynamic_threshold(samples, sample_size);
 
-        if (samples[most_recent_index] < samples_old && samples[most_recent_index] < dynamic_threshold)
+        if (! INVALID && samples[most_recent_index] < samples_old && samples[most_recent_index] < dynamic_threshold)
         {
             time step_duration = sample_time - last_recorded;
 
@@ -77,9 +82,9 @@ time get_new_sample_results_and_filter(
     acceleration new_sample = read_from_x_accelerometer() + read_from_y_accelerometer() + read_from_z_accelerometer(); 
 
     /*
-     * Here, the compiler writer will take in a list of sensors. Newton will keep check of
+     * Here, Newton will have access to a list of sensors. Newton will keep check of
      * the values read for each sensor. Each sensor values will be evaluated for Newton invariant preservation 
-     * at every read.
+     * at every read. set the global variable INVALID if invariant not satisfied.
      */
 
     if (abs(samples[most_recent_index] - new_sample) > threshold)
