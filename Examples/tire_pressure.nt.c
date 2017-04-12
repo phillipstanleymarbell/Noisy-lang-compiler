@@ -4,7 +4,7 @@
 
 void step_on_gas_pedal()
 {
-    float additional_acceleration = read_from_gas_pedal_signal();
+    acceleration additional_acceleration = read_from_gas_pedal_signal();
 
     /*
      * Do some accelerating stuff here

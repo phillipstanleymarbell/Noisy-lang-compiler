@@ -1,0 +1,85 @@
+time : signal =
+{
+    name = "minute" English
+    symbol = "m";
+    derivation = none;
+}
+
+time : signal =
+{
+    name = "second" English
+    symbol = "s";
+    derivation = none;
+}
+
+distance : signal(i: 0 to 2) =
+{
+        name = "meter" English
+        symbol = "m";
+        derivation = none;
+}
+
+mass : signal =
+{
+        name = "kilogram" English
+        symbol = "kg";
+        derivation = none;
+}
+
+speed : signal(i: 0 to 2) =
+{
+        derivation = distance@i / second;
+}
+
+acceleration : signal(i: 0 to 2) =
+{
+        derivation = speed@i / second;
+}
+
+force : signal(i: 0 to 2) = 
+{
+        name = "Newton" English
+        symbol = "N" ;
+        derivation = mass * acceleration@i;
+}
+
+Pi : constant = 3.14159;
+
+angular_displacement : signal(i: 0 to 2) = 
+{
+    name = "radian" English
+    symbol = "rad";
+    derivation = none;
+}
+
+angular_velocity : signal =
+{
+    derivation = angular_displacement / time;
+}
+
+# TODO Newton baseSignal does not yet support a multiple index.
+torque : signal(i: 0 to 2, j: 0 to 2) = 
+{
+        name = "Joule" English
+        symbol = "J";
+        derivation = force * distance@i / angular_displacement@j;
+}
+
+power : signal = 
+{
+    name = "Watts" English
+    symbol = "W";
+    derivation = torque * angular_velocity;
+}
+
+accelerationAndGyro : invariant(
+    x: speed@0, 
+    y: speed@1, 
+    z: speed@2, 
+    row: angular_velocity@0, 
+    pitch: angular_velocity@1, 
+    yaw: angular_velocity@2) = 
+{
+    (x ** 2 + y ** 2 + z ** 2) @< (row ** 2 + pitch ** 2 + yaw ** 2)
+}
+
