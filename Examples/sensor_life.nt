@@ -1,0 +1,68 @@
+time : signal = {
+    name = "second" English
+    symbol = "s";
+    derivation = none;
+}
+
+temperature: signal(i: 0 to 17) = {
+    name = "Celsius" English
+    symbol = "C";
+    derivation = none;
+}
+
+maxTemp: constant = 120 * C;
+SamplingTime: constant = 5 * 10 ** -3 * s;
+
+tempInRange: invariant(
+    neighborTempNW: temperature@0,
+    neighborTempN: temperature@1,
+    neighborTempNE: temperature@2,
+    neighborTempE: temperature@3,
+    neighborTempW: temperature@4,
+    neighborTempSW: temperature@5,
+    neighborTempS: temperature@6,
+    neighborTempSE: temperature@7,
+    selfTemp: temperature@8
+) = {
+    neighborTempNW < maxTemp,
+    neighborTempN < maxTemp,
+    neighborTempNE < maxTemp,
+    neighborTempE < maxTemp,
+    neighborTempW < maxTemp,
+    neighborTempSW < maxTemp,
+    neighborTempS < maxTemp,
+    neighborTempSE < maxTemp,
+    selfTemp < maxTemp
+}
+
+temperatureRedundancy: invariant(
+    neighborTempNW1: temperature@0,
+    neighborTempN1: temperature@1,
+    neighborTempNE1: temperature@2,
+    neighborTempE1: temperature@3,
+    neighborTempW1: temperature@4,
+    neighborTempSW1: temperature@5,
+    neighborTempS1: temperature@6,
+    neighborTempSE1: temperature@7,
+    selfTemp1: temperature@8,
+    neighborTempNW2: temperature@9,
+    neighborTempN2: temperature@10,
+    neighborTempNE2: temperature@11,
+    neighborTempE2: temperature@12,
+    neighborTempW2: temperature@13,
+    neighborTempSW2: temperature@14,
+    neighborTempS2: temperature@15,
+    neighborTempSE2: temperature@16,
+    selfTemp2: temperature@17
+) = {
+    neighborTempNW1 ~ neighborTempNW2,
+    neighborTempN1 ~ neighborTempN2,
+    neighborTempNE1 ~ neighborTempNE2,
+    neighborTempE1 ~ neighborTempE2,
+    neighborTempW1 ~ neighborTempW2,
+    neighborTempSW1 ~ neighborTempSW2,
+    neighborTempS1 ~ neighborTempS2,
+    neighborTempSE1 ~ neighborTempSE2,
+    selfTemp1 ~ selfTemp2
+}
+

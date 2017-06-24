@@ -1,0 +1,100 @@
+time : signal =
+{
+        name = "second" English
+        symbol = "s";
+        derivation = none;
+}
+
+distance : signal =
+{
+        name = "meter" English
+        symbol = "m";
+        derivation = none;
+}
+
+speed : signal =
+{
+        derivation = distance / time;
+}
+
+acceleration : signal =
+{
+        derivation = speed / time;
+}
+
+force : signal = 
+{
+        name = "Newton" English
+        symbol = "N" ;
+        derivation = mass * acceleration;
+}
+
+charge : signal =
+{
+        name = "Coulomb" English
+        symbol = "C";
+        derivation = none;
+}
+
+current : signal = 
+{
+    name = "Ampere" English
+    symbol = "A";
+    derivation = charge / time;
+}
+
+CoulombsLawConstant: constant = 9 * 10 ** 9 * N * m ** 2 / C ** 2;
+
+voltage : signal = 
+{
+    name = "Voltage" English
+    symbol = "V";
+    derivation = CoulombsLawConstant * charge / distance;
+}
+
+capacitance : signal = 
+{
+    name = "Farad" English
+    symbol = "F";
+    derivation = charge / voltage;
+}
+
+storedEnergy : signal = 
+{
+    name = "Joule" English
+    symbol = "J";
+    derivation = 0.5 * charge / voltage;
+}
+
+power : signal = 
+{
+    name = "Watts" English
+    symbol = "W";
+    derivation = current * voltage;
+}
+
+resistance : signal = 
+{
+    name = "Ohms" English
+    symbol = "Omega";
+    derivation = voltage / current;
+}
+
+currentRange : invariant(I: current) = 
+{
+    I < 5 * 10 ** -3 * A;
+}
+
+capacitanceRange : invariant(C: capacitance) = 
+{
+    C < 6 * F;
+}
+
+powerRange : invariant(I: current, R: resistance) = 
+{
+    I * R < 100 * W;
+}
+
+
+
+

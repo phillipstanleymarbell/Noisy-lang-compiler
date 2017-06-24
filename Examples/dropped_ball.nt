@@ -1,0 +1,52 @@
+time : signal = {
+    name = "second" English
+    symbol = "s";
+    derivation = none;
+}
+
+mass : signal = {
+    name = "kilogram" English
+    symbol = "kg";
+    derivation = none;
+}
+
+distance : signal(i: 0 to 2) = {
+    name = "meter" English
+    symbol = "m";
+    derivation = none;
+}
+
+speed : signal(i: 0 to 2) = {
+    derivation = distance / time;
+}
+
+acceleration : signal(i: 0 to 2) = {
+    derivation = speed / time;
+}
+
+force : signal(i: 0 to 2) = {
+    name = "Newton" English
+    symbol = "N" ;
+    derivation = mass * acceleration@i;
+}
+
+energy: signal(i: 0 to 2) = {
+    name = "Joule" English
+    symbol = "J";
+    derivation = force@i * distance;
+}
+
+g : constant = 9.8 * m * s ** -2;
+SamplingTime: constant = 5 * 10 ** -3 * s;
+initialHeight: constant = 10 * m;
+myMass: constant = 1 * kg;
+
+mechanicalEnergyDecreasing: invariant (
+    h: distance@2,
+    x: acceleration@0,
+    y: acceleration@1,
+    z: acceleration@2
+) = {
+    myMass * g * initialHeight > myMass * g * h + 0.5 * myMass * ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) - 10 * J
+}
+

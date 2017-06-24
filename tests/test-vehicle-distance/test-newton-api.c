@@ -60,6 +60,7 @@
 #include "minunit.h"
 #include "test-utils.h"
 #include "test-newton-api.h"
+#include "probes.h"
 
 extern int tests_run;
 
@@ -67,39 +68,32 @@ extern int tests_run;
 
 char * test_newtonApiInit_notNull()
 {
+    NEWTON_NEWTON_START();
 	mu_assert(
         "test_newtonApiInit_notNull: newtonApiInit returns NULL!",
-        newtonApiInit("../Examples/invariants.nt") != NULL
+        newtonApiInit("../../Examples/vehicle_distance.nt") != NULL
     );
+    NEWTON_NEWTON_DONE();
     return 0;
 }
 
 char * test_newtonApiInit_notNullInvariant()
 {
-    State* newton = newtonApiInit("../Examples/invariants.nt");
+    State* newton = newtonApiInit("../../Examples/step_counter.nt");
 	mu_assert(
-        "test_newtonApiInit_notNullInvariant: invariantList for invariants.nt is NULL!",
+        "test_newtonApiInit_notNullInvariant: invariantList for step_counter.nt is NULL!",
          newton->invariantList != NULL
     );
 
-    newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
-	mu_assert(
-        "test_newtonApiInit_notNullInvariant: invariantList is pendulum_acceleration.nt is NULL!",
-		newton->invariantList != NULL
-		);
     return 0;
 }
 
 char * test_newtonApiGetPhysicsTypeByNameAndSubindex_Valid()
 {
-    State* newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+    State* newton = newtonApiInit("../../Examples/step_counter.nt");
     mu_assert(
         "newtonApiGetPhysicsTypeByNameAndSubindex: distance on Y axis not found",
         newtonApiGetPhysicsTypeByNameAndSubindex(newton, "distance", 1) != NULL
-		);
-    mu_assert(
-        "newtonApiGetPhysicsTypeByNameAndSubindex: acceleration on Z axis not found",
-        newtonApiGetPhysicsTypeByNameAndSubindex(newton, "acceleration", 2) != NULL
 		);
 
     return 0;
@@ -107,7 +101,8 @@ char * test_newtonApiGetPhysicsTypeByNameAndSubindex_Valid()
 
 char * test_newtonApiGetPhysicsTypeByName_Valid()
 {
-    State* newton = newtonApiInit("../Examples/invariants.nt");
+    State* newton = newtonApiInit("../../Examples/step_counter.nt");
+
     mu_assert(
         "newtonApiGetPhysicsTypeByName: distance not found",
         !strcmp(
@@ -115,6 +110,7 @@ char * test_newtonApiGetPhysicsTypeByName_Valid()
             "distance"
         )
     );
+
     mu_assert(
         "newtonApiGetPhysicsTypeByName: acceleration not found",
         !strcmp(
@@ -128,7 +124,7 @@ char * test_newtonApiGetPhysicsTypeByName_Valid()
 
 char * test_newtonApiGetInvariantByParameters_Valid()
 {
-    State* newton = newtonApiInit("../Examples/invariants.nt");
+    State* newton = newtonApiInit("../../Examples/invariants.nt");
 
     mu_assert(
         "test_newtonApiGetInvariantByParameters: the invariant is named SimplePendulum",
@@ -141,7 +137,7 @@ char * test_newtonApiGetInvariantByParameters_Valid()
         )
     );
 
-    newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+    newton = newtonApiInit("../../Examples/pendulum_acceleration.nt");
     mu_assert(
         "test_newtonApiGetInvariantByParameters: the invariant is named AccelerationRange",
         !strcmp(
@@ -157,7 +153,7 @@ char * test_newtonApiGetInvariantByParameters_Valid()
 
 char * test_newtonCheckSingleInvariant()
 {
-	State * newton = newtonApiInit("../Examples/invariants.nt");
+	State * newton = newtonApiInit("../../Examples/invariants.nt");
 	mu_assert(
 		"test_newtonCheckSingleInvariant invariants.nt: number passed should be 5",
 	    numberOfConstraintsPassed(
@@ -172,7 +168,7 @@ char * test_newtonCheckSingleInvariant()
 		"test_newtonCheckSingleInvariant pendulum_acceleration.nt: number passed should be 4",
 	    numberOfConstraintsPassed(
 			newtonApiSatisfiesConstraints(
-				newtonApiInit("../Examples/pendulum_acceleration.nt"),
+				newtonApiInit("../../Examples/pendulum_acceleration.nt"),
 				makeTestParameterTuplePendulumCase()
 				)
 			) == 4
@@ -182,7 +178,7 @@ char * test_newtonCheckSingleInvariant()
 		"test_newtonCheckSingleInvariant pressure_sensors.nt Boyles: number passed should be 1",
 	    numberOfConstraintsPassed(
 			newtonApiSatisfiesConstraints(
-				newtonApiInit("../Examples/pressure_sensors.nt"),
+				newtonApiInit("../../Examples/pressure_sensors.nt"),
 				makeTestParameterTuplePressureCaseBoyles()
 				)
 			) == 1
@@ -190,7 +186,7 @@ char * test_newtonCheckSingleInvariant()
 	assert(
 	    numberOfConstraintsPassed(
 			newtonApiSatisfiesConstraints(
-				newtonApiInit("../Examples/pressure_sensors.nt"),
+				newtonApiInit("../../Examples/pressure_sensors.nt"),
 				makeTestParameterTuplePressureCaseGayLussac()
 				)
 			) == 1
@@ -199,7 +195,7 @@ char * test_newtonCheckSingleInvariant()
 		"test_newtonCheckSingleInvariant pressure_sensors.nt Gay Lussac: number passed should be 1",
 	    numberOfConstraintsPassed(
 			newtonApiSatisfiesConstraints(
-				newtonApiInit("../Examples/pressure_sensors.nt"),
+				newtonApiInit("../../Examples/pressure_sensors.nt"),
 				makeTestParameterTuplePressureCaseGayLussac()
 				)
 			) == 1
@@ -208,7 +204,7 @@ char * test_newtonCheckSingleInvariant()
 		"test_newtonCheckSingleInvariant pressure_sensors.nt Avogadro: number passed should be 1",
 	    numberOfConstraintsPassed(
 			newtonApiSatisfiesConstraints(
-				newtonApiInit("../Examples/pressure_sensors.nt"),
+				newtonApiInit("../../Examples/pressure_sensors.nt"),
 				makeTestParameterTuplePressureCaseAvogadro()
 				)
 			) == 0
@@ -218,7 +214,7 @@ char * test_newtonCheckSingleInvariant()
 
 char * test_newtonApiDimensionCheckTree()
 {
-	State * newton = newtonApiInit("../Examples/invariants.nt");
+	State * newton = newtonApiInit("../../Examples/invariants.nt");
 
 	ConstraintReport* report = newtonApiDimensionCheckTree(newton, makeSampleCorrectTestStatement());
 	assert(report->satisfiesDimensionConstraint);
@@ -234,7 +230,7 @@ char * test_newtonApiDimensionCheckTree()
 		!report->satisfiesDimensionConstraint
 		);
 
-	newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+	newton = newtonApiInit("../../Examples/pendulum_acceleration.nt");
 	report = newtonApiDimensionCheckTree(newton, makeSampleCorrectTestStatementPendulumCase());
 	assert(report->satisfiesDimensionConstraint);
 	mu_assert(
@@ -249,7 +245,7 @@ char * test_newtonApiDimensionCheckTree()
 		!report->satisfiesDimensionConstraint
 		);
 
-	newton = newtonApiInit("../Examples/pressure_sensors.nt");
+	newton = newtonApiInit("../../Examples/pressure_sensors.nt");
 	report = newtonApiDimensionCheckTree(newton, makeSampleCorrectTestStatementPressureCase());
 	assert(report->satisfiesDimensionConstraint);
 	mu_assert(
@@ -276,7 +272,7 @@ char * test_newtonApiDimensionCheckTree()
 char * test_newtonApiPhysicsTypeUsageExample()
 {
     State * noisy = init(kNoisyModeDefault);
-    State * newton = newtonApiInit("../Examples/invariants.nt");
+    State * newton = newtonApiInit("../../Examples/invariants.nt");
 
     IrNode * distanceNode = makeIrNodeSetValue(
         noisy,
@@ -300,7 +296,7 @@ char * test_newtonApiPhysicsTypeUsageExample()
         distanceNode->physics->id != timeNode->physics->id
     );
 
-    newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+    newton = newtonApiInit("../../Examples/pendulum_acceleration.nt");
     distanceNode->physics = newtonApiGetPhysicsTypeByName(newton, distanceNode->token->identifier);
     timeNode->physics = newtonApiGetPhysicsTypeByName(newton, timeNode->token->identifier);
 
@@ -324,7 +320,7 @@ char * test_newtonApiPhysicsTypeUsageExample()
         0.0
 		);
 
-    newton = newtonApiInit("../Examples/pressure_sensors.nt");
+    newton = newtonApiInit("../../Examples/pressure_sensors.nt");
     pressure->physics = newtonApiGetPhysicsTypeByName(newton, pressure->token->identifier);
     temperature->physics = newtonApiGetPhysicsTypeByName(newton, temperature->token->identifier);
 
@@ -339,7 +335,7 @@ char * test_newtonApiPhysicsTypeUsageExample()
 
 char * test_newtonApiNumberParametersZeroToN()
 {
-	State * newton = newtonApiInit("../Examples/invariants.nt");
+	State * newton = newtonApiInit("../../Examples/invariants.nt");
 	IrNode* parameterTree = makeTestParameterTuple(newton);
 	mu_assert(
 		"test_newtonApiNumberParametersZeroToN: the first left child should have number of 0",

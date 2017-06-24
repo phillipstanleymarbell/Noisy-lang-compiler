@@ -1,0 +1,60 @@
+time : signal = {
+    name = "second" English
+    symbol = "s";
+    derivation = none;
+}
+
+mass : signal = {
+    name = "kilogram" English
+    symbol = "kg";
+    derivation = none;
+}
+
+mass_flow_rate: signal = {
+    name = "mDot" English
+    symbol = "mDot";
+    derivation = mass / time;
+}
+
+distance : signal = {
+    name = "meter" English
+    symbol = "m";
+    derivation = none;
+}
+
+area : signal = {
+    derivation = distance ** 2;
+}
+
+speed : signal = {
+    derivation = distance / time;
+}
+
+acceleration : signal = {
+    derivation = speed / time;
+}
+
+force : signal = {
+    name = "Newton" English
+    symbol = "N" ;
+    derivation = mass * acceleration;
+}
+
+pressure: signal = {
+    name = "Pascal" English
+    symbol = "Pa" ;
+    derivation = force / area;
+}
+
+SamplingTime: constant = 5 * 10 ** -3 * s;
+
+MooreGreitzerJetEngineModel: invariant(
+    x: mass_flow_rate,
+    y: pressure
+) = 
+{
+    x * kg ** 2 * s ** 4 ~ -y * kg ** 3 * s ** 3 / Pa - 1.5 * (x * SamplingTime) ** 2 * kg * s ** 3  - 0.5 * (x * SamplingTime) ** 3 * s ** 3 - 0.5 * kg ** 3 * s ** 3,
+    y / SamplingTime * kg ~ 3 * x * Pa - y * kg / s 
+}
+
+

@@ -1,0 +1,12 @@
+time : signal = 
+{
+        name = "second" English
+        symbol = "s";
+        derivation = none;
+}
+
+
+Sample: invariant(t: time) = 
+{
+    t < 1 * s
+}

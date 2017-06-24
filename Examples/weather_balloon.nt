@@ -1,0 +1,70 @@
+time : signal = {
+    name = "time" English
+    symbol = "s";
+    derivation = none;
+}
+
+distance: signal = {
+    name = "meter" English
+    symbol = "m";
+    derivation = none;
+}
+
+mass : signal = {
+    name = "kilogram" English
+    symbol = "kg";
+    derivation = none;
+}
+
+temperature : signal = {
+    name = "Kelvin" English
+    symbol = "K";
+    derivation = none;
+}
+
+area : signal = {
+    derivation = distance ** 2;
+}
+
+speed : signal = {
+    derivation = distance / time;
+}
+
+acceleration : signal = {
+    derivation = speed / time;
+}
+
+force : signal =  {
+    name = "Newton" English
+    symbol = "N" ;
+    derivation = mass * acceleration;
+}
+
+pressure: signal =  {
+    name = "Pascal" English
+    symbol = "Pa" ;
+    derivation = force / area;
+}
+
+groundpressure: constant = 101325 * Pa;
+groundtemp: constant = 288.15 * K;
+
+# http://home.anadolu.edu.tr/~mcavcar/common/ISAweb.pdf
+altitudeAndPressureTroposphere: invariant(
+    altitude: distance, 
+    airpressure: pressure, 
+    groundtemp: temperature
+) = {
+    airpressure > groundpressure * (1 - 0.0065 * (altitude * K) / ((groundtemp + 273.15 * K) * m)) ** 5.2561 - 200 * Pa,
+    airpressure < groundpressure * (1 - 0.0065 * (altitude * K) / ((groundtemp + 273.15 * K) * m)) ** 5.2561 + 200 * Pa
+}
+
+# http://home.anadolu.edu.tr/~mcavcar/common/ISAweb.pdf
+altitudeAndTemperatureTroposphere: invariant(
+    altitude: distance, 
+    airtemp: temperature
+) = {
+    airtemp > groundtemp - 6.5 * K * altitude / (1000 * m) - 8 * K, # 8 * K == error tolerance
+    airtemp < groundtemp - 6.5 * K * altitude / (1000 * m) + 8 * K
+}
+

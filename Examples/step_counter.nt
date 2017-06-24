@@ -1,0 +1,84 @@
+time : signal = {
+    name = "second" English
+    symbol = "s";
+    derivation = none;
+}
+
+distance : signal(i: 0 to 5) = {
+    name = "meter" English
+    symbol = "m";
+    derivation = none;
+}
+
+speed : signal(i: 0 to 5) = {
+    derivation = distance@i / time;
+}
+
+acceleration : signal(i: 0 to 5) = {
+    derivation = speed@i / time;
+}
+
+angular_displacement : signal(i: 0 to 5) = {
+    name = "radian" English
+    symbol = "rad";
+    derivation = none;
+}
+
+angular_velocity : signal(i: 0 to 5) = {
+    derivation = angular_displacement / time;
+}
+
+SamplingTime : constant = 5 * 10 ** -4 * s;
+
+maximumAcceleration: invariant(
+    x: acceleration@0, 
+    y: acceleration@1, 
+    z: acceleration@2
+) = {
+    x < 9.5 * m / s ** 2,
+    x > - 9.5 * m / s ** 2,
+    y < 9.5 * m / s ** 2,
+    y > - 9.5 * m / s ** 2,
+    z < 9.5 * m / s ** 2,
+    z > - 9.5 * m / s ** 2
+}
+
+accelerationAndGyro : invariant(
+    x: acceleration@0, 
+    y: acceleration@1, 
+    z: acceleration@2, 
+    row: angular_velocity@0, 
+    pitch: angular_velocity@1, 
+    yaw: angular_velocity@2
+) = {
+	# rectangular integration estimation
+    ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) / (row ** 2 + pitch ** 2 + yaw ** 2) < 2 * m,
+    (row ** 2 + pitch ** 2 + yaw ** 2) / ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) > 0.1 * m
+}
+
+accelerationRedundancy: invariant (
+    x1: acceleration@0, 
+    y1: acceleration@1, 
+    z1: acceleration@2, 
+    x2: acceleration@3, 
+    y2: acceleration@4, 
+    z2: acceleration@5
+) = {
+    x1 ~ x2,
+    y1 ~ y2,
+    z1 ~ z2
+}
+
+gyroRedundancy: invariant (
+    x1: angular_velocity@0, 
+    y1: angular_velocity@1, 
+    z1: angular_velocity@2, 
+    x2: angular_velocity@3, 
+    y2: angular_velocity@4, 
+    z2: angular_velocity@5
+) = {
+    x1 ~ x2,
+    y1 ~ y2,
+    z1 ~ z2
+}
+

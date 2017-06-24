@@ -66,7 +66,7 @@
 IrNode *
 makeTestParameterTuplePressureCaseBoyles()
 {
-    State * newton = newtonApiInit("../Examples/pressure_sensors.nt");
+    State * newton = newtonApiInit("../../Examples/pressure_sensors.nt");
 	IrNode *	root = genIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
 								 NULL /* left child */,
 								 NULL /* right child */,
@@ -97,7 +97,7 @@ makeTestParameterTuplePressureCaseBoyles()
 IrNode *
 makeTestParameterTuplePressureCaseGayLussac()
 {
-    State * newton = newtonApiInit("../Examples/pressure_sensors.nt");
+    State * newton = newtonApiInit("../../Examples/pressure_sensors.nt");
 	IrNode *	root = genIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
 								 NULL /* left child */,
 								 NULL /* right child */,
@@ -128,7 +128,7 @@ makeTestParameterTuplePressureCaseGayLussac()
 IrNode *
 makeTestParameterTuplePressureCaseAvogadro()
 {
-    State * newton = newtonApiInit("../Examples/pressure_sensors.nt");
+    State * newton = newtonApiInit("../../Examples/pressure_sensors.nt");
 	IrNode *	root = genIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
 								 NULL /* left child */,
 								 NULL /* right child */,
@@ -165,7 +165,7 @@ makeTestParameterTuplePressureCaseAvogadro()
 IrNode *
 makeSampleIncorrectTestStatementPressureCase()
 {
-    State * newton = newtonApiInit("../Examples/pressure_sensors.nt");
+    State * newton = newtonApiInit("../../Examples/pressure_sensors.nt");
 	IrNode * root = genIrNode(newton,
 							  kNewtonIrNodeType_PquantityStatement,
 							  NULL,
@@ -203,7 +203,7 @@ makeSampleIncorrectTestStatementPressureCase()
 IrNode *
 makeSampleIncorrectTestExpressionPressureCase()
 {
-    State * newton = newtonApiInit("../Examples/pressure_sensors.nt");
+    State * newton = newtonApiInit("../../Examples/pressure_sensors.nt");
 	IrNode * root = genIrNode(newton,
 							  kNewtonIrNodeType_PquantityExpression,
 							  NULL,
@@ -293,7 +293,7 @@ makeSampleIncorrectTestExpressionPressureCase()
 IrNode *
 makeSampleCorrectTestStatementPressureCase()
 {
-    State * newton = newtonApiInit("../Examples/pressure_sensors.nt");
+    State * newton = newtonApiInit("../../Examples/pressure_sensors.nt");
 	IrNode * root = genIrNode(newton,
 							  kNewtonIrNodeType_PquantityStatement,
 							  NULL,
@@ -330,7 +330,7 @@ makeSampleCorrectTestStatementPressureCase()
 IrNode *
 makeSampleCorrectTestExpressionPressureCase()
 {
-    State * newton = newtonApiInit("../Examples/pressure_sensors.nt");
+    State * newton = newtonApiInit("../../Examples/pressure_sensors.nt");
 	IrNode * root = genIrNode(newton,
 							  kNewtonIrNodeType_PquantityExpression,
 							  NULL,
@@ -417,7 +417,7 @@ makeSampleCorrectTestExpressionPressureCase()
 IrNode *
 makeTestParameterTuplePendulumCase()
 {
-    State * newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+    State * newton = newtonApiInit("../../Examples/pendulum_acceleration.nt");
 	IrNode *	root = genIrNode(newton,	kNewtonIrNodeType_PparameterTuple,
 								 NULL /* left child */,
 								 NULL /* right child */,
@@ -465,7 +465,7 @@ makeTestParameterTuplePendulumCase()
 IrNode *
 makeSampleIncorrectTestStatementPendulumCase()
 {
-    State * newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+    State * newton = newtonApiInit("../../Examples/pendulum_acceleration.nt");
 	IrNode * root = genIrNode(newton,
 							  kNewtonIrNodeType_PquantityStatement,
 							  NULL,
@@ -502,7 +502,7 @@ makeSampleIncorrectTestStatementPendulumCase()
 IrNode *
 makeSampleIncorrectTestExpressionPendulumCase()
 {
-    State * newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+    State * newton = newtonApiInit("../../Examples/pendulum_acceleration.nt");
 	IrNode * root = genIrNode(newton,
 							  kNewtonIrNodeType_PquantityExpression,
 							  NULL,
@@ -596,7 +596,7 @@ makeSampleIncorrectTestExpressionPendulumCase()
 IrNode *
 makeSampleCorrectTestStatementPendulumCase()
 {
-    State * newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+    State * newton = newtonApiInit("../../Examples/pendulum_acceleration.nt");
 	IrNode * root = genIrNode(newton,
 							  kNewtonIrNodeType_PquantityStatement,
 							  NULL,
@@ -633,7 +633,7 @@ makeSampleCorrectTestStatementPendulumCase()
 IrNode *
 makeSampleCorrectTestExpressionPendulumCase()
 {
-    State * newton = newtonApiInit("../Examples/pendulum_acceleration.nt");
+    State * newton = newtonApiInit("../../Examples/pendulum_acceleration.nt");
 	IrNode * root = genIrNode(newton,
 							  kNewtonIrNodeType_PquantityExpression,
 							  NULL,
@@ -731,7 +731,7 @@ makeSampleCorrectTestExpressionPendulumCase()
 IrNode *
 makeSampleIncorrectTestStatement()
 {
-    State * newton = newtonApiInit("../Examples/invariants.nt");
+    State * newton = newtonApiInit("../../Examples/invariants.nt");
 	IrNode * root = genIrNode(newton,
 							  kNewtonIrNodeType_PquantityStatement,
 							  NULL,
@@ -768,7 +768,7 @@ makeSampleIncorrectTestStatement()
 IrNode *
 makeSampleIncorrectTestExpression()
 {
-    State * newton = newtonApiInit("../Examples/invariants.nt");
+    State * newton = newtonApiInit("../../Examples/invariants.nt");
 	IrNode * root = genIrNode(newton,
 							  kNewtonIrNodeType_PquantityExpression,
 							  NULL,
@@ -858,7 +858,7 @@ makeSampleIncorrectTestExpression()
 IrNode *
 makeSampleCorrectTestStatement()
 {
-    State * newton = newtonApiInit("../Examples/invariants.nt");
+    State * newton = newtonApiInit("../../Examples/invariants.nt");
 	IrNode * root = genIrNode(newton,
 							  kNewtonIrNodeType_PquantityStatement,
 							  NULL,
@@ -895,7 +895,7 @@ makeSampleCorrectTestStatement()
 IrNode *
 makeSampleCorrectTestExpression()
 {
-    State * newton = newtonApiInit("../Examples/invariants.nt");
+    State * newton = newtonApiInit("../../Examples/invariants.nt");
 	IrNode * root = genIrNode(newton,
 							  kNewtonIrNodeType_PquantityExpression,
 							  NULL,

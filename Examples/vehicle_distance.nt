@@ -1,0 +1,46 @@
+time : signal = {
+    name = "time" English
+    symbol = "s";
+    derivation = none;
+}
+
+distance : signal = {
+    name = "meter" English
+    symbol = "m";
+    derivation = none;
+}
+
+speed : signal = {
+    derivation = distance / time;
+}
+
+acceleration : signal = {
+        derivation = speed / time;
+}
+
+angular_displacement : signal = {
+        name = "radian" English
+        symbol = "rad";
+        derivation = none;
+}
+
+angular_velocity : signal = {
+        derivation = angular_displacement / time / 60;
+}
+
+TimeBetweenSensors: constant = 5 * 10 ** -6 * s;
+ReferenceDistance: constant = 1.3 * m;
+
+keepDistance: invariant(
+    x: distance 
+) = {
+    x > ReferenceDistance
+}
+
+velocityBound: invariant(
+    distance_to_prev_car: distance,
+    current_speed: speed
+) = {
+    distance_to_prev_car - ReferenceDistance > current_speed * TimeBetweenSensors
+}
+

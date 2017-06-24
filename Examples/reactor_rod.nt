@@ -1,0 +1,27 @@
+time : signal =
+{
+    name = "second" English
+    symbol = "s";
+    derivation = none;
+}
+
+temperature : signal(i: 0 to 1) =
+{
+    name = "Celsius" English
+    symbol = "C";
+    derivation = none;
+}
+
+maxCoolingTime: constant = 50000 * s;
+NewtonsLawConstant: constant = 3 / s;
+targetCoolingTemperature: constant = 30 * C;
+
+# if we can't cool in max amount of time, something has gone wrong.
+RodCooling: invariant(
+    rodTemp: temperature@0,
+    waterTemp: temperature@1
+) =
+{
+    rodTemp - NewtonsLawConstant * (rodTemp - waterTemp) * maxCoolingTime <= targetCoolingTemperature
+}
+

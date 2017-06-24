@@ -1,0 +1,47 @@
+time : signal = {
+    name = "second" English
+    symbol = "s";
+    derivation = none;
+}
+
+distance: signal(i: 0 to 5) =  {
+    name = "meter" English
+    symbol = "m";
+    derivation = none;
+}
+
+speed : signal(i: 0 to 5) = {
+    derivation = distance@i / time;
+}
+
+acceleration : signal(i: 0 to 5) = {
+    derivation = speed / time;
+}
+
+mass : signal = {
+    name = "kilogram" English
+    symbol = "kg";
+    derivation = none;
+}
+
+SamplingTime: constant = 5 * 10 ** -5 * s;
+
+GPSAndAccelerometerMatch : invariant (
+    ds: distance@3,
+    v: speed
+) = {
+    # double rectangular integration estimation
+    ds > v - 1 * m / s,
+    ds < v + 1 * m / s
+}
+
+GPSRedundancy: invariant(
+    x1: distance@0,
+    y1: distance@1,
+    x2: distance@3,
+    y2: distance@4
+) = {
+    x1 ~ x2,
+    y1 ~ y2
+}
+

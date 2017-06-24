@@ -30,7 +30,7 @@ extern int tests_run;
 
 char * test_newtonGetPhysicsId()
 {
-    State* newton = newtonApiInit("../Examples/invariants.nt");
+    State* newton = newtonApiInit("../../Examples/invariants.nt");
     mu_assert(
         "test_newtonGetPhysicsId: first Physics struct should have the first prime number as id",
         newtonApiGetPhysicsTypeByName(newton, "time")->id == 2
@@ -61,7 +61,7 @@ char * test_newtonGetPhysicsId()
 
 char * test_newtonGetInvariantIdByParameters()
 {
-    State* newton = newtonApiInit("../Examples/invariants.nt");
+    State* newton = newtonApiInit("../../Examples/invariants.nt");
 
     mu_assert(
         "test_newtonGetInvariantIdByParameters: invariant id should be distance * time",

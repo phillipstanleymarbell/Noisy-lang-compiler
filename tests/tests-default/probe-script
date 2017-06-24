@@ -1,0 +1,4 @@
+dtrace -o probes.h -h -s probes.d;
+make clean; make;
+sudo dtrace -s timing.d -c /Users/jonathanlim/Documents/Compiler/Noisy_philip/tests/tests-default/test-darwin-EN 
+

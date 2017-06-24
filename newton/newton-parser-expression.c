@@ -257,7 +257,6 @@ newtonParseQuantityTerm(State * N, Scope * currentScope)
     }
 
     bool hasNumberInTerm = false;
-    bool isPhysics /*not a number*/ = peekCheck(N, 1, kNewtonIrNodeType_Tidentifier);
     IrNode * leftFactor = newtonParseQuantityFactor(N, currentScope);
     addLeafWithChainingSeq(N, intermediate, leftFactor);
     hasNumberInTerm = hasNumberInTerm || leftFactor->physics == NULL || leftFactor->physics->isConstant;
@@ -268,7 +267,7 @@ newtonParseQuantityTerm(State * N, Scope * currentScope)
 
     int numVectorsInTerm = 0;
 
-    if (isPhysics)
+    if (!newtonIsDimensionless(leftFactor->physics))
     {
 		assert(leftFactor->physics != NULL);
 		newtonPhysicsAddExponents(N, intermediate->physics, leftFactor->physics);
@@ -290,8 +289,8 @@ newtonParseQuantityTerm(State * N, Scope * currentScope)
         IrNode * binOp = newtonParseMidPrecedenceBinaryOp(N, currentScope);
         addLeafWithChainingSeq(N, intermediate, binOp);
 
-        bool isPhysics = peekCheck(N, 1, kNewtonIrNodeType_Tidentifier);
         rightFactor = newtonParseQuantityFactor(N, currentScope);
+
         addLeafWithChainingSeq(N, intermediate, rightFactor);
         hasNumberInTerm = hasNumberInTerm || leftFactor->physics == NULL || leftFactor->physics->isConstant;
 
@@ -308,7 +307,7 @@ newtonParseQuantityTerm(State * N, Scope * currentScope)
           }
 
         // TODO double check this logic when I'm more awake
-        if (isPhysics && rightFactor->physics->isVector)
+        if (!newtonIsDimensionless(rightFactor->physics) && rightFactor->physics->isVector)
         {
             intermediate->physics->isVector = true;
             numVectorsInTerm++;
@@ -321,11 +320,11 @@ newtonParseQuantityTerm(State * N, Scope * currentScope)
             assert(numVectorsInTerm < 2);
         }
 
-        if (isPhysics && binOp->type == kNewtonIrNodeType_Tmul)
+        if (!newtonIsDimensionless(rightFactor->physics) && binOp->type == kNewtonIrNodeType_Tmul)
         {
 			newtonPhysicsAddExponents(N, intermediate->physics, rightFactor->physics);
         }
-        else if (isPhysics && binOp->type == kNewtonIrNodeType_Tdiv)
+        else if (!newtonIsDimensionless(rightFactor->physics) && binOp->type == kNewtonIrNodeType_Tdiv)
         {
 			newtonPhysicsSubtractExponents(N, intermediate->physics, rightFactor->physics);
         }
@@ -419,12 +418,18 @@ newtonParseExponentialExpression(State * N, Scope * currentScope, IrNode * baseN
         newtonParseInteger(N, currentScope);
 	addLeaf(N, expression, exponent);
 
-    baseNode->physics->value = pow(baseNode->physics->value, exponent->value);
+	expression->value = exponent->value;
 
     /* If the base is a Physics quantity, the exponent must be an integer */
-    assert(exponent->value == (int) exponent->value);
-	expression->value = exponent->value;
-	newtonPhysicsMultiplyExponents(N, baseNode->physics, expression->value);
+	if (!newtonIsDimensionless(baseNode->physics))
+	{
+	    baseNode->physics->value = pow(baseNode->physics->value, expression->value);
+		newtonPhysicsMultiplyExponents(N, baseNode->physics, expression->value);
+
+		/* Can't raise a dimension to a non integer value*/
+		assert(exponent->value == (int) exponent->value);
+	}
+
 
     return expression;
 }
