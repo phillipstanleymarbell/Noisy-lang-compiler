@@ -11,8 +11,6 @@ mass : signal = {
 }
 
 mass_flow_rate: signal = {
-    name = "mDot" English
-    symbol = "mDot";
     derivation = mass / time;
 }
 
@@ -53,7 +51,7 @@ MooreGreitzerJetEngineModel: invariant(
     y: pressure
 ) = 
 {
-    x * kg ** 2 * s ** 4 ~ -y * kg ** 3 * s ** 3 / Pa - 1.5 * (x * SamplingTime) ** 2 * kg * s ** 3  - 0.5 * (x * SamplingTime) ** 3 * s ** 3 - 0.5 * kg ** 3 * s ** 3,
+    x * kg ** 2 * s ** 4 > -y * kg ** 3 * s ** 3 / Pa - 1.5 * (x * SamplingTime) ** 2 * kg * s ** 3  - 0.5 * (x * SamplingTime) ** 3 * s ** 3 - 0.5 * kg ** 3 * s ** 3,
     y / SamplingTime * kg ~ 3 * x * Pa - y * kg / s 
 }
 
