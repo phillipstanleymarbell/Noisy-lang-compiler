@@ -31,8 +31,8 @@ GPSAndAccelerometerMatch : invariant (
     v: speed
 ) = {
     # double rectangular integration estimation
-    ds > v - 1 * m / s,
-    ds < v + 1 * m / s
+    ds > v * SamplingTime - 1 * m,
+    ds < v * SamplingTime + 1 * m
 }
 
 GPSRedundancy: invariant(
