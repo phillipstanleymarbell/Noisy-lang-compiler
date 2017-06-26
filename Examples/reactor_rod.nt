@@ -13,8 +13,8 @@ temperature : signal(i: 0 to 1) =
 }
 
 maxCoolingTime: constant = 50000 * s;
-NewtonsLawConstant: constant = 3 / s;
-targetCoolingTemperature: constant = 30 * C;
+NewtonsLawConstant: constant = 0.5 / s;
+targetCoolingTemperature: constant = 70 * C;
 
 # if we can't cool in max amount of time, something has gone wrong.
 RodCooling: invariant(
