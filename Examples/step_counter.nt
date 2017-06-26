@@ -52,8 +52,8 @@ accelerationAndGyro : invariant(
     yaw: angular_velocity@2
 ) = {
 	# rectangular integration estimation
-    ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) / (row ** 2 + pitch ** 2 + yaw ** 2) < 2 * m,
-    (row ** 2 + pitch ** 2 + yaw ** 2) / ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) > 0.1 * m
+    ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) / (row ** 2 + pitch ** 2 + yaw ** 2) < (2 * m / rad) ** 2,
+    (row ** 2 + pitch ** 2 + yaw ** 2) / ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) > (0.1 * rad / m) ** 2
 }
 
 accelerationRedundancy: invariant (

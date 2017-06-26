@@ -246,13 +246,12 @@ newtonParseParameterTuple(State * N, Scope * currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
 
   int parameterNumber = 0;
-  addLeaf(N, node, newtonParseParameter(N, currentScope, parameterNumber));
+  addLeaf(N, node, newtonParseParameter(N, currentScope, parameterNumber++));
 
   while (peekCheck(N, 1, kNewtonIrNodeType_Tcomma))
     {
       newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
-      addLeafWithChainingSeq(N, node, newtonParseParameter(N, currentScope, parameterNumber));
-      parameterNumber++;
+      addLeafWithChainingSeq(N, node, newtonParseParameter(N, currentScope, parameterNumber++));
     }
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 

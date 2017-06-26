@@ -91,6 +91,7 @@ int gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
                                                                  kNewtonIrNodeType_Tnumber,
                                                                  kNewtonIrNodeType_Tidentifier,
                                                                  kNewtonIrNodeType_TleftParen,
+                                                                 kNewtonIrNodeType_PquantityExpression,
                                                                  kNoisyIrNodeTypeMax
                                                             },
             [kNewtonIrNodeType_PquantityTerm ]            = {
