@@ -175,7 +175,7 @@ char * test_newtonCheckSingleInvariant()
 		);
 
 	mu_assert(
-		"test_newtonCheckSingleInvariant invariants.nt: number passed should be 5",
+		"test_newtonCheckSingleInvariant invariants.nt: number passed should be 2",
 	    numberOfConstraintsPassed(report) == 2
 		);
 

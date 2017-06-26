@@ -5,7 +5,5 @@ char * test_newtonApiGetPhysicsTypeByName_Valid();
 char * test_newtonApiPhysicsTypeUsageExample();
 char * test_newtonCheckSingleInvariant();
 char * test_newtonApiNumberParametersZeroToN();
-char * tests_newtonApiDimensionCheckTree();
-char * test_newtonApiDimensionCheckTree();
 char * test_newtonApiGetPhysicsTypeByNameAndSubindex_Valid();
 
