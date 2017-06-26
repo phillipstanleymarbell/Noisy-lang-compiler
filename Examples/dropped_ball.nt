@@ -47,6 +47,6 @@ mechanicalEnergyDecreasing: invariant (
     y: acceleration@1,
     z: acceleration@2
 ) = {
-    myMass * g * initialHeight > myMass * g * h + 0.5 * myMass * ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) - 10 * J
+    myMass * g * initialHeight / SamplingTime >= myMass * g * h / SamplingTime + 0.5 * myMass * (x ** 2 + y ** 2 + z ** 2) * s - 10 * J / SamplingTime
 }
 

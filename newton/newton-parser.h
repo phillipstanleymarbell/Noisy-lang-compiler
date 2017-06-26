@@ -75,19 +75,15 @@ newtonGetInvariantIdByParameters(State * N, IrNode * parameterTreeRoot, unsigned
 int
 newtonGetPhysicsId(State * N, Physics * physics);
 
-char *
-newtonParseGetPhysicsTypeStringByBoundIdentifier(State * N, IrNode * root, char* boundVariableIdentifier);
+Physics * 
+newtonParseGetPhysicsByBoundIdentifier(State * N, IrNode * root, char* boundVariableIdentifier);
 
-/* TODO currently this is unused... remove if still unused */
-char *
-newtonParseGetIdentifierByBoundPhysicsString(State * N, IrNode * root, char* physicsTypeString);
 
 IrNode *
 newtonParseFindNodeByPhysicsId(State *N, IrNode * root, int physicsId);
 
-/* TODO don't think this is used... remove if still unused */
 IrNode *
-newtonParseFindNodeByTokenString(State *N, IrNode * root, char* tokenString);
+newtonParseFindParameterByTokenString(State *N, IrNode * parameterTreeRoot, char* tokenString);
 
 IrNode *
 newtonParseFindNodeByParameterNumberAndSubindex(State *N, IrNode * root, int parameterNumber, int subindex);

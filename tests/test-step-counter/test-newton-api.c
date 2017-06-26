@@ -102,11 +102,6 @@ char * test_newtonApiGetPhysicsTypeByNameAndSubindex_Valid()
 		);
 
     mu_assert(
-        "fuck boi",
-		false
-		);
-
-    mu_assert(
         "newtonApiGetPhysicsTypeByNameAndSubindex: angular_velocity on second Z axis not found",
         newtonApiGetPhysicsTypeByNameAndSubindex(newton, "angular_velocity", 5) != NULL
 		);

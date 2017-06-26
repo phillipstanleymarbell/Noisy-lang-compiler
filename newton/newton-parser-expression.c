@@ -362,14 +362,23 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
 
 		}
 
+		if (!strcmp(factor->token->identifier, "y"))
+			assert(true);
+
         /* Is a matchable parameter corresponding the invariant parameter */
-        //if (!newtonIsDimensionless(factor->physics) &&
-		//	!factor->physics->isConstant &&
-		//	newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(N, N->newtonIrTopScope, factor->tokenString) == NULL &&
-		//	newtonPhysicsTablePhysicsForDimensionAlias(N, N->newtonIrTopScope, factor->tokenString) == NULL)
-        //{
-        //    factor->parameterNumber = N->currentParameterNumber++;
-        //}
+        if (!newtonIsDimensionless(factor->physics) &&
+			!factor->physics->isConstant &&
+			newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(N, N->newtonIrTopScope, factor->tokenString) == NULL &&
+			newtonPhysicsTablePhysicsForDimensionAlias(N, N->newtonIrTopScope, factor->tokenString) == NULL &&
+			currentScope->invariantParameterList)
+        {
+			IrNode* matchingParameter = newtonParseFindParameterByTokenString(
+				N,
+				currentScope->invariantParameterList,
+				factor->token->identifier
+				);
+			factor->parameterNumber = matchingParameter->parameterNumber;
+        }
     }
     else if (peekCheck(N, 1, kNewtonIrNodeType_Tnumber))
     {

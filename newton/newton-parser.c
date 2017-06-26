@@ -642,23 +642,28 @@ newtonParseFindNodeByParameterNumberAndSubindex(State *N, IrNode * root, int par
 }
 
 IrNode *
-newtonParseFindNodeByTokenString(State *N, IrNode * root, char * tokenString)
+newtonParseFindParameterByTokenString(State *N, IrNode * root, char* tokenString)
 {
-	if (root->token && !strcmp(root->token->identifier, tokenString))
+    if (root->type == kNewtonIrNodeType_Pparameter)
     {
-		return root;
+        assert(root->irLeftChild != NULL && root->irRightChild != NULL);
+		if (!strcmp(root->irLeftChild->tokenString, tokenString))
+        {
+			assert(root->irRightChild->physics != NULL);
+			return root;
+        }
     }
 
 	IrNode* targetNode = NULL;
 
 	if (root->irLeftChild != NULL)
-		targetNode = newtonParseFindNodeByTokenString(N, root->irLeftChild, tokenString);
+		targetNode = newtonParseFindParameterByTokenString(N, root->irLeftChild, tokenString);
 
 	if (targetNode != NULL)
 		return targetNode;
 
 	if (root->irRightChild != NULL)
-		targetNode = newtonParseFindNodeByTokenString(N, root->irRightChild, tokenString);
+		targetNode = newtonParseFindParameterByTokenString(N, root->irRightChild, tokenString);
 
 	if (targetNode != NULL)
 		return targetNode;
@@ -666,39 +671,8 @@ newtonParseFindNodeByTokenString(State *N, IrNode * root, char * tokenString)
 	return targetNode;
 }
 
-char *
-newtonParseGetIdentifierByBoundPhysicsString(State * N, IrNode * root, char* physicsTypeString)
-{
-    // do DFS and find the node whose right child node has given identifier
-    // and return the left node's identifier
-    if (root->type == kNewtonIrNodeType_Pparameter)
-    {
-        assert(root->irLeftChild != NULL && root->irRightChild != NULL);
-        if (!strcmp(root->irRightChild->tokenString, physicsTypeString))
-        {
-            return root->irLeftChild->tokenString;
-        }
-    }
-
-    char * stringResult = "";
-
-    if (root->irLeftChild != NULL)
-        stringResult = newtonParseGetIdentifierByBoundPhysicsString(N, root->irLeftChild, physicsTypeString);
-
-    if (strcmp(stringResult, ""))
-        return stringResult;
-
-    if (root->irRightChild != NULL)
-        stringResult = newtonParseGetIdentifierByBoundPhysicsString(N, root->irRightChild, physicsTypeString);
-
-    if (strcmp(stringResult, ""))
-        return stringResult;
-
-    return "";
-}
-
-char *
-newtonParseGetPhysicsTypeStringByBoundIdentifier(State * N, IrNode * root, char* boundVariableIdentifier)
+Physics* 
+newtonParseGetPhysicsByBoundIdentifier(State * N, IrNode * root, char* boundVariableIdentifier)
 {
     // do DFS and find the node whose left child node has given identifier
     // and return the right node's identifier
@@ -707,26 +681,26 @@ newtonParseGetPhysicsTypeStringByBoundIdentifier(State * N, IrNode * root, char*
         assert(root->irLeftChild != NULL && root->irRightChild != NULL);
 		if (!strcmp(root->irLeftChild->tokenString, boundVariableIdentifier))
         {
-			assert(root->irRightChild->tokenString != NULL);
-            return root->irRightChild->tokenString;
+			assert(root->irRightChild->physics != NULL);
+            return root->irRightChild->physics;
         }
     }
 
-    char * stringResult = "";
+	Physics* result = NULL;
 
     if (root->irLeftChild != NULL)
-        stringResult = newtonParseGetPhysicsTypeStringByBoundIdentifier(N, root->irLeftChild, boundVariableIdentifier);
+        result = newtonParseGetPhysicsByBoundIdentifier(N, root->irLeftChild, boundVariableIdentifier);
 
-    if (strcmp(stringResult, ""))
-        return stringResult;
+    if (result != NULL)
+        return result;
 
     if (root->irRightChild != NULL)
-        stringResult = newtonParseGetPhysicsTypeStringByBoundIdentifier(N, root->irRightChild, boundVariableIdentifier);
+        result = newtonParseGetPhysicsByBoundIdentifier(N, root->irRightChild, boundVariableIdentifier);
 
-    if (strcmp(stringResult, ""))
-        return stringResult;
+    if (result != NULL)
+        return result;
 
-    return "";
+    return NULL;
 }
 
 /*
@@ -791,11 +765,11 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 
     if (physicsSearchResult == NULL)
     {
-        char * physicsTypeString = newtonParseGetPhysicsTypeStringByBoundIdentifier(N, scope->invariantParameterList, t->identifier);
-        if ((physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, physicsTypeString)) == NULL)
-        {
-            physicsSearchResult = newtonPhysicsTablePhysicsForDimensionAlias(N, scope, physicsTypeString);
-        }
+		// TODO remove later
+		if (!strcmp(t->identifier, "h")) {
+			assert(true);
+		}
+        physicsSearchResult = newtonParseGetPhysicsByBoundIdentifier(N, scope->invariantParameterList, t->identifier);
     }
 
 	assert(physicsSearchResult != NULL);

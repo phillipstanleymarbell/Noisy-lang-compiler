@@ -11,7 +11,6 @@
 #include "common-timeStamps.h"
 #include "data-structures.h"
 #include "newton-data-structures.h"
-#include "newton-parser.h"
 #include "newton-parser-expression.h"
 #include "newton-lexer.h"
 #include "newton-symbolTable.h"
@@ -19,7 +18,6 @@
 
 #include "minunit.h"
 #include "test-driver.h"
-#include "test-newton-parser.h"
 #include "test-newton-api.h"
 #include "test-common.h"
 
@@ -32,14 +30,7 @@ char * all_tests()
     mu_run_test(test_newtonApiGetInvariantByParameters_Valid);
     mu_run_test(test_newtonApiGetPhysicsTypeByName_Valid);
 
-    mu_run_test(test_newtonGetPhysicsId);
-    mu_run_test(test_newtonGetInvariantIdByParameters);
-    mu_run_test(test_newtonApiPhysicsTypeUsageExample);
-    mu_run_test(test_testNthIrNodeOfType);
-    mu_run_test(test_testNthIrNodeOfTypes);
     mu_run_test(test_newtonCheckSingleInvariant);
-    mu_run_test(test_newtonApiNumberParametersZeroToN);
-    mu_run_test(test_newtonApiDimensionCheckTree);
     mu_run_test(test_newtonApiGetPhysicsTypeByNameAndSubindex_Valid);
 
     return 0;
