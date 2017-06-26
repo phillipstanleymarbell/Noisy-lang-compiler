@@ -52,9 +52,9 @@ SafetyCheck: invariant(
     seatPressure: pressure,
     passengerTemp: temperature
 ) = {
-    seatPressure > 0,
-    passengerTemp > 34,
-    passengerTemp < 39
+    seatPressure > 0 * Pa,
+    passengerTemp > 34 * C,
+    passengerTemp < 39 * C
 }
 
 SpeedCheck: invariant(
