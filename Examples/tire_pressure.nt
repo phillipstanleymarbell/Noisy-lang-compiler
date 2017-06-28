@@ -16,18 +16,6 @@ distance : signal = {
     derivation = none;
 }
 
-temperature : signal = {
-    name = "Kelvin" English
-    symbol = "K";
-    derivation = none;
-}
-
-amount : signal = {
-    name = "mole" English
-    symbol = "mol";
-    derivation = none;
-}
-
 area : signal = {
     derivation = distance ** 2;
 }

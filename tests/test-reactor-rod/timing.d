@@ -1,10 +1,9 @@
 #!/usr/sbin/dtrace -s
  
-#pragma D option quiet
  
 newton*:::newton-start
 {
-  self->start = timestamp;
+        self->start = timestamp;
 }
  
 newton*:::newton-done

@@ -52,11 +52,10 @@ groundtemp: constant = 288.15 * K;
 # http://home.anadolu.edu.tr/~mcavcar/common/ISAweb.pdf
 altitudeAndPressureTroposphere: invariant(
     altitude: distance, 
-    airpressure: pressure, 
-    groundtemp: temperature
+    airpressure: pressure
 ) = {
-    airpressure > groundpressure * (1 - 0.0065 * (altitude * K) / ((groundtemp + 273.15 * K) * m)) ** 5.2561 - 200 * Pa,
-    airpressure < groundpressure * (1 - 0.0065 * (altitude * K) / ((groundtemp + 273.15 * K) * m)) ** 5.2561 + 200 * Pa
+    airpressure > groundpressure * (1 - 0.0065 * (altitude * K) / (groundtemp * m)) ** 5.2561 - 200 * Pa,
+    airpressure < groundpressure * (1 - 0.0065 * (altitude * K) / (groundtemp * m)) ** 5.2561 + 200 * Pa
 }
 
 # http://home.anadolu.edu.tr/~mcavcar/common/ISAweb.pdf

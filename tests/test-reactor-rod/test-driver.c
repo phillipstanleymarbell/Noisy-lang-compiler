@@ -18,8 +18,8 @@
 
 #include "minunit.h"
 #include "test-driver.h"
-#include "test-newton-api.h"
 #include "test-common.h"
+#include "test-newton-api.h"
 
 int tests_run = 0;
 

@@ -1,3 +1,4 @@
-sudo dtrace -s timing.d -c /Users/jonathanlim/Documents/Compiler/Noisy_philip/tests/test-step-counter/test-darwin-EN
+sudo dtrace -s timing.d -c /Users/jonathanlim/Documents/Compiler/Noisy_philip/tests/test-gps-walking/test-darwin-EN | grep newton >> result
+sudo dtrace -s timing.d -c /Users/jonathanlim/Documents/Compiler/Noisy_philip/tests/test-gps-walking/test2-darwin-EN | grep newton >> result2
 
 

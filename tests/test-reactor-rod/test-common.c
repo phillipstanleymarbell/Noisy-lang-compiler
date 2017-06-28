@@ -60,9 +60,9 @@ All rights reserved.
 #include "newton-api.h"
 
 #include "minunit.h"
-#include "test-newton-api.h"
 #include "test-common.h"
 #include "test-utils.h"
+#include "test-newton-api.h"
 
 extern int gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 extern int tests_run;

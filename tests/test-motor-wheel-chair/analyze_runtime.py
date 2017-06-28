@@ -27,15 +27,21 @@ def standard_deviation(lst, population=True):
     sd = sqrt(variance)
     return sd
 
-data = []
-for line in open('result'):
-    data.append(int(line.split()[1]))
-
 import os 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 experiment_name = dir_path.split('/')[-1]
 
-print experiment_name, 'mean:', mean(data), 'data size', len(data)
-print experiment_name, 'standard deviation:', standard_deviation(data), 'data size', len(data)
+def print_mean_std(filename):
+    data = []
+    for line in open(filename):
+        data.append(int(line.split()[1]))
 
+    print experiment_name, 'mean:', mean(data), 'data size', len(data)
+    print experiment_name, 'standard deviation:', standard_deviation(data), 'data size', len(data)
+
+print 'newtonApiInit'
+print_mean_std('result')
+
+print '\nnewtonApiSatisfiesConstraints'
+print_mean_std('result2')
 

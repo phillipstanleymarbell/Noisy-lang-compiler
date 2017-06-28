@@ -11,7 +11,7 @@ newton*:::newton-done
 {
         @times["newton"] = sum(timestamp - self->start);
 }
- 
+
 END
 {
         printa(@times);

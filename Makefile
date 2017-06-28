@@ -41,7 +41,7 @@ runtime:
 	@set -e; for dir in $(TESTDIRS); do \
 	for i in `seq 1 40`; do \
 	(cd $$dir; \
-		(./probe-script | grep newton >> result) \
+		(./probe-script) \
 	); \
 	done; \
 	(cd $$dir; \

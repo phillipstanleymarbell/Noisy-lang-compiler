@@ -61,6 +61,7 @@
 #include "test-utils.h"
 #include "test-newton-api.h"
 #include "probes.h"
+#include "invariant-probes.h"
 
 extern int tests_run;
 
@@ -143,14 +144,16 @@ char * test_newtonApiGetInvariantByParameters_Valid()
 char * test_newtonCheckSingleInvariant()
 {
 	State * newton = newtonApiInit("../../Examples/activity_classifier.nt");
+    IrNode* parameters = makeTestParameterTuple(newton);
+    NewtonAPIReport* report = newtonApiSatisfiesConstraints(
+		newton,
+        parameters
+	);
+
 	mu_assert(
 		"test_newtonCheckSingleInvariant invariants.nt: number passed should be 2",
-	    numberOfConstraintsPassed(
-			newtonApiSatisfiesConstraints(
-				newton,
-				makeTestParameterTuple(newton)
-				)
-			) == 2
+	    numberOfConstraintsPassed( report
+						) == 2
 		);
 	return 0;
 }

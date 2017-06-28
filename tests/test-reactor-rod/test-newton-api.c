@@ -67,12 +67,10 @@ extern int tests_run;
 
 char * test_newtonApiInit_notNull()
 {
-    NEWTON_NEWTON_START();
 	mu_assert(
         "test_newtonApiInit_notNull: newtonApiInit returns NULL!",
         newtonApiInit("../../Examples/reactor_rod.nt") != NULL
     );
-    NEWTON_NEWTON_DONE();
     return 0;
 }
 
@@ -142,13 +140,17 @@ char * test_newtonApiGetInvariantByParameters_Valid()
 char * test_newtonCheckSingleInvariant()
 {
 	State * newton = newtonApiInit("../../Examples/reactor_rod.nt");
+    IrNode* parameter = makeTestParameterTuple(newton);
+    NEWTON_NEWTON_START();
+    NewtonAPIReport * report = newtonApiSatisfiesConstraints(
+				newton,
+                parameter
+				);
+    NEWTON_NEWTON_DONE();
 	mu_assert(
 		"test_newtonCheckSingleInvariant reactor_rod.nt: number passed should be 1",
 	    numberOfConstraintsPassed(
-			newtonApiSatisfiesConstraints(
-				newton,
-				makeTestParameterTuple(newton)
-				)
+            report
 			) == 1
 		);
 

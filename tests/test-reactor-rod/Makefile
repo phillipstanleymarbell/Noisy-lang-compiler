@@ -21,6 +21,7 @@ LIBNEWTON = Newton
 LIBNOISY	= Noisy
 LIBCOMMON = Common
 LIBTEST = Test
+LIBTEST2 = Test2
 
 NEWTON_L10N	= EN
 TEST_L10N	= EN
@@ -28,6 +29,7 @@ NOISY_L10N	= EN
 COMMON_L10N	= EN
 
 TARGET		= test-$(OSTYPE)-$(TEST_L10N)
+TARGET2		= test2-$(OSTYPE)-$(TEST_L10N)
 
 #	-std=gnu99 because we use anonymous unions and induction variable defintions in loop head.
 CCFLAGS		+= -c -std=gnu99 -DkTestL10N="\"$(TEST_L10N)\"" -DTEST_L10N_EN
@@ -45,22 +47,27 @@ SOURCES		=\
 		test-utils.c\
 		test-common.c\
 
-#
-#	Clang seems to be unable to do LTO unless we have all the objects
-#	not tucked into a library, so we don't just simply link main against
-#	-l$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N)
-#
+
 OBJS		=\
 		test-driver.$(OBJECTEXTENSION)\
 		test-newton-api.$(OBJECTEXTENSION)\
 		test-utils.$(OBJECTEXTENSION)\
 		test-common.$(OBJECTEXTENSION)\
 
-
+OBJS2		=\
+		test-driver.$(OBJECTEXTENSION)\
+		test-newton-api-invariant.$(OBJECTEXTENSION)\
+		test-utils.$(OBJECTEXTENSION)\
+		test-common.$(OBJECTEXTENSION)\
 
 
 LIBTESTOBJS =\
 		test-newton-api.$(OBJECTEXTENSION)\
+		test-utils.$(OBJECTEXTENSION)\
+		test-common.$(OBJECTEXTENSION)\
+
+LIBTESTOBJS2 =\
+		test-newton-api-invariant.$(OBJECTEXTENSION)\
 		test-utils.$(OBJECTEXTENSION)\
 		test-common.$(OBJECTEXTENSION)\
 
@@ -72,10 +79,15 @@ HEADERS		=\
 		test-common.h                   \
 		test-utils.h                    \
 		minunit.h                       \
+		probes.h                       \
 
 
 
-all: dtrace_probe lib$(LIBTEST)-$(OSTYPE)-$(TEST_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+all: init invariant
+
+init: dtrace_probe lib$(LIBTEST2)-$(OSTYPE)-$(TEST_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+
+invariant: dtrace_probe lib$(LIBTEST2)-$(OSTYPE)-$(TEST_L10N).a target2 $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
 
 dtrace_probe: 
 	dtrace -o probes.h -h -s probes.d
@@ -87,12 +99,17 @@ dtrace_probe:
 lib$(LIBTEST)-$(OSTYPE)-$(TEST_L10N).a: $(LIBTESTOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
 	$(AR) $(ARFLAGS) $@ $(LIBTESTOBJS)
 
+lib$(LIBTEST2)-$(OSTYPE)-$(TEST_L10N).a: $(LIBTESTOBJS2) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+	$(AR) $(ARFLAGS) $@ $(LIBTESTOBJS2)
+
 #
 #			Executables
 #
 target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
 	$(LD) $(LINKDIRS) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -lm -o $(TARGET)
 
+target2: $(OBJS2) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+	$(LD) $(LINKDIRS) $(LDFLAGS) $(OBJS2) -lflex-$(OSTYPE) -lm -o $(TARGET2)
 
 #
 #			Objects
@@ -102,5 +119,5 @@ target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(
 	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
 clean:
-	rm -rf version.c $(OBJS) $(LIBTESTOBJS) $(TARGET) $(TARGET).dSYM lib$(LIBTEST)-$(OSTYPE)-$(TEST_L10N).a *.o *.plist result
+	rm -rf version.c $(OBJS) $(LIBTESTOBJS) $(TARGET) $(TARGET).dSYM lib$(LIBTEST)-$(OSTYPE)-$(TEST_L10N).a  $(OBJS2) $(LIBTESTOBJS2) $(TARGET2) $(TARGET2).dSYM lib$(LIBTEST2)-$(OSTYPE)-$(TEST_L10N).a *.o *.plist result result2
 
