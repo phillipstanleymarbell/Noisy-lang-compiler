@@ -1,0 +1,10 @@
+HelloWorld : progtype
+{
+	init	: namegen (list of string):(list of string);
+}
+
+init =
+{
+	print := name2chan string "system.print" 0.0;
+	print <-= "Hello World!";
+}

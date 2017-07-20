@@ -1,0 +1,42 @@
+#	--
+#	--	Example from L. De Moura and N. Bjørner, "Satisfiability Modulo Theories: Introduction
+#	--	and Applications", CACM Vol. 54, No. 9, pp. 69–77.
+#	--
+#	U0 : integers = <0 ... 8>
+#	U1 = U0 >< U0 >< U0 >< U0 >< U0 >< U0
+#	
+#	P0 = ( 	(t11:U1[1] >= 0) & (t12:U1[2] >= t11:U1[1] + 2) & (t12:U1[2] + 1 <= 8) &
+#		(t21:U1[3] >= 0) & (t22:U1[4] >= t21:U1[3] + 3) & (t22:U1[4] + 1 <= 8) &
+#		(t31:U1[5] >= 0) & (t32:U1[6] >= t31:U1[5] + 2) & (t32:U1[6] + 3 <= 8) &
+#		((t11:U1[1] >= t21:U1[3] + 3) | (t21:U1[3] >= t11:U1[1] + 2)) &
+#		((t11:U1[1] >= t31:U1[5] + 2) | (t31:U1[5] >= t11:U1[1] + 2)) &
+#		((t21:U1[3] >= t31:U1[5] + 2) | (t31:U1[5] >= t21:U1[3] + 3)) &
+#		((t12:U1[2] >= t22:U1[4] + 1) | (t22:U1[4] >= t12:U1[2] + 1)) &
+#		((t12:U1[2] >= t32:U1[6] + 3) | (t32:U1[6] >= t12:U1[2] + 1)) &
+#		((t22:U1[4] >= t32:U1[6] + 3) | (t32:U1[6] >= t22:U1[4] + 1))
+#	)
+#	
+#	S0 = (P0 : U1)
+#	print enum S0
+#	print info S0
+
+deMouraBjoernerJobShop : progtype
+{
+	init	: namegen (list of string):(list of string);
+}
+
+
+#
+#	Problem definition
+#
+init =>
+{
+}
+
+
+#
+#	Algorithm implementation
+#
+init =
+{
+}

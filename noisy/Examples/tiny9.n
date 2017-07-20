@@ -1,0 +1,35 @@
+tiny9 : progtype
+{
+	intconst	: const 1;
+	#realconst	: const 1.;
+	erealconst1	: const 10E5;
+	erealconst2	: const 1.0E5;
+	#erealconst2	: const 1.0E-5;
+	#strconst	: const "somestring";
+	#boolconst	: const true;
+
+	complexint	: type (int, int);
+	complexreal	: type (real, real);
+
+	#tolerancevar1	: type int epsilon(1., 0.001);
+	tolerancevar2	: type int epsilon(1.0, 0.001), epsilon(2.0, 0.0001);
+	#tolerancevar3	: type int epsilon(1.0, 0.1), alpha(1.0, 0.1), tau(1.0, 0.1), epsilon(10.0, 0.001);
+
+	someadt : adt
+	{
+		a	: int;
+		b	: (int, int);
+		c	: ((int, int), (int, int));
+	};
+
+	init		: namegen (int):(int);
+}
+
+init =
+{
+	i := 0;
+	iter
+	{
+	#	i < 100	=> ;
+	};
+}
