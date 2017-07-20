@@ -1,5 +1,5 @@
-LIBFLEXPATH=/Users/jonathanlim/Documents/Compiler/libflex
-CONFIGPATH=/Users/jonathanlim/Documents/Compiler/libflex
+LIBFLEXPATH=/Users/Hippo/compiler/libflex
+CONFIGPATH=/Users/Hippo/compiler/libflex
 TREEROOT=..
 MACHTYPE=x86_64
 COMPILERVARIANT=clang
