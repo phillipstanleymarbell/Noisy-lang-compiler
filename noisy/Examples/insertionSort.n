@@ -1,0 +1,93 @@
+InsertionSort : progtype
+{
+	init		: namegen (list of string):(list of string);
+	insert		: namegen (string, list of string):(list of string);
+}
+
+init =
+{
+	#
+	#	Pre-conditions: The init namegen is created, and a valid	
+	#		list-of-string input is written to it.
+	#
+	#	Post-conditions: The reader of the init namegen reads a
+	#		list of string whose head is the largest item,
+	#		and the items are in non-increasing order from
+	#		head to tail, lexicographically.
+	#
+	result	: list of string;
+#	insert	:= name2chan InsertionSort->insertgen 0.0;
+
+	input := <-init;
+	iter
+	{
+		#
+		#	Loop invariants: 'result' list is always a sorted
+		#		subset of the input list.
+		#
+		#	Progress: in each iteration, an item is removed
+		#		from 'input' and added to 'result'
+		#
+		#	Termination: when 'input' is empty.
+		#
+		len input > 0	=>
+		{
+			item := hd input;
+			insert <-= (item, result);
+			result = <-insert;
+			input = tl input;
+		}
+	}
+}
+
+insert =
+{
+	#
+	#	Pre-conditions: The insert namegen is created, and a	
+	#		valid tuple comprising a single element, and
+	#		an already sorted (or empty) list-of-string
+	#		input is written to it.
+	#
+	#	Post-conditions: The reader of the insert  namegen
+	#		reads a sorted list of strings.
+	#
+	result	: list of string;
+
+	(new, inputlist) := <-insert;
+	iter
+	{
+		#
+		#	Loop invariant: the list result is always a sorted
+		#		list of strings.
+		#
+		#	Progress: in each iteration, an item is removed from
+		#		'inputlist'.
+		#
+		#	Termination: when 'inputlist' is empty.
+		#
+		len inputlist > 0	=>
+		{
+			item = hd inputlist;
+			done : bool = false;
+			
+			matchseq
+			{
+				item < new || done	=>
+				{
+					result = item :: result;
+				}
+
+				item >= new		=>
+				{
+					result = new :: result;
+					result = item :: result;
+					done = true;
+				}
+			}
+			
+			inputlist = tl inputlist;
+		}
+	}
+	
+	insert <-= result;
+}

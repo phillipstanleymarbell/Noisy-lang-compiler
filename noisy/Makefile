@@ -1,5 +1,5 @@
-LIBFLEXPATH=/Users/jonathanlim/Documents/Compiler/libflex
-CONFIGPATH=/Users/jonathanlim/Documents/Compiler/libflex
+LIBFLEXPATH=/Users/Hippo/compiler/libflex
+CONFIGPATH=/Users/Hippo/compiler/libflex
 
 TREEROOT=..
 COMMONPATH=../common
