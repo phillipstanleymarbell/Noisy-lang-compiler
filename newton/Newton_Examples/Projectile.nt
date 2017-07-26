@@ -1,42 +1,80 @@
+#
+#		Physical invariant for a projectile:
+#
+#		Necessary variables: 
+#
+#		m : Mass of the object
+#
+#		h : Maximum height of the projectile
+#
+#		v : Initial speed
+#
+#		g : Acceleration of gravity  
+#
+
+
 time : signal =
 {
-        name = "second" English
-        symbol = "s";
-        derivation = none;
+	name = "second" English
+	symbol = "s";
+	derivation = none;
 }
 
 distance : signal(i: 0 to 2) =
 {
-        name = "meter" English
-        symbol = "m";
-        derivation = none;
+	name = "meter" English
+	symbol = "m";
+	derivation = none;
 }
 
 mass : signal =
 {
-        name = "kilogram" English
-        symbol = "kg";
-        derivation = none;
+	name = "kilogram" English
+	symbol = "kg";
+	derivation = none;
 }
+
 
 speed : signal(i: 0 to 2) =
 {
-        derivation = distance@i / time;
+	derivation = distance@i / time;
 }
 
 acceleration : signal(i: 0 to 2) =
 {
-        derivation = speed@i / time;
+	derivation = speed@i / time;
 }
 
 force : signal(i: 0 to 2) = 
 {
-        name = "Newton" English
-        symbol = "N" ;
-        derivation = mass * acceleration@i;
+	name = "Newton" English
+	symbol = "N" ;
+	derivation = mass * acceleration@i;
 }
 
-g : constant = 9.8 * meter ** 2 * second ** -2;
+work : signal(i: 0 to 2) = 
+{
+	name = "Joule" English
+	symbol = "J";
+	derivation = force * distance@i;
+}
+
+
+g : constant = 9.8 * m * s ** -2;
+
+#
+#		Dimensional Matrix:
+#
+#
+#		h  v  m  g  
+#	 L  1  1  0  1  
+#	 M  0  0  1  0  
+#	 T  0 -1  0 -2  
+#
+#		z = null(A,'r')
+#
+
+
 
 
 Projectile : invariant(h: distance@0, v: speed@0, period: time) =

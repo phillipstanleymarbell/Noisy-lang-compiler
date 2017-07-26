@@ -22,64 +22,67 @@
 
 time : signal =
 {
-        name = "second" English
-        symbol = "s";
-        derivation = none;
+	name = "second" English
+	symbol = "s";
+	derivation = none;
 }
 
 distance : signal(i: 0 to 2) =
 {
-        name = "meter" English
-        symbol = "m";
-        derivation = none;
+	name = "meter" English
+	symbol = "m";
+	derivation = none;
 }
 
 mass : signal =
 {
-        name = "kilogram" English
-        symbol = "kg";
-        derivation = none;
+	name = "kilogram" English
+	symbol = "kg";
+	derivation = none;
 }
 
-temperature : signal = 
-{ 
-		name = "Kelvin" English 
-		symbol = "K"; 
-		derivation = none;
-}
 
 speed : signal(i: 0 to 2) =
 {
-        derivation = distance@i / time;
+	derivation = distance@i / time;
 }
 
 acceleration : signal(i: 0 to 2) =
 {
-        derivation = speed@i / time;
+	derivation = speed@i / time;
 }
 
 force : signal(i: 0 to 2) = 
 {
-        name = "Newton" English
-        symbol = "N" ;
-        derivation = mass * acceleration@i;
+	name = "Newton" English
+	symbol = "N" ;
+	derivation = mass * acceleration@i;
 }
 
 work : signal(i: 0 to 2) = 
 {
-        name = "Joule" English
-        symbol = "J";
-        derivation = force * distance@i;
+	name = "Joule" English
+	symbol = "J";
+	derivation = force * distance@i;
 }
 
-g : constant = 9.8 * meter ** 2 * second ** -2;
-rho : constant = 1 * kilogram * meter ** -3;
-v : constant = 10 * meter ** 2 * second ** -1;
-cp : constant = 1 * meter ** 2 * second ** -2 * Kelvin ** -1;
-a : constant = 1 * meter ** 2 * second ** -1;
-b : constant = 1 * Kelvin ** -1;
+temperature : signal = 
+{ 
+	name = "Kelvin" English 
+	symbol = "K"; 
+	derivation = none;
+}
 
 
+g : constant = 9.8 * m ** 2 * s ** -2;
+rho : constant = 1 * kg * m ** -3;
+v : constant = 10 * m ** 2 * s ** -1;
+cp : constant = 1 * m ** 2 * s ** -2 * K ** -1;
+a : constant = 1 * m ** 2 * s ** -1;
+b : constant = 1 * K ** -1;
+
+
+#
 #		Dimensional Matrix:
 #
 #
@@ -93,9 +96,6 @@ b : constant = 1 * Kelvin ** -1;
 #		z = null(A,'r')
 #
 #
-#
-#
-
 
 
 

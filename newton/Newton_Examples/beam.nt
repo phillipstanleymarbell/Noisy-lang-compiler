@@ -17,58 +17,60 @@
 
 time : signal =
 {
-        name = "second" English
-        symbol = "s";
-        derivation = none;
+	name = "second" English
+	symbol = "s";
+	derivation = none;
 }
 
 distance : signal(i: 0 to 2) =
 {
-        name = "meter" English
-        symbol = "m";
-        derivation = none;
+	name = "meter" English
+	symbol = "m";
+	derivation = none;
 }
 
 mass : signal =
 {
-        name = "kilogram" English
-        symbol = "kg";
-        derivation = none;
+	name = "kilogram" English
+	symbol = "kg";
+	derivation = none;
 }
+
 
 speed : signal(i: 0 to 2) =
 {
-        derivation = distance@i / time;
+	derivation = distance@i / time;
 }
 
 acceleration : signal(i: 0 to 2) =
 {
-        derivation = speed@i / time;
+	derivation = speed@i / time;
 }
 
 force : signal(i: 0 to 2) = 
 {
-        name = "Newton" English
-        symbol = "N" ;
-        derivation = mass * acceleration@i;
+	name = "Newton" English
+	symbol = "N" ;
+	derivation = mass * acceleration@i;
 }
 
 work : signal(i: 0 to 2) = 
 {
-        name = "Joule" English
-        symbol = "J";
-        derivation = force * distance@i;
+	name = "Joule" English
+	symbol = "J";
+	derivation = force * distance@i;
 }
 
 Pi : constant = 3.14159;
-g : constant = 9.8 * meter ** 2 * second ** -2;
-E : constant = 1900000 * Newton * meter **-2;
-b : constant = 0.005 * meter;
-h : constant = 0.05 * meter;
-I : constant = 1/12 * b * h ** 3 * meter ** 4;
-L : constant = 5 * meter; 
+g : constant = 9.8 * m * s ** -2;
+E : constant = 1900000 * N * m **-2;
+b : constant = 0.005 * m;
+h : constant = 0.05 * m;
+I : constant = 1/12 * b * h ** 3 * m ** 4;
+L : constant = 5 * m; 
 
 
+#
 #		Dimensional Matrix:
 #
 #
@@ -78,8 +80,6 @@ L : constant = 5 * meter;
 #	 T -2  0  0 -2
 #
 #		z = null(A,'r')
-#
-#
 #
 #
 
