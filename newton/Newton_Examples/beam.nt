@@ -1,3 +1,20 @@
+#
+#		Physical invariant for an Euler-Bernoulli beam:
+#
+#		Necessary variables: 
+#
+#		P : Point load
+#
+#		E : Young's Modulus
+#
+#		I : Moment of Inertia
+#
+#		L : Length of the beam
+#
+#		d : deflection of the beam at the tip
+#
+#
+
 time : signal =
 {
         name = "second" English
@@ -50,6 +67,21 @@ b : constant = 0.005 * meter;
 h : constant = 0.05 * meter;
 I : constant = 1/12 * b * h ** 3 * meter ** 4;
 L : constant = 5 * meter; 
+
+
+#		Dimensional Matrix:
+#
+#
+#		P  L  I  E
+#	 L  1  1  4 -1
+#	 M  1  0  0  1
+#	 T -2  0  0 -2
+#
+#		z = null(A,'r')
+#
+#
+#
+#
 
 
 beam : invariant(d: distance@0, P: force, r: distance) =

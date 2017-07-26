@@ -1,3 +1,25 @@
+#
+#		Physical invariant for heat transfer between a hot sphere and the environment
+#
+#		Necessary variables: 
+#
+#		R : Radius of the sphere
+#
+#		T : Temperature difference between the sphere and the environment 
+#
+#		g : Acceleration of gravity 
+#
+#	\rho  : Fluid density
+#
+#	\nu   : Kinematic viscosity
+#
+#	 C_p  : Specific heat  
+#
+#  \alpha : Thermal diffusivity
+#
+#   \beta : Thermal expansion
+#
+
 time : signal =
 {
         name = "second" English
@@ -56,6 +78,26 @@ v : constant = 10 * meter ** 2 * second ** -1;
 cp : constant = 1 * meter ** 2 * second ** -2 * Kelvin ** -1;
 a : constant = 1 * meter ** 2 * second ** -1;
 b : constant = 1 * Kelvin ** -1;
+
+
+#		Dimensional Matrix:
+#
+#
+#		R  T  g  r  v  c  a  b
+#	 L  0  0  0  1  0  0  0  0
+#	 M  1  0  1 -3  2  2  2  0
+#	 T  0  0 -2  0 -1 -2 -1  0
+#	 O  0  1  0  0  0 -1  0 -1
+#
+#
+#		z = null(A,'r')
+#
+#
+#
+#
+
+
+
 
 hotSphere : invariant(Q: work@0, t: temperature, r: distance) =
 {
