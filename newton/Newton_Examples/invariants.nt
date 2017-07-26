@@ -1,0 +1,57 @@
+time : signal =
+{
+        name = "second" English
+        symbol = "s";
+        derivation = none;
+}
+
+distance : signal(i: 0 to 2) =
+{
+        name = "meter" English
+        symbol = "m";
+        derivation = none;
+}
+
+mass : signal =
+{
+        name = "kilogram" English
+        symbol = "kg";
+        derivation = none;
+}
+
+speed : signal(i: 0 to 2) =
+{
+        derivation = distance@i / time;
+}
+
+acceleration : signal(i: 0 to 2) =
+{
+        derivation = speed@i / time;
+}
+
+force : signal(i: 0 to 2) = 
+{
+        name = "Newton" English
+        symbol = "N" ;
+        derivation = mass * acceleration@i;
+}
+
+work : signal(i: 0 to 2) = 
+{
+        name = "Joule" English
+        symbol = "J";
+        derivation = force * distance@i;
+}
+
+Pi : constant = 3.14159;
+g : constant = 9.8 * meter ** 2 * second ** -2;
+
+
+SimplePendulum : invariant(L: distance@0, period: time) =
+{
+    
+    period ~ (4 * Pi * Pi * L / g) ** 2,
+    period >= 3 * second,
+    period <= 9 * second
+}
+

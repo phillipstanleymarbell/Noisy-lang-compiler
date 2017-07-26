@@ -1,0 +1,59 @@
+#
+#			Mechanical properties of Nylon 11, used for 3D printing into a beam
+#
+
+time : signal =
+{
+        name = "second" English
+        symbol = "s";
+        derivation = none;
+}
+
+distance : signal =
+{
+        name = "meter" English
+        symbol = "m";
+        derivation = none;
+}
+
+mass : signal =
+{
+        name = "kilogram" English
+        symbol = "kg";
+        derivation = none;
+}
+
+speed : signal =
+{
+        name = "MegaSpeed" English
+        symbol = "MegS";
+        derivation = distance / time;
+}
+
+acceleration : signal =
+{
+        name = "MegaAcceleration" English
+        symbol = "MegA";
+        derivation = speed / time;
+}
+
+force : signal = 
+{
+        name = "Newton" English
+        symbol = "N" ;
+        derivation = mass * acceleration;
+}
+
+#
+#	Source of data:
+#
+#	
+#
+poisson : constant = 0.272;
+rho : constant = 1040 * kilogram * meter ** -3;
+E : constant = 1.2e9 * Newton / meter ** -2;
+
+null : invariant(null: time) =
+{
+	null ~ 0
+}
