@@ -1,18 +1,6 @@
-#		
-#
-#
 #
 #			Mechanical properties of Nylon 12, used for 3D printing into a beam
 #
-#
-#
-#
-#
-#
-#
-#
-
-
 
 
 time : signal =
@@ -64,7 +52,7 @@ work : signal =
         derivation = force * distance;
 }
 
-#poisson : constant = 0.272;
+poisson : constant = 0.272;
 rho : constant = 1010 * kilogram * meter ** -3;
 E : constant = 1.54e9 * Newton / meter ** -2;
 

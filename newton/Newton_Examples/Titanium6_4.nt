@@ -1,3 +1,7 @@
+#
+#			Mechanical properties of Titanium6_4, used for 3D printing into a beam
+#
+
 time : signal =
 {
         name = "second" English
