@@ -1,3 +1,19 @@
+#		
+#
+#
+#
+#			Mechanical properties of EOS PEEK, used for 3D printing into a beam
+#
+#
+#
+#
+#
+#
+#
+#
+
+
+
 time : signal =
 {
         name = "second" English
@@ -36,7 +52,7 @@ acceleration : signal =
 force : signal = 
 {
         name = "Newton" English
-        symbol = "N";
+        symbol = "N" ;
         derivation = mass * acceleration;
 }
 
@@ -46,3 +62,21 @@ work : signal =
         symbol = "J";
         derivation = force * distance;
 }
+
+#poisson : constant = 0.272;
+rho : constant = 1310 * kilogram * meter ** -3;
+E : constant = 1.54e9 * Newton / meter ** -2;
+
+
+g : constant = 9.8 * meter ** 2 * second ** -2;
+b : constant = 0.005 * meter;
+h : constant = 0.05 * meter;
+I : constant = 1/12 * b * h ** 3 * meter ** 4;
+L : constant = 5 * meter; 
+
+eospeek : invariant(d: distance@0, P: force, r: distance) =
+{
+    d ~ (P * L / (3 * E * I)) 
+ 
+}
+

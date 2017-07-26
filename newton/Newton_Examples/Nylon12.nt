@@ -1,0 +1,83 @@
+#		
+#
+#
+#
+#			Mechanical properties of Nylon 12, used for 3D printing into a beam
+#
+#
+#
+#
+#
+#
+#
+#
+
+
+
+
+time : signal =
+{
+        name = "second" English
+        symbol = "s";
+        derivation = none;
+}
+
+distance : signal =
+{
+        name = "meter" English
+        symbol = "m";
+        derivation = none;
+}
+
+mass : signal =
+{
+        name = "kilogram" English
+        symbol = "kg";
+        derivation = none;
+}
+
+speed : signal =
+{
+        name = "MegaSpeed" English
+        symbol = "MegS";
+        derivation = distance / time;
+}
+
+acceleration : signal =
+{
+        name = "MegaAcceleration" English
+        symbol = "MegA";
+        derivation = speed / time;
+}
+
+force : signal = 
+{
+        name = "Newton" English
+        symbol = "N" ;
+        derivation = mass * acceleration;
+}
+
+work : signal = 
+{
+        name = "Joule" English
+        symbol = "J";
+        derivation = force * distance;
+}
+
+#poisson : constant = 0.272;
+rho : constant = 1010 * kilogram * meter ** -3;
+E : constant = 1.54e9 * Newton / meter ** -2;
+
+
+g : constant = 9.8 * meter ** 2 * second ** -2;
+b : constant = 0.005 * meter;
+h : constant = 0.05 * meter;
+I : constant = 1/12 * b * h ** 3 * meter ** 4;
+L : constant = 5 * meter; 
+
+nylon12 : invariant(d: distance@0, P: force, r: distance) =
+{
+    d ~ (P * L / (3 * E * I)) 
+ 
+}
+

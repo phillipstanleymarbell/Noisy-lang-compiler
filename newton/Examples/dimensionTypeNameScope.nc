@@ -1,3 +1,0 @@
-dimensionTypeNames {
-    time = "s";
-}
