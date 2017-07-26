@@ -89,4 +89,3 @@ beam : invariant(d: distance@0, P: force, r: distance) =
     d ~ (P * L / (3 * E * I)) 
  
 }
-

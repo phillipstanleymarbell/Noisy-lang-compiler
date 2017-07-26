@@ -104,4 +104,3 @@ hotSphere : invariant(Q: work@0, t: temperature, r: distance) =
     Q ~ (b * g * t * r ** 3 / (v ** 2)) 
  
 }
-

@@ -14,7 +14,6 @@
 #		G : Gravitational constant
 #
 
-
 time : signal =
 {
 	name = "second" English
