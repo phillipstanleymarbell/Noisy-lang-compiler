@@ -1,0 +1,32 @@
+#
+#	aaaa
+#
+time : signal =
+{
+	name = "second" English
+	symbol = "s";
+	derivation = none;
+}
+
+distance : signal(i: 0 to 2) =
+{
+        name = "meter" English
+        symbol = "m";
+        derivation = none;
+}
+
+mass : signal =
+{
+        name = "kilogram" English
+        symbol = "kg";
+        derivation = none;
+}
+
+
+G : constant = 6.674 * meter ** 3 * kilogram ** -1 * second ** -2;
+
+
+Kepler : invariant(r: distance@0, period: time) =
+{
+	(period ** 2) ~ (r ** 3 / (G * kilogram))
+}

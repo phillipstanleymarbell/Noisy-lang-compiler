@@ -1,0 +1,72 @@
+#	--
+#	--	Sort (integers): version 3
+#	--
+#	--      In this version, rather than using subsets, we create a N-tuple
+#	--      comprising the values and indeces for the list of N elements,
+#	--      and have a predicate of the form
+#	--
+#	--                forall i forall j _:u[i] <= _:u[j] => i <= j
+#	--
+#	
+#	--   Cardinality of the input list
+#	I0 = 5
+#	
+#	--   Values
+#	U0 : integers = <0 ... 20>
+#	
+#	--
+#	--   N-tuple of values. Eventually want to be able to do U1 = crossover U0 I0
+#	--   to get a I0-times cross product of U0
+#	--
+#	U1 = U0 >< U0 >< U0 >< U0 >< U0
+#	
+#	
+#	--
+#	--   Indeces
+#	--
+#	U2 : integers = <1 ... I0>
+#	
+#	--
+#	--   Input: Given as a set. Sorted input will however
+#	--   be computed as a tuple
+#	--
+#	S0 = {12, 2, 14, 1, 7} : U0
+#	
+#	
+#	--
+#	--   Tuple is in sorted order
+#	--
+#	P1 = forall i:U2[1] forall j:U2[1]
+#	     (_:U1[i] in S0) &
+#	     (_:U1[j] in S0) &
+#	     (!(_:U1[i] <= _:U1[j]) | (i <= j)) &
+#	     (!(i <= j) | (_:U1[i] <= _:U1[j]))
+#	
+#	S1 = (true : U1)
+#	S2 = (P1 : U1)
+#	
+#	echo "Properties of input set:                " print info S0
+#	echo "Properties of set of candidate outputs: " print info S1
+#	echo "Output, computed as a tuple:            " print enum S2
+#	
+
+sortIntegers : progtype
+{
+	init	: namegen (list of string):(list of string);
+}
+
+
+#
+#	Problem definition
+#
+init =>
+{
+}
+
+
+#
+#	Algorithm implementation
+#
+init =
+{
+}

@@ -1,0 +1,4 @@
+tiny2 : progtype
+{
+	a	: namegen (int):(int);
+}
