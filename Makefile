@@ -1,7 +1,7 @@
 DIRS =\
-    common\
-    newton\
-    noisy\
+	common\
+	newton\
+	noisy\
 	tests\
 
 all:
