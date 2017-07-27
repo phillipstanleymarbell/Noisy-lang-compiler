@@ -99,11 +99,11 @@ processNewtonFile(State *  N, char *  filename)
 static State*
 processNewtonFileDimensionPass(char * filename)
 {
-  State* N = init(kNoisyModeDefault);
+	State *	N = init(kNoisyModeDefault);
 	newtonLexInit(N, filename);
 
 	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
 	newtonDimensionPassParse(N, N->newtonIrTopScope);
 
-  return N;
+	return N;
 }
