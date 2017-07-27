@@ -1,0 +1,65 @@
+#
+#			Mechanical properties of Steel 17-4, used for 3D printing into a beam
+#
+
+time : signal =
+{
+	name = "second" English
+	symbol = "s";
+	derivation = none;
+}
+
+distance : signal =
+{
+	name = "meter" English
+	symbol = "m";
+	derivation = none;
+}
+
+mass : signal =
+{
+	name = "kilogram" English
+	symbol = "kg";
+	derivation = none;
+}
+
+speed : signal =
+{
+	name = "MegaSpeed" English
+	symbol = "MegS";
+	derivation = distance / time;
+}
+
+acceleration : signal =
+{
+	name = "MegaAcceleration" English
+	symbol = "MegA";
+	derivation = speed / time;
+}
+
+force : signal = 
+{
+	name = "Newton" English
+	symbol = "N" ;
+	derivation = mass * acceleration;
+}
+
+#
+#	Source of data:
+#
+#	@misc{AKSteel,
+#	title = {Steel 17-4 properties},
+#	howpublished = 
+#	{\url{http://www.aksteel.com/pdf/markets_products/stainless/precipitation/17-4_ph_data_sheet.pdf}},
+#	note = {Accessed: 2017-26-07}
+#	}
+#
+
+poisson : constant = 0.272;
+rho : constant = 7780 * kilogram * meter ** -3;
+E : constant = 197e11 * Newton / meter ** -2;
+
+null : invariant(null: time) =
+{
+	null ~ 0
+}

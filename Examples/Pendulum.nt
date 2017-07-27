@@ -1,0 +1,65 @@
+#
+#		Physical invariant for simple pendulum :
+#
+#		Necessary variables: 
+#
+#		m : Mass of the pendulum
+#
+#		L : Length of the pendulum
+#
+#		g : Acceleration of gravity 
+#
+#		T : Period of the simple pendulum
+#
+
+
+time : signal =
+{
+    name = "second" English
+    symbol = "s";
+    derivation = none;
+}
+
+length : signal(n: 0 to 2) =
+{
+    name = "meter" English
+    symbol = "m";
+    derivation = none;
+}
+
+
+mass : signal = 
+{
+    name = "kilogram" English
+	symbol = "kg";	
+    derivation = none;
+
+}
+
+Pi : constant = 3.14159;
+g : constant = 9.8 * m * s ** -2;
+
+
+#
+#		Dimensional Matrix:
+#
+#
+#		G  M  r  T  m
+#	 L  3  0  1  0  0
+#	 M -1  1  0  0  1
+#	 T -2  0  0  1  0
+#
+#		z = null(A,'r')
+#
+#
+#
+#
+
+
+
+pendulum : invariant(L: length@0, period: time) =
+{
+    
+    period  ** 2 ~ (4 * Pi * Pi * L / g) 
+    
+}

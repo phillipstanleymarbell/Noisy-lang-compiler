@@ -1,0 +1,65 @@
+#
+#			Mechanical properties of Titanium 6-4, used for 3D printing into a beam
+#
+
+time : signal =
+{
+	name = "second" English
+	symbol = "s";
+	derivation = none;
+}
+
+distance : signal =
+{
+	name = "meter" English
+	symbol = "m";
+	derivation = none;
+}
+
+mass : signal =
+{
+	name = "kilogram" English
+	symbol = "kg";
+	derivation = none;
+}
+
+speed : signal =
+{
+	name = "MegaSpeed" English
+	symbol = "MegS";
+	derivation = distance / time;
+}
+
+acceleration : signal =
+{
+	name = "MegaAcceleration" English
+	symbol = "MegA";
+	derivation = speed / time;
+}
+
+force : signal = 
+{
+	name = "Newton" English
+	symbol = "N" ;
+	derivation = mass * acceleration;
+}
+
+#
+#	Source of data:
+#
+#	@misc{EOSINT,
+#	title = {Ti64 properties},
+#	howpublished = 
+#	{\url{http://www.e-manufacturing.it/downloads/EOS_Titanium_Ti64.pdf}},
+#	note = {Accessed: 2017-26-07}
+#	}
+#
+
+poisson : constant = 0.342;
+rho : constant = 4430 * kilogram * meter ** -3;
+E : constant = 114.8e11 * Newton / meter ** -2;
+
+null : invariant(null: time) =
+{
+	null ~ 0
+}
