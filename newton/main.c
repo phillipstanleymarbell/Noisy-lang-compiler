@@ -1,5 +1,6 @@
 /*
 	Authored 2015. Phillip Stanley-Marbell.
+	Adapted for Newton in 2017 by Jonathan Lim.
 
 	All rights reserved.
 
@@ -331,9 +332,9 @@ main(int argc, char *argv[])
 			jumpParameter = setjmp(N->jmpbuf);
 			if (!jumpParameter)
 			{
-                processNewtonFile(N, argv[optind++]);
-                recurseDimensions(N, N->newtonIrTopScope);
-                recursePhysics(N, N->newtonIrTopScope);
+				processNewtonFile(N, argv[optind++]);
+				recurseDimensions(N, N->newtonIrTopScope);
+				recursePhysics(N, N->newtonIrTopScope);
 			}
 			else
 			{
