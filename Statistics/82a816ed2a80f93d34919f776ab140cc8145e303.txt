@@ -1,17 +1,17 @@
 
     Hardware Overview:
 
-      Model Name: MacBook Pro
-      Model Identifier: MacBookPro11,3
-      Processor Name: Intel Core i7
-      Processor Speed: 2.3 GHz
+      Model Name: MacBook
+      Model Identifier: MacBook9,1
+      Processor Name: Intel Core m5
+      Processor Speed: 1.2 GHz
       Number of Processors: 1
-      Total Number of Cores: 4
+      Total Number of Cores: 2
       L2 Cache (per Core): 256 KB
-      L3 Cache: 6 MB
-      Memory: 16 GB
+      L3 Cache: 4 MB
+      Memory: 8 GB
 
-changeset: 229:41c8c265a89b757e4191904e62626f3fc2085517
+changeset: 232:82a816ed2a80f93d34919f776ab140cc8145e303
 
 ./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s
 

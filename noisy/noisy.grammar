@@ -30,8 +30,9 @@ progtypedecl		= identifier ":" "progtype" "{" progtypebody "}" .
 progtypebody		= {ptypenamedecl ";"} .
 ptypenamedecl		::= identlist ":" (condecl | typedecl | namegendecl) .
 condecl			= "const" (intconst | realconst | boolconst) .
-typedecl		= ("type" typeexpr) | adttypedecl .
+typedecl		= ("type" typeexpr) | adttypedecl | vectortypedecl .
 adttypedecl		::= "adt" "{" identlist ":" typeexpr ";" {identlist ":" typeexpr ";"} "}" .
+vectortypedecl		::= "vector" "[" intconst "]" of typeexpr .
 namegendecl		::= "namegen" tupletype ":" tupletype .
 identornil		::= (identifier {fieldselect}) | "nil" .
 identornillist		= identornil {"," identornil} .
@@ -91,6 +92,17 @@ unop			::= "~" | "!" | "-"  | "+" | "<-"  | "hd" | "tl" | "len" .
 
 
 
+/*
+ *	New constructs to add
+ */
+sequence		::= "sequence" "(" assignmentStatement ";" booleanExpression ";" assignmentStatement ")" scopedStatementList .
+forEachStatement	::= "foreach" "(" identifier "in" setExpression ")" scopedStatementList .
+
+/*
+ *	New types to add
+ */
+basictype		::= "bool" | "nybble" | "byte" | "string" | "int" | realtype | physicaltype .
+physicaltype		::= "distance" | "time" | "temperature" | "pressure" | "humidity" |  "acceleration" | "angularmomentum" | "magneticfield" | "luminance" .
 
 /*
  *	Below is the part of the grammar specific to se-theoretic operations (inherited from our earlier Sal language)

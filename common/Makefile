@@ -1,9 +1,12 @@
-LIBFLEXPATH=/Users/jonathanlim/Documents/Compiler/libflex
-CONFIGPATH=/Users/jonathanlim/Documents/Compiler/libflex
-TREEROOT=..
-MACHTYPE=x86_64
-COMPILERVARIANT=clang
-OSTYPE=darwin
+TREEROOT        = ..
+
+include         $(TREEROOT)/config.local
+
+COMMONPATH      = ../common
+MACHTYPE        = x86_64
+COMPILERVARIANT = clang
+OSTYPE          = darwin
+
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 include		config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 

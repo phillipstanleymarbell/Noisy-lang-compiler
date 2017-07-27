@@ -36,7 +36,16 @@
 *.plist
 *.bc
 
+
+# Misc
+.DS_Store
+
 # Noisy specific
 version.c
 noisy-darwin-EN
 noisycgi-darwin-EN
+newton-darwin-EN
+test-darwin-EN
+.noisy-last-head
+latest.txt
+config.local
