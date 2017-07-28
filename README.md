@@ -15,6 +15,8 @@ After cloning the above two repositories,
 
 	LIBFLEXPATH     = full-path-to-libflex-repository-clone 
 	CONFIGPATH      = full-path-to-libflex-repository-clone
+	OSTYPE		= <one of 'linux' or 'darwin'>
+	MACHTYPE	= x86_64
 
 For example,
 
@@ -25,6 +27,8 @@ For example,
 
 	dtraceDirectory=full-path-to-DTrace-repository-clone
 	libflexDirectory=full-path-to-libflex-repository-clone
+
+For the following steps, valid options for OSTYPE are currently `linux` for Gnu/Linux and `darwin` for macOS.
 
 (3) Build Libflex by going to the directory you cloned for Libflex and running `make`.
 The makefiles assume the environment variables `OSTYPE` and `MACHTYPE` are set. If that

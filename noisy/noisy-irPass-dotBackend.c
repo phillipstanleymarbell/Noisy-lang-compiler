@@ -130,7 +130,7 @@ noisyIrPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irN
 
 	if (irNode->type != kNoisyIrNodeType_Xseq)
 	{
-		snprintf(src, kNoisyMaxPrintBufferLength, "| source:%llu,%llu", irNode->sourceInfo->lineNumber, irNode->sourceInfo->columnNumber);
+		snprintf(src, kNoisyMaxPrintBufferLength, "| source:%lu,%lu", irNode->sourceInfo->lineNumber, irNode->sourceInfo->columnNumber);
 	}
 
 	if (N->dotDetailLevel & kNoisyDotDetailLevelNoText)
@@ -393,14 +393,17 @@ noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotBackend);
 
-	int			bufferLength, irAndSymbolTableSize = 0, n = 0;
+	int			bufferLength, irAndSymbolTableSize = 0;
 	char *			buf = NULL;
+#ifdef NoisyOsMacOSX
+	int			n = 0;
 	struct timeval		t;
 
 	/*
 	 *	Length is required to be 26 chars by ctime_r.
 	 */
 	char			dateString[26];
+#endif
 
 
 
@@ -555,13 +558,13 @@ scope2id(State *  N, Scope *  scope)
 
 	char *	buf, tmp[kNoisyMaxBufferLength];
 
-	int length = snprintf(tmp, kNoisyMaxBufferLength, "%llu_%llu_%llu_%llu",
+	int length = snprintf(tmp, kNoisyMaxBufferLength, "%lu_%lu_%lu_%lu",
 			scope->begin->lineNumber, scope->begin->columnNumber,
 			scope->end->lineNumber, scope->end->columnNumber);
 
 	buf = (char *)malloc(length);
 
-	sprintf(buf, "%llu_%llu_%llu_%llu",
+	sprintf(buf, "%lu_%lu_%lu_%lu",
 			scope->begin->lineNumber, scope->begin->columnNumber,
 			scope->end->lineNumber, scope->end->columnNumber);
 
@@ -585,14 +588,14 @@ scope2id2(State *  N, Scope *  scope)
 
 	char *	buf, tmp[kNoisyMaxBufferLength];
 
-	int length = snprintf(tmp, kNoisyMaxBufferLength, "%s:%llu,%llu \\nto\\n %s:%llu,%llu",
+	int length = snprintf(tmp, kNoisyMaxBufferLength, "%s:%lu,%lu \\nto\\n %s:%lu,%lu",
 		scope->begin->fileName, scope->begin->lineNumber, 
 		scope->begin->columnNumber,  scope->begin->fileName,
 		scope->end->lineNumber, scope->end->columnNumber);
 
 	buf = (char *)malloc(length);
 
-	sprintf(buf, "%s:%llu,%llu \\nto\\n %s:%llu,%llu",
+	sprintf(buf, "%s:%lu,%lu \\nto\\n %s:%lu,%lu",
 		scope->begin->fileName, scope->begin->lineNumber, 
 		scope->begin->columnNumber,  scope->begin->fileName,
 		scope->end->lineNumber, scope->end->columnNumber);
@@ -617,12 +620,12 @@ symbol2id(State *  N, Symbol *  symbol)
 
 	char *	buf, tmp[kNoisyMaxBufferLength];
 
-	int length = snprintf(tmp, kNoisyMaxBufferLength, "%llu_%llu",
+	int length = snprintf(tmp, kNoisyMaxBufferLength, "%lu_%lu",
 		symbol->sourceInfo->lineNumber, symbol->sourceInfo->columnNumber);
 
 	buf = (char *)malloc(length);
 
-	sprintf(buf, "%llu_%llu",
+	sprintf(buf, "%lu_%lu",
 		symbol->sourceInfo->lineNumber, symbol->sourceInfo->columnNumber);
 
 	return buf;

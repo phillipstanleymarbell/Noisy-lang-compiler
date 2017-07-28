@@ -1,7 +1,7 @@
 AR			= /usr/bin/ar
 RANLIB			= /usr/bin/ranlib
 HOSTNAME		= `hostname`
-PLATFORM_DFLAGS		+= -DkNoisyBasePath="\"/Library/WebServer/Documents/tmp/\"" -DkNoisyDotCommand="\"/opt/local/bin/dot\"" -DkNoisyLogoPath="\"http://$(HOSTNAME)/tmp/Noisy-logo.png\"" -DkOrganizationLogoPath="\"http://$(HOSTNAME)/tmp/orange-logo-full.png\"" -DkNoisyCgiFileUrlBase=\""http://$(HOSTNAME)/tmp/\"" -DkNoisyCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/noisycgi-darwin\"" -DkNewtonCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/newtoncgi-darwin\""
+PLATFORM_DFLAGS		+= -DkNoisyBasePath="\"/Library/WebServer/Documents/tmp/\"" -DkNoisyDotCommand="\"/opt/local/bin/dot\"" -DkNoisyLogoPath="\"http://$(HOSTNAME)/tmp/Noisy-logo.png\"" -DkOrganizationLogoPath="\"http://$(HOSTNAME)/tmp/orange-logo-full.png\"" -DkNoisyCgiFileUrlBase=\""http://$(HOSTNAME)/tmp/\"" -DkNoisyCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/noisycgi-linux\"" -DkNewtonCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/newtoncgi-linux\""
 PLATFORM_OPTFLAGS	= -O0
 PLATFORM_DBGFLAGS	+= -g
 PLATFORM_CFLAGS		+= -DNoisyOsLinux
