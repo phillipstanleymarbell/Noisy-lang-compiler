@@ -5,15 +5,12 @@ include		$(TREEROOT)/config.local
 COMMONPATH	= ../common
 NOISYPATH	= ../noisy
 INCLUDEPATH	= ../include
-MACHTYPE	= x86_64
 COMPILERVARIANT = clang
-OSTYPE		= darwin
 
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 
-PLATFORM_CFLAGS	= -Wno-gnu-designator
-OBJECTEXTENSION = o
+PLATFORM_CFLAGS	+= -Wno-gnu-designator
 MAKEFLAGS	+= -j
 
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
@@ -35,7 +32,7 @@ CCFLAGS		+= -c -std=gnu99 -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
 
 WFLAGS		= -Wall -Werror
 INCDIRS		= -I. -I$(LIBFLEXPATH) -I$(COMMONPATH) -I$(NOISYPATH) -I$(INCLUDEPATH)
-LINKDIRS	= -L. -L$(LIBFLEXPATH) -L$(COMMONPATH) -lCommon-darwin-EN
+LINKDIRS	= -L. -L$(LIBFLEXPATH) -L$(COMMONPATH) -lCommon-$(OSTYPE)-EN
 PROTOC		= protoc-c
 
 NEWTONEXTENSION	= nt
@@ -155,11 +152,11 @@ lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a: $(LIBNEWTONOBJS) $(CONFIGPATH)/confi
 #			Executables
 #
 target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
-	$(LD) $(LINKDIRS) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -lm -o $(TARGET)
+	$(LD) $(LINKDIRS) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -lm $(LINKDIRS) $(LDFLAGS) -o $(TARGET)
 
 
 cgi:lib$(LIBNEWTON)-$(OSTYPE)-$(NOISY_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
-	$(LD) $(LINKDIRS) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) -o $(CGI_TARGET)
+	$(LD) $(LINKDIRS) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) $(LINKDIRS) $(LDFLAGS) -o $(CGI_TARGET)
 
 
 #
@@ -176,7 +173,7 @@ installcgi: cgi
 	sudo cp $(CGI_TARGET) $(CGI_BIN)
 
 test:
-	./newton-darwin-EN --dot Examples/invariants.n | dot -Tpdf -O ; open noname.gv.pdf 
+	./newton-$(OSTYPE)-EN --dot Examples/invariants.n | dot -Tpdf -O ; open noname.gv.pdf 
 
 
 clean:
