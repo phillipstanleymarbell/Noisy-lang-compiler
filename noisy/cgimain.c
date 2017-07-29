@@ -41,10 +41,17 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/time.h>
+#include <unistd.h>
+#include <sys/resource.h>
 #include <getopt.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <sys/syslimits.h>
+
+#ifdef __linux
+#else
+#	include <sys/syslimits.h>
+#endif
+
 #include <fcntl.h>
 #include <sys/param.h>
 #include <stdint.h>
@@ -63,7 +70,11 @@
 #include "noisy-irPass-dotBackend.h"
 
 static const char		kNoisyCgiInputLogStub[]		= "XXXXXXXXXX";
+
+#ifdef __linux__
+#else
 static const char		kNoisyCgiInputLogExtension[]	= ".noisy";
+#endif
 
 static char **			getCgiVars(void);
 static void			htmlPrint(char *  s);
@@ -613,10 +624,15 @@ main(void)
 		 *	Get the path corresponding to the mkstemp()-created file.
 		 */
 		char inputFilePath[MAXPATHLEN];
+
+#ifdef __linux__
+		strncpy(inputFilePath, logFileStub, MAXPATHLEN);
+#else
 		if (fcntl(logFd, F_GETPATH, &inputFilePath) == -1)
 		{
 			fatal(noisyCgiState, Efd2path);
 		}
+#endif
 
 		/*
 		 *	Tokenize input, then parse it and build AST + symbol table.
@@ -753,9 +769,9 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("</textarea>\n");
 
 	printf("<div style=\"background-color:#EEEEEE; color:444444; padding:3px;\">\n");
-	printf("&nbsp;&nbsp;(Noisy/" FLEX_UVLONGFMT 
+	printf("&nbsp;&nbsp;(Noisy/" FLEX_ULONGFMT 
 					":&nbsp;&nbsp;Operation completed in %.6f&thinsp;seconds S+U time; &nbsp; Mem = "
-					FLEX_UVLONGFMT "&thinsp;KB, &nbsp; &#916; Mem = " FLEX_UVLONGFMT "&thinsp;KB).\n",
+					FLEX_ULONGFMT "&thinsp;KB, &nbsp; &#916; Mem = " FLEX_ULONGFMT "&thinsp;KB).\n",
 					noisyCgiState->callAggregateTotal, 
 					(	(end.ru_stime.tv_sec - start.ru_stime.tv_sec) +
 						(end.ru_utime.tv_sec - start.ru_utime.tv_sec))

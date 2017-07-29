@@ -171,6 +171,10 @@ version.c: $(HEADERS) Makefile
 
 installcgi: cgi
 	sudo cp $(CGI_TARGET) $(CGI_BIN)
+	sudo mkdir -p $(HTMLBASEPATH)
+	sudo cp ../icons/* $(HTMLBASEPATH)/ 
+	sudo chmod 777 $(HTMLBASEPATH) 
+	sudo chmod 755 $(HTMLBASEPATH)/*.png
 
 test:
 	./newton-$(OSTYPE)-EN --dot Examples/invariants.n | dot -Tpdf -O ; open noname.gv.pdf 
