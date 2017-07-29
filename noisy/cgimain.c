@@ -58,7 +58,8 @@
 #include "noisy-parser.h"
 #include "noisy-lexer.h"
 #include "noisy-symbolTable.h"
-#include "noisy-irPass-helpers.h"
+#include "common-irPass-helpers.h"
+#include "common-lexers-helpers.h"
 #include "noisy-irPass-dotBackend.h"
 
 static const char		kNoisyCgiInputLogStub[]		= "XXXXXXXXXX";
@@ -429,7 +430,40 @@ main(void)
 	printf("              font-size:12px;\n");
 	printf("              color: #777777;\n");
 	printf("          }\n");
+
+	printf("	a {\n");
+	printf("	  outline: none;\n");
+	printf("	  text-decoration: none;\n");
+	printf("	}\n");
+
+	printf("	a:link {\n");
+	printf("	  color: #222222;\n");
+	printf("	  font-weight: 500;\n");
+	printf("	}\n");
+
+	printf("	a:visited {\n");
+	printf("	  color: #448822;\n");
+	printf("	}\n");
+
+	printf("	a:focus {\n");
+ 	printf("	  border-bottom: 5px solid;\n");
+	printf("	  background: #FF3333;\n");
+	printf("	}\n");
+
+	printf("	a:hover {\n");
+	printf("	  border-bottom: 5px solid;\n");
+	printf("	  background: #CCFFAA;\n");
+	printf("	}\n");
+
+	printf("	a:active {\n");
+	printf("	  background: #333333;\n");
+	printf("	  color: #FF3333;\n");
+	printf("	}\n");
 	
+	printf("	a img {\n");
+	printf("	  display: block;\n");
+	printf("	}\n");
+
 	printf("        </style>\n");
 
 
@@ -592,7 +626,7 @@ main(void)
 		/*
 		 *	Create a top-level scope, then parse.
 		 */
-		noisyCgiState->noisyIrTopScope = SymbolTableAllocScope(noisyCgiState);
+		noisyCgiState->noisyIrTopScope = noisySymbolTableAllocScope(noisyCgiState);
 		noisyCgiState->noisyIrRoot = noisyParse(noisyCgiState, noisyCgiState->noisyIrTopScope);
 		runPasses(noisyCgiState);
 
@@ -635,7 +669,7 @@ main(void)
 			timeStampDumpResidencies(noisyCgiState);
 
 			irNodeCount = irPassHelperIrSize(noisyCgiState, noisyCgiState->noisyIrRoot);
-			symbolTableNodeCount = noisyIrPassHelperSymbolTableSize(noisyCgiState, noisyCgiState->noisyIrTopScope);
+			symbolTableNodeCount = irPassHelperSymbolTableSize(noisyCgiState, noisyCgiState->noisyIrTopScope);
 
 			flexprint(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fpinfo, "Intermediate Representation Information:\n\n");
 			flexprint(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fpinfo, "    IR node count                        : %llu\n", irNodeCount);
@@ -778,21 +812,65 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 			kNoisyCgiFileUrlBase, noisyCgiState->lastDotRender, fmtWidth);
 	}
 
-	printf("<br><span style=\"color: black; background-color:#FF9966; padding:3px;\">");
-	printf("&nbsp;&nbsp;<b>Compiler Parameters:</b>&nbsp;&nbsp;</span>\n");
 
-	printf("<table style=\"width:100%%;\">\n");
-	printf("<tr><td>\n");
-	printf("<table style=\"width:300px; background-color: #EEEEEE\">\n");
+
+
+
+
+
+
+
+	printf("<table cellpadding=0; border=0; style=\"width:100%%;\">\n");
+	printf("<tr>\n");
+
+	printf("<td valign=top>\n");
+	printf("<table>\n");
+	printf("<tr>\n");
+	printf("<td>\n");
+	printf("<table border=0 style=\"width:250px; padding:6px; background-color: #EfEfEf\">\n");
+	printf("<tr><td><span style=\"color: black; background-color:#FF9966; padding:3px;\">");
+	printf("<b>Compiler Parameters:</b>&nbsp;&nbsp;</span></td></tr>\n");
+	//printf("<tr><td height=\"2\">&nbsp;</td></tr>\n");
 	printf("<tr><td>Backends Bitmap	</td><td><input type=\"number\" name=\"s\" style=\"width: 30px\" value=\"%d\"></td></tr>\n", cgiSparameter);
 	printf("<tr><td>Passes Bitmap	</td><td><input type=\"number\" name=\"o\" style=\"width: 60px\" value=\"%d\"></td></tr>\n", cgiOparameter);
 	printf("<tr><td>Dot detail level</td><td><input type=\"number\" name=\"t\" style=\"width: 60px\" value=\"%d\"></td></tr>\n", cgiTparameter);
+	//printf("<tr><td height=\"2\">&nbsp;</td></tr>\n");
+	printf("<tr><td><input style=\"font-family:'Source Sans Pro'; color: black; font-size:14px; font-weight:400; border: 1px; background-color: #FF9900;\" type=\"submit\" name=\"b\" value=\"Compile\"></td></tr>\n");
 	printf("</table>\n");
-	printf("</td><td>\n");
-	printf("<img src=\"%s\" width=150 align=\"right\">\n", kNoisyLogoPath);
-	printf("</td></tr>\n");
+	printf("</td>\n");
+	printf("</tr>\n");
+	printf("<tr><td><img src=\"%s\" width=90 align=\"left\"></td></tr>\n", kNoisyLogoPath);
 	printf("</table>\n");
-	printf("<input style=\"font-family:'Source Sans Pro'; color: black; font-size:14px; font-weight:400; border: 1px; background-color: #FF9900;\" type=\"submit\" name=\"b\" value=\"Compile\">\n");
+	printf("</td>\n");
+
+	printf("<td align=center; valign=top>\n");
+//	printf("<b>Cite this as:</b>\n");
+//	printf("<div style=\"background-color:whitesmoke;\">\n");
+//	printf("P. Stanley-Marbell, P. A. Francese, and M. Rinard. \"Encoder logic for reducing serial I/O power in sensors and sensor hubs.\"\n<i>28th IEEE Hot Chips Symposium (HotChips 28)</i>, 2016.\n");
+//	printf("</div>\n");
+//	printf("<pre>\n");
+//	printf("@inproceedings{hotchips16encoder,\n");
+//	printf("  title={Encoder logic for reducing serial I/O power in sensors and sensor hubs},\n");
+//	printf("  author={P. Stanley-Marbell and P.~A. Francese and M. Rinard},\n");
+//	printf("  booktitle={28th IEEE Hot Chips Symposium (HotChips 28)},\n");
+//	printf("  pages={1--2},\n");
+//	printf("  year={2016},\n");
+//	printf("  organization={IEEE}\n");
+//	printf("}\n");
+//	printf("</pre>\n");
+//	printf("<a href=\"\">[Download Paper PDF]</a>\n");
+	printf("</td>\n");
+
+	printf("<td valign=top; align=right>\n");
+	printf("<table border=0>\n");
+	printf("<tr><td><a href=\"http://physcomp.eng.cam.ac.uk\"><img src=\"%s\" width=120 align=\"right\"></a></td></tr>\n", kPhyscomplabLogoPath);
+	printf("</table>\n");
+	printf("</td>\n");
+
+	printf("</tr>\n");
+	printf("</table>\n");
+
+
 	printf("</form>\n");
 	printf("</div>\n");
 
@@ -823,11 +901,12 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("            editor.session.setMode(\"ace/mode/c_cpp\");\n");
 	printf("            editor.setShowPrintMargin(false);\n");
 	printf("            editor.gotoLine(%llu, %llu, true);\n", lexPeek(noisyCgiState, 1)->sourceInfo->lineNumber, lexPeek(noisyCgiState, 1)->sourceInfo->columnNumber);
+
 	/*
 	 *	Have ACE autosize the height, with an upper limit at maxLines
 	 */
 	printf("	editor.setOptions({maxLines: 40});\n");
-	printf("	editor.setOptions({minLines: 40});\n");
+	printf("	editor.setOptions({minLines: 20});\n");
 	/*
 	 *	Copy the ACE editor contents back to textarea for form submission.
 	 */

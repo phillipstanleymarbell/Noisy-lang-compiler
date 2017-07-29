@@ -5,7 +5,7 @@ CC			= sh-coff-gcc
 CCFLAGS			= "-nostdlib -fno-builtin -std=gnu99"
 RANLIB			= sh-coff-ranlib
 HOSTNAME		= localhost#`hostname`
-PLATFORM_DFLAGS		+= -DkNoisyBasePath="\"/Library/WebServer/Documents/tmp/\"" -DkNoisyDotCommand="\"/opt/local/bin/dot\"" -DkNoisyLogPath="\"http://$(HOSTNAME)/tmp/salsvm-logo.png\"" -DkOrganizationLogoPath="\"http://$(HOSTNAME)/tmp/orange-logo-full.png\"" -DkNoisyCgiFileUrlBase=\""http://$(HOSTNAME)/tmp/\"" -DkNoisyCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/crayoncgi-darwin\"" -DkNewtonCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/newtoncgi-darwin\""
+PLATFORM_DFLAGS		+= -DkPhyscomplabLogoPath="\"http://$(HOSTNAME)/tmp/orange-logo-full.png\"" -DkNoisyBasePath="\"/Library/WebServer/Documents/tmp/\"" -DkNoisyDotCommand="\"/opt/local/bin/dot\"" -DkNoisyLogPath="\"http://$(HOSTNAME)/tmp/salsvm-logo.png\"" -DkNoisyCgiFileUrlBase=\""http://$(HOSTNAME)/tmp/\"" -DkNoisyCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/crayoncgi-darwin\"" -DkNewtonCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/newtoncgi-darwin\""
 PLATFORM_OPTFLAGS	= -O3
 PLATFORM_DBGFLAGS	+= -g
 PLATFORM_CFLAGS		+= -DNOISY_OS_MACOSX
