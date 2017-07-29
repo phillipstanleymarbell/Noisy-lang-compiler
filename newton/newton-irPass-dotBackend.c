@@ -43,6 +43,7 @@
 #include <sys/time.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -135,7 +136,7 @@ irPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irNode, 
 
 	if (irNode->type != kNoisyIrNodeType_Xseq)
 	{
-		snprintf(src, kNoisyMaxPrintBufferLength, "| source:%lu,%lu", irNode->sourceInfo->lineNumber, irNode->sourceInfo->columnNumber);
+		snprintf(src, kNoisyMaxPrintBufferLength, "| source:%"PRIu64",%"PRIu64"", irNode->sourceInfo->lineNumber, irNode->sourceInfo->columnNumber);
 	}
 
 	if (N->dotDetailLevel & kNoisyDotDetailLevelNoText)
@@ -527,13 +528,13 @@ scope2id(State *  N, Scope *  scope)
 
 	char *	buf, tmp[kNoisyMaxBufferLength];
 
-	int length = snprintf(tmp, kNoisyMaxBufferLength, "%lu_%lu_%lu_%lu",
+	int length = snprintf(tmp, kNoisyMaxBufferLength, "%"PRIu64"_%"PRIu64"_%"PRIu64"_%"PRIu64"",
 			scope->begin->lineNumber, scope->begin->columnNumber,
 			scope->end->lineNumber, scope->end->columnNumber);
 
 	buf = (char *)malloc(length);
 
-	sprintf(buf, "%lu_%lu_%lu_%lu",
+	sprintf(buf, "%"PRIu64"_%"PRIu64"_%"PRIu64"_%"PRIu64"",
 			scope->begin->lineNumber, scope->begin->columnNumber,
 			scope->end->lineNumber, scope->end->columnNumber);
 
@@ -557,14 +558,14 @@ scope2id2(State *  N, Scope *  scope)
 
 	char *	buf, tmp[kNoisyMaxBufferLength];
 
-	int length = snprintf(tmp, kNoisyMaxBufferLength, "%s:%lu,%lu \\nto\\n %s:%lu,%lu",
+	int length = snprintf(tmp, kNoisyMaxBufferLength, "%s:%"PRIu64",%"PRIu64" \\nto\\n %s:%"PRIu64",%"PRIu64"",
 		scope->begin->fileName, scope->begin->lineNumber, 
 		scope->begin->columnNumber,  scope->begin->fileName,
 		scope->end->lineNumber, scope->end->columnNumber);
 
 	buf = (char *)malloc(length);
 
-	sprintf(buf, "%s:%lu,%lu \\nto\\n %s:%lu,%lu",
+	sprintf(buf, "%s:%"PRIu64",%"PRIu64" \\nto\\n %s:%"PRIu64",%"PRIu64"",
 		scope->begin->fileName, scope->begin->lineNumber, 
 		scope->begin->columnNumber,  scope->begin->fileName,
 		scope->end->lineNumber, scope->end->columnNumber);
@@ -589,12 +590,12 @@ symbol2id(State *  N, Symbol *  symbol)
 
 	char *	buf, tmp[kNoisyMaxBufferLength];
 
-	int length = snprintf(tmp, kNoisyMaxBufferLength, "%lu_%lu",
+	int length = snprintf(tmp, kNoisyMaxBufferLength, "%"PRIu64"_%"PRIu64"",
 		symbol->sourceInfo->lineNumber, symbol->sourceInfo->columnNumber);
 
 	buf = (char *)malloc(length);
 
-	sprintf(buf, "%lu_%lu",
+	sprintf(buf, "%"PRIu64"_%"PRIu64"",
 		symbol->sourceInfo->lineNumber, symbol->sourceInfo->columnNumber);
 
 	return buf;
