@@ -41,10 +41,17 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/time.h>
+#include <unistd.h>
+#include <sys/resource.h>
 #include <getopt.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <sys/syslimits.h>
+
+#ifdef __linux
+#else
+#	include <sys/syslimits.h>
+#endif
+
 #include <fcntl.h>
 #include <sys/param.h>
 #include <stdint.h>
@@ -58,11 +65,16 @@
 #include "noisy-parser.h"
 #include "noisy-lexer.h"
 #include "noisy-symbolTable.h"
-#include "noisy-irPass-helpers.h"
+#include "common-lexers-helpers.h"
+#include "common-irPass-helpers.h"
 #include "noisy-irPass-dotBackend.h"
 
 static const char		kNoisyCgiInputLogStub[]		= "XXXXXXXXXX";
+
+#ifdef __linux__
+#else
 static const char		kNoisyCgiInputLogExtension[]	= ".noisy";
+#endif
 
 static char **			getCgiVars(void);
 static void			htmlPrint(char *  s);
@@ -579,10 +591,15 @@ main(void)
 		 *	Get the path corresponding to the mkstemp()-created file.
 		 */
 		char inputFilePath[MAXPATHLEN];
+
+#ifdef __linux__
+		strncpy(inputFilePath, logFileStub, MAXPATHLEN);
+#else
 		if (fcntl(logFd, F_GETPATH, &inputFilePath) == -1)
 		{
 			fatal(noisyCgiState, Efd2path);
 		}
+#endif
 
 		/*
 		 *	Tokenize input, then parse it and build AST + symbol table.
@@ -592,7 +609,7 @@ main(void)
 		/*
 		 *	Create a top-level scope, then parse.
 		 */
-		noisyCgiState->noisyIrTopScope = SymbolTableAllocScope(noisyCgiState);
+		noisyCgiState->noisyIrTopScope = noisySymbolTableAllocScope(noisyCgiState);
 		noisyCgiState->noisyIrRoot = noisyParse(noisyCgiState, noisyCgiState->noisyIrTopScope);
 		runPasses(noisyCgiState);
 
@@ -635,7 +652,7 @@ main(void)
 			timeStampDumpResidencies(noisyCgiState);
 
 			irNodeCount = irPassHelperIrSize(noisyCgiState, noisyCgiState->noisyIrRoot);
-			symbolTableNodeCount = noisyIrPassHelperSymbolTableSize(noisyCgiState, noisyCgiState->noisyIrTopScope);
+			symbolTableNodeCount = irPassHelperSymbolTableSize(noisyCgiState, noisyCgiState->noisyIrTopScope);
 
 			flexprint(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fpinfo, "Intermediate Representation Information:\n\n");
 			flexprint(noisyCgiState->Fe, noisyCgiState->Fm, noisyCgiState->Fpinfo, "    IR node count                        : %llu\n", irNodeCount);
@@ -719,9 +736,9 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("</textarea>\n");
 
 	printf("<div style=\"background-color:#EEEEEE; color:444444; padding:3px;\">\n");
-	printf("&nbsp;&nbsp;(Noisy/" FLEX_UVLONGFMT 
+	printf("&nbsp;&nbsp;(Noisy/" FLEX_ULONGFMT 
 					":&nbsp;&nbsp;Operation completed in %.6f&thinsp;seconds S+U time; &nbsp; Mem = "
-					FLEX_UVLONGFMT "&thinsp;KB, &nbsp; &#916; Mem = " FLEX_UVLONGFMT "&thinsp;KB).\n",
+					FLEX_ULONGFMT "&thinsp;KB, &nbsp; &#916; Mem = " FLEX_ULONGFMT "&thinsp;KB).\n",
 					noisyCgiState->callAggregateTotal, 
 					(	(end.ru_stime.tv_sec - start.ru_stime.tv_sec) +
 						(end.ru_utime.tv_sec - start.ru_utime.tv_sec))
@@ -822,7 +839,11 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("            editor.setTheme(\"ace/theme/solarized_light\");\n");
 	printf("            editor.session.setMode(\"ace/mode/c_cpp\");\n");
 	printf("            editor.setShowPrintMargin(false);\n");
-	printf("            editor.gotoLine(%llu, %llu, true);\n", lexPeek(noisyCgiState, 1)->sourceInfo->lineNumber, lexPeek(noisyCgiState, 1)->sourceInfo->columnNumber);
+	
+	/*
+	 *	Disabled for now. See Issue #132
+	 */
+//	printf("            editor.gotoLine(%llu, %llu, true);\n", lexPeek(noisyCgiState, 1)->sourceInfo->lineNumber, lexPeek(noisyCgiState, 1)->sourceInfo->columnNumber);
 	/*
 	 *	Have ACE autosize the height, with an upper limit at maxLines
 	 */

@@ -187,6 +187,11 @@ README.sloccount: $(HEADERS) $(SOURCES)
 
 installcgi: cgi
 	sudo cp $(CGI_TARGET) $(CGI_BIN)
+	sudo mkdir $(HTMLBASEPATH)
+	sudo cp ../icons/* $(HTMLBASEPATH)/ 
+	sudo chmod 777 $(HTMLBASEPATH) 
+	sudo chmod 755 $(HTMLBASEPATH)/*.png
+
 	
 test:
 	./noisy-$(OSTYPE)-EN --dot examples/helloWorld.n | dot -Tpdf -O ; open noname.gv.pdf 

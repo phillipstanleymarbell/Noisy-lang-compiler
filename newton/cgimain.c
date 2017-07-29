@@ -41,10 +41,17 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/time.h>
+#include <unistd.h>
+#include <sys/resource.h>
 #include <getopt.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <sys/syslimits.h>
+
+#ifdef __linux__
+#else
+#	include <sys/syslimits.h>
+#endif
+
 #include <fcntl.h>
 #include <sys/param.h>
 #include <stdint.h>
@@ -69,7 +76,11 @@
 extern char *			gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
 
 static const char		kNoisyCgiInputLogStub[]		= "XXXXXXXXXX";
+
+#ifdef __linux__
+#else
 static const char		kNoisyCgiInputLogExtension[]	= ".newton";
+#endif
 
 static char **			getCgiVars(void);
 static void			htmlPrint(char *  s);
@@ -366,7 +377,7 @@ main(void)
 
 	printf("<html>\n");
 	printf("<head>\n");
-	printf("<title>Noisy version %s</title>\n", kNewtonVersion);
+	printf("<title>Newton version %s</title>\n", kNewtonVersion);
 	printf("<link rel=\"stylesheet\" type=\"text/css\" href=\"http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300\">\n");
 	printf("<link rel=\"stylesheet\" type=\"text/css\" href=\"http://fonts.googleapis.com/css?family=Source+Code+Pro:400,300\">\n");
 
@@ -586,10 +597,15 @@ main(void)
 		 *	Get the path corresponding to the mkstemp()-created file.
 		 */
 		char inputFilePath[MAXPATHLEN];
+
+#ifdef __linux__
+		strncpy(inputFilePath, logFileStub, MAXPATHLEN);
+#else
 		if (fcntl(logFd, F_GETPATH, &inputFilePath) == -1)
 		{
 			fatal(newtonCgiState, Efd2path);
 		}
+#endif
 
 		/*
 		 *	Tokenize input, then parse it and build AST + symbol table.
@@ -735,9 +751,9 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("</textarea>\n");
 
 	printf("<div style=\"background-color:#EEEEEE; color:444444; padding:3px;\">\n");
-	printf("&nbsp;&nbsp;(Newton/" FLEX_UVLONGFMT 
+	printf("&nbsp;&nbsp;(Newton/" FLEX_ULONGFMT 
 					":&nbsp;&nbsp;Operation completed in %.6f&thinsp;seconds S+U time; &nbsp; Mem = "
-					FLEX_UVLONGFMT "&thinsp;KB, &nbsp; &#916; Mem = " FLEX_UVLONGFMT "&thinsp;KB).\n",
+					FLEX_ULONGFMT "&thinsp;KB, &nbsp; &#916; Mem = " FLEX_ULONGFMT "&thinsp;KB).\n",
 					newtonCgiState->callAggregateTotal, 
 					(	(end.ru_stime.tv_sec - start.ru_stime.tv_sec) +
 						(end.ru_utime.tv_sec - start.ru_utime.tv_sec))
