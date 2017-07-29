@@ -55,6 +55,7 @@
 #include <fcntl.h>
 #include <sys/param.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -916,7 +917,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("            editor.setTheme(\"ace/theme/solarized_light\");\n");
 	printf("            editor.session.setMode(\"ace/mode/c_cpp\");\n");
 	printf("            editor.setShowPrintMargin(false);\n");
-	printf("            editor.gotoLine(%llu, %llu, true);\n", lexPeek(noisyCgiState, 1)->sourceInfo->lineNumber, lexPeek(noisyCgiState, 1)->sourceInfo->columnNumber);
+	printf("            editor.gotoLine(%"PRIu64", %"PRIu64", true);\n", lexPeek(noisyCgiState, 1)->sourceInfo->lineNumber, lexPeek(noisyCgiState, 1)->sourceInfo->columnNumber);
 
 	/*
 	 *	Have ACE autosize the height, with an upper limit at maxLines
