@@ -1,0 +1,7 @@
+
+
+changeset: 238:5327793afcbe2e620bf41ebf1a6979a1aa2d8a7f
+
+./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s
+
+sudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s"

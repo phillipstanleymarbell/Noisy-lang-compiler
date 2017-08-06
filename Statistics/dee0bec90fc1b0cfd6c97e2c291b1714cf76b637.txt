@@ -1,0 +1,240 @@
+
+    Hardware Overview:
+
+      Model Name: MacBook Pro
+      Model Identifier: MacBookPro11,4
+      Processor Name: Intel Core i7
+      Processor Speed: 2.2 GHz
+      Number of Processors: 1
+      Total Number of Cores: 4
+      L2 Cache (per Core): 256 KB
+      L3 Cache: 6 MB
+      Memory: 16 GB
+
+changeset: 167:dee0bec90fc1b0cfd6c97e2c291b1714cf76b637
+char kNoisyVersion[] = "0.1-alpha-167 (dee0bec90fc1b0cfd6c97e2c291b1714cf76b637) (build 01-28-2017-14:46-jonathanlim@Jonathans-MacBook-Pro-Darwin-16.3.0-x86_64)";
+
+./noisy-darwin-EN -O0 Examples/helloWorld.n -s
+
+Informational Report:
+---------------------
+dimension second s fcc08900
+dimension meter m fcc08bb0
+dimension kilogram kg fcc09d20
+physics time
+alias second
+alias abbreviation s
+isvector 0
+numerator dimension second 2 fcc08930
+==============================================================================================
+physics distance
+alias meter
+alias abbreviation m
+isvector 0
+numerator dimension meter 3 fcc09320
+==============================================================================================
+physics mass
+alias kilogram
+alias abbreviation kg
+isvector 0
+numerator dimension kilogram 5 fcc09d50
+==============================================================================================
+physics speed
+alias MegaSpeed
+alias abbreviation MegS
+isvector 0
+numerator dimension meter 3 fcc0a980
+==============================================================================================
+physics acceleration
+alias MegaAcceleration
+alias abbreviation MegA
+isvector 0
+numerator dimension meter 3 fcc0b5b0
+==============================================================================================
+physics force
+alias Newton
+alias abbreviation N
+isvector 0
+numerator dimension kilogram 5 fcc0c210
+numerator dimension meter 3 fcc0c270
+==============================================================================================
+physics work
+alias Joule
+alias abbreviation J
+isvector 0
+numerator dimension kilogram 5 fcc0cf30
+numerator dimension meter 3 fcc0cf90
+numerator dimension meter 3 fcc0cff0
+==============================================================================================
+physics Pi
+alias (null)
+alias abbreviation (null)
+isvector 0
+==============================================================================================
+physics g
+alias (null)
+alias abbreviation (null)
+isvector 0
+numerator dimension meter 3 fcc0dae0
+numerator dimension second 2 fcc0db40
+==============================================================================================
+physics G
+alias (null)
+alias abbreviation (null)
+isvector 0
+numerator dimension meter 3 fcc0e730
+numerator dimension kilogram 5 fcc0e790
+numerator dimension second 2 fcc0e7f0
+==============================================================================================
+
+Informational Report:
+---------------------
+dimension second s fcc08900
+dimension meter m fcc08bb0
+dimension kilogram kg fcc09d20
+physics time
+alias second
+alias abbreviation s
+isvector 0
+numerator dimension second 2 fcc08930
+==============================================================================================
+physics distance
+alias meter
+alias abbreviation m
+isvector 0
+numerator dimension meter 3 fcc09320
+==============================================================================================
+physics mass
+alias kilogram
+alias abbreviation kg
+isvector 0
+numerator dimension kilogram 5 fcc09d50
+==============================================================================================
+physics speed
+alias MegaSpeed
+alias abbreviation MegS
+isvector 0
+numerator dimension meter 3 fcc0a980
+==============================================================================================
+physics acceleration
+alias MegaAcceleration
+alias abbreviation MegA
+isvector 0
+numerator dimension meter 3 fcc0b5b0
+==============================================================================================
+physics force
+alias Newton
+alias abbreviation N
+isvector 0
+numerator dimension kilogram 5 fcc0c210
+numerator dimension meter 3 fcc0c270
+==============================================================================================
+physics work
+alias Joule
+alias abbreviation J
+isvector 0
+numerator dimension kilogram 5 fcc0cf30
+numerator dimension meter 3 fcc0cf90
+numerator dimension meter 3 fcc0cff0
+==============================================================================================
+physics Pi
+alias (null)
+alias abbreviation (null)
+isvector 0
+==============================================================================================
+physics g
+alias (null)
+alias abbreviation (null)
+isvector 0
+numerator dimension meter 3 fcc0dae0
+numerator dimension second 2 fcc0db40
+==============================================================================================
+physics G
+alias (null)
+alias abbreviation (null)
+isvector 0
+numerator dimension meter 3 fcc0e730
+numerator dimension kilogram 5 fcc0e790
+numerator dimension second 2 fcc0e7f0
+==============================================================================================
+
+Non-zero Noisy routine residency time upper bounds and counts (2593 calls, total of 13104.6980 us):
+
+    Routine                                         Parse,         1 calls (0.0386 %), total residency = 0.117000 us (0.0009 %)
+    Routine                                  ParseProgram,         1 calls (0.0386 %), total residency = 0.100000 us (0.0008 %)
+    Routine                      ParseProgtypeDeclaration,         1 calls (0.0386 %), total residency = 0.092000 us (0.0007 %)
+    Routine                             ParseProgtypeBody,         1 calls (0.0386 %), total residency = 0.041000 us (0.0003 %)
+    Routine              ParseProgtypeTypenameDeclaration,         1 calls (0.0386 %), total residency = 2.053000 us (0.0157 %)
+    Routine                       ParseNamegenDeclaration,         1 calls (0.0386 %), total residency = 0.043000 us (0.0003 %)
+    Routine                          ParseIdentifierOrNil,         2 calls (0.0771 %), total residency = 0.083000 us (0.0006 %)
+    Routine                      ParseIdentifierOrNilList,         2 calls (0.0771 %), total residency = 0.092000 us (0.0007 %)
+    Routine                           ParseIdentifierList,         1 calls (0.0386 %), total residency = 0.160000 us (0.0012 %)
+    Routine                           ParseTypeExpression,         5 calls (0.1928 %), total residency = 0.194000 us (0.0015 %)
+    Routine                                ParseBasicType,         3 calls (0.1157 %), total residency = 0.121000 us (0.0009 %)
+    Routine                        ParseAnonAggregateType,         2 calls (0.0771 %), total residency = 0.160000 us (0.0012 %)
+    Routine                                 ParseListType,         2 calls (0.0771 %), total residency = 0.083000 us (0.0006 %)
+    Routine                                ParseTupleType,         2 calls (0.0771 %), total residency = 0.142000 us (0.0011 %)
+    Routine                        ParseNamegenDefinition,         1 calls (0.0386 %), total residency = 0.041000 us (0.0003 %)
+    Routine                      ParseScopedStatementList,         1 calls (0.0386 %), total residency = 0.118000 us (0.0009 %)
+    Routine                            ParseStatementList,         1 calls (0.0386 %), total residency = 1.865000 us (0.0142 %)
+    Routine                                ParseStatement,         2 calls (0.0771 %), total residency = 0.082000 us (0.0006 %)
+    Routine                                 ParseAssignOp,         2 calls (0.0771 %), total residency = 0.084000 us (0.0006 %)
+    Routine                               ParseExpression,         3 calls (0.1157 %), total residency = 0.159000 us (0.0012 %)
+    Routine                      ParseName2chanExpression,         1 calls (0.0386 %), total residency = 0.115000 us (0.0009 %)
+    Routine                                     ParseTerm,         2 calls (0.0771 %), total residency = 0.141000 us (0.0011 %)
+    Routine                                   ParseFactor,         2 calls (0.0771 %), total residency = 0.088000 us (0.0007 %)
+    Routine                                 ParseTerminal,        30 calls (1.1570 %), total residency = 1.215000 us (0.0093 %)
+    Routine             ParseIdentifierDefinitionTerminal,         5 calls (0.1928 %), total residency = 0.361000 us (0.0028 %)
+    Routine                           ParserSemanticError,         1 calls (0.0386 %), total residency = 0.101000 us (0.0008 %)
+    Routine                      ParserProgtypeName2scope,         1 calls (0.0386 %), total residency = 0.045000 us (0.0003 %)
+    Routine                    ParserErrorMultiDefinition,         1 calls (0.0386 %), total residency = 0.042000 us (0.0003 %)
+    Routine                               ParserPeekCheck,       377 calls (14.5391 %), total residency = 24.416000 us (0.1863 %)
+    Routine                          ParserDepthFirstWalk,       333 calls (12.8423 %), total residency = 2599.441000 us (19.8359 %)
+    Routine                                 ParserAddLeaf,        96 calls (3.7023 %), total residency = 4.021000 us (0.0307 %)
+    Routine                  ParserAddLeafWithChainingSeq,        88 calls (3.3938 %), total residency = 5.848000 us (0.0446 %)
+    Routine                     ParserAddToProgtypeScopes,         1 calls (0.0386 %), total residency = 0.064000 us (0.0005 %)
+    Routine                             ParserAssignTypes,         1 calls (0.0386 %), total residency = 0.121000 us (0.0009 %)
+    Routine                         SymbolTableAllocScope,         3 calls (0.1157 %), total residency = 2.118000 us (0.0162 %)
+    Routine          SymbolTableAddOrLookupSymbolForToken,         5 calls (0.1928 %), total residency = 0.549000 us (0.0042 %)
+    Routine                SymbolTableSymbolForIdentifier,        12 calls (0.4628 %), total residency = 1.016000 us (0.0078 %)
+    Routine                          SymbolTableOpenScope,         2 calls (0.0771 %), total residency = 0.085000 us (0.0006 %)
+    Routine                         SymbolTableCloseScope,         2 calls (0.0771 %), total residency = 0.093000 us (0.0007 %)
+    Routine                                GenNoisyIrNode,       407 calls (15.6961 %), total residency = 92.039000 us (0.7023 %)
+    Routine                         LexAllocateSourceInfo,        36 calls (1.3884 %), total residency = 18.162000 us (0.1386 %)
+    Routine                              LexAllocateToken,        36 calls (1.3884 %), total residency = 7.394000 us (0.0564 %)
+    Routine                                        LexPut,        36 calls (1.3884 %), total residency = 4.995000 us (0.0381 %)
+    Routine                                        LexGet,        35 calls (1.3498 %), total residency = 1.675000 us (0.0128 %)
+    Routine                                       LexPeek,       287 calls (11.0683 %), total residency = 57.479000 us (0.4386 %)
+    Routine                                       LexInit,         1 calls (0.0386 %), total residency = 45.431000 us (0.3467 %)
+    Routine                         LexerCheckTokenLength,       128 calls (4.9364 %), total residency = 7.565000 us (0.0577 %)
+    Routine                                      LexerCur,       212 calls (8.1759 %), total residency = 15.596000 us (0.1190 %)
+    Routine                                   LexerGobble,        17 calls (0.6556 %), total residency = 3.251000 us (0.0248 %)
+    Routine                                     LexerDone,        35 calls (1.3498 %), total residency = 1.840000 us (0.0140 %)
+    Routine                                      LexerEqf,         6 calls (0.2314 %), total residency = 0.439000 us (0.0033 %)
+    Routine                                LexerCheckWeq3,         5 calls (0.1928 %), total residency = 0.521000 us (0.0040 %)
+    Routine                              LexerCheckSingle,        11 calls (0.4242 %), total residency = 0.509000 us (0.0039 %)
+    Routine                                 LexerCheckDot,         5 calls (0.1928 %), total residency = 9998.115000 us (76.2941 %)
+    Routine                                  LexerCheckLt,         1 calls (0.0386 %), total residency = 0.042000 us (0.0003 %)
+    Routine                         LexerCheckDoubleQuote,         2 calls (0.0771 %), total residency = 0.083000 us (0.0006 %)
+    Routine                              LexerFinishToken,        49 calls (1.8897 %), total residency = 45.343000 us (0.3460 %)
+    Routine                         LexerMakeNumericConst,         1 calls (0.0386 %), total residency = 0.170000 us (0.0013 %)
+    Routine                                LexerIsDecimal,         3 calls (0.1157 %), total residency = 0.886000 us (0.0068 %)
+    Routine                             LexerStringAtLeft,         2 calls (0.0771 %), total residency = 2.387000 us (0.0182 %)
+    Routine                            LexerStringAtRight,         2 calls (0.0771 %), total residency = 0.840000 us (0.0064 %)
+    Routine               LexerIsDecimalSeparatedWithChar,         1 calls (0.0386 %), total residency = 0.092000 us (0.0007 %)
+    Routine                              LexerIsRealConst,         1 calls (0.0386 %), total residency = 0.148000 us (0.0011 %)
+    Routine                   LexerIsEngineeringRealConst,         1 calls (0.0386 %), total residency = 0.155000 us (0.0012 %)
+    Routine                        LexerStringToRealConst,         1 calls (0.0386 %), total residency = 0.042000 us (0.0003 %)
+    Routine                    LexerIsOperatorOrSeparator,       134 calls (5.1678 %), total residency = 13.521000 us (0.1032 %)
+    Routine                                       InFirst,       128 calls (4.9364 %), total residency = 22.508000 us (0.1718 %)
+    Routine                                      InFollow,        10 calls (0.3857 %), total residency = 0.418000 us (0.0032 %)
+    Routine                           ConsolePrintBuffers,         1 calls (0.0386 %), total residency = 117.342000 us (0.8954 %)
+
+Intermediate Representation Information:
+
+    IR node count                        : 38
+    Symbol Table node count              : 2
+
+sudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy-darwin-EN -O0 Examples/helloWorld.n -s"
+
+sudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy-darwin-EN -O0 Examples/helloWorld.n -s"

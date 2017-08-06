@@ -1,11 +1,10 @@
-LIBFLEXPATH=/Users/jonathanlim/Documents/Compiler/libflex
-CONFIGPATH=/Users/jonathanlim/Documents/Compiler/libflex
+TREEROOT	= ..
 
-TREEROOT=..
-COMMONPATH=../common
-MACHTYPE=x86_64
-COMPILERVARIANT=clang
-OSTYPE=darwin
+include		$(TREEROOT)/config.local
+
+COMMONPATH	= ../common
+COMPILERVARIANT	= clang
+
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 
@@ -25,7 +24,7 @@ CGI_TARGET	= noisycgi-$(OSTYPE)-$(NOISY_L10N)
 
 WFLAGS		= -Wall -Werror
 INCDIRS		= -I. -I$(LIBFLEXPATH) -I$(COMMONPATH) 
-LINKDIRS    = -L. -L$(LIBFLEXPATH) -L$(COMMONPATH) -lCommon-darwin-EN
+LINKDIRS	= -L. -L$(LIBFLEXPATH) -L$(COMMONPATH) -lCommon-$(OSTYPE)-EN
 PROTOC		= protoc-c
 
 NOISYEXTENSION	= n
@@ -143,11 +142,11 @@ lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a: $(LIBNOISYOBJS) $(CONFIGPATH)/config.$
 #			Executables
 #
 target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
-	$(LD) $(LINKDIRS) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -lm -o $(TARGET)
+	$(LD) $(LINKDIRS) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -lm $(LINKDIRS) $(LDFLAGS) -o $(TARGET)
 
 
 cgi:lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
-	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) -o $(CGI_TARGET)
+	$(LD) -L. -L$(LIBFLEXPATH) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) $(LINKDIRS) $(LDFLAGS) -o $(CGI_TARGET)
 
 
 full: scan README.sloccount
@@ -188,9 +187,14 @@ README.sloccount: $(HEADERS) $(SOURCES)
 
 installcgi: cgi
 	sudo cp $(CGI_TARGET) $(CGI_BIN)
+	sudo mkdir $(HTMLBASEPATH)
+	sudo cp ../icons/* $(HTMLBASEPATH)/ 
+	sudo chmod 777 $(HTMLBASEPATH) 
+	sudo chmod 755 $(HTMLBASEPATH)/*.png
+
 	
 test:
-	./noisy-darwin-EN --dot examples/helloWorld.n | dot -Tpdf -O ; open noname.gv.pdf 
+	./noisy-$(OSTYPE)-EN --dot examples/helloWorld.n | dot -Tpdf -O ; open noname.gv.pdf 
 
 
 clean:

@@ -1,14 +1,14 @@
-LIBFLEXPATH=/Users/jonathanlim/Documents/Compiler/libflex
-CONFIGPATH=/Users/jonathanlim/Documents/Compiler/libflex
-TREEROOT=..
-MACHTYPE=x86_64
-COMPILERVARIANT=clang
-OSTYPE=darwin
+TREEROOT        = ..
+
+include         $(TREEROOT)/config.local
+
+COMMONPATH      = ../common
+COMPILERVARIANT = clang
+
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 include		config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 
-PLATFORM_CFLAGS	= -Wno-gnu-designator
-OBJECTEXTENSION = o
+PLATFORM_CFLAGS	+= -Wno-gnu-designator
 MAKEFLAGS	+= -j
 
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
@@ -40,7 +40,7 @@ SOURCES		=\
 
 #
 #	Clang seems to be unable to do LTO unless we have all the objects
-#	not tucked into a library, so we don't just simply link maain against
+#	not tucked into a library, so we don't just simply link main against
 #	-l$(LIBCOMMON)-$(OSTYPE)-$(COMMON_L10N)
 #
 OBJS		=\

@@ -1,0 +1,64 @@
+#
+#			Mechanical properties of Nylon 12, used for 3D printing into a beam
+#
+
+time : signal =
+{
+	name = "second" English
+	symbol = "s";
+	derivation = none;
+}
+
+distance : signal =
+{
+	name = "meter" English
+	symbol = "m";
+	derivation = none;
+}
+
+mass : signal =
+{
+	name = "kilogram" English
+	symbol = "kg";
+	derivation = none;
+}
+
+speed : signal =
+{
+	name = "MegaSpeed" English
+	symbol = "MegS";
+	derivation = distance / time;
+}
+
+acceleration : signal =
+{
+	name = "MegaAcceleration" English
+	symbol = "MegA";
+	derivation = speed / time;
+}
+
+force : signal = 
+{
+	name = "Newton" English
+	symbol = "N" ;
+	derivation = mass * acceleration;
+}
+
+#
+#	Source of data:
+#
+#	@misc{Matbase,
+#	title = {Nylon 12 properties},
+#	howpublished = 
+#	{\url{https://www.matbase.com/material-categories/natural-and-synthetic-polymers/thermoplastics/engineering-polymers/material-properties-of-polyamide-12-nylon-12-pa-12.html#properties}},
+#	note = {Accessed: 2017-25-07}
+#	}
+#
+
+rho : constant = 1010 * kilogram * meter ** -3;
+E : constant = 1.54e9 * Newton / meter ** -2;
+
+null : invariant(null: time) =
+{
+	null ~ 0
+}

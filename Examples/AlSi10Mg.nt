@@ -1,0 +1,68 @@
+#
+#			Mechanical properties of AlSi10Mg, used for 3D printing into a beam
+#
+
+time : signal =
+{
+	name = "second" English
+	symbol = "s";
+	derivation = none;
+}
+
+distance : signal =
+{
+	name = "meter" English
+	symbol = "m";
+	derivation = none;
+}
+
+mass : signal =
+{
+	name = "kilogram" English
+	symbol = "kg";
+	derivation = none;
+}
+
+speed : signal =
+{
+	name = "MegaSpeed" English
+	symbol = "MegS";
+	derivation = distance / time;
+}
+
+acceleration : signal =
+{
+	name = "MegaAcceleration" English
+	symbol = "MegA";
+	derivation = speed / time;
+}
+
+force : signal = 
+{
+	name = "Newton" English
+	symbol = "N" ;
+	derivation = mass * acceleration;
+}
+
+#
+#	Source of data:
+#
+#	@misc{EOSINT,
+#	title = {AlSi10Mg properties},
+#	howpublished = 
+#	{\url{https://www.anubis3d.com/documents/dmls/datasheets/Aluminum-AlSi10Mg.pdf}},
+#	note = {Accessed: 2010-09-30}
+#	}
+#
+
+rho : constant = 2670 * kilogram * meter ** -3;
+E : constant = 7e10 * Newton / meter ** -2;
+
+
+
+null : invariant(null: time) =
+{
+	null ~ 0
+}
+
+
