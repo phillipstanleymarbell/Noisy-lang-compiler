@@ -44,10 +44,10 @@ g : constant = 9.8 * m * s ** -2;
 #		Dimensional Matrix:
 #
 #
-#		G  M  r  T  m
-#	 L  3  0  1  0  0
-#	 M -1  1  0  0  1
-#	 T -2  0  0  1  0
+#		l  g  m  T  
+#	 L  1  1  0  0  
+#	 M  0  0  1  0  
+#	 T  0 -2  0  1  
 #
 #		z = null(A,'r')
 #
