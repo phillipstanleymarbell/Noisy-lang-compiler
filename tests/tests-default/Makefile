@@ -1,5 +1,6 @@
 LIBFLEXPATH=/Users/jonathanlim/Documents/Compiler/libflex
 CONFIGPATH=/Users/jonathanlim/Documents/Compiler/libflex
+
 NOISYPATH=../../noisy
 NEWTONPATH=../../newton
 COMMONPATH=../../common
@@ -11,10 +12,11 @@ include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 
 PLATFORM_CFLAGS	= -Wno-gnu-designator
+OBJECTEXTENSION = o
 MAKEFLAGS	+= -j
 
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
-LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS)
+LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
 
 LIBNEWTON	= Newton
 LIBNOISY	= Noisy
@@ -88,9 +90,11 @@ HEADERS		=\
 
 
 
-all: init 
+all: init invariant
 
-init: dtrace_probe lib$(LIBTEST2)-$(OSTYPE)-$(TEST_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+init: dtrace_probe lib$(LIBTEST)-$(OSTYPE)-$(TEST_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+
+invariant: dtrace_probe lib$(LIBTEST2)-$(OSTYPE)-$(TEST_L10N).a target2 $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
 
 dtrace_probe: 
 	dtrace -o probes.h -h -s probes.d

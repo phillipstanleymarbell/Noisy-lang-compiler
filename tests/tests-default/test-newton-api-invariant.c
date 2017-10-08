@@ -158,3 +158,167 @@ char * test_newtonCheckSingleInvariant()
 }
 
 
+char * test_newtonApiDimensionCheckTree()
+{
+	State * newton = newtonApiInit("../../Examples/invariants.nt");
+
+	ConstraintReport* report = newtonApiDimensionCheckTree(newton, makeSampleCorrectTestStatement());
+	assert(report->satisfiesDimensionConstraint);
+	mu_assert(
+		"invariants.nt: correct test statements should pass dimension constraint",
+		report->satisfiesDimensionConstraint
+		);
+
+	report = newtonApiDimensionCheckTree(newton, makeSampleIncorrectTestStatement());
+	assert(!report->satisfiesDimensionConstraint);
+	mu_assert(
+		"invariants.nt: incorrect test statements should not pass dimension constraint",
+		!report->satisfiesDimensionConstraint
+		);
+
+	newton = newtonApiInit("../../Examples/pendulum_acceleration.nt");
+	report = newtonApiDimensionCheckTree(newton, makeSampleCorrectTestStatementPendulumCase());
+	assert(report->satisfiesDimensionConstraint);
+	mu_assert(
+		"pendulum_acceleration.nt: correct test statements should pass dimension constraint",
+		report->satisfiesDimensionConstraint
+		);
+
+	report = newtonApiDimensionCheckTree(newton, makeSampleIncorrectTestStatementPendulumCase());
+	assert(!report->satisfiesDimensionConstraint);
+	mu_assert(
+		"pendulum_acceleration.nt: incorrect test statements should not pass dimension constraint",
+		!report->satisfiesDimensionConstraint
+		);
+
+	newton = newtonApiInit("../../Examples/pressure_sensors.nt");
+	report = newtonApiDimensionCheckTree(newton, makeSampleCorrectTestStatementPressureCase());
+	assert(report->satisfiesDimensionConstraint);
+	mu_assert(
+		"pressure_sensors.nt: correct test statements should pass dimension constraint",
+		report->satisfiesDimensionConstraint
+		);
+
+	report = newtonApiDimensionCheckTree(newton, makeSampleIncorrectTestStatementPressureCase());
+	assert(!report->satisfiesDimensionConstraint);
+	mu_assert(
+		"pressure_sensors.nt: incorrect test statements should not pass dimension constraint",
+		!report->satisfiesDimensionConstraint
+		);
+	return 0;
+}
+
+/*
+ * This example shows how a host language compiler (e.g. Noisy compiler) would check 
+ * if two IR nodes are dimensionally equivalent during the parsing step.
+ * Let's say the Noisy compiler encounters two variables of type distance and time.
+ * The Noisy compiler can look up Physics * struct's corresponding to distance and time
+ * and then compare the ID's to see if they should be equal.
+ */
+char * test_newtonApiPhysicsTypeUsageExample()
+{
+    State * noisy = init(kNoisyModeDefault);
+    State * newton = newtonApiInit("../../Examples/invariants.nt");
+
+    IrNode * distanceNode = makeIrNodeSetValue(
+        noisy,
+        kNoisyIrNodeType_Tidentifier,
+        "distance",
+        0.0
+    );
+
+    IrNode * timeNode = makeIrNodeSetValue(
+        noisy,
+        kNoisyIrNodeType_Tidentifier,
+        "time",
+        0.0
+    );
+
+    distanceNode->physics = newtonApiGetPhysicsTypeByName(newton, distanceNode->token->identifier);
+    timeNode->physics = newtonApiGetPhysicsTypeByName(newton, timeNode->token->identifier);
+
+    mu_assert(
+        "test_newtonApiTypeExpressionExample invariants.nt: time and distance id's should be different and cannot be used in add or subtract",
+        distanceNode->physics->id != timeNode->physics->id
+    );
+
+    newton = newtonApiInit("../../Examples/pendulum_acceleration.nt");
+    distanceNode->physics = newtonApiGetPhysicsTypeByName(newton, distanceNode->token->identifier);
+    timeNode->physics = newtonApiGetPhysicsTypeByName(newton, timeNode->token->identifier);
+
+    mu_assert(
+        "test_newtonApiTypeExpressionExample pendulum_acceleration.nt: time and distance id's should be different and cannot be used in add or subtract",
+        distanceNode->physics->id != timeNode->physics->id
+		);
+
+
+    IrNode * pressure = makeIrNodeSetValue(
+        noisy,
+        kNoisyIrNodeType_Tidentifier,
+        "pressure",
+        0.0
+		);
+
+    IrNode * temperature= makeIrNodeSetValue(
+        noisy,
+        kNoisyIrNodeType_Tidentifier,
+        "temperature",
+        0.0
+		);
+
+    newton = newtonApiInit("../../Examples/pressure_sensors.nt");
+    pressure->physics = newtonApiGetPhysicsTypeByName(newton, pressure->token->identifier);
+    temperature->physics = newtonApiGetPhysicsTypeByName(newton, temperature->token->identifier);
+
+    mu_assert(
+        "test_newtonApiTypeExpressionExample pendulum_acceleration.nt: time and distance id's should be different and cannot be used in add or subtract",
+        pressure->physics->id != temperature->physics->id
+		);
+
+    return 0;
+}
+
+
+char * test_newtonApiNumberParametersZeroToN()
+{
+	State * newton = newtonApiInit("../../Examples/invariants.nt");
+	IrNode* parameterTree = makeTestParameterTuple(newton);
+	mu_assert(
+		"test_newtonApiNumberParametersZeroToN: the first left child should have number of 0",
+		parameterTree->irLeftChild->parameterNumber == 0
+		);
+	mu_assert(
+		"test_newtonApiNumberParametersZeroToN: the first right child should have number of 1",
+		parameterTree->irRightChild->irLeftChild->parameterNumber == 1
+		);
+
+	parameterTree = makeTestParameterTuplePendulumCase();
+	mu_assert(
+		"test_newtonApiNumberParametersZeroToN: Pendulum Case the first left child should have number of 0",
+		parameterTree->irLeftChild->parameterNumber == 0
+		);
+	mu_assert(
+		"test_newtonApiNumberParametersZeroToN: Pendulum Case the first right child should have number of 1",
+		parameterTree->irRightChild->irLeftChild->parameterNumber == 1
+		);
+
+	IrNode* parameterTrees[3] = {
+		makeTestParameterTuplePressureCaseBoyles(),
+		makeTestParameterTuplePressureCaseGayLussac(),
+		makeTestParameterTuplePressureCaseAvogadro(),
+	};
+
+	for (int index = 0; index < 3; index++)
+	{
+		mu_assert(
+			"test_newtonApiNumberParametersZeroToN: Pressure Case the first left child should have number of 0",
+			parameterTrees[index]->irLeftChild->parameterNumber == 0
+			);
+		mu_assert(
+			"test_newtonApiNumberParametersZeroToN: Pressure Case the first right child should have number of 1",
+			parameterTrees[index]->irRightChild->irLeftChild->parameterNumber == 1
+			);
+	}
+	return 0;
+}
+
