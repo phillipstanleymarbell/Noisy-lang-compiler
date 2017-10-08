@@ -11,7 +11,7 @@ install these is to use macports (macports.org) to install the packages `protobu
 `protobuf-cpp`, and `graphviz-devel`.
 
 After cloning the above two repositories, 
-(1) Create a file `config.local` and edit it to contain 
+(1) Create a file `config.local` in the root of the Noisy tree and edit it to contain 
 
 	LIBFLEXPATH     = full-path-to-libflex-repository-clone 
 	CONFIGPATH      = full-path-to-libflex-repository-clone
