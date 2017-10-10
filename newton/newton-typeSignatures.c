@@ -50,7 +50,7 @@
 /*
  *	I just included all the nodes, they shouldn't all be here though
  */
-const char gNewtonTypeNodeSignatures[kNoisyIrNodeTypeMax] = {
+const char      gNewtonTypeNodeSignatures[kNoisyIrNodeTypeMax] = {
 [	kNewtonIrNodeType_Tnil] = 'a',
 [	kNewtonIrNodeType_Tnone] = 'b',
 [    kNewtonIrNodeType_Tlt] = 'c',
@@ -115,6 +115,6 @@ const char gNewtonTypeNodeSignatures[kNoisyIrNodeTypeMax] = {
 [	kNewtonIrNodeType_Prule] = '@',
 [	kNewtonIrNodeType_PruleList] = '+',
 [	kNewtonIrNodeType_PnewtonFile] = '/',
-								[kNoisyIrNodeType_Xseq]				= ':',
+[kNoisyIrNodeType_Xseq]				= ':',
 };
 

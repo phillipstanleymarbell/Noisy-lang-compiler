@@ -48,7 +48,7 @@
 /*
  *	Some classes of characters used in Lexer
  */
-const IrNodeType gNewtonReservedTokens[] = {
+const IrNodeType    gNewtonReservedTokens[] = {
     kNewtonIrNodeType_Tlt,
     kNewtonIrNodeType_Tle,
     kNewtonIrNodeType_Tgt,

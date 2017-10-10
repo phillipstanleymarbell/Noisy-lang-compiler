@@ -45,11 +45,11 @@ struct ConstraintReport
 	bool satisfiesValueConstraint;
 	char valueErrorMessage[1024];
 
-	ConstraintReport* next;
+	ConstraintReport * next;
 };
 
 struct NewtonAPIReport
 {
-	ConstraintReport* firstConstraintReport;
+	ConstraintReport * firstConstraintReport;
 };
 

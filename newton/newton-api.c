@@ -64,17 +64,17 @@
 
 
 State *
-newtonApiInit(char *  newtonFileName)
+newtonApiInit(char * newtonFileName)
 {
-    State * N = init(kNoisyModeDefault);
+    State *     N = init(kNoisyModeDefault);
     processNewtonFile(N, newtonFileName);
     return N;
 }
 
 Physics *
-newtonApiGetPhysicsTypeByNameAndSubindex(State* N, char* nameOfType, int subindex)
+newtonApiGetPhysicsTypeByNameAndSubindex(State * N, char * nameOfType, int subindex)
 {
-    Physics* current = N->newtonIrTopScope->firstPhysics;
+    Physics *   current = N->newtonIrTopScope->firstPhysics;
     while (current != NULL)
     {
         if (!strcmp(current->identifier, nameOfType) && current->subindex == subindex)
@@ -87,9 +87,9 @@ newtonApiGetPhysicsTypeByNameAndSubindex(State* N, char* nameOfType, int subinde
 }
 
 Physics *
-newtonApiGetPhysicsTypeByName(State* N, char* nameOfType)
+newtonApiGetPhysicsTypeByName(State * N, char * nameOfType)
 {
-    Physics* current = N->newtonIrTopScope->firstPhysics;
+    Physics *   current = N->newtonIrTopScope->firstPhysics;
     while (current != NULL)
     {
         if (!strcmp(current->identifier, nameOfType))
@@ -103,10 +103,10 @@ newtonApiGetPhysicsTypeByName(State* N, char* nameOfType)
 
 
 Invariant * 
-newtonApiGetInvariantByParameters(State* N, IrNode* parameterTreeRoot)
+newtonApiGetInvariantByParameters(State * N, IrNode * parameterTreeRoot)
 {
-    unsigned long long int targetId = newtonGetInvariantIdByParameters(N, parameterTreeRoot, 1);
-    Invariant * current = N->invariantList;
+    unsigned long long int      targetId = newtonGetInvariantIdByParameters(N, parameterTreeRoot, 1);
+    Invariant *     current = N->invariantList;
     while (current != NULL)
     {
         if (current->id == targetId)
@@ -119,10 +119,10 @@ newtonApiGetInvariantByParameters(State* N, IrNode* parameterTreeRoot)
 }
 
 NewtonAPIReport * 
-newtonApiSatisfiesConstraints(State* N, IrNode* parameterTreeRoot)
+newtonApiSatisfiesConstraints(State * N, IrNode * parameterTreeRoot)
 {
-    Invariant* invariant = newtonApiGetInvariantByParameters(N, parameterTreeRoot);
-    NewtonAPIReport* report = (NewtonAPIReport*) calloc(1, sizeof(NewtonAPIReport));
+    Invariant *     invariant = newtonApiGetInvariantByParameters(N, parameterTreeRoot);
+    NewtonAPIReport *   report = (NewtonAPIReport *) calloc(1, sizeof(NewtonAPIReport));
     iterateConstraints(N, invariant->constraints, parameterTreeRoot, report);
     return report;
 }
@@ -137,14 +137,14 @@ newtonApiAddLeaf(State *  N, IrNode *  parent, IrNode *  newNode)
 
 	if (node == NULL)
     {
-      fatal(N, Esanity);
+        fatal(N, Esanity);
     }
 
 	if (node->irLeftChild == NULL)
     {
-      node->irLeftChild = newNode;
+        node->irLeftChild = newNode;
 
-      return;
+        return;
     }
 
 	node->irRightChild = newNode;
@@ -159,9 +159,9 @@ newtonApiAddLeafWithChainingSeqNoLexer(State *  N, IrNode *  parent, IrNode *  n
 
 	if (node->irLeftChild == NULL)
     {
-      node->irLeftChild = newNode;
+        node->irLeftChild = newNode;
 
-      return;
+        return;
     }
 
 	node->irRightChild = genIrNode(N,	kNoisyIrNodeType_Xseq,
@@ -174,19 +174,19 @@ newtonApiAddLeafWithChainingSeqNoLexer(State *  N, IrNode *  parent, IrNode *  n
 void
 newtonApiNumberParametersZeroToN(State * N, IrNode * parameterTreeRoot)
 {
-  IrNode * parameter;
-  int parameterNumber = 0;
+    IrNode *    parameter;
+    int     parameterNumber = 0;
 
-  while((parameter = findNthIrNodeOfType(N, parameterTreeRoot, kNewtonIrNodeType_Pparameter, parameterNumber)) != NULL)
+    while((parameter = findNthIrNodeOfType(N, parameterTreeRoot, kNewtonIrNodeType_Pparameter, parameterNumber)) != NULL)
     {
-      parameter->parameterNumber = parameterNumber;
-      parameterNumber++;
+        parameter->parameterNumber = parameterNumber;
+        parameterNumber++;
     }
 }
 
 
-ConstraintReport*
-newtonApiDimensionCheckTree(State * N, IrNode* tree)
+ConstraintReport *
+newtonApiDimensionCheckTree(State * N, IrNode * tree)
 {
     return newtonDimensionCheckExpressionOrStatement(N, tree);
 }
