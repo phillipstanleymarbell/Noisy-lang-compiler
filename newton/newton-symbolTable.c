@@ -302,18 +302,6 @@ void newtonPhysicsMultiplyExponents(State * N, Physics * source, double multipli
 }
 
 
-void
-newtonPhysicsZeroExponents(State * N, Physics * source)
-{
-	Dimension * current = source->dimensions;
-	assert(current != NULL);
-
-	while(current != NULL)
-	{
-		current->exponent = 0;
-	}
-}
-
 Dimension *
 newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  nameToken, Token * abbrevToken)
 {

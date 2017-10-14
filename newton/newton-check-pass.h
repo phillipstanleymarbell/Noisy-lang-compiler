@@ -1,3 +1,17 @@
+typedef struct Indices Indices;
+
+
+/* only used in newton-check-pass.c */
+struct Indices {
+	int expressionIndex;
+	int termIndex;
+	int factorIndex;
+	int lowBinOpIndex;
+	int midBinOpIndex;
+	int highBinOpIndex;
+};
+
+
 void
 newtonCheckCompareOp(
     State * N,
@@ -12,8 +26,9 @@ newtonCheckCompareOp(
 void
 newtonCheckBinOp(
     State* N,
-    IrNode * leftTerm,
-    IrNode * rightTerm,
+	IrNode * parent,
+    IrNode * left,
+    IrNode * right,
     IrNodeType binOpType,
     ConstraintReport * report
 );
@@ -26,7 +41,7 @@ checkSingleConstraint(
     NewtonAPIReport* report
 );
 
-double
+Indices *
 checkQuantityExpression(
     State * N,
     IrNode * constraintTreeRoot,
@@ -35,7 +50,7 @@ checkQuantityExpression(
     ConstraintReport * report
 );
 
-double
+Indices *
 checkQuantityTerm(
     State * N,
     IrNode * constraintTreeRoot,
@@ -44,7 +59,7 @@ checkQuantityTerm(
     ConstraintReport * report
 );
 
-void
+Indices *
 checkQuantityFactor(
     State * N,
     IrNode * constraintTreeRoot,
@@ -55,3 +70,6 @@ checkQuantityFactor(
 
 void
 addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintReport * constraintReport);
+
+void
+updateDestinationTrackerIndicesFromSource(Indices * dest, Indices * source);

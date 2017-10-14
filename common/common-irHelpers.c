@@ -119,7 +119,7 @@ findNthIrNodeOfTypes(State * N, IrNode * root, IrNodeType productionOrToken, int
 IrNode*
 findNthIrNodeOfTypesHelper(State * N, IrNode * root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int *nth)
 {
-  assert(root != NULL);
+    assert(root != NULL);
 	for (int i = 0; i < kNoisyIrNodeTypeMax && firsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
 		if (firsts[productionOrToken][i] == root->type)
@@ -131,20 +131,20 @@ findNthIrNodeOfTypesHelper(State * N, IrNode * root, IrNodeType productionOrToke
 		}
 	}
 
-  IrNode * nthNode;
-  if (root->irLeftChild != NULL &&\
+    IrNode * nthNode;
+    if (root->irLeftChild != NULL &&\
       (nthNode = findNthIrNodeOfTypesHelper(N, root->irLeftChild, productionOrToken, firsts, nth)) != NULL)
     {
       return nthNode;
     }
 
-  if (root->irRightChild != NULL &&\
+    if (root->irRightChild != NULL &&\
       (nthNode = findNthIrNodeOfTypesHelper(N, root->irRightChild, productionOrToken, firsts, nth)) != NULL)
     {
       return nthNode;
     }
 
-  return NULL;
+    return NULL;
 }
 
 IrNode*

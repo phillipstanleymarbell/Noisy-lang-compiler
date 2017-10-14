@@ -224,7 +224,11 @@ newtonParseSubindexTuple(State * N, Scope * currentScope)
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
 
-	addLeaf(N, node, newtonParseSubindex(N, currentScope));
+	IrNode * subindexNode = newtonParseSubindex(N, currentScope);
+	addLeaf(N, node, subindexNode);
+
+	node->subindexStart = subindexNode->subindexStart;
+	node->subindexEnd = subindexNode->subindexEnd;
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 
@@ -242,13 +246,12 @@ newtonParseParameterTuple(State * N, Scope * currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
 
   int parameterNumber = 0;
-  addLeaf(N, node, newtonParseParameter(N, currentScope, parameterNumber));
+  addLeaf(N, node, newtonParseParameter(N, currentScope, parameterNumber++));
 
   while (peekCheck(N, 1, kNewtonIrNodeType_Tcomma))
     {
       newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
-      addLeafWithChainingSeq(N, node, newtonParseParameter(N, currentScope, parameterNumber));
-      parameterNumber++;
+      addLeafWithChainingSeq(N, node, newtonParseParameter(N, currentScope, parameterNumber++));
     }
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 
@@ -275,7 +278,13 @@ newtonParseParameter(State * N, Scope * currentScope, int parameterNumber)
 	{
 		newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
 
-		physicsName->physics->subindex = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope)->value;
+		newtonParseResetPhysicsWithCorrectSubindex(
+			N,
+			physicsName,
+			currentScope,
+			physicsName->token->identifier,
+			newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope)->value
+			);
 	}
 
     node->parameterNumber = parameterNumber;
@@ -358,61 +367,72 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 		subindexNode = newtonParseSubindexTuple(N, currentScope);
 		subindexStart = subindexNode->subindexStart;
 		subindexEnd = subindexNode->subindexEnd;
+
+		assert(subindexEnd > 0);
 	}
 
 
     newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, currentScope);
 
-	for (currentScope->currentSubindex = subindexStart; currentScope->currentSubindex <= subindexEnd; currentScope->currentSubindex++)
+	/*
+	 * name syntax is optional
+	 */
+	IrNode * unitName = NULL;
+	if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts))
 	{
-		/*
-		 * name syntax is optional
-		 */
-		IrNode * unitName = NULL;
-		if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts))
-		{
-			unitName = newtonParseName(N, currentScope);
-			addLeafWithChainingSeq(N, node, unitName);
-			newPhysics->dimensionAlias = unitName->token->stringConst; /* e.g.) meter, Pascal*/
-		}
+		unitName = newtonParseName(N, currentScope);
+		addLeafWithChainingSeq(N, node, unitName);
+		newPhysics->dimensionAlias = unitName->token->stringConst; /* e.g.) meter, Pascal*/
+	}
 
-		/*
-		 * abbreviation syntax is also optional
-		 */
-		IrNode * unitAbbreviation = NULL;
-		if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts))
-		{
-			unitAbbreviation = newtonParseSymbol(N, currentScope);
-			addLeafWithChainingSeq(N, node, unitAbbreviation);
-			newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g.) m, Pa*/
-		}
+	/*
+	 * abbreviation syntax is also optional
+	 */
+	IrNode * unitAbbreviation = NULL;
+	if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts))
+	{
+		unitAbbreviation = newtonParseSymbol(N, currentScope);
+		addLeafWithChainingSeq(N, node, unitAbbreviation);
+		newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g.) m, Pa*/
+	}
 
-		/*
-		 * derivation syntax is required
-		 */
-		IrNode * derivationExpression = newtonParseDerivation(N, currentScope)->irLeftChild;
-		addLeafWithChainingSeq(N, node, derivationExpression);
+	/*
+	 * derivation syntax is required
+	 */
+	IrNode * derivationExpression = newtonParseDerivation(N, currentScope)->irLeftChild;
+	addLeafWithChainingSeq(N, node, derivationExpression);
 
-		if (derivationExpression->type != kNewtonIrNodeType_Tnone)
-		{
-			newtonPhysicsAddExponents(N, newPhysics, derivationExpression->physics);
-		}
-		else
-		{
-			assert(basicPhysicsIdentifier->token->identifier != NULL);
-			assert(unitName != NULL && unitName->token);
-			newtonPhysicsIncrementExponent(
-				N,
-				newPhysics,
-				newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, unitName->token->stringConst)
-				);
-		}
+	if (derivationExpression->type != kNewtonIrNodeType_Tnone)
+	{
+		newtonPhysicsAddExponents(N, newPhysics, derivationExpression->physics);
+	}
+	else
+	{
+		assert(basicPhysicsIdentifier->token->identifier != NULL);
+		assert(unitName != NULL && unitName->token);
+		newtonPhysicsIncrementExponent(
+			N,
+			newPhysics,
+			newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, unitName->token->stringConst)
+			);
+	}
 
-		newPhysics->id = newtonGetPhysicsId(N, newPhysics);
-		newPhysics->subindex = currentScope->currentSubindex;
+	newPhysics->id = newtonGetPhysicsId(N, newPhysics);
+	newPhysics->subindex = currentScope->currentSubindex;
 
-		assert(newPhysics->id > 1);
+	assert(newPhysics->id > 1);
+
+	for (currentScope->currentSubindex = subindexStart + 1; currentScope->currentSubindex <= subindexEnd; currentScope->currentSubindex++)
+	{
+		Physics * newSubindexPhysics = newtonPhysicsTableCopyAndAddPhysics(N, currentScope, newPhysics);
+		assert(newSubindexPhysics != newPhysics);
+
+		newSubindexPhysics->id = newtonGetPhysicsId(N, newSubindexPhysics);
+		newSubindexPhysics->subindex = currentScope->currentSubindex;
+
+		assert(newSubindexPhysics->id > 1);
+		assert(newSubindexPhysics->subindex > 0);
 	}
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
@@ -622,23 +642,28 @@ newtonParseFindNodeByParameterNumberAndSubindex(State *N, IrNode * root, int par
 }
 
 IrNode *
-newtonParseFindNodeByTokenString(State *N, IrNode * root, char * tokenString)
+newtonParseFindParameterByTokenString(State *N, IrNode * root, char* tokenString)
 {
-	if (root->token && !strcmp(root->token->identifier, tokenString))
+    if (root->type == kNewtonIrNodeType_Pparameter)
     {
-		return root;
+        assert(root->irLeftChild != NULL && root->irRightChild != NULL);
+		if (!strcmp(root->irLeftChild->tokenString, tokenString))
+        {
+			assert(root->irRightChild->physics != NULL);
+			return root;
+        }
     }
 
 	IrNode* targetNode = NULL;
 
 	if (root->irLeftChild != NULL)
-		targetNode = newtonParseFindNodeByTokenString(N, root->irLeftChild, tokenString);
+		targetNode = newtonParseFindParameterByTokenString(N, root->irLeftChild, tokenString);
 
 	if (targetNode != NULL)
 		return targetNode;
 
 	if (root->irRightChild != NULL)
-		targetNode = newtonParseFindNodeByTokenString(N, root->irRightChild, tokenString);
+		targetNode = newtonParseFindParameterByTokenString(N, root->irRightChild, tokenString);
 
 	if (targetNode != NULL)
 		return targetNode;
@@ -646,39 +671,8 @@ newtonParseFindNodeByTokenString(State *N, IrNode * root, char * tokenString)
 	return targetNode;
 }
 
-char *
-newtonParseGetIdentifierByBoundPhysicsString(State * N, IrNode * root, char* physicsTypeString)
-{
-    // do DFS and find the node whose right child node has given identifier
-    // and return the left node's identifier
-    if (root->type == kNewtonIrNodeType_Pparameter)
-    {
-        assert(root->irLeftChild != NULL && root->irRightChild != NULL);
-        if (!strcmp(root->irRightChild->tokenString, physicsTypeString))
-        {
-            return root->irLeftChild->tokenString;
-        }
-    }
-
-    char * stringResult = "";
-
-    if (root->irLeftChild != NULL)
-        stringResult = newtonParseGetIdentifierByBoundPhysicsString(N, root->irLeftChild, physicsTypeString);
-
-    if (strcmp(stringResult, ""))
-        return stringResult;
-
-    if (root->irRightChild != NULL)
-        stringResult = newtonParseGetIdentifierByBoundPhysicsString(N, root->irRightChild, physicsTypeString);
-
-    if (strcmp(stringResult, ""))
-        return stringResult;
-
-    return "";
-}
-
-char *
-newtonParseGetPhysicsTypeStringByBoundIdentifier(State * N, IrNode * root, char* boundVariableIdentifier)
+Physics* 
+newtonParseGetPhysicsByBoundIdentifier(State * N, IrNode * root, char* boundVariableIdentifier)
 {
     // do DFS and find the node whose left child node has given identifier
     // and return the right node's identifier
@@ -687,26 +681,26 @@ newtonParseGetPhysicsTypeStringByBoundIdentifier(State * N, IrNode * root, char*
         assert(root->irLeftChild != NULL && root->irRightChild != NULL);
 		if (!strcmp(root->irLeftChild->tokenString, boundVariableIdentifier))
         {
-			assert(root->irRightChild->tokenString != NULL);
-            return root->irRightChild->tokenString;
+			assert(root->irRightChild->physics != NULL);
+            return root->irRightChild->physics;
         }
     }
 
-    char * stringResult = "";
+	Physics* result = NULL;
 
     if (root->irLeftChild != NULL)
-        stringResult = newtonParseGetPhysicsTypeStringByBoundIdentifier(N, root->irLeftChild, boundVariableIdentifier);
+        result = newtonParseGetPhysicsByBoundIdentifier(N, root->irLeftChild, boundVariableIdentifier);
 
-    if (strcmp(stringResult, ""))
-        return stringResult;
+    if (result != NULL)
+        return result;
 
     if (root->irRightChild != NULL)
-        stringResult = newtonParseGetPhysicsTypeStringByBoundIdentifier(N, root->irRightChild, boundVariableIdentifier);
+        result = newtonParseGetPhysicsByBoundIdentifier(N, root->irRightChild, boundVariableIdentifier);
 
-    if (strcmp(stringResult, ""))
-        return stringResult;
+    if (result != NULL)
+        return result;
 
-    return "";
+    return NULL;
 }
 
 /*
@@ -755,6 +749,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 
     n->token = t;
     n->tokenString = t->identifier;
+	assert(!strcmp(n->token->identifier, n->tokenString));
 
     // TODO rewrite this logic in a cleaner way.... make a new method or something
     Physics * physicsSearchResult;
@@ -770,23 +765,17 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 
     if (physicsSearchResult == NULL)
     {
-        char * physicsTypeString = newtonParseGetPhysicsTypeStringByBoundIdentifier(N, scope->invariantParameterList, t->identifier);
-        if ((physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, physicsTypeString)) == NULL)
-        {
-            physicsSearchResult = newtonPhysicsTablePhysicsForDimensionAlias(N, scope, physicsTypeString);
-        }
+		// TODO remove later
+		if (!strcmp(t->identifier, "h")) {
+			assert(true);
+		}
+        physicsSearchResult = newtonParseGetPhysicsByBoundIdentifier(N, scope->invariantParameterList, t->identifier);
     }
 
-    if (physicsSearchResult == NULL)
-    {
-        errorUseBeforeDefinition(N, t->identifier);
-    }
-    else
-    {
-        /* defensive copying to keep the Physics list in State immutable */
-        n->physics = deepCopyPhysicsNode(physicsSearchResult);
-		assert(n->physics->dimensions != NULL);
-    }
+	assert(physicsSearchResult != NULL);
+
+    n->physics = deepCopyPhysicsNode(physicsSearchResult);
+	assert(n->physics->dimensions != NULL);
 
     return n;
 }

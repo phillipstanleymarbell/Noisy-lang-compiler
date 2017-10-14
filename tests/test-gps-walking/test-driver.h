@@ -1,0 +1,2 @@
+char * all_tests();
+

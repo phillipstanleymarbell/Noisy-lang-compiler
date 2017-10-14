@@ -1,7 +1,7 @@
 #!/bin/sh
 
-dtraceDirectory=/Volumes/doos/DTrace-hg
-libflexDirectory=/Volumes/doos/libflex-hg-clone
+dtraceDirectory=/Users/jonathanlim/Documents/Compiler/DTrace-scripts
+libflexDirectory=/Users/jonathanlim/Documents/Compiler/libflex
 trackingDirectory=Statistics
 statsFile=`git rev-parse HEAD`.txt
 

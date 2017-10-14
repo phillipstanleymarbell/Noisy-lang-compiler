@@ -732,7 +732,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 					flexprint(N->Fe, N->Fm, N->Fperr, "'%llu' ", tmp->integerConst);
 
 					char	dummy[64];
-					tripCharacters += sprintf(dummy, "'%lu' ", tmp->integerConst);
+					tripCharacters += sprintf(dummy, "'%llu' ", tmp->integerConst);
 
 					break;
 				}

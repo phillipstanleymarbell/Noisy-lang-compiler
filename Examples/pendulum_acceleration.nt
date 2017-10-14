@@ -22,7 +22,7 @@ acceleration : signal(n: 0 to 2) =
     derivation = speed@n / time;
 }
 
-AccelerationRange : invariant(X: acceleration@0, Y: acceleration@1, Z: acceleration@2)
+AccelerationRange : invariant(X: acceleration@0, Y: acceleration@1, Z: acceleration@2) = 
 {
     X >= -2 * meter / second ** 2,
     X <= 2 * meter / second ** 2,
