@@ -1,5 +1,5 @@
-Noisy: A Language for Talking Sensors to Sleep
-==============================================
+Noisy (a language for talking to sensors) and Newton (a language for describing physics)
+========================================================================================
 
 Building the Noisy compiler and debug tools depends on the following repositories:
 
