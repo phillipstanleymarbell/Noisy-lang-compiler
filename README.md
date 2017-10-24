@@ -1,5 +1,6 @@
-Noisy (a language for talking to sensors) and Newton (a language for describing physics)
+Noisy and Newton
 ========================================================================================
+Noisy (a language for talking to sensors) and Newton (a language for describing physics).
 
 Building the Noisy compiler and debug tools depends on the following repositories:
 
