@@ -388,6 +388,7 @@ typedef enum
 {
 	kNoisyIrNodeColorDotBackendColoring		= (1 << 0),
 	kNoisyIrNodeColorProtobufBackendColoring	= (1 << 1),
+	kNoisyIrNodeColorTreeTransformedColoring	= (1 << 2),
 
 	/*
 	 *	Code depends on this bringing up the rear.
