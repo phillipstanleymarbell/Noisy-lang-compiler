@@ -171,6 +171,7 @@ main(int argc, char *argv[])
 			{"help",		no_argument,		0,	'h'},
 			{"version",		no_argument,		0,	'V'},
 			{"dot",			required_argument,	0,	'd'},
+			{"smt",			required_argument,	0,	'S'},
 			{"bytecode",		required_argument,	0,	'b'},
 			{"trace",		no_argument,		0,	't'},
 			{"statistics",		no_argument,		0,	's'},
@@ -178,7 +179,7 @@ main(int argc, char *argv[])
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:b:stO:", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -232,6 +233,13 @@ main(int argc, char *argv[])
 					exit(EXIT_FAILURE);
 				}
 
+				break;
+			}
+
+			case 'S':
+			{
+				N->irBackends |= kNewtonIrBackendSmt;
+				N->outputSmtFilePath = optarg;
 				break;
 			}
 
@@ -377,6 +385,7 @@ usage(State *  N)
 						"                | (--version, --V)                                   \n"
 						"                | (--verbose <level>, -v <level>)                    \n"
 						"                | (--dot <level>, -d <level>)                        \n"
+						"                | (--smt <output directory>, -S <output directory>)  \n"
 						"                | (--bytecode <output file name>, -b <output file name>)\n"
 						"                | (--optimize <level>, -O <level>)                   \n"
 						"                | (--trace, -t)                                      \n"

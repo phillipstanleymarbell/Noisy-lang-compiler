@@ -58,6 +58,7 @@
 #include "newton-symbolTable.h"
 #include "newton.h"
 #include "newton-irPass-dotBackend.h"
+#include "newton-irPass-smtBackend.h"
 #include "newton-dimension-pass.h"
 
 extern char* gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
@@ -69,7 +70,6 @@ processNewtonFileDimensionPass(char * filename);
 void
 processNewtonFile(State *  N, char *  filename)
 {
-
 	/*
 	 *	Tokenize input, then parse it and build AST + symbol table.
 	 */
@@ -93,6 +93,13 @@ processNewtonFile(State *  N, char *  filename)
 	if (N->irBackends & kNoisyIrBackendDot)
 		fprintf(stdout, "%s\n", irPassDotBackend(N, N->newtonIrTopScope, N->newtonIrRoot, gNewtonAstNodeStrings));
 
+    /*
+     * Smt backend
+     */
+	if (N->irBackends & kNewtonIrBackendSmt)
+	{
+		irPassSmtBackend(N);
+	}
 	consolePrintBuffers(N);
 }
 
