@@ -1,7 +1,7 @@
 #!/bin/sh
 
-dtraceDirectory=/Users/jonathanlim/Documents/Compiler/DTrace-scripts
-libflexDirectory=/Users/jonathanlim/Documents/Compiler/libflex
+dtraceDirectory=
+libflexDirectory=
 trackingDirectory=Statistics
 statsFile=`git rev-parse HEAD`.txt
 

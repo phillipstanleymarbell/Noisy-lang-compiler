@@ -2,6 +2,8 @@ TREEROOT	= ..
 
 include		$(TREEROOT)/config.local
 
+PRECOMMITHOOK = precommitStatisticsHook-$(OSTYPE).sh 
+
 COMMONPATH	= ../common
 NOISYPATH	= ../noisy
 INCLUDEPATH	= ../include
@@ -135,7 +137,7 @@ HEADERS		=\
 all: installhooks version.c lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
 
 installhooks:
-	cp $(TREEROOT)/precommitStatisticsHook.sh $(TREEROOT)/.git/hooks/pre-commit
+	cp $(TREEROOT)/$(PRECOMMITHOOK) $(TREEROOT)/.git/hooks/pre-commit
 	cp $(TREEROOT)/postcommitStatisticsHook.sh $(TREEROOT)/.git/hooks/post-commit
 	chmod +x $(TREEROOT)/.git/hooks/pre-commit
 	chmod +x $(TREEROOT)/.git/hooks/post-commit
