@@ -2,6 +2,7 @@ TREEROOT	= ..
 
 include		$(TREEROOT)/config.local
 
+PRECOMMITHOOK = precommitStatisticsHook-$(OSTYPE).sh 
 COMMONPATH	= ../common
 COMPILERVARIANT	= clang
 
@@ -125,7 +126,7 @@ all: installhooks lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a target $(CONFIGPATH)/
 #			Install the pre-commit hooks. There doesn't seem to be any other way to force people to install the hook when comitting on Noisy.
 #
 installhooks:
-	cp $(TREEROOT)/precommitStatisticsHook.sh $(TREEROOT)/.git/hooks/pre-commit
+	cp $(TREEROOT)/$(PRECOMMITHOOK) $(TREEROOT)/.git/hooks/pre-commit
 	cp $(TREEROOT)/postcommitStatisticsHook.sh $(TREEROOT)/.git/hooks/post-commit
 	chmod +x $(TREEROOT)/.git/hooks/pre-commit
 	chmod +x $(TREEROOT)/.git/hooks/post-commit
