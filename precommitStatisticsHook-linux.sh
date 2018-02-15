@@ -10,7 +10,7 @@ statsFile=`git rev-parse HEAD`.txt
 #
 echo `git rev-parse HEAD` > .noisy-last-head
 
-echo '' >> $trackingDirectory/$statsFile
+echo '' > $trackingDirectory/$statsFile
 echo "changeset: `git rev-list --count HEAD`:`git rev-parse HEAD`" >> $trackingDirectory/$statsFile 
 
 cd $libflexDirectory && make clean all &
@@ -23,5 +23,8 @@ make README.sloccount
 cat version.c >> $trackingDirectory/$statsFile
 echo '\n./noisy/noisy-linux-EN -O0 Examples/helloWorld.n -s' >> $trackingDirectory/$statsFile
 ./noisy/noisy-linux-EN -O0 Examples/helloWorld.n -s >> $trackingDirectory/$statsFile
+echo '\n./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt' >> $trackingDirectory/$statsFile
+./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt >> $trackingDirectory/$statsFile
+rm tmp.smt2
 
 cp $trackingDirectory/$statsFile $trackingDirectory/latest.txt

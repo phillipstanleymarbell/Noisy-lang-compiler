@@ -313,7 +313,14 @@ irPassSmtProcessConstraint(State *  N, Invariant *  parentInvariant, IrNode *  r
 
     fprintf(outputFile, "(assert ");
 
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+	printf("Start Tree Transform %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
+
     irPassSmtTreeWalk(N, parentInvariant, transformed, outputFile);
+
+    gettimeofday(&tv,NULL);
+	printf("Start Tree Transform %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
 
     fprintf(outputFile, " )\n");
 
