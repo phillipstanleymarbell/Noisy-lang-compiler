@@ -37,6 +37,7 @@ SOURCES		=\
 		common-errors.c\
 		common-timeStamps.c\
 		common-irHelpers.c\
+		common-astTransform.c\
 
 
 #
@@ -53,6 +54,7 @@ OBJS		=\
 		common-timeStamps.$(OBJECTEXTENSION)\
 		common-irHelpers.$(OBJECTEXTENSION)\
 		common-irPass-helpers.$(OBJECTEXTENSION)\
+		common-astTransform.$(OBJECTEXTENSION)\
 
 
 LIBCOMMONOBJS =\
@@ -64,6 +66,7 @@ LIBCOMMONOBJS =\
 		common-timeStamps.$(OBJECTEXTENSION)\
 		common-irHelpers.$(OBJECTEXTENSION)\
 		common-irPass-helpers.$(OBJECTEXTENSION)\
+		common-astTransform.$(OBJECTEXTENSION)\
 
 
 HEADERS		=\
@@ -75,6 +78,7 @@ HEADERS		=\
 		data-structures.h\
 		common-irHelpers.h\
 		common-irPass-helpers.h\
+		common-astTransform.h\
 
 
 
