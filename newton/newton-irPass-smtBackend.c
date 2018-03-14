@@ -306,6 +306,31 @@ irPassSmtTreeWalk(State *  N, Invariant *  parentInvariant, IrNode *  root, FILE
     return;
 }
 
+/*
+ * This function walks a transformed tree and creates a new assertion of a != 0 for
+ * any expression in the form of a/b
+ */
+void
+irPassSmtDivisorWalk(State *  N, Invariant *  parentInvariant, IrNode *  root, FILE *  outputFile)
+{
+    if (root == NULL)
+    {
+        return;
+    }
+
+    if (root->type == kNewtonIrNodeType_Tdiv)
+    {
+        fprintf(outputFile, "(assert ( not ( = 0 ");
+        irPassSmtTreeWalk(N, parentInvariant, root->irRightChild, outputFile);
+        fprintf(outputFile, " ) ) )\n");
+    }
+
+    irPassSmtDivisorWalk(N, parentInvariant, root->irLeftChild, outputFile);
+    irPassSmtDivisorWalk(N, parentInvariant, root->irRightChild, outputFile);
+
+    return;
+}
+
 void
 irPassSmtProcessConstraint(State *  N, Invariant *  parentInvariant, IrNode *  root, FILE *  outputFile)
 {
@@ -323,6 +348,14 @@ irPassSmtProcessConstraint(State *  N, Invariant *  parentInvariant, IrNode *  r
 	printf("End Tree Transform %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
 
     fprintf(outputFile, " )\n");
+
+    gettimeofday(&tv,NULL);
+	printf("Start Divisor Walk %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
+
+    irPassSmtDivisorWalk(N, parentInvariant, transformed, outputFile);
+
+    gettimeofday(&tv,NULL);
+	printf("End Divisor Walk %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
 
     return;
 }
