@@ -770,9 +770,9 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("</textarea>\n");
 
 	printf("<div style=\"background-color:#EEEEEE; color:444444; padding:3px;\">\n");
-	printf("&nbsp;&nbsp;(Noisy/" FLEX_ULONGFMT 
-					":&nbsp;&nbsp;Operation completed in %.6f&thinsp;seconds S+U time; &nbsp; Mem = "
-					FLEX_ULONGFMT "&thinsp;KB, &nbsp; &#916; Mem = " FLEX_ULONGFMT "&thinsp;KB).\n",
+	printf("&nbsp;&nbsp;(Noisy/%" PRIu64 
+					":&nbsp;&nbsp;Operation completed in %.6f&thinsp;seconds S+U time; &nbsp; Mem = %"
+					PRIu64 "&thinsp;KB, &nbsp; &#916; Mem = %" PRIu64 "&thinsp;KB).\n",
 					noisyCgiState->callAggregateTotal, 
 					(	(end.ru_stime.tv_sec - start.ru_stime.tv_sec) +
 						(end.ru_utime.tv_sec - start.ru_utime.tv_sec))
@@ -922,8 +922,8 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	/*
 	 *	Have ACE autosize the height, with an upper limit at maxLines
 	 */
-	printf("	editor.setOptions({maxLines: 40});\n");
-	printf("	editor.setOptions({minLines: 20});\n");
+	printf("	editor.setOptions({maxLines: 20});\n");
+	printf("	editor.setOptions({minLines: 10});\n");
 	/*
 	 *	Copy the ACE editor contents back to textarea for form submission.
 	 */

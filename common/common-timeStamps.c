@@ -250,7 +250,7 @@ timeStampDumpTimeline(State *  N)
 void
 timeStampDumpResidencies(State *  N)
 {
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "\nNon-zero Noisy routine residency time upper bounds and counts (%d calls, total of %-02.4f us):\n\n",
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "\nNon-zero routine residency time upper bounds and counts (%d calls, total of %-02.4f us):\n\n",
 						N->callAggregateTotal, (double)machtimeToNanoseconds(N->timeAggregateTotal)/1000.0);
 	for (int i = 0; i < kNoisyTimeStampKeyMax; i++)
 	{
