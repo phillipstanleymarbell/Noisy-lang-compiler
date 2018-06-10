@@ -69,7 +69,10 @@ checkQuantityFactor(
 );
 
 void
-addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintReport * constraintReport);
+addConstraintReportToNewtonAPIReport(
+    NewtonAPIReport * newtonReport, 
+    ConstraintReport * constraintReport
+);
 
 void
 updateDestinationTrackerIndicesFromSource(Indices * dest, Indices * source);

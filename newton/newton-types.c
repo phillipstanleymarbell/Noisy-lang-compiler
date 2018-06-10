@@ -77,7 +77,7 @@ newtonTypeMakeTypeSignature(State *  N, IrNode *  subtree)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyTypeMakeTypeSignature);
 
-	char *	signature;
+	char *  signature;
 	char *	leftSignature;
 	char *	rightSignature;
 

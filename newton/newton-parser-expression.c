@@ -66,23 +66,23 @@ extern void		fatal(State *  N, const char *  msg);
 extern void		error(State *  N, const char *  msg);
 
 /*
- * ParseNumericExpression is only used to parse expressions of numbers and dimensionless constants inside exponents.
- * It was inconvenient just to use ParseQuantityExpression for the following reason.
- * Although we do not want to evaluate expressions at compile time, evaluating
- * expressions inside exponents is necessary for compile time dimensional checking.
- * If we use ParseQuantityExpression, then sometimes not all the terms and factors have
- * numeric values known. To distinguish the two cases, we can either pass in a flag to quantity parsing methods
- * or just use ParseNumericExpression. 
- * e.g.) Pi == 3.14 but mass might not have a numeric value.
- *
- * We use kNewtonIrNodeType_PquantityTerm and kNewtonIrNodeType_PquantityFactor because
- * constant physics structs are essentially quantityFactors.
+ *  ParseNumericExpression is only used to parse expressions of numbers and dimensionless constants inside exponents.
+ *  It was inconvenient just to use ParseQuantityExpression for the following reason.
+ *  Although we do not want to evaluate expressions at compile time, evaluating
+ *  expressions inside exponents is necessary for compile time dimensional checking.
+ *  If we use ParseQuantityExpression, then sometimes not all the terms and factors have
+ *  numeric values known. To distinguish the two cases, we can either pass in a flag to quantity parsing methods
+ *  or just use ParseNumericExpression. 
+ *  e.g.) Pi == 3.14 but mass might not have a numeric value.
+ *  
+ *  We use kNewtonIrNodeType_PquantityTerm and kNewtonIrNodeType_PquantityFactor because
+ *  constant physics structs are essentially quantityFactors.
  */
 IrNode *
 newtonParseNumericExpression(State * N, Scope * currentScope)
 {
-    IrNode * leftTerm;
-    IrNode * rightTerm;
+    IrNode *    leftTerm;
+    IrNode *    rightTerm;
 
     if (inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts))
     {
@@ -90,7 +90,7 @@ newtonParseNumericExpression(State * N, Scope * currentScope)
 
         while (inFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFirsts))
         {
-            IrNode * binOp = newtonParseLowPrecedenceBinaryOp(N, currentScope);
+            IrNode *    binOp = newtonParseLowPrecedenceBinaryOp(N, currentScope);
             addLeaf(N, leftTerm, binOp);
 
             rightTerm = newtonParseNumericTerm(N, currentScope);
@@ -128,17 +128,17 @@ newtonParseNumericTerm(State * N, Scope * currentScope)
         intermediate->value *= -1;
     }
 
-    IrNode * leftFactor = newtonParseNumericFactor(N, currentScope);
+    IrNode *    leftFactor = newtonParseNumericFactor(N, currentScope);
     intermediate->value *= leftFactor->value;
 
     addLeafWithChainingSeq(N, intermediate, leftFactor);
 
     while (inFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts))
     {
-        IrNode * binOp = newtonParseMidPrecedenceBinaryOp(N, currentScope);
+        IrNode *    binOp = newtonParseMidPrecedenceBinaryOp(N, currentScope);
         addLeafWithChainingSeq(N, intermediate, binOp);
 
-        IrNode * rightFactor = newtonParseNumericFactor(N, currentScope);
+        IrNode *    rightFactor = newtonParseNumericFactor(N, currentScope);
         addLeafWithChainingSeq(N, intermediate, rightFactor);
 
         if (binOp->type == kNewtonIrNodeType_Tmul) 
@@ -183,13 +183,17 @@ newtonParseNumericFactor(State * N, Scope * currentScope)
     {
         addLeaf(N, node, newtonParseHighPrecedenceBinaryOp(N, currentScope));
 
-        /* exponents are automatically just one integer unless wrapped in parens */
-        IrNode * exponentExpression = peekCheck(N, 1, kNewtonIrNodeType_TleftParen) ? 
+        /* 
+         *  exponents are automatically just one integer unless wrapped in parens 
+         */
+        IrNode *    exponentExpression = peekCheck(N, 1, kNewtonIrNodeType_TleftParen) ? 
             newtonParseNumericExpression(N, currentScope) : 
             newtonParseInteger(N, currentScope);
         addLeaf(N, node, exponentExpression);
 
-        /* 0 ** 0 in mathematics is indeterminate */
+        /* 
+         *  0 ** 0 in mathematics is indeterminate 
+         */
         assert(node->value != 0 || exponentExpression->value != 0);
         node->value = pow(node->value, exponentExpression->value);
     }
@@ -211,7 +215,7 @@ newtonParseQuantityExpression(State * N, Scope * currentScope)
 
     if (inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts))
 	{
-        IrNode * leftTerm = newtonParseQuantityTerm(N, currentScope);
+        IrNode *    leftTerm = newtonParseQuantityTerm(N, currentScope);
         expression->value = leftTerm->value;
         expression->physics = leftTerm->physics;
         addLeaf(N, expression, leftTerm);
@@ -221,7 +225,7 @@ newtonParseQuantityExpression(State * N, Scope * currentScope)
 		{
             addLeafWithChainingSeq(N, expression, newtonParseLowPrecedenceBinaryOp(N, currentScope));
 
-            IrNode * rightTerm = newtonParseQuantityTerm(N, currentScope);
+            IrNode *    rightTerm = newtonParseQuantityTerm(N, currentScope);
             addLeafWithChainingSeq(N, expression, rightTerm);
             expression->value += rightTerm->value;
 
@@ -257,7 +261,7 @@ newtonParseQuantityTerm(State * N, Scope * currentScope)
     }
 
     bool hasNumberInTerm = false;
-    IrNode * leftFactor = newtonParseQuantityFactor(N, currentScope);
+    IrNode *    leftFactor = newtonParseQuantityFactor(N, currentScope);
     addLeafWithChainingSeq(N, intermediate, leftFactor);
     hasNumberInTerm = hasNumberInTerm || leftFactor->physics == NULL || leftFactor->physics->isConstant;
     if (hasNumberInTerm)
@@ -265,7 +269,7 @@ newtonParseQuantityTerm(State * N, Scope * currentScope)
         intermediate->value = isUnary ? leftFactor->value * -1 : leftFactor->value;
 	}
 
-    int numVectorsInTerm = 0;
+    int     numVectorsInTerm = 0;
 
     if (!newtonIsDimensionless(leftFactor->physics))
     {
@@ -282,11 +286,11 @@ newtonParseQuantityTerm(State * N, Scope * currentScope)
         }
     }
 
-    IrNode * rightFactor;
+    IrNode *    rightFactor;
 
     while (inFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts))
     {
-        IrNode * binOp = newtonParseMidPrecedenceBinaryOp(N, currentScope);
+        IrNode *    binOp = newtonParseMidPrecedenceBinaryOp(N, currentScope);
         addLeafWithChainingSeq(N, intermediate, binOp);
 
         rightFactor = newtonParseQuantityFactor(N, currentScope);
@@ -372,7 +376,7 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
 			newtonPhysicsTablePhysicsForDimensionAlias(N, N->newtonIrTopScope, factor->tokenString) == NULL &&
 			currentScope->invariantParameterList)
         {
-			IrNode* matchingParameter = newtonParseFindParameterByTokenString(
+			IrNode *    matchingParameter = newtonParseFindParameterByTokenString(
 				N,
 				currentScope->invariantParameterList,
 				factor->token->identifier
@@ -402,7 +406,7 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
     {
         addLeaf(N, factor, newtonParseHighPrecedenceBinaryOp(N, currentScope));
 
-        IrNode * exponentialExpression = newtonParseExponentialExpression(N, currentScope, factor);
+        IrNode *    exponentialExpression = newtonParseExponentialExpression(N, currentScope, factor);
 		assert(exponentialExpression->type == kNewtonIrNodeType_PquantityExpression);
         addLeafWithChainingSeq(N, factor, exponentialExpression);
 
@@ -425,7 +429,7 @@ newtonParseExponentialExpression(State * N, Scope * currentScope, IrNode * baseN
     expression->physics = newtonInitPhysics(N, currentScope, NULL);
 
     /* exponents are automatically just one integer unless wrapped in parens */
-    IrNode * exponent = peekCheck(N, 1, kNewtonIrNodeType_TleftParen) ?
+    IrNode *    exponent = peekCheck(N, 1, kNewtonIrNodeType_TleftParen) ?
         newtonParseNumericExpression(N, currentScope) :
         newtonParseInteger(N, currentScope);
 	addLeaf(N, expression, exponent);
@@ -463,7 +467,6 @@ newtonParseLowPrecedenceBinaryOp(State *  N, Scope * currentScope)
     }
     else
     {
-        // noisyParserErrorRecovery(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp);
         return NULL;
     }
 
@@ -491,7 +494,7 @@ newtonParseUnaryOp(State *  N, Scope * currentScope)
 IrNode *
 newtonParseCompareOp(State * N, Scope * currentScope)
 {
-    IrNodeType type;
+    IrNodeType  type;
     if ((type = lexPeek(N, 1)->type) == kNewtonIrNodeType_Tlt ||
          type == kNewtonIrNodeType_Tle ||
          type == kNewtonIrNodeType_Tge ||
@@ -568,8 +571,6 @@ newtonParseInteger(State * N, Scope * currentScope)
     IrNode * number = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
     addLeaf(N, node, number);
     node->value = node->value == -1 ? node->value * number->value : number->value;
-
-    assert(node->value != 0); // TODO remove this assertion later bc value MIGHT be 0
 
     return node;
 }

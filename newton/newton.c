@@ -61,9 +61,9 @@
 #include "newton-irPass-smtBackend.h"
 #include "newton-dimension-pass.h"
 
-extern char* gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
+extern char *   gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
 
-static State*
+static State *
 processNewtonFileDimensionPass(char * filename);
 
 
@@ -87,7 +87,7 @@ processNewtonFile(State *  N, char *  filename)
 	 */
 	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
 
-	State * N_dim = processNewtonFileDimensionPass(filename);
+	State *     N_dim = processNewtonFileDimensionPass(filename);
 	N->newtonIrTopScope->firstDimension = N_dim->newtonIrTopScope->firstDimension;
 
 	assert(N->newtonIrTopScope->firstDimension != NULL);
@@ -104,7 +104,9 @@ processNewtonFile(State *  N, char *  filename)
 	 *	Dot backend.
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
+    {
 		fprintf(stdout, "%s\n", irPassDotBackend(N, N->newtonIrTopScope, N->newtonIrRoot, gNewtonAstNodeStrings));
+    }
 
     /*
      * Smt backend
@@ -125,7 +127,7 @@ processNewtonFile(State *  N, char *  filename)
 static State*
 processNewtonFileDimensionPass(char * filename)
 {
-	State *	N = init(kNoisyModeDefault);
+	State *	    N = init(kNoisyModeDefault);
 	newtonLexInit(N, filename);
 
 	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);

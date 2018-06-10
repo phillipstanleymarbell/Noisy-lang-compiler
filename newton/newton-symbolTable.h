@@ -13,13 +13,13 @@ Physics * newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(State *  N, Sco
 Physics * newtonPhysicsTableAddPhysics(State * N, Scope * scope);
 Physics * newtonPhysicsTableCopyAndAddPhysics(State * N, Scope * scope, Physics * source);
 
-Physics* deepCopyPhysicsNode(Physics* node);
-Physics* shallowCopyPhysicsNode(Physics* node);
-Physics* getTailPhysics(Physics* list);
+Physics * deepCopyPhysicsNode(Physics * node);
+Physics * shallowCopyPhysicsNode(Physics * node);
+Physics * getTailPhysics(Physics * list);
 
-IntegralList* getTailIntegralList(IntegralList* list);
+IntegralList * getTailIntegralList(IntegralList * list);
 
-int countNumberTime(Dimension* head);
+int countNumberTime(Dimension * head);
 
 void newtonPhysicsIncrementExponent(State * N, Physics * source, Dimension * added);
 void newtonPhysicsAddExponents(State * N, Physics * left, Physics * right);
@@ -28,10 +28,10 @@ void newtonPhysicsMultiplyExponents(State * N, Physics * source, double multipli
 
 void newtonAddInvariant(State * N, Invariant * invariant);
 
-Scope *	newtonSymbolTableAllocScope(State *  N);
-Symbol *	newtonSymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  token);
-Symbol *	newtonSymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  identifier);
-Scope *	newtonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subtree);
-void		        newtonSymbolTableCloseScope(State *  N, Scope *  scope, IrNode *  subtree);
+Scope *	newtonSymbolTableAllocScope(State * N);
+Symbol *	newtonSymbolTableAddOrLookupSymbolForToken(State *  N, Scope * scope, Token * token);
+Symbol *	newtonSymbolTableSymbolForIdentifier(State * N, Scope * scope, const char * identifier);
+Scope *	newtonSymbolTableOpenScope(State * N, Scope * scope, IrNode * subtree);
+void		        newtonSymbolTableCloseScope(State * N, Scope * scope, IrNode * subtree);
 
 bool areTwoPhysicsEquivalent(State * N, Physics * left, Physics * right);

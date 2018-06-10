@@ -76,15 +76,14 @@ int
 newtonGetPhysicsId(State * N, Physics * physics);
 
 Physics * 
-newtonParseGetPhysicsByBoundIdentifier(State * N, IrNode * root, char* boundVariableIdentifier);
-
-
-IrNode *
-newtonParseFindNodeByPhysicsId(State *N, IrNode * root, int physicsId);
+newtonParseGetPhysicsByBoundIdentifier(State * N, IrNode * root, char * boundVariableIdentifier);
 
 IrNode *
-newtonParseFindParameterByTokenString(State *N, IrNode * parameterTreeRoot, char* tokenString);
+newtonParseFindNodeByPhysicsId(State * N, IrNode * root, int physicsId);
 
 IrNode *
-newtonParseFindNodeByParameterNumberAndSubindex(State *N, IrNode * root, int parameterNumber, int subindex);
+newtonParseFindParameterByTokenString(State * N, IrNode * parameterTreeRoot, char * tokenString);
+
+IrNode *
+newtonParseFindNodeByParameterNumberAndSubindex(State * N, IrNode * root, int parameterNumber, int subindex);
 
