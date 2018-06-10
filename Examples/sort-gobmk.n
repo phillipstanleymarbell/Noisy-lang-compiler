@@ -1,6 +1,3 @@
-#
-#
-#
 gobmkSort : progtype
 {
 	tMoves : adt
@@ -30,8 +27,11 @@ init : probdef (N: int32, in: array [N] of tMoves) -> (out: array [N] of tMoves)
 	n <= N-2,
 	given (out in array [N] of tMoves)
 	(
-		forall (n in int32) (out[n].score <= out[n+1].score) &&
-		out >=< in
+		forall (n in int32)
+		(
+			(out[n].score <= out[n+1].score) &&
+			out >=< in
+		)
 	)
 }
 
