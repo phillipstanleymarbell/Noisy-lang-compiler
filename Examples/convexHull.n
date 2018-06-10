@@ -1,65 +1,131 @@
-#	--
-#	--	Compute the convex hull of any 2D universe, U2, of integers. (A sample
-#	--	U2 is declared below.)
-#	--
-#	--	This formulation is similar in style to the SlowConvexHull algorithm
-#	--	given on page 3 of de Berg, van Kreveld, Overmars & Schwartzkopf.
-#	--
-#	--	The sign of the determinant
-#	--
-#	--			| 1 px py |
-#	--		D =	| 1 qx qy |  = (qx*ry - qy*rx) - px(ry - qy) + py(rx-qx),
-#	--			| 1 rx ry |
-#	--
-#	--	denotes whether r is on left or right of line pq.
-#	--
-#	U0		:  Integers = <1 ... 10 delta 2*iota>
-#	U1		:  Integers = <1 ... 10 delta (2*iota)+1>
-#	U2		= U0 >< U1
+#
+#	This formulation is similar in style to the SlowConvexHull algorithm
+#	given on page 3 of de Berg, van Kreveld, Overmars & Schwartzkopf.
 #	
+#	The sign of the determinant
 #	
-#	P10		= !((qy == py:U2[2]) & (qx == px:U2[1]))
-#	P11		= ((qx*ry - qy*rx) - px:U2[1]*(ry - qy) + py:U2[2]*(rx - qx)) >= 0
+#			| 1 px py |
+#		D =	| 1 qx qy |  = (qx*ry - qy*rx) - px(ry - qy) + py(rx-qx),
+#			| 1 rx ry |
 #	
-#	P20		= ((qy > py:U2[2]) & (qx < px:U2[1]) & P11)
-#	P21		= ((qy > py:U2[2]) & (qx > px:U2[1]) & P11)
-#	P22		= ((qy < py:U2[2]) & (qx < px:U2[1]) & P11)
-#	P23		= ((qy < py:U2[2]) & (qx > px:U2[1]) & P11)
-#	
-#	P24		= ((qy == py:U2[2]) & (qx > px:U2[1]) & P11) 
-#	P25		= ((qx == px:U2[1]) & (qy > py:U2[2]) & P11) 
-#	P26		= ((qy == py:U2[2]) & (qx < px:U2[1]) & P11) 
-#	P27		= ((qx == px:U2[1]) & (qy < py:U2[2]) & P11)  
-#	
-#	P1		= exists qx:U2[1] exists qy:U2[2] forall rx:U2[1] forall ry:U2[2] (P10 & (P20|P21|P22|P23|P24|P25|P26|P27))
-#	
-#	
-#	S1 		= (true	: U2)
-#	S2		= (P1	: U2)
-#	
-#	--echo		"S1 = " print enum S1
-#	--print		info S1
-#	--echo		"S2 = " print enum S2
-#	print		info S2
-
-
+#	denotes whether r is on left or right of line pq.
+#
 convexHull : progtype
 {
-	init	: namegen (list of string):(list of string);
+	init			: namegen	(inputPoints: list of (int, int)) -> (convexHull: list of (int, int));
+
+	pqDiffer		: predicate	(qx:integer, qy:integer) @ (px:integer, py:integer);
+
+	nonNegativeDeterminant	: predicate	(qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer);
+	qOnUpperRight		: predicate	(qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer);
+	qOnUpperLeft		: predicate	(qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer);
+	qOnLowerLeft		: predicate	(qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer);
+	qOnLowerRight		: predicate	(qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer);
+	qOnRight		: predicate	(qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer);
+	qAbove			: predicate	(qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer);
+	qOnLeft			: predicate	(qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer);
+	qBelow			: predicate	(qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer);
 }
 
 
+
 #
-#	Problem definition
+#	Several predicate functions for the eventual problem definition
 #
-init =>
+pqDiffer : predicate (qx:integer, qy:integer) @ (px:integer, py:integer) =
 {
+	!((qy == py) & (qx == px))
 }
+
+nonNegativeDeterminant : predicate (qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer) =>
+{
+	((qx*ry - qy*rx) - px*(ry - qy) + py*(rx - qx)) >= 0
+}
+
+qOnUpperRight : predicate (qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer) =>
+{
+	((qy > py) & (qx < px) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
+}
+
+qOnUpperLeft : predicate (qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer) =>
+{
+	((qy > py) & (qx > px) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
+}
+
+qOnLowerLeft : predicate (qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer) =>
+{
+	((qy < py) & (qx < px) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
+}
+
+qOnLowerRight : predicate (qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer) =>
+{
+	((qy < py) & (qx > px) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
+}
+
+qOnRight : predicate (qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer) =>
+{
+	((qy == py) & (qx > px) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
+}
+
+qAbove : predicate (qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer) =>
+{
+	((qx == px) & (qy > py) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
+}
+
+qOnLeft : predicate (qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer) =>
+{
+	((qy == py) & (qx < px) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
+}
+
+qBelow : predicate (qx:integer, qy:integer, rx:integer, ry:integer) @ (px:integer, py:integer) =>
+{
+	((qx == px) & (qy < py) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
+}
+
+
+
+#
+#	Problem definition. This is a Boolean predicate that should
+#	evaluate to 'True' when applied to any output value of the
+#	namegen.
+#
+init : probdef (inputPoints: list of (integer, integer)) -> (convexHull: list of (integer, integer)) =>
+{
+	#
+	#	Given a point (px, py) on the list convexHull, there
+	#	exists a point (qx, qy) in the list inputPoints (and by
+	#	extension, in convexHull) such that for all points
+	#	(rx, ry) on the list inputPoints, (rx, ry) is on the left
+	#	or the right of the line from (px, py) to (qx, qy) (as
+	#	appropriate, by quadrant of the 2D space).
+	#
+	given ((px, py) in convexHull)
+	(
+		exists ((qx, qy) in inputPoints)
+		(
+			forall ((rx, ry) in inputPoints)
+			(
+				pqDiffer(qx, qy) @ (px, py) &
+				(
+					  qOnUpperRight	(qx, qy, rx, ry) @ (px, py)
+					| qOnUpperLeft	(qx, qy, rx, ry) @ (px, py)
+					| qOnLowerLeft	(qx, qy, rx, ry) @ (px, py)
+					| qOnLowerRight	(qx, qy, rx, ry) @ (px, py)
+					| qOnRight	(qx, qy, rx, ry) @ (px, py)
+					| qAbove	(qx, qy, rx, ry) @ (px, py)
+					| qOnLeft	(qx, qy, rx, ry) @ (px, py)
+					| qBelow	(qx, qy, rx, ry) @ (px, py)
+				)
+			)
+		)
+	)
+}
+
 
 
 #
 #	Algorithm implementation
 #
-init =
+init : namegen (inputPoints: list of (int, int)) -> (convexHull: list of (int, int)) =
 {
 }

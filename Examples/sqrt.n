@@ -1,36 +1,21 @@
-#	--
-#	-- compute sqrt of R0
-#	--
-#	R0 = 42.0
-#	
-#	U1 : reals = <0. ... R0 delta 0.01*iota>
-#	
-#	S1 = (((x:U1[1] * x:U1[1]) ==@0.01 R0) : U1)
-#	
-#	print info S1
-#	print enum S1
-
 sqrt : progtype
 {
-	init	: namegen (list of string):(list of string);
+	init	: namegen (argument: integer) -> (result: integer);
 }
 
 
 #
 #	Problem definition
 #
-init =>
+init : (argument: integer) -> (result: integer) =>
 {
-	argument	:= int (hd tl <-init);
-	argumentType	: reals = <0.0 ... argument delta 0.01*iota>;
-
-	init <-= enumerate (((squareRoot:argumentType * squareRoot:argumentType) ==@0.01 argument) : argumentType);
+	result == argument ** 2
 }
 
 
 #
 #	Algorithm implementation
 #
-init =
+init : (argument: integer) -> (result: integer) =
 {
 }

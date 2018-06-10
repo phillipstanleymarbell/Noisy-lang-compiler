@@ -1,0 +1,71 @@
+#
+#
+#
+Viterbi : progtype
+{
+	init	: namegen (	M: int32,
+				N: int32,
+				a: array [N+2][N+2] of int32,
+				x: array [M] of int32,
+				p: array [N+2][N+2] of int32) -> (y: array [M+2] of int32);
+}
+
+
+
+#
+#	The probdef is translitterated from viterbi.cp
+#
+#	See R. Jongerius and P. Stanley-Marbell
+#	"Language Definition for a Notation of Computational Problems",
+#	IBM Research Report rz 3828, IBM Research, 2012.
+#	
+#	Find the Viterbi path
+#
+init : probdef (M: int32,
+		N: int32,
+		a: array [N+2][N+2] of int32,
+		x: array [M] of int32,
+		p: array [N+2][N+2] of int32) -> (y: array [M+2] of int32) =>
+{
+	m >= 1,
+	m <= M+1,
+	l >= 1,
+	l <= N+1,
+	given (y in array [M+2] of int32)
+	(
+		exists (P in array [M+2] of int32)
+		(
+			exists (m in int32)
+			(
+				#
+				#	First sequence is always start == 0 state
+				#
+				(y[0] == 0) &&
+
+				#
+				#	Likelyhood to start in the start state = 1
+				#
+				(P[0] == 1) &&
+
+				#
+				#	We want y[m] := l, which is not possible to do in the max for statement
+				#
+				(P[m] == p[x[m]][y[m]] * a[y[m-1]][y[m]] * P[m-1]) &&
+				(P[m] == (max for (l in int32) of (p[x[m]][l] * a[y[m-1]][l] * P[m-1]))
+			)
+		)
+	)
+}
+
+
+
+#
+#	Algorithm implementation
+#
+init : namegen (M: int32,
+		N: int32,
+		a: array [N+2][N+2] of int32,
+		x: array [M] of int32,
+		p: array [N+2][N+2] of int32) -> (y: array [M+2] of int32) =
+{
+}

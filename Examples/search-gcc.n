@@ -1,0 +1,35 @@
+#
+#
+#
+gccSearch : progtype
+{
+	init	: namegen (N: int32, elementBits: array [N] of int32) -> (found: bool);
+}
+
+
+
+#
+#	The probdef is translitterated from sort-gobmk.cp
+#
+#	See R. Jongerius and P. Stanley-Marbell
+#	"Language Definition for a Notation of Computational Problems",
+#	IBM Research Report rz 3828, IBM Research, 2012.
+#	
+#	Search function in GCC, checks for 0 entries in an array.
+#
+init : probdef (N: int32, elementBits: array [N] of int32) -> (found: bool) =>
+{
+	given (found in bool)
+	(
+		found == exists (n in int32) (elementBits[n] == 0)
+	)
+}
+
+
+
+#
+#	Algorithm implementation
+#
+init : namegen (N: int32, elementBits: array [N] of int32) -> (found: bool) =
+{
+}
