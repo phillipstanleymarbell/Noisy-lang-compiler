@@ -1,0 +1,94 @@
+#
+#	For the math->min and math->max namegen:
+#
+include "math.nd"
+
+#
+#	For the definition of the definition of 'accelerometerTypeAnnote',
+#	which is a sequence of epsilon/tau/alpha specifications which
+#	specify the tolerable error, erasure, latency distribution/jitter.
+#
+include "sensorErrorTypes.nd"
+
+
+
+pedometer : progtype(lengthType: type, sampleType: type, countType: type)
+{
+	computeSteps	: namegen (windowSampleCount: lengthType, samples: sampleType, timeseries) -> (count: countType);
+	init		: namegen (windowSampleCount: lengthType) -> (stepsChannel: chan of countType);
+}
+
+
+
+#
+#	A very simple invariant that does not even define
+#	the computational problem: There cannot be more
+#	steps than there are window samples.
+#
+init : probdef (windowSampleCount: lengthType, samples: sampleType, timeseries) -> (count: countType) =>
+{
+	given (windowSampleCount in lengthType)
+	(
+		count < windowSampleCount
+	)
+}
+
+
+
+#
+#	Algorithm implementation
+#
+computeSteps : namegen (windowSampleCount: lengthType, samples: sampleType, timeseries) -> (stepCount: countType) =
+{
+	windowMin, windowMax, windowMidPoint	: sampleType;
+	stepCount				: countType = 0;
+
+	#
+	#	Load the math module implementation (at path pathMathModule)
+	#
+	math := name2chan pathMathModule;
+
+	#
+	#	Low-pass filter the timeseries data passed in, with
+	#	a cutoff frequency of 20Hz
+	#
+	filteredSamples := lowpass samples 20;
+
+	windowMin = typemax(sampleType);
+	windowMax = typemin(sampleType);
+
+	foreach (s in filteredSamples)
+	{
+		windowMin = math->min(windowMin, s);
+		windowMax = math->max(windowMax, s);
+	}
+
+	windowMidPoint = (windowMin + windowMax)/2;
+	stepCount = 0;
+	sequence (i := 0; i < (length filteredSamples) - 1; i++)
+	{
+		if ((filteredSamples[i] > windowMidPoint) && (filteredSamples[i+1] < windowMidPoint))
+		{
+			stepCount++;
+		}
+	}
+}
+
+
+
+init : namegen (windowSampleCount: lengthType) -> (stepsChannel: chan of countType) =
+{
+	#
+	#	Leave it up to the runtime to determine where to get the
+	#	accelerometer samples from, how to configure the sensor
+	#	based on the type annotation in accelerometerTypeAnnote, etc.
+	#
+	accelerometer		: chan of sampleType, signal acceleration, accelerometerTypeAnnote;
+	accelerometerSamples	: sampleType, timeseries;
+
+	sequence (;;)
+	{
+		accelerometerSamples	=<- [windowSampleCount] accelerometer;
+		stepsChannel		<-= computeSteps(windowSampleCount, accelerometerSamples);
+	}
+}
