@@ -343,8 +343,12 @@ newtonParseQuantityTerm(State * N, Scope * currentScope)
 IrNode *
 newtonParseQuantityFactor(State * N, Scope * currentScope)
 {
-    IrNode *   factor;
+    IrNode *   intermediate = genIrNode(N,   kNewtonIrNodeType_PquantityFactor,
+                        NULL /* left child */,
+                        NULL /* right child */,
+                        lexPeek(N, 1)->sourceInfo /* source info */);
 
+    IrNode * factor;
     if (peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
     {
         factor = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
@@ -398,25 +402,27 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
     {
         fatal(N, "newtonParseQuantityFactor: missed a case in factor\n");
     }
+    addLeaf(N, intermediate, factor);
+    intermediate->value = factor->value;
 
     /*
      * e.g.) (acceleration * mass) ** (3 + 5)
      */
     if (inFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts))
     {
-        addLeaf(N, factor, newtonParseHighPrecedenceBinaryOp(N, currentScope));
+        addLeaf(N, intermediate, newtonParseHighPrecedenceBinaryOp(N, currentScope));
 
         IrNode *    exponentialExpression = newtonParseExponentialExpression(N, currentScope, factor);
 		assert(exponentialExpression->type == kNewtonIrNodeType_PquantityExpression);
-        addLeafWithChainingSeq(N, factor, exponentialExpression);
+        addLeafWithChainingSeq(N, intermediate, exponentialExpression);
 
-        if (factor->value != 0)
+        if (intermediate->value != 0)
 		{
-			factor->value = pow(factor->value, exponentialExpression->value);
+			intermediate->value = pow(intermediate->value, exponentialExpression->value);
 		}
     }
 
-    return factor;
+    return intermediate;
 }
 
 IrNode *

@@ -1,10 +1,10 @@
-LIBFLEXPATH=/Users/jonathanlim/Documents/Compiler/libflex
-CONFIGPATH=/Users/jonathanlim/Documents/Compiler/libflex
+TREEROOT        = ../..
+include         $(TREEROOT)/config.local
 
-NOISYPATH=../../noisy
-NEWTONPATH=../../newton
-COMMONPATH=../../common
-INCLUDEPATH=../../include
+NOISYPATH=$(TREEROOT)/noisy
+NEWTONPATH=$(TREEROOT)/newton
+COMMONPATH=$(TREEROOT)/common
+INCLUDEPATH=$(TREEROOT)/include
 MACHTYPE=x86_64
 COMPILERVARIANT=clang
 OSTYPE=darwin
