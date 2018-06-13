@@ -1,10 +1,21 @@
+include "sortList-variantA.nd"
+
 SelectionSort : progtype
 {
-	init		: namegen (list of string):(list of string);
-	smallestfind	: namegen (list of string):((string, list of string));
+	init		: namegen (args: list of string) -> (results: list of string);
+	findSmallest	: namegen (stringList: list of string) -> ((string, list of string));
+
+	sort		: namegen (inputList: list of valueType) -> (outputList: list of valueType);
+	sort		: probdef (inputList: list of valueType) -> (outputList: list of valueType);
 }
 
-init =
+init (args: list of string) -> (results: list of string) =
+{
+	sort <- init;
+	init <- sort;
+}
+
+sort : namegen (inputList: list of valueType) : (outputList: list of valueType) =
 {
 	#
 	#	Pre-conditions: The init namegen is created, and a valid	
@@ -15,9 +26,9 @@ init =
 	#		and the items are in non-increasing order from
 	#		head to tail, lexicographically.
 	#
-	rest, result	: list of string;
-	smallest	: string;
-#	findsmallest	:= name2chan SelectionSort->smallestfind 0.0;
+	rest, result		: list of string;
+	smallest		: string;
+	findSmallestChannel	:= name2chan (typeof SelectionSort->findSmallest) (string SelectionSort->findSmallest);
 
 	rest =<- init;
 	iter
@@ -33,21 +44,21 @@ init =
 		#
 		len rest > 0	=>
 		{
-			findsmallest <-= rest;
-			(smallest, rest) =<- findsmallest;
+			findSmallestChannel <-= rest;
+			(smallest, rest) =<- findSmallestChannel;
 			result = smallest :: result;
 		}
 	};
-	init <-= result;
+	sort <-= result;
 }
 
-smallestfind =
+findSmallest =
 {
 	#
-	#	Pre-conditions: The smallestfind namegen is created, and a	
+	#	Pre-conditions: The findSmallest namegen is created, and a	
 	#		valid list-of-string input is written to it.
 	#
-	#	Post-conditions: The reader of the smallestfind  namegen
+	#	Post-conditions: The reader of the findSmallest  namegen
 	#		reads a tuple, first item of which is a string, no
 	#		larger (lexicographically) than any item on the
 	#		incoming list, and the second item in the tuple is a
@@ -56,7 +67,7 @@ smallestfind =
 	#		smallest item removed.
 	#
 	rest		: list of string;
-	input		:=<- smallestfind;
+	input		:=<- findSmallest;
 	smallest	:= hd input;
 
 	iter
@@ -90,5 +101,5 @@ smallestfind =
 			input = tl input;
 		}
 	};
-	smallestfind <-= (smallest, rest);
+	findSmallest <-= (smallest, rest);
 }

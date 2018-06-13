@@ -1,0 +1,21 @@
+sqrt : progtype
+{
+	init	: namegen (argument: integer) -> (result: integer);
+}
+
+
+#
+#	Problem definition
+#
+init : (argument: integer) -> (result: integer) =>
+{
+	result == argument ** 2
+}
+
+
+#
+#	Algorithm implementation
+#
+init : (argument: integer) -> (result: integer) =
+{
+}

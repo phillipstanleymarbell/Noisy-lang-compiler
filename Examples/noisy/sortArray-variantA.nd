@@ -1,0 +1,28 @@
+sortArrayVariantA : progtype (indexType: type, valueType: type)
+{
+	sort	: namegen (inputArray: array of valueType) -> (outputArray: array of valueType);
+	sort	: probdef (inputArray: array of valueType) -> (outputArray: array of valueType);
+}
+
+#
+#	Problem definition, based on sort-integers-v1.sal
+#
+sort : probdef (inputArray: array of valueType) : (outputArray: array of valueType) =>
+{
+	forall (i in indexType)
+	(
+		#
+		#	This could instead be lifted out of the forall
+		#	and expressed instead as outputArray >=< inputArray
+		#
+		(outputArray[i] in inputArray)	&&
+
+		#
+		#	Pair a predicate with an array to form a set
+		#	The cardinality of that set is the number of
+		#	entries that are less than or equal to outputArray[i].
+		#	That cardinality should be equal to i + 1
+		#
+		(cardinality (outputArray[j] <= outputArray[i]):outputArray) == i + 1
+	)
+}

@@ -1,0 +1,52 @@
+#
+#	For kMathPi, cos, and sin (we need both the namegen prototype as well as the probdef prototype)
+#
+include "math.nd"
+
+#
+#
+#
+DFT : progtype (sampleType: type, indexType: type)
+{
+	dft	: namegen (N: indexType, x: array [N] of complex sampleType) -> (X: array [N] of complex sampleType);
+	dft	: probdef (N: indexType, x: array [N] of complex sampleType) -> (X: array [N] of complex sampleType);
+}
+
+
+
+#
+#	The probdef is transliterated from dft.cpd
+#
+#	See R. Jongerius and P. Stanley-Marbell
+#	"Language Definition for a Notation of Computational Problems",
+#	IBM Research Report rz 3828, IBM Research, 2012.
+#
+#	DFT
+#
+dft	: probdef (N: indexType, x: array [N] of complex sampleType) -> (X: array [N] of complex sampleType) =>
+{
+	#
+	#	The outer 'given (X...)' is not needed since N, x, and X are already
+	#	bound to the read / write types of the namegen
+	#
+	given (X in array [N] of complex sampleTyp)
+	(
+		exists (expRes in array [N][N] of complex sampleType)
+		(
+			forall (k, n in indexType)
+			(
+				(
+					k >= 0									&&
+					k < N - 1								&&
+					n >= 0									&&
+					n < N - 1								&&
+					(real expRes[k][n])		== cos(-2 * kMathPi * n * k / N)	&&
+					(imaginary expRes[k][n])	== sin(-2 * kMathPi * n * k / N)
+				) =>
+				(real X[k])		== sum n in indexType from 0 to N - 1 of (real		x[n]*expRes[k][n]))
+				&&
+				(imaginary X[k])	== sum n in indexType from 0 to N - 1 of (imaginary	x[n]*expRes[k][n]))
+			)
+		)
+	)
+}

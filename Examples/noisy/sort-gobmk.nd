@@ -1,0 +1,45 @@
+GoBmkSort : progtype
+{
+	tMoves : adt
+	{
+		score : int32;
+		pos : int32;
+	};
+
+	sort	: namegen (N: int32, in: array [N] of tMoves) -> (out: array [N] of tMoves);
+	sort	: probdef (N: int32, in: array [N] of tMoves) -> (out: array [N] of tMoves);
+}
+
+
+
+#
+#	The probdef is transliterated from sort-gobmk.cp
+#
+#	See R. Jongerius and P. Stanley-Marbell
+#	"Language Definition for a Notation of Computational Problems",
+#	IBM Research Report rz 3828, IBM Research, 2012.
+#	
+#	Sorting in gobmk: simple integer sort on structures of two elements.
+#	One element to sort, the other to swap.
+#
+sort : probdef (N: int32, in: array [N] of tMoves) -> (out: array [N] of tMoves) =>
+{
+	#
+	#	The outer 'given (out...' is not needed since N, in, and out
+	#	are already bound to the read / write types of the namegen
+	#
+	given (out in array [N] of tMoves)
+	(
+		forall (n in int32)
+		(
+			(
+				n >= 0		&&
+				n <= N-2
+			) =>
+			(
+				(out[n].score <= out[n+1].score) &&
+				out >=< in
+			)
+		)
+	)
+}

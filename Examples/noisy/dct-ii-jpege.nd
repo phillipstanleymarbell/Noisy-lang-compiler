@@ -1,0 +1,61 @@
+#
+#	For the numeric constant kMathPi, the path string pathMathModule, and the math->cos namegen:
+#
+include "math.nd"
+math	: Math;
+cos	: import math;
+
+#
+#
+#
+sad : progtype (timeDomainType: type, dctDomainType: type, indexType: type)
+{
+	init	: namegen (length: indexType, x: array [length][length] of timeDomainType) -> (X: array [length][length] of dctDomainType);
+}
+
+
+
+#
+#	The probdef is transliterated from sort-gobmk.cp
+#
+#	See R. Jongerius and P. Stanley-Marbell
+#	"Language Definition for a Notation of Computational Problems",
+#	IBM Research Report rz 3828, IBM Research, 2012.
+#
+#	DCT II in jpeg encode. A straightforward 8x8 transform.
+#
+init : probdef (dftSize: indexType, x: array [dftSize][dftSize] of timeDomainType) -> (X: array [dftSize][dftSize] of dctDomainType) =>
+{
+	#
+	#	The outer 'given (X...)' is not needed since dftSize, x, and X are already
+	#	bound to the read / write types of the namegen
+	#
+	given (X in array [dftSize][dftSize] of dctDomainType)
+	(
+		exists (Y in array [dftSize][dftSize] of dctDomainType)
+		(
+			forall (l in indexType) forall (k in indexType)
+			(
+				(
+					k >= 0		&&
+					k <= dftSize	&&
+					l >= 0		&&
+					l <= dftSize	&&
+					Y[l][k] == sum n in indexType from 0 to (dftSize - 1) of (x[l][n] * cos(kMathPi / (dftSize - 1) * (n + 0.5) * k))
+				) =>
+				X[l][k] == sum n in indexType from 0 to (dftSize - 1) of (Y[n][k] * cos(kMathPi / (dftSize - 1) * (n + 0.5) * l))
+			)
+		)
+	)
+}
+
+#
+#	Algorithm implementation
+#
+init : namegen (dftSize: indexType, x: array [dftSize][dftSize] of timeDomainType) -> (X: array [dftSize][dftSize] of dctDomainType) =
+{
+	#
+	#	Load the math module implementation (at path pathMathModule)
+	#
+	math := name2chan pathMathModule;
+}

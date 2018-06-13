@@ -1,0 +1,40 @@
+sortArrayVariantC : progtype (indexType: type, valueType: type)
+{
+	sort	: namegen (inputArray: array of valueType) -> (outputArray: array of valueType);
+	sort	: probdef (inputArray: array of valueType) -> (outputArray: array of valueType);
+}
+
+#
+#	Problem definition
+#
+sort : probdef (inputArray: array of valueType) : (outputArray: array of valueType) =>
+{
+	#
+	#	The output should be a permutation of the input.
+	#
+	outputArray >=< inputarray,
+
+	forall (i in indexType)
+	(
+		#
+		#	Valid array bounds
+		#
+		((i >=0) && (i < length outputArray)) => 
+		(
+			#
+			#	The expression `item in inputArray` below is
+			#	not a variable introduction of the sort we usually
+			#	see in forall and so on, but rather set membership:
+			#	Variable introductions are defined to be
+			#
+			#		varIntro ::= identifier "in" (setExpr | typeExpr) .
+			#
+			#	(We could also have written `item in outputArray`)
+			#
+			forall (item in inputArray)
+			(
+				(outputArray[i] == item) => outputArray[i+1] >= item
+			)
+		)
+	)
+}

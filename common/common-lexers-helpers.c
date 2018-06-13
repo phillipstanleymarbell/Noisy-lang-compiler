@@ -5,6 +5,7 @@
 #include <setjmp.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -729,10 +730,10 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 
 				case kNoisyIrNodeType_TintConst:
 				{
-					flexprint(N->Fe, N->Fm, N->Fperr, "'%llu' ", tmp->integerConst);
+					flexprint(N->Fe, N->Fm, N->Fperr, "'%"PRIu64"' ", tmp->integerConst);
 
 					char	dummy[64];
-					tripCharacters += sprintf(dummy, "'%llu' ", tmp->integerConst);
+					tripCharacters += sprintf(dummy, "'%"PRIu64"' ", tmp->integerConst);
 
 					break;
 				}

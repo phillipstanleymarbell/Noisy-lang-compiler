@@ -1,0 +1,43 @@
+#
+#	For kMathPi and cos (we need both the namegen prototype as well as the probdef prototype)
+#
+include "math.nd"
+
+#
+#
+#
+dctIV : progtype (indexType: type, sampleType: type)
+{
+	init	: namegen (N: indexType, x: sampleType) -> (X: sampleType);
+	init	: probdef (N: indexType, x: sampleType) -> (X: sampleType);
+}
+
+
+
+#
+#	The probdef is transliterated from dct-iv.cpd
+#
+#	See R. Jongerius and P. Stanley-Marbell
+#	"Language Definition for a Notation of Computational Problems",
+#	IBM Research Report rz 3828, IBM Research, 2012.
+#
+#	DCT IV
+#
+init	: probdef (N: indexType, x: array [N] of sampleType) -> (X: array [N] of sampleType) =>
+{
+	#
+	#	The outer 'given (X...)' is not needed since N, x, and X are already
+	#	bound to the read / write types of the namegen
+	#
+	given (X in sampleType)
+	(
+		forall (k in indexType)
+		(
+			X[k] == sum n in indexType from 0 to N-1 of ((x[n] * cos((kMathPi / N) * (n + 0.5) * (k + 0.5))))
+		)
+	)
+}
+
+init	: namegen (N: indexType, x: sampleType) -> (X: sampleType) = 
+{
+}
