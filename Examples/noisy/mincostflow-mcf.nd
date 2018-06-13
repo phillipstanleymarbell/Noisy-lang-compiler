@@ -1,0 +1,74 @@
+MinCostFlowMCF : progtype (indexType: type, valueType: type)
+{
+	MCFarc : adt
+	{
+		head	: ref MCFarc	# Pointer to head node
+		tail	: ref MCFarc	# Pointer to tail node
+
+		cost	: valueType	# Cost of arc
+
+		lower	: valueType	# Flow lower bound of arc
+		upper	: valueType	# Flow upper bound of arc
+	};
+
+	MCFnode : adt
+	{
+		balance		: valueType	# Supply/demand of the node
+		potential	: valueType	# We do not currently calculate dual feasibility
+	};
+
+	MCFnetwork : adt
+	{
+		N	: indexType		# Number of nodes
+		M	: indexType		# Number of arcs
+		nodes	: array [N] of MCFnode	# Input nodes
+		arcs	: array [M] of MCFarc	# Input arcs
+	}
+
+	solve	: namegen (network : MCFnetwork) -> (feasible: bool, flow: array [network.M] of valueType, optCost: valueType);
+	solve	: probdef (network : MCFnetwork) -> (feasible: bool, flow: array [network.M] of valueType, optCost: valueType);
+}
+
+#
+#	Flow conservation constraint
+#
+flowConservation : predicate (network: MCFnetwork, flow : array [network.M] of valueType) @ () =>
+{
+	forall (i in indexType)
+	(
+		network.nodes[i].balance ==
+		(
+			sum (k from 0 to network.M - 1) with (network.arcs[k].head == i) of flow[k])	-
+			sum (k from 0 to network.M - 1) with (network.arcs[k].tail == i) of flow[k])
+		)
+	)
+}
+
+flowCapacities : predicate (network: MCFnetwork, flow : array [network.M] of valueType) @ () =>
+{
+	forall (k in indexType)
+	{
+		network.arcs[k].lower <= flow[k]	&&
+		flow[k] <= network.arcs[k].upper
+	}
+}
+
+#
+#	The probdef is transliterated from mincostflow-mcf.cpd
+#
+#	See R. Jongerius and P. Stanley-Marbell
+#	"Language Definition for a Notation of Computational Problems",
+#	IBM Research Report rz 3828, IBM Research, 2012.
+#
+#	Minimum-cost network flow from MCF.
+#
+solve	: probdef (network : MCFnetwork) -> (feasible: bool, flow: array [network.M] of valueType, optCost: valueType) =>
+{
+	feasible =>
+	(
+		optcost == min with (flowConservation(network, flow) && flowCapacities(network, flow)) of
+		(
+			sum for (k from 0 to network.M - 1) of (network.arcs[k].cost * flow[k])
+		)
+	)
+}

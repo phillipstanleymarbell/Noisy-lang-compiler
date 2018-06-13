@@ -1,0 +1,25 @@
+sortListVariantA : progtype (indexType: type, valueType: type)
+{
+	sort	: namegen (inputList: list of valueType) -> (outputList: list of valueType);
+	sort	: probdef (inputList: list of valueType) -> (outputList: list of valueType);
+}
+
+#
+#	Problem definition, based on sort-integers-v1.sal
+#
+sort : probdef (inputList: list of valueType) : (outputList: list of valueType) =>
+{
+	outputList >=< inputList,
+	forall (i in indexType)
+	(
+		#
+		#	Pair a predicate with a List to form a set. We use
+		#	the fact that we can index into lists like arrays.
+		#
+		#	The cardinality of that set is the number of
+		#	entries that are less than or equal to outputList[i].
+		#	That cardinality should be equal to i + 1
+		#
+		(cardinality (outputList[j] <= outputList[i]):outputList) == i + 1
+	)
+}

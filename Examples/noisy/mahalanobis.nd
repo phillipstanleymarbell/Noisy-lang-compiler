@@ -1,0 +1,37 @@
+Mahalanobis : progtype (indexType: type, valueType: type)
+{
+	#
+	#	x:	multivariate vector
+	#	mu:	vector of means
+	#	S:	covariance matrix
+	#
+	distance	: namegen (N: indexType, x: array [N] of valueType, mu: array [N] of valueType, S: array [N] of valueType) -> (d: valueType);
+	distance	: probdef (N: indexType, x: array [N] of valueType, mu: array [N] of valueType, S: array [N] of valueType) -> (d: valueType);
+}
+
+
+
+#
+#	The probdef is transliterated from mahalanobis.cpd
+#
+#	See R. Jongerius and P. Stanley-Marbell
+#	"Language Definition for a Notation of Computational Problems",
+#	IBM Research Report rz 3828, IBM Research, 2012.
+#
+#	Problem definition for Mahalanobis distance.
+#
+distance: probdef (N: indexType, x: array [N] of valueType, mu: array [N] of valueType, S: array [N] of valueType) -> (d: valueType) =>
+{
+	exists (T in array [N] of valueType)
+	(
+		forall (m in indexType)
+		(
+			(
+				n >= 0		&&
+				n < N - 1	&&
+				T[m] == sum (n in indexType) of ((x[n] - mu[n]) * S[n][m]))
+			)
+			=> d ** 2 == sum m (T[m] * (x[n] - mu[n]))
+		)
+	)
+}

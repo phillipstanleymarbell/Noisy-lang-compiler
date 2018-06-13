@@ -1,0 +1,32 @@
+MinSearchH264ref : progtype (indexType: type, valueType: type)
+{
+	search	: namegen (M: indexType, N: indexType, blockSAD: valueType) -> (minCost: valueType, bestPosition: indexType);
+	search	: probdef (M: indexType, N: indexType, blockSAD: valueType) -> (minCost: valueType, bestPosition: indexType);
+}
+
+
+
+#
+#	The probdef is transliterated from min-search-h264ref.cpd
+#
+#	See R. Jongerius and P. Stanley-Marbell
+#	"Language Definition for a Notation of Computational Problems",
+#	IBM Research Report rz 3828, IBM Research, 2012.
+#
+#	Do a minimizing search for minimizing motion cost.
+#	Calculation of cost assumed to be already done.
+#
+search	: probdef (M: indexType, N: indexType, blockSAD: valueType) -> (minCost: valueType, bestPosition: indexType) =>
+{
+	forall (position in indexType)
+	(
+		(
+			position >= 0				&&
+			position < N - 1
+		) =>
+		(
+			blockSAD[bestPosition] == minCost	&&
+			minCost <= blockSAD[position]
+		)
+	)
+}

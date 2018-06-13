@@ -1,0 +1,57 @@
+#
+#	For kMathPi and cos (we need both the namegen prototype as well as the probdef prototype)
+#
+include "math.nd"
+
+#
+#	N: number of samples.
+#	x: time-domain samples.
+#	X: frequency-domain samples.
+#
+dctIIIh264ref : progtype (countType: type, sampleType: type)
+{
+	init	: namegen (N: countType, x: array [N][N] of sampleType) -> (X: array [N][N] of sampleType);
+	init	: probdef (N: countType, x: array [N][N] of sampleType) -> (X: array [N][N] of sampleType);
+}
+
+
+
+#
+#	The probdef is transliterated from dct-iii-h264ref.cpd
+#
+#	See R. Jongerius and P. Stanley-Marbell
+#	"Language Definition for a Notation of Computational Problems",
+#	IBM Research Report rz 3828, IBM Research, 2012.
+#
+#	DCT II in h264 is a straightforward NxN transform
+#
+init	: namegen (N: countType, x: array [N][N] of sampleType) -> (X: array [N][N] of sampleType) =>
+{
+	#
+	#	The outer 'given (X...)' is not needed since N, x, and X are already
+	#	bound to the read / write types of the namegen
+	#
+	given (X in array [N][N] of sampleType)
+	(
+		exists (Y in array [N][N] of sampleType)
+		(
+			forall (k in countType, l in countType, n in countType)
+			(
+				(
+					l >= 0	&&
+					l < N	&&
+					k >= 0	&&
+					k < N	&&
+					n >= 1	&&
+					n < N	&&
+					Y[l][k] == 0.5 * x[l][0] + sum n in countType from 1 to N - 1 of ((x[l][n] * cos(kMathPi / N * (k + 0.5) * n)))
+				) => 
+				X[l,k] == 0.5 * Y[0][k] + sum n in countType from 1 to N - 1 of ((Y[n][k] * cos(kMathPi / N * (l + 0.5) * n)))
+			)
+		)
+	)
+}
+
+init	: namegen (N: countType, x: array [N][N] of sampleType) -> (X: array [N][N] of sampleType) =
+{
+}

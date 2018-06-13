@@ -1,0 +1,36 @@
+matrixMultiplicationMCF : progtype (valueType: type, indexType: type)
+{
+	init	: namegen (size: indexType, A: array [size][size] of complex valueType, B: array [size][size] of complex valueType) -> (C: array [size][size] of complex valueType);
+	init	: probdef (size: indexType, A: array [size][size] of complex valueType, B: array [size][size] of complex valueType) -> (C: array [size][size] of complex valueType);
+}
+
+
+
+#
+#	The probdef is transliterated from xxx
+#
+#	See R. Jongerius and P. Stanley-Marbell
+#	"Language Definition for a Notation of Computational Problems",
+#	IBM Research Report rz 3828, IBM Research, 2012.
+#
+#	One of the most-used matrix operations from from the SPEC MILC benchmark
+#
+init	: namegen (size: indexType, A: array [size][size] of complex valueType, B: array [size][size] of complex valueType) -> (C: array [size][size] of complex valueType) => 
+{
+	forall (n in indexType, m in indexType)
+	(
+		(
+			n >= 0		&&
+			n < size	&&
+			m >= 0		&&
+			m < size
+		) =>
+		(real C[n][m])		== sum k in indexType from 0 to size - 1 of (real A[n][k] * B[k][m])		&&
+		(imaginary C[n][m])	== sum k in indexType from 0 to size - 1 of (imaginary A[n][k] * B[k][m])
+	)
+}
+
+init	: namegen (size: indexType, A: array [size][size] of complex valueType, B: array [size][size] of complex valueType) -> (C: array [size][size] of complex valueType) =
+{
+	
+}

@@ -1,0 +1,27 @@
+MaxSearchSjeng : progtype (indexType: type, valueType: type)
+{
+	search	: namegen (N: indexType, moveOrdering: array [N] of valueType) -> (marker: array [N] of valueType);
+	search	: probdef (N: indexType, moveOrdering: array [N] of valueType) -> (marker: array [N] of valueType);
+}
+
+
+
+#
+#	The probdef is transliterated from xxx
+#
+#	See R. Jongerius and P. Stanley-Marbell
+#	"Language Definition for a Notation of Computational Problems",
+#	IBM Research Report rz 3828, IBM Research, 2012.
+#
+#	Search for the array index with maximum value and return its index
+#
+search	: probdef (N: indexType, moveOrdering: array [N] of valueType) -> (marker: array [N] of valueType) =>
+{
+	exists (best in valueType) 
+	(
+		forall (i in indexType)
+		(
+			((i >= 0) && (i < N - 1)) => (best >= moveOrdering[i])
+		) && (moveOrdering[marker] == best)
+	)
+}

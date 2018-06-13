@@ -1,0 +1,16 @@
+sortArrayVariantB : progtype (indexType: type, valueType: type)
+{
+	sort	: namegen (inputArray: array of valueType) -> (outputArray: array of valueType);
+	sort	: probdef (inputArray: array of valueType) -> (outputArray: array of valueType);
+}
+
+#
+#	Problem definition, based on sort-integers-v3.sal
+#
+sort : probdef (inputArray: array of valueType) : (outputArray: array of valueType) =>
+{
+	forall (item in outputArray)
+	{
+		(outputArray[i] == item) <=> outputArray[i+1] >= item
+	}
+}

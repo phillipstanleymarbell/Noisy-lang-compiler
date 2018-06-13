@@ -10,15 +10,12 @@ include "math.nd"
 #
 include "sensorErrorTypes.nd"
 
-
-
 pedometer : progtype(lengthType: type, sampleType: type, countType: type)
 {
-	computeSteps	: namegen (windowSampleCount: lengthType, samples: sampleType, timeseries) -> (count: countType);
+	computeSteps	: namegen (windowSampleCount: lengthType, samples: sampleType, timeseries)
+				-> (count: countType);
 	init		: namegen (windowSampleCount: lengthType) -> (stepsChannel: chan of countType);
 }
-
-
 
 #
 #	A very simple invariant that does not even define
@@ -33,12 +30,11 @@ init : probdef (windowSampleCount: lengthType, samples: sampleType, timeseries) 
 	)
 }
 
-
-
 #
 #	Algorithm implementation
 #
-computeSteps : namegen (windowSampleCount: lengthType, samples: sampleType, timeseries) -> (stepCount: countType) =
+computeSteps : namegen (windowSampleCount: lengthType, samples: sampleType, timeseries)
+	-> (stepCount: countType) =
 {
 	windowMin, windowMax, windowMidPoint	: sampleType;
 	stepCount				: countType = 0;
@@ -73,8 +69,6 @@ computeSteps : namegen (windowSampleCount: lengthType, samples: sampleType, time
 		}
 	}
 }
-
-
 
 init : namegen (windowSampleCount: lengthType) -> (stepsChannel: chan of countType) =
 {
