@@ -1,0 +1,43 @@
+sad : progtype (indexType: type, sadType: type, diffType: type, absDiffType: type)
+{
+	init	: namegen (N: indexType, diff: array [N] of diffType) -> (sad: sadType);
+	abs	: namegen (in: diffType) -> (out: absDiffType);
+}
+
+
+
+#
+#	The probdef is translitterated from sort-gobmk.cp
+#
+#	See R. Jongerius and P. Stanley-Marbell
+#	"Language Definition for a Notation of Computational Problems",
+#	IBM Research Report rz 3828, IBM Research, 2012.
+#
+init : probdef (N: indexType, diff: array [N] of indexType) -> (sad: sadType) =>
+{
+	n >= 0,
+	n <= N-1,
+	given (sad in sadType)
+	(
+		sad == sum (n in indexType) from (n==0) to (n == N-1) of abs(diff[n])
+	)
+}
+
+abs : namegen (in: diffType) -> (out: absDiffType) =
+{
+	if (in < 0)
+	{
+		out = 0 - in;
+	}
+	else
+	{
+		out = in;
+	}
+}
+
+#
+#	Algorithm implementation
+#
+init : namegen (N: indexType, diff: array [N] of indexType) -> (sad: sadType) =
+{
+}

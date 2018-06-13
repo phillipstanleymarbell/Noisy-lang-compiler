@@ -1,10 +1,22 @@
+include "sortList-variantA.nd"
+
 InsertionSort : progtype
 {
-	init		: namegen (list of string):(list of string);
-	insert		: namegen (string, list of string):(list of string);
+	init		: namegen (args: list of string) -> (results: list of string);
+	insert		: namegen (item: string, stringlist: list of string) -> (list of string);
+
+	sort		: namegen (inputList: list of valueType) -> (outputList: list of valueType);
+	sort		: probdef (inputList: list of valueType) -> (outputList: list of valueType);
 }
 
-init =
+
+init (args: list of string) -> (results: list of string) =
+{
+	sort <- init;
+	init <- sort;
+}
+
+sort : namegen (inputList: list of valueType) : (outputList: list of valueType) =
 {
 	#
 	#	Pre-conditions: The init namegen is created, and a valid	
@@ -15,8 +27,8 @@ init =
 	#		and the items are in non-increasing order from
 	#		head to tail, lexicographically.
 	#
-	result	: list of string;
-#	insert	:= name2chan InsertionSort->insertgen 0.0;
+	result		: list of string;
+	insertChannel	:= name2chan (typeof InsertionSort->insert) (string InsertionSort->insert);
 
 	input := <-init;
 	iter
@@ -33,14 +45,14 @@ init =
 		len input > 0	=>
 		{
 			item := hd input;
-			insert <-= (item, result);
-			result = <-insert;
+			insertChannel <-= (item, result);
+			result = <-insertChannel;
 			input = tl input;
 		}
 	}
 }
 
-insert =
+insert : namegen (item: string, stringlist: list of string) -> (list of string) =
 {
 	#
 	#	Pre-conditions: The insert namegen is created, and a	

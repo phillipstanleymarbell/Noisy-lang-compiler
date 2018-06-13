@@ -1,0 +1,44 @@
+include "system.nd"
+
+HelloWorld : progtype
+{
+	init	: namegen (args: list of string) -> (results: list of string);
+}
+
+init =
+{
+	#
+	#	The first argument to the `name2chan` operator is the
+	#	type of the channel that will be created. The recommended
+	#	way to specify this in the case of a namegen implementation
+	#	which is being loaded, is to use the `typeof` operator to
+	#	get the type specified in the namegen's progtype.
+	#
+	#	In this case, `typeof System.print` is the type expression
+	#	`list of string`.
+	#
+	print := name2chan (typeof System->print) (string System->print);
+
+	#
+	#	Send a value with type `list of string` down the channel.
+	#
+	print <-= "Hello World!"::nil;
+
+	#
+	#	The read type of the channel, as defined in system.nd
+	#	is int64. The semantics are that the read gives the
+	#	number of UTF-8 bytes of the last formatting. We can
+	#	therefore read this `print` channel to get the equivalent
+	#	of the "return value" of the last print.
+	#
+	utf8BytesPrinted := <- print;
+
+	#
+	#	As long as the `print` channel is valid (i.e., in scope 
+	#	and not nil), the runtime system will keep it around.
+	#	We can force the print co-routine's demise by setting the
+	#	channel to nil. (Going out of scope at the namegen's end
+	#	achieves the same, so this is not really necessary.)
+	#
+	print = nil;
+}

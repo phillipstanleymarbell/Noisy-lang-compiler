@@ -1,0 +1,34 @@
+include "fibonacci.nd"
+
+fibonacci : namegen (input: valueType) -> (output: valueType) =
+{
+	v := <-fib;
+
+	matchseq
+	{
+		(v == 0) =>
+		{
+			fibonacci <-= 0;
+		}
+
+		(v == 1) =>
+		{
+			fibonacci <-= 1;
+		}
+
+		true =>
+		{
+			#
+			#	The '.' selector can be applied to a progtype to yield its constituent namegens and progtypes
+			#
+			#	Applying 'typeof' to an idintifier yields a type expression. In the line below,
+			#	we get both the read and write types of the namegen Fibonacci.fibonacci
+			#	Applying 'string' to a progtype yields the path to its implementation.
+			#
+			c1, c2		:=	name2chan (typeof Fibonacci.fibonacci) (string Fibonacci);
+			c1		<-=	(v - 1);
+			c2		<-=	(v - 2);
+			r		<-=	<-c1 + <-c2;
+		}
+	};
+}
