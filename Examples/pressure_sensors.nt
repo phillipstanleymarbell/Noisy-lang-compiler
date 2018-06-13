@@ -76,17 +76,17 @@ pressure: signal =
 }
 
 
-BoylesLaw: invariant(P: pressure, V: volume)
+BoylesLaw: invariant(P: pressure, V: volume) = 
 {
     P * V ~ 3.5 * Pa * m ** 3
 }
 
-GayLussacLaw: invariant(P: pressure, T: temperature)
+GayLussacLaw: invariant(P: pressure, T: temperature) = 
 {
     P * T ~ 5 * Pa * K
 }
 
-AvogadroLaw: invariant(V: volume, n: amount)
+AvogadroLaw: invariant(V: volume, n: amount) = 
 {
     V / n ~ 5 * m ** 3 / mol
 }

@@ -75,15 +75,17 @@ newtonDimensionCheckExpressionOrStatement(
 	State * N,
 	IrNode * tree
 ) {
-    int expressionIndex = 0;
-	ConstraintReport * constraintReport = (ConstraintReport*) calloc(1, sizeof(ConstraintReport));
+    int     expressionIndex = 0;
+	ConstraintReport *      constraintReport = (ConstraintReport *) calloc(1, sizeof(ConstraintReport));
 	constraintReport->satisfiesValueConstraint = true;
 	constraintReport->satisfiesDimensionConstraint = true;
 	char leftDetailMessage[1024];
 	char rightDetailMessage[1024];
 
-    /* check LHS expression */
-    IrNode* leftExpression = findNthIrNodeOfType(
+    /* 
+     *  check LHS expression 
+     */
+    IrNode *    leftExpression = findNthIrNodeOfType(
         N,
         tree,
         kNewtonIrNodeType_PquantityExpression,
@@ -97,10 +99,12 @@ newtonDimensionCheckExpressionOrStatement(
         constraintReport
 		);
 
-    /* find the compareOp between LHS and RHS*/
-    int compareOrAssignOpIndex = 0;
-	IrNode* compareOrAssignOpNode;
-    IrNode* compareOp = findNthIrNodeOfTypes(
+    /*
+     *  find the compareOp between LHS and RHS
+     */
+    int     compareOrAssignOpIndex = 0;
+	IrNode *    compareOrAssignOpNode;
+    IrNode *    compareOp = findNthIrNodeOfTypes(
         N,
         tree,
         kNewtonIrNodeType_PcompareOp,
@@ -117,7 +121,7 @@ newtonDimensionCheckExpressionOrStatement(
 			);
     assert(compareOrAssignOpNode != NULL);
 
-    IrNode* rightExpression = findNthIrNodeOfType(
+    IrNode *    rightExpression = findNthIrNodeOfType(
         N,
         tree,
         kNewtonIrNodeType_PquantityExpression,
@@ -141,11 +145,11 @@ newtonDimensionCheckExpressionOrStatement(
 }
 
 /*
- * This file basically follows the format of newton-parser-expression.c except for a few differences
- * First, inFirst method searches the first productions in the IR tree
- * given, instead of in the token stream.
- * Second, this file needs to evaluate compareOps and assignOps.
- * Third, it does not create new nodes. This file assumes that the tree is constructed correctly.
+ *  This file basically follows the format of newton-parser-expression.c except for a few differences
+ *  First, inFirst method searches the first productions in the IR tree
+ *  given, instead of in the token stream.
+ *  Second, this file needs to evaluate compareOps and assignOps.
+ *  Third, it does not create new nodes. This file assumes that the tree is constructed correctly.
  */
 void
 newtonDimensionCheckQuantityExpression(
@@ -155,8 +159,8 @@ newtonDimensionCheckQuantityExpression(
 	ConstraintReport * report
 ) {
 
-    int termIndex = 0;
-    IrNode* leftTerm = findNthIrNodeOfType(
+    int     termIndex = 0;
+    IrNode *    leftTerm = findNthIrNodeOfType(
         N,
         expressionRoot,
         kNewtonIrNodeType_PquantityTerm,
@@ -179,8 +183,8 @@ newtonDimensionCheckQuantityExpression(
 		);
 
 
-    int lowBinOpIndex = 0;
-    IrNode* lowBinOpNode = findNthIrNodeOfTypes(
+    int     lowBinOpIndex = 0;
+    IrNode *    lowBinOpNode = findNthIrNodeOfTypes(
         N,
         expressionRoot,
         kNewtonIrNodeType_PlowPrecedenceBinaryOp,
@@ -194,7 +198,7 @@ newtonDimensionCheckQuantityExpression(
 
     while (lowBinOpNode != NULL)
 	{
-		IrNode* rightTerm = findNthIrNodeOfType(
+		IrNode *    rightTerm = findNthIrNodeOfType(
 			N,
 			expressionRoot,
 			kNewtonIrNodeType_PquantityTerm,
@@ -228,14 +232,14 @@ newtonDimensionCheckQuantityExpression(
 void
 newtonDimensionCheckQuantityTerm(State * N, IrNode * termRoot, char * errorMessage, ConstraintReport * report)
 {
-    int factorIndex = 0;
+    int     factorIndex = 0;
 
 	/*
-	 * We do not check for unary op because
-	 * unary ops do not have an impact on dimensions
+	 *  We do not check for unary op because
+	 *  unary ops do not have an impact on dimensions
 	 */
 
-    IrNode* leftFactor = findNthIrNodeOfTypes(
+    IrNode *    leftFactor = findNthIrNodeOfTypes(
         N,
         termRoot,
         kNewtonIrNodeType_PquantityFactor,
@@ -257,14 +261,13 @@ newtonDimensionCheckQuantityTerm(State * N, IrNode * termRoot, char * errorMessa
 		return;
 	}
 
-    int numVectorsInTerm = 0;
+    int     numVectorsInTerm = 0;
 
 	assert(leftFactor->physics != NULL);
 	newtonPhysicsAddExponents(N, termRoot->physics, leftFactor->physics);
 
     /*
-     * I
-f either LHS or RHS is a vector (not both), then the resultant is a vector
+     *  If either LHS or RHS is a vector (not both), then the resultant is a vector
      */
     if (leftFactor->physics->isVector)
     {
@@ -272,8 +275,8 @@ f either LHS or RHS is a vector (not both), then the resultant is a vector
         numVectorsInTerm++;
     }
 
-	int midBinOpIndex = 0;
-	IrNode * midBinOp = findNthIrNodeOfTypes(
+	int     midBinOpIndex = 0;
+	IrNode *    midBinOp = findNthIrNodeOfTypes(
 		N,
 		termRoot,
 		kNewtonIrNodeType_PmidPrecedenceBinaryOp,
@@ -284,7 +287,7 @@ f either LHS or RHS is a vector (not both), then the resultant is a vector
 
     while (midBinOp != NULL)
     {
-		IrNode* rightFactor = findNthIrNodeOfTypes(
+		IrNode *    rightFactor = findNthIrNodeOfTypes(
 			N,
 			termRoot,
 			kNewtonIrNodeType_PquantityFactor,
@@ -300,17 +303,15 @@ f either LHS or RHS is a vector (not both), then the resultant is a vector
 			);
 		assert(rightFactor->physics != NULL);
 
-
-        // TODO double check this logic when I'm more awake
         if (rightFactor->physics->isVector)
         {
             termRoot->physics->isVector = true;
             numVectorsInTerm++;
 
             /*
-             * Cannot perform multiply or divide operations on two vectors
-             * e.g.) vector * scalar * scalar / vector is illegal because
-             * it boils down to vector / vector which is illegal
+             *  Cannot perform multiply or divide operations on two vectors
+             *  e.g.) vector * scalar * scalar / vector is illegal because
+             *  it boils down to vector / vector which is illegal
              */
             assert(numVectorsInTerm < 2);
         }
@@ -337,15 +338,15 @@ f either LHS or RHS is a vector (not both), then the resultant is a vector
 
 void
 newtonDimensionCheckQuantityFactor(
-	State *N,
-	IrNode *factorRoot,
+	State * N,
+	IrNode * factorRoot,
 	char * errorMessage,
 	ConstraintReport * report
 	) {
 	char factorDetailMessage[1024];
 
-	int factorIndex = 0;
-	IrNode * factor = findNthIrNodeOfTypes(
+	int     factorIndex = 0;
+	IrNode *    factor = findNthIrNodeOfTypes(
 		N,
 		factorRoot,
 		kNewtonIrNodeType_PquantityFactor,
@@ -378,8 +379,8 @@ newtonDimensionCheckQuantityFactor(
 	}
     strcat(errorMessage, factorDetailMessage);
 
-	int highBinOpIndex = 0;
-	IrNode* highBinOpNode = findNthIrNodeOfTypes(
+	int     highBinOpIndex = 0;
+	IrNode *    highBinOpNode = findNthIrNodeOfTypes(
 		N,
 		factorRoot,
 		kNewtonIrNodeType_PhighPrecedenceBinaryOp,
@@ -388,13 +389,13 @@ newtonDimensionCheckQuantityFactor(
 		);
 	highBinOpIndex++;
 
-	int expressionIndex = 0;
+	int     expressionIndex = 0;
 	while (highBinOpNode != NULL)
 	{
 		strcat(errorMessage, gNewtonTokenDescriptions[highBinOpNode->type]);
 		strcat(errorMessage, "(");
 
-		IrNode* expression = findNthIrNodeOfType(
+		IrNode *    expression = findNthIrNodeOfType(
 			N,
 			factorRoot,
 			kNewtonIrNodeType_PquantityExpression,
@@ -428,20 +429,22 @@ newtonDimensionCheckQuantityFactor(
 
 void
 newtonDimensionCheckExponentialExpression(
-	State *N,
+	State * N,
 	IrNode * expressionRoot,
 	IrNode * baseNode,
 	char * errorMessage,
 	ConstraintReport * report
 	)
 {
-	double exponentValue = newtonDimensionCheckNumericExpression(
+	double      exponentValue = newtonDimensionCheckNumericExpression(
 		N,
 		expressionRoot,
 		errorMessage,
 		report);
 
-    /* If the base is a Physics quantity, the exponent must be an integer */
+    /* 
+     *  If the base is a Physics quantity, the exponent must be an integer 
+     */
     assert(exponentValue == (int) exponentValue);
 	assert(baseNode->physics != NULL);
 	newtonPhysicsMultiplyExponents(N, baseNode->physics, exponentValue);
@@ -455,8 +458,8 @@ newtonDimensionCheckNumericExpression(
     ConstraintReport * report
 	) {
 
-    int termIndex = 0;
-    IrNode* leftTerm = findNthIrNodeOfType(
+    int     termIndex = 0;
+    IrNode *    leftTerm = findNthIrNodeOfType(
         N,
         expressionRoot,
         kNewtonIrNodeType_PquantityTerm,
@@ -475,7 +478,7 @@ newtonDimensionCheckNumericExpression(
     expressionRoot->physics = newtonInitPhysics(N, NULL, NULL);
 
     int lowBinOpIndex = 0;
-    IrNode* lowBinOpNode = findNthIrNodeOfTypes(
+    IrNode *    lowBinOpNode = findNthIrNodeOfTypes(
         N,
         expressionRoot,
         kNewtonIrNodeType_PlowPrecedenceBinaryOp,
@@ -486,7 +489,7 @@ newtonDimensionCheckNumericExpression(
 
     while (lowBinOpNode != NULL)
 	{
-		IrNode* rightTerm = findNthIrNodeOfType(
+		IrNode *    rightTerm = findNthIrNodeOfType(
 			N,
 			expressionRoot,
 			kNewtonIrNodeType_PquantityTerm,
@@ -540,9 +543,9 @@ newtonDimensionCheckNumericTerm(
     char * errorMessage,
     ConstraintReport * report
 	) {
-    int factorIndex = 0;
+    int     factorIndex = 0;
 
-	IrNode* unaryOp = findNthIrNodeOfTypes(
+	IrNode *    unaryOp = findNthIrNodeOfTypes(
 		N,
 		termRoot,
 		kNewtonIrNodeType_PunaryOp,
@@ -550,7 +553,7 @@ newtonDimensionCheckNumericTerm(
 		0
 		);
 
-    IrNode* leftFactor = findNthIrNodeOfTypes(
+    IrNode *    leftFactor = findNthIrNodeOfTypes(
         N,
         termRoot,
         kNewtonIrNodeType_PquantityFactor,
@@ -567,19 +570,19 @@ newtonDimensionCheckNumericTerm(
 
 	termRoot->value = leftFactor->value;
 
-	assert(termRoot->value != 0); // TODO remove later
+	assert(termRoot->value != 0);
 	if (unaryOp != NULL)
 	{
 		termRoot->value *= -1;
 	}
 
-    int numVectorsInTerm = 0;
+    int     numVectorsInTerm = 0;
 
 	assert(leftFactor->physics != NULL);
 	newtonPhysicsAddExponents(N, termRoot->physics, leftFactor->physics);
 
     /*
-     * If either LHS or RHS is a vector (not both), then the resultant is a vector
+     *  If either LHS or RHS is a vector (not both), then the resultant is a vector
      */
     if (leftFactor->physics->isVector)
     {
@@ -587,8 +590,8 @@ newtonDimensionCheckNumericTerm(
         numVectorsInTerm++;
     }
 
-	int midBinOpIndex = 0;
-	IrNode * midBinOp = findNthIrNodeOfTypes(
+	int     midBinOpIndex = 0;
+	IrNode *    midBinOp = findNthIrNodeOfTypes(
 		N,
 		termRoot,
 		kNewtonIrNodeType_PmidPrecedenceBinaryOp,
@@ -599,7 +602,7 @@ newtonDimensionCheckNumericTerm(
 
     while (midBinOp != NULL)
     {
-		IrNode* rightFactor = findNthIrNodeOfTypes(
+		IrNode *    rightFactor = findNthIrNodeOfTypes(
 			N,
 			termRoot,
 			kNewtonIrNodeType_PquantityFactor,
@@ -616,16 +619,15 @@ newtonDimensionCheckNumericTerm(
 		assert(newtonIsDimensionless(rightFactor->physics));
 
 
-        // TODO double check this logic when I'm more awake
         if (rightFactor->physics->isVector)
         {
             termRoot->physics->isVector = true;
             numVectorsInTerm++;
 
             /*
-             * Cannot perform multiply or divide operations on two vectors
-             * e.g.) vector * scalar * scalar / vector is illegal because
-             * it boils down to vector / vector which is illegal
+             *  Cannot perform multiply or divide operations on two vectors
+             *  e.g.) vector * scalar * scalar / vector is illegal because
+             *  it boils down to vector / vector which is illegal
              */
             assert(numVectorsInTerm < 2);
         }
@@ -674,8 +676,8 @@ newtonDimensionCheckNumericFactor(
 	) {
 
 	char factorDetailMessage[1024];
-	int factorIndex = 0;
-	IrNode * factor = findNthIrNodeOfTypes(
+	int     factorIndex = 0;
+	IrNode *    factor = findNthIrNodeOfTypes(
 		N,
 		factorRoot,
 		kNewtonIrNodeType_PquantityFactor,
@@ -688,8 +690,6 @@ newtonDimensionCheckNumericFactor(
 	}
 	assert(newtonIsDimensionless(factor->physics));
 	assert(factor->type == kNewtonIrNodeType_Tnumber);
-	assert(factor->value != 0); // TODO remove later
-
 
 	if (newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) == NULL)
 	{
@@ -706,8 +706,8 @@ newtonDimensionCheckNumericFactor(
 	}
     strcat(errorMessage, factorDetailMessage);
 
-	int highBinOpIndex = 0;
-	IrNode* highBinOpNode = findNthIrNodeOfTypes(
+	int     highBinOpIndex = 0;
+	IrNode *    highBinOpNode = findNthIrNodeOfTypes(
 		N,
 		factorRoot,
 		kNewtonIrNodeType_PhighPrecedenceBinaryOp,
@@ -716,13 +716,13 @@ newtonDimensionCheckNumericFactor(
 		);
 	highBinOpIndex++;
 
-	int expressionIndex = 0;
+	int     expressionIndex = 0;
 	while  (highBinOpNode != NULL)
 	{
 		strcat(errorMessage, gNewtonTokenDescriptions[highBinOpNode->type]);
 		strcat(errorMessage, "(");
 
-		IrNode* expression = findNthIrNodeOfType(
+		IrNode *    expression = findNthIrNodeOfType(
 			N,
 			factorRoot,
 			kNewtonIrNodeType_PquantityExpression,

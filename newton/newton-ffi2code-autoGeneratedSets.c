@@ -88,14 +88,10 @@ int gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
                                                                  kNoisyIrNodeTypeMax
                                                             },
             [kNewtonIrNodeType_PquantityFactor]            = {
-                                                                 kNewtonIrNodeType_Tminus,
-                                                                 kNewtonIrNodeType_Tderivative,
-                                                                 kNewtonIrNodeType_Tintegral,
-                                                                 kNewtonIrNodeType_Tdot,
-                                                                 kNewtonIrNodeType_Tcross,
                                                                  kNewtonIrNodeType_Tnumber,
                                                                  kNewtonIrNodeType_Tidentifier,
                                                                  kNewtonIrNodeType_TleftParen,
+                                                                 kNewtonIrNodeType_PquantityExpression,
                                                                  kNoisyIrNodeTypeMax
                                                             },
             [kNewtonIrNodeType_PquantityTerm ]            = {
@@ -311,29 +307,6 @@ int gNewtonFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
                                                             },
             [kNewtonIrNodeType_PruleList     ]            = {kNewtonIrNodeType_Zeof, kNoisyIrNodeTypeMax},
             [kNewtonIrNodeType_PnewtonFile   ]            = {kNewtonIrNodeType_Zeof, kNoisyIrNodeTypeMax},
-            // [T_XXX                           ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Tnil          ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_ZbadIdentifier]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_ZbadStringConst]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Zepsilon      ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Zeof          ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Tcross        ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Tdot          ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Tintegral     ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Tderivative   ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_TSpanish      ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_TEnglish      ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Tsignal   ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Tinvariant    ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Tconstant     ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Tderivation   ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Tsymbol       ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Tname         ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_TrightBrace    ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_TleftBrace     ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_TrightParen   ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_TleftParen    ]            = {T_XXX, kNoisyIrNodeTypeMax},
-            // [kNewtonIrNodeType_Tidentifier   ]            = {T_XXX, kNoisyIrNodeTypeMax}
 };
 
 char* gNewtonAstNodeStrings[kNoisyIrNodeTypeMax]	= {

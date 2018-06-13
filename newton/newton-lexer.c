@@ -233,9 +233,6 @@ newtonLexInit(State *  N, char *  fileName)
                     {
                         checkProportionality(N);
                         continue;
-                        // if (checkProportionality(N))
-                        //     continue;
-                        // break;
                     }
                     case '>':
 					{

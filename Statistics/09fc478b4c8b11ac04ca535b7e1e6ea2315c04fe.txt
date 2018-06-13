@@ -1,0 +1,86 @@
+
+changeset: 280:09fc478b4c8b11ac04ca535b7e1e6ea2315c04fe
+\n./noisy/noisy-linux-EN -O0 Examples/helloWorld.n -s
+\n./newton/newton-linux-EN -S tmp.smt2 Examples/invariants.nt
+
+changeset: 280:09fc478b4c8b11ac04ca535b7e1e6ea2315c04fe
+\n./noisy/noisy-linux-EN -O0 Examples/helloWorld.n -s
+
+Informational Report:
+---------------------
+
+Non-zero Noisy routine residency time upper bounds and counts (0 calls, total of 0.0000 us):
+
+
+Intermediate Representation Information:
+
+    IR node count                        : 38
+    Symbol Table node count              : 2
+\n./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt
+Start Lexer: 1518610215857579
+End Lexer: 1518610215857849
+Start Parser: 1518610215858108
+End Parser: 1518610215858251
+Start SMT2 Backend: 1518610215858252
+Start Tree Transform AccelerationRange: 1518610215858310
+Start Tree Transform AccelerationRange: 1518610215858326
+Start Tree Transform AccelerationRange: 1518610215858328
+Start Tree Transform AccelerationRange: 1518610215858335
+Start Tree Transform AccelerationRange: 1518610215858337
+Start Tree Transform AccelerationRange: 1518610215858344
+Start Tree Transform AccelerationRange: 1518610215858347
+Start Tree Transform AccelerationRange: 1518610215858354
+Start Tree Transform AccelerationRange: 1518610215858355
+Start Tree Transform AccelerationRange: 1518610215858362
+End SMT2 Backend: 1518610215858380
+
+changeset: 280:09fc478b4c8b11ac04ca535b7e1e6ea2315c04fe
+\n./noisy/noisy-linux-EN -O0 Examples/helloWorld.n -s
+\n./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt
+Start Lexer: 1518714389141758
+End Lexer: 1518714389142142
+Start Parser: 1518714389142336
+End Parser: 1518714389142432
+Start SMT2 Backend: 1518714389142432
+Start Tree Transform AccelerationRange: 1518714389142470
+Start Tree Transform AccelerationRange: 1518714389142479
+Start Tree Transform AccelerationRange: 1518714389142481
+Start Tree Transform AccelerationRange: 1518714389142485
+Start Tree Transform AccelerationRange: 1518714389142486
+Start Tree Transform AccelerationRange: 1518714389142490
+Start Tree Transform AccelerationRange: 1518714389142493
+Start Tree Transform AccelerationRange: 1518714389142496
+Start Tree Transform AccelerationRange: 1518714389142497
+Start Tree Transform AccelerationRange: 1518714389142501
+End SMT2 Backend: 1518714389142514
+
+changeset: 280:09fc478b4c8b11ac04ca535b7e1e6ea2315c04fe
+\n./noisy/noisy-linux-EN -O0 Examples/helloWorld.n -s
+
+Informational Report:
+---------------------
+
+Non-zero Noisy routine residency time upper bounds and counts (0 calls, total of 0.0000 us):
+
+
+Intermediate Representation Information:
+
+    IR node count                        : 38
+    Symbol Table node count              : 2
+\n./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt
+Start Lexer: 1518714785533241
+End Lexer: 1518714785533447
+Start Parser: 1518714785533596
+End Parser: 1518714785533674
+Start SMT2 Backend: 1518714785533674
+Start Tree Transform AccelerationRange: 1518714785533705
+Start Tree Transform AccelerationRange: 1518714785533714
+Start Tree Transform AccelerationRange: 1518714785533715
+Start Tree Transform AccelerationRange: 1518714785533718
+Start Tree Transform AccelerationRange: 1518714785533719
+Start Tree Transform AccelerationRange: 1518714785533723
+Start Tree Transform AccelerationRange: 1518714785533725
+Start Tree Transform AccelerationRange: 1518714785533728
+Start Tree Transform AccelerationRange: 1518714785533729
+Start Tree Transform AccelerationRange: 1518714785533732
+End SMT2 Backend: 1518714785533743

@@ -1,0 +1,4 @@
+sudo dtrace -s timing.d -c /Users/jonathanlim/Documents/Compiler/Noisy_philip/tests/test-motor-wheel-chair/test-darwin-EN | grep newton >> result
+sudo dtrace -s timing.d -c /Users/jonathanlim/Documents/Compiler/Noisy_philip/tests/test-motor-wheel-chair/test2-darwin-EN | grep newton >> result2
+
+

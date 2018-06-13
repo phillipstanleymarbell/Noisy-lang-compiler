@@ -2,7 +2,7 @@ ConstraintReport*
 newtonDimensionCheckExpressionOrStatement(
     State * N,
     IrNode * leftExpression
-	);
+);
 
 
 void
@@ -11,14 +11,15 @@ newtonDimensionCheckQuantityExpression(
 	IrNode * expressionRoot,
 	char * errorMessage,
 	ConstraintReport * report
-	);
+);
 
 void
 newtonDimensionCheckQuantityTerm(
 	State * N,
 	IrNode * termRoot,
 	char * errorMessage,
-	ConstraintReport * report);
+	ConstraintReport * report
+);
 
 void
 newtonDimensionCheckQuantityFactor(
@@ -26,7 +27,7 @@ newtonDimensionCheckQuantityFactor(
 	IrNode *factorRoot,
 	char * errorMessage,
 	ConstraintReport * report
-	);
+);
 
 void
 newtonDimensionCheckExponentialExpression(
@@ -35,7 +36,7 @@ newtonDimensionCheckExponentialExpression(
     IrNode * expressionRoot,
     char * errorMessage,
     ConstraintReport * report
-	);
+);
 
 double
 newtonDimensionCheckNumericExpression(
@@ -43,7 +44,7 @@ newtonDimensionCheckNumericExpression(
     IrNode * expressionRoot,
     char * errorMessage,
     ConstraintReport * report
-	);
+);
 
 double
 newtonDimensionCheckNumericTerm(
@@ -51,7 +52,7 @@ newtonDimensionCheckNumericTerm(
     IrNode * termRoot,
     char * errorMessage,
     ConstraintReport * report
-	);
+);
 
 void
 newtonDimensionCheckNumericFactor(
@@ -59,4 +60,4 @@ newtonDimensionCheckNumericFactor(
     IrNode * factorRoot,
     char * errorMessage,
     ConstraintReport * report
-	);
+);

@@ -1,5 +1,5 @@
 /*
-	Authored 2016. Jonathan Lim.
+	Authored 2017. Jonathan Lim.
 
 	All rights reserved.
 
@@ -63,10 +63,19 @@
 #include "newton-check-pass.h"
 
 extern int		gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
-extern char* gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
-extern const char *	gNewtonTokenDescriptions[kNoisyIrNodeTypeMax];
+extern char *    gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
+extern const char *     gNewtonTokenDescriptions[kNoisyIrNodeTypeMax];
 
-
+void
+updateDestinationTrackerIndicesFromSource(Indices * dest, Indices * source)
+{
+	dest->expressionIndex += source->expressionIndex;
+	dest->termIndex += source->termIndex;
+	dest->factorIndex += source->factorIndex;
+	dest->lowBinOpIndex += source->lowBinOpIndex;
+	dest->midBinOpIndex += source->midBinOpIndex;
+	dest->highBinOpIndex += source->highBinOpIndex;
+}
 
 void
 addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintReport * constraintReport)
@@ -77,7 +86,7 @@ addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintR
 		return;
 	}
 
-	ConstraintReport* current = newtonReport->firstConstraintReport;
+	ConstraintReport * current = newtonReport->firstConstraintReport;
 	while (current->next != NULL)
 	{
 		current = current->next;
@@ -88,7 +97,7 @@ addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintR
 
 void
 newtonCheckCompareOp(
-    State* N,
+    State * N,
     IrNode * leftExpression,
     IrNode * rightExpression,
     char * leftErrorMessage,
@@ -105,68 +114,132 @@ newtonCheckCompareOp(
         case kNewtonIrNodeType_Tge:
             report->satisfiesValueConstraint = leftExpression->value >= rightExpression->value;
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
-			  ((newtonIsDimensionless(leftExpression->physics) &&
-				newtonIsDimensionless(rightExpression->physics)) ||
-			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
+				((newtonIsDimensionless(leftExpression->physics) &&
+			    newtonIsDimensionless(rightExpression->physics)) ||
+				areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
-			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be >= RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
+			{
+			    sprintf(report->valueErrorMessage,
+						"LHS %s of value %f should be >= RHS %s of value %f",
+						leftErrorMessage,
+						leftExpression->value,
+						rightErrorMessage,
+						rightExpression->value);
+			}
             if (!report->satisfiesDimensionConstraint)
-			  sprintf(report->dimensionErrorMessage, "dimensions of LHS %s and RHS %s do not match", leftErrorMessage, rightErrorMessage);
+			{
+				sprintf(report->dimensionErrorMessage,
+						"dimensions of LHS %s and RHS %s do not match",
+						leftErrorMessage,
+						rightErrorMessage);
+			}
             break;
 
         case kNewtonIrNodeType_Tgt:
             report->satisfiesValueConstraint = leftExpression->value > rightExpression->value;
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
-			  ((newtonIsDimensionless(leftExpression->physics) &&
+			    ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
+			    areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
-			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be > RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
+			{
+				sprintf(report->valueErrorMessage,
+						"LHS %s of value %f should be > RHS %s of value %f",
+						leftErrorMessage,
+						leftExpression->value,
+						rightErrorMessage,
+						rightExpression->value);
+			}
             if (!report->satisfiesDimensionConstraint)
-			  sprintf(report->dimensionErrorMessage, "dimensions of LHS %s and RHS %s do not match", leftErrorMessage, rightErrorMessage);
+			{
+				sprintf(report->dimensionErrorMessage,
+						"dimensions of LHS %s and RHS %s do not match",
+						leftErrorMessage,
+						rightErrorMessage);
+			}
             break;
 
         case kNewtonIrNodeType_Tle:
             report->satisfiesValueConstraint = leftExpression->value <= rightExpression->value;
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
-			  ((newtonIsDimensionless(leftExpression->physics) &&
+			    ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
+			    areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
-			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be <= RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
+			{
+				sprintf(report->valueErrorMessage,
+						"LHS %s of value %f should be <= RHS %s of value %f",
+						leftErrorMessage,
+						leftExpression->value,
+						rightErrorMessage,
+						rightExpression->value);
+			}
             if (!report->satisfiesDimensionConstraint)
-			  sprintf(report->dimensionErrorMessage, "dimensions of LHS %s and RHS %s do not match", leftErrorMessage, rightErrorMessage);
+			{
+				sprintf(report->dimensionErrorMessage,
+						"dimensions of LHS %s and RHS %s do not match",
+						leftErrorMessage,
+						rightErrorMessage);
+			}
             break;
 
         case kNewtonIrNodeType_Tlt:
             report->satisfiesValueConstraint = leftExpression->value < rightExpression->value;
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
-			  ((newtonIsDimensionless(leftExpression->physics) &&
+			    ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
+			    areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
-			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be < RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
+			{
+				sprintf(report->valueErrorMessage,
+						"LHS %s of value %f should be < RHS %s of value %f",
+						leftErrorMessage,
+						leftExpression->value,
+						rightErrorMessage,
+						rightExpression->value);
+			}
             if (!report->satisfiesDimensionConstraint)
-			  sprintf(report->dimensionErrorMessage, "dimensions of LHS %s and RHS %s do not match", leftErrorMessage, rightErrorMessage);
+			{
+				sprintf(report->dimensionErrorMessage,
+						"dimensions of LHS %s and RHS %s do not match",
+						leftErrorMessage,
+						rightErrorMessage);
+			}
             break;
 
         case kNewtonIrNodeType_Tproportionality:
-            /* TODO figure out how to check proportionality */
-		  report->satisfiesValueConstraint = true;
-		  report->satisfiesDimensionConstraint = true;
+            /* 
+             *  TODO figure out how to check proportionality 
+             */
+		    report->satisfiesValueConstraint = true;
+		    report->satisfiesDimensionConstraint = true;
 			break;
 
         case kNewtonIrNodeType_Tequivalent:
-            /* TODO change == to incorporate an epsilon */
+            /* 
+             *  TODO change == to incorporate an epsilon 
+             */
             report->satisfiesValueConstraint = leftExpression->value == rightExpression->value;
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
-			  ((newtonIsDimensionless(leftExpression->physics) &&
+			    ((newtonIsDimensionless(leftExpression->physics) &&
 				newtonIsDimensionless(rightExpression->physics)) ||
-			   areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
+			    areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
-			  sprintf(report->valueErrorMessage, "LHS %s of value %f should be == RHS %s of value %f", leftErrorMessage, leftExpression->value, rightErrorMessage, rightExpression->value);
+			{
+				sprintf(report->valueErrorMessage,
+						"LHS %s of value %f should be == RHS %s of value %f",
+						leftErrorMessage,
+						leftExpression->value,
+						rightErrorMessage,
+						rightExpression->value);
+			}
             if (!report->satisfiesDimensionConstraint)
-			  sprintf(report->dimensionErrorMessage, "dimensions of LHS %s and RHS %s do not match", leftErrorMessage, rightErrorMessage);
+			{
+				sprintf(report->dimensionErrorMessage,
+						"dimensions of LHS %s and RHS %s do not match",
+						leftErrorMessage,
+						rightErrorMessage);
+			}
             break;
 
         default:
@@ -177,8 +250,9 @@ newtonCheckCompareOp(
 
 void
 newtonCheckBinOp(
-    State* N,
-    IrNode * left,
+    State * N,
+	IrNode * parent,
+	IrNode * left,
     IrNode * right,
     IrNodeType binOpType,
     ConstraintReport * report
@@ -188,104 +262,117 @@ newtonCheckBinOp(
     switch(binOpType)
     {
         case kNewtonIrNodeType_Tplus:
-            left->value += right->value;
+            parent->value += right->value;
+
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
 			    ((newtonIsDimensionless(left->physics) && newtonIsDimensionless(right->physics)) || \
-				 (areTwoPhysicsEquivalent(N, left->physics, right->physics)));
-
+				(areTwoPhysicsEquivalent(N, left->physics, right->physics)));
             break;
 
         case kNewtonIrNodeType_Tminus:
-            left->value -= right->value;
+            parent->value = left->value - right->value;
+
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
-			  ((newtonIsDimensionless(left->physics) && newtonIsDimensionless(right->physics)) || \
-			   areTwoPhysicsEquivalent(N, left->physics, right->physics));
+			    ((newtonIsDimensionless(left->physics) && newtonIsDimensionless(right->physics)) || \
+			    areTwoPhysicsEquivalent(N, left->physics, right->physics));
             break;
 
         /*
-         * Note that we don't need to copy over any dimensions as in Parsing
-         * because they are already filled in. Same for division and exponents
+         *  Note that we don't need to copy over any dimensions as in Parsing
+         *  because they are already filled in. Same for division and exponents
          */
         case kNewtonIrNodeType_Tmul:
 			left->value = left->value == 0 ? 1 : left->value;
 			right->value = right->value == 0 ? 1 : right->value;
-            left->value *= right->value;
+			parent->value = left->value * right->value;
             break;
 
         case kNewtonIrNodeType_Tdiv:
-		  /* The drawback of this approach is that we can't catch divide by 0 */
-		  left->value = left->value == 0 ? 1 : left->value;
-		  right->value = right->value == 0 ? 1 : right->value;
-            left->value /= right->value;
+		    /* 
+             *  The drawback of this approach is that we can't catch divide by 0 
+             */
+		    left->value = left->value == 0 ? 1 : left->value;
+		    right->value = right->value == 0 ? 1 : right->value;
+		    parent->value = left->value / right->value;
             break;
 
         case kNewtonIrNodeType_Texponent:
             /*
-             * left is base and right is exponential expression.
-             * The value of the exponential expression is always dimensionless and should
-             * already have been calculated by Newton description parser.
+             *  left is base and right is exponential expression.
+             *  The value of the exponential expression is always dimensionless and should
+             *  already have been calculated by Newton description parser.
              */
 		    report->satisfiesValueConstraint = report->satisfiesValueConstraint && (left->value != 0 || right->value != 0);
 			if (!report->satisfiesValueConstraint)
-			  {
+			{
 				fatal(N, "newton-check-pass.c:newtonCheckBinOp: cannot raise 0 to 0 power");
-			  }
-            left->value = pow(left->value, right->value);
-
+			}
+            parent->value = pow(left->value, right->value);
             break;
+
         default:
             fatal(N, "newton-api.c:newtonCheckCompareOp: no binOp detected");
             break;
     }
 
 	/*
-	 * This should not fail because asserts inside Newton parser must have caught this error.
+	 *  This should not fail because asserts inside Newton parser must have caught this error.
 	 */
 	assert(report->satisfiesDimensionConstraint);
 }
 
 void
-iterateConstraints(State * N, IrNode * constraintTreeRoot, IrNode* parameterTreeRoot, NewtonAPIReport* report)
+iterateConstraints(State * N, IrNode * constraintTreeRoot, IrNode * parameterTreeRoot, NewtonAPIReport * report)
 {
     if (constraintTreeRoot->type == kNewtonIrNodeType_Pconstraint)
     {
-      checkSingleConstraint(N, constraintTreeRoot, parameterTreeRoot, report);
+        checkSingleConstraint(N, constraintTreeRoot, parameterTreeRoot, report);
     }
 
     if (constraintTreeRoot->irLeftChild != NULL)
+	{
 	  	iterateConstraints(N, constraintTreeRoot->irLeftChild, parameterTreeRoot, report);
+	}
 
     if (constraintTreeRoot->irRightChild != NULL)
+	{
 	  	iterateConstraints(N, constraintTreeRoot->irRightChild, parameterTreeRoot, report);
+	}
 }
 
 void
-checkSingleConstraint(State * N, IrNode * constraintTreeRoot, IrNode* parameterTreeRoot, NewtonAPIReport* newtonReport)
+checkSingleConstraint(State * N, IrNode * constraintTreeRoot, IrNode * parameterTreeRoot, NewtonAPIReport * newtonReport)
 {
-    int expressionIndex = 0;
-	ConstraintReport * constraintReport = (ConstraintReport*) calloc(1, sizeof(ConstraintReport));
+    Indices * tracker = (Indices *) calloc(1, sizeof(Indices));
+	ConstraintReport * constraintReport = (ConstraintReport *) calloc(1, sizeof(ConstraintReport));
 	constraintReport->satisfiesValueConstraint = true;
 	constraintReport->satisfiesDimensionConstraint = true;
 	char leftDetailMessage[1024];
 	char rightDetailMessage[1024];
 
-    /* check LHS expression */
+    /*
+     *  check LHS expression 
+     */
     IrNode* leftExpression = findNthIrNodeOfType(
         N,
         constraintTreeRoot,
         kNewtonIrNodeType_PquantityExpression,
-        expressionIndex
+        tracker->expressionIndex
     );
-    expressionIndex++;
-    leftExpression->value = checkQuantityExpression(
+    tracker->expressionIndex++;
+	tracker->factorIndex++;
+    Indices* leftTracker = checkQuantityExpression(
         N,
         leftExpression,
         parameterTreeRoot,
 		leftDetailMessage,
         constraintReport
     );
+	updateDestinationTrackerIndicesFromSource(tracker, leftTracker);
 
-    /* find the compareOp between LHS and RHS*/
+    /* 
+     *  find the compareOp between LHS and RHS
+     */
     int compareOpIndex = 0;
     IrNode* compareOp = findNthIrNodeOfTypes(
         N,
@@ -294,23 +381,27 @@ checkSingleConstraint(State * N, IrNode * constraintTreeRoot, IrNode* parameterT
         gNewtonFirsts,
         compareOpIndex
     );
-    /* There must be one compareOp per constraint */
+    /* 
+     *  There must be one compareOp per constraint 
+     */
     assert(compareOp != NULL);
 
     IrNode* rightExpression = findNthIrNodeOfType(
         N,
         constraintTreeRoot,
         kNewtonIrNodeType_PquantityExpression,
-        expressionIndex
+        tracker->expressionIndex
     );
-    expressionIndex++;
-    rightExpression->value = checkQuantityExpression(
+    tracker->expressionIndex++;
+	tracker->factorIndex++;
+    Indices * rightTracker = checkQuantityExpression(
         N,
         rightExpression,
         parameterTreeRoot,
 		rightDetailMessage,
         constraintReport
     );
+	updateDestinationTrackerIndicesFromSource(tracker, rightTracker);
 
     newtonCheckCompareOp(
         N,
@@ -323,9 +414,13 @@ checkSingleConstraint(State * N, IrNode * constraintTreeRoot, IrNode* parameterT
     );
 
 	addConstraintReportToNewtonAPIReport(newtonReport, constraintReport);
+
+	free(tracker);
+	free(leftTracker);
+	free(rightTracker);
 }
 
-double
+Indices *
 checkQuantityExpression(
     State * N,
     IrNode * expressionRoot,
@@ -333,56 +428,63 @@ checkQuantityExpression(
 	char * errorMessage,
     ConstraintReport * report
 ) {
-    int termIndex = 0;
-    IrNode* leftTerm = findNthIrNodeOfType(
+	Indices * tracker = (Indices *) calloc(1, sizeof(Indices));
+
+    IrNode * leftTerm = findNthIrNodeOfType(
         N,
         expressionRoot,
         kNewtonIrNodeType_PquantityTerm,
-        termIndex
+        tracker->termIndex
     );
-    termIndex++;
+	tracker->termIndex++;
     assert(leftTerm != NULL);
-    leftTerm->value = checkQuantityTerm(
+
+    Indices * leftTracker = checkQuantityTerm(
         N,
         leftTerm,
         parameterTreeRoot,
 		errorMessage,
         report
     );
+	expressionRoot->value = leftTerm->value;
+	updateDestinationTrackerIndicesFromSource(tracker, leftTracker);
 
-    int lowBinOpIndex = 0;
-    IrNode* lowBinOpNode = findNthIrNodeOfTypes(
+    IrNode * lowBinOpNode = findNthIrNodeOfTypes(
         N,
         expressionRoot,
         kNewtonIrNodeType_PlowPrecedenceBinaryOp,
         gNewtonFirsts,
-        lowBinOpIndex
+        tracker->lowBinOpIndex
     );
-    lowBinOpIndex++;
 
     while (lowBinOpNode != NULL)
     {
+		tracker->lowBinOpIndex++;
+
 	    strcat(errorMessage, gNewtonTokenDescriptions[lowBinOpNode->type]);
-        IrNode* rightTerm = findNthIrNodeOfType(
+        IrNode * rightTerm = findNthIrNodeOfType(
             N,
             expressionRoot,
             kNewtonIrNodeType_PquantityTerm,
-            termIndex
+            tracker->termIndex
         );
-        termIndex++;
+		tracker->termIndex++;
         assert(	rightTerm != NULL );
-        rightTerm->value = checkQuantityTerm(
+
+        Indices * rightTracker = checkQuantityTerm(
             N,
             rightTerm,
             parameterTreeRoot,
 			errorMessage,
             report
         );
+		updateDestinationTrackerIndicesFromSource(tracker, rightTracker);
 		strcat(errorMessage, gNewtonTokenDescriptions[lowBinOpNode->type]);
 
         newtonCheckBinOp(
             N,
-            leftTerm,
+			expressionRoot,
+			leftTerm,
             rightTerm,
             lowBinOpNode->type,
             report
@@ -393,14 +495,18 @@ checkQuantityExpression(
             expressionRoot,
             kNewtonIrNodeType_PlowPrecedenceBinaryOp,
             gNewtonFirsts,
-            lowBinOpIndex
+            tracker->lowBinOpIndex
         );
-        lowBinOpIndex++;
+
+		free(rightTracker);
     }
-	return leftTerm->value;
+
+	free(leftTracker);
+
+	return tracker;
 }
 
-double
+Indices * 
 checkQuantityTerm(
     State * N,
     IrNode * termRoot,
@@ -408,7 +514,7 @@ checkQuantityTerm(
     char * errorMessage,
     ConstraintReport * report
 ) {
-    int factorIndex = 0;
+	Indices * tracker = (Indices *) calloc(1, sizeof(Indices));
 
 	/*
 	 * This is part of value propagation. Some factor may have a value set, some may not.
@@ -421,94 +527,109 @@ checkQuantityTerm(
 	 * This is also how the values are propagated in newtonParseQuantityExpression.
 	 */
 
-	IrNode* unaryOp = findNthIrNodeOfTypes(
+	IrNode * unaryOp = findNthIrNodeOfTypes(
 		N,
 		termRoot,
 		kNewtonIrNodeType_PunaryOp,
 		gNewtonFirsts,
-		factorIndex
+		tracker->lowBinOpIndex
 		);
-    IrNode* leftFactor = findNthIrNodeOfTypes(
+	if (unaryOp != NULL)
+	{
+		tracker->lowBinOpIndex++;
+	}
+
+    IrNode * leftFactor = findNthIrNodeOfTypes(
         N,
         termRoot,
         kNewtonIrNodeType_PquantityFactor,
         gNewtonFirsts,
-        factorIndex
+        tracker->factorIndex
     );
-    factorIndex++;
+    tracker->factorIndex++;
     assert(leftFactor != NULL);
-
-    checkQuantityFactor(
+    Indices * leftTracker = checkQuantityFactor(
         N,
         leftFactor,
         parameterTreeRoot,
 		errorMessage,
         report
     );
+	termRoot->value = leftFactor->value;
+	updateDestinationTrackerIndicesFromSource(tracker, leftTracker);
 
 	if (unaryOp != NULL)
 	{
-		leftFactor->value *= -1;
+		termRoot->value *= -1;
 	}
 
-	bool noFactorHasValueSet = leftFactor->value == 0;
+	bool noFactorHasValueSet = termRoot->value == 0;
 
-    int midBinOpIndex = 0;
-    IrNode* midBinOpNode = findNthIrNodeOfTypes(
+    IrNode * midBinOpNode = findNthIrNodeOfTypes(
         N,
         termRoot,
         kNewtonIrNodeType_PmidPrecedenceBinaryOp,
         gNewtonFirsts,
-        midBinOpIndex
+        tracker->midBinOpIndex
     );
-    midBinOpIndex++;
 
     while (midBinOpNode != NULL)
     {
-
+		tracker->midBinOpIndex++;
 	    strcat(errorMessage, gNewtonTokenDescriptions[midBinOpNode->type]);
 
-        IrNode* rightFactor = findNthIrNodeOfTypes(
+        IrNode * rightFactor = findNthIrNodeOfTypes(
             N,
             termRoot,
             kNewtonIrNodeType_PquantityFactor,
             gNewtonFirsts,
-            factorIndex
+            tracker->factorIndex
         );
-        factorIndex++;
-        checkQuantityFactor(
+		tracker->factorIndex++;
+        Indices * rightTracker = checkQuantityFactor(
             N,
             rightFactor,
             parameterTreeRoot,
 			errorMessage,
             report
         );
+		updateDestinationTrackerIndicesFromSource(tracker, rightTracker);
 		noFactorHasValueSet = noFactorHasValueSet && (rightFactor->value == 0);
 
-		/* checking for high precedence binop just sets the values by multiplying or dividing */
-        newtonCheckBinOp(N, leftFactor, rightFactor, midBinOpNode->type, report);
+		/* 
+         *  checking for high precedence binop just sets the values by multiplying or dividing 
+         */
+        newtonCheckBinOp(
+			N,
+			termRoot,
+			leftFactor,
+			rightFactor,
+			midBinOpNode->type,
+			report
+		);
 
         midBinOpNode = findNthIrNodeOfTypes(
             N,
             termRoot,
             kNewtonIrNodeType_PmidPrecedenceBinaryOp,
             gNewtonFirsts,
-            midBinOpIndex
+            tracker->midBinOpIndex
         );
-        midBinOpIndex++;
+		free(rightTracker);
     }
 
-	assert(!noFactorHasValueSet);
 	if (!noFactorHasValueSet)
-	  assert(leftFactor->value != 0);
+		assert(termRoot->value != 0);
 
 	if (noFactorHasValueSet)
-	  leftFactor->value = 0;
+		termRoot->value = 0;
 
-	return leftFactor->value;
+	free(leftTracker);
+
+	return tracker;
 }
 
-void
+Indices *
 checkQuantityFactor(
     State * N,
     IrNode * factorRoot,
@@ -516,110 +637,136 @@ checkQuantityFactor(
 	char * errorMessage,
     ConstraintReport * report
 ) {
-  // find a factor and then look it up in parameters
-  // to assign a value
-  //
-  // if there is an highBinOp, check Expression
-  int factorIndex = 0;
-  IrNode * factor = findNthIrNodeOfTypes(
-	  N,
-	  factorRoot,
-	  kNewtonIrNodeType_PquantityFactor,
-	  gNewtonFirsts,
-      factorIndex
-  );
+    // find a factor and then look it up in parameters
+    // to assign a value
+    //
+    // if there is an highBinOp, check Expression
+    Indices * tracker = (Indices *) calloc(1, sizeof(Indices));
 
-  if (!newtonIsDimensionless(factor->physics) && !factor->physics->isConstant && newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) == NULL)
-	{
-	  /*
-	   * Suppose the caller of the API has supplied a IrNode Tidentifier "L" with numeric value 5.
-	   * The constraint is L < 2 * meter.
-	   *
-	   * Currently, searching the symbol table for a unit returns that IrNode with its corresponding Physics struct.
-	   * A matching parameter must correspond to the Physics struct bound by the token string (e.g. L : distance),
-	   * but we do not want to raise an error a node that just is a unit (e.g. meter), not a Physics.
-	   */
-		IrNode * matchingParameter = newtonParseFindNodeByParameterNumberAndSubindex(N, parameterTreeRoot, factor->parameterNumber, factor->physics->subindex);
-	  if (matchingParameter == NULL)
-		{
-		  sprintf(report->dimensionErrorMessage, "newton-check-pass.c:checkQuantityFactor: did not find a parameter with physics id %llu", factor->physics->id);
+    IrNode * factor = findNthIrNodeOfTypes(
+    	N,
+    	factorRoot,
+    	kNewtonIrNodeType_PquantityFactor,
+    	gNewtonFirsts,
+        tracker->factorIndex
+    );
 
-		  fatal(N, "newton-check-pass.c:checkQuantity: matchingParameter is null\n");
-		  return;
-		}
-	  else
-		{
-		  factor->value = matchingParameter->value;
-		}
-	}
 
-  char factorDetailMessage[1024];
-  if (factor->physics)
+	if (factorRoot->type == kNewtonIrNodeType_PquantityExpression)
 	{
-	  if (newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) == NULL)
-		{
-		  sprintf(factorDetailMessage,
-				  " (%s : %f) ",
-				  (factor->physics != NULL ? factor->tokenString: ""),
-				  factor->value);
-		}
-	  else
-		{
-		  sprintf(factorDetailMessage,
-				  " %s ",
-				  (factor->physics != NULL ? factor->tokenString: ""));
-		}
+		tracker->expressionIndex++;
+
+		Indices * rightTracker = checkQuantityExpression(
+			N,
+			factorRoot,
+			parameterTreeRoot,
+			errorMessage,
+			report);
+		updateDestinationTrackerIndicesFromSource(tracker, rightTracker);
 	}
-  else
-	{
-	  sprintf(factorDetailMessage,
-			  " %f ",
-			  factor->value);
-	}
+    else if (
+		!newtonIsDimensionless(factor->physics) &&
+		!factor->physics->isConstant &&
+		newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(N, N->newtonIrTopScope, factor->tokenString) == NULL &&
+		newtonPhysicsTablePhysicsForDimensionAlias(N, N->newtonIrTopScope, factor->tokenString) == NULL)
+    {
+        /*
+         *  Suppose the caller of the API has supplied a IrNode Tidentifier "L" with numeric value 5.
+         *  The constraint is L < 2 * meter.
+         *  
+         *  Currently, searching the symbol table for a unit returns that IrNode with its corresponding Physics struct.
+         *  A matching parameter must correspond to the Physics struct bound by the token string (e.g. L : distance),
+         *  but we do not want to raise an error a node that just is a unit (e.g. meter), not a Physics.
+         */
+        IrNode * matchingParameter = newtonParseFindNodeByParameterNumberAndSubindex(
+			N,
+			parameterTreeRoot,
+			factor->parameterNumber,
+			factor->physics->subindex);
+        if (matchingParameter == NULL)
+        {
+		    sprintf(
+				report->dimensionErrorMessage,
+				"newton-check-pass.c:checkQuantityFactor: did not find a parameter with physics id %llu", factor->physics->id);
+
+		    fatal(N, "newton-check-pass.c:checkQuantity: matchingParameter is null\n");
+		    return NULL;
+        }
+        else
+        {
+        	factor->value = matchingParameter->value;
+        }
+    }
+
+    char factorDetailMessage[1024];
+    if (factor->type == kNewtonIrNodeType_Tidentifier && factor->physics)
+    {
+        if (newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) == NULL)
+        {
+    	    sprintf(factorDetailMessage,
+    		    " (%s : %f) ",
+    		    (factor->physics != NULL ? factor->tokenString: ""),
+    		    factor->value);
+    	}
+        else
+    	{
+    	    sprintf(factorDetailMessage,
+    			  " %s ",
+    			  (factor->physics != NULL ? factor->tokenString: ""));
+    	}
+    }
+    else
+    {
+      sprintf(factorDetailMessage,
+    		  " %f ",
+    		  factor->value);
+    }
     strcat(errorMessage, factorDetailMessage);
 
+    IrNode * highBinOpNode = findNthIrNodeOfTypes(
+    	N,
+    	factorRoot,
+    	kNewtonIrNodeType_PhighPrecedenceBinaryOp,
+    	gNewtonFirsts,
+    	tracker->highBinOpIndex
+    );
 
-	int highBinOpIndex = 0;
-	IrNode* highBinOpNode = findNthIrNodeOfTypes(
-		N,
-		factorRoot,
-		kNewtonIrNodeType_PhighPrecedenceBinaryOp,
-		gNewtonFirsts,
-		highBinOpIndex
-	);
-	highBinOpIndex++;
+	/*
+     *  if, not while, because a factor can have maximum one exponential expression at a time 
+     */
+    if (highBinOpNode != NULL)
+    {
+        tracker->highBinOpIndex++;
+        strcat(errorMessage, gNewtonTokenDescriptions[highBinOpNode->type]);
+        strcat(errorMessage, "(");
 
-	int expressionIndex = 0;
-	while  (highBinOpNode != NULL)
-	{
-	  strcat(errorMessage, gNewtonTokenDescriptions[highBinOpNode->type]);
-	  strcat(errorMessage, "(");
+        IrNode * expression = findNthIrNodeOfType(
+		    N,
+			factorRoot,
+			kNewtonIrNodeType_PquantityExpression,
+			tracker->expressionIndex
+			);
+        tracker->expressionIndex++;
+		tracker->factorIndex++;
 
-	  IrNode* expression = findNthIrNodeOfType(
-                                                   N,
-                                                   factorRoot,
-                                                   kNewtonIrNodeType_PquantityExpression,
-                                                   expressionIndex
-                                                   );
+        Indices * rightTracker = checkQuantityExpression(
+			N,
+			expression,
+			parameterTreeRoot,
+			errorMessage,
+			report);
+		updateDestinationTrackerIndicesFromSource(tracker, rightTracker);
 
-      expressionIndex++;
-	  checkQuantityExpression(N,
-                              expression,
-                              parameterTreeRoot,
-							  errorMessage,
-                              report);
+        strcat(errorMessage, ")");
 
-	  strcat(errorMessage, ")");
+        newtonCheckBinOp(
+			N,
+			factor,
+			factor,
+			expression,
+			highBinOpNode->type,
+			report);
+    }
 
-      newtonCheckBinOp(N, factor, expression, highBinOpNode->type, report);
-
-	  highBinOpNode = findNthIrNodeOfTypes(
-                                         N,
-                                         factorRoot,
-                                         kNewtonIrNodeType_PhighPrecedenceBinaryOp,
-                                         gNewtonFirsts,
-                                         highBinOpIndex
-                                         );
-	  highBinOpIndex++;
-	}
+	return tracker;
 }

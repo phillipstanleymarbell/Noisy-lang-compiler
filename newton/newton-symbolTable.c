@@ -51,7 +51,7 @@
 #include "newton-symbolTable.h"
 
 
-extern int primeNumbers[168];
+extern int  primeNumbers[168];
 
 /*
  *	TODO: need to tag scopes corresponding to progtypes with a name, so
@@ -60,15 +60,17 @@ extern int primeNumbers[168];
  *	"b".  See, e.g., comments at P_TYPENAME in newton-irPass-cBackend.
  */
 
-static Dimension* copyDimensionNode(Dimension* list);
-static Dimension* copyDimensionList(Dimension* list);
+static Dimension *  copyDimensionNode(Dimension* list);
+static Dimension *  copyDimensionList(Dimension* list);
 
 
-static Invariant*
+static Invariant *
 getTailInvariant(Invariant * head)
 {
     if (head == NULL)
+    {
         return NULL;
+    }
     else
     {
         Invariant* current = head;
@@ -81,10 +83,10 @@ getTailInvariant(Invariant * head)
 }
 
 
-static Dimension*
-copyDimensionNode(Dimension* list)
+static Dimension *
+copyDimensionNode(Dimension * list)
 {
-    Dimension * temp = (Dimension*) calloc(1, sizeof(Dimension));
+    Dimension *     temp = (Dimension *) calloc(1, sizeof(Dimension));
     temp->identifier = list->identifier;
     temp->scope = list->scope;
     temp->sourceInfo = list->sourceInfo;
@@ -93,19 +95,19 @@ copyDimensionNode(Dimension* list)
 
     if (list->next != NULL)
     {
-        Dimension * nextCopy = (Dimension*) calloc(1, sizeof(Dimension));
+        Dimension *     nextCopy = (Dimension *) calloc(1, sizeof(Dimension));
         memcpy(nextCopy, list->next, sizeof(Dimension));
         temp->next = nextCopy;
     }
     return temp;
 }
 
-static Dimension*
-copyDimensionList(Dimension* source)
+static Dimension *
+copyDimensionList(Dimension * source)
 {
-    Dimension * returnNode = NULL;
-    Dimension * destHead = NULL;
-    Dimension * sourceHead = source;
+    Dimension *     returnNode = NULL;
+    Dimension *     destHead = NULL;
+    Dimension *     sourceHead = source;
     while (sourceHead != NULL) 
     {
         if (destHead == NULL)
@@ -124,10 +126,10 @@ copyDimensionList(Dimension* source)
     return returnNode;
 }
 
-Physics*
-shallowCopyPhysicsNode(Physics* node)
+Physics *
+shallowCopyPhysicsNode(Physics * node)
 {
-    Physics * copy = (Physics *) calloc(1, sizeof(Physics));
+    Physics *   copy = (Physics *) calloc(1, sizeof(Physics));
 
     copy->identifier = node->identifier;
     copy->scope = node->scope;
@@ -145,10 +147,10 @@ shallowCopyPhysicsNode(Physics* node)
     return copy;
 }
 
-Physics*
-deepCopyPhysicsNode(Physics* node)
+Physics *
+deepCopyPhysicsNode(Physics * node)
 {
-    Physics * copy = (Physics *) calloc(1, sizeof(Physics));
+    Physics *   copy = (Physics *) calloc(1, sizeof(Physics));
     copy->dimensions = copyDimensionList(node->dimensions);
 
     copy->identifier = node->identifier;
@@ -171,14 +173,16 @@ deepCopyPhysicsNode(Physics* node)
 }
 
 
-IntegralList*
-getTailIntegralList(IntegralList* list)
+IntegralList *
+getTailIntegralList(IntegralList * list)
 {
     if (list == NULL)
+    {
         return NULL;
+    }
     else
     {
-        IntegralList* current = list;
+        IntegralList *  current = list;
         while (current->next != NULL)
         {
             current = current->next;
@@ -187,14 +191,16 @@ getTailIntegralList(IntegralList* list)
     }
 }
 
-Physics*
-getTailPhysics(Physics* list)
+Physics *
+getTailPhysics(Physics * list)
 {
     if (list == NULL)
+    {
         return NULL;
+    }
     else
     {
-        Physics* current = list;
+        Physics *   current = list;
         while (current->next != NULL)
         {
             current = current->next;
@@ -206,11 +212,13 @@ getTailPhysics(Physics* list)
 Physics * 
 newtonPhysicsTableCopyAndAddPhysics(State * N, Scope * scope, Physics * source)
 {
-    Physics * dest = deepCopyPhysicsNode(source);
+    Physics *   dest = deepCopyPhysicsNode(source);
 
-    Physics * tail;
+    Physics *   tail;
     if ((tail = getTailPhysics(source)) == NULL)
+    {
         scope->firstPhysics = dest;
+    }
     else
         tail->next = dest;
 
@@ -220,20 +228,24 @@ newtonPhysicsTableCopyAndAddPhysics(State * N, Scope * scope, Physics * source)
 void
 newtonAddInvariant(State * N, Invariant * invariant)
 {
-    Invariant * tail;
+    Invariant *     tail;
     if ((tail = getTailInvariant(N->invariantList)) == NULL)
+    {
         N->invariantList = invariant;
+    }
     else
+    {
         tail->next = invariant;
+    }
 }
 
 
 void
 newtonPhysicsIncrementExponent(State * N, Physics * source, Dimension * added)
 {
-	Dimension * current = source->dimensions;
+	Dimension *     current = source->dimensions;
 
-	bool somethingWasAdded = false;
+	bool    somethingWasAdded = false;
 	while (current != NULL)
 	{
 		if (current->primeNumber == added->primeNumber)
@@ -245,19 +257,20 @@ newtonPhysicsIncrementExponent(State * N, Physics * source, Dimension * added)
 		current = current->next;
 	}
 
-	assert(somethingWasAdded); // TODO remove later
+	assert(somethingWasAdded); /* TODO remove later */
 }
 
 
-void newtonPhysicsAddExponents(State * N, Physics * left, Physics * right)
+void 
+newtonPhysicsAddExponents(State * N, Physics * left, Physics * right)
 {
 	if (right == NULL)
 	{
 		return;
 	}
 
-	Dimension * currentLeft = left->dimensions;
-	Dimension * currentRight = right->dimensions;
+	Dimension *     currentLeft = left->dimensions;
+	Dimension *     currentRight = right->dimensions;
 
 	assert(currentLeft != NULL && currentRight != NULL);
 
@@ -271,10 +284,11 @@ void newtonPhysicsAddExponents(State * N, Physics * left, Physics * right)
 }
 
 
-void newtonPhysicsSubtractExponents(State * N, Physics * left, Physics * right)
+void 
+newtonPhysicsSubtractExponents(State * N, Physics * left, Physics * right)
 {
-	Dimension * currentLeft = left->dimensions;
-	Dimension * currentRight = right->dimensions;
+	Dimension *     currentLeft = left->dimensions;
+	Dimension *     currentRight = right->dimensions;
 
 	assert(currentLeft != NULL && currentRight != NULL);
 
@@ -302,24 +316,12 @@ void newtonPhysicsMultiplyExponents(State * N, Physics * source, double multipli
 }
 
 
-void
-newtonPhysicsZeroExponents(State * N, Physics * source)
-{
-	Dimension * current = source->dimensions;
-	assert(current != NULL);
-
-	while(current != NULL)
-	{
-		current->exponent = 0;
-	}
-}
-
 Dimension *
 newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  nameToken, Token * abbrevToken)
 {
-	Dimension *	newDimension;
+	Dimension *	    newDimension;
 
-	newDimension = (Dimension *)calloc(1, sizeof(Dimension));
+	newDimension = (Dimension *) calloc(1, sizeof(Dimension));
 
 	if (newDimension == NULL)
 	{
@@ -339,8 +341,9 @@ newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  na
     }
 	else
 	{
-        Dimension * curDimension = scope->firstDimension;
-        while (curDimension->next != NULL) {
+        Dimension *     curDimension = scope->firstDimension;
+        while (curDimension->next != NULL) 
+        {
             curDimension = curDimension->next;
         }
         curDimension->next = newDimension;
@@ -352,9 +355,11 @@ newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  na
 Physics * 
 newtonInitPhysics(State * N, Scope * scope, Token * token)
 {
-	Physics * newPhysics = (Physics *) calloc(1, sizeof(Physics));
+	Physics *   newPhysics = (Physics *) calloc(1, sizeof(Physics));
 	if (newPhysics == NULL)
+    {
 		fatal(N, Emalloc);
+    }
 
 	assert(N->newtonIrTopScope->firstDimension != NULL);
     newPhysics->dimensions = copyDimensionList(N->newtonIrTopScope->firstDimension);
@@ -365,7 +370,6 @@ newtonInitPhysics(State * N, Scope * scope, Token * token)
 	{
 		newPhysics->identifier = token->identifier;
 		newPhysics->sourceInfo = token->sourceInfo;
-		// newPhysics->definition = newtonPhysicsTablePhysicsForIdentifier(N, scope, token->identifier);
 	}
 	newPhysics->next = NULL;
 
@@ -375,7 +379,7 @@ newtonInitPhysics(State * N, Scope * scope, Token * token)
 Physics *
 newtonPhysicsTableAddPhysicsForToken(State *  N, Scope *  scope, Token *  token)
 {
-	Physics * newPhysics;
+	Physics *   newPhysics;
 	if (N->newtonIrTopScope->firstDimension == NULL)
 	{
 		newPhysics = (Physics *) calloc(1, sizeof(Physics));
@@ -385,7 +389,6 @@ newtonPhysicsTableAddPhysicsForToken(State *  N, Scope *  scope, Token *  token)
 		{
 			newPhysics->identifier = token->identifier;
 			newPhysics->sourceInfo = token->sourceInfo;
-			// newPhysics->definition = newtonPhysicsTablePhysicsForIdentifier(N, scope, token->identifier);
 		}
 	}
 	else
@@ -399,7 +402,7 @@ newtonPhysicsTableAddPhysicsForToken(State *  N, Scope *  scope, Token *  token)
 	}
 	else
 	{
-		Physics * curPhysics = scope->firstPhysics;
+		Physics *   curPhysics = scope->firstPhysics;
 		while (curPhysics->next != NULL)
 		{
 			curPhysics = curPhysics->next;
@@ -413,8 +416,8 @@ newtonPhysicsTableAddPhysicsForToken(State *  N, Scope *  scope, Token *  token)
 bool
 areTwoPhysicsEquivalent(State * N, Physics * left, Physics * right)
 {
-	Dimension * leftCurrent = left->dimensions;
-	Dimension * rightCurrent = right->dimensions;
+	Dimension *     leftCurrent = left->dimensions;
+	Dimension *     rightCurrent = right->dimensions;
 
 	assert(leftCurrent != NULL && rightCurrent != NULL);
 
@@ -444,7 +447,7 @@ newtonDimensionTableDimensionForIdentifier(State *  N, Scope *  scope, const cha
 		return NULL;
 	}
 
-	Dimension * curDimension = scope->firstDimension;
+	Dimension *     curDimension = scope->firstDimension;
 	while (curDimension != NULL)
 	{
 		if (!strcmp(curDimension->identifier, identifier))
@@ -465,7 +468,7 @@ newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(State *  N, Scope *  scop
 		return NULL;
 	}
 
-	Physics * curPhysics = scope->firstPhysics;
+	Physics *   curPhysics = scope->firstPhysics;
 	while (curPhysics != NULL)
 	{
         /*
@@ -490,7 +493,7 @@ newtonPhysicsTablePhysicsForDimensionAlias(State *  N, Scope *  scope, const cha
 		return NULL;
 	}
 
-	Physics * curPhysics = scope->firstPhysics;
+	Physics *   curPhysics = scope->firstPhysics;
 	while (curPhysics != NULL)
 	{
         /*
@@ -515,7 +518,7 @@ newtonPhysicsTablePhysicsForIdentifierAndSubindex(State *  N, Scope *  scope, co
 		return NULL;
 	}
 
-	Physics * curPhysics = scope->firstPhysics;
+	Physics *   curPhysics = scope->firstPhysics;
 	while (curPhysics != NULL)
 	{
 		if (!strcmp(curPhysics->identifier, identifier) && curPhysics->subindex == subindex)
@@ -537,7 +540,7 @@ newtonPhysicsTablePhysicsForIdentifier(State *  N, Scope *  scope, const char * 
 		return NULL;
 	}
 
-	Physics * curPhysics = scope->firstPhysics;
+	Physics *   curPhysics = scope->firstPhysics;
 	while (curPhysics != NULL)
 	{
 		if (!strcmp(curPhysics->identifier, identifier))
@@ -554,9 +557,9 @@ newtonPhysicsTablePhysicsForIdentifier(State *  N, Scope *  scope, const char * 
 Scope *
 newtonSymbolTableAllocScope(State *  N)
 {
-	Scope *	newScope;
+	Scope *	    newScope;
 
-	newScope = (Scope *)calloc(1, sizeof(Scope));
+	newScope = (Scope *) calloc(1, sizeof(Scope));
 	if (newScope == NULL)
 	{
 		fatal(N, Emalloc);
@@ -569,7 +572,7 @@ newtonSymbolTableAllocScope(State *  N)
 Scope *
 newtonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
-	Scope *	newScope = newtonSymbolTableAllocScope(N);
+	Scope *	    newScope = newtonSymbolTableAllocScope(N);
 
 	newScope->parent = scope;
 	newScope->begin = subTree->sourceInfo;

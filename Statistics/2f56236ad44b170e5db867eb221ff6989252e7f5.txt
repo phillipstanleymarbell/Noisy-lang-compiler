@@ -1,0 +1,43 @@
+
+changeset: 288:2f56236ad44b170e5db867eb221ff6989252e7f5
+
+./noisy/noisy-linux-EN -O0 Examples/helloWorld.n -s
+
+Informational Report:
+---------------------
+
+Non-zero Noisy routine residency time upper bounds and counts (0 calls, total of 0.0000 us):
+
+
+Intermediate Representation Information:
+
+    IR node count                        : 38
+    Symbol Table node count              : 2
+
+./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt
+Start Lexer: 1521040409849637
+End Lexer: 1521040409849911
+Start Parser: 1521040409850209
+End Parser: 1521040409850348
+Start SMT2 Backend: 1521040409850348
+Start Tree Transform AccelerationRange: 1521040409850423
+End Tree Transform AccelerationRange: 1521040409850440
+Start Divisor Walk AccelerationRange: 1521040409850442
+End Divisor Walk AccelerationRange: 1521040409850448
+Start Tree Transform AccelerationRange: 1521040409850450
+End Tree Transform AccelerationRange: 1521040409850455
+Start Divisor Walk AccelerationRange: 1521040409850455
+End Divisor Walk AccelerationRange: 1521040409850460
+Start Tree Transform AccelerationRange: 1521040409850462
+End Tree Transform AccelerationRange: 1521040409850468
+Start Divisor Walk AccelerationRange: 1521040409850468
+End Divisor Walk AccelerationRange: 1521040409850474
+Start Tree Transform AccelerationRange: 1521040409850478
+End Tree Transform AccelerationRange: 1521040409850484
+Start Divisor Walk AccelerationRange: 1521040409850485
+End Divisor Walk AccelerationRange: 1521040409850490
+Start Tree Transform AccelerationRange: 1521040409850492
+End Tree Transform AccelerationRange: 1521040409850498
+Start Divisor Walk AccelerationRange: 1521040409850499
+End Divisor Walk AccelerationRange: 1521040409850506
+End SMT2 Backend: 1521040409850528

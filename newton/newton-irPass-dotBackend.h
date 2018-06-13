@@ -37,4 +37,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-char * irPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot, char* astNodeStrings[]);
+char * irPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot, char * astNodeStrings[]);

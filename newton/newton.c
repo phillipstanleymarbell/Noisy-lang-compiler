@@ -58,48 +58,76 @@
 #include "newton-symbolTable.h"
 #include "newton.h"
 #include "newton-irPass-dotBackend.h"
+#include "newton-irPass-smtBackend.h"
 #include "newton-dimension-pass.h"
 
-extern char* gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
+extern char *   gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
 
-static State*
+static State *
 processNewtonFileDimensionPass(char * filename);
 
 
 void
 processNewtonFile(State *  N, char *  filename)
 {
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
+	printf("Start Lexer: %lu%06lu\n", tv.tv_sec, tv.tv_usec);
 
 	/*
 	 *	Tokenize input, then parse it and build AST + symbol table.
 	 */
 	newtonLexInit(N, filename);
 
+	gettimeofday(&tv,NULL);
+	printf("End Lexer: %lu%06lu\n", tv.tv_sec, tv.tv_usec);
+
 	/*
 	 *	Create a top-level scope, then parse.
 	 */
 	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
 
-	State * N_dim = processNewtonFileDimensionPass(filename);
+	State *     N_dim = processNewtonFileDimensionPass(filename);
 	N->newtonIrTopScope->firstDimension = N_dim->newtonIrTopScope->firstDimension;
 
 	assert(N->newtonIrTopScope->firstDimension != NULL);
 
+	gettimeofday(&tv,NULL);
+	printf("Start Parser: %lu%06lu\n", tv.tv_sec, tv.tv_usec);
+
 	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
+
+	gettimeofday(&tv,NULL);
+	printf("End Parser: %lu%06lu\n", tv.tv_sec, tv.tv_usec);
 
 	/*
 	 *	Dot backend.
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
+    {
 		fprintf(stdout, "%s\n", irPassDotBackend(N, N->newtonIrTopScope, N->newtonIrRoot, gNewtonAstNodeStrings));
+    }
 
+    /*
+     * Smt backend
+     */
+	if (N->irBackends & kNewtonIrBackendSmt)
+	{
+		gettimeofday(&tv,NULL);
+		printf("Start SMT2 Backend: %lu%06lu\n", tv.tv_sec, tv.tv_usec);
+
+		irPassSmtBackend(N);
+
+		gettimeofday(&tv,NULL);
+		printf("End SMT2 Backend: %lu%06lu\n", tv.tv_sec, tv.tv_usec);
+	}
 	consolePrintBuffers(N);
 }
 
 static State*
 processNewtonFileDimensionPass(char * filename)
 {
-	State *	N = init(kNoisyModeDefault);
+	State *	    N = init(kNoisyModeDefault);
 	newtonLexInit(N, filename);
 
 	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);

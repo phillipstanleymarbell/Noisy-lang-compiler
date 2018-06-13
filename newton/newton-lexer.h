@@ -1,7 +1,7 @@
-SourceInfo *	newtonLexAllocateSourceInfo(	State *  N, char **  genealogy, 
+SourceInfo *	newtonLexAllocateSourceInfo(State *  N, char **  genealogy, 
 							char *  fileName, uint64_t lineNumber,
 							uint64_t columnNumber, uint64_t length);
-Token *		newtonLexAllocateToken(		State *  N, IrNodeType type, 
+Token *		newtonLexAllocateToken(	State *  N, IrNodeType type, 
 							char *  identifier, uint64_t integerConst,
 							double realConst, char * stringConst,
 							SourceInfo *  sourceInfo);

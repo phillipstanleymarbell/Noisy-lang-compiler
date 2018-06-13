@@ -2,6 +2,7 @@ TREEROOT        = ..
 
 include         $(TREEROOT)/config.local
 
+PRECOMMITHOOK = precommitStatisticsHook-$(OSTYPE).sh 
 COMMONPATH      = ../common
 COMPILERVARIANT = clang
 
@@ -36,6 +37,7 @@ SOURCES		=\
 		common-errors.c\
 		common-timeStamps.c\
 		common-irHelpers.c\
+		common-astTransform.c\
 
 
 #
@@ -52,6 +54,7 @@ OBJS		=\
 		common-timeStamps.$(OBJECTEXTENSION)\
 		common-irHelpers.$(OBJECTEXTENSION)\
 		common-irPass-helpers.$(OBJECTEXTENSION)\
+		common-astTransform.$(OBJECTEXTENSION)\
 
 
 LIBCOMMONOBJS =\
@@ -63,6 +66,7 @@ LIBCOMMONOBJS =\
 		common-timeStamps.$(OBJECTEXTENSION)\
 		common-irHelpers.$(OBJECTEXTENSION)\
 		common-irPass-helpers.$(OBJECTEXTENSION)\
+		common-astTransform.$(OBJECTEXTENSION)\
 
 
 HEADERS		=\
@@ -74,6 +78,7 @@ HEADERS		=\
 		data-structures.h\
 		common-irHelpers.h\
 		common-irPass-helpers.h\
+		common-astTransform.h\
 
 
 
@@ -83,7 +88,7 @@ all: installhooks lib$(LIBCOMMON)-$(OSTYPE)-$(COMMON_L10N).a $(CONFIGPATH)/confi
 #			Install the pre-commit hooks. There doesn't seem to be any other way to force people to install the hook when comitting on Noisy.
 #
 installhooks:
-	cp $(TREEROOT)/precommitStatisticsHook.sh $(TREEROOT)/.git/hooks/pre-commit
+	cp $(TREEROOT)/$(PRECOMMITHOOK) $(TREEROOT)/.git/hooks/pre-commit
 	cp $(TREEROOT)/postcommitStatisticsHook.sh $(TREEROOT)/.git/hooks/post-commit
 	chmod +x $(TREEROOT)/.git/hooks/pre-commit
 	chmod +x $(TREEROOT)/.git/hooks/post-commit

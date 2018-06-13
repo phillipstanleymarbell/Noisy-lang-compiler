@@ -1,5 +1,6 @@
-Noisy: A Language for Talking Sensors to Sleep
-==============================================
+Noisy and Newton
+========================================================================================
+Noisy (a language for talking to sensors) and Newton (a language for describing physics).
 
 Building the Noisy compiler and debug tools depends on the following repositories:
 
@@ -23,7 +24,7 @@ For example,
 	LIBFLEXPATH=/home/me/code/libflex-git-clone
 	CONFIGPATH=/home/me/code/libflex-git-clone
 
-(2) Edit `precommitStatisticsHook.sh` to set
+(2) Edit `precommitStatisticsHook-<your os type>.sh` to set
 
 	dtraceDirectory=full-path-to-DTrace-repository-clone
 	libflexDirectory=full-path-to-libflex-repository-clone
@@ -127,7 +128,7 @@ The hooks can be enabled for mercurial by adding the following to
 `.hg/hgrc`:
 
 	[hooks]
-	pretxncommit    = ./precommitStatisticsHook.sh
+	pretxncommit    = ./precommitStatisticsHook-<your-os-type>.sh
 	commit          = ./postcommitStatisticsHook.sh
 
 The generated statistics are stored in the `Statistics/` subdirectory,

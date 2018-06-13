@@ -1,5 +1,6 @@
 State * newtonApiInit(char *  newtonFileName);
 Physics* newtonApiGetPhysicsTypeByName(State* N, char* nameOfType);
+Physics * newtonApiGetPhysicsTypeByNameAndSubindex(State* N, char* nameOfType, int subindex);
 NewtonAPIReport* newtonApiSatisfiesConstraints(State* N, IrNode* parameterTreeRoot);
 Invariant * newtonApiGetInvariantByParameters(State* N, IrNode* parameterTreeRoot);
 
