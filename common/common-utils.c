@@ -61,8 +61,9 @@
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
+#include "noisy-timeStamps.h"
 #include "common-timeStamps.h"
-#include "data-structures.h"
+#include "common-data-structures.h"
 #include "common-errors.h"
 
 /*
@@ -109,14 +110,14 @@ timestampsInit(State *  N)
 #endif
 
 
-	N->timeAggregates = (uint64_t *) calloc(kNoisyTimeStampKeyMax, sizeof(uint64_t));
+	N->timeAggregates = (uint64_t *) calloc(kCommonTimeStampKeyMax, sizeof(uint64_t));
 	if (N->timeAggregates == NULL)
 	{
 		fatal(NULL, Emalloc);
 	}
 
 	//TODO: revisit naming of timeAgregates/callAggregates, as well as the NoisyTimeStampKey prefix
-	N->callAggregates = (uint64_t *) calloc(kNoisyTimeStampKeyMax, sizeof(uint64_t));
+	N->callAggregates = (uint64_t *) calloc(kCommonTimeStampKeyMax, sizeof(uint64_t));
 	if (N->callAggregates == NULL)
 	{
 		fatal(NULL, Emalloc);

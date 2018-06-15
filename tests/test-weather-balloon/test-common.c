@@ -1,10 +1,7 @@
 /*
 	Authored 2017. Jonathan Lim.
 
-
-	
-
-All rights reserved.
+	All rights reserved.
 
 
 	Redistribution and use in source and binary forms, with or without
@@ -48,8 +45,9 @@ All rights reserved.
 #include "flexerror.h"
 #include "flex.h"
 
+#include "newton-timeStamps.h"
 #include "common-timeStamps.h"
-#include "data-structures.h"
+#include "common-data-structures.h"
 #include "newton-data-structures.h"
 #include "common-irHelpers.h"
 #include "common-lexers-helpers.h"

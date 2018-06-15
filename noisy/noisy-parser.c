@@ -46,8 +46,9 @@
 #include "flex.h"
 #include "common-errors.h"
 #include "version.h"
+#include "noisy-timeStamps.h"
 #include "common-timeStamps.h"
-#include "data-structures.h"
+#include "common-data-structures.h"
 #include "noisy-parser.h"
 #include "common-lexers-helpers.h"
 #include "noisy-lexer.h"
@@ -97,11 +98,11 @@
 
 extern char *		gProductionStrings[];
 extern char *		gProductionDescriptions[];
-extern const char *		gReservedTokenDescriptions[];
-extern const char *		gTerminalStrings[];
+extern const char *	gReservedTokenDescriptions[];
+extern const char *	gTerminalStrings[];
 extern char *		gAstNodeStrings[];
 extern int		gNoisyFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
-extern int	    gNoisyFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
+extern int		gNoisyFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 
 extern void		fatal(State *  N, const char *  msg);
 extern void		error(State *  N, const char *  msg);
@@ -330,7 +331,6 @@ noisyParseConstantDeclaration(State *  N, Scope *  scope)
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PconstantDeclaration);
 	}
 
-
 	return n;
 }
 
@@ -368,7 +368,6 @@ noisyParseTypeDeclaration(State *  N, Scope *  currentScope)
 		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeDeclaration, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeDeclaration);
 	}
-
 
 	return n;
 }
@@ -650,26 +649,9 @@ noisyParseTypeExpression(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-        /*
-         * Here, we compile the "Physics type"
-         * TODO fix this. N needs to have NC stuff in it
-         */
-        // Token * nextToken = lexPeek(N, 1);
-        // Physics * physics = noisyConfigPhysicsTablePhysicsForIdentifier(N, N->noisyConfigIrTopScope, nextToken->identifier);
-        // 
-        // if (physics!= NULL)
-        // {
-        //     n->physics = physics;
-        // }
-        // else 
-        // {
-		//     noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeExpression, kNoisyIrNodeTypeMax);
-		//     noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeExpression);
-        // }
 		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeExpression, kNoisyIrNodeTypeMax);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeExpression);
 	}
-
 
 	return n;
 }
@@ -2839,7 +2821,7 @@ noisyParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToken)
 
 	if ((N != NULL) && (N->jmpbufIsValid))
 	{
-fprintf(stderr, "doing longjmp");
+		fprintf(stderr, "doing longjmp");
 
 		/*
 		 *	Could pass in case-specific info here, but just
@@ -2860,8 +2842,3 @@ fprintf(stderr, "doing longjmp");
 
 	exit(EXIT_SUCCESS);
 }
-
-
-
-
-

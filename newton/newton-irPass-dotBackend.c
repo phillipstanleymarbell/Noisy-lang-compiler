@@ -1,5 +1,5 @@
 /*
-	Authored 2017. Phillip Stanley-Marbell. Jonathan Lim
+	Authored 2015, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim.
 
 
 	All rights reserved.
@@ -49,8 +49,9 @@
 #include "flex.h"
 #include "common-errors.h"
 #include "version.h"
+#include "newton-timeStamps.h"
 #include "common-timeStamps.h"
-#include "data-structures.h"
+#include "common-data-structures.h"
 #include "noisy-parser.h"
 #include "noisy-lexer.h"
 #include "common-irPass-helpers.h"
@@ -71,7 +72,7 @@ static char *	symbol2id(State *  N, Symbol *  symbol);
 int
 irPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irNode, char* astNodeStrings[])
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotAstDotFmt);
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassDotAstDotFmt);
 
 	char *		nilFormatString;
 	char *		tokenString = "";
@@ -226,7 +227,7 @@ irPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irNode, 
 int
 irPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope *  scope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotSymbotTableDotFmt);
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassDotSymbotTableDotFmt);
 
 	char *		nilFormatString;
 	char *		symbolFormatString;
@@ -321,7 +322,7 @@ irPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope *  s
 int
 irPassDotAstPrintWalk(State *  N, IrNode *  irNode, char *  buf, int bufferLength, char* astNodeStrings[])
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassAstDotPrintWalk);
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassAstDotPrintWalk);
 
 	int	n0 = 0, n1 = 0, n2 = 0;
 
@@ -364,7 +365,7 @@ irPassDotAstPrintWalk(State *  N, IrNode *  irNode, char *  buf, int bufferLengt
 int
 irPassDotSymbolTablePrintWalk(State *  N, Scope *  scope, char *  buf, int bufferLength)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassSymbolTableDotPrintWalk);
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassSymbolTableDotPrintWalk);
 
 	int	n0 = 0, n1 = 0, n2 = 0;
 
@@ -398,7 +399,7 @@ irPassDotSymbolTablePrintWalk(State *  N, Scope *  scope, char *  buf, int buffe
 char *
 irPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot, char* astNodeStrings[])
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotBackend);
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassDotBackend);
 
 	int			bufferLength, irAndSymbolTableSize = 0;
 	char *			buf = NULL;
@@ -515,7 +516,7 @@ irPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot, cha
 static char *
 scope2id(State *  N, Scope *  scope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotScope2Id);
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassDotScope2Id);
 
 	if (scope == NULL)
 	{
@@ -545,7 +546,7 @@ scope2id(State *  N, Scope *  scope)
 static char *
 scope2id2(State *  N, Scope *  scope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotScope2Id2);
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassDotScope2Id2);
 
 	if (scope == NULL)
 	{
@@ -577,7 +578,7 @@ scope2id2(State *  N, Scope *  scope)
 static char *
 symbol2id(State *  N, Symbol *  symbol)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotSymbol2Id);
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassDotSymbol2Id);
 
 	if (symbol == NULL)
 	{
@@ -606,7 +607,7 @@ symbol2id(State *  N, Symbol *  symbol)
 static bool
 isType(State *  N, IrNode *  node)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassDotIsType);
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassDotIsType);
 
 	switch (node->type)
     {

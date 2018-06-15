@@ -1,5 +1,6 @@
 /*
 	Authored 2015. Phillip Stanley-Marbell.
+	Modified, 2016-2017, Jonathan Lim to add Newton hooks.
 
 	All rights reserved.
 
@@ -52,7 +53,7 @@ typedef enum
 typedef enum
 {
 	/*
-	 *	Tokens
+	 *	Noisy Tokens
 	 */
 	kNoisyIrNodeType_TaddAs,
 	kNoisyIrNodeType_Tadt,
@@ -161,11 +162,14 @@ typedef enum
 	kNoisyIrNodeType_Zeof,
 
 
+	/*
+	 *	Code depends on this bringing up the rear for Noisy tokens.
+	 */
 	kNoisyIrNodeType_TMax,
 
 
 	/*
-	 *	Grammar productions.
+	 *	Noisy grammar productions.
 	 */
 	kNoisyIrNodeType_Pcharacter,
 	kNoisyIrNodeType_PreservedToken,
@@ -237,6 +241,10 @@ typedef enum
 	kNoisyIrNodeType_PcmpOp,
 	kNoisyIrNodeType_PbooleanOp,
 	kNoisyIrNodeType_PunaryOp,
+
+	/*
+	 *	Code depends on this bringing up the rear for Noisy productions.
+	 */
 	kNoisyIrNodeType_PMax,
 
 	/*
@@ -244,88 +252,109 @@ typedef enum
 	 */
 	kNoisyIrNodeType_Xseq,
 
-
-    /*
-     * Newton related nodes
-     */
-	kNewtonIrNodeType_Tnil,
-	kNewtonIrNodeType_Tnone,
-    kNewtonIrNodeType_Tlt,
-    kNewtonIrNodeType_Tle,
-    kNewtonIrNodeType_Tgt,
-    kNewtonIrNodeType_Tge,
-    kNewtonIrNodeType_Tproportionality,
-    kNewtonIrNodeType_Tequivalent,
-    kNewtonIrNodeType_Tsemicolon,
-    kNewtonIrNodeType_Tcolon,
-    kNewtonIrNodeType_Tcomma,
-    kNewtonIrNodeType_Tdot,
-	kNewtonIrNodeType_Tdiv,
-	kNewtonIrNodeType_Tmul,
-	kNewtonIrNodeType_Tplus,
-	kNewtonIrNodeType_Tminus,
-    kNewtonIrNodeType_Texponent,
-	kNewtonIrNodeType_Tequals,
-    kNewtonIrNodeType_TintConst,
-    kNewtonIrNodeType_TrealConst,	
-	kNewtonIrNodeType_TstringConst,
-	kNewtonIrNodeType_ZbadIdentifier,
-	kNewtonIrNodeType_ZbadStringConst,
-	kNewtonIrNodeType_Zepsilon,
-	kNewtonIrNodeType_Zeof,
-	kNewtonIrNodeType_Tcross,
-	kNewtonIrNodeType_Tintegral,
-	kNewtonIrNodeType_Tderivative,
-	kNewtonIrNodeType_TSpanish,
-	kNewtonIrNodeType_TEnglish,
-	kNewtonIrNodeType_Tinvariant,
-	kNewtonIrNodeType_Tconstant,
-	kNewtonIrNodeType_Tsignal,
-	kNewtonIrNodeType_Tderivation,
-	kNewtonIrNodeType_Tsymbol,
-	kNewtonIrNodeType_Tname,
-	kNewtonIrNodeType_Tto,
-	kNewtonIrNodeType_TatSign,
-	kNewtonIrNodeType_Pinteger,
-	kNewtonIrNodeType_Tnumber,
-	kNewtonIrNodeType_TrightBrace,
-	kNewtonIrNodeType_TleftBrace,
-	kNewtonIrNodeType_TrightParen,
-	kNewtonIrNodeType_TleftParen,
-	kNewtonIrNodeType_Tidentifier,
-    kNewtonIrNodeType_PlanguageSetting,
-	kNewtonIrNodeType_PcompareOp,
-	kNewtonIrNodeType_PvectorOp,
-	kNewtonIrNodeType_PhighPrecedenceBinaryOp,
-	kNewtonIrNodeType_PmidPrecedenceBinaryOp,
-	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
-	kNewtonIrNodeType_PunaryOp,
-	kNewtonIrNodeType_PtimeOp,
-	kNewtonIrNodeType_Pquantity,
-	kNewtonIrNodeType_PquantityFactor,
-	kNewtonIrNodeType_PquantityTerm,
-	kNewtonIrNodeType_PquantityExpression,
-	kNewtonIrNodeType_PquantityStatement,
-	kNewtonIrNodeType_Pparameter,
-	kNewtonIrNodeType_PparameterTuple,
-	kNewtonIrNodeType_Psubindex,
-	kNewtonIrNodeType_PsubindexTuple,
-	kNewtonIrNodeType_Pderivation,
-	kNewtonIrNodeType_Psymbol,
-	kNewtonIrNodeType_Pname,
-	kNewtonIrNodeType_Pconstraint,
-	kNewtonIrNodeType_PconstraintList,
-	kNewtonIrNodeType_PbaseSignal,
-	kNewtonIrNodeType_Pinvariant,
-	kNewtonIrNodeType_Pconstant,
-	kNewtonIrNodeType_Prule,
-	kNewtonIrNodeType_PruleList,
-	kNewtonIrNodeType_PnewtonFile,
-	
-    /*
-	 *	Code depends on this bringing up the rear.
+	/*
+	 *	Code depends on this bringing up the rear for Noisy.
 	 */
 	kNoisyIrNodeTypeMax,
+
+
+	/*
+	 *	Newton tokens
+	 */
+	kNewtonIrNodeType_TEnglish,
+	kNewtonIrNodeType_TSpanish,
+	kNewtonIrNodeType_TatSign,
+	kNewtonIrNodeType_Tcolon,
+	kNewtonIrNodeType_Tcomma,
+	kNewtonIrNodeType_Tconstant,
+	kNewtonIrNodeType_Tcross,
+	kNewtonIrNodeType_Tderivation,
+	kNewtonIrNodeType_Tderivative,
+	kNewtonIrNodeType_Tdiv,
+	kNewtonIrNodeType_Tdot,
+	kNewtonIrNodeType_Tequals,
+	kNewtonIrNodeType_Tequivalent,
+	kNewtonIrNodeType_Texponent,
+	kNewtonIrNodeType_Tge,
+	kNewtonIrNodeType_Tgt,
+	kNewtonIrNodeType_Tidentifier,
+	kNewtonIrNodeType_TintConst,
+	kNewtonIrNodeType_Tintegral,
+	kNewtonIrNodeType_Tinvariant,
+	kNewtonIrNodeType_Tle,
+	kNewtonIrNodeType_TleftBrace,
+	kNewtonIrNodeType_TleftParen,
+	kNewtonIrNodeType_Tlt,
+	kNewtonIrNodeType_Tminus,
+	kNewtonIrNodeType_Tmul,
+	kNewtonIrNodeType_Tname,
+	kNewtonIrNodeType_Tnil,
+	kNewtonIrNodeType_Tnone,
+	kNewtonIrNodeType_Tnumber,
+	kNewtonIrNodeType_Tplus,
+	kNewtonIrNodeType_Tproportionality,
+	kNewtonIrNodeType_TrealConst,	
+	kNewtonIrNodeType_TrightBrace,
+	kNewtonIrNodeType_TrightParen,
+	kNewtonIrNodeType_Tsemicolon,
+	kNewtonIrNodeType_Tsignal,
+	kNewtonIrNodeType_TstringConst,
+	kNewtonIrNodeType_Tsymbol,
+	kNewtonIrNodeType_Tto,
+	
+	kNewtonIrNodeType_ZbadIdentifier,
+	kNewtonIrNodeType_ZbadStringConst,
+	kNewtonIrNodeType_Zeof,
+	kNewtonIrNodeType_Zepsilon,
+
+	/*
+	 *	Code depends on this bringing up the rear for Newton Tokens.
+	 */
+	kNewtonIrNodeType_TMax,
+	
+	/*
+	 *	Newton grammar productions
+	 */
+	kNewtonIrNodeType_PbaseSignal,
+	kNewtonIrNodeType_PcompareOp,
+	kNewtonIrNodeType_Pconstant,
+	kNewtonIrNodeType_Pconstraint,
+	kNewtonIrNodeType_PconstraintList,
+	kNewtonIrNodeType_Pderivation,
+	kNewtonIrNodeType_PhighPrecedenceBinaryOp,
+	kNewtonIrNodeType_Pinteger,
+	kNewtonIrNodeType_Pinvariant,
+	kNewtonIrNodeType_PlanguageSetting,
+	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
+	kNewtonIrNodeType_PmidPrecedenceBinaryOp,
+	kNewtonIrNodeType_Pname,
+	kNewtonIrNodeType_PnewtonFile,
+	kNewtonIrNodeType_Pparameter,
+	kNewtonIrNodeType_PparameterTuple,
+	kNewtonIrNodeType_Pquantity,
+	kNewtonIrNodeType_PquantityExpression,
+	kNewtonIrNodeType_PquantityFactor,
+	kNewtonIrNodeType_PquantityStatement,
+	kNewtonIrNodeType_PquantityTerm,
+	kNewtonIrNodeType_Prule,
+	kNewtonIrNodeType_PruleList,
+	kNewtonIrNodeType_Psubindex,
+	kNewtonIrNodeType_PsubindexTuple,
+	kNewtonIrNodeType_Psymbol,
+	kNewtonIrNodeType_PtimeOp,
+	kNewtonIrNodeType_PunaryOp,
+	kNewtonIrNodeType_PvectorOp,
+
+	/*
+	 *	Code depends on this bringing up the rear for Newton Productions.
+	 */
+	kNewtonIrNodeType_PMax,
+
+
+	/*
+	 *	Code depends on this bringing up the rear for Noisy.
+	 */
+	kNewtonIrNodeTypeMax
 } IrNodeType;
 
 
@@ -363,6 +392,7 @@ typedef enum
 	kNoisyIrBackendDot				= (1 << 0),
 	kNoisyIrBackendProtobuf				= (1 << 1),
 	kNewtonIrBackendSmt				= (1 << 2),
+
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -388,7 +418,7 @@ typedef enum
 {
 	kNoisyIrNodeColorDotBackendColoring		= (1 << 0),
 	kNoisyIrNodeColorProtobufBackendColoring	= (1 << 1),
-	kNoisyIrNodeColorTreeTransformedColoring    = (1 << 2),
+	kNoisyIrNodeColorTreeTransformedColoring	= (1 << 2),
 
 	/*
 	 *	Code depends on this bringing up the rear.
@@ -447,84 +477,64 @@ typedef enum
 } NoisyPostFileWriteAction;
 
 
-typedef struct Scope	Scope;
-typedef struct Symbol	Symbol;
-typedef struct Token	Token;
-typedef struct IrNode	IrNode;
+typedef struct Scope		Scope;
+typedef struct Symbol		Symbol;
+typedef struct Token		Token;
+typedef struct IrNode		IrNode;
 typedef struct SourceInfo	SourceInfo;
-typedef struct Dimension Dimension;
-typedef struct Physics Physics;
-typedef struct IntegralList IntegralList
-;
-typedef struct Invariant Invariant;
+typedef struct Dimension	Dimension;
+typedef struct Physics		Physics;
+typedef struct IntegralList	IntegralList;
+typedef struct Invariant	Invariant;
 
 struct Dimension
 {
-    char * identifier;
-    char * abbreviation;
+	char *			identifier;
+	char *			abbreviation;
+	double			exponent;		//	Default value is 1 if exists
+	Scope *			scope;
+	SourceInfo *		sourceInfo;
+	int			primeNumber;
 
-    double exponent; // default value is 1 if exists
-
-    Scope *		scope;
-
-    SourceInfo *	sourceInfo;
-
-
-    int primeNumber;
-
-    Dimension * next;
+	Dimension *		next;
 };
 
 struct Invariant
 {
-    char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
-
-
-    
-    Scope *		scope;
-    SourceInfo *	sourceInfo;
-
-
-
-    IrNode * parameterList; // this is just bunch of IrNode's in Xseq
-    unsigned long long int id;
-
-    IrNode * constraints;
-
-    Invariant * next;
+	char *			identifier;		//	Name of the physics quantity. of type kNoisyConfigType_Tidentifier
+	Scope *			scope;
+	SourceInfo *		sourceInfo;
+	IrNode *		parameterList;		//	This is just bunch of IrNode's in Xseq
+	unsigned long long int	id;
+	IrNode *		constraints;
+	
+	Invariant *		next;
 };
 
 struct Physics
 {
-    char * identifier; // name of the physics quantity. of type kNoisyConfigType_Tidentifier
-    unsigned long long int id;
-	int subindex; /* index for further identification. e.g.) acceleration along x, y, z axes */
+	char *			identifier;		//	Name of the physics quantity. of type kNoisyConfigType_Tidentifier
+	unsigned long long int	id;
+	int			subindex;		//	Index for further identification. e.g.) acceleration along x, y, z axes
+	Scope *			scope;
+	SourceInfo *		sourceInfo;
+	bool			isVector;
+	Physics *		vectorCounterpart;	//	Non-NULL if a scalar AND counterpart defined in vectorScalarPairScope
+	Physics *		scalarCounterpart;	//	Non-NULl if a vector AND counterpart defined in vectorScalarPairScope
+	double			value;			//	For constants like Pi or gravitational acceleration
+	bool			isConstant;
+	Dimension *		dimensions;
+	char *			dimensionAlias;
+	char *			dimensionAliasAbbreviation;
+	Physics *		definition;
 
-    Scope *		scope;
-    SourceInfo *	sourceInfo;
-
-
-    bool isVector;
-    Physics * vectorCounterpart; // non-NULL if a scalar AND counterpart defined in vectorScalarPairScope
-    Physics * scalarCounterpart; // non-NULl if a vector AND counterpart defined in vectorScalarPairScope
-
-    double value; /* for constants like Pi or gravitational acceleration */
-    bool isConstant;
-
-    Dimension * dimensions;
-
-    char * dimensionAlias;
-    char * dimensionAliasAbbreviation;
-
-    Physics * definition;
-
-    Physics * next;
+	Physics *		next;
 };
 
 struct IntegralList
 {
-    Physics * head;
-    IntegralList * next;
+	Physics *		head;
+	IntegralList *		next;
 };
 
 struct IrNode
@@ -535,33 +545,31 @@ struct IrNode
 	 *	Syntactic (AST) information.
 	 */
 	char *			tokenString;
-	Token * token;
-	SourceInfo	*	sourceInfo;
+	Token *			token;
+	SourceInfo *		sourceInfo;
 	IrNode *		irParent;
 	IrNode *		irLeftChild;
 	IrNode *		irRightChild;
 
 	Symbol *		symbol;
 
-
+	/*
+	 *	Used for evaluating dimensions in expressions
+	 */
+	Physics *		physics;
 
 	/*
-	 * Used for evaluating dimensions in expressions
+	 *	Only if this node belongs to a ParseNumericExpression subtree
 	 */
-	Physics * physics;
+	double			value;
+
+	int			subindexStart;
+	int			subindexEnd;
 
 	/*
-	 * only if this node belongs to a ParseNumericExpression subtree
+	 *	A parameter tuple of length n has ordering from zero to n - 1
 	 */
-	double value;
-
-	int subindexStart;
-	int subindexEnd;
-
-	/*
-	 * A parameter tuple of length n has ordering from zero to n - 1
-	 */
-	int parameterNumber;
+	int			parameterNumber;
 
 	/*
 	 * When doing an API check of the invariant tree given a parameter tree,
@@ -571,7 +579,7 @@ struct IrNode
 	/*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
 	 */
-	IrNodeColor	nodeColor;
+	IrNodeColor		nodeColor;
 };
 
 
@@ -597,10 +605,10 @@ struct Token
 	uint64_t		integerConst;
 	double			realConst;
 	char *			stringConst;
-	SourceInfo *	sourceInfo;
+	SourceInfo *		sourceInfo;
 	
-	Token *		prev;
-	Token *		next;
+	Token *			prev;
+	Token *			next;
 };
 
 
@@ -612,48 +620,48 @@ struct Scope
 	 */
 	char *			identifier;
 
-    int currentSubindex;
+	int			currentSubindex;
 
 	/*
 	 *	Hierarchy. The firstChild is used to access its siblings via firstChild->next
 	 */
-	Scope *		parent;
-	Scope *		firstChild;
+	Scope *			parent;
+	Scope *			firstChild;
 
 	/*
 	 *	Symbols in this scope. The list of symbols is accesed via firstSymbol->next
 	 */
 	Symbol *		firstSymbol;
 
-    /*
-     * each invariant scope will have its own list of parameters
-     */
-    IrNode * invariantParameterList; // this is just bunch of IrNode's in Xseq
+	/*
+	 *	Each invariant scope will have its own list of parameters
+	 */
+	IrNode *		invariantParameterList;		//	This is just bunch of IrNode's in Xseq
 
-    /*
-     * For the config file, we only have one global scope that keeps track of all
-     * dimensions ad physics quantities.
-     */
-    Dimension * firstDimension;
-    Physics * firstPhysics;
+	/*
+	 *	For the config file, we only have one global scope that keeps track of all
+	 *	dimensions ad physics quantities.
+	 */
+	Dimension *		firstDimension;
+	Physics *		firstPhysics;
 
 	/*
 	 *	Where in source scope begins and ends
 	 */
-	SourceInfo *	begin;
-	SourceInfo *	end;
+	SourceInfo *		begin;
+	SourceInfo *		end;
 
 	/*
 	 *	For chaining together scopes (currently only used for Progtype
 	 *	scopes and for chaining together children).
 	 */
-	Scope *		next;
-	Scope *		prev;
+	Scope *			next;
+	Scope *			prev;
 
 	/*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
 	 */
-	IrNodeColor	nodeColor;
+	IrNodeColor		nodeColor;
 };
 
 
@@ -675,7 +683,7 @@ struct Symbol
 	/*
 	 *	Scope within which sym appears
 	 */
-	Scope *		scope;
+	Scope *			scope;
 
 	/*
 	 *	If an identifier use, definition's Sym, if any
@@ -708,22 +716,20 @@ typedef struct
 	 *	Timestamps to track lifecycle
 	 */
 	uint64_t		initializationTimestamp;
-	TimeStamp *	timestamps;
+	TimeStamp *		timestamps;
 	uint64_t		timestampCount;
 	uint64_t		timestampSlots;
-
 
 	/*
 	 *	Track aggregate time spent in all routines, by incrementing
 	 *	timeAggregates[timeAggregatesLastKey] by (now - timeAggregatesLastTimestamp)
 	 */
 	uint64_t *		timeAggregates;
-	TimeStampKey	timeAggregatesLastKey;
+	TimeStampKey		timeAggregatesLastKey;
 	uint64_t		timeAggregatesLastTimestamp;
 	uint64_t		timeAggregateTotal;
 	uint64_t *		callAggregates;
 	uint64_t		callAggregateTotal;
-
 
 	/*
 	 *	Used to get error status from FlexLib routines
@@ -742,7 +748,6 @@ typedef struct
 	 */
 	FlexPrintBuf *		Fperr;
 	FlexPrintBuf *		Fpinfo;
-
 
 	/*
 	 *	The output file of the last render. TODO: Not very happy
@@ -763,7 +768,6 @@ typedef struct
 	 */
 	Scope *		progtypeScopes;
 
-
 	/*
 	 *	Lexer state
 	 */
@@ -774,17 +778,16 @@ typedef struct
 	uint64_t		lineLength;
 	char *			currentToken;
 	uint64_t		currentTokenLength;
-	Token *		tokenList;
-	Token *		lastToken;
-
+	Token *			tokenList;
+	Token *			lastToken;
 
 	/*
 	 *	The root of the IR tree, and top scope
 	 */
 	IrNode *		noisyIrRoot;
 	IrNode *		newtonIrRoot;
-	Scope *		noisyIrTopScope;
-    Scope *        newtonIrTopScope;
+	Scope *			noisyIrTopScope;
+	Scope *			newtonIrTopScope;
 
 	/*
 	 *	Output file name when emitting bytecode/protobuf
@@ -802,44 +805,42 @@ typedef struct
 
 	jmp_buf			jmpbuf;
 	bool			jmpbufIsValid;
-    
-    /*
-     * Global index of which prime numbers we have used for the dimension id's
-     */
-    int primeNumbersIndex;
 
-  /*
-   * When parsing invariant constraints, need to number the factors that correspond to the parameters passed in.
-   * This is so that finding matching Parameter doesn't depend either the identifier passed, or the physics type.
-   * That is a good idea because now we don't need to implicitly fill in the left identifier child of the parameter node.
-   */
-  int currentParameterNumber;
+	/*
+	 *	Global index of which prime numbers we have used for the dimension id's
+	 */
+	int		primeNumbersIndex;
 
-    /*
-     * This is a group (linked list) of linked list of physics nodes
-     */
-    IntegralList * vectorIntegralLists;
-    
-    /*
-     * This is a group (linked list) of linked list of physics nodes
-     */
-    IntegralList * scalarIntegralLists;
+	/*
+	 *	When parsing invariant constraints, need to number the factors that correspond to the parameters passed in.
+	 *	This is so that finding matching Parameter doesn't depend either the identifier passed, or the physics type.
+	 *	That is a good idea because now we don't need to implicitly fill in the left identifier child of the parameter node.
+	 */
+	int currentParameterNumber;
 
-    Invariant * invariantList;
+	/*
+	 *	This is a group (linked list) of linked list of physics nodes
+	 */
+	IntegralList * vectorIntegralLists;
 
+	/*
+	 *	This is a group (linked list) of linked list of physics nodes
+	 */
+	IntegralList * scalarIntegralLists;
+	Invariant * invariantList;
 } State;
 
 
-void				fatal(State *  C, const char *  msg) __attribute__((noreturn));
-void				error(State *  C, const char *  msg);
-void				timestampsInit(State *  C);
-void				timeStampDumpTimeline(State *  C);
-void				timeStampDumpResidencies(State *  C);
-State *			init(NoisyMode mode);
-void				dealloc(State *  C);
-void				runPasses(State *  C);
-uint64_t		checkRss(State *  C);
-void				consolePrintBuffers(State *  C);
-void				printToFile(State *  C, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action);
-void				renderDotInFile(State *  C, char *  pathName, char *  randomizedFileName);
-void				checkCgiCompletion(State *  C, const char *  pathName, const char *  renderExtension);
+void		fatal(State *  C, const char *  msg) __attribute__((noreturn));
+void		error(State *  C, const char *  msg);
+void		timestampsInit(State *  C);
+void		timeStampDumpTimeline(State *  C);
+void		timeStampDumpResidencies(State *  C);
+State *		init(NoisyMode mode);
+void		dealloc(State *  C);
+void		runPasses(State *  C);
+uint64_t	checkRss(State *  C);
+void		consolePrintBuffers(State *  C);
+void		printToFile(State *  C, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action);
+void		renderDotInFile(State *  C, char *  pathName, char *  randomizedFileName);
+void		checkCgiCompletion(State *  C, const char *  pathName, const char *  renderExtension);

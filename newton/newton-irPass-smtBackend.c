@@ -51,8 +51,9 @@
 #include "flexerror.h"
 #include "flex.h"
 #include "common-errors.h"
+#include "newton-timeStamps.h"
 #include "common-timeStamps.h"
-#include "data-structures.h"
+#include "common-data-structures.h"
 #include "newton-symbolTable.h"
 #include "common-irPass-helpers.h"
 #include "common-astTransform.h"
@@ -334,36 +335,49 @@ irPassSmtDivisorWalk(State *  N, Invariant *  parentInvariant, IrNode *  root, F
 void
 irPassSmtProcessConstraint(State *  N, Invariant *  parentInvariant, IrNode *  root, FILE *  outputFile)
 {
-    struct timeval tv;
-    gettimeofday(&tv,NULL);
-    printf("Start Tree Transform %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
+	/*
+		Not portable across platforms.
 
-    IrNode *  transformed = commonTreeTransform(N, root);
+		struct timeval tv;
+		gettimeofday(&tv,NULL);
+		printf("Start Tree Transform %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
+	*/
+	IrNode *  transformed = commonTreeTransform(N, root);
 
-    gettimeofday(&tv,NULL);
-    printf("End Tree Transform %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
+	/*
+		Not portable across platforms.
 
-    fprintf(outputFile, "(assert ");
+		gettimeofday(&tv,NULL);
+		printf("End Tree Transform %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
 
-    gettimeofday(&tv,NULL);
-    printf("Start Tree Walk %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
+		fprintf(outputFile, "(assert ");
 
-    irPassSmtTreeWalk(N, parentInvariant, transformed, outputFile);
+		gettimeofday(&tv,NULL);
+		printf("Start Tree Walk %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
+	*/
+	irPassSmtTreeWalk(N, parentInvariant, transformed, outputFile);
 
-    gettimeofday(&tv,NULL);
-    printf("End Tree Walk %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
+	/*
+		Not portable across platforms.
 
-    fprintf(outputFile, " )\n");
+		gettimeofday(&tv,NULL);
+		printf("End Tree Walk %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
 
-    gettimeofday(&tv,NULL);
-    printf("Start Divisor Walk %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
+		fprintf(outputFile, " )\n");
 
-    irPassSmtDivisorWalk(N, parentInvariant, transformed, outputFile);
+		gettimeofday(&tv,NULL);
+		printf("Start Divisor Walk %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
+	*/
+	irPassSmtDivisorWalk(N, parentInvariant, transformed, outputFile);
 
-    gettimeofday(&tv,NULL);
-    printf("End Divisor Walk %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
+	/*
+		Not portable across platforms.
 
-    return;
+		gettimeofday(&tv,NULL);
+		printf("End Divisor Walk %s: %lu%06lu\n", parentInvariant->identifier, tv.tv_sec, tv.tv_usec);
+	*/
+
+	return;
 }
 
 void

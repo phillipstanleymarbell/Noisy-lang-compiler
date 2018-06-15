@@ -50,8 +50,9 @@
 #include "flex.h"
 #include "common-errors.h"
 #include "version.h"
+#include "noisy-timeStamps.h"
 #include "common-timeStamps.h"
-#include "data-structures.h"
+#include "common-data-structures.h"
 
 #include "newton-parser.h"
 #include "newton-lexer.h"

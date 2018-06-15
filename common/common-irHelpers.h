@@ -1,5 +1,5 @@
 /*
-    Authored 2015, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim.
+	Authored 2015, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim.
 
 	All rights reserved.
 
@@ -43,7 +43,7 @@ void		addLeaf(State *  N, IrNode *  parent, IrNode *  newNode);
 void		addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode);
 void		addLeafWithChainingSeqNoLexer(State *  N, IrNode *  parent, IrNode *  newNode);
 bool		peekCheck(State *  N, int lookAhead, IrNodeType expectedType);
-IrNode* findNthIrNodeOfType(State * N, IrNode * root, IrNodeType expectedType, int nth);
-IrNode* findNthIrNodeOfTypes(State * N, IrNode * root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int nth);
-IrNode* findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int* nth);
-IrNode* findNthIrNodeOfTypesHelper(State * N, IrNode * root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int* nth);
+IrNode *	findNthIrNodeOfType(State *  N, IrNode *  root, IrNodeType expectedType, int nth);
+IrNode *	findNthIrNodeOfTypes(State *  N, IrNode *  root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int nth);
+IrNode *	findNthIrNodeOfTypeHelper(State *  N, IrNode *  root, IrNodeType expectedType, int *  nth);
+IrNode *	findNthIrNodeOfTypesHelper(State *  N, IrNode *  root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int *  nth);

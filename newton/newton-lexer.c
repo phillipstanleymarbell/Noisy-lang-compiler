@@ -1,5 +1,5 @@
 /*
-	Authored 2017. Jonathan Lim.
+	Authored 2017. Jonathan Lim. Modified 2018, Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -47,8 +47,9 @@
 #include "flex.h"
 #include "common-errors.h"
 #include "version.h"
+#include "newton-timeStamps.h"
 #include "common-timeStamps.h"
-#include "data-structures.h"
+#include "common-data-structures.h"
 #include "newton-parser.h"
 #include "common-lexers-helpers.h"
 #include "newton-lexer.h"
@@ -65,9 +66,9 @@ static void		finishToken(State *  N);
 
 static void		checkGt(State *  N);
 static void		checkLt(State *  N);
-static void     checkMul(State * N);
-static bool     checkProportionality(State * N);
-static void     checkDot(State *  N);
+static void		checkMul(State * N);
+static bool		checkProportionality(State * N);
+static void		checkDot(State *  N);
 
 static void		makeNumericConst(State *  N);
 
@@ -824,8 +825,6 @@ checkMul(State *  N)
 static void
 checkDot(State *  N)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckDot);
-
 	/*
 	 *	If token thus far is	"0" | onenine {zeronine}	then
 	 *	don't gobble; continue building token.  However, something like

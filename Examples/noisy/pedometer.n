@@ -40,9 +40,9 @@ computeSteps : namegen (windowSampleCount: lengthType, samples: sampleType, time
 	stepCount				: countType = 0;
 
 	#
-	#	Load the math module implementation (at path pathMathModule)
+	#	Load the math module implementation (at path kPathMathModule)
 	#
-	math := name2chan pathMathModule;
+	math := name2chan kPathMathModule;
 
 	#
 	#	Low-pass filter the timeseries data passed in, with
@@ -55,8 +55,8 @@ computeSteps : namegen (windowSampleCount: lengthType, samples: sampleType, time
 
 	foreach (s in filteredSamples)
 	{
-		windowMin = math->min(windowMin, s);
-		windowMax = math->max(windowMax, s);
+		windowMin = math->min(a: windowMin, b: s);
+		windowMax = math->max(a: windowMax, b: s);
 	}
 
 	windowMidPoint = (windowMin + windowMax)/2;
@@ -83,6 +83,6 @@ init : namegen (windowSampleCount: lengthType) -> (stepsChannel: chan of countTy
 	sequence (;;)
 	{
 		accelerometerSamples	=<- [windowSampleCount] accelerometer;
-		stepsChannel		<-= computeSteps(windowSampleCount, accelerometerSamples);
+		stepsChannel		<-= computeSteps(windowSampleCount: windowSampleCount, samples: accelerometerSamples);
 	}
 }

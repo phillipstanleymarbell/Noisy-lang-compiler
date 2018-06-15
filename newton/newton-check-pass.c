@@ -1,5 +1,5 @@
 /*
-	Authored 2017. Jonathan Lim.
+	Authored 2017. Jonathan Lim.  Modified 2018, Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -50,8 +50,9 @@
 #include "flex.h"
 #include "common-errors.h"
 #include "version.h"
+#include "newton-timeStamps.h"
 #include "common-timeStamps.h"
-#include "data-structures.h"
+#include "common-data-structures.h"
 #include "newton-data-structures.h"
 
 #include "newton-parser.h"

@@ -1,5 +1,5 @@
 /*
-	Authored 2016. Jonathan Lim.
+	Authored 2016. Jonathan Lim.  Modified 2018, Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -40,16 +40,16 @@ typedef struct ConstraintReport ConstraintReport;
 
 struct ConstraintReport
 {
-	bool satisfiesDimensionConstraint;
-	char dimensionErrorMessage[1024];
-	bool satisfiesValueConstraint;
-	char valueErrorMessage[1024];
+	bool			satisfiesDimensionConstraint;
+	char			dimensionErrorMessage[1024];
+	bool			satisfiesValueConstraint;
+	char			valueErrorMessage[1024];
 
-	ConstraintReport * next;
+	ConstraintReport *	next;
 };
 
 struct NewtonAPIReport
 {
-	ConstraintReport * firstConstraintReport;
+	ConstraintReport *	firstConstraintReport;
 };
 
