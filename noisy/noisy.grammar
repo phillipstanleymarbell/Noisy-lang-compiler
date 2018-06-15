@@ -146,7 +146,10 @@ var2nameexpr		::=	"var2name" factor [stringConst] .
 name2chanexpr		::=	"name2chan" typeExpr expr realConst .
 term			::=	[basictype] [unop] factor ["++" | "--"] {hprecbinop factor} .
 factor			::=	(identifier {fieldselect}) | integerConst | realConst | stringConst | boolConst
-				| "(" expr ")" | tuplevalue | namegenInvokeShorthand | typeMinExpr | typeMaxExpr .
+				| "(" expr ")" | tuplevalue | namegenInvokeShorthand | typeMinExpr | typeMaxExpr
+				| namegenWriteShorthand .
+namegenWriteShorthand	::=	identifier "(" argumentList ")" .
+argumentList		=	[identifier ":" expr {"," identifier ":" expr}] .
 typeMinExpr		::=	"typemin" "(" arithType ")" .
 typeMaxExpr		::=	"typemax" "(" arithType ")" .
 namegenInvokeShorthand	::=	identifier "(" [expr] {"," expr} ")" .

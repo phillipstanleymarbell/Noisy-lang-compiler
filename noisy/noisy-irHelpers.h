@@ -36,6 +36,6 @@
 */
 
 
-Scope *	progtypeName2scope(State *  N, const char *  identifier);
+Scope *		progtypeName2scope(State *  N, const char *  identifier);
 void		addToProgtypeScopes(State *  N, char *  identifier, Scope *  progtypeScope);
 void		assignTypes(State *  N, IrNode *  node, IrNode *  typeExpression);

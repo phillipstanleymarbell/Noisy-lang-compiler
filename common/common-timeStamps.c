@@ -34,183 +34,25 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+
 #ifdef NoisyOsMacOSX
 #	include <mach/mach.h>
 #	include <mach/mach_time.h>
 #	include <unistd.h>
 #endif
 
-#include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <string.h>
 #include <setjmp.h>
+#include <string.h>
 #include <stdint.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
 #include "common-errors.h"
+#include "noisy-timeStamps.h"
 #include "common-timeStamps.h"
-#include "data-structures.h"
-
-
-
-const char *	TimeStampKeyStrings[kNoisyTimeStampKeyMax] =
-{
-	/*
-	 *	Generated from body of kNoisyTimeStampKey enum by piping through
-	 *
-	 *		grep 'kNoisy' | grep -v kNoisyTimeStampKeyMax| awk -F',' '{print "\t["$1"]\t\t\""$1"\","}'
-	 */
-	[kNoisyTimeStampKeyParse]					"kNoisyTimeStampKeyParse",
-	[kNoisyTimeStampKeyParseProgram]				"kNoisyTimeStampKeyParseProgram",
-	[kNoisyTimeStampKeyParseProgtypeDeclaration]			"kNoisyTimeStampKeyParseProgtypeDeclaration",
-	[kNoisyTimeStampKeyParseProgtypeBody]				"kNoisyTimeStampKeyParseProgtypeBody",
-	[kNoisyTimeStampKeyParseProgtypeTypenameDeclaration]		"kNoisyTimeStampKeyParseProgtypeTypenameDeclaration",
-	[kNoisyTimeStampKeyParseConstantDeclaration]			"kNoisyTimeStampKeyParseConstantDeclaration",
-	[kNoisyTimeStampKeyParseTypeDeclaration]			"kNoisyTimeStampKeyParseTypeDeclaration",
-	[kNoisyTimeStampKeyParseAdtTypeDeclaration]			"kNoisyTimeStampKeyParseAdtTypeDeclaration",
-	[kNoisyTimeStampKeyParseNamegenDeclaration]			"kNoisyTimeStampKeyParseNamegenDeclaration",
-	[kNoisyTimeStampKeyParseIdentifierOrNil]			"kNoisyTimeStampKeyParseIdentifierOrNil",
-	[kNoisyTimeStampKeyParseIdentifierOrNilList]			"kNoisyTimeStampKeyParseIdentifierOrNilList",
-	[kNoisyTimeStampKeyParseIdentifierList]				"kNoisyTimeStampKeyParseIdentifierList",
-	[kNoisyTimeStampKeyParseTypeExpression]				"kNoisyTimeStampKeyParseTypeExpression",
-	[kNoisyTimeStampKeyParseTypeName]				"kNoisyTimeStampKeyParseTypeName",
-	[kNoisyTimeStampKeyParseTolerance]				"kNoisyTimeStampKeyParseTolerance",
-	[kNoisyTimeStampKeyParseErrorMagnitudeTolerance]		"kNoisyTimeStampKeyParseErrorMagnitudeTolerance",
-	[kNoisyTimeStampKeyParseLossTolerance]				"kNoisyTimeStampKeyParseLossTolerance",
-	[kNoisyTimeStampKeyParseLatencyTolerance]			"kNoisyTimeStampKeyParseLatencyTolerance",
-	[kNoisyTimeStampKeyParseBasicType]				"kNoisyTimeStampKeyParseBasicType",
-	[kNoisyTimeStampKeyParseRealType]				"kNoisyTimeStampKeyParseRealType",
-	[kNoisyTimeStampKeyParseFixedType]				"kNoisyTimeStampKeyParseFixedType",
-	[kNoisyTimeStampKeyParseAnonAggregateType]			"kNoisyTimeStampKeyParseAnonAggregateType",
-	[kNoisyTimeStampKeyParseArrayType]				"kNoisyTimeStampKeyParseArrayType",
-	[kNoisyTimeStampKeyParseListType]				"kNoisyTimeStampKeyParseListType",
-	[kNoisyTimeStampKeyParseTupleType]				"kNoisyTimeStampKeyParseTupleType",
-	[kNoisyTimeStampKeyParseSetType]				"kNoisyTimeStampKeyParseSetType",
-	[kNoisyTimeStampKeyParseInitList]				"kNoisyTimeStampKeyParseInitList",
-	[kNoisyTimeStampKeyParseIdxInitList]				"kNoisyTimeStampKeyParseIdxInitList",
-	[kNoisyTimeStampKeyParseStarInitList]				"kNoisyTimeStampKeyParseStarInitList",
-	[kNoisyTimeStampKeyParseElement]				"kNoisyTimeStampKeyParseElement",
-	[kNoisyTimeStampKeyParseNamegenDefinition]			"kNoisyTimeStampKeyParseNamegenDefinition",
-	[kNoisyTimeStampKeyParseScopedStatementList]			"kNoisyTimeStampKeyParseScopedStatementList",
-	[kNoisyTimeStampKeyParseStatementList]				"kNoisyTimeStampKeyParseStatementList",
-	[kNoisyTimeStampKeyParseStatement]				"kNoisyTimeStampKeyParseStatement",
-	[kNoisyTimeStampKeyParseAssignOp]				"kNoisyTimeStampKeyParseAssignOp",
-	[kNoisyTimeStampKeyParseMatchStatement]				"kNoisyTimeStampKeyParseMatchStatement",
-	[kNoisyTimeStampKeyParseIterStatement]				"kNoisyTimeStampKeyParseIterStatement",
-	[kNoisyTimeStampKeyParseGuardBody]				"kNoisyTimeStampKeyParseGuardBody",
-	[kNoisyTimeStampKeyParseExpression]				"kNoisyTimeStampKeyParseExpression",
-	[kNoisyTimeStampKeyParseListCastExpression]			"kNoisyTimeStampKeyParseListCastExpression",
-	[kNoisyTimeStampKeyParseSetCastExpression]			"kNoisyTimeStampKeyParseSetCastExpression",
-	[kNoisyTimeStampKeyParseArrayCastExpression]			"kNoisyTimeStampKeyParseArrayCastExpression",
-	[kNoisyTimeStampKeyParseAnonAggregateCastExpression]		"kNoisyTimeStampKeyParseAnonAggregateCastExpression",
-	[kNoisyTimeStampKeyParseChanEventExpression]			"kNoisyTimeStampKeyParseChanEventExpression",
-	[kNoisyTimeStampKeyParseChan2nameExpression]			"kNoisyTimeStampKeyParseChan2nameExpression",
-	[kNoisyTimeStampKeyParseVar2nameExpression]			"kNoisyTimeStampKeyParseVar2nameExpression",
-	[kNoisyTimeStampKeyParseName2chanExpression]			"kNoisyTimeStampKeyParseName2chanExpression",
-	[kNoisyTimeStampKeyParseTerm]					"kNoisyTimeStampKeyParseTerm",
-	[kNoisyTimeStampKeyParseFactor]					"kNoisyTimeStampKeyParseFactor",
-	[kNoisyTimeStampKeyParseTupleValue]				"kNoisyTimeStampKeyParseTupleValue",
-	[kNoisyTimeStampKeyParseFieldSelect]				"kNoisyTimeStampKeyParseFieldSelect",
-	[kNoisyTimeStampKeyParseHighPrecedenceBinaryO]			"kNoisyTimeStampKeyParseHighPrecedenceBinaryO",
-	[kNoisyTimeStampKeyParseLowPrecedenceBinaryOp]			"kNoisyTimeStampKeyParseLowPrecedenceBinaryOp",
-	[kNoisyTimeStampKeyParseCmpOp]					"kNoisyTimeStampKeyParseCmpOp",
-	[kNoisyTimeStampKeyParseBooleanOp]				"kNoisyTimeStampKeyParseBooleanOp",
-	[kNoisyTimeStampKeyParseUnaryOp]				"kNoisyTimeStampKeyParseUnaryOp",
-	[kNoisyTimeStampKeyParseTerminal]				"kNoisyTimeStampKeyParseTerminal",
-	[kNoisyTimeStampKeyParseIdentifierUsageTerminal]		"kNoisyTimeStampKeyParseIdentifierUsageTerminal",
-	[kNoisyTimeStampKeyParseIdentifierDefinitionTerminal]		"kNoisyTimeStampKeyParseIdentifierDefinitionTerminal",
-	[kNoisyTimeStampKeyParserSyntaxError]				"kNoisyTimeStampKeyParserSyntaxError",
-	[kNoisyTimeStampKeyParserSemanticError]				"kNoisyTimeStampKeyParserSemanticError",
-	[kNoisyTimeStampKeyParserErrorRecovery]				"kNoisyTimeStampKeyParserErrorRecovery",
-	[kNoisyTimeStampKeyParserProgtypeName2scope]			"kNoisyTimeStampKeyParserProgtypeName2scope",
-	[kNoisyTimeStampKeyParserErrorUseBeforeDefinition]		"kNoisyTimeStampKeyParserErrorUseBeforeDefinition",
-	[kNoisyTimeStampKeyParserErrorMultiDefinition]			"kNoisyTimeStampKeyParserErrorMultiDefinition",
-	[kNoisyTimeStampKeyParserPeekCheck]				"kNoisyTimeStampKeyParserPeekCheck",
-	[kNoisyTimeStampKeyLexPeekPrint]				"kNoisyTimeStampKeyLexPeekPrint",
-	[kNoisyTimeStampKeyParserDepthFirstWalk]			"kNoisyTimeStampKeyParserDepthFirstWalk",
-	[kNoisyTimeStampKeyParserAddLeaf]				"kNoisyTimeStampKeyParserAddLeaf",
-	[kNoisyTimeStampKeyParserAddLeafWithChainingSeq]		"kNoisyTimeStampKeyParserAddLeafWithChainingSeq",
-	[kNoisyTimeStampKeyParserAddToProgtypeScopes]			"kNoisyTimeStampKeyParserAddToProgtypeScopes",
-	[kNoisyTimeStampKeyParserAssignTypes]				"kNoisyTimeStampKeyParserAssignTypes",
-	[kNoisyTimeStampKeySymbolTableAllocScope]			"kNoisyTimeStampKeySymbolTableAllocScope",
-	[kNoisyTimeStampKeySymbolTableAddOrLookupSymbolForToken]	"kNoisyTimeStampKeySymbolTableAddOrLookupSymbolForToken",
-	[kNoisyTimeStampKeySymbolTableSymbolForIdentifier]		"kNoisyTimeStampKeySymbolTableSymbolForIdentifier",
-	[kNoisyTimeStampKeySymbolTableOpenScope]			"kNoisyTimeStampKeySymbolTableOpenScope",
-	[kNoisyTimeStampKeySymbolTableCloseScope]			"kNoisyTimeStampKeySymbolTableCloseScope",
-	[kNoisyTimeStampKeyGenNoisyIrNode]				"kNoisyTimeStampKeyGenNoisyIrNode",
-	[kNoisyTimeStampKeyLexAllocateSourceInfo]			"kNoisyTimeStampKeyLexAllocateSourceInfo",
-	[kNoisyTimeStampKeyLexAllocateToken]				"kNoisyTimeStampKeyLexAllocateToken",
-	[kNoisyTimeStampKeyLexPut]					"kNoisyTimeStampKeyLexPut",
-	[kNoisyTimeStampKeyLexGet]					"kNoisyTimeStampKeyLexGet",
-	[kNoisyTimeStampKeyLexPeek]					"kNoisyTimeStampKeyLexPeek",
-	[kNoisyTimeStampKeyLexInit]					"kNoisyTimeStampKeyLexInit",
-	[kNoisyTimeStampKeyLexPrintToken]				"kNoisyTimeStampKeyLexPrintToken",
-	[kNoisyTimeStampKeyLexDebugPrintToken]				"kNoisyTimeStampKeyLexDebugPrintToken",
-	[kNoisyTimeStampKeyLexerCheckTokenLength]			"kNoisyTimeStampKeyLexerCheckTokenLength",
-	[kNoisyTimeStampKeyLexerCur]					"kNoisyTimeStampKeyLexerCur",
-	[kNoisyTimeStampKeyLexerGobble]					"kNoisyTimeStampKeyLexerGobble",
-	[kNoisyTimeStampKeyLexerDone]					"kNoisyTimeStampKeyLexerDone",
-	[kNoisyTimeStampKeyLexerEqf]					"kNoisyTimeStampKeyLexerEqf",
-	[kNoisyTimeStampKeyLexerCheckComment]				"kNoisyTimeStampKeyLexerCheckComment",
-	[kNoisyTimeStampKeyLexerCheckWeq]				"kNoisyTimeStampKeyLexerCheckWeq",
-	[kNoisyTimeStampKeyLexerCheckWeq3]				"kNoisyTimeStampKeyLexerCheckWeq3",
-	[kNoisyTimeStampKeyLexerCheckSingle]				"kNoisyTimeStampKeyLexerCheckSingle",
-	[kNoisyTimeStampKeyLexerCheckDot]				"kNoisyTimeStampKeyLexerCheckDot",
-	[kNoisyTimeStampKeyLexerCheckGt]				"kNoisyTimeStampKeyLexerCheckGt",
-	[kNoisyTimeStampKeyLexerCheckLt]				"kNoisyTimeStampKeyLexerCheckLt",
-	[kNoisyTimeStampKeyLexerCheckSingleQuote]			"kNoisyTimeStampKeyLexerCheckSingleQuote",
-	[kNoisyTimeStampKeyLexerCheckDoubleQuote]			"kNoisyTimeStampKeyLexerCheckDoubleQuote",
-	[kNoisyTimeStampKeyLexerCheckMinus]				"kNoisyTimeStampKeyLexerCheckMinus",
-	[kNoisyTimeStampKeyLexerFinishToken]				"kNoisyTimeStampKeyLexerFinishToken",
-	[kNoisyTimeStampKeyLexerMakeNumericConst]			"kNoisyTimeStampKeyLexerMakeNumericConst",
-	[kNoisyTimeStampKeyLexerIsDecimal]				"kNoisyTimeStampKeyLexerIsDecimal",
-	[kNoisyTimeStampKeyLexerStringAtLeft]				"kNoisyTimeStampKeyLexerStringAtLeft",
-	[kNoisyTimeStampKeyLexerStringAtRight]				"kNoisyTimeStampKeyLexerStringAtRight",
-	[kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar]		"kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar",
-	[kNoisyTimeStampKeyLexerIsRadixConst]				"kNoisyTimeStampKeyLexerIsRadixConst",
-	[kNoisyTimeStampKeyLexerIsRealConst]				"kNoisyTimeStampKeyLexerIsRealConst",
-	[kNoisyTimeStampKeyLexerIsEngineeringRealConst]			"kNoisyTimeStampKeyLexerIsEngineeringRealConst",
-	[kNoisyTimeStampKeyLexerStringToRadixConst]			"kNoisyTimeStampKeyLexerStringToRadixConst",
-	[kNoisyTimeStampKeyLexerStringToRealConst]			"kNoisyTimeStampKeyLexerStringToRealConst",
-	[kNoisyTimeStampKeyLexerStringToEngineeringRealConst]		"kNoisyTimeStampKeyLexerStringToEngineeringRealConst",
-	[kNoisyTimeStampKeyLexerIsOperatorOrSeparator]			"kNoisyTimeStampKeyLexerIsOperatorOrSeparator",
-	[kNoisyTimeStampKeyInFirst]					"kNoisyTimeStampKeyInFirst",
-	[kNoisyTimeStampKeyInFollow]					"kNoisyTimeStampKeyInFollow",
-	[kNoisyTimeStampKeyTypeValidateIrSubtree]			"kNoisyTimeStampKeyTypeValidateIrSubtree",
-	[kNoisyTimeStampKeyTypeEqualsSubtreeTypes]			"kNoisyTimeStampKeyTypeEqualsSubtreeTypes",
-	[kNoisyTimeStampKeyTypeMakeTypeSignature]			"kNoisyTimeStampKeyTypeMakeTypeSignature",
-	[kNoisyTimeStampKeyNoisyInit]					"kNoisyTimeStampKeyNoisyInit",
-	[kNoisyTimeStampKeyRunPasses]					"kNoisyTimeStampKeyRunPasses",
-	[kNoisyTimeStampKeyCheckRss]					"kNoisyTimeStampKeyCheckRss",
-	[kNoisyTimeStampKeyConsolePrintBuffers]				"kNoisyTimeStampKeyConsolePrintBuffers",
-	[kNoisyTimeStampKeyPrintToFile]					"kNoisyTimeStampKeyPrintToFile",
-	[kNoisyTimeStampKeyRenderDotInFile]				"kNoisyTimeStampKeyRenderDotInFile",
-	[kNoisyTimeStampKeyCheckCgiCompletion]				"kNoisyTimeStampKeyCheckCgiCompletion",
-	[kNoisyTimeStampKeyFatal]					"kNoisyTimeStampKeyFatal",
-	[kNoisyTimeStampKeyError]					"kNoisyTimeStampKeyError",
-	[kNoisyTimeStampKeyIrPassDotAstDotFmt]				"kNoisyTimeStampKeyIrPassDotAstDotFmt",
-	[kNoisyTimeStampKeyIrPassDotSymbotTableDotFmt]			"kNoisyTimeStampKeyIrPassDotSymbotTableDotFmt",
-	[kNoisyTimeStampKeyIrPassAstDotPrintWalk]			"kNoisyTimeStampKeyIrPassAstDotPrintWalk",
-	[kNoisyTimeStampKeyIrPassSymbolTableDotPrintWalk]		"kNoisyTimeStampKeyIrPassSymbolTableDotPrintWalk",
-	[kNoisyTimeStampKeyIrPassDotBackend]				"kNoisyTimeStampKeyIrPassDotBackend",
-	[kNoisyTimeStampKeyIrPassDotIsType]				"kNoisyTimeStampKeyIrPassDotIsType",
-	[kNoisyTimeStampKeyIrPassDotScope2Id]				"kNoisyTimeStampKeyIrPassDotScope2Id",
-	[kNoisyTimeStampKeyIrPassDotScope2Id2]				"kNoisyTimeStampKeyIrPassDotScope2Id2",
-	[kNoisyTimeStampKeyIrPassDotSymbol2Id]				"kNoisyTimeStampKeyIrPassDotSymbol2Id",
-	[kNoisyTimeStampKeyIrPassProtobufSymbotTableEmitter]		"kNoisyTimeStampKeyIrPassProtobufSymbotTableEmitter",
-	[kNoisyTimeStampKeyIrPassProtobufAstEmitter]			"kNoisyTimeStampKeyIrPassProtobufAstEmitter",
-	[kNoisyTimeStampKeyIrPassProtobufAstSerializeWalk]		"kNoisyTimeStampKeyIrPassProtobufAstSerializeWalk",
-	[kNoisyTimeStampKeyIrPassProtobufSymbolTableSerializeWalk]	"kNoisyTimeStampKeyIrPassProtobufSymbolTableSerializeWalk",
-	[kNoisyTimeStampKeyIrPassHelperColorIr]				"kNoisyTimeStampKeyIrPassHelperColorIr",
-	[kNoisyTimeStampKeyIrPassHelperColorSymbolTable]		"kNoisyTimeStampKeyIrPassHelperColorSymbolTable",
-	[kNoisyTimeStampKeyIrPassHelperIrSize]				"kNoisyTimeStampKeyIrPassHelperIrSize",
-	[kNoisyTimeStampKeyIrPassHelperSymbolTableSize]			"kNoisyTimeStampKeyIrPassHelperSymbolTableSize",
-
-	[kNoisyTimeStampKeyUnknown]					"kNoisyTimeStampKeyUnknown",
-};
-
+#include "common-data-structures.h"
 
 
 //TODO: move this to libflex...
@@ -252,7 +94,7 @@ timeStampDumpResidencies(State *  N)
 {
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "\nNon-zero routine residency time upper bounds and counts (%d calls, total of %-02.4f us):\n\n",
 						N->callAggregateTotal, (double)machtimeToNanoseconds(N->timeAggregateTotal)/1000.0);
-	for (int i = 0; i < kNoisyTimeStampKeyMax; i++)
+	for (int i = 0; i < kCommonTimeStampKeyMax; i++)
 	{
 		if (N->timeAggregates[i] == 0)
 		{

@@ -1,5 +1,5 @@
 /*
-	Authored 2016. Jonathan Lim.
+	Authored 2016. Jonathan Lim. Modified 2018, Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -49,8 +49,9 @@
 #include "flex.h"
 #include "common-errors.h"
 #include "version.h"
+#include "newton-timeStamps.h"
 #include "common-timeStamps.h"
-#include "data-structures.h"
+#include "common-data-structures.h"
 #include "newton-data-structures.h"
 #include "common-irHelpers.h"
 
@@ -65,7 +66,7 @@
 
 State *
 newtonApiInit(char * newtonFileName)
-{
+{	
     State *     N = init(kNoisyModeDefault);
     processNewtonFile(N, newtonFileName);
     return N;
@@ -131,8 +132,6 @@ newtonApiSatisfiesConstraints(State * N, IrNode * parameterTreeRoot)
 void
 newtonApiAddLeaf(State *  N, IrNode *  parent, IrNode *  newNode)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeaf);
-
 	IrNode *	node = depthFirstWalk(N, parent);
 
 	if (node == NULL)
@@ -153,8 +152,6 @@ newtonApiAddLeaf(State *  N, IrNode *  parent, IrNode *  newNode)
 void
 newtonApiAddLeafWithChainingSeqNoLexer(State *  N, IrNode *  parent, IrNode *  newNode)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
-
 	IrNode *	node = depthFirstWalk(N, parent);
 
 	if (node->irLeftChild == NULL)

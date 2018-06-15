@@ -1,4 +1,4 @@
-include "system.nd"
+#include "system.nd"
 
 HelloWorld : progtype
 {

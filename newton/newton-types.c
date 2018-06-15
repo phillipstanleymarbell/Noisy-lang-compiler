@@ -1,5 +1,6 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2015. Phillip Stanley-Marbell for Noisy.
+	Modified, 2016-2017 by Jonathan Lim for Newton implementation.
 
 	All rights reserved.
 
@@ -45,8 +46,9 @@
 #include "flex.h"
 #include "common-errors.h"
 #include "version.h"
+#include "newton-timeStamps.h"
 #include "common-timeStamps.h"
-#include "data-structures.h"
+#include "common-data-structures.h"
 #include "newton-types.h"
 
 
@@ -57,8 +59,6 @@ extern const char	gNewtonAstNodeStrings[kNoisyIrNodeType_TMax];
 IrNode *
 newtonTypeValidateIrSubtree(State *  N, IrNode *  subtree)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyTypeValidateIrSubtree);
-
 	return NULL;
 }
 
@@ -66,8 +66,6 @@ newtonTypeValidateIrSubtree(State *  N, IrNode *  subtree)
 bool
 newtonTypeEqualsSubtreeTypes(State *  N, IrNode *  subtreeA, IrNode *  subtreeB)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyTypeEqualsSubtreeTypes);
-
 	return false;
 }
 
@@ -75,9 +73,7 @@ newtonTypeEqualsSubtreeTypes(State *  N, IrNode *  subtreeA, IrNode *  subtreeB)
 char *
 newtonTypeMakeTypeSignature(State *  N, IrNode *  subtree)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyTypeMakeTypeSignature);
-
-	char *  signature;
+	char *	signature;
 	char *	leftSignature;
 	char *	rightSignature;
 

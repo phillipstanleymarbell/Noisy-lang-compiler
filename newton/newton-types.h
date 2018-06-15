@@ -36,5 +36,5 @@
 */
 
 IrNode *	newtonTypeValidateIrSubtree(State *  N, IrNode *  subtree);
-bool 		newtonTypeEqualsSubtreeTypes(State *  N, IrNode *  subtreeA, IrNode *  subtreeB);
-char *	newtonTypeMakeTypeSignature(State *  N, IrNode *  subtree);
+bool		newtonTypeEqualsSubtreeTypes(State *  N, IrNode *  subtreeA, IrNode *  subtreeB);
+char *		newtonTypeMakeTypeSignature(State *  N, IrNode *  subtree);

@@ -1,6 +1,5 @@
 /*
-	Authored 2017. Jonathan Lim.
-
+	Authored 2017. Jonathan Lim. Modified 2018, Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -35,6 +34,7 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -47,9 +47,10 @@
 #include "flexerror.h"
 #include "flex.h"
 #include "version.h"
-#include "common-timeStamps.h"
 #include "common-errors.h"
-#include "data-structures.h"
+#include "newton-timeStamps.h"
+#include "common-timeStamps.h"
+#include "common-data-structures.h"
 #include "newton-data-structures.h"
 #include "common-irHelpers.h"
 #include "noisy-parser.h"
