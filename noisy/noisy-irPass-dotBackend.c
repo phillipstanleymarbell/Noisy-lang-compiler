@@ -39,6 +39,11 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <sys/time.h>
+
+#ifdef NoisyOsLinux
+#include <time.h>
+#endif
+
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
@@ -397,7 +402,7 @@ noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot
 
 	int			bufferLength, irAndSymbolTableSize = 0;
 	char *			buf = NULL;
-#ifdef NoisyOsMacOSX
+#if defined(NoisyOsMacOSX) || defined(NoisyOsLinux)
 	int			n = 0;
 	struct timeval		t;
 
@@ -425,7 +430,7 @@ noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot
 		fatal(N, Emalloc);
 	}
 
-#ifdef NoisyOsMacOSX
+#if defined(NoisyOsMacOSX) || defined(NoisyOsLinux)
 	gettimeofday(&t, NULL);
 	ctime_r(&t.tv_sec, dateString);
 
