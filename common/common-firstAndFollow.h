@@ -34,5 +34,5 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-bool inFirst(State *  N, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
-bool inFollow(State *  N, IrNodeType productionOrToken, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]);
+bool inFirst(State *  N, IrNodeType productionOrToken, int firsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax], int maxKey);
+bool inFollow(State *  N, IrNodeType productionOrToken, int follows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax], int maxKey);

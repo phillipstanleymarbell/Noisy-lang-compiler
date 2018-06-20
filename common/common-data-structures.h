@@ -349,12 +349,12 @@ typedef enum
 	 *	Code depends on this bringing up the rear for Newton Productions.
 	 */
 	kNewtonIrNodeType_PMax,
-
+	kNewtonIrNodeTypeMax,
 
 	/*
-	 *	Code depends on this bringing up the rear for Noisy.
+	 *	Code depends on this bringing up the rear for both Newton and Noisy.
 	 */
-	kNewtonIrNodeTypeMax
+	kCommonIrNodeTypeMax
 } IrNodeType;
 
 

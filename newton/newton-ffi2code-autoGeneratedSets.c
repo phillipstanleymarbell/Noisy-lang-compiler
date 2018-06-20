@@ -58,7 +58,7 @@
  *	(with some subsequent manual edits)
  */
 
-int gNewtonFirsts[kNewtonIrNodeTypeMax][kNewtonIrNodeTypeMax]  = {
+int gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
             [kNewtonIrNodeType_PcompareOp    ]            = {
                                                                  kNewtonIrNodeType_Tlt,
                                                                  kNewtonIrNodeType_Tle,
@@ -165,7 +165,7 @@ int gNewtonFirsts[kNewtonIrNodeTypeMax][kNewtonIrNodeTypeMax]  = {
             [kNewtonIrNodeType_PnewtonFile   ]            = {kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax}
  };
 
-int gNewtonFollows[kNewtonIrNodeTypeMax][kNewtonIrNodeTypeMax]  = {
+int gNewtonFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
             [kNewtonIrNodeType_PcompareOp    ]            = {
                                                                  kNewtonIrNodeType_Tminus,
                                                                  kNewtonIrNodeType_Tderivative,
@@ -317,7 +317,7 @@ int gNewtonFollows[kNewtonIrNodeTypeMax][kNewtonIrNodeTypeMax]  = {
             [kNewtonIrNodeType_PnewtonFile   ]            = {kNewtonIrNodeType_Zeof, kNewtonIrNodeTypeMax},
 };
 
-char* gNewtonAstNodeStrings[kNewtonIrNodeTypeMax]	= {
+char* gNewtonAstNodeStrings[kCommonIrNodeTypeMax]	= {
                                                [    kNewtonIrNodeType_PcompareOp]            = "kNewtonIrNodeType_PcompareOp",
                                                [     kNewtonIrNodeType_PvectorOp]            = "kNewtonIrNodeType_PvectorOp",
                                                [kNewtonIrNodeType_PhighPrecedenceBinaryOp]            = "kNewtonIrNodeType_PhighPrecedenceBinaryOp",

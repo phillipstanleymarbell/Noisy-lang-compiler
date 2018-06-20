@@ -60,21 +60,21 @@
  *		inFirst(IrNodeType productionOrToken, IrNodeType token)
  */
 bool
-inFirst(State *  N, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
+inFirst(State *  N, IrNodeType productionOrToken, int firsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax], int maxKey)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyInFirst);
 
 	Token *	token = lexPeek(N, 1);
 
-	if (productionOrToken > kNoisyIrNodeTypeMax)
+	if (productionOrToken > kCommonIrNodeTypeMax)
 	{
 		fatal(N, Esanity);
 	}
 
 	/*
-	 *	NOTE: The arrays created by ffi2code have a kNoisyIrNodeTypeMax element at the end of each sub-array
+	 *	NOTE: The arrays created by ffi2code have a maxKey element at the end of each sub-array
 	 */
-	for (int i = 0; i < kNoisyIrNodeTypeMax && firsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
+	for (int i = 0; i < maxKey && firsts[productionOrToken][i] != maxKey; i++)
 	{
 		if (firsts[productionOrToken][i] == token->type)
 		{
@@ -96,21 +96,21 @@ inFirst(State *  N, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax
  *		inFollow(IrNodeType productionOrToken, IrNodeType token)
  */
 bool
-inFollow(State *  N, IrNodeType productionOrToken, int follows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax])
+inFollow(State *  N, IrNodeType productionOrToken, int follows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax], int maxKey)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyInFollow);
 
 	Token *	token = lexPeek(N, 1);
 
-	if (productionOrToken > kNoisyIrNodeTypeMax)
+	if (productionOrToken > kCommonIrNodeTypeMax)
 	{
 		fatal(N, Esanity);
 	}
 
 	/*
-	 *	NOTE: The arrays created by ffi2code have a kNoisyIrNodeTypeMax element at the end of each sub-array
+	 *	NOTE: The arrays created by ffi2code have a maxKey element at the end of each sub-array
 	 */
-	for (int i = 0; i < kNoisyIrNodeTypeMax && follows[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
+	for (int i = 0; i < maxKey && follows[productionOrToken][i] != maxKey; i++)
 	{
 		if (follows[productionOrToken][i] == token->type)
 		{

@@ -61,7 +61,7 @@
  */
 
 
-int    gNoisyFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
+int    gNoisyFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                [kNoisyIrNodeType_PunaryOp       ]            = {
                                                                                                     kNoisyIrNodeType_Ttilde,
                                                                                                     kNoisyIrNodeType_Tbang,
@@ -404,7 +404,7 @@ int    gNoisyFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
                                                [kNoisyIrNodeType_Pidentifier    ]            = {kNoisyIrNodeType_Tidentifier, kNoisyIrNodeTypeMax}
                                     };
 
-int    gNoisyFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
+int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                [kNoisyIrNodeType_PunaryOp       ]            = {
                                                                                                     kNoisyIrNodeType_Tidentifier,
                                                                                                     kNoisyIrNodeType_TintConst,
@@ -2137,7 +2137,7 @@ int    gNoisyFollows[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax]  = {
 											       */
                                    };
 
-char	*gNoisyAstNodeStrings[kNoisyIrNodeTypeMax]	= {
+char	*gNoisyAstNodeStrings[kCommonIrNodeTypeMax]	= {
                                                [       kNoisyIrNodeType_PunaryOp]            = "kNoisyIrNodeType_PunaryOp",
                                                [     kNoisyIrNodeType_PbooleanOp]            = "kNoisyIrNodeType_PbooleanOp",
                                                [         kNoisyIrNodeType_PcmpOp]            = "kNoisyIrNodeType_PcmpOp",
