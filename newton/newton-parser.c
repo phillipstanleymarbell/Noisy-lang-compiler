@@ -64,7 +64,7 @@ extern const char *		gNewtonTokenDescriptions[];
 extern char *			gNewtonAstNodeStrings[];
 extern char *			gProductionStrings[];
 extern char *			gProductionDescriptions[];
-extern int			gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
+extern int			gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax];
 
 extern void			fatal(State *  N, const char *  msg);
 
@@ -105,7 +105,7 @@ newtonParseFile(State *  N, Scope *  currentScope)
 
 	if (lexPeek(N, 1)->type != kNewtonIrNodeType_Zeof)
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Zeof, kNoisyIrNodeTypeMax);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_Zeof, kNewtonIrNodeTypeMax);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Zeof);
 	}
 
@@ -128,12 +128,12 @@ newtonParseRuleList(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
-	if (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts))
+	if (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		addLeaf(N, node, newtonParseRule(N, currentScope));
 	}
 
-	while (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts))
+	while (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		addLeafWithChainingSeq(N, node, newtonParseRule(N, currentScope));
 	}
@@ -170,7 +170,7 @@ newtonParseRule(State * N, Scope * currentScope)
 
 		default:
 		{
-			newtonParserSyntaxError(N, kNewtonIrNodeType_Prule, kNoisyIrNodeTypeMax);
+			newtonParserSyntaxError(N, kNewtonIrNodeType_Prule, kNewtonIrNodeTypeMax);
 			newtonParserErrorRecovery(N, kNewtonIrNodeType_Prule);
 		}
 	}
@@ -341,7 +341,7 @@ newtonParseConstant(State * N, Scope * currentScope)
 	addLeaf(N, node, constantIdentifier);
 	Physics *	constantPhysics = newtonPhysicsTableAddPhysicsForToken(N, currentScope, constantIdentifier->token);
 
-	if (inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts))
+	if (inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		IrNode *	constantExpression = newtonParseQuantityExpression(N, currentScope);
 		constantPhysics->value = constantExpression->value;
@@ -363,7 +363,7 @@ newtonParseConstant(State * N, Scope * currentScope)
 	}
 	else
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_PquantityExpression, kNoisyIrNodeTypeMax);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PquantityExpression, kNewtonIrNodeTypeMax);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PquantityExpression);
 	}
 
@@ -410,7 +410,7 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 	 *	Name syntax is optional
 	 */
 	IrNode *	unitName = NULL;
-	if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts))
+	if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		unitName = newtonParseName(N, currentScope);
 		addLeafWithChainingSeq(N, node, unitName);
@@ -421,7 +421,7 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 	 *	Abbreviation syntax is also optional
 	 */
 	IrNode *	unitAbbreviation = NULL;
-	if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts))
+	if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		unitAbbreviation = newtonParseSymbol(N, currentScope);
 		addLeafWithChainingSeq(N, node, unitAbbreviation);
@@ -496,7 +496,7 @@ newtonParseName(State * N, Scope * currentScope)
 	}
 	else
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Pname, kNoisyIrNodeTypeMax);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_Pname, kNewtonIrNodeTypeMax);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pname);
 	}
 
@@ -559,7 +559,7 @@ newtonParseTerminal(State *  N, IrNodeType expectedType, Scope * currentScope)
 {
 	if (!peekCheck(N, 1, expectedType))
 	{
-		newtonParserSyntaxError(N, expectedType, kNoisyIrNodeTypeMax);
+		newtonParserSyntaxError(N, expectedType, kNewtonIrNodeTypeMax);
 		newtonParserErrorRecovery(N, expectedType);
 	}
 
@@ -606,13 +606,12 @@ newtonParseIdentifier(State *  N, Scope *  currentScope)
 	if (peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
 	{
 		n = newtonParseIdentifierDefinitionTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
+
 		return n;
 	}
-	else
-	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNoisyIrNodeTypeMax);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
-	}
+
+	newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax);
+	newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
 
 	return NULL;
 }
@@ -819,7 +818,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 {
 	if (!peekCheck(N, 1, expectedType))
 	{
-		newtonParserSyntaxError(N, expectedType, kNoisyIrNodeTypeMax);
+		newtonParserSyntaxError(N, expectedType, kNewtonIrNodeTypeMax);
 		newtonParserErrorRecovery(N, expectedType);
 	
 		return NULL;
@@ -891,7 +890,7 @@ newtonParseConstraint(State * N, Scope * currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
-	if (inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts))
+	if (inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
 		addLeafWithChainingSeq(N, node, newtonParseCompareOp(N, currentScope));
@@ -903,7 +902,7 @@ newtonParseConstraint(State * N, Scope * currentScope)
 	}
 	else
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_PquantityExpression, kNoisyIrNodeTypeMax);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PquantityExpression, kNewtonIrNodeTypeMax);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PquantityExpression);
 	}
 
@@ -919,7 +918,7 @@ newtonParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sc
 {
 	if (!peekCheck(N, 1, expectedType))
 	{
-		newtonParserSyntaxError(N, expectedType, kNoisyIrNodeTypeMax);
+		newtonParserSyntaxError(N, expectedType, kNewtonIrNodeTypeMax);
 		newtonParserErrorRecovery(N, expectedType);
 	}
 
@@ -1064,10 +1063,10 @@ newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction
 		flexprint(N->Fe, N->Fm, N->Fperr, "\" %s %s.\n\n\t%s", EsyntaxB, gProductionDescriptions[currentlyParsingTokenOrProduction], EsyntaxC);
 	}
 
-	if (((expectedProductionOrToken > kNewtonIrNodeType_TMax) && (expectedProductionOrToken < kNewtonIrNodeType_PMax)) || (expectedProductionOrToken == kNoisyIrNodeTypeMax))
+	if (((expectedProductionOrToken > kNewtonIrNodeType_TMax) && (expectedProductionOrToken < kNewtonIrNodeType_PMax)) || (expectedProductionOrToken == kNewtonIrNodeTypeMax))
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, " one of:\n\n\t\t");
-		for (int i = 0; i < kNoisyIrNodeTypeMax && gNewtonFirsts[currentlyParsingTokenOrProduction][i] != kNoisyIrNodeTypeMax; i++)
+		for (int i = 0; i < kNewtonIrNodeTypeMax && gNewtonFirsts[currentlyParsingTokenOrProduction][i] != kNewtonIrNodeTypeMax; i++)
 		{
 			if (seen > 0)
 			{
@@ -1078,7 +1077,7 @@ newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction
 			seen++;
 		}
 	}
-	else if ((currentlyParsingTokenOrProduction == kNoisyIrNodeTypeMax) && (expectedProductionOrToken < kNewtonIrNodeType_TMax))
+	else if ((currentlyParsingTokenOrProduction == kNewtonIrNodeTypeMax) && (expectedProductionOrToken < kNewtonIrNodeType_TMax))
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, ":\n\n\t\t");
 		flexprint(N->Fe, N->Fm, N->Fperr, "'%s'", gNewtonTokenDescriptions[expectedProductionOrToken]);
@@ -1134,7 +1133,7 @@ newtonParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToken)
 	}
 
 	/*
-	while (!inFollow(N, expectedProductionOrToken, gNewtonFollows) && N->tokenList != NULL)
+	while (!inFollow(N, expectedProductionOrToken, gNewtonFollows, kNewtonIrNodeTypeMax) && N->tokenList != NULL)
 	{
 		 *
 		 *	Retrieve token and discard...

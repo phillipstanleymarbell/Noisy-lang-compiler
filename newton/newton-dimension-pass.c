@@ -62,9 +62,9 @@
 
 extern unsigned long int    bigNumberOffset;
 extern int      primeNumbers[168];
-extern const char *     gNewtonTokenDescriptions[kNoisyIrNodeTypeMax];
+extern const char *     gNewtonTokenDescriptions[];
 extern char *		gNewtonAstNodeStrings[];
-extern int		gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
+extern int		gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax];
 
 extern void		fatal(State *  N, const char *  msg);
 extern void		error(State *  N, const char *  msg);
@@ -98,12 +98,12 @@ newtonDimensionPassParseFile(State *  N, Scope *  currentScope)
 void
 newtonDimensionPassParseRuleList(State *  N, Scope *  currentScope)
 {
-    if (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts))
+    if (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		newtonDimensionPassParseRule(N, currentScope);
 	}
 
-    while (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts))
+    while (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		newtonDimensionPassParseRule(N, currentScope);
 	}
@@ -164,7 +164,7 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 	 *  name syntax is optional
 	 */
 	IrNode *    unitName = NULL;
-	if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts))
+	if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 	  unitName = newtonParseName(N, currentScope);
 	}
@@ -173,7 +173,7 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 	 *  abbreviation syntax is also optional
 	 */
 	IrNode *    unitAbbreviation = NULL;
-	if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts))
+	if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 	  unitAbbreviation = newtonParseSymbol(N, currentScope);
 	}
@@ -188,13 +188,13 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 		/*
          *  just gobble tokens for expressions 
          */
-		while(inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts) ||
-			  inFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFirsts) ||
-			  inFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts) ||
-			  inFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts) ||
-			  inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts) ||
-			  inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts) ||
-			  inFirst(N, kNewtonIrNodeType_PquantityFactor, gNewtonFirsts) ||
+		while(inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
+			  inFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
+			  inFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
+			  inFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
+			  inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
+			  inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
+			  inFirst(N, kNewtonIrNodeType_PquantityFactor, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
 			  lexPeek(N, 1)->type == kNewtonIrNodeType_TatSign
             )
         {

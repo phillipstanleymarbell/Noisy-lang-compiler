@@ -61,7 +61,7 @@
 
 
 extern char *		gNewtonAstNodeStrings[];
-extern int		gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
+extern int		gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax];
 
 extern void		fatal(State *  N, const char *  msg);
 extern void		error(State *  N, const char *  msg);
@@ -85,11 +85,11 @@ newtonParseNumericExpression(State * N, Scope * currentScope)
     IrNode *    leftTerm;
     IrNode *    rightTerm;
 
-    if (inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts))
+    if (inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts, kNewtonIrNodeTypeMax))
     {
         leftTerm = newtonParseNumericTerm(N, currentScope);
 
-        while (inFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFirsts))
+        while (inFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
         {
             IrNode *    binOp = newtonParseLowPrecedenceBinaryOp(N, currentScope);
             addLeaf(N, leftTerm, binOp);
@@ -123,7 +123,7 @@ newtonParseNumericTerm(State * N, Scope * currentScope)
                         NULL /* right child */,
                         lexPeek(N, 1)->sourceInfo /* source info */);
     intermediate->value = 1;
-    if (inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts))
+    if (inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
     {
         addLeaf(N, intermediate, newtonParseUnaryOp(N, currentScope));
         intermediate->value *= -1;
@@ -134,7 +134,7 @@ newtonParseNumericTerm(State * N, Scope * currentScope)
 
     addLeafWithChainingSeq(N, intermediate, leftFactor);
 
-    while (inFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts))
+    while (inFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
     {
         IrNode *    binOp = newtonParseMidPrecedenceBinaryOp(N, currentScope);
         addLeafWithChainingSeq(N, intermediate, binOp);
@@ -180,7 +180,7 @@ newtonParseNumericFactor(State * N, Scope * currentScope)
         fatal(N, "newtonParseQuantityFactor: missed a case in factor\n");
     }
 
-    if (inFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts))
+    if (inFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
     {
         addLeaf(N, node, newtonParseHighPrecedenceBinaryOp(N, currentScope));
 
@@ -214,7 +214,7 @@ newtonParseQuantityExpression(State * N, Scope * currentScope)
 
     N->currentParameterNumber = 0;
 
-    if (inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts))
+    if (inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
         IrNode *    leftTerm = newtonParseQuantityTerm(N, currentScope);
         expression->value = leftTerm->value;
@@ -222,7 +222,7 @@ newtonParseQuantityExpression(State * N, Scope * currentScope)
         addLeaf(N, expression, leftTerm);
 
 
-        while (inFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFirsts))
+        while (inFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
 		{
             addLeafWithChainingSeq(N, expression, newtonParseLowPrecedenceBinaryOp(N, currentScope));
 
@@ -255,7 +255,7 @@ newtonParseQuantityTerm(State * N, Scope * currentScope)
 
     bool isUnary = false;
 
-    if (inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts))
+    if (inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
     {
         addLeaf(N, intermediate, newtonParseUnaryOp(N, currentScope));
         isUnary = true;
@@ -289,7 +289,7 @@ newtonParseQuantityTerm(State * N, Scope * currentScope)
 
     IrNode *    rightFactor;
 
-    while (inFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts))
+    while (inFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
     {
         IrNode *    binOp = newtonParseMidPrecedenceBinaryOp(N, currentScope);
         addLeafWithChainingSeq(N, intermediate, binOp);
@@ -409,7 +409,7 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
     /*
      * e.g.) (acceleration * mass) ** (3 + 5)
      */
-    if (inFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts))
+    if (inFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
     {
         addLeaf(N, intermediate, newtonParseHighPrecedenceBinaryOp(N, currentScope));
 
@@ -569,7 +569,7 @@ newtonParseInteger(State * N, Scope * currentScope)
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
-    if (inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts))
+    if (inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
     {
         addLeaf(N, node, newtonParseUnaryOp(N, currentScope));
         node->value = -1;
