@@ -624,7 +624,7 @@ lexPeek(State *  N, int lookAhead)
 
 
 void
-lexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
+lexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexPrintToken);
 
@@ -662,7 +662,7 @@ lexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kNoisyIr
 			}
 			else
 			{
-				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in noisyLexPrintToken <<<", t->type);
+				flexprint(N->Fe, N->Fm, N->Fperr, ">>>Unhandled IR node type [%d] in lexPrintToken (code is still specific to Noisy).<<<", t->type);
 				//fatal(N, Esanity);
 			}
 		}
@@ -670,7 +670,7 @@ lexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kNoisyIr
 }
 
 void
-lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
+lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexDebugPrintToken);
 
@@ -711,7 +711,7 @@ lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kNo
 			}
 			else
 			{
-				flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG: unhandled type [%d] in lexDebugPrintToken <<<", t->type);
+				flexprint(N->Fe, N->Fm, N->Fperr, ">>>Unhandled IR node type [%d] in lexPrintToken (code is still specific to Noisy).<<<", t->type);
 				//fatal(N, Esanity);
 			}
 		}
@@ -722,7 +722,7 @@ lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kNo
 }
 
 void
-lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
+lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenDescriptionArray[])
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexPeekPrint);
 
@@ -815,8 +815,8 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 					}
 					else
 					{
-						flexprint(N->Fe, N->Fm, N->Fperr, ">>>BUG/TODO: un-handled type [%d] in noisyLexPeekPrint <<<", tmp->type);
-						fatal(N, Esanity);
+						flexprint(N->Fe, N->Fm, N->Fperr, ">>>Unhandled IR node type [%d] in lexPrintToken (code is still specific to Noisy).<<<", tmp->type);
+						//fatal(N, Esanity);
 					}
 				}
 			}

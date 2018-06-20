@@ -606,13 +606,12 @@ newtonParseIdentifier(State *  N, Scope *  currentScope)
 	if (peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
 	{
 		n = newtonParseIdentifierDefinitionTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
+
 		return n;
 	}
-	else
-	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
-	}
+
+	newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax);
+	newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
 
 	return NULL;
 }

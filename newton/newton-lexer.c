@@ -473,7 +473,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 		return;
 	}
 
-	for (int i = 0; i < kNoisyIrNodeTypeMax; i++)
+	for (int i = 0; i < kNewtonIrNodeTypeMax; i++)
 	{
 		if ((gNewtonTokenDescriptions[i] != NULL) && !strcmp(gNewtonTokenDescriptions[i], N->currentToken))
 		{
