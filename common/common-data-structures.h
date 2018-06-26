@@ -55,6 +55,7 @@ typedef enum
 	/*
 	 *	Noisy Tokens
 	 */
+	kNoisyIrNodeType_TMin,
 	kNoisyIrNodeType_TaddAs,
 	kNoisyIrNodeType_Tadt,
 	kNoisyIrNodeType_Talpha,
@@ -150,10 +151,14 @@ typedef enum
 	kNoisyIrNodeType_Tvector,
 	kNoisyIrNodeType_TxorAs,
 
+	/*
+	 *	Code depends on this bringing up the rear for Noisy tokens.
+	 */
+	kNoisyIrNodeType_TMax,
+
 	kNoisyIrNodeType_ZbadCharConst,
 	kNoisyIrNodeType_ZbadStringConst,
 	kNoisyIrNodeType_ZbadIdentifier,
-
 
 	/*
 	 *	Epsilon and $ (i.e., EOF) need to be in same ordinal set as tokens
@@ -162,15 +167,12 @@ typedef enum
 	kNoisyIrNodeType_Zeof,
 
 
-	/*
-	 *	Code depends on this bringing up the rear for Noisy tokens.
-	 */
-	kNoisyIrNodeType_TMax,
 
 
 	/*
 	 *	Noisy grammar productions.
 	 */
+	kNoisyIrNodeType_PMin,
 	kNoisyIrNodeType_Pcharacter,
 	kNoisyIrNodeType_PreservedToken,
 	kNoisyIrNodeType_PzeroNine,
@@ -261,6 +263,7 @@ typedef enum
 	/*
 	 *	Newton tokens
 	 */
+	kNewtonIrNodeType_TMin,
 	kNewtonIrNodeType_TEnglish,
 	kNewtonIrNodeType_TSpanish,
 	kNewtonIrNodeType_TatSign,
@@ -301,20 +304,22 @@ typedef enum
 	kNewtonIrNodeType_TstringConst,
 	kNewtonIrNodeType_Tsymbol,
 	kNewtonIrNodeType_Tto,
-	
-	kNewtonIrNodeType_ZbadIdentifier,
-	kNewtonIrNodeType_ZbadStringConst,
-	kNewtonIrNodeType_Zeof,
-	kNewtonIrNodeType_Zepsilon,
 
 	/*
 	 *	Code depends on this bringing up the rear for Newton Tokens.
 	 */
 	kNewtonIrNodeType_TMax,
 	
+	kNewtonIrNodeType_ZbadIdentifier,
+	kNewtonIrNodeType_ZbadStringConst,
+	kNewtonIrNodeType_Zeof,
+	kNewtonIrNodeType_Zepsilon,
+
+	
 	/*
 	 *	Newton grammar productions
 	 */
+	kNewtonIrNodeType_PMin,
 	kNewtonIrNodeType_PbaseSignal,
 	kNewtonIrNodeType_PcompareOp,
 	kNewtonIrNodeType_Pconstant,
@@ -349,6 +354,11 @@ typedef enum
 	 *	Code depends on this bringing up the rear for Newton Productions.
 	 */
 	kNewtonIrNodeType_PMax,
+
+
+	/*
+	 *	Code depends on this bringing up the rear for Newton.
+	 */
 	kNewtonIrNodeTypeMax,
 
 	/*

@@ -54,7 +54,7 @@ typedef enum
 
 
 
-void		noisyParserSemanticError(State *  N, const char * format, ...);
+void		noisyParserSemanticError(State *  N, IrNodeType currentlyParsingProduction, char *  details);
 void		noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingProduction, IrNodeType expectedProductionOrToken);
 void		noisyParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToken) __attribute__((noreturn));
 

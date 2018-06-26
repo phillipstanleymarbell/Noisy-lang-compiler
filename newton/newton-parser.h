@@ -35,7 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void			newtonParserSemanticError(State *  N, const char * format, ...);
+void			newtonParserSemanticError(State *  N, IrNodeType currentlyParsingTokenOrProduction, char *  details);
 void			newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingProduction, IrNodeType expectedProductionOrToken);
 void			newtonParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToken) __attribute__((noreturn));
 

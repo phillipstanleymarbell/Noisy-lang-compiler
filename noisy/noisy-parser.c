@@ -41,6 +41,7 @@
 #include <setjmp.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -96,10 +97,8 @@
  */
 
 
-extern char *		gProductionStrings[];
 extern char *		gProductionDescriptions[];
-extern const char *	gReservedTokenDescriptions[];
-extern const char *	gTerminalStrings[];
+extern const char *	gNoisyTokenDescriptions[];
 extern char *		gAstNodeStrings[];
 extern int		gNoisyFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax];
 extern int		gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax];
@@ -712,7 +711,10 @@ noisyParseTypeName(State *  N, Scope *  scope)
 		id2 = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, progtypeName2scope(N, id1->symbol->identifier));
 		if (id2->symbol == NULL)
 		{
-			noisyParserSemanticError(N, "%s'%s%s%s'\n", Eundeclared, id1->symbol->identifier, "->", "noisyParseTypeName: semantic Error" /*id2->symbol->identifier*/);
+			char *	details;
+			
+			asprintf(&details, "%s: '%s%s%s'\n", Eundeclared, id1->symbol->identifier, "->", "noisyParseTypeName: semantic Error" /*id2->symbol->identifier*/);
+			noisyParserSemanticError(N, kNoisyIrNodeType_Ptypename, details);
 		}
 		idsym = id2->symbol;
 
@@ -723,7 +725,10 @@ noisyParseTypeName(State *  N, Scope *  scope)
 		idsym = noisySymbolTableSymbolForIdentifier(N, scope, id1->symbol->identifier);
 		if (idsym == NULL)
 		{
-			noisyParserSemanticError(N, "%s%s\n", Eundeclared, id1->symbol->identifier);
+			char *	details;
+			
+			asprintf(&details, "%s: %s\n", Eundeclared, id1->symbol->identifier);
+			noisyParserSemanticError(N, kNoisyIrNodeType_Ptypename, details);
 		}
 	}
 
@@ -1354,7 +1359,10 @@ noisyParseNamegenDefinition(State *  N, Scope *  scope)
 
 		if (sym == NULL)
 		{
-			noisyParserSemanticError(N, "%s%s\n", Eundeclared, identifier->symbol->identifier);
+			char *	details;
+			
+			asprintf(&details, "%s: %s\n", Eundeclared, identifier->symbol->identifier);
+			noisyParserSemanticError(N, kNoisyIrNodeType_PnamegenDefinition, details);
 		}
 		else
 		{
@@ -2595,7 +2603,7 @@ noisyParseTerminal(State *  N, IrNodeType expectedType)
 		noisyParserErrorRecovery(N, expectedType);
 	}
 
-	Token *	t = lexGet(N, gReservedTokenDescriptions);
+	Token *	t = lexGet(N, gNoisyTokenDescriptions);
 	IrNode *	n = genIrNode(N,	t->type,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2622,7 +2630,7 @@ noisyParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  
 		noisyParserErrorRecovery(N, expectedType);
 	}
 
-	Token *	t = lexGet(N, gReservedTokenDescriptions);
+	Token *	t = lexGet(N, gNoisyTokenDescriptions);
 	IrNode *	n = genIrNode(N,	t->type,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2658,7 +2666,7 @@ noisyParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sco
 		noisyParserErrorRecovery(N, expectedType);
 	}
 
-	Token *	t = lexGet(N, gReservedTokenDescriptions);
+	Token *	t = lexGet(N, gNoisyTokenDescriptions);
 	IrNode *	n = genIrNode(N,	t->type,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2689,24 +2697,10 @@ noisyParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sco
 
 
 
-
-
-
 void
-noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction, IrNodeType expectedProductionOrToken)
+noisyParserSyntaxAndSemanticPre(State *  N, IrNodeType currentlyParsingTokenOrProduction,
+	const char *  string1, const char *  string2, const char *  string3, const char *  string4)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParserSyntaxError);
-
-	int		seen = 0;
-
-
-	//errors++;
-
-	/*
-	 *	TODO: Other places where we need the string form of a IrNodeType
-	 *	should also use gAstNodeStrings[] like we do here, rather than 
-	 *	gProductionStrings[] and gTerminalStrings[].
-	 */
 	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n");
 	if (N->mode & kNoisyModeCGI)
 	{
@@ -2716,26 +2710,59 @@ noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction,
 	if (N->mode & kNoisyModeCGI)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\t%s, line %d position %d, %s %s\"",
-						EsyntaxA,
+						string1,
 						lexPeek(N, 1)->sourceInfo->lineNumber,
 						lexPeek(N, 1)->sourceInfo->columnNumber,
-						EsyntaxD,
+						string4,
 						kNoisyErrorTokenHtmlTagOpen);
-		lexPrintToken(N, lexPeek(N, 1), gReservedTokenDescriptions);
-		flexprint(N->Fe, N->Fm, N->Fperr, "\"%s %s %s.<br><br>%s%s", kNoisyErrorTokenHtmlTagClose, EsyntaxB, gProductionDescriptions[currentlyParsingTokenOrProduction], kNoisyErrorDetailHtmlTagOpen, EsyntaxC);
+		lexPrintToken(N, lexPeek(N, 1), gNoisyTokenDescriptions);
+		flexprint(N->Fe, N->Fm, N->Fperr, "\"%s %s %s.<br><br>%s%s",
+			kNoisyErrorTokenHtmlTagClose,
+			string2,
+			(currentlyParsingTokenOrProduction > kNoisyIrNodeType_TMax ?
+				gProductionDescriptions[currentlyParsingTokenOrProduction] :
+				gNoisyTokenDescriptions[currentlyParsingTokenOrProduction]),
+			kNoisyErrorDetailHtmlTagOpen,
+			string3);
 	}
 	else
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\t%s, %s line %d position %d, %s \"",
-						EsyntaxA,
+						string1,
 						lexPeek(N, 1)->sourceInfo->fileName,
 						lexPeek(N, 1)->sourceInfo->lineNumber,
 						lexPeek(N, 1)->sourceInfo->columnNumber,
-						EsyntaxD);
-		lexPrintToken(N, lexPeek(N, 1), gReservedTokenDescriptions);
-		flexprint(N->Fe, N->Fm, N->Fperr, "\" %s %s.\n\n\t%s", EsyntaxB, gProductionDescriptions[currentlyParsingTokenOrProduction], EsyntaxC);
+						string4);
+		lexPrintToken(N, lexPeek(N, 1), gNoisyTokenDescriptions);
+		flexprint(N->Fe, N->Fm, N->Fperr, "\" %s %s.\n\n\t%s",
+			string2,
+			(currentlyParsingTokenOrProduction > kNoisyIrNodeType_TMax ?
+				gProductionDescriptions[currentlyParsingTokenOrProduction] :
+				gNoisyTokenDescriptions[currentlyParsingTokenOrProduction]),
+			string3);
+	}	
+}
+
+void
+noisyParserSyntaxAndSemanticPost(State *  N)
+{
+	if (N->mode & kNoisyModeCGI)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s</b>", kNoisyErrorDetailHtmlTagClose);
 	}
 
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n\n");	
+}
+
+void
+noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction, IrNodeType expectedProductionOrToken)
+{
+	int	seen = 0;
+
+
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserSyntaxError);
+
+	noisyParserSyntaxAndSemanticPre(N, currentlyParsingTokenOrProduction, EsyntaxA, EsyntaxB, EsyntaxC, EsyntaxD);
 	if (((expectedProductionOrToken > kNoisyIrNodeType_TMax) && (expectedProductionOrToken < kNoisyIrNodeType_PMax)) || (expectedProductionOrToken == kNoisyIrNodeTypeMax))
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, " one of:\n\n\t\t");
@@ -2746,14 +2773,14 @@ noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction,
 				flexprint(N->Fe, N->Fm, N->Fperr, ",\n\t\t");
 			}
 
-			flexprint(N->Fe, N->Fm, N->Fperr, "'%s'", gReservedTokenDescriptions[gNoisyFirsts[currentlyParsingTokenOrProduction][i]]);
+			flexprint(N->Fe, N->Fm, N->Fperr, "'%s'", gNoisyTokenDescriptions[gNoisyFirsts[currentlyParsingTokenOrProduction][i]]);
 			seen++;
 		}
 	}
 	else if ((currentlyParsingTokenOrProduction == kNoisyIrNodeTypeMax) && (expectedProductionOrToken < kNoisyIrNodeType_TMax))
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, ":\n\n\t\t");
-		flexprint(N->Fe, N->Fm, N->Fperr, "'%s'", gReservedTokenDescriptions[expectedProductionOrToken]);
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s", gNoisyTokenDescriptions[expectedProductionOrToken]);
 	}
 	else
 	{
@@ -2761,37 +2788,18 @@ noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction,
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fperr, ".\n\n\tInstead, saw:\n\n");
-	lexPeekPrint(N, 5, 0, gReservedTokenDescriptions);
-	
-	if (N->mode & kNoisyModeCGI)
-	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "%s</b>", kNoisyErrorDetailHtmlTagClose);
-	}
+	lexPeekPrint(N, 5, 0, gNoisyTokenDescriptions);
 
-	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n\n");
+	noisyParserSyntaxAndSemanticPost(N);
 }
 
 
 void
-noisyParserSemanticError(State *  N, const char * format, ...)
+noisyParserSemanticError(State *  N, IrNodeType currentlyParsingTokenOrProduction, char *  details)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParserSemanticError);
-
-	va_list	arg;
-
-	/*
-	 *	We use varargs so that we can pass in a list of strings that should
-	 *	get concatenated, akin to joining them with "+" in Limbo.
-	 */
-	if (N->verbosityLevel & kNoisyVerbosityDebugParser)
-	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParserSemanticError(), Ignoring semantic error...\n");
-		flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParserSemanticError(), Source file line %llu\n", lexPeek(N, 1)->sourceInfo->lineNumber);
-	}
-
-	va_start(arg, format);
-//	flexprint(N->Fe, N->Fm, N->Fperr, format, arg);
-	va_end(arg);
+	noisyParserSyntaxAndSemanticPre(N, currentlyParsingTokenOrProduction, EsemanticsA, EsemanticsB, details, EsemanticsD);
+	noisyParserSyntaxAndSemanticPost(N);
 }
 
 

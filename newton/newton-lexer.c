@@ -124,7 +124,7 @@ newtonLexInit(State *  N, char *  fileName)
 		while (N->columnNumber < N->lineLength)
 		{
 
-      // flexprint(N->Fe, N->Fm, N->Fperr, "%c", cur(N));
+			//flexprint(N->Fe, N->Fm, N->Fperr, "%c\n", cur(N));
 			if (isOperatorOrSeparator(N, cur(N)))
 			{
 				switch (cur(N))
@@ -135,7 +135,7 @@ newtonLexInit(State *  N, char *  fileName)
 					 *
 					 *	We process the chars see so far as a finished token, then handle the following chars.
 					 */
-                  // I DONT HAVE ANY OF THESE
+					//TODO: exponent "**" should be handled here.
 
 
 					/*
@@ -164,8 +164,7 @@ newtonLexInit(State *  N, char *  fileName)
 						checkSingle(N, kNewtonIrNodeType_TrightParen);
 						continue;
 					}
-					
-                    case '{':
+					case '{':
 					{
 						checkSingle(N, kNewtonIrNodeType_TleftBrace);
 						continue;
@@ -176,66 +175,59 @@ newtonLexInit(State *  N, char *  fileName)
 						checkSingle(N, kNewtonIrNodeType_TrightBrace);
 						continue;
 					}
-					
-
-                    case '+':
+					case '+':
 					{
 						checkSingle(N, kNewtonIrNodeType_Tplus);
 						continue;
 					}
-
 					case '-':
 					{
 						checkSingle(N, kNewtonIrNodeType_Tminus);
 						continue;
 					}
-                    case '*':
+					case '*':
 					{
-                        checkMul(N);
+						checkMul(N);
 						continue;
 					}
-                    
-                    case '/':
+					case '/':
 					{
 						checkSingle(N, kNewtonIrNodeType_Tdiv);
 						continue;
 					}
 					
-                    case ',':
+					case ',':
 					{
 						checkSingle(N, kNewtonIrNodeType_Tcomma);
 						continue;
 					}
-                    
-                    case ';':
+					case ';':
 					{
 						checkSingle(N, kNewtonIrNodeType_Tsemicolon);
 						continue;
 					}
-                    
-                    case ':':
+					case ':':
 					{
 						checkSingle(N, kNewtonIrNodeType_Tcolon);
 						continue;
 					}
 
-                    case '.':
-                    {
-                        checkDot(N);
-                        continue;
-                    }
-					
+					case '.':
+					{
+						checkDot(N);
+						continue;
+					}
 
 					/*
 					 *	These tokens require special handling beyond being paired with an equals,
 					 *	being part of a number, or doubled-up (e.g., ">>", etc.).
 					 */
-                    case '@':
-                    {
-                        checkProportionality(N);
-                        continue;
-                    }
-                    case '>':
+					case '@':
+					{
+						checkProportionality(N);
+						continue;
+					}
+					case '>':
 					{
 						checkGt(N);
 						continue;
@@ -250,7 +242,6 @@ newtonLexInit(State *  N, char *  fileName)
 						checkDoubleQuote(N);
 						continue;
 					}
-
 					case '#':
 					{
 						checkComment(N);
@@ -276,7 +267,7 @@ newtonLexInit(State *  N, char *  fileName)
 
 					default:
 					{
-                        consolePrintBuffers(N);
+						consolePrintBuffers(N);
 						fatal(N, Esanity);
 					}
 				}
@@ -301,27 +292,23 @@ newtonLexInit(State *  N, char *  fileName)
 										N->lineNumber /* lineNumber */,
 										N->columnNumber /* columnNumber */,
 										0 /* length */);
-	  								
-	 Token *		eofToken = lexAllocateToken(N,	kNewtonIrNodeType_Zeof /* type */,
-	 								NULL /* identifier */,
-	 								0 /* integerConst */,
-	 								0.0 /* realConst */,
-	 								NULL /* stringConst */,
-	 								eofSourceInfo /* sourceInfo */);
-	 lexPut(N, eofToken);
+	 								
+	Token *		eofToken = lexAllocateToken(N,	kNewtonIrNodeType_Zeof /* type */,
+									NULL /* identifier */,
+									0 /* integerConst */,
+									0.0 /* realConst */,
+									NULL /* stringConst */,
+									eofSourceInfo /* sourceInfo */);
+	lexPut(N, eofToken);
 
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
-		// flexprint(N->Fe, N->Fm, N->Fperr, "Done lexing...\n");
-
-		// flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
 		Token *	p = N->tokenList;
 		while (p != NULL)
 		{
 			lexDebugPrintToken(N, p, gNewtonTokenDescriptions);
 			p = p->next;
 		}
-		// flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
 	}
 
 
@@ -364,7 +351,7 @@ checkSingle(State *  N, IrNodeType tokenType)
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "checkSingle(), tokenType = %d\n", tokenType);
-//fprintf(stderr, "checkSingle(), tokenType = %d\n", tokenType);
+		//fprintf(stderr, "checkSingle(), tokenType = %d\n", tokenType);
 	}
 
 	Token *		newToken = lexAllocateToken(N,	tokenType /* type	*/,
@@ -460,7 +447,7 @@ finishToken(State *  N)
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
-fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
+		//fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 	}
 
 	/*
@@ -473,7 +460,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 		return;
 	}
 
-	for (int i = 0; i < kNewtonIrNodeTypeMax; i++)
+	for (int i = 0; i < kCommonIrNodeTypeMax; i++)
 	{
 		if ((gNewtonTokenDescriptions[i] != NULL) && !strcmp(gNewtonTokenDescriptions[i], N->currentToken))
 		{
@@ -568,7 +555,7 @@ makeNumericConst(State *  N)
 			 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
 			 */
 			done(N, newToken);
-      fatal(N, "something gone wrong with newton lexer decimals\n");
+			fatal(N, "something gone wrong with newton lexer decimals\n");
 
 			return;
 		}
@@ -867,11 +854,7 @@ isOperatorOrSeparator(State *  N, char c)
 	switch (c)
 	{
 		case '~':
-		case '!':
-		case '%':
-        case '@':
-		case '^':
-		case '&':
+		case '@':
 		case '*':
 		case '(':
 		case ')':
@@ -883,12 +866,9 @@ isOperatorOrSeparator(State *  N, char c)
 		case '<':
 		case ';':
 		case ':':
-		case '\'':
-		case '\"':
+		case '"':
 		case '{':
 		case '}':
-		case '[':
-		case ']':
 		case '|':
 		case ',':
 		case '.':

@@ -41,6 +41,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <assert.h>
+#include <stdarg.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -62,7 +63,6 @@ extern unsigned long int	bigNumberOffset;
 extern int			primeNumbers[];
 extern const char *		gNewtonTokenDescriptions[];
 extern char *			gNewtonAstNodeStrings[];
-extern char *			gProductionStrings[];
 extern char *			gProductionDescriptions[];
 extern int			gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax];
 
@@ -348,7 +348,13 @@ newtonParseConstant(State * N, Scope * currentScope)
 		constantPhysics->isConstant = true;
 
 		node->value = constantExpression->value;
-		assert(node->value != 0); // TODO remove later
+
+		//assert(node->value != 0); // TODO remove later
+		if (node->value == 0)
+		{
+			newtonParserSyntaxError(N, kNewtonIrNodeType_PquantityExpression, kNewtonIrNodeTypeMax);
+			newtonParserErrorRecovery(N, kNewtonIrNodeType_PquantityExpression);	
+		}
 
 		newtonPhysicsAddExponents(N, constantPhysics, constantExpression->physics);
 
@@ -559,7 +565,7 @@ newtonParseTerminal(State *  N, IrNodeType expectedType, Scope * currentScope)
 {
 	if (!peekCheck(N, 1, expectedType))
 	{
-		newtonParserSyntaxError(N, expectedType, kNewtonIrNodeTypeMax);
+		newtonParserSyntaxError(N, expectedType, expectedType);
 		newtonParserErrorRecovery(N, expectedType);
 	}
 
@@ -610,7 +616,7 @@ newtonParseIdentifier(State *  N, Scope *  currentScope)
 		return n;
 	}
 
-	newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax);
+	newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeType_Tidentifier);
 	newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
 
 	return NULL;
@@ -818,7 +824,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 {
 	if (!peekCheck(N, 1, expectedType))
 	{
-		newtonParserSyntaxError(N, expectedType, kNewtonIrNodeTypeMax);
+		newtonParserSyntaxError(N, expectedType, expectedType);
 		newtonParserErrorRecovery(N, expectedType);
 	
 		return NULL;
@@ -852,10 +858,32 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 
 	if (physicsSearchResult == NULL)
 	{
+		/*
+		 *	Identifier use when scope parameter list is empty
+		 */	
+		if (scope->invariantParameterList == NULL)
+		{
+			char *	details;
+
+			asprintf(&details, "%s: \"%s\"\n", Eundeclared, t->identifier);
+			newtonParserSemanticError(N, kNewtonIrNodeType_Tidentifier, details);
+			free(details);
+
+			newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
+		}
+
 		physicsSearchResult = newtonParseGetPhysicsByBoundIdentifier(N, scope->invariantParameterList, t->identifier);
 	}
 
-	assert(physicsSearchResult != NULL);
+	//assert(physicsSearchResult != NULL);
+	if (physicsSearchResult == NULL)
+	{
+		/*
+		 *	Identifier use before definition.
+		 */
+		newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeType_Tidentifier);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
+	}
 
 	n->physics = deepCopyPhysicsNode(physicsSearchResult);
 	assert(n->physics->dimensions != NULL);
@@ -897,7 +925,7 @@ newtonParseConstraint(State * N, Scope * currentScope)
 		addLeafWithChainingSeq(N, node, newtonParseQuantityExpression(N, currentScope));
 
 		/*
-		 *	TODO do some epic type checking here
+		 *	TODO (Jonathan): do some epic type checking here
 		 */
 	}
 	else
@@ -918,7 +946,7 @@ newtonParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sc
 {
 	if (!peekCheck(N, 1, expectedType))
 	{
-		newtonParserSyntaxError(N, expectedType, kNewtonIrNodeTypeMax);
+		newtonParserSyntaxError(N, expectedType, expectedType);
 		newtonParserErrorRecovery(N, expectedType);
 	}
 
@@ -1017,23 +1045,10 @@ newtonGetPhysicsId(State * N, Physics * physics)
  *	Exported non-parse routines
  */
 
-
-
 void
-newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction, IrNodeType expectedProductionOrToken)
+newtonParserSyntaxAndSemanticPre(State *  N, IrNodeType currentlyParsingTokenOrProduction,
+	const char *  string1, const char *  string2, const char *  string3, const char *  string4)
 {
-	TimeStampTraceMacro(kNewtonTimeStampKeyParserSyntaxError);
-
-	int		seen = 0;
-
-
-	//errors++;
-
-	/*
-	 *	TODO: Other places where we need the string form of a IrNodeType
-	 *	should also use gAstNodeStrings[] like we do here, rather than 
-	 *	gProductionStrings[] and gTerminalStrings[].
-	 */
 	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n");
 	if (N->mode & kNoisyModeCGI)
 	{
@@ -1043,25 +1058,59 @@ newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction
 	if (N->mode & kNoisyModeCGI)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\t%s, line %d position %d, %s %s\"",
-						EsyntaxA,
+						string1,
 						lexPeek(N, 1)->sourceInfo->lineNumber,
 						lexPeek(N, 1)->sourceInfo->columnNumber,
-						EsyntaxD,
+						string4,
 						kNewtonErrorTokenHtmlTagOpen);
 		lexPrintToken(N, lexPeek(N, 1), gNewtonTokenDescriptions);
-		flexprint(N->Fe, N->Fm, N->Fperr, "\"%s %s %s.<br><br>%s%s", kNewtonErrorTokenHtmlTagClose, EsyntaxB, gProductionDescriptions[currentlyParsingTokenOrProduction], kNewtonErrorDetailHtmlTagOpen, EsyntaxC);
+		flexprint(N->Fe, N->Fm, N->Fperr, "\"%s %s %s.<br><br>%s%s",
+			kNewtonErrorTokenHtmlTagClose,
+			string2,
+			(currentlyParsingTokenOrProduction > kNewtonIrNodeType_TMax ?
+				gProductionDescriptions[currentlyParsingTokenOrProduction] :
+				gNewtonTokenDescriptions[currentlyParsingTokenOrProduction]),
+			kNewtonErrorDetailHtmlTagOpen,
+			string3);
 	}
 	else
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\t%s, %s line %d position %d, %s \"",
-						EsyntaxA,
+						string1,
 						lexPeek(N, 1)->sourceInfo->fileName,
 						lexPeek(N, 1)->sourceInfo->lineNumber,
 						lexPeek(N, 1)->sourceInfo->columnNumber,
-						EsyntaxD);
+						string4);
 		lexPrintToken(N, lexPeek(N, 1), gNewtonTokenDescriptions);
-		flexprint(N->Fe, N->Fm, N->Fperr, "\" %s %s.\n\n\t%s", EsyntaxB, gProductionDescriptions[currentlyParsingTokenOrProduction], EsyntaxC);
+		flexprint(N->Fe, N->Fm, N->Fperr, "\" %s %s.\n\n\t%s",
+			string2,
+			(currentlyParsingTokenOrProduction > kNewtonIrNodeType_TMax ?
+				gProductionDescriptions[currentlyParsingTokenOrProduction] :
+				gNewtonTokenDescriptions[currentlyParsingTokenOrProduction]),
+			string3);
 	}
+}
+
+void
+newtonParserSyntaxAndSemanticPost(State *  N)
+{
+	if (N->mode & kNoisyModeCGI)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s</b>", kNewtonErrorDetailHtmlTagClose);
+	}
+
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n\n");	
+}
+
+void
+newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction, IrNodeType expectedProductionOrToken)
+{
+	int		seen = 0;
+
+
+	TimeStampTraceMacro(kNewtonTimeStampKeyParserSyntaxError);
+
+	newtonParserSyntaxAndSemanticPre(N, currentlyParsingTokenOrProduction, EsyntaxA, EsyntaxB, EsyntaxC, EsyntaxD);
 
 	if (((expectedProductionOrToken > kNewtonIrNodeType_TMax) && (expectedProductionOrToken < kNewtonIrNodeType_PMax)) || (expectedProductionOrToken == kNewtonIrNodeTypeMax))
 	{
@@ -1077,10 +1126,10 @@ newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction
 			seen++;
 		}
 	}
-	else if ((currentlyParsingTokenOrProduction == kNewtonIrNodeTypeMax) && (expectedProductionOrToken < kNewtonIrNodeType_TMax))
+	else if ((expectedProductionOrToken >= kNewtonIrNodeType_TMin) && (expectedProductionOrToken < kNewtonIrNodeType_TMax))
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, ":\n\n\t\t");
-		flexprint(N->Fe, N->Fm, N->Fperr, "'%s'", gNewtonTokenDescriptions[expectedProductionOrToken]);
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s", gNewtonTokenDescriptions[expectedProductionOrToken]);
 	}
 	else
 	{
@@ -1090,35 +1139,16 @@ newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction
 	flexprint(N->Fe, N->Fm, N->Fperr, ".\n\n\tInstead, saw:\n\n");
 	lexPeekPrint(N, 5, 0, gNewtonTokenDescriptions);
 	
-	if (N->mode & kNoisyModeCGI)
-	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "%s</b>", kNewtonErrorDetailHtmlTagClose);
-	}
-
-	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n\n");
+	newtonParserSyntaxAndSemanticPost(N);
 }
 
 
 void
-newtonParserSemanticError(State *  N, const char * format, ...)
+newtonParserSemanticError(State *  N, IrNodeType currentlyParsingTokenOrProduction, char *  details)
 {
 	TimeStampTraceMacro(kNewtonTimeStampKeyParserSemanticError);
-
-	va_list	arg;
-
-	/*
-	 *	We use varargs so that we can pass in a list of strings that should
-	 *	get concatenated, akin to joining them with "+" in Limbo.
-	 */
-	if (N->verbosityLevel & kNoisyVerbosityDebugParser)
-	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "In newtonParserSemanticError(), Ignoring semantic error...\n");
-		flexprint(N->Fe, N->Fm, N->Fperr, "In newtonParserSemanticError(), Source file line %llu\n", lexPeek(N, 1)->sourceInfo->lineNumber);
-	}
-
-	va_start(arg, format);
-//	flexprint(N->Fe, N->Fm, N->Fperr, format, arg);
-	va_end(arg);
+	newtonParserSyntaxAndSemanticPre(N, currentlyParsingTokenOrProduction, EsemanticsA, EsemanticsB, details, EsemanticsD);
+	newtonParserSyntaxAndSemanticPost(N);
 }
 
 
