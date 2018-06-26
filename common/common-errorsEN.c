@@ -51,10 +51,12 @@ const char	EbadCgiQuery[]				= "bad CGI query (no request, or request not a HEAD
 const char	Emkstemps[]				= "mkstemps() failed";
 const char	EelementOrStar[]			= "Sanity check failed: Expected element or \"*\"";
 const char	EsyntaxA[]				= "Syntax error";
-const char	EsyntaxB[]				= "while parsing grammar";
+const char	EsyntaxB[]				= "while parsing";
 const char	EsyntaxC[]				= "Expected";
 const char	EsyntaxD[]				= "at";
-const char	Esemantics[]				= "Semantics error";
+const char	EsemanticsA[]				= "Semantics error";
+const char	EsemanticsB[]				= "while parsing";
+const char	EsemanticsD[]				= "followed by";
 const char	EassignTypesSanity[]			= "Sanity check failed in assignTypes(): non-identifiers can't be assigned a type";
 const char	EtokenTooLong[]				= "Saw a token longer than kNoisyMaxBufferLength during lexing";
 const char	EstringTooLongOrWithNewline[]		= "Saw a string longer than kNoisyMaxBufferLength or one containing an unescaped newline, during lexing";
@@ -67,11 +69,11 @@ const char	Efd2path[]				= "fcntl() failed to get path for file descriptor";
 /*
  *	These are mostly passed in eSemantics()
  */
-const char	Eundeclared[]			= "Variable use before declaration: ";
+const char	Eundeclared[]				= "Variable use before declaration";
 
 
 
 /*
  *	HTML-format errors for CGI version
  */
-const char	WcgiAsync[] 			= "\n<span width=\"580\" style=\"background-color:FFCC00; color:#FF0000\"><br><b>&#9888;</b>&nbsp;&nbsp;&nbsp; NoisyCompiler halted the computation. Memory or CPU usage limit exceeded.<br><br>See the \"SETCPULIMIT\" and \"SETMEMLIMIT\" commands; \"help\" for more information.</span>\n";
+const char	WcgiAsync[] 				= "\n<span width=\"580\" style=\"background-color:FFCC00; color:#FF0000\"><br><b>&#9888;</b>&nbsp;&nbsp;&nbsp; NoisyCompiler halted the computation. Memory or CPU usage limit exceeded.<br><br>See the \"SETCPULIMIT\" and \"SETMEMLIMIT\" commands; \"help\" for more information.</span>\n";

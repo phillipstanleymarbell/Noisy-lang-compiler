@@ -51,7 +51,7 @@
 /*
  *	Strings representing the various productions, for debugging and error reporting
  */
-const char *	gProductionDescriptions[kNoisyIrNodeTypeMax] =
+const char *	gProductionDescriptions[kCommonIrNodeTypeMax] =
 {
 	[kNoisyIrNodeType_Pcharacter]			= "character",
 	[kNoisyIrNodeType_PreservedToken]		= "reserved operator",
@@ -121,83 +121,4 @@ const char *	gProductionDescriptions[kNoisyIrNodeTypeMax] =
 	[kNoisyIrNodeType_PcmpOp]			= "comparator operator",
 	[kNoisyIrNodeType_PbooleanOp]			= "Boolean operator",
 	[kNoisyIrNodeType_PunaryOp]			= "unary operator",
-};
-
-
-/*
- *	TODO: Places where we need the string form of a NoisyIrNodeType should also use gNoisyAstNodeStrings[], not
- *	gProductionStrings[] and gTerminalStrings[]. Get rid of gProductionStrings[] and gTerminalStrings[]
- */
-
-const char *	gProductionStrings[kNoisyIrNodeTypeMax] =
-{
-	[kNoisyIrNodeType_Pcharacter]			= "NoisyIrNodeType_Pcharacter",
-	[kNoisyIrNodeType_PreservedToken]		= "NoisyIrNodeType_PreservedToken",
-	[kNoisyIrNodeType_PzeroNine]			= "NoisyIrNodeType_PzeroNine",
-	[kNoisyIrNodeType_PoneNine]			= "NoisyIrNodeType_PoneNine",
-	[kNoisyIrNodeType_Pradix]			= "NoisyIrNodeType_Pradix",
-	[kNoisyIrNodeType_PcharConst]			= "NoisyIrNodeType_PcharConst",
-	[kNoisyIrNodeType_PintConst]			= "NoisyIrNodeType_PintConst",
-	[kNoisyIrNodeType_PboolConst]			= "NoisyIrNodeType_PboolConst",
-	[kNoisyIrNodeType_PdRealConst]			= "NoisyIrNodeType_PdRealConst",
-	[kNoisyIrNodeType_PeRealConst]			= "NoisyIrNodeType_PeRealConst",
-	[kNoisyIrNodeType_PrealConst]			= "NoisyIrNodeType_PrealConst",
-	[kNoisyIrNodeType_PstringConst]			= "NoisyIrNodeType_PstringConst",
-	[kNoisyIrNodeType_PidentifierChar]		= "NoisyIrNodeType_PidentiferChar",
-	[kNoisyIrNodeType_Pidentifier]			= "NoisyIrNodeType_Pidentifier",
-	[kNoisyIrNodeType_Pprogram]			= "NoisyIrNodeType_Pprogram",
-	[kNoisyIrNodeType_PprogtypeDeclaration]		= "NoisyIrNodeType_PprogtypeDeclaration",
-	[kNoisyIrNodeType_PprogtypeBody]		= "NoisyIrNodeType_PprogtypeBody",
-	[kNoisyIrNodeType_PprogtypeTypenameDeclaration]	= "NoisyIrNodeType_PprogtypeTypenameDeclaration",
-	[kNoisyIrNodeType_PconstantDeclaration]		= "NoisyIrNodeType_PconstantDeclaration",
-	[kNoisyIrNodeType_PtypeDeclaration]		= "NoisyIrNodeType_PtypeDeclaration",
-	[kNoisyIrNodeType_PadtTypeDeclaration]		= "NoisyIrNodeType_PadtTypeDeclaration",
-	[kNoisyIrNodeType_PnamegenDeclaration]		= "NoisyIrNodeType_PnamegenDeclaration",
-	[kNoisyIrNodeType_PidentifierOrNil]		= "NoisyIrNodeType_PidentifierOrNil",
-	[kNoisyIrNodeType_PidentifierOrNilList]		= "NoisyIrNodeType_PidentifierOrNilList",
-	[kNoisyIrNodeType_PidentifierList]		= "NoisyIrNodeType_PidentifierList",
-	[kNoisyIrNodeType_PtypeExpression]		= "NoisyIrNodeType_PtypeExpression",
-	[kNoisyIrNodeType_Ptypename]			= "NoisyIrNodeType_Ptypename",
-	[kNoisyIrNodeType_Ptolerance]			= "NoisyIrNodeType_Ptolerance",
-	[kNoisyIrNodeType_PerrorMagnitudeTolerance]	= "NoisyIrNodeType_PerrorMagnitudeTolerance",
-	[kNoisyIrNodeType_PlossTolerance]		= "NoisyIrNodeType_PlossTolerance",
-	[kNoisyIrNodeType_PlatencyTolerance]		= "NoisyIrNodeType_PlatencyTolerance",
-	[kNoisyIrNodeType_PbasicType]			= "NoisyIrNodeType_PbasicType",
-	[kNoisyIrNodeType_PrealType]			= "NoisyIrNodeType_PrealType",
-	[kNoisyIrNodeType_PfixedType]			= "NoisyIrNodeType_PfixedType",
-	[kNoisyIrNodeType_PanonAggregateType]		= "NoisyIrNodeType_PanonAggregateType",
-	[kNoisyIrNodeType_ParrayType]			= "NoisyIrNodeType_ParrayType",
-	[kNoisyIrNodeType_PlistType]			= "NoisyIrNodeType_PlistType",
-	[kNoisyIrNodeType_PtupleType]			= "NoisyIrNodeType_PtupleType",
-	[kNoisyIrNodeType_PsetType]			= "NoisyIrNodeType_PsetType",
-	[kNoisyIrNodeType_PinitList]			= "NoisyIrNodeType_PinitList",
-	[kNoisyIrNodeType_PindexedInitList]		= "NoisyIrNodeType_PindexedInitList",
-	[kNoisyIrNodeType_PstarInitList]		= "NoisyIrNodeType_PstarInitList",
-	[kNoisyIrNodeType_Pelement]			= "NoisyIrNodeType_Pelement",
-	[kNoisyIrNodeType_PnamegenDefinition]		= "NoisyIrNodeType_PnamegenDefinition",
-	[kNoisyIrNodeType_PscopedStatementList]		= "NoisyIrNodeType_PscopedStatementList",
-	[kNoisyIrNodeType_PstatementList]		= "NoisyIrNodeType_PstatementList",
-	[kNoisyIrNodeType_Pstatement]			= "NoisyIrNodeType_Pstatement",
-	[kNoisyIrNodeType_PassignOp]			= "NoisyIrNodeType_PassignOp",
-	[kNoisyIrNodeType_PmatchStatement]		= "NoisyIrNodeType_PmatchStatement",
-	[kNoisyIrNodeType_PiterationStatement]		= "NoisyIrNodeType_PiterStatement",
-	[kNoisyIrNodeType_PguardBody]			= "NoisyIrNodeType_PguardBody",
-	[kNoisyIrNodeType_Pexpression]			= "NoisyIrNodeType_Pexpression",
-	[kNoisyIrNodeType_PlistCastExpression]		= "NoisyIrNodeType_PlistCastExpression",
-	[kNoisyIrNodeType_PsetCastExpression]		= "NoisyIrNodeType_PsetCastExpression",
-	[kNoisyIrNodeType_ParrayCastExpression]		= "NoisyIrNodeType_ParrayCastExpression",
-	[kNoisyIrNodeType_PanonAggregateCastExpression]	= "NoisyIrNodeType_PanonAggregateCastExpression",
-	[kNoisyIrNodeType_PchanEventExpression]		= "NoisyIrNodeType_PchanEventExpression",
-	[kNoisyIrNodeType_Pchan2nameExpression]		= "NoisyIrNodeType_Pchan2nameExpression",
-	[kNoisyIrNodeType_Pvar2nameExpression]		= "NoisyIrNodeType_Pvar2nameExpression",
-	[kNoisyIrNodeType_Pname2chanExpression]		= "NoisyIrNodeType_Pname2chanExpression",
-	[kNoisyIrNodeType_Pterm]			= "NoisyIrNodeType_Pterm",
-	[kNoisyIrNodeType_Pfactor]			= "NoisyIrNodeType_Pfactor",
-	[kNoisyIrNodeType_PtupleValue]			= "kNoisyIrNodeType_PtupleValue",
-	[kNoisyIrNodeType_PfieldSelect]			= "NoisyIrNodeType_PfieldSelect",
-	[kNoisyIrNodeType_PhighPrecedenceBinaryOp]	= "NoisyIrNodeType_PhighPrecedenceBinaryOp",
-	[kNoisyIrNodeType_PlowPrecedenceBinaryOp]	= "NoisyIrNodeType_PlowPrecedenceBinaryOp",
-	[kNoisyIrNodeType_PcmpOp]			= "NoisyIrNodeType_PcmpOp",
-	[kNoisyIrNodeType_PbooleanOp]			= "NoisyIrNodeType_PbooleanOp",
-	[kNoisyIrNodeType_PunaryOp]			= "NoisyIrNodeType_PunaryOp",
 };

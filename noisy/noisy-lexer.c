@@ -56,7 +56,7 @@
 
 
 extern const char *	gTerminalStrings[];
-extern const char *	gReservedTokenDescriptions[];
+extern const char *	gNoisyTokenDescriptions[];
 
 
 static void		checkComment(State *  N);
@@ -372,7 +372,7 @@ noisyLexInit(State *  N, char *  fileName)
 		Token *	p = N->tokenList;
 		while (p != NULL)
 		{
-			lexDebugPrintToken(N, p, gReservedTokenDescriptions);
+			lexDebugPrintToken(N, p, gNoisyTokenDescriptions);
 			p = p->next;
 		}
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
@@ -1119,7 +1119,7 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 
 	for (int i = 0; i < kNoisyIrNodeTypeMax; i++)
 	{
-		if ((gReservedTokenDescriptions[i] != NULL) && !strcmp(gReservedTokenDescriptions[i], N->currentToken))
+		if ((gNoisyTokenDescriptions[i] != NULL) && !strcmp(gNoisyTokenDescriptions[i], N->currentToken))
 		{
 			Token *	newToken = lexAllocateToken(N,	i	/* type		*/,
 										NULL	/* identifier	*/,
