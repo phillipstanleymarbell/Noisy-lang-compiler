@@ -1,0 +1,30 @@
+
+    Hardware Overview:
+
+      Model Name: MacBook
+      Model Identifier: MacBook9,1
+      Processor Name: Intel Core m5
+      Processor Speed: 1.2 GHz
+      Number of Processors: 1
+      Total Number of Cores: 2
+      L2 Cache (per Core): 256 KB
+      L3 Cache: 4 MB
+      Memory: 8 GB
+
+changeset: 322:0aeb32f69c6f1594dd6b3f856f591f1c7b489117
+
+./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s
+
+Informational Report:
+---------------------
+
+Non-zero routine residency time upper bounds and counts (2 calls, total of 65.5150 us):
+
+    Routine                                       LexInit,         1 calls (50.0000 %), total residency = 65.515000 us (100.0000 %)
+
+
+./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt
+
+sudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s"
+
+sudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s"

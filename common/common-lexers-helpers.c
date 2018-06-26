@@ -401,20 +401,10 @@ stringToRealConst(State *  N, char *  string)
 
 	char		tmp;
 	char *		ep = &tmp;
-	char *		left;
-	char *		right;
-	int		rightLength;
-	uint64_t	integerPart, fractionalPart;
+	double		result;
 
 
-	left		= stringAtLeft(N, string, '.');
-	right		= stringAtRight(N, string, '.');
-	if (right != NULL)
-	{
-		rightLength	= strlen(right);
-	}
-
-	integerPart = strtoul(left, &ep, 0);
+	result = strtod(string, &ep);
 	if (*ep != '\0')
 	{
 		fatal(N, Esanity);
@@ -422,35 +412,8 @@ stringToRealConst(State *  N, char *  string)
 		/* Not reached */
 	}
 
-	
-	if (right == NULL)
-	{
-		/*
-		 *	stringAtLeft() makes a copy, which needs to be freed.
-		 *	(stringAtRight on the other hand does not need to make
-		 *	a copy, and doesn't).
-		 */
-		free(left);
 
-		return (double)integerPart;
-	}
-	fractionalPart	= strtoul(right, &ep, 0);
-	if (*ep != '\0')
-	{
-		fatal(N, Esanity);
-
-		/* Not reached */
-	}
-
-	/*
-	 *	stringAtLeft() makes a copy, which needs to be freed.
-	 *	(stringAtRight on the other hand does not need to make
-	 *	a copy, and doesn't).
-	 */
-	free(left);
-
-
-	return (double)integerPart + ((double)fractionalPart/pow(10.0, rightLength));
+	return result;
 }
 
 
