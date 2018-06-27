@@ -37,4 +37,4 @@
 
 #define SMT_GEN_VARNAME(varName, physics) sprintf(varName, "%s@%u", physics->identifier, physics->subindex)
 
-int irPassSmtBackend(State *  N);
+void	irPassSmtBackend(State *  N);
