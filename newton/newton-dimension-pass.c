@@ -60,14 +60,14 @@
 #include "newton-dimension-pass.h"
 
 
-extern unsigned long int    bigNumberOffset;
-extern int      primeNumbers[168];
-extern const char *     gNewtonTokenDescriptions[];
-extern char *		gNewtonAstNodeStrings[];
-extern int		gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax];
+extern unsigned long int	bigNumberOffset;
+extern int			primeNumbers[168];
+extern const char *		gNewtonTokenDescriptions[];
+extern char *			gNewtonAstNodeStrings[];
+extern int			gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax];
 
-extern void		fatal(State *  N, const char *  msg);
-extern void		error(State *  N, const char *  msg);
+extern void			fatal(State *  N, const char *  msg);
+extern void			error(State *  N, const char *  msg);
 
 
 
@@ -76,7 +76,6 @@ newtonDimensionPassParse(State *  N, Scope *  currentScope)
 {
 	newtonDimensionPassParseFile(N, currentScope);
 }
-
 
 /*
  *	kNoisyIrNodeType_PruleList
@@ -91,19 +90,14 @@ newtonDimensionPassParseFile(State *  N, Scope *  currentScope)
 {
 	newtonDimensionPassParseRuleList(N, currentScope);
 
-    assert(lexPeek(N, 1)->type == kNewtonIrNodeType_Zeof);
+	assert(lexPeek(N, 1)->type == kNewtonIrNodeType_Zeof);
 	N->tokenList = N->tokenList->next; /* skip eof token without using lexGet*/
 }
 
 void
 newtonDimensionPassParseRuleList(State *  N, Scope *  currentScope)
 {
-    if (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
-	{
-		newtonDimensionPassParseRule(N, currentScope);
-	}
-
-    while (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	while (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		newtonDimensionPassParseRule(N, currentScope);
 	}

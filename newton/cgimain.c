@@ -56,7 +56,6 @@
 #include <sys/param.h>
 #include <stdint.h>
 #include <inttypes.h>
-#include <assert.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -659,16 +658,23 @@ main(void)
 		newtonDimensionPassParse(dimensionsState, dimensionsState->newtonIrTopScope);
 
 		newtonCgiState->newtonIrTopScope->firstDimension = dimensionsState->newtonIrTopScope->firstDimension;
-		assert(newtonCgiState->newtonIrTopScope->firstDimension != NULL);
-
-		newtonCgiState->newtonIrRoot = newtonParse(newtonCgiState, newtonCgiState->newtonIrTopScope);
-
+		if(newtonCgiState->newtonIrTopScope->firstDimension != NULL);
+		{
+			newtonCgiState->newtonIrRoot = newtonParse(newtonCgiState, newtonCgiState->newtonIrTopScope);
+		}
 
 		/*
 		 *	We don't put the following into runPasses() because they
 		 *	are not general-purpose.
 		 */
 
+		/*
+		 *	SMT backend.
+		 */
+		if (newtonCgiState->irBackends & kNewtonIrBackendSmt)
+		{
+			irPassSmtBackend(N);
+		}
 
 		/*
 		 *	Dot backend.

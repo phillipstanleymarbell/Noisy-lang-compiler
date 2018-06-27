@@ -36,3 +36,5 @@
 */
 
 void	processNewtonFile(State *  N, char *  filename);
+void	version(State *  N);
+void	usage(State *  N);
