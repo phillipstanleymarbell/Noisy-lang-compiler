@@ -1,0 +1,121 @@
+#
+#	Particle(point-like) moving in an uniform magnetic field
+#
+
+time : signal = {
+      name = "second" English
+      symbol = "s";
+      derivation = none;
+}
+
+distance : signal = {
+      name = "meter" English
+      symbol = "m";
+      derivation = none;
+}
+
+weight : signal = {
+      name = "kilogram" English
+      symbol = "kg";
+      derivation = none;
+}
+
+magnetic_field_intensity : signal = {
+      name = "tesla" English
+      symbol = "B";
+      derivation = none;
+}
+
+charge : signal = {
+      name = "Coulomb" English
+      symbol = "C";
+      derivation = none;
+}
+
+speed : signal(n:0 to 2) = {
+      derivation = distance@n / time;
+}
+
+acceleration : signal(n:0 to 2) = {
+      derivation = speed@n / time;
+}
+
+#
+#	Initial velocities can be adjusted for each experiment
+#
+v_0 : constant = 1 * m * s ** -1;
+v_1 : constant = 1 * m * s ** -1;
+v_2 : constant = 1 * m * s ** -1;
+
+#
+#	Initial particle position is assumed to be (0; 0; 0) - easiness of dealing with the equations
+#
+x_0 : constant = 10 * m;
+x_1 : constant = 10 * m;
+x_2 : constant = 10 * m;
+
+#
+#	Magnetic field is uniform = (0; 0; B) - w.l.o.g. we can take B oriented along z dierction (i.e. indice '2' in our notation)
+#
+mfi : constant = 1 * B;
+
+#
+#	Particle weight
+#
+mass : constant = 1 * kg;
+
+#
+#	Particle charge
+#
+q : constant = 1 * C;
+
+#
+#	Error tolerances
+#
+a_e : constant = 0.001 * m * s ** -2;
+v_e : constant = 0.001 * m * s ** -1;
+
+period : invariant(T: time) = {
+      T ~ m * (q * mfi) ** -1
+}
+
+
+ZdirectionAccelerationLower : invariant(a: acceleration@2, v: speed@2) = {
+	#
+	#	acceleration = 0
+	#
+	a > - a_e
+}
+
+ZdirectionAccelerationUpper : invariant(a: acceleration@2, v: speed@2) = {
+	#
+	#	acceleration = 0
+	#
+	a < a_e
+}
+
+ZdirectionVelocityLower : invariant(a: acceleration@2, v: speed@2) = {
+	#
+	#	velocity on z = constant
+	#
+	v > v_2 - v_e
+}
+
+ZdirectionVelocityUpper : invariant(a: acceleration@2, v: speed@2) = {
+	#
+	#	velocity on z = constant
+	#
+	v < v_2 + v_e
+}
+
+
+#         Dimensional Matrix
+#
+#         T   B   Q   M   V
+#    s    1  -1   0   0  -1
+#    m    0   0   0   0   1     -> therefore 5-4=1 invariant given by dimensional analysis
+#   kg    0   1   0   1   0
+#    C    0  -1   1   0   0
+#
+#    1 Tesla = kg / (C * s)  ->  not a fundamental unit in the above example
+
