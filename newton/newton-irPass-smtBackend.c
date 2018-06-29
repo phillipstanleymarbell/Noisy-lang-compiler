@@ -478,9 +478,7 @@ irPassSmtBackend(State *  N)
 		if (smtFile == NULL)
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, "\n%s: %s.\n", Eopen, N->outputSmtFilePath);
-			usage(N);
 			consolePrintBuffers(N);
-			exit(EXIT_FAILURE);
 		}
 
 		fprintf(smtFile, "%s", buf);

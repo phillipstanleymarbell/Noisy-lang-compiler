@@ -1,0 +1,30 @@
+
+    Hardware Overview:
+
+      Model Name: iMac
+      Model Identifier: iMac14,2
+      Processor Name: Intel Core i7
+      Processor Speed: 3.5 GHz
+      Number of Processors: 1
+      Total Number of Cores: 4
+      L2 Cache (per Core): 256 KB
+      L3 Cache: 8 MB
+      Memory: 32 GB
+
+changeset: 320:3f367903eb4cbb4d36a8a565a460b22081dab27e
+
+./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s
+
+Informational Report:
+---------------------
+
+Non-zero routine residency time upper bounds and counts (2 calls, total of 21.2210 us):
+
+    Routine                                       LexInit,         1 calls (50.0000 %), total residency = 21.221000 us (100.0000 %)
+
+
+./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt
+
+sudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s"
+
+sudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s"
