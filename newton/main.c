@@ -263,7 +263,11 @@ main(int argc, char *argv[])
 			jumpParameter = setjmp(N->jmpbuf);
 			if (!jumpParameter)
 			{
-				processNewtonFile(N, argv[optind++]);			}
+				/*
+				 * We use the last argument as the input file due to avoid confusion in case of
+				 * issue-223
+				 */
+				processNewtonFile(N, argv[argc-1]);			}
 			else
 			{
 				//TODO: we could intelligently use the incoming jumpParameter
@@ -305,7 +309,7 @@ usage(State *  N)
 						"                | (--version, --V)                                   \n"
 						"                | (--verbose <level>, -v <level>)                    \n"
 						"                | (--dot <level>, -d <level>)                        \n"
-						"                | (--smt <path to output file>, -S <path to output file>)\n"
+						"                | (--smt=<path to output file>, -S                   \n"
 						"                | (--bytecode <output file name>, -b <output file name>)\n"
 						"                | (--optimize <level>, -O <level>)                   \n"
 						"                | (--trace, -t)                                      \n"
