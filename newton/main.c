@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 			{"help",		no_argument,		0,	'h'},
 			{"version",		no_argument,		0,	'V'},
 			{"dot",			required_argument,	0,	'd'},
-			{"smt",			optional_argument,	0,	'S'},
+			{"smt",			required_argument,	0,	'S'},
 			{"bytecode",		required_argument,	0,	'b'},
 			{"trace",		no_argument,		0,	't'},
 			{"statistics",		no_argument,		0,	's'},
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:Sb:stO:", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:", options, &optionIndex);
 
 		if (c == -1)
 		{
