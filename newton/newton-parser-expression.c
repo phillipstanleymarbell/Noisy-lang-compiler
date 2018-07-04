@@ -437,23 +437,24 @@ newtonParseExponentialExpression(State * N, Scope * currentScope, IrNode * baseN
 
     /* exponents are automatically just one integer unless wrapped in parens */
     IrNode *    exponent = peekCheck(N, 1, kNewtonIrNodeType_TleftParen) ?
-        newtonParseNumericExpression(N, currentScope) :
+        newtonParseQuantityExpression(N, currentScope) :
         newtonParseInteger(N, currentScope);
 	addLeaf(N, expression, exponent);
 
 	expression->value = exponent->value;
+    /*
+    This check should be part of the dimension check pass instead.
 
-    /* If the base is a Physics quantity, the exponent must be an integer */
+    // If the base is a Physics quantity, the exponent must be an integer
 	if (!newtonIsDimensionless(baseNode->physics))
 	{
 	    baseNode->physics->value = pow(baseNode->physics->value, expression->value);
 		newtonPhysicsMultiplyExponents(N, baseNode->physics, expression->value);
 
-		/* Can't raise a dimension to a non integer value*/
+		// Can't raise a dimension to a non integer value
 		assert(exponent->value == (int) exponent->value);
 	}
-
-
+    */
     return expression;
 }
 
