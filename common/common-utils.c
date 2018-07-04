@@ -200,6 +200,22 @@ init(NoisyMode mode)
 	}
 
 	/*
+	 *	Used to hold SMT2 backend output
+	 */
+	N->Fpsmt2 = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
+	if (N->Fpinfo == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	//TODO: need to figure out right buffer size dynamically. 
+	N->Fpsmt2->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
+	if (N->Fpinfo->circbuf == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	/*
 	 *	Used during lexing
 	 */
 	N->currentToken = calloc(kNoisyMaxBufferLength, sizeof(char));
@@ -323,6 +339,15 @@ consolePrintBuffers(State *  N)
 	if (N && N->Fpinfo && strlen(N->Fpinfo->circbuf))
 	{
 		fprintf(stdout, "\nInformational Report:\n---------------------\n%s", N->Fpinfo->circbuf);
+		if (N->mode & kNoisyModeCGI)
+		{
+			fflush(stdout);
+		}
+	}
+
+if (N && N->Fpsmt2 && strlen(N->Fpsmt2->circbuf))
+	{
+		fprintf(stdout, "\nSMT2 Backend output:\n---------------------\n%s", N->Fpsmt2->circbuf);
 		if (N->mode & kNoisyModeCGI)
 		{
 			fflush(stdout);
