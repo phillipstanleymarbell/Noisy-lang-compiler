@@ -113,23 +113,6 @@ IrNode *  expandMinus(State *  N, IrNode *  rootNode)
     return genIrNode(N, rootNode->type, expandedTree, R(R(rootNode)), rootNode->sourceInfo);
 }
 
-IrNode *  exponentTreeTransform(State *  N, IrNode *  baseNode)
-{
-    /*
-     * We could use the original "baseNode" as our base, although it will also
-     * inherent its children, so it is probably better to make a copy of it.
-     * Since it should be (hopefully) clear enough from the token type, we can
-     * just copy both tokenString and value attributes to the new node.
-     */
-    IrNode *  base = genIrNode(N, baseNode->type, NULL, NULL, baseNode->sourceInfo);
-    base->tokenString = baseNode->tokenString;
-    base->value = baseNode->value;
-
-    IrNode *  exponent = commonTreeTransform(N, L(R(baseNode)));
-
-    return genIrNode(N, kNewtonIrNodeType_Texponent, base, exponent, baseNode->sourceInfo);
-}
-
 
 IrNode *  commonTreeTransform(State *  N, IrNode *  inputAST)
 {
@@ -186,21 +169,32 @@ IrNode *  commonTreeTransform(State *  N, IrNode *  inputAST)
             }
             break;
         }
+        case kNewtonIrNodeType_PquantityFactor:
+        {
+            /*
+             * When it is a single quantity term
+             */
+            if (R(inputAST) == NULL)
+            {
+                return commonTreeTransform(N, L(inputAST));
+            }
+            /*
+             * When it is a sum of quantity expressions
+             */
+            else if (R(inputAST)->type == kNewtonIrNodeType_PhighPrecedenceBinaryOp)
+            {
+                return binaryOpTreeTransform(N, inputAST);
+            }
+            else
+            {
+                fatal(N, "Unrecognized Expression AST Structure!");
+            }
+            break;
+        }
         case kNewtonIrNodeType_Tidentifier:
         case kNewtonIrNodeType_Tnumber:
         {
-            /*
-             * Depends on the type of the base, an exponent tree in Newton may take
-             * the format of (base (AUX '**' NILL) (X_SEQ exponent NILL))
-             */
-            if (L(inputAST) == NULL)
-            {
-                return inputAST;
-            }
-            else if (L(inputAST)->type == kNewtonIrNodeType_PhighPrecedenceBinaryOp)
-            {
-                return exponentTreeTransform(N, inputAST);
-            }
+            return inputAST;
         }
         default:
         {

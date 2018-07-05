@@ -1,0 +1,11 @@
+
+changeset: 343:950507d693ff6dc4feffcb5d026cf0cdf8fbcea8
+\n./noisy/noisy-linux-EN -O0 Examples/helloWorld.n -s
+
+Informational Report:
+---------------------
+
+Non-zero routine residency time upper bounds and counts (0 calls, total of 0.0000 us):
+
+
+\n./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt
