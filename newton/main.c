@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 			{"help",		no_argument,		0,	'h'},
 			{"version",		no_argument,		0,	'V'},
 			{"dot",			required_argument,	0,	'd'},
-			{"smt",			optional_argument,	0,	'S'},
+			{"smt",			required_argument,	0,	'S'},
 			{"bytecode",		required_argument,	0,	'b'},
 			{"trace",		no_argument,		0,	't'},
 			{"statistics",		no_argument,		0,	's'},
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:Sb:stO:", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -263,11 +263,7 @@ main(int argc, char *argv[])
 			jumpParameter = setjmp(N->jmpbuf);
 			if (!jumpParameter)
 			{
-				/*
-				 * We use the last argument as the input file due to avoid confusion in case of
-				 * issue-223
-				 */
-				processNewtonFile(N, argv[argc-1]);			}
+				processNewtonFile(N, argv[optind++]);			}
 			else
 			{
 				//TODO: we could intelligently use the incoming jumpParameter
@@ -309,7 +305,7 @@ usage(State *  N)
 						"                | (--version, --V)                                   \n"
 						"                | (--verbose <level>, -v <level>)                    \n"
 						"                | (--dot <level>, -d <level>)                        \n"
-						"                | (--smt=<path to output file>, -S                   \n"
+						"                | (--smt <path to output file>, -S <path to output file>)\n"
 						"                | (--bytecode <output file name>, -b <output file name>)\n"
 						"                | (--optimize <level>, -O <level>)                   \n"
 						"                | (--trace, -t)                                      \n"
