@@ -572,7 +572,7 @@ newtonParseInteger(State * N, Scope * currentScope)
 
     if (inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
     {
-        addLeaf(N, node, newtonParseUnaryOp(N, currentScope));
+        addLeafWithChainingSeq(N, node, newtonParseUnaryOp(N, currentScope));
         node->value = -1;
     }
 
