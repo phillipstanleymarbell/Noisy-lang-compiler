@@ -65,29 +65,40 @@
 IrNode *  binaryOpTreeTransform(State *  N, IrNode *  inputAST)
 {
     /*
-     * In a Newton AST, a binary operator tree has the following structure
-     * (ROOT leftOperand (X_SEQ Operator rightOperand)), where ROOT could be
-     * any auxiliary type, leftOperand is a tree with the root node showing
-     * its type (expression or term). rightOperand could be eithor another 
-     * binary expression tree with X_SEQ as the root or an X_SEQ node with
-     * a single expression/term tree as its child.
+     * In a Newton AST, a binary operator tree represents the application of
+     * n operators of the same precedence on n+1 operands, e.g. a1 - a2 + a3,
+     * a1 / a2 * a3, ..., where a1, a2 and a3 could be expressions with higher
+     * precedence.
+     * 
+     * In the binary operator tree, it is represented in a structure similar to
+     * a linked list, e.g., a1 - a2 is (AUX a1 (X_SEQ / (X_SEQ a2 NILL)).
+     * 
+     * In order that we handle the precedence correctly, this function recurses on
+     * the left operand, as +,-,*,/ are all left recursive. In the example of
+     * a1 + a2 - a3 - a4, the function essentially considers it to be 
+     * (((a1 + a2) - a3) - a4). It handles the innerset (a1 + a2) in the first call,
+     * and processes the expression in the parenthesis one level higher in each
+     * iteration, until it reaches the outerest level.
      */
     IrNodeType opType = L(R(inputAST))->type;
     IrNode *  leftOperand = commonTreeTransform(N, L(inputAST));
-    IrNode *  rightOperand = NULL;
+    IrNode *  rightOperand = commonTreeTransform(N, L(R(R(inputAST))));
+
+    IrNode *  newLeftOperand = genIrNode(N, opType, leftOperand, rightOperand, inputAST->sourceInfo);
+    irPassHelperColorIr(N, newLeftOperand, kNoisyIrNodeColorTreeTransformedColoring, true, false);
+
+    IrNode *  newRoot = R(R(inputAST));
     /*
-     * This tests if the right operand is the last item in a long chain of
-     * addition/multiplication, and creates the right operand node accordingly.
+     * This tests if there are any trailing operations
      */
-    if (R(R(R(inputAST))) == NULL)
+    if (R(newRoot) == NULL)
     {
-        rightOperand = commonTreeTransform(N, L(R(R(inputAST))));
+        return newLeftOperand;
     }
     else
     {
-        rightOperand = binaryOpTreeTransform(N, R(R(inputAST)));
+        return binaryOpTreeTransform(N, genIrNode(N, newRoot->type, newLeftOperand, R(newRoot), newRoot->sourceInfo));
     }
-    return genIrNode(N, opType, leftOperand, rightOperand, inputAST->sourceInfo);
 }
 
 IrNode *  expandMinus(State *  N, IrNode *  rootNode)
