@@ -1,0 +1,17 @@
+#
+#	See https://github.com/phillipstanleymarbell/Noisy-lang-compiler/issues/160
+#
+
+time : signal = 
+{
+        name = "second" English;
+        symbol = "s";
+        derivation = none;
+}
+
+# i : constant = 1;
+
+Sample: invariant(t: time) = 
+{
+	3 ~ 4 	
+}

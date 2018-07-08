@@ -1,0 +1,45 @@
+newtonDescription	::= ruleList .
+
+ruleList		::= {rule} .
+rule			::= (constantDefinition | invariantDefinition | baseSignalDefinition) .
+
+constantDefinition	::= identifier ":" "constant" "=" number [unitExpression] ";" .
+invariantDefinition	::= identifier ":" "invariant" parameterTuple  "=" "{" constraintList "}" .
+baseSignalDefinition	::= identifier ":" "signal" [subdimensionTuple] "=" "{" nameStatement symbolStatement derivationStatement "}" .
+
+nameStatement		::= "name" "=" stringConstant languageSetting ";" .
+symbolStatement		::= "symbol" "=" stringConstant ";" .
+derivationStatement	::= "derivation" "=" ("none" | quantityExpression) ";" .
+
+subdimensionTuple	::= "(" identifier ":" number "to" number ")" .
+parameterTuple		::= "(" parameter {"," parameter} ")" .
+parameter		::= identifier ":" identifier .
+
+constraintList		::= constraint {"," constraint} .
+constraint		::= quantityExpression comparisonOperator quantityExpression .
+
+quantityExpression	::= quantityTerm {lowPrecedenceOperator quantityTerm} .
+quantityTerm		::= [unaryMinus] quantityFactor {midPrecedenceOperator quantityFactor} .
+quantityFactor		::= quantity								|
+				quantity [highPrecedenceOperator quantityExpression]		| 
+				timeOperator {timeOperator} quantityExpression			| 
+				"(" quantityExpression ")"					.
+quantity		::= number | (identifier {"@" number}) .
+lowPrecedenceOperator	::= "+" | "-" .
+midPrecedenceOperator	::= "*" | "/" | vectorOp .
+highPrecedenceOperator	::= "**" .
+vectorOp		::= "dot" | "cross" .
+timeOperator		::= "derivative" | "integral" .
+
+unitExpression		::= unitTerm .
+unitTerm		::= unitFactor {midPrecedenceOperator unitFactor} .
+unitFactor		::= [unaryMinus] (unit [highPrecedenceOperator number] | "(" unitExpression ")") .
+unit			::= identifier .
+
+number			::= [unaryMinus] integer {"." integer} .
+integer			::= "[1..9]{0..9}" .
+stringConstant		::= "\"[a-zA-Z]+\"" .
+identifier		::= "[a-zA-Z]{0-9a-zA-Z_}" .
+comparisonOperator	::= "o<" | "~" | "<" | "<=" | ">" | ">=" | "==" .
+unaryMinus		::= "-" .
+languageSetting		::= "English" .

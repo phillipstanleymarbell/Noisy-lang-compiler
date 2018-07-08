@@ -1,7 +1,43 @@
 #
-#		Physical invariant for heat transfer between a hot sphere and the environment
+#	Authored 2017, Shao-Tuan Chen.
 #
-#		Necessary variables: 
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description:	Physical invariant for heat transfer between a hot sphere and the environment
+#
+#	Necessary variables: 
 #
 #		R : Radius of the sphere
 #
@@ -9,34 +45,34 @@
 #
 #		g : Acceleration of gravity 
 #
-#	\rho  : Fluid density
+#		\rho  : Fluid density
 #
-#	\nu   : Kinematic viscosity
+#		\nu   : Kinematic viscosity
 #
-#	 C_p  : Specific heat  
+#		C_p  : Specific heat  
 #
-#  \alpha : Thermal diffusivity
+#		\alpha : Thermal diffusivity
 #
-#   \beta : Thermal expansion
+#		\beta : Thermal expansion
 #
 
 time : signal =
 {
-	name = "second" English
+	name = "second" English;
 	symbol = "s";
 	derivation = none;
 }
 
 distance : signal(i: 0 to 2) =
 {
-	name = "meter" English
+	name = "meter" English;
 	symbol = "m";
 	derivation = none;
 }
 
 mass : signal =
 {
-	name = "kilogram" English
+	name = "kilogram" English;
 	symbol = "kg";
 	derivation = none;
 }
@@ -54,25 +90,24 @@ acceleration : signal(i: 0 to 2) =
 
 force : signal(i: 0 to 2) = 
 {
-	name = "Newton" English
+	name = "Newton" English;
 	symbol = "N" ;
 	derivation = mass * acceleration@i;
 }
 
 work : signal(i: 0 to 2) = 
 {
-	name = "Joule" English
+	name = "Joule" English;
 	symbol = "J";
 	derivation = force * distance@i;
 }
 
 temperature : signal = 
 { 
-	name = "Kelvin" English 
+	name = "Kelvin" English; 
 	symbol = "K"; 
 	derivation = none;
 }
-
 
 g : constant = 9.8 * m ** 2 * s ** -2;
 rho : constant = 1 * kg * m ** -3;
@@ -80,7 +115,6 @@ v : constant = 10 * m ** 2 * s ** -1;
 cp : constant = 1 * m ** 2 * s ** -2 * K ** -1;
 a : constant = 1 * m ** 2 * s ** -1;
 b : constant = 1 * K ** -1;
-
 
 #
 #		Dimensional Matrix:
@@ -97,10 +131,7 @@ b : constant = 1 * K ** -1;
 #
 #
 
-
-
 hotSphere : invariant(Q: work@0, t: temperature, r: distance) =
 {
-    Q ~ (b * g * t * r ** 3 / (v ** 2)) 
- 
+	Q ~ (b * g * t * r ** 3 / (v ** 2)) 
 }

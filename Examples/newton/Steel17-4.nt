@@ -1,65 +1,94 @@
 #
-#			Mechanical properties of Steel 17-4, used for 3D printing into a beam
+#	Authored 2017, Shao-Tuan Chen.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description:	Mechanical properties of Steel 17-4, used for 3D printing into a beam
+#
+#	Source of data:
+#
+#		@misc{AKSteel,
+#				title = {Steel 17-4 properties},
+#				howpublished = 
+#				{\url{http://www.aksteel.com/pdf/markets_products/stainless/precipitation/17-4_ph_data_sheet.pdf}},
+#				note = {Accessed: 2017-26-07}
+#			}
 #
 
 time : signal =
 {
-	name = "second" English
+	name = "second" English;
 	symbol = "s";
 	derivation = none;
 }
 
 distance : signal =
 {
-	name = "meter" English
+	name = "meter" English;
 	symbol = "m";
 	derivation = none;
 }
 
 mass : signal =
 {
-	name = "kilogram" English
+	name = "kilogram" English;
 	symbol = "kg";
 	derivation = none;
 }
 
 speed : signal =
 {
-	name = "MegaSpeed" English
+	name = "MegaSpeed" English;
 	symbol = "MegS";
 	derivation = distance / time;
 }
 
 acceleration : signal =
 {
-	name = "MegaAcceleration" English
+	name = "MegaAcceleration" English;
 	symbol = "MegA";
 	derivation = speed / time;
 }
 
 force : signal = 
 {
-	name = "Newton" English
+	name = "Newton" English;
 	symbol = "N" ;
 	derivation = mass * acceleration;
 }
 
-#
-#	Source of data:
-#
-#	@misc{AKSteel,
-#	title = {Steel 17-4 properties},
-#	howpublished = 
-#	{\url{http://www.aksteel.com/pdf/markets_products/stainless/precipitation/17-4_ph_data_sheet.pdf}},
-#	note = {Accessed: 2017-26-07}
-#	}
-#
-
 poisson : constant = 0.272;
 rho : constant = 7780 * kilogram * meter ** -3;
 E : constant = 197e11 * Newton / meter ** -2;
-
-null : invariant(null: time) =
-{
-	null ~ 0
-}

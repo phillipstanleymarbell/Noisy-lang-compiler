@@ -426,6 +426,7 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 		unitName = newtonParseName(N, currentScope);
 		addLeafWithChainingSeq(N, node, unitName);
 		newPhysics->dimensionAlias = unitName->token->stringConst; /* e.g., meter, Pascal*/
+		newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 	}
 
 	/*
@@ -437,6 +438,7 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 		unitAbbreviation = newtonParseSymbol(N, currentScope);
 		addLeafWithChainingSeq(N, node, unitAbbreviation);
 		newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g., m, Pa*/
+		newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 	}
 
 	/*
@@ -444,6 +446,7 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 	 */
 	IrNode *	derivationExpression = newtonParseDerivation(N, currentScope)->irLeftChild;
 	addLeafWithChainingSeq(N, node, derivationExpression);
+	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 
 	if (derivationExpression->type != kNewtonIrNodeType_Tnone)
 	{
@@ -530,7 +533,6 @@ newtonParseSymbol(State * N, Scope * currentScope)
 	node->token = baseSignalAbbreviation->token;
 
 	addLeaf(N, node, baseSignalAbbreviation);
-	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 
 	return node;
 }
@@ -554,8 +556,6 @@ newtonParseDerivation(State * N, Scope * currentScope)
 	{
 		addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
 	}
-
-	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 
 	return node;
 }

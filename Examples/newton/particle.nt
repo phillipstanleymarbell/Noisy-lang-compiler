@@ -1,43 +1,79 @@
 #
-#	Particle(point-like) moving in an uniform magnetic field
+#	Authored 2018, Vlad-Mihai Mandric.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description: Particle (point-like) moving in a uniform magnetic field
 #
 
 time : signal = {
-      name = "second" English
-      symbol = "s";
-      derivation = none;
+	name = "second" English;
+	symbol = "s";
+	derivation = none;
 }
 
 distance : signal = {
-      name = "meter" English
-      symbol = "m";
-      derivation = none;
+	name = "meter" English;
+	symbol = "m";
+	derivation = none;
 }
 
 weight : signal = {
-      name = "kilogram" English
-      symbol = "kg";
-      derivation = none;
+	name = "kilogram" English;
+	symbol = "kg";
+	derivation = none;
 }
 
 magnetic_field_intensity : signal = {
-      name = "tesla" English
-      symbol = "B";
-      derivation = none;
+	name = "tesla" English;
+	symbol = "B";
+	derivation = none;
 }
 
 charge : signal = {
-      name = "Coulomb" English
-      symbol = "C";
-      derivation = none;
+	name = "Coulomb" English;
+	symbol = "C";
+	derivation = none;
 }
 
 speed : signal(n:0 to 2) = {
-      derivation = distance@n / time;
+	derivation = distance@n / time;
 }
 
 acceleration : signal(n:0 to 2) = {
-      derivation = speed@n / time;
+	derivation = speed@n / time;
 }
 
 #
@@ -55,7 +91,7 @@ x_1 : constant = 10 * m;
 x_2 : constant = 10 * m;
 
 #
-#	Magnetic field is uniform = (0; 0; B) - w.l.o.g. we can take B oriented along z dierction (i.e. indice '2' in our notation)
+#	Magnetic field is uniform = (0; 0; B) - w.l.o.g. we can take B oriented along z direction (i.e., index '2' in our notation)
 #
 mfi : constant = 1 * B;
 
@@ -76,7 +112,7 @@ a_e : constant = 0.001 * m * s ** -2;
 v_e : constant = 0.001 * m * s ** -1;
 
 period : invariant(T: time) = {
-      T ~ m * (q * mfi) ** -1
+	T ~ m * (q * mfi) ** -1
 }
 
 
@@ -108,14 +144,12 @@ ZdirectionVelocityUpper : invariant(a: acceleration@2, v: speed@2) = {
 	v < v_2 + v_e
 }
 
-
-#         Dimensional Matrix
+#		Dimensional Matrix
 #
-#         T   B   Q   M   V
-#    s    1  -1   0   0  -1
-#    m    0   0   0   0   1     -> therefore 5-4=1 invariant given by dimensional analysis
-#   kg    0   1   0   1   0
-#    C    0  -1   1   0   0
+#		T   B   Q   M   V
+#	s   1  -1   0   0  -1
+#	m   0   0   0   0   1     -> therefore 5-4=1 invariant given by dimensional analysis
+#	kg  0   1   0   1   0
+#	C   0  -1   1   0   0
 #
-#    1 Tesla = kg / (C * s)  ->  not a fundamental unit in the above example
-
+#	1 Tesla = kg / (C * s)  ->  not a fundamental unit in the above example

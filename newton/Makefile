@@ -8,12 +8,14 @@ COMMONPATH	= ../common
 NOISYPATH	= ../noisy
 INCLUDEPATH	= ../include
 COMPILERVARIANT = clang
+EXAMPLESPATH	= ../Examples/newton
 
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 
 PLATFORM_CFLAGS	+= -Wno-gnu-designator
 MAKEFLAGS	+= #-j
+EXAMPLES_NEWTON_FLAGS = #--verbose 1
 
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
@@ -147,8 +149,7 @@ HEADERS		=\
 		newton-dimension-check-pass.h\
 		$(INCLUDEPATH)/newton-api.h\
 
-
-all: installhooks version.c lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+all: installhooks version.c lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile target examples
 
 installhooks:
 	cp $(TREEROOT)/$(PRECOMMITHOOK) $(TREEROOT)/.git/hooks/pre-commit
@@ -185,6 +186,43 @@ cgi:lib$(LIBNEWTON)-$(OSTYPE)-$(NOISY_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(
 version.c: $(HEADERS) Makefile
 	echo 'char kNewtonVersion[] = "0.1-alpha-'`git rev-list --count HEAD`' ('`git rev-parse HEAD`') (build '`date '+%m-%d-%Y-%H:%M'`-`whoami`@`hostname -s`-`uname -s`-`uname -r`-`uname -m`\)\"\; > version.c
 
+#
+#			Examples
+#
+examples: $(EXAMPLES)
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/AlSi10Mg.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/Beam.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/EosPEEK.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/HotSphere.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/Kepler.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/Nylon11.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/Nylon12.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/Pendulum.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/Projectile.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/Steel17-4.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/Titanium6-4.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/activity_classifier.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/airplane_pressure.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/baseSignal.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/constants.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/dropped_ball.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/electricity.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/gps_walking.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/jet_engine.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/motor_wheel_chair.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/particle.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/pendulum_acceleration.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/pressure_sensors.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/reactor_rod.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/sensor_life.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/simple.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/step_counter.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/tire_pressure.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/vehicle_distance.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/violin.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/weather_balloon.nt
+
 installcgi: cgi
 	sudo cp $(CGI_TARGET) $(CGI_BIN)
 	sudo mkdir -p $(HTMLBASEPATH)
@@ -193,7 +231,7 @@ installcgi: cgi
 	sudo chmod 755 $(HTMLBASEPATH)/*.png
 
 test:
-	./newton-$(OSTYPE)-EN --dot Examples/invariants.n | dot -Tpdf -O ; open noname.gv.pdf 
+	./$(TARGET) --dot 0 $(EXAMPLESPATH)/invariants.nt | dot -Tpdf -O ; open noname.gv.pdf 
 
 
 clean:
