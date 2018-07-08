@@ -1,103 +1,143 @@
+#
+#	Authored 2017, Jonathan Lim.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description: Invariants for electricity-related measurements.
+#
+
 time : signal =
 {
-        name = "second" English
-        symbol = "s";
-        derivation = none;
+	name = "second" English;
+	symbol = "s";
+	derivation = none;
 }
 
 distance : signal =
 {
-        name = "meter" English
-        symbol = "m";
-        derivation = none;
+	name = "meter" English;
+	symbol = "m";
+	derivation = none;
 }
 
 speed : signal =
 {
-        derivation = distance / time;
+	derivation = distance / time;
 }
 
 acceleration : signal =
 {
-        derivation = speed / time;
+	derivation = speed / time;
 }
 
 mass : signal = 
 {
-        name = "kilogram" English
-        symbol = "kg" ;
-        derivation = none;
+	name = "kilogram" English;
+	symbol = "kg" ;
+	derivation = none;
 }
 
 force : signal = 
 {
-        name = "Newton" English
-        symbol = "N" ;
-        derivation = mass * acceleration;
+	name = "Newton" English;
+	symbol = "N" ;
+	derivation = mass * acceleration;
 }
 
 charge : signal =
 {
-        name = "Coulomb" English
-        symbol = "C";
-        derivation = none;
+	name = "Coulomb" English;
+	symbol = "C";
+	derivation = none;
 }
 
 current : signal = 
 {
-    name = "Ampere" English
-    symbol = "A";
-    derivation = charge / time;
+	name = "Ampere" English;
+	symbol = "A";
+	derivation = charge / time;
 }
 
 CoulombsLawConstant: constant = 9 * 10 ** 9 * N * m ** 2 / C ** 2;
 
 voltage : signal = 
 {
-    name = "Voltage" English
-    symbol = "V";
-    derivation = CoulombsLawConstant * charge / distance;
+	name = "Voltage" English;
+	symbol = "V";
+	derivation = CoulombsLawConstant * charge / distance;
 }
 
 capacitance : signal = 
 {
-    name = "Farad" English
-    symbol = "F";
-    derivation = charge / voltage;
+	name = "Farad" English;
+	symbol = "F";
+	derivation = charge / voltage;
 }
 
 storedEnergy : signal = 
 {
-    name = "Joule" English
-    symbol = "J";
-    derivation = 0.5 * charge / voltage;
+	name = "Joule" English;
+	symbol = "J";
+	derivation = 0.5 * charge / voltage;
 }
 
 power : signal = 
 {
-    name = "Watts" English
-    symbol = "W";
-    derivation = current * voltage;
+	name = "Watts" English;
+	symbol = "W";
+	derivation = current * voltage;
 }
 
 resistance : signal = 
 {
-    name = "Ohms" English
-    symbol = "Omega";
-    derivation = voltage / current;
+	name = "Ohms" English;
+	symbol = "Omega";
+	derivation = voltage / current;
 }
 
 currentRange : invariant(I: current) = 
 {
-    I < 5 * 10 ** -3 * A
+	I < 5 * 10 ** -3 * A
 }
 
 capacitanceRange : invariant(C: capacitance) = 
 {
-    C < 6 * F
+	C < 6 * F
 }
 
 powerRange : invariant(I: current, R: resistance) = 
 {
-    I * R < 100 * W
+	I * R < 100 * W
 }

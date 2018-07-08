@@ -1,77 +1,113 @@
 #
-#       Physical invariant for a violin
+#	Authored 2018, James Rhodes.
 #
-#       Necessary variables
+#	All rights reserved.
 #
-#       T : tension of the string
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
 #
-#       L : length of string between finger and bridge
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
 #
-#       μ : mass per unit length of the string
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
 #
-#       f : fundamental frequency of the (shortened) string
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description: Physical invariant for a violin
+#
+#	Necessary variables
+#
+#		T : tension of the string
+#
+#		L : length of string between finger and bridge
+#
+#		μ : mass per unit length of the string
+#
+#		f : fundamental frequency of the (shortened) string
 #
 
 time : signal =
 {
-        name       = "second" English
-        symbol     = "s";
-        derivation =  none;
+	name       = "second" English;
+	symbol     = "s";
+	derivation =  none;
 }
 
 distance : signal(i: 0 to 1) =
 {
-        name       = "meter" English
-        symbol     = "m";
-        derivation = none;
+	name       = "meter" English;
+	symbol     = "m";
+	derivation = none;
 }
 
 mass : signal =
 {
-        name       = "kilogram" English
-        symbol     = "kg";
-        derivation = none;
+	name       = "kilogram" English;
+	symbol     = "kg";
+	derivation = none;
 }
 
 speed : signal(i: 0 to 1) =
 {
-        derivation = distance@i / time;
+	derivation = distance@i / time;
 }
 
 acceleration : signal(i: 0 to 1) =
 {
-        derivation = speed@i / time;
+	derivation = speed@i / time;
 }
 
 frequency : signal =
 {
-        derivation = 1 / time;
+	derivation = 1 / time;
 }
 
 force : signal =
 {
-        name       = "Newton" English
-        symbol     = "N";
-        derivation = mass * acceleration;
+	name       = "Newton" English;
+	symbol     = "N";
+	derivation = mass * acceleration;
 }
 
 area : signal =
 {
-        name       = "Square meter" English
-        symbol     = "m^2";
-        derivation = distance ** 2;
+	name       = "Square meter" English;
+	symbol     = "m^2";
+	derivation = distance ** 2;
 }
 
 pressure : signal =
 {
-        name       = "Pascal" English
-        symbol     = "Pa";
-        derivation = force / area;
+	name       = "Pascal" English;
+	symbol     = "Pa";
+	derivation = force / area;
 }
 
 mu : constant = 0.000078 * kg / m;
 
 OscillatingString: invariant(T: force, L: distance, f: frequency) =
 {
-        f ** 2 ~ (T / mu) / (4 * L ** 2)
+	f ** 2 ~ (T / mu) / (4 * L ** 2)
 }

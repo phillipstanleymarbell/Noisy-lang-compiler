@@ -106,18 +106,31 @@ newtonDimensionPassParseRuleList(State *  N, Scope *  currentScope)
 void
 newtonDimensionPassParseRule(State * N, Scope * currentScope)
 {
-    if (lexPeek(N, 3)->type != kNewtonIrNodeType_Tsignal)
-    {
-        while (lexPeek(N, 1)->type != kNewtonIrNodeType_TrightBrace)
-        {
-            lexGet(N, gNewtonTokenDescriptions);
-        }
-        lexGet(N, gNewtonTokenDescriptions);
-    }
-    else
-    {
-        newtonDimensionPassParseBaseSignal(N, currentScope);
-    }
+	/*
+	 *	Rules can be one of signal, invariant, or constant.
+	 *	Signal and invariant blocks end with a '}'. A constant
+	 *	definition on the other hand ends with a ';'.
+	 */
+	if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tinvariant)
+	{
+		while (lexPeek(N, 1)->type != kNewtonIrNodeType_TrightBrace)
+		{
+			lexGet(N, gNewtonTokenDescriptions);
+		}
+		lexGet(N, gNewtonTokenDescriptions);
+	}
+	else if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tconstant)
+	{
+		while (lexPeek(N, 1)->type != kNewtonIrNodeType_Tsemicolon)
+		{
+			lexGet(N, gNewtonTokenDescriptions);
+		}
+		lexGet(N, gNewtonTokenDescriptions);
+	}
+	else
+	{
+		newtonDimensionPassParseBaseSignal(N, currentScope);
+	}
 }
 
 void
@@ -160,7 +173,8 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 	IrNode *    unitName = NULL;
 	if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-	  unitName = newtonParseName(N, currentScope);
+		unitName = newtonParseName(N, currentScope);
+		newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 	}
 
 	/*
@@ -169,10 +183,12 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 	IrNode *    unitAbbreviation = NULL;
 	if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-	  unitAbbreviation = newtonParseSymbol(N, currentScope);
+		unitAbbreviation = newtonParseSymbol(N, currentScope);
+		newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 	}
-    newtonParseTerminal(N, kNewtonIrNodeType_Tderivation, currentScope);
-    newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
+
+	newtonParseTerminal(N, kNewtonIrNodeType_Tderivation, currentScope);
+	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 
     /*
      *  These are the derived signals

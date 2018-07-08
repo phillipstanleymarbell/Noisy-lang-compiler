@@ -1,71 +1,110 @@
+#
+#	Authored 2017, Jonathan Lim.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description: Invariants for an activity classifier.
+#
+
 time : signal = {
-    name = "time" English
-    symbol = "s";
-    derivation = none;
+	name = "time" English;
+	symbol = "s";
+	derivation = none;
 }
 
 distance : signal(i: 0 to 5) = {
-    name = "meter" English
-    symbol = "m";
-    derivation = none;
+	name = "meter" English;
+	symbol = "m";
+	derivation = none;
 }
 
 mass : signal = {
-    name = "kilogram" English
-    symbol = "kg";
-    derivation = none;
+	name = "kilogram" English;
+	symbol = "kg";
+	derivation = none;
 }
 
 speed : signal(i: 0 to 5) = {
-    derivation = distance@i / time;
+	derivation = distance@i / time;
 }
 
 acceleration : signal(i: 0 to 5) = {
-    derivation = speed@i / time;
+	derivation = speed@i / time;
 }
 
 angular_displacement : signal(i: 0 to 2) = {
-    name = "radian" English
-    symbol = "rad";
-    derivation = none;
+	name = "radian" English;
+	symbol = "rad";
+	derivation = none;
 }
 
 angular_velocity : signal(i: 0 to 2) = {
-    derivation = angular_displacement@i / time / 60;
+	derivation = angular_displacement@i / time / 60;
 }
 
 magnetic_field : signal = {
-    name = "Tesla" English
-    symbol = "T";
-    derivation = none; # not a base SI unit, but can be defined as a Newton base unit
+	name = "Tesla" English;
+	symbol = "T";
+	derivation = none; # not a base SI unit, but can be defined as a Newton base unit
 }
 
 TimeBetweenSensors: constant = 5 * 10 ** -6 * s;
 SamplingTime : constant = 5 * 10 ** -4 * s;
 
 accelerationAndGyro : invariant(
-    x: acceleration@0, 
-    y: acceleration@1, 
-    z: acceleration@2, 
-    row: angular_velocity@0, 
-    pitch: angular_velocity@1, 
-    yaw: angular_velocity@2
+	x: acceleration@0, 
+	y: acceleration@1, 
+	z: acceleration@2, 
+	row: angular_velocity@0, 
+	pitch: angular_velocity@1, 
+	yaw: angular_velocity@2
 ) = {
 	# rectangular integration estimation
-    ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) / (row ** 2 + pitch ** 2 + yaw ** 2) < (2 * m / rad) ** 2,
-    (row ** 2 + pitch ** 2 + yaw ** 2) / ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) > (0.1 * rad / m) ** 2
+	((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) / (row ** 2 + pitch ** 2 + yaw ** 2) < (2 * m / rad) ** 2,
+	(row ** 2 + pitch ** 2 + yaw ** 2) / ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) > (0.1 * rad / m) ** 2
 }
 
 redundantAccelerometers : invariant(
-    x1: acceleration@0, 
-    y1: acceleration@1, 
-    z1: acceleration@2, 
-    x2: acceleration@3, 
-    y2: acceleration@4, 
-    z2: acceleration@5
+	x1: acceleration@0, 
+	y1: acceleration@1, 
+	z1: acceleration@2, 
+	x2: acceleration@3, 
+	y2: acceleration@4, 
+	z2: acceleration@5
 ) = {
-    x1 ~ x2,
-    y1 ~ y2,
-    z1 ~ z2
+	x1 ~ x2,
+	y1 ~ y2,
+	z1 ~ z2
 }
-
