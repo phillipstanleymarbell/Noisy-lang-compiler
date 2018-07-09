@@ -90,8 +90,16 @@ newtonDimensionPassParseFile(State *  N, Scope *  currentScope)
 {
 	newtonDimensionPassParseRuleList(N, currentScope);
 
-	assert(lexPeek(N, 1)->type == kNewtonIrNodeType_Zeof);
-	N->tokenList = N->tokenList->next; /* skip eof token without using lexGet*/
+	if (lexPeek(N, 1)->type != kNewtonIrNodeType_Zeof)
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_Zeof, kNewtonIrNodeTypeMax);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Zeof);
+	}
+
+	/*
+	 *	Skip eof token without using lexGet
+	 */
+	N->tokenList = N->tokenList->next;
 }
 
 void
