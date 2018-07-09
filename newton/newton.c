@@ -103,7 +103,6 @@ processNewtonFile(State *  N, char *  filename)
 	{
 		irPassSmtBackend(N);
 	}
-	consolePrintBuffers(N);
 }
 
 static State*
