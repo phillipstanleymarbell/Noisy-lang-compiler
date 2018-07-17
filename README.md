@@ -2,7 +2,7 @@ Noisy and Newton
 ========================================================================================
 Noisy (a language for talking to sensors) and Newton (a language for describing physics).
 
-The correct way to clone this repository to get the hardware and firmware submodules is:
+The correct way to clone this repository to get the submodules is:
 
 	git clone --recursive git@github.com:physical-computation/Warp-fpga.git
 
