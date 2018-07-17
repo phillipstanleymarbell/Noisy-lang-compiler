@@ -1,0 +1,10 @@
+AR			= /usr/bin/ar
+RANLIB			= /usr/bin/ranlib
+HOSTNAME		= localhost#`hostname`
+HTMLBASEPATH		= /Library/WebServer/Documents/tmp/
+PLATFORM_DFLAGS		+= -DkPhyscomplabLogoPath="\"http://$(HOSTNAME)/tmp/orange-logo-full.png\"" -DkNoisyBasePath="\"$(HTMLBASEPATH)\"" -DkNoisyDotCommand="\"/opt/local/bin/dot\"" -DkNoisyLogoPath="\"http://$(HOSTNAME)/tmp/Noisy-logo.png\"" -DkNoisyCgiFileUrlBase=\""http://$(HOSTNAME)/tmp/\"" -DkNoisyCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/noisycgi-darwin\"" -DkNewtonCgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/newtoncgi-darwin\""
+PLATFORM_OPTFLAGS	= -O0
+PLATFORM_DBGFLAGS	+= -g
+PLATFORM_CFLAGS		+= -DNoisyOsMacOSX
+CGI_BIN			= /Library/WebServer/CGI-Executables/
+LINTFLAGS		= --analyze #-Xclang -analyzer-output=html -o htmlreports
