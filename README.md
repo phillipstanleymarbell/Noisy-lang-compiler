@@ -2,10 +2,21 @@ Noisy and Newton
 ========================================================================================
 Noisy (a language for talking to sensors) and Newton (a language for describing physics).
 
-Building the Noisy compiler and debug tools depends on the following repositories:
+The correct way to clone this repository to get the submodules is:
+
+	git clone --recursive git@github.com:physical-computation/Warp-fpga.git
+
+To update all submodules:
+
+	git pull --recurse-submodules
+	git submodule update --remote --recursive
+
+Building the Noisy compiler and debug tools depends on the following repositories which are already included as submodules:
 
 	Libflex:		git@github.com:phillipstanleymarbell/libflex.git
 	DTrace-scripts:		git@github.com:phillipstanleymarbell/DTrace-scripts.git
+	Eigen:			git@github.com:eigenteam/eigen-git-mirror.git	
+	Wirth tools:		git@github.com:phillipstanleymarbell/Wirth-tools.git
 
 The build also depends on the C protobuf compiler and on Graphviz. On Mac OS X, the easiest way to
 install these is to use macports (macports.org) to install the packages `protobuf-c`
