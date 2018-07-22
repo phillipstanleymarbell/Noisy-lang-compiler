@@ -11,10 +11,10 @@ tiny5 : progtype
 	complex	: type (int, int);
 	rational: type (int, int);
 
-	init	: namegen (list of string):(list of string);
-	first	: namegen ((int, int), byte, int):(int);
-	second	: namegen (int, string):(int, (int, int));
-	third	: namegen (real):(int, real, (int, string, (int, byte)), string);
+	init	: function (list of string) -> (list of string);
+	first	: function ((int, int), byte, int) -> (int);
+	second	: function (int, string) -> (int, (int, int));
+	third	: function (real) -> (int, real, (int, string, (int, byte)), string);
 }
 
 init =
@@ -33,18 +33,18 @@ third =
 {
 }
 
-localfunc1 : (int, int):(int) =
+localfunc1 : (int, int) -> (int) =
 {
 }
 
-localfunc2 : (real, int, byte, string):(int) =
+localfunc2 : (real, int, byte, string) -> (int) =
 {
 }
 
-localfunc3 : (int, int):(int, (int, int)) =
+localfunc3 : (int, int) -> (int, (int, int)) =
 {
 }
 
-localfunc4 : (int, int):((int, int)) =
+localfunc4 : (int, int) -> ((int, int)) =
 {
 }

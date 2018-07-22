@@ -1,0 +1,7 @@
+#
+#	VDBS re-quantization for 8-bit words with m=64 tolerable deviation.
+#
+VDBS: module(valueType: type)
+{
+	vdbs8bitM64Quantizer	: function (input: valueType) -> (out: valueType);
+}

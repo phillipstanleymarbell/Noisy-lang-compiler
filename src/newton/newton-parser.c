@@ -119,6 +119,12 @@ newtonParseFile(State *  N, Scope *  currentScope)
 	 */
 	N->tokenList = N->tokenList->next;
 
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
+	}
+
 	return node;
 }
 
@@ -141,6 +147,12 @@ newtonParseStatementList(State *  N, Scope *  currentScope)
 	while (inFirst(N, kNewtonIrNodeType_Pstatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		addLeafWithChainingSeq(N, node, newtonParseStatement(N, currentScope));
+	}
+
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
 	}
 
 	return node;
@@ -181,6 +193,12 @@ newtonParseStatement(State * N, Scope * currentScope)
 	}
 
 	currentScope->end = lexPeek(N, 1)->sourceInfo;
+
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
+	}
 
 	return node;
 }
@@ -223,6 +241,12 @@ newtonParseInvariant(State * N, Scope * currentScope)
 	newtonSymbolTableCloseScope(N, newScope, scopeEnd);
 	newtonAddInvariant(N, invariant);
 
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
+	}
+
 	return node;
 }
 
@@ -241,6 +265,12 @@ newtonParseSubindex(State * N, Scope * currentScope)
 	node->subindexStart = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope)->value;
 	newtonParseTerminal(N, kNewtonIrNodeType_Tto, currentScope);
 	node->subindexEnd = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope)->value;
+
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
+	}
 
 	return node;
 }
@@ -263,6 +293,12 @@ newtonParseSubindexTuple(State * N, Scope * currentScope)
 	node->subindexEnd = subindexNode->subindexEnd;
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
+
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
+	}
 
 	return node;
 }
@@ -287,6 +323,12 @@ newtonParseParameterTuple(State * N, Scope * currentScope)
 		addLeafWithChainingSeq(N, node, newtonParseParameter(N, currentScope, parameterNumber++));
 	}
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
+
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
+	}
 
 	return node;
 }
@@ -323,6 +365,12 @@ newtonParseParameter(State * N, Scope * currentScope, int parameterNumber)
 
 	node->parameterNumber = parameterNumber;
 	node->physics = physicsName->physics;
+
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
+	}
 
 	return node;
 }
@@ -379,6 +427,12 @@ newtonParseConstant(State * N, Scope * currentScope)
 	}
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
+
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
+	}
 
 	return node;
 }
@@ -483,7 +537,13 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
 	currentScope->currentSubindex = 0;
 
-    return node;
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
+	}
+
+	return node;
 }
 
 IrNode *
@@ -514,6 +574,12 @@ newtonParseName(State * N, Scope * currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pname);
 	}
 
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
+	}
+
 	return node;
 }
 
@@ -533,6 +599,12 @@ newtonParseSymbol(State * N, Scope * currentScope)
 	node->token = baseSignalAbbreviation->token;
 
 	addLeaf(N, node, baseSignalAbbreviation);
+
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
+	}
 
 	return node;
 }
@@ -555,6 +627,12 @@ newtonParseDerivation(State * N, Scope * currentScope)
 	else
 	{
 		addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
+	}
+
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
 	}
 
 	return node;
@@ -597,6 +675,12 @@ newtonParseTerminal(State *  N, IrNodeType expectedType, Scope * currentScope)
 		}
 	}
 
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
+	}
+
 	return n;
 }
 
@@ -623,6 +707,12 @@ newtonParseIdentifier(State *  N, Scope *  currentScope)
 
 	newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeType_Tidentifier);
 	newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
+
+	if (!inFollow(N, kNewtonIrNodeType_Pxxx, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNewtonIrNodeType_Pxxx, kNewtonIrNodeTypeMax, gNewtonFollows);
+		noisyParserErrorRecovery(N, kNewtonIrNodeType_Pxxx);
+	}
 
 	return NULL;
 }

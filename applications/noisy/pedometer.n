@@ -1,7 +1,15 @@
 #
-#	For the math->min and math->max namegen:
+#	For the math->min and math->max function:
 #
 include "math.nd"
+include "VDBS.nd"
+include "pedometer.nd"
+
+PedometerConstants: const = 
+{
+	kPedometerSampleRate = 10,
+	kPedometerLowpassCutoffFrequency = 20
+};
 
 #
 #	For the definition of the definition of 'accelerometerTypeAnnote',
@@ -10,79 +18,158 @@ include "math.nd"
 #
 include "sensorErrorTypes.nd"
 
-pedometer : progtype(lengthType: type, sampleType: type, countType: type)
-{
-	computeSteps	: namegen (windowSampleCount: lengthType, samples: sampleType, timeseries)
-				-> (count: countType);
-	init		: namegen (windowSampleCount: lengthType) -> (stepsChannel: chan of countType);
-}
-
 #
-#	A very simple invariant that does not even define
-#	the computational problem: There cannot be more
-#	steps than there are window samples.
+#	Compute the number of steps taken in a given window of samples from
+#	a single axis.
 #
-init : probdef (windowSampleCount: lengthType, samples: sampleType, timeseries) -> (count: countType) =>
-{
-	given (windowSampleCount in lengthType)
-	(
-		count < windowSampleCount
-	)
-}
-
-#
-#	Algorithm implementation
-#
-computeSteps : namegen (windowSampleCount: lengthType, samples: sampleType, timeseries)
-	-> (stepCount: countType) =
+computeStepsSamples : function (inputSamples: sampleType and timeseries) -> (stepCount: countType) =
 {
 	windowMin, windowMax, windowMidPoint	: sampleType;
 	stepCount				: countType = 0;
 
 	#
-	#	Load the math module implementation (at path kPathMathModule)
+	#	Load the math module implementation (at the path determined by
+	#	applying the `path` operator to the `Math` module type).
 	#
-	math := name2chan kPathMathModule;
+	math := load Math (path Math);
 
 	#
 	#	Low-pass filter the timeseries data passed in, with
 	#	a cutoff frequency of 20Hz
 	#
-	filteredSamples := lowpass samples 20;
+	filteredSamples := lowpass inputSamples kPedometerLowpassCutoffFrequency;
 
+	return (count: stepsFromSamplesLowLevel(samples: filteredSamples));
+}
+
+#
+#	Compute the number of steps taken in a given window of a non-sampled signal
+#	measurment, from a single axis signal.
+#
+computeStepsMeasurement : function (measurement: signal) -> (count: countType) =
+{
+	windowMin, windowMax, windowMidPoint	: sampleType;
+	stepCount				: countType = 0;
+
+	#
+	#	Load the math module implementation (at the path determined by
+	#	applying the `path` operator to the `Math` module type).
+	#
+	math := load Math (path Math);
+
+	#
+	#	Load the VDBS module implementation (at the path determined by
+	#	applying the `path` operator to the `VDBS` module type).
+	#
+	vdbs := load VDBS (path VDBS);
+
+	#
+	#	Quantize the measurement with the VDBS quantizer from the VDBS module.
+	#	In practice, this will mean re-quantizing the signal to apply VDBS
+	#	encoding. A program analysis should in principle be able to determine
+	#	that the signal is only used quantized, and to ensure only the quantized
+	#	version is reuqested from a sensor. vdbs8bitM64Quantizer is a constant
+	#	expression defined in the VDBS module.
+	#
+	quantizedMeasurement := vdbs->vdbs8bitM64Quantizer(measurement);
+
+	#
+	#	Sample the signal at time offsets defined by the function sampler.
+	#	(defined below). The sampler could in principle be a non-uniform-time
+	#	sampler (i.e., with jitter) or even a non-uniform-rate sampler (i.e.,
+	#	not always returning the same number of sampling points per second).
+	#
+	quantizedAndSampledMeasurement := sampler(measurement:quantizedMeasurement, rate:kPedometerSampleRate);
+
+	#
+	#	Low-pass filter the timeseries data passed in, with
+	#	a cutoff frequency of 20Hz
+	#
+	filteredSamples := lowpass quantizedAndSampledMeasurement kPedometerLowpassCutoffFrequency;
+
+	return (count: stepsFromSamplesLowLevel(samples: filteredSamples));
+}
+
+stepsFromSamplesLowLevel : function(samples: sampleType and timeseries) -> (stepCount: countType) =
+{
 	windowMin = typemax(sampleType);
 	windowMax = typemin(sampleType);
 
-	foreach (s in filteredSamples)
+	sequence (s in filteredSamples)
 	{
 		windowMin = math->min(a: windowMin, b: s);
 		windowMax = math->max(a: windowMax, b: s);
 	}
 
 	windowMidPoint = (windowMin + windowMax)/2;
-	stepCount = 0;
-	sequence (i := 0; i < (length filteredSamples) - 1; i++)
+	stepCount := 0;
+
+	sequence (i := 0; i < (length samples) - 1; i++)
 	{
-		if ((filteredSamples[i] > windowMidPoint) && (filteredSamples[i+1] < windowMidPoint))
+		match
 		{
-			stepCount++;
+			((samples[i] > windowMidPoint) && (samples[i+1] < windowMidPoint))	=>	stepCount++;
 		}
 	}
+
+	return (count: stepCount);
 }
 
-init : namegen (windowSampleCount: lengthType) -> (stepsChannel: chan of countType) =
+stepsFromSamplesFourierAbstraction : function(samples: sampleType and timeseries) -> (stepCount: countType) =
+{
+	stepCount := ((tailtip (timebase samples)) - (head (timebase samples))) * (head (frequencies (sort (fourier samples))));
+
+	return (count: stepCount);
+}
+
+
+sampler : function (measurement: signal, rate: countType) -> (sampleTimes: list of countType)
+{
+	times := nil;
+
+	sampleCount := rate * ((head (sort (timebase measurement))) - (head (reverse (sort (timebase measurement)))));
+	sequence (i := 0; i < sampleCount; i++)
+	{
+		times = i::times;
+	}
+
+	return (sampleTimes: times);
+}
+
+#
+#	This simple driver for computeSteps only reads from a single sensor
+#	signal (acceleration@0).
+#
+#	A more sophisticated implementation would read from all three axes
+#	of a 3-axis accelerometer.
+#
+start : function (windowSampleCount: lengthType) -> (stepsChannel: chan of countType) =
 {
 	#
 	#	Leave it up to the runtime to determine where to get the
 	#	accelerometer samples from, how to configure the sensor
 	#	based on the type annotation in accelerometerTypeAnnote, etc.
+	#	These will come from a Newton `sigsource` description.
 	#
-	accelerometer		: chan of sampleType, signal acceleration, accelerometerTypeAnnote;
-	accelerometerSamples	: sampleType, timeseries;
+	accelerometer		: chan of sampleType and signal acceleration@0 and accelerometerTypeAnnote;
+	accelerometerSamples	: sampleType and timeseries;
 
 	sequence (;;)
 	{
+		#
+		#	Compute steps by explicitly sampling from accelerometer signal
+		#
 		accelerometerSamples	=<- [windowSampleCount] accelerometer;
-		stepsChannel		<-= computeSteps(windowSampleCount: windowSampleCount, samples: accelerometerSamples);
+		stepsChannel		<-= computeStepsSamples(inputSamples: accelerometerSamples);
+
+		#
+		#	Alternatively, could compute steps by working directly
+		#	on un-sampled signal (in practice, might mean re-sampling).
+		#
+		stepsChannel		<-= computeStepsSamples(measurement: <-accelerometer);
 	}
+}
+
+init : function	(arguments: list of string) -> (results: list of string) =
+{
 }

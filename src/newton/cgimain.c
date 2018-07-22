@@ -956,7 +956,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("            editor.setTheme(\"ace/theme/solarized_light\");\n");
 	printf("            editor.session.setMode(\"ace/mode/c_cpp\");\n");
 	printf("            editor.setShowPrintMargin(false);\n");
-	
+
 	/*
 	 *	Was disabled (see #132). We now try both the dimensions pass's state as well as the main parser to find the line number.
 	 */

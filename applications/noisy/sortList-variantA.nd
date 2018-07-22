@@ -1,13 +1,13 @@
-sortListVariantA : progtype (indexType: type, valueType: type)
+sortListVariantA : module (indexType: type, valueType: type)
 {
-	sort	: namegen (inputList: list of valueType) -> (outputList: list of valueType);
-	sort	: probdef (inputList: list of valueType) -> (outputList: list of valueType);
+	sorter	: function (inputList: list of valueType) -> (outputList: list of valueType);
+	sorter	: probdef (inputList: list of valueType) -> (outputList: list of valueType);
 }
 
 #
 #	Problem definition, based on sort-integers-v1.sal
 #
-sort : probdef (inputList: list of valueType) : (outputList: list of valueType) =>
+sorter : probdef (inputList: list of valueType) : (outputList: list of valueType) =>
 {
 	outputList >=< inputList,
 	forall (i in indexType)

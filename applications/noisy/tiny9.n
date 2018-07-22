@@ -22,7 +22,7 @@ tiny9 : progtype
 		c	: ((int, int), (int, int));
 	};
 
-	init		: namegen (int):(int);
+	init		: function (int) -> (int);
 }
 
 init =

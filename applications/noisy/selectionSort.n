@@ -1,37 +1,33 @@
 include "sortList-variantA.nd"
 
-SelectionSort : progtype
+SelectionSort : module(valueType: type)
 {
-	init		: namegen (args: list of string) -> (results: list of string);
-	findSmallest	: namegen (stringList: list of string) -> ((string, list of string));
+	init	: function (args: list of string) -> (results: list of string);
 
-	sort		: namegen (inputList: list of valueType) -> (outputList: list of valueType);
-	sort		: probdef (inputList: list of valueType) -> (outputList: list of valueType);
+	sorter	: function (inputList: list of valueType) -> (outputList: list of valueType);
+	sorter	: probdef (inputList: list of valueType) -> (outputList: list of valueType);
 }
 
-init (args: list of string) -> (results: list of string) =
+init : function (args: list of string) -> (results: list of string) =
 {
-	sort <- init;
-	init <- sort;
+	return (results: sorter(tail args));
 }
 
-sort : namegen (inputList: list of valueType) : (outputList: list of valueType) =
+sorter : function (inputList: list of valueType) -> (outputList: list of valueType) =
 {
 	#
-	#	Pre-conditions: The init namegen is created, and a valid	
+	#	Pre-conditions: The init function is created, and a valid	
 	#		list-of-string input is written to it.
 	#
-	#	Post-conditions: The reader of the init namegen reads a
+	#	Post-conditions: The reader of the init function reads a
 	#		list of string whose head is the largest item,
 	#		and the items are in non-increasing order from
 	#		head to tail, lexicographically.
 	#
 	rest, result		: list of string;
 	smallest		: string;
-	findSmallestChannel	:= name2chan (typeof SelectionSort->findSmallest) (string SelectionSort->findSmallest);
 
-	rest =<- init;
-	iter
+	sequence (rest = inputList; length rest > 0;)
 	{
 		#
 		#	Loop invariants: 'result' list contains no items
@@ -42,23 +38,21 @@ sort : namegen (inputList: list of valueType) : (outputList: list of valueType) 
 		#
 		#	Termination: when 'rest' is empty.
 		#
-		len rest > 0	=>
-		{
-			findSmallestChannel <-= rest;
-			(smallest, rest) =<- findSmallestChannel;
-			result = smallest :: result;
-		}
-	};
-	sort <-= result;
+		;
+		(smallest, rest) = findSmallest(stringList: rest);
+		result = smallest :: result;
+	}
+	
+	return (outputList: result);
 }
 
-findSmallest =
+findSmallest : function (stringList: list of string) -> (result: (string, list of string)) =
 {
 	#
-	#	Pre-conditions: The findSmallest namegen is created, and a	
+	#	Pre-conditions: The findSmallest function is created, and a	
 	#		valid list-of-string input is written to it.
 	#
-	#	Post-conditions: The reader of the findSmallest  namegen
+	#	Post-conditions: The reader of the findSmallest  function
 	#		reads a tuple, first item of which is a string, no
 	#		larger (lexicographically) than any item on the
 	#		incoming list, and the second item in the tuple is a
@@ -67,10 +61,10 @@ findSmallest =
 	#		smallest item removed.
 	#
 	rest		: list of string;
-	input		:=<- findSmallest;
-	smallest	:= hd input;
+	input		:= stringList;
+	smallest	:= head input;
 
-	iter
+	sequence (; length input > 0;)
 	{
 		#
 		#	Loop invariant: 'smallest' is the lexicographically
@@ -82,24 +76,22 @@ findSmallest =
 		#
 		#	Termination: when input list is empty.
 		#
-		len input > 0	=>
+		item := head input;
+		match
 		{
-			item := hd input;
-			match
+			item <= smallest =>
 			{
-				item <= smallest =>
-				{
-					rest = smallest :: rest;
-					smallest = item;
-				}
+				rest = smallest :: rest;
+				smallest = item;
+			}
 
-				item > smallest =>
-				{
-					rest = item :: rest;
-				}
-			};
-			input = tl input;
+			item > smallest =>
+			{
+				rest = item :: rest;
+			}
 		}
-	};
-	findSmallest <-= (smallest, rest);
+		input = tail input;
+	}
+
+	return (result: (smallest, rest));
 }

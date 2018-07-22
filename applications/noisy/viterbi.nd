@@ -1,6 +1,6 @@
 Viterbi : progtype (indexType: type, valueType: type)
 {
-	solve	: namegen (	M: indexType,
+	solve	: function (	M: indexType,
 				N: indexType,
 				a: array [N+2][N+2] of valueType,
 				x: array [M] of valueType,

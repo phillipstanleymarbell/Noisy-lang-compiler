@@ -1,6 +1,8 @@
-MinSearchH264ref : progtype (indexType: type, valueType: type)
+MinSearchH264ref : module (indexType: type, valueType: type)
 {
-	search	: namegen (M: indexType, N: indexType, blockSAD: valueType) -> (minCost: valueType, bestPosition: indexType);
+	init	: function (args: list of string) -> (results: list of string);
+
+	search	: function (M: indexType, N: indexType, blockSAD: valueType) -> (minCost: valueType, bestPosition: indexType);
 	search	: probdef (M: indexType, N: indexType, blockSAD: valueType) -> (minCost: valueType, bestPosition: indexType);
 }
 
@@ -29,4 +31,8 @@ search	: probdef (M: indexType, N: indexType, blockSAD: valueType) -> (minCost: 
 			minCost <= blockSAD[position]
 		)
 	)
+}
+
+init : function	(arguments: list of string) -> (results: list of string) =
+{
 }

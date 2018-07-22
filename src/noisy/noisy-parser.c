@@ -91,7 +91,7 @@
  *			that it's not NULL
  *
  *
- *	(3)	Urgent: we need to fogure out a strategy for recovering
+ *	(3)	Urgent: we need to figure out a strategy for recovering
  *			from syntax or semantic errors. We currently just
  *			exit. We can't simply ignore and continue either,
  *			since some errors lead to NULL structures (e.g.,
@@ -165,6 +165,11 @@ noisyParseProgram(State *  N, Scope *  currentScope)
 	 */
 	currentScope->end = lexPeek(N, 1)->sourceInfo;
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -209,6 +214,11 @@ noisyParseProgtypeDeclaration(State *  N, Scope *  scope)
 
 	addToProgtypeScopes(N, identifier->symbol->identifier, progtypeScope);
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -241,6 +251,11 @@ noisyParseProgtypeBody(State *  N, Scope *  scope)
 		noisyParseTerminal(N, kNoisyIrNodeType_Tsemicolon);
 	}
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -284,7 +299,7 @@ noisyParseProgtypeTypenameDeclaration(State *  N, Scope *  scope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PprogtypeTypenameDeclaration, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PprogtypeTypenameDeclaration, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PprogtypeTypenameDeclaration);
 	}
 	addLeaf(N, n, typeExpression);
@@ -294,6 +309,11 @@ noisyParseProgtypeTypenameDeclaration(State *  N, Scope *  scope)
 	 */
 	assignTypes(N, identifierList, typeExpression);
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -331,8 +351,14 @@ noisyParseConstantDeclaration(State *  N, Scope *  scope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PconstantDeclaration, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PconstantDeclaration, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PconstantDeclaration);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -369,8 +395,14 @@ noisyParseTypeDeclaration(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeDeclaration, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeDeclaration, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeDeclaration);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -421,6 +453,11 @@ noisyParseAdtTypeDeclaration(State *  N, Scope *  scope)
 	IrNode *	scopeEnd  = noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
 	noisySymbolTableCloseScope(N, currentScope, scopeEnd);
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -458,6 +495,12 @@ noisyParseVectorType(State *  N, Scope *  currentScope)
 	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
 	addLeafWithChainingSeq(N, n, noisyParseTypeExpression(N, currentScope));
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
+
 	return n;
 }
 
@@ -486,6 +529,11 @@ noisyParseNamegenDeclaration(State *  N, Scope *  scope)
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 	addLeaf(N, n, noisyParseTupleType(N, scope));
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -523,8 +571,14 @@ noisyParseIdentifierOrNil(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PidentifierOrNil, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PidentifierOrNil, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PidentifierOrNil);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -563,6 +617,11 @@ noisyParseIdentifierOrNilList(State *  N, Scope *  currentScope)
 		addLeafWithChainingSeq(N, n, noisyParseIdentifierOrNil(N, currentScope));
 	}
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -600,6 +659,11 @@ noisyParseIdentifierList(State *  N, Scope *  currentScope)
 		addLeafWithChainingSeq(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
 	}
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -653,8 +717,14 @@ noisyParseTypeExpression(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeExpression, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeExpression, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeExpression);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -744,6 +814,11 @@ noisyParseTypeName(State *  N, Scope *  scope)
 	 */
 	n->symbol = idsym;
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -780,8 +855,14 @@ noisyParseTolerance(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Ptolerance, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Ptolerance, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_Ptolerance);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -814,6 +895,12 @@ noisyParseErrorMagnitudeTolerance(State *  N)
 	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrealConst));
 	noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
+
 	return n;
 }
 
@@ -844,6 +931,12 @@ noisyParseLossTolerance(State *  N)
 	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrealConst));
 	noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
+
 	return n;
 }
 
@@ -873,6 +966,12 @@ noisyParseLatencyTolerance(State *  N)
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
 	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrealConst));
 	noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -921,8 +1020,14 @@ noisyParseBasicType(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PbasicType, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PbasicType, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PbasicType);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -956,8 +1061,14 @@ noisyParseRealType(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PrealType, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PrealType, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PrealType);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -987,7 +1098,13 @@ noisyParseFixedType(State *  N)
 	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TintConst));
 	noisyParseTerminal(N, kNoisyIrNodeType_Tdot);
 	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TintConst));
-	
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
+
 	return n;
 }
 
@@ -1027,8 +1144,14 @@ noisyParseAnonAggregateType(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PanonAggregateType, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PanonAggregateType, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PanonAggregateType);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -1070,6 +1193,12 @@ noisyParseArrayType(State *  N, Scope *  currentScope)
 	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
 	addLeafWithChainingSeq(N, n, noisyParseTypeExpression(N, currentScope));
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
+
 	return n;
 }
 
@@ -1096,6 +1225,12 @@ noisyParseListType(State *  N, Scope *  currentScope)
 	noisyParseTerminal(N, kNoisyIrNodeType_Tlist);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
 	addLeaf(N, n, noisyParseTypeExpression(N, currentScope));
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -1129,6 +1264,12 @@ noisyParseTupleType(State *  N, Scope *  currentScope)
 	}
 	noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
+
 	return n;
 }
 
@@ -1158,6 +1299,12 @@ noisyParseSetType(State *  N, Scope *  currentScope)
 	noisyParseTerminal(N, kNoisyIrNodeType_TrightBrac);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
 	addLeaf(N, n, noisyParseTypeExpression(N, currentScope));
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -1191,6 +1338,12 @@ noisyParseInitList(State *  N, Scope *  scope)
 	}
 	noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
+
 	return n;
 }
 
@@ -1222,6 +1375,12 @@ noisyParseIdxInitList(State *  N, Scope *  scope)
 		addLeafWithChainingSeq(N, n, noisyParseElement(N, scope));
 	}
 	noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -1273,7 +1432,14 @@ noisyParseStarInitList(State *  N, Scope *  scope)
 			fatal(N, EelementOrStar);
 		}
 	}
+
 	noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -1303,6 +1469,12 @@ noisyParseElement(State *  N, Scope *  scope)
 	{
 		noisyParseTerminal(N, kNoisyIrNodeType_Tgoes);
 		addLeaf(N, n, noisyParseExpression(N, scope));
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -1378,6 +1550,12 @@ noisyParseNamegenDefinition(State *  N, Scope *  scope)
 	noisyParseTerminal(N, kNoisyIrNodeType_Tas);
 	addLeaf(N, n, noisyParseScopedStatementList(N, scope));
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
+
 	return n;
 }
 
@@ -1406,6 +1584,12 @@ noisyParseScopedStatementList(State *  N, Scope *  scope)
 	addLeaf(N, n, noisyParseStatementList(N, currentScope));
 	IrNode *	scopeEnd  	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
 	noisySymbolTableCloseScope(N, currentScope, scopeEnd);
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -1438,6 +1622,12 @@ noisyParseStatementList(State *  N, Scope *  currentScope)
 	{
 		addLeafWithChainingSeq(N, n, noisyParseStatement(N, currentScope));
 		noisyParseTerminal(N, kNoisyIrNodeType_Tsemicolon);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -1497,7 +1687,7 @@ noisyParseStatement(State *  N, Scope *  currentScope)
 			}
 			else
 			{
-				noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement, kNoisyIrNodeTypeMax);
+				noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement, kNoisyIrNodeTypeMax, gNoisyFirsts);
 				noisyParserErrorRecovery(N, kNoisyIrNodeType_Pstatement);
 			}
 
@@ -1513,7 +1703,7 @@ noisyParseStatement(State *  N, Scope *  currentScope)
 		}
 		else
 		{
-			noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement, kNoisyIrNodeTypeMax);
+			noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement, kNoisyIrNodeTypeMax, gNoisyFirsts);
 			noisyParserErrorRecovery(N, kNoisyIrNodeType_Pstatement);
 		}
 	}
@@ -1545,8 +1735,14 @@ noisyParseStatement(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pstatement, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pstatement);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -1625,8 +1821,14 @@ noisyParseAssignOp(State *  N)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PassignOp, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PassignOp, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PassignOp);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -1660,7 +1862,7 @@ noisyParseMatchStatement(State *  N, Scope *  scope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PmatchStatement, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PmatchStatement, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PmatchStatement);
 	}
 
@@ -1669,6 +1871,12 @@ noisyParseMatchStatement(State *  N, Scope *  scope)
 	addLeaf(N, n, noisyParseGuardBody(N, currentScope));
 	IrNode *	scopeEnd	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
 	noisySymbolTableCloseScope(N, currentScope, scopeEnd);
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -1699,6 +1907,12 @@ noisyParseIterStatement(State *  N, Scope *  scope)
 	addLeaf(N, n, noisyParseGuardBody(N, currentScope));
 	IrNode *	scopeEnd	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
 	noisySymbolTableCloseScope(N, currentScope, scopeEnd);
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -1750,6 +1964,12 @@ noisyParseGuardBody(State *  N, Scope *  currentScope)
 		{
 			addLeafWithChainingSeq(N, n, noisyParseStatementList(N, currentScope));
 		}
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -1807,8 +2027,14 @@ noisyParseExpression(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pexpression, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pexpression, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pexpression);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -1838,6 +2064,12 @@ noisyParseListCastExpression(State *  N, Scope *  currentScope)
 	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
 	addLeaf(N, n, noisyParseInitList(N, currentScope));
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
+
 	return n;
 }
 
@@ -1864,6 +2096,12 @@ noisyParseSetCastExpression(State *  N, Scope *  currentScope)
 	noisyParseTerminal(N, kNoisyIrNodeType_Tset);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
 	addLeaf(N, n, noisyParseInitList(N, currentScope));
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -1905,8 +2143,14 @@ noisyParseArrayCastExpression(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_ParrayCastExpression, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_ParrayCastExpression, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_ParrayCastExpression);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -1944,8 +2188,14 @@ noisyParseAnonAggregateCastExpression(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PanonAggregateCastExpression, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PanonAggregateCastExpression, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PanonAggregateCastExpression);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -1985,7 +2235,7 @@ noisyParseChanEventExpression(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PchanEventExpression, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PchanEventExpression, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PchanEventExpression);
 	}
 
@@ -1993,6 +2243,12 @@ noisyParseChanEventExpression(State *  N, Scope *  currentScope)
 	addLeafWithChainingSeq(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
 	addLeafWithChainingSeq(N, n, noisyParseCmpOp(N));
 	addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -2023,6 +2279,12 @@ noisyParseChan2nameExpression(State *  N, Scope *  currentScope)
 	if (peekCheck(N, 1, kNoisyIrNodeType_TstringConst))
 	{
 		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TstringConst));
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -2056,6 +2318,12 @@ noisyParseVar2nameExpression(State *  N, Scope *  currentScope)
 		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TstringConst));
 	}
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
+
 	return n;
 }
 
@@ -2083,6 +2351,12 @@ noisyParseName2chanExpression(State *  N, Scope *  currentScope)
 	addLeaf(N, n, noisyParseTypeExpression(N, currentScope));
 	addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
 	addLeafWithChainingSeq(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrealConst));
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -2125,6 +2399,12 @@ noisyParseTerm(State *  N, Scope *  currentScope)
 	{
 		addLeafWithChainingSeq(N, n, noisyParseHighPrecedenceBinaryOp(N));
 		addLeafWithChainingSeq(N, n, noisyParseFactor(N, currentScope));
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -2213,8 +2493,14 @@ noisyParseFactor(State *  N, Scope *  currentScope)
  */
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pfactor, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pfactor, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pfactor);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -2245,6 +2531,12 @@ noisyParseTupleValue(State *  N, Scope *  currentScope)
 	 *	but labeled as a kNoisyIrNodeType_PtupleValue.
 	 */
 	n->type = kNoisyIrNodeType_PtupleValue;
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -2291,8 +2583,14 @@ noisyParseFieldSelect(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PfieldSelect, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PfieldSelect, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PfieldSelect);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -2338,8 +2636,14 @@ noisyParseHighPrecedenceBinaryOp(State *  N)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PhighPrecedenceBinaryOp, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PhighPrecedenceBinaryOp, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PhighPrecedenceBinaryOp);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -2417,8 +2721,14 @@ noisyParseLowPrecedenceBinaryOp(State *  N)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PlowPrecedenceBinaryOp, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PlowPrecedenceBinaryOp, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PlowPrecedenceBinaryOp);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -2476,8 +2786,14 @@ noisyParseCmpOp(State *  N)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PcmpOp, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PcmpOp, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PcmpOp);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -2512,8 +2828,14 @@ noisyParseBooleanOp(State *  N)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PbooleanOp, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PbooleanOp, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PbooleanOp);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -2583,8 +2905,14 @@ noisyParseUnaryOp(State *  N)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PunaryOp, kNoisyIrNodeTypeMax);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PunaryOp, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PunaryOp);
+	}
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	return n;
@@ -2600,7 +2928,7 @@ noisyParseTerminal(State *  N, IrNodeType expectedType)
 
 	if (!peekCheck(N, 1, expectedType))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType);
+		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType, gNoisyFirsts);
 
 		/*
 		 *	In this case, we know the specific expected type/token.
@@ -2613,6 +2941,17 @@ noisyParseTerminal(State *  N, IrNodeType expectedType)
 						NULL /* left child */,
 						NULL /* right child */,
 						t->sourceInfo /* source info */);
+
+	/*
+	 *	Checking the FOLLOW() set of terminals will catch
+	 *	errors such as "iterate" that is followed by anything
+	 *	other than a "{" (the only token in its follow set).
+	 */
+	if (!inFollow(N, expectedType, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, expectedType, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, expectedType);
+	}
 
 	return n;
 }
@@ -2627,7 +2966,7 @@ noisyParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  
 
 	if (!peekCheck(N, 1, expectedType))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType);
+		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType, gNoisyFirsts);
 
 		/*
 		 *	In this case, we know the specific expected type/token.
@@ -2650,6 +2989,12 @@ noisyParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  
 		// TODO: do noisyParserErrorRecovery() here ?
 	}
 
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
+
 	return n;
 }
 
@@ -2663,7 +3008,7 @@ noisyParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sco
 
 	if (!peekCheck(N, 1, expectedType))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType);
+		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType, gNoisyFirsts);
 
 		/*
 		 *	In this case, we know the specific expected type/token.
@@ -2687,6 +3032,12 @@ noisyParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sco
 		// TODO: do noisyParserErrorRecovery() here ?
 	}
 	n->symbol = sym;
+
+	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+	}
 
 	return n;
 }
@@ -2760,7 +3111,7 @@ noisyParserSyntaxAndSemanticPost(State *  N)
 }
 
 void
-noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction, IrNodeType expectedProductionOrToken)
+noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction, IrNodeType expectedProductionOrToken, firstOrFollowsArray[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax])
 {
 	int	seen = 0;
 
@@ -2771,14 +3122,14 @@ noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction,
 	if (((expectedProductionOrToken > kNoisyIrNodeType_TMax) && (expectedProductionOrToken < kNoisyIrNodeType_PMax)) || (expectedProductionOrToken == kNoisyIrNodeTypeMax))
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, " one of:\n\n\t\t");
-		for (int i = 0; i < kNoisyIrNodeTypeMax && gNoisyFirsts[currentlyParsingTokenOrProduction][i] != kNoisyIrNodeTypeMax; i++)
+		for (int i = 0; i < kNoisyIrNodeTypeMax && firstOrFollowsArray[currentlyParsingTokenOrProduction][i] != kNoisyIrNodeTypeMax; i++)
 		{
 			if (seen > 0)
 			{
 				flexprint(N->Fe, N->Fm, N->Fperr, ",\n\t\t");
 			}
 
-			flexprint(N->Fe, N->Fm, N->Fperr, "'%s'", gNoisyTokenDescriptions[gNoisyFirsts[currentlyParsingTokenOrProduction][i]]);
+			flexprint(N->Fe, N->Fm, N->Fperr, "'%s'", gNoisyTokenDescriptions[firstOrFollowsArray[currentlyParsingTokenOrProduction][i]]);
 			seen++;
 		}
 	}

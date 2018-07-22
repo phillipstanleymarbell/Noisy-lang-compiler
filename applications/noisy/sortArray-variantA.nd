@@ -1,13 +1,13 @@
-sortArrayVariantA : progtype (indexType: type, valueType: type)
+sortArrayVariantA : module (indexType: type, valueType: type)
 {
-	sort	: namegen (inputArray: array of valueType) -> (outputArray: array of valueType);
-	sort	: probdef (inputArray: array of valueType) -> (outputArray: array of valueType);
+	sorter	: function (inputArray: array of valueType) -> (outputArray: array of valueType);
+	sorter	: probdef (inputArray: array of valueType) -> (outputArray: array of valueType);
 }
 
 #
 #	Problem definition, based on sort-integers-v1.sal
 #
-sort : probdef (inputArray: array of valueType) : (outputArray: array of valueType) =>
+sorter : probdef (inputArray: array of valueType) : (outputArray: array of valueType) =>
 {
 	forall (i in indexType)
 	(

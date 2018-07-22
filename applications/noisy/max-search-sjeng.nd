@@ -1,13 +1,15 @@
-MaxSearchSjeng : progtype (indexType: type, valueType: type)
+MaxSearchSjeng : module (indexType: type, valueType: type)
 {
-	search	: namegen (N: indexType, moveOrdering: array [N] of valueType) -> (marker: array [N] of valueType);
+	init	: function (args: list of string) -> (results: list of string);
+
+	search	: function (N: indexType, moveOrdering: array [N] of valueType) -> (marker: array [N] of valueType);
 	search	: probdef (N: indexType, moveOrdering: array [N] of valueType) -> (marker: array [N] of valueType);
 }
 
 
 
 #
-#	The probdef is transliterated from xxx
+#	The probdef is transliterated from MaxSearchSjeng.cpd
 #
 #	See R. Jongerius and P. Stanley-Marbell
 #	"Language Definition for a Notation of Computational Problems",
@@ -24,4 +26,8 @@ search	: probdef (N: indexType, moveOrdering: array [N] of valueType) -> (marker
 			((i >= 0) && (i < N - 1)) => (best >= moveOrdering[i])
 		) && (moveOrdering[marker] == best)
 	)
+}
+
+init : function	(arguments: list of string) -> (results: list of string) =
+{
 }

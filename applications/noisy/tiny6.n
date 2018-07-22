@@ -12,7 +12,7 @@ tiny6 : progtype
 	complex	: type (int, int);
 	rational: type (int, int);
 
-	init	: namegen (list of string):(list of string);
+	init	: function (list of string) -> (list of string);
 }
 
 init =

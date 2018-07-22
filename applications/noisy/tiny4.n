@@ -8,10 +8,10 @@ tiny4 : progtype
 		a : byte;
 	};
 
-	init	: namegen (list of string):(list of string);
-	first	: namegen (byte, int):(int);
-	second	: namegen (int, string):(int);
-	third	: namegen (real):(int, real, string);
+	init	: function (list of string) -> (list of string);
+	first	: function (byte, int) -> (int);
+	second	: function (int, string) -> (int);
+	third	: function (real) -> (int, real, string);
 }
 
 init =
@@ -30,10 +30,10 @@ third =
 {
 }
 
-localfunc1 : (int, int):(int) =
+localfunc1 : (int, int) -> (int) =
 {
 }
 
-localfunc2 : (real, int, byte, string):(int) =
+localfunc2 : (real, int, byte, string) -> (int) =
 {
 }

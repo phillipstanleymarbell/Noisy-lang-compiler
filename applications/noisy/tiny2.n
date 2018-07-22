@@ -1,4 +1,4 @@
 tiny2 : progtype
 {
-	a	: namegen (int):(int);
+	a	: function (int) -> (int);
 }
