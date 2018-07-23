@@ -680,8 +680,16 @@ lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 		}
 	}
 
-	flexprint(N->Fe, N->Fm, N->Fperr, "source file: %16s, line %3d, pos %3d, length %3d\n",
-		t->sourceInfo->fileName, t->sourceInfo->lineNumber, t->sourceInfo->columnNumber, t->sourceInfo->length);
+	if (N->mode & kNoisyModeCGI)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "line %3d, pos %3d, length %3d\n",
+			t->sourceInfo->lineNumber, t->sourceInfo->columnNumber, t->sourceInfo->length);
+	}
+	else
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "source file: %16s, line %3d, pos %3d, length %3d\n",
+			t->sourceInfo->fileName, t->sourceInfo->lineNumber, t->sourceInfo->columnNumber, t->sourceInfo->length);
+	}
 }
 
 void
@@ -697,7 +705,15 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 	int		tripCharacters = 0, done = 0;
 	Token *	tmp = N->tokenList;
 
-	flexprint(N->Fe, N->Fm, N->Fperr, "\tsource file: %40s, line %5d, token %3d\t", tmp->sourceInfo->fileName, tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
+	if (N->mode & kNoisyModeCGI)
+        {
+		flexprint(N->Fe, N->Fm, N->Fperr, "\tline %5d, token %3d\t", tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
+	}
+	else
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "\tsource file: %40s, line %5d, token %3d\t", tmp->sourceInfo->fileName, tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
+	}
+
 	while (tmp != NULL)
 	{
 		if (maxTokens > 0 && (done++ > maxTokens))
@@ -788,12 +804,26 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 				//flexprint(N->Fe, N->Fm, N->Fperr, "(newlines)");
 				tripCharacters = 0;
 
-				flexprint(N->Fe, N->Fm, N->Fperr, "\n\tsource file: %40s, line %5d\t\t", tmp->sourceInfo->fileName, tmp->next->sourceInfo->lineNumber);
+				if (N->mode & kNoisyModeCGI)
+				{
+					flexprint(N->Fe, N->Fm, N->Fperr, "\n\tline %5d\t\t", tmp->next->sourceInfo->lineNumber);
+				}
+				else
+				{
+					flexprint(N->Fe, N->Fm, N->Fperr, "\n\tsource file: %40s, line %5d\t\t", tmp->sourceInfo->fileName, tmp->next->sourceInfo->lineNumber);
+				}
 			}
 			else if (tripCharacters >= formatCharacters)
 			{
 				tripCharacters = 0;
-				flexprint(N->Fe, N->Fm, N->Fperr, "\n\t\t\t\t\t\t\t\t\t\t\t");
+				if (N->mode & kNoisyModeCGI)
+				{
+					flexprint(N->Fe, N->Fm, N->Fperr, "\n\t\t\t\t");
+				}
+				else
+				{
+					flexprint(N->Fe, N->Fm, N->Fperr, "\n\t\t\t\t\t\t\t\t\t\t\t");
+				}
 			}
 		}
 

@@ -41,6 +41,7 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <sys/time.h>
+#include <time.h>
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>

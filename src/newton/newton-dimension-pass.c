@@ -213,7 +213,8 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 			  inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
 			  inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
 			  inFirst(N, kNewtonIrNodeType_PquantityFactor, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
-			  lexPeek(N, 1)->type == kNewtonIrNodeType_TatSign
+			  lexPeek(N, 1)->type == kNewtonIrNodeType_TatSign ||
+			  lexPeek(N, 1)->type == kNewtonIrNodeType_TrightParen
             )
         {
 			lexGet(N, gNewtonTokenDescriptions);

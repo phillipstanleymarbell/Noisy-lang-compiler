@@ -1,0 +1,6 @@
+
+changeset: 346:24fb02b30be0b253947db1524bbcd5416dcdf419
+
+./noisy/noisy-linux-EN -O0 Examples/helloWorld.n -s
+
+./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt
