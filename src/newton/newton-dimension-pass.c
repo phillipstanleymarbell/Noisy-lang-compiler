@@ -88,7 +88,7 @@ newtonDimensionPassParse(State *  N, Scope *  currentScope)
 void
 newtonDimensionPassParseFile(State *  N, Scope *  currentScope)
 {
-	newtonDimensionPassParseRuleList(N, currentScope);
+	newtonDimensionPassParseStatementList(N, currentScope);
 
 	if (lexPeek(N, 1)->type != kNewtonIrNodeType_Zeof)
 	{
@@ -103,16 +103,16 @@ newtonDimensionPassParseFile(State *  N, Scope *  currentScope)
 }
 
 void
-newtonDimensionPassParseRuleList(State *  N, Scope *  currentScope)
+newtonDimensionPassParseStatementList(State *  N, Scope *  currentScope)
 {
-	while (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	while (inFirst(N, kNewtonIrNodeType_Pstatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		newtonDimensionPassParseRule(N, currentScope);
+		newtonDimensionPassParseStatement(N, currentScope);
 	}
 }
 
 void
-newtonDimensionPassParseRule(State * N, Scope * currentScope)
+newtonDimensionPassParseStatement(State * N, Scope * currentScope)
 {
 	/*
 	 *	Rules can be one of signal, invariant, or constant.

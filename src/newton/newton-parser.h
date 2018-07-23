@@ -41,8 +41,8 @@ void			newtonParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToke
 
 IrNode *		newtonParse(State *  N, Scope *  currentScope);
 IrNode *		newtonParseFile(State *  N, Scope *  currentScope);
-IrNode *		newtonParseRuleList(State *  N, Scope *  currentScope);
-IrNode *		newtonParseRule(State *  N, Scope *  currentScope);
+IrNode *		newtonParseStatementList(State *  N, Scope *  currentScope);
+IrNode *		newtonParseStatement(State *  N, Scope *  currentScope);
 IrNode *		newtonParseInvariant(State *  N, Scope *  currentScope);
 IrNode *		newtonParseParameter(State *  N, Scope *  currentScope, int parameterNumber);
 IrNode *		newtonParseParameterTuple(State *  N, Scope *  currentScope);

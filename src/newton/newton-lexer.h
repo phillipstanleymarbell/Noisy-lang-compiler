@@ -46,6 +46,7 @@ void		newtonLexPut(State *  N, Token *  newToken);
 Token *		newtonLexGet(State *  N);
 Token *		newtonLexPeek(State *  N, int lookAhead);
 void		newtonLexInit(State *  N, char *  fileName);
+void		newtonLex(State *  N, char *  fileName);
 void		newtonLexPrintToken(State *  N, Token *  t);
 void		newtonLexDebugPrintToken(State *  N, Token *  t);
 void		newtonLexPeekPrint(State *  N, int maxTokens, int formatCharacters);

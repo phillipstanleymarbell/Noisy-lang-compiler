@@ -1,8 +1,9 @@
-newtonDescription	::= ruleList .
+newtonDescription	::= statementList .
 
-ruleList		::= {rule} .
-rule			::= (constantDefinition | invariantDefinition | baseSignalDefinition) .
+statementList		::= {statement} .
+statement		::= (includeStatement | constantDefinition | invariantDefinition | baseSignalDefinition) .
 
+includeStatement	::= "include" stringConstant .
 constantDefinition	::= identifier ":" "constant" "=" number [unitExpression] ";" .
 invariantDefinition	::= identifier ":" "invariant" parameterTuple  "=" "{" constraintList "}" .
 baseSignalDefinition	::= identifier ":" "signal" [subdimensionTuple] "=" "{" nameStatement symbolStatement derivationStatement "}" .

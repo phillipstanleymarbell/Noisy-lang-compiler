@@ -60,21 +60,15 @@ extern const char *	gNewtonTokenDescriptions[];
 
 static void		checkComment(State *  N);
 static void		checkSingle(State *  N, IrNodeType tokenType);
-static void		checkDoubleQuote(State *  N);
-
+static void		checkDoubleQuote(State *  N, bool callFinishTokenFlag);
 static void		finishToken(State *  N);
-
 static void		checkGt(State *  N);
 static void		checkLt(State *  N);
 static void		checkMul(State * N);
 static bool		checkProportionality(State * N);
 static void		checkDot(State *  N);
-
 static void		makeNumericConst(State *  N);
-
 static bool		isOperatorOrSeparator(State *  N, char c);
-
-
 
 
 
@@ -82,22 +76,10 @@ static bool		isOperatorOrSeparator(State *  N, char c);
 void
 newtonLexInit(State *  N, char *  fileName)
 {
-	FILE *			filePointer;
-	size_t			lineBufferSize;
-
-
 	N->fileName 		= fileName;
 	N->columnNumber		= 1;
 	N->lineNumber		= 1;
 	N->lineLength		= 0;
-
-
-	filePointer = fopen(fileName, "r");
-	if (filePointer == NULL)
-	{
-		fatal(N, Eopen);
-	}
-
 
 	/*
 	 *	Notes:
@@ -116,15 +98,52 @@ newtonLexInit(State *  N, char *  fileName)
 	 *	The following two are needed in order for getline() to allocate the buffer itself
 	 */
 	N->lineBuffer = NULL;
-	lineBufferSize = 0;
 
+	newtonLex(N, fileName);
+
+	SourceInfo *	eofSourceInfo = lexAllocateSourceInfo(N,	NULL /* genealogy */,
+										N->fileName /* fileName */,
+										N->lineNumber /* lineNumber */,
+										N->columnNumber /* columnNumber */,
+										0 /* length */);
+	 								
+	Token *		eofToken = lexAllocateToken(N,	kNewtonIrNodeType_Zeof /* type */,
+									NULL /* identifier */,
+									0 /* integerConst */,
+									0.0 /* realConst */,
+									NULL /* stringConst */,
+									eofSourceInfo /* sourceInfo */);
+	lexPut(N, eofToken);
+
+	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
+	{
+		Token *	p = N->tokenList;
+		while (p != NULL)
+		{
+			lexDebugPrintToken(N, p, gNewtonTokenDescriptions);
+			p = p->next;
+		}
+	}
+}
+
+void
+newtonLex(State *  N, char *  fileName)
+{
+	FILE *			filePointer;
+	size_t			lineBufferSize;
+
+	filePointer = fopen(fileName, "r");
+	if (filePointer == NULL)
+	{
+		fatal(N, Eopen);
+	}
+
+	lineBufferSize = 0;
 	while ((N->lineLength = getline(&(N->lineBuffer), &lineBufferSize, filePointer)) != -1)
 	{
 		N->columnNumber = 0;
 		while (N->columnNumber < N->lineLength)
 		{
-
-			//flexprint(N->Fe, N->Fm, N->Fperr, "%c\n", cur(N));
 			if (isOperatorOrSeparator(N, cur(N)))
 			{
 				switch (cur(N))
@@ -133,10 +152,8 @@ newtonLexInit(State *  N, char *  fileName)
 					 *	These tokens may be paired with an equals sign or with another char (e.g., "::"),
 					 *	but otherwise do not require additional special handling as in the case of ".".
 					 *
-					 *	We process the chars see so far as a finished token, then handle the following chars.
+					 *	We process the chars seen so far as a finished token, then handle the following chars.
 					 */
-					//TODO: exponent "**" should be handled here.
-
 
 					/*
 					 *	These tokens only occur alone.
@@ -239,7 +256,7 @@ newtonLexInit(State *  N, char *  fileName)
 					}
 					case '"':
 					{
-						checkDoubleQuote(N);
+						checkDoubleQuote(N, true /* callFinishTokenFlag */);
 						continue;
 					}
 					case '#':
@@ -272,7 +289,7 @@ newtonLexInit(State *  N, char *  fileName)
 					}
 				}
 			}
-			
+
 			checkTokenLength(N, 1);
 			N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
 		}
@@ -286,31 +303,6 @@ newtonLexInit(State *  N, char *  fileName)
 	}
 
 	fclose(filePointer);
-
-	SourceInfo *	eofSourceInfo = lexAllocateSourceInfo(N,	NULL /* genealogy */,
-										N->fileName /* fileName */,
-										N->lineNumber /* lineNumber */,
-										N->columnNumber /* columnNumber */,
-										0 /* length */);
-	 								
-	Token *		eofToken = lexAllocateToken(N,	kNewtonIrNodeType_Zeof /* type */,
-									NULL /* identifier */,
-									0 /* integerConst */,
-									0.0 /* realConst */,
-									NULL /* stringConst */,
-									eofSourceInfo /* sourceInfo */);
-	lexPut(N, eofToken);
-
-	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
-	{
-		Token *	p = N->tokenList;
-		while (p != NULL)
-		{
-			lexDebugPrintToken(N, p, gNewtonTokenDescriptions);
-			p = p->next;
-		}
-	}
-
 
 	return;
 }
@@ -350,8 +342,7 @@ checkSingle(State *  N, IrNodeType tokenType)
 
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
-		//flexprint(N->Fe, N->Fm, N->Fperr, "checkSingle(), tokenType = %d\n", tokenType);
-		//fprintf(stderr, "checkSingle(), tokenType = %d\n", tokenType);
+		flexprint(N->Fe, N->Fm, N->Fperr, "checkSingle(), tokenType = %d\n", tokenType);
 	}
 
 	Token *		newToken = lexAllocateToken(N,	tokenType /* type	*/,
@@ -369,18 +360,22 @@ checkSingle(State *  N, IrNodeType tokenType)
 
 
 static void
-checkDoubleQuote(State *  N)
+checkDoubleQuote(State *  N, bool callFinishTokenFlag)
 {
 	/*
 	 *	TODO/BUG: we do not handle escaped dquotes in a strconst
 	 */
 	Token *	newToken;
 
-
 	/*
-	 *	Gobble any extant chars.
+	 *	Gobble any extant chars. We do not call finishToken() when we
+	 *	come here via finishToken() itself in the case of handling 
+	 *	include statements.
 	 */
-	finishToken(N);
+	if (callFinishTokenFlag)
+	{
+		finishToken(N);
+	}
 
 	/*
 	 *	String constants cannot contain an un-escaped newline;  the current
@@ -462,6 +457,18 @@ finishToken(State *  N)
 
 	for (int i = 0; i < kCommonIrNodeTypeMax; i++)
 	{
+		if (!strcmp("include", N->currentToken))
+		{
+			/*
+			 *	Reset the index in the current token to place the filename string over the "include" since we don't need to keep that.
+			 */
+			N->currentTokenLength = 0;
+			checkDoubleQuote(N, false /* callFinishTokenFlag */);
+			fprintf(stderr, "In finishToken(), processing an include statement, N->lastToken=[%s]\n", N->lastToken->stringConst);
+			lexPeekPrint(N, 5, 0, gNewtonTokenDescriptions);
+			newtonLex(N, N->lastToken->stringConst);
+		}
+
 		if ((gNewtonTokenDescriptions[i] != NULL) && !strcmp(gNewtonTokenDescriptions[i], N->currentToken))
 		{
 			Token *	newToken = lexAllocateToken(N,	i	/* type		*/,

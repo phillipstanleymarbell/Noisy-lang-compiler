@@ -48,6 +48,7 @@
 
 
 const char *	gNewtonTokenDescriptions[kCommonIrNodeTypeMax] = {
+									[kNewtonIrNodeType_Tinclude]		= "include",
 									[kNewtonIrNodeType_TEnglish]		= "English",
 									[kNewtonIrNodeType_TSpanish]		= "Spanish",
 									[kNewtonIrNodeType_TatSign]		= "@",

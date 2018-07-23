@@ -160,8 +160,8 @@ int gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
             [kNewtonIrNodeType_PbaseSignal   ]            = {kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax},
             [kNewtonIrNodeType_Pinvariant    ]            = {kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax},
             [kNewtonIrNodeType_Pconstant     ]            = {kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax},
-            [kNewtonIrNodeType_Prule         ]            = {kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax},
-            [kNewtonIrNodeType_PruleList     ]            = {kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax},
+            [kNewtonIrNodeType_Pstatement         ]       = {kNewtonIrNodeType_Tinclude, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax},
+            [kNewtonIrNodeType_PstatementList     ]       = {kNewtonIrNodeType_Tinclude, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax},
             [kNewtonIrNodeType_PnewtonFile   ]            = {kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax},
             [kNewtonIrNodeType_Zeof]                      = {
                                                                 kNewtonIrNodeType_TEnglish,
@@ -351,12 +351,12 @@ int gNewtonFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
             [kNewtonIrNodeType_PbaseSignal   ]            = {kNewtonIrNodeType_TrightBrace, kNewtonIrNodeTypeMax},
             [kNewtonIrNodeType_Pinvariant    ]            = {kNewtonIrNodeType_TrightBrace, kNewtonIrNodeTypeMax},
             [kNewtonIrNodeType_Pconstant     ]            = {kNewtonIrNodeType_TrightBrace, kNewtonIrNodeTypeMax},
-            [kNewtonIrNodeType_Prule         ]            = {
+            [kNewtonIrNodeType_Pstatement         ]            = {
                                                                  kNewtonIrNodeType_TrightBrace,
                                                                  kNewtonIrNodeType_Zeof,
                                                                  kNewtonIrNodeTypeMax
                                                             },
-            [kNewtonIrNodeType_PruleList     ]            = {kNewtonIrNodeType_Zeof, kNewtonIrNodeTypeMax},
+            [kNewtonIrNodeType_PstatementList     ]            = {kNewtonIrNodeType_Zeof, kNewtonIrNodeTypeMax},
             [kNewtonIrNodeType_PnewtonFile   ]            = {kNewtonIrNodeType_Zeof, kNewtonIrNodeTypeMax},
 };
 
@@ -382,8 +382,8 @@ char* gNewtonAstNodeStrings[kCommonIrNodeTypeMax]	= {
                                                [   kNewtonIrNodeType_PbaseSignal]            = "kNewtonIrNodeType_PbaseSignal",
                                                [    kNewtonIrNodeType_Pinvariant]            = "kNewtonIrNodeType_Pinvariant",
                                                [     kNewtonIrNodeType_Pconstant]            = "kNewtonIrNodeType_Pconstant",
-                                               [         kNewtonIrNodeType_Prule]            = "kNewtonIrNodeType_Prule",
-                                               [     kNewtonIrNodeType_PruleList]            = "kNewtonIrNodeType_PruleList",
+                                               [         kNewtonIrNodeType_Pstatement]            = "kNewtonIrNodeType_Pstatement",
+                                               [     kNewtonIrNodeType_PstatementList]            = "kNewtonIrNodeType_PstatementList",
                                                [   kNewtonIrNodeType_PnewtonFile]            = "kNewtonIrNodeType_PnewtonFile",
                                                [          kNewtonIrNodeType_Tnil]            = "kNewtonIrNodeType_Tnil",
                                                [kNewtonIrNodeType_ZbadIdentifier]            = "kNewtonIrNodeType_ZbadIdentifier",

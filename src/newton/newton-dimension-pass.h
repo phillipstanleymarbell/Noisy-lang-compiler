@@ -37,8 +37,8 @@
 
 void		newtonDimensionPassParse(State *  N, Scope *  currentScope);
 void		newtonDimensionPassParseFile(State *  N, Scope *  currentScope);
-void		newtonDimensionPassParseRuleList(State *  N, Scope *  currentScope);
-void		newtonDimensionPassParseRule(State *  N, Scope *  currentScope);
+void		newtonDimensionPassParseStatementList(State *  N, Scope *  currentScope);
+void		newtonDimensionPassParseStatement(State *  N, Scope *  currentScope);
 void		newtonDimensionPassParseBaseSignal(State *  N, Scope *  currentScope);
 void		newtonDimensionPassParseSubindexTuple(State *  N, Scope *  currentScope);
 void		newtonDimensionPassParseSubindex(State *  N, Scope *  currentScope);

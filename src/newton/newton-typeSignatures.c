@@ -113,8 +113,8 @@ const char	gNewtonTypeNodeSignatures[kNewtonIrNodeTypeMax] = {
 									[	kNewtonIrNodeType_PbaseSignal		] = '-',
 									[	kNewtonIrNodeType_Pinvariant		] = '_',
 									[	kNewtonIrNodeType_Pconstant		] = '!',
-									[	kNewtonIrNodeType_Prule			] = '@',
-									[	kNewtonIrNodeType_PruleList		] = '+',
+									[	kNewtonIrNodeType_Pstatement		] = '@',
+									[	kNewtonIrNodeType_PstatementList	] = '+',
 									[	kNewtonIrNodeType_PnewtonFile		] = '/',
 									[	kNoisyIrNodeType_Xseq			] = ':',
 								};

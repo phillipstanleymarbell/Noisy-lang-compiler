@@ -10,6 +10,8 @@ INCLUDEPATH	= ../include
 COMPILERVARIANT = clang
 EXAMPLESPATH	= ../../Examples/newton
 
+SYSNAME		= Newton
+SYSNAMELOWER	= newton
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 
@@ -21,15 +23,13 @@ CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
 
 LIBNEWTON	= Newton
-LIBNOISY	= Noisy
 LIBCOMMON	= Common
 
 NEWTON_L10N	= EN
-NOISY_L10N	= EN
 COMMON_L10N	= EN
 
 TARGET		= newton-$(OSTYPE)-$(NEWTON_L10N)
-CGI_TARGET	= newtoncgi-$(OSTYPE)-$(NOISY_L10N)
+CGI_TARGET	= newtoncgi-$(OSTYPE)-$(NEWTON_L10N)
 
 #	-std=gnu99 because we use anonymous unions and induction variable defintions in loop head.
 CCFLAGS		+= -c -std=gnu99 -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
@@ -172,7 +172,7 @@ target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(
 	$(LD) $(LINKDIRS) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -lm $(LINKDIRS) $(LDFLAGS) -o $(TARGET)
 
 
-cgi:lib$(LIBNEWTON)-$(OSTYPE)-$(NOISY_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+cgi:lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
 	$(LD) $(LINKDIRS) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) $(LINKDIRS) $(LDFLAGS) -o $(CGI_TARGET)
 
 

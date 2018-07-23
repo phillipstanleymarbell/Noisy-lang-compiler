@@ -264,6 +264,7 @@ typedef enum
 	 *	Newton tokens
 	 */
 	kNewtonIrNodeType_TMin,
+	kNewtonIrNodeType_Tinclude,
 	kNewtonIrNodeType_TEnglish,
 	kNewtonIrNodeType_TSpanish,
 	kNewtonIrNodeType_TatSign,
@@ -341,8 +342,8 @@ typedef enum
 	kNewtonIrNodeType_PquantityFactor,
 	kNewtonIrNodeType_PquantityStatement,
 	kNewtonIrNodeType_PquantityTerm,
-	kNewtonIrNodeType_Prule,
-	kNewtonIrNodeType_PruleList,
+	kNewtonIrNodeType_Pstatement,
+	kNewtonIrNodeType_PstatementList,
 	kNewtonIrNodeType_Psubindex,
 	kNewtonIrNodeType_PsubindexTuple,
 	kNewtonIrNodeType_Psymbol,
