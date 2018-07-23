@@ -783,6 +783,7 @@ typedef struct
 	/*
 	 *	Lexer state
 	 */
+	FILE *			filePointer;
 	char *			fileName;
 	char *			lineBuffer;
 	uint64_t		columnNumber;

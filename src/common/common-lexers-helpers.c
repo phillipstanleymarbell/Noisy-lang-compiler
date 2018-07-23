@@ -697,8 +697,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 	int		tripCharacters = 0, done = 0;
 	Token *	tmp = N->tokenList;
 
-//flexprint(E, M, P, "\tline %5d, token %3d\t", tmp->linenum, tmp->colnum);
-	flexprint(N->Fe, N->Fm, N->Fperr, "\t\tline %5d, token %3d\t", tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
+	flexprint(N->Fe, N->Fm, N->Fperr, "\tsource file: %40s, line %5d, token %3d\t", tmp->sourceInfo->fileName, tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
 	while (tmp != NULL)
 	{
 		if (maxTokens > 0 && (done++ > maxTokens))
@@ -789,12 +788,12 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 				//flexprint(N->Fe, N->Fm, N->Fperr, "(newlines)");
 				tripCharacters = 0;
 
-				flexprint(N->Fe, N->Fm, N->Fperr, "\n\t\tline %5d\t\t", tmp->next->sourceInfo->lineNumber);
+				flexprint(N->Fe, N->Fm, N->Fperr, "\n\tsource file: %40s, line %5d\t\t", tmp->sourceInfo->fileName, tmp->next->sourceInfo->lineNumber);
 			}
 			else if (tripCharacters >= formatCharacters)
 			{
 				tripCharacters = 0;
-				flexprint(N->Fe, N->Fm, N->Fperr, "\n\t\t\t\t\t");
+				flexprint(N->Fe, N->Fm, N->Fperr, "\n\t\t\t\t\t\t\t\t\t\t\t");
 			}
 		}
 

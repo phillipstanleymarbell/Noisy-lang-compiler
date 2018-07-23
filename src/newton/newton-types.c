@@ -36,6 +36,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <setjmp.h>
