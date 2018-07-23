@@ -68,7 +68,7 @@ bmx055: sensor (
 	#	Range of Temperature can be found in Table 2 on page 11
 	#
 
-	range Temperature == [-40*d .. 85*d],
+	range Temperature == [233.15*K .. 358.15*K],
         
 	#
 	#	Range of Magnetic Field Density can be found in Table 4 on page 17
@@ -399,15 +399,15 @@ bmx055: sensor (
 	#
 
 	accuracy xAcceleration == {
-				(150*g, 312),
+				(150*n, 312),
 								},
 
 	accuracy yAcceleration == {
-				(150*g, 312),
+				(150*n, 312),
 								},
 
 	accuracy zAcceleration == {
-				(150*g, 312),
+				(150*n, 312),
 								},
 	
 	#
@@ -423,7 +423,7 @@ bmx055: sensor (
 	#
 
 	accuracy Temperature == {
-			(4.0*d, 312),
+			(4.0*K, 312),
 							},
 
 	#
