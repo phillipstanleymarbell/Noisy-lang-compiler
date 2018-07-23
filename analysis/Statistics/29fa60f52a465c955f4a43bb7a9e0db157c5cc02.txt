@@ -1,0 +1,29 @@
+
+changeset: 382:29fa60f52a465c955f4a43bb7a9e0db157c5cc02
+
+./noisy/noisy-linux-EN -O0 Examples/noisy/helloWorld.n -s
+
+./newton/newton-linux-EN -S tmp.smt2 Examples/newton/pendulum_acceleration.nt
+
+SMT2 Backend output:
+---------------------
+(set-logic QF_NRA)
+(declare-fun s () Real)
+(assert  ( = s 1 ) )
+(declare-fun m () Real)
+(assert  ( = m 1 ) )
+(declare-fun AccelerationRange@acceleration@0@X () Real)
+(declare-fun AccelerationRange@acceleration@1@Y () Real)
+(declare-fun AccelerationRange@acceleration@2@Z () Real)
+(assert  ( >= AccelerationRange@acceleration@0@X ( / ( * ( - 0 2.000000 ) meter ) ( ^ second 2.000000 ) ) ) )
+(assert ( not ( = 0  ( ^ second 2.000000 ) ) ) )
+(assert  ( <= AccelerationRange@acceleration@0@X ( / ( * 2.000000 meter ) ( ^ second 2.000000 ) ) ) )
+(assert ( not ( = 0  ( ^ second 2.000000 ) ) ) )
+(assert  ( >= AccelerationRange@acceleration@1@Y ( / ( * ( - 0 1.000000 ) meter ) ( ^ second 2.000000 ) ) ) )
+(assert ( not ( = 0  ( ^ second 2.000000 ) ) ) )
+(assert  ( <= AccelerationRange@acceleration@1@Y ( / ( * 1.000000 meter ) ( ^ second 2.000000 ) ) ) )
+(assert ( not ( = 0  ( ^ second 2.000000 ) ) ) )
+(assert  ( = AccelerationRange@acceleration@2@Z ( / ( * 0.000000 meter ) ( ^ second 2.000000 ) ) ) )
+(assert ( not ( = 0  ( ^ second 2.000000 ) ) ) )
+(check-sat)
+(exit)
