@@ -670,8 +670,8 @@ isType(State *  N, IrNode *  node)
 		case	kNewtonIrNodeType_PbaseSignal:
 		case	kNewtonIrNodeType_Pinvariant:
 		case	kNewtonIrNodeType_Pconstant:
-		case	kNewtonIrNodeType_Prule:
-		case	kNewtonIrNodeType_PruleList:
+		case	kNewtonIrNodeType_Pstatement:
+		case	kNewtonIrNodeType_PstatementList:
 		case	kNewtonIrNodeType_PnewtonFile:
       {
         return true;

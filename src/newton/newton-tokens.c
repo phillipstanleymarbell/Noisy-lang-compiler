@@ -35,6 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <setjmp.h>
@@ -48,6 +49,7 @@
 
 
 const char *	gNewtonTokenDescriptions[kCommonIrNodeTypeMax] = {
+									[kNewtonIrNodeType_Tinclude]		= "include",
 									[kNewtonIrNodeType_TEnglish]		= "English",
 									[kNewtonIrNodeType_TSpanish]		= "Spanish",
 									[kNewtonIrNodeType_TatSign]		= "@",

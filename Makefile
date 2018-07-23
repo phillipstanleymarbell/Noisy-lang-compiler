@@ -1,7 +1,7 @@
 DIRS =\
-    src/common\
-    src/newton\
-    src/noisy\
+	src/common\
+	src/newton\
+	src/noisy\
 	src/tests/tests-default\
 	src/tests/test-activity-classifier\
 	src/tests/test-vehicle-distance\
@@ -33,7 +33,7 @@ TESTDIRS =\
 all:
 	@set -e; for dir in $(DIRS); do \
 	(cd $$dir; \
-		$(MAKE)\
+		$(MAKE) SYSNAME=Noisy SYSNAMELOWER=noisy\
 	); \
 	done
 

@@ -60,44 +60,26 @@ extern const char *	gNewtonTokenDescriptions[];
 
 static void		checkComment(State *  N);
 static void		checkSingle(State *  N, IrNodeType tokenType);
-static void		checkDoubleQuote(State *  N);
-
+static void		checkDoubleQuote(State *  N, bool callFinishTokenFlag);
 static void		finishToken(State *  N);
-
 static void		checkGt(State *  N);
 static void		checkLt(State *  N);
 static void		checkMul(State * N);
 static bool		checkProportionality(State * N);
 static void		checkDot(State *  N);
-
 static void		makeNumericConst(State *  N);
-
 static bool		isOperatorOrSeparator(State *  N, char c);
-
-
-
+static void		newtonLex(State *  N, char *  fileName);
 
 
 
 void
 newtonLexInit(State *  N, char *  fileName)
 {
-	FILE *			filePointer;
-	size_t			lineBufferSize;
-
-
 	N->fileName 		= fileName;
 	N->columnNumber		= 1;
 	N->lineNumber		= 1;
 	N->lineLength		= 0;
-
-
-	filePointer = fopen(fileName, "r");
-	if (filePointer == NULL)
-	{
-		fatal(N, Eopen);
-	}
-
 
 	/*
 	 *	Notes:
@@ -116,15 +98,51 @@ newtonLexInit(State *  N, char *  fileName)
 	 *	The following two are needed in order for getline() to allocate the buffer itself
 	 */
 	N->lineBuffer = NULL;
-	lineBufferSize = 0;
 
-	while ((N->lineLength = getline(&(N->lineBuffer), &lineBufferSize, filePointer)) != -1)
+	newtonLex(N, fileName);
+
+	SourceInfo *	eofSourceInfo = lexAllocateSourceInfo(N,	NULL		/* genealogy	*/,
+									N->fileName	/* fileName	*/,
+									N->lineNumber	/* lineNumber	*/,
+									N->columnNumber	/* columnNumber	*/,
+									0		/* length	*/);
+	 								
+	Token *		eofToken = lexAllocateToken(N,	kNewtonIrNodeType_Zeof		/* type		*/,
+									NULL		/* identifier	*/,
+									0		/* integerConst	*/,
+									0.0		/* realConst	*/,
+									NULL		/* stringConst	*/,
+									eofSourceInfo	/* sourceInfo	*/);
+	lexPut(N, eofToken);
+
+	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
+	{
+		Token *	p = N->tokenList;
+		while (p != NULL)
+		{
+			lexDebugPrintToken(N, p, gNewtonTokenDescriptions);
+			p = p->next;
+		}
+	}
+}
+
+static void
+newtonLex(State *  N, char *  fileName)
+{
+	size_t			lineBufferSize;
+
+	N->filePointer = fopen(fileName, "r");
+	if (N->filePointer == NULL)
+	{
+		fatal(N, Eopen);
+	}
+
+	lineBufferSize = 0;
+	while ((N->lineLength = getline(&(N->lineBuffer), &lineBufferSize, N->filePointer)) != -1)
 	{
 		N->columnNumber = 0;
 		while (N->columnNumber < N->lineLength)
 		{
-
-			//flexprint(N->Fe, N->Fm, N->Fperr, "%c\n", cur(N));
 			if (isOperatorOrSeparator(N, cur(N)))
 			{
 				switch (cur(N))
@@ -133,10 +151,8 @@ newtonLexInit(State *  N, char *  fileName)
 					 *	These tokens may be paired with an equals sign or with another char (e.g., "::"),
 					 *	but otherwise do not require additional special handling as in the case of ".".
 					 *
-					 *	We process the chars see so far as a finished token, then handle the following chars.
+					 *	We process the chars seen so far as a finished token, then handle the following chars.
 					 */
-					//TODO: exponent "**" should be handled here.
-
 
 					/*
 					 *	These tokens only occur alone.
@@ -239,7 +255,7 @@ newtonLexInit(State *  N, char *  fileName)
 					}
 					case '"':
 					{
-						checkDoubleQuote(N);
+						checkDoubleQuote(N, true /* callFinishTokenFlag */);
 						continue;
 					}
 					case '#':
@@ -272,12 +288,12 @@ newtonLexInit(State *  N, char *  fileName)
 					}
 				}
 			}
-			
+
 			checkTokenLength(N, 1);
 			N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
 		}
 		N->lineNumber++;
-	
+
 		/*
 		 *	In order for getline() to allocate the buffer itself on the next iteration...
 		 */
@@ -285,32 +301,7 @@ newtonLexInit(State *  N, char *  fileName)
 		lineBufferSize = 0;
 	}
 
-	fclose(filePointer);
-
-	SourceInfo *	eofSourceInfo = lexAllocateSourceInfo(N,	NULL /* genealogy */,
-										N->fileName /* fileName */,
-										N->lineNumber /* lineNumber */,
-										N->columnNumber /* columnNumber */,
-										0 /* length */);
-	 								
-	Token *		eofToken = lexAllocateToken(N,	kNewtonIrNodeType_Zeof /* type */,
-									NULL /* identifier */,
-									0 /* integerConst */,
-									0.0 /* realConst */,
-									NULL /* stringConst */,
-									eofSourceInfo /* sourceInfo */);
-	lexPut(N, eofToken);
-
-	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
-	{
-		Token *	p = N->tokenList;
-		while (p != NULL)
-		{
-			lexDebugPrintToken(N, p, gNewtonTokenDescriptions);
-			p = p->next;
-		}
-	}
-
+	fclose(N->filePointer);
 
 	return;
 }
@@ -350,11 +341,10 @@ checkSingle(State *  N, IrNodeType tokenType)
 
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
-		//flexprint(N->Fe, N->Fm, N->Fperr, "checkSingle(), tokenType = %d\n", tokenType);
-		//fprintf(stderr, "checkSingle(), tokenType = %d\n", tokenType);
+		flexprint(N->Fe, N->Fm, N->Fperr, "checkSingle(), tokenType = %d\n", tokenType);
 	}
 
-	Token *		newToken = lexAllocateToken(N,	tokenType /* type	*/,
+	Token *		newToken = lexAllocateToken(N,			tokenType /* type	*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -369,18 +359,22 @@ checkSingle(State *  N, IrNodeType tokenType)
 
 
 static void
-checkDoubleQuote(State *  N)
+checkDoubleQuote(State *  N, bool callFinishTokenFlag)
 {
 	/*
 	 *	TODO/BUG: we do not handle escaped dquotes in a strconst
 	 */
 	Token *	newToken;
 
-
 	/*
-	 *	Gobble any extant chars.
+	 *	Gobble any extant chars. We do not call finishToken() when we
+	 *	come here via finishToken() itself in the case of handling 
+	 *	include statements.
 	 */
-	finishToken(N);
+	if (callFinishTokenFlag)
+	{
+		finishToken(N);
+	}
 
 	/*
 	 *	String constants cannot contain an un-escaped newline;  the current
@@ -389,7 +383,7 @@ checkDoubleQuote(State *  N)
 	 */
 	if (strchr(&N->lineBuffer[N->columnNumber+1], '"') == NULL)
 	{
-		newToken = lexAllocateToken(N,	kNewtonIrNodeType_ZbadStringConst	/* type		*/,
+		newToken = lexAllocateToken(N,		kNewtonIrNodeType_ZbadStringConst	/* type		*/,
 							NULL					/* identifier	*/,
 							0					/* integerConst	*/,
 							0.0					/* realConst	*/,
@@ -427,7 +421,7 @@ checkDoubleQuote(State *  N)
 			N->columnNumber++;
 		}
 
-		newToken = lexAllocateToken(N,	kNewtonIrNodeType_TstringConst	/* type		*/,
+		newToken = lexAllocateToken(N,		kNewtonIrNodeType_TstringConst	/* type		*/,
 							NULL				/* identifier	*/,
 							0				/* integerConst	*/,
 							0.0				/* realConst	*/,
@@ -462,9 +456,70 @@ finishToken(State *  N)
 
 	for (int i = 0; i < kCommonIrNodeTypeMax; i++)
 	{
+		if (!strcmp("include", N->currentToken))
+		{
+			/*
+			 *	Reset the index in the current token to place the filename string
+			 *	over the "include" since we don't need to keep that. Then, call
+			 *	checkDoubleQuote()
+			 */
+			N->currentTokenLength = 0;
+			checkDoubleQuote(N, false /* callFinishTokenFlag */);
+
+			/*
+			 *	Since we don't call done() (which sets the N->currentTokenLength
+			 *	to zero and bzero's the N->currentToken buffer), we need to do
+			 *	this manually.
+			 */
+			bzero(N->currentToken, kNoisyMaxBufferLength);
+			N->currentTokenLength = 0;
+
+			char *	newFileName = strdup(N->lastToken->stringConst);
+			if (!newFileName)
+			{
+				fatal(N, Emalloc);
+			}
+
+			Token *	tmp		= N->lastToken;
+			N->lastToken		= N->lastToken->prev;
+			if (N->lastToken == NULL)
+			{
+				N->tokenList = N->lastToken;
+			}
+
+			free(tmp->stringConst);
+			free(tmp);
+
+			char *	oldFileName	= N->fileName;
+			int	oldColumnNumber	= N->columnNumber;
+			int	oldLineNumber	= N->lineNumber;
+			FILE *	oldFilePointer	= N->filePointer;
+
+			N->fileName 		= newFileName;
+			N->columnNumber		= 1;
+			N->lineNumber		= 1;
+			N->lineLength		= 0;
+			N->lineBuffer		= NULL;
+			newtonLex(N, newFileName);
+			free(newFileName);
+
+			N->fileName		= oldFileName;
+			N->filePointer		= oldFilePointer;
+			N->lineNumber		= oldLineNumber;
+
+			/*
+			 *	Set the columnNumber and lineLength to be same to force
+			 *	ourselves to stop chomping on the same line.
+			 */
+			N->columnNumber		= oldColumnNumber;
+			N->lineLength		= oldColumnNumber;
+
+			return;
+		}
+
 		if ((gNewtonTokenDescriptions[i] != NULL) && !strcmp(gNewtonTokenDescriptions[i], N->currentToken))
 		{
-			Token *	newToken = lexAllocateToken(N,	i	/* type		*/,
+			Token *	newToken = lexAllocateToken(N,			i	/* type		*/,
 										NULL	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -491,7 +546,7 @@ finishToken(State *  N)
 	 *	since we would have halted the building of the token on seing them
 	 *	and gotten called here.
 	 */
-	Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_Tidentifier	/* type		*/,
+	Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_Tidentifier	/* type		*/,
 								N->currentToken			/* identifier	*/,
 								0	/* integerConst	*/,
 								0.0	/* realConst	*/,
@@ -588,7 +643,7 @@ makeNumericConst(State *  N)
 	 */
 	if (isRealConst(N, N->currentToken))
 	{
-		Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_Tnumber /* type		*/,
+		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_Tnumber	 /* type	*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
 									stringToRealConst(N, N->currentToken)	/* realConst	*/,
@@ -608,7 +663,7 @@ makeNumericConst(State *  N)
 	 */
 	if (isRadixConst(N, N->currentToken))
 	{
-		Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_Tnumber/* type		*/,
+		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_Tnumber	/* type		*/,
 									NULL				/* identifier	*/,
 									stringToRadixConst(N, N->currentToken)	/* integerConst	*/,
 									0				/* realConst	*/,
@@ -628,7 +683,7 @@ makeNumericConst(State *  N)
 	 */
 	if (!isDecimal(N, N->currentToken))
 	{
-		Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_ZbadIdentifier	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,		kNewtonIrNodeType_ZbadIdentifier	/* type		*/,
 									N->currentToken			/* identifier	*/,
 									0				/* integerConst	*/,
 									0				/* realConst	*/,
@@ -651,7 +706,7 @@ makeNumericConst(State *  N)
 	uint64_t 	decimalValue = strtoul(N->currentToken, &ep, 0);
 	if (*ep == '\0')
 	{
-		Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_Tnumber/* type		*/,
+		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_Tnumber	/* type		*/,
 									NULL				/* identifier	*/,
 									decimalValue			/* integerConst	*/,
 									0				/* realConst	*/,
@@ -691,7 +746,7 @@ checkGt(State *  N)
 		type = kNewtonIrNodeType_Tgt;
 	}
 
-	Token *		newToken = lexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = lexAllocateToken(N,			type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -726,7 +781,7 @@ checkLt(State *  N)
 		type = kNewtonIrNodeType_Tlt;
 	}
 
-	Token *		newToken = lexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = lexAllocateToken(N,			type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -760,7 +815,7 @@ checkProportionality(State * N)
 		type = kNewtonIrNodeType_TatSign;
 	}
 
-	Token *		newToken = lexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = lexAllocateToken(N,			type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -796,7 +851,7 @@ checkMul(State *  N)
 		type = kNewtonIrNodeType_Tmul;
 	}
 
-	Token *		newToken = lexAllocateToken(N,	type	/* type		*/,
+	Token *		newToken = lexAllocateToken(N,			type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
@@ -832,7 +887,7 @@ checkDot(State *  N)
 
 	gobble(N, 1);
 
-	Token *		newToken = lexAllocateToken(N,	kNewtonIrNodeType_Tdot /* type	*/,
+	Token *		newToken = lexAllocateToken(N,	kNewtonIrNodeType_Tdot	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,

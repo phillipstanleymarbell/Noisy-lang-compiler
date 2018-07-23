@@ -35,6 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <setjmp.h>
@@ -74,8 +75,8 @@ const char *	gProductionDescriptions[kCommonIrNodeTypeMax] =
 	[kNewtonIrNodeType_PquantityFactor]		= "quantity factor",
 	[kNewtonIrNodeType_PquantityStatement]		= "quantity statement",
 	[kNewtonIrNodeType_PquantityTerm]		= "quantity term",
-	[kNewtonIrNodeType_Prule]			= "rule",
-	[kNewtonIrNodeType_PruleList]			= "rule list",
+	[kNewtonIrNodeType_Pstatement]			= "statement",
+	[kNewtonIrNodeType_PstatementList]		= "statement list",
 	[kNewtonIrNodeType_Psubindex]			= "sub index",
 	[kNewtonIrNodeType_PsubindexTuple]		= "sub index tuple",
 	[kNewtonIrNodeType_Psymbol]			= "symbol",

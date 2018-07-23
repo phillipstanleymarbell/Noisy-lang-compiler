@@ -88,7 +88,7 @@ newtonParse(State *  N, Scope *  currentScope)
 
 
 /*
- *	kNoisyIrNodeType_PruleList
+ *	kNoisyIrNodeType_PstatementList
  *
  *	Generated AST subtree:
  *
@@ -106,7 +106,7 @@ newtonParseFile(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
-	addLeaf(N, node, newtonParseRuleList(N, currentScope));
+	addLeaf(N, node, newtonParseStatementList(N, currentScope));
 
 	if (lexPeek(N, 1)->type != kNewtonIrNodeType_Zeof)
 	{
@@ -123,31 +123,31 @@ newtonParseFile(State *  N, Scope *  currentScope)
 }
 
 IrNode *
-newtonParseRuleList(State *  N, Scope *  currentScope)
+newtonParseStatementList(State *  N, Scope *  currentScope)
 {
 	IrNode *	node = genIrNode(
 						N,
-						kNewtonIrNodeType_PruleList,
+						kNewtonIrNodeType_PstatementList,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
-	if (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	if (inFirst(N, kNewtonIrNodeType_Pstatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeaf(N, node, newtonParseRule(N, currentScope));
+		addLeaf(N, node, newtonParseStatement(N, currentScope));
 	}
 
-	while (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	while (inFirst(N, kNewtonIrNodeType_Pstatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeafWithChainingSeq(N, node, newtonParseRule(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseStatement(N, currentScope));
 	}
 
 	return node;
 }
 
 IrNode *
-newtonParseRule(State * N, Scope * currentScope)
+newtonParseStatement(State * N, Scope * currentScope)
 {
 	IrNode *	node;
 
@@ -175,8 +175,8 @@ newtonParseRule(State * N, Scope * currentScope)
 
 		default:
 		{
-			newtonParserSyntaxError(N, kNewtonIrNodeType_Prule, kNewtonIrNodeTypeMax);
-			newtonParserErrorRecovery(N, kNewtonIrNodeType_Prule);
+			newtonParserSyntaxError(N, kNewtonIrNodeType_Pstatement, kNewtonIrNodeTypeMax);
+			newtonParserErrorRecovery(N, kNewtonIrNodeType_Pstatement);
 		}
 	}
 

@@ -81,7 +81,7 @@ processNewtonFile(State *  N, char *  filename)
 	 */
 	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
 
-	State *     N_dim = processNewtonFileDimensionPass(filename);
+	State *	N_dim = processNewtonFileDimensionPass(filename);
 	N->newtonIrTopScope->firstDimension = N_dim->newtonIrTopScope->firstDimension;
 
 	assert(N->newtonIrTopScope->firstDimension != NULL);
@@ -97,8 +97,8 @@ processNewtonFile(State *  N, char *  filename)
  	}
 
 	/*
-	*	Smt backend
-	*/
+	 *	Smt backend
+	 */
 	if (N->irBackends & kNewtonIrBackendSmt)
 	{
 		irPassSmtBackend(N);
@@ -108,7 +108,7 @@ processNewtonFile(State *  N, char *  filename)
 static State*
 processNewtonFileDimensionPass(char * filename)
 {
-	State *	    N = init(kNoisyModeDefault);
+	State *		N = init(kNoisyModeDefault);
 	newtonLexInit(N, filename);
 
 	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
