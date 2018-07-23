@@ -21,10 +21,10 @@ make -j
 make README.sloccount
 
 cat version.c >> $trackingDirectory/$statsFile
-echo '\n./noisy/noisy-linux-EN -O0 Examples/helloWorld.n -s' >> $trackingDirectory/$statsFile
-./noisy/noisy-linux-EN -O0 Examples/helloWorld.n -s >> $trackingDirectory/$statsFile
-echo '\n./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt' >> $trackingDirectory/$statsFile
-./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt >> $trackingDirectory/$statsFile
+echo '\n./noisy/noisy-linux-EN -O0 Examples/noisy/helloWorld.n -s' >> $trackingDirectory/$statsFile
+./src/noisy/noisy-linux-EN -O0 Examples/noisy/helloWorld.n -s >> $trackingDirectory/$statsFile
+echo '\n./newton/newton-linux-EN -S tmp.smt2 Examples/newton/pendulum_acceleration.nt' >> $trackingDirectory/$statsFile
+./src/newton/newton-linux-EN -S tmp.smt2 Examples/newton/pendulum_acceleration.nt >> $trackingDirectory/$statsFile
 rm tmp.smt2
 
 cp $trackingDirectory/$statsFile $trackingDirectory/latest.txt
