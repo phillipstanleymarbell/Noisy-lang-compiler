@@ -166,7 +166,7 @@ fieldSelect		::=	("." identifier) | ("[" expression [":" expression] "]") .
 highPrecedenceBinaryOp	::=	"*" | "/" | "%" | "&" | "^" | "::" | "lowpass" | "highpass" | "dotproduct"
 				| "crossproduct" | "centralmoment" | highPrecedenceBinaryBoolOp .
 lowPrecedenceBinaryOp	::=	"+" | "-" | ">>" | "<<" | "|"  | cmpOp | lowPrecedenceBinaryBoolOp .
-cmpOp			::=	"==" | "!=" | ">" | "<" | "<=" | ">=" .
+cmpOp			::=	"==" | "!=" | ">" | "<" | "<=" | ">=" | ">=<" .
 unaryOp			::=	"~" | "-"  | "+" | "<-"  | "head" | "tail" | "length" | "sort" | "uncertainty"
 				| "tintegral" | "tderivative" | "timebase" | "sigfigs" | "samples" | "reverse"
 				\| "fourier" | "cardinality" | "frequencies" | "magnitudes" | unaryBoolOp .
@@ -220,4 +220,4 @@ highPrecedenceBoolSetOp	::=	"#" | "><" .
 lowPrecedenceBoolSetOp	::=	"+" | "-" | "^" | "=>" | "<=>" .
 unarySetOp		::=	"powerset" | "complement" .
 quantifierOp		::=	"forall" | "exists" | "given" .
-setCmpOp		::=	"strongdominates" | "weakdominates" | ">=<" .
+setCmpOp		::=	"strongdominates" | "weakdominates" .
