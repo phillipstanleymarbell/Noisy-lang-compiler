@@ -325,6 +325,10 @@ bmx055: sensor (
 	#
 	#	The cost is a power or latency (or energy=power*time) cost for accessing values. 
 	#
+	
+	#
+	#	Cost has a unit of microwatts
+	#
 
 	#
     #	Could not find the relevant information in data sheet so I left the cost as 0.
@@ -395,15 +399,15 @@ bmx055: sensor (
 	#
 
 	accuracy xAcceleration == {
-				(150, 312),
+				(150*g, 312),
 								},
 
 	accuracy yAcceleration == {
-				(150, 312),
+				(150*g, 312),
 								},
 
 	accuracy zAcceleration == {
-				(150, 312),
+				(150*g, 312),
 								},
 	
 	#
@@ -419,7 +423,7 @@ bmx055: sensor (
 	#
 
 	accuracy Temperature == {
-			(4.0, 312),
+			(4.0*d, 312),
 							},
 
 	#
@@ -435,24 +439,24 @@ bmx055: sensor (
 	#
 
 	accuracy xMagneticFluxDensity == {		
-				(1.0, 408),
-				(0.6, 1200),
-				(0.5, 1920),
-				(0.3, 11760),
+				(1.0*b, 408),
+				(0.6*b, 1200),
+				(0.5*b, 1920),
+				(0.3*b, 11760),
 										},
 
 	accuracy yMagneticFluxDensity == {
-				(1.0, 408),
-				(0.6, 1200),
-				(0.5, 1920),
-				(0.3, 11760),
+				(1.0*b, 408),
+				(0.6*b, 1200),
+				(0.5*b, 1920),
+				(0.3*b, 11760),
 										},
 
 	accuracy zMagneticFluxDensity == {
-				(1.4, 408),
-				(0.6, 1200),
-				(0.5, 1920),
-				(0.3, 11760),
+				(1.4*b, 408),
+				(0.6*b, 1200),
+				(0.5*b, 1920),
+				(0.3*b, 11760),
 										},
 					
 	#
@@ -468,14 +472,14 @@ bmx055: sensor (
 	#
 
 	accuracy xAngularRate == {
-				(0.1, 0.012),
+				(0.1*o, 0.012),
 								},
 
 	accuracy xAngularRate == {
-				(0.1, 0.012),
+				(0.1*o, 0.012),
 								},
 
 	accuracy xAngularRate == {
-				(0.1, 0.012),
+				(0.1*o, 0.012),
 								}							
 }
