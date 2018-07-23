@@ -77,11 +77,11 @@
 
 extern char *			gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
 
-static const char		kNoisyCgiInputLogStub[]		= "XXXXXXXXXX";
+static const char		kNewtonCgiInputLogStub[]		= "XXXXXXXXXX";
 
 #ifdef __linux__
 #else
-static const char		kNoisyCgiInputLogExtension[]	= ".newton";
+static const char		kNewtonCgiInputLogExtension[]	= ".newton";
 #endif
 
 static char **			getCgiVars(void);
@@ -94,7 +94,7 @@ static char *			newtonCodeBuffer = NULL;
 
 
 State *				newtonCgiState;
-
+State *				newtonCgiDimensionsState;
 
 enum
 {
@@ -369,6 +369,7 @@ main(void)
 
 
 	newtonCgiState = init(kNoisyModeDefault|kNoisyModeCallStatistics/* | kNoisyModeCallTracing */|kNoisyModeCGI);
+	newtonCgiDimensionsState = init(kNoisyModeDefault|kNoisyModeCallStatistics/* | kNoisyModeCallTracing */|kNoisyModeCGI);
 	timestampsInit(newtonCgiState);
 
 
@@ -591,10 +592,10 @@ main(void)
 	 *	Linux does not have mkstemps()
 	 */
 #ifdef __linux__
-	snprintf(logFileStub, kNoisyMaxFilenameLength, "%sinput-%s-%s", kNoisyBasePath, getenv("REMOTE_ADDR"), kNoisyCgiInputLogStub);
+	snprintf(logFileStub, kNoisyMaxFilenameLength, "%sinput-%s-%s", kNewtonBasePath, getenv("REMOTE_ADDR"), kNewtonCgiInputLogStub);
 	logFd = mkstemp(logFileStub);
 #else
-	snprintf(logFileStub, kNoisyMaxFilenameLength, "%sinput-%s-%s.newton", kNoisyBasePath, getenv("REMOTE_ADDR"), kNoisyCgiInputLogStub);
+	snprintf(logFileStub, kNoisyMaxFilenameLength, "%sinput-%s-%s.newton", kNewtonBasePath, getenv("REMOTE_ADDR"), kNewtonCgiInputLogStub);
 	logFd = mkstemps(logFileStub, strlen(kNoisyCgiInputLogExtension));
 #endif
 
@@ -614,10 +615,12 @@ main(void)
 	fflush(stdout);
 
 	jumpParameter = setjmp(newtonCgiState->jmpbuf);
+	memcpy(newtonCgiDimensionsState->jmpbuf, newtonCgiState->jmpbuf, sizeof(newtonCgiDimensionsState->jmpbuf));
 
 	if (!jumpParameter)
 	{
 		newtonCgiState->jmpbufIsValid = true;
+		newtonCgiDimensionsState->jmpbufIsValid = true;
 
 		/*
 		 *	Return from call to setjmp
@@ -652,13 +655,13 @@ main(void)
 		 */
 		newtonCgiState->newtonIrTopScope = newtonSymbolTableAllocScope(newtonCgiState);
 		
-		State *	dimensionsState = init(kNoisyModeDefault);
-		newtonLexInit(dimensionsState, inputFilePath);
 
-		dimensionsState->newtonIrTopScope = newtonSymbolTableAllocScope(dimensionsState);
-		newtonDimensionPassParse(dimensionsState, dimensionsState->newtonIrTopScope);
+		newtonLexInit(newtonCgiDimensionsState, inputFilePath);
+		newtonCgiDimensionsState->newtonIrTopScope = newtonSymbolTableAllocScope(newtonCgiDimensionsState);
+		newtonDimensionPassParse(newtonCgiDimensionsState, newtonCgiDimensionsState->newtonIrTopScope);
 
-		newtonCgiState->newtonIrTopScope->firstDimension = dimensionsState->newtonIrTopScope->firstDimension;
+		newtonCgiState->newtonIrTopScope->firstDimension = newtonCgiDimensionsState->newtonIrTopScope->firstDimension;
+
 		if(newtonCgiState->newtonIrTopScope->firstDimension != NULL)
 		{
 			newtonCgiState->newtonIrRoot = newtonParse(newtonCgiState, newtonCgiState->newtonIrTopScope);
@@ -684,17 +687,6 @@ main(void)
 		{
 			printToFile(newtonCgiState, irPassDotBackend(newtonCgiState, newtonCgiState->newtonIrTopScope, newtonCgiState->newtonIrRoot, gNewtonAstNodeStrings), "tmpdot", kNoisyPostFileWriteActionRenderDot);
 		}
-
-
-		/*
-		 *	XXX
-		 */
-		//if (newtonCgiState->irBackends & kNoisyIrBackendXXX)
-		//{
-		//	newtonIrXXXBackend(newtonCgiState, newtonCgiState->colorOptimizationLambda, 
-		//					newtonCgiState->shapeOptimizationPercent, newtonCgiState->colorOptimizationBackgroundBrightness);
-		//}
-
 
 		if (newtonCgiState->mode & kNoisyModeCallTracing)
 		{
@@ -733,6 +725,7 @@ main(void)
 		/*	Return again after longjmp	*/
 		newtonCgiState->jmpbufIsValid = false;
 	}
+
 	getrusage(RUSAGE_SELF, &end);
 	endRss = checkRss(newtonCgiState);
 
@@ -829,6 +822,14 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 		printf("<span style=\"background-color:whitesmoke; display:none;\" id='newtonerrs'>%s</span></pre></td></tr></table>", newtonCgiState->Fperr->circbuf);
 	}
 
+	if (strlen(newtonCgiDimensionsState->Fperr->circbuf) != 0)
+	{
+		printf("<div width=\"%d\" style=\"background-color:FFDB58; padding:3px;\" onclick=\"JavaScript:toggle('newtonerrs')\">", fmtWidth);
+		printf("&nbsp;&nbsp;Error Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td><pre>", fmtWidth);
+		printf("<span style=\"background-color:whitesmoke; display:none;\" id='newtonerrs'>%s</span></pre></td></tr></table>", newtonCgiDimensionsState->Fperr->circbuf);
+	}
+
 	if (strlen(newtonCgiState->Fpsmt2->circbuf) != 0)
 	{
 		printf("<div width=\"%d\" style=\"background-color:00EEEE; padding:3px;\" onclick=\"JavaScript:toggle('newtonsmt2')\">", fmtWidth);
@@ -844,11 +845,11 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 		printf("<tr><td>\n");
 		printf("<pre>");
 		printf("<a href=\"%s%s.png\" target=\"_blank\"><img src=\"%spng-icon.png\" height=25 border=0/></a>&nbsp;",
-			kNoisyCgiFileUrlBase, newtonCgiState->lastDotRender, kNoisyCgiFileUrlBase);
+			kNewtonCgiFileUrlBase, newtonCgiState->lastDotRender, kNewtonCgiFileUrlBase);
 		printf("<a href=\"%s%s.pdf\" target=\"_blank\"><img src=\"%spdf-icon.png\" height=25 border=0/></a>&nbsp;",
-			kNoisyCgiFileUrlBase, newtonCgiState->lastDotRender, kNoisyCgiFileUrlBase);
+			kNewtonCgiFileUrlBase, newtonCgiState->lastDotRender, kNewtonCgiFileUrlBase);
 		printf("<a href=\"%s%s.svg\" target=\"_blank\"><img src=\"%ssvg-icon.png\" height=25 border=0/></a>&nbsp;",
-			kNoisyCgiFileUrlBase, newtonCgiState->lastDotRender, kNoisyCgiFileUrlBase);
+			kNewtonCgiFileUrlBase, newtonCgiState->lastDotRender, kNewtonCgiFileUrlBase);
 		printf("</pre>\n");
 		printf("</td></tr>\n");
 		printf("</table>\n");
@@ -857,7 +858,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 		 *	Embed the PNG variant inline.
 		 */
 		printf("<img src=\"%s%s.png\" width=\"%d\">\n",
-			kNoisyCgiFileUrlBase, newtonCgiState->lastDotRender, fmtWidth);
+			kNewtonCgiFileUrlBase, newtonCgiState->lastDotRender, fmtWidth);
 	}
 
 
@@ -904,7 +905,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 //	printf("  organization={IEEE}\n");
 //	printf("}\n");
 //	printf("</pre>\n");
-	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23+++++++Physical+invariant+for+a+violin%%0D%%0A%%23%%0D%%0A%%23+++++++Necessary+variables%%0D%%0A%%23%%0D%%0A%%23+++++++T+%%3A+tension+of+the+string%%0D%%0A%%23%%0D%%0A%%23+++++++L+%%3A+length+of+string+between+finger+and+bridge%%0D%%0A%%23%%0D%%0A%%23+++++++%%26%%23956%%3B+%%3A+mass+per+unit+length+of+the+string%%0D%%0A%%23%%0D%%0A%%23+++++++f+%%3A+fundamental+frequency+of+the+%%28shortened%%29+string%%0D%%0A%%23%%0D%%0A%%0D%%0Atime+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22second%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22s%%22%%3B%%0D%%0A++++++++derivation+%%3D++none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Adistance+%%3A+signal%%28i%%3A+0+to+1%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22meter%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22m%%22%%3B%%0D%%0A++++++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Amass+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22kilogram%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22kg%%22%%3B%%0D%%0A++++++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aspeed+%%3A+signal%%28i%%3A+0+to+1%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++++derivation+%%3D+distance%%40i+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aacceleration+%%3A+signal%%28i%%3A+0+to+1%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++++derivation+%%3D+speed%%40i+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Afrequency+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++derivation+%%3D+1+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aforce+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22Newton%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22N%%22%%3B%%0D%%0A++++++++derivation+%%3D+mass+*+acceleration%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aarea+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22Square+meter%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22m%%5E2%%22%%3B%%0D%%0A++++++++derivation+%%3D+distance+**+2%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Apressure+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22Pascal%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22Pa%%22%%3B%%0D%%0A++++++++derivation+%%3D+force+%%2F+area%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Amu+%%3A+constant+%%3D+0.000078+*+kg+%%2F+m%%3B%%0D%%0A%%0D%%0AOscillatingString%%3A+invariant%%28T%%3A+force%%2C+L%%3A+distance%%2C+f%%3A+frequency%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++++f+**+2+%%7E+%%28T+%%2F+mu%%29+%%2F+%%284+*+L+**+2%%29%%0D%%0A%%7D%%0D%%0A&w=980&s=0&o=0&t=0&b=Compile\">[Violin Example]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
+	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23+++++++Physical+invariant+for+a+violin%%0D%%0A%%23%%0D%%0A%%23+++++++Necessary+variables%%0D%%0A%%23%%0D%%0A%%23+++++++T+%%3A+tension+of+the+string%%0D%%0A%%23%%0D%%0A%%23+++++++L+%%3A+length+of+string+between+finger+and+bridge%%0D%%0A%%23%%0D%%0A%%23+++++++%%26%%23956%%3B+%%3A+mass+per+unit+length+of+the+string%%0D%%0A%%23%%0D%%0A%%23+++++++f+%%3A+fundamental+frequency+of+the+%%28shortened%%29+string%%0D%%0A%%23%%0D%%0A%%0D%%0Atime+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22second%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22s%%22%%3B%%0D%%0A++++++++derivation+%%3D++none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Adistance+%%3A+signal%%28i%%3A+0+to+1%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22meter%%22+English%%3B%%0D%%0A++++++++symbol+++++%%3D+%%22m%%22%%3B%%0D%%0A++++++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Amass+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22kilogram%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22kg%%22%%3B%%0D%%0A++++++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aspeed+%%3A+signal%%28i%%3A+0+to+1%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++++derivation+%%3D+distance%%40i+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aacceleration+%%3A+signal%%28i%%3A+0+to+1%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++++derivation+%%3D+speed%%40i+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Afrequency+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++derivation+%%3D+1+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aforce+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22Newton%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22N%%22%%3B%%0D%%0A++++++++derivation+%%3D+mass+*+acceleration%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aarea+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22Square+meter%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22m%%5E2%%22%%3B%%0D%%0A++++++++derivation+%%3D+distance+**+2%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Apressure+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22Pascal%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22Pa%%22%%3B%%0D%%0A++++++++derivation+%%3D+force+%%2F+area%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Amu+%%3A+constant+%%3D+0.000078+*+kg+%%2F+m%%3B%%0D%%0A%%0D%%0AOscillatingString%%3A+invariant%%28T%%3A+force%%2C+L%%3A+distance%%2C+f%%3A+frequency%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++++f+**+2+%%7E+%%28T+%%2F+mu%%29+%%2F+%%284+*+L+**+2%%29%%0D%%0A%%7D%%0D%%0A&w=980&s=0&o=0&t=0&b=Compile\">[Violin Example]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
 	printf("&nbsp;&nbsp;\n");
 	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23+++Simple+Pendulum%%0D%%0A%%23%%0D%%0A%%0D%%0Atime%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22second%%22+English%%0D%%0A++++symbol+%%3D+%%22s%%22%%3B%%0D%%0A++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Alength%%3A+signal%%28n%%3A+0+to+2%%29+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22meter%%22+English%%0D%%0A++++symbol+%%3D+%%22m%%22%%3B%%0D%%0A++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Amass%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22kilogram%%22+English%%0D%%0A%%09symbol+%%3D+%%22kg%%22%%3B%%09%%0D%%0A++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0APi++%%3A+constant+%%3D+3.14%%3B%%0D%%0Ag+++%%3A+constant+%%3D+9.8*m*s**-2%%3B%%0D%%0A%%0D%%0Apendulum%%3A+invariant%%28L%%3A+length%%400%%2C+period%%3A+time%%29+%%3D+%%0D%%0A%%7B%%0D%%0A++++period**2++%%7E++4*%%28Pi**2%%29*L%%2Fg+%%0D%%0A%%7D&w=980&s=0&o=0&t=0&b=Compile\">[Pendulum Example]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
 	printf("&nbsp;&nbsp;\n");
@@ -958,9 +959,11 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("            editor.setShowPrintMargin(false);\n");
 	
 	/*
-	 *	Disabled for now. See Issue #132
+	 *	Was disabled (see #132). We now try both the dimensions pass's state as well as the main parser to find the line number.
 	 */
-//	printf("            editor.gotoLine(%llu, %llu, true);\n", lexPeek(newtonCgiState, 1)->sourceInfo->lineNumber, lexPeek(newtonCgiState, 1)->sourceInfo->columnNumber);
+	printf("            editor.gotoLine(%"PRIu64", %"PRIu64", true);\n", lexPeek(newtonCgiState, 1)->sourceInfo->lineNumber, lexPeek(newtonCgiState, 1)->sourceInfo->columnNumber);
+	printf("            editor.gotoLine(%"PRIu64", %"PRIu64", true);\n", lexPeek(newtonCgiDimensionsState, 1)->sourceInfo->lineNumber, lexPeek(newtonCgiDimensionsState, 1)->sourceInfo->columnNumber);
+
 	/*
 	 *	Have ACE autosize the height, with an upper limit at maxLines
 	 */
