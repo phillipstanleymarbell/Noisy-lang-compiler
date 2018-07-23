@@ -23,16 +23,16 @@ make -j
 make README.sloccount
 
 cat version.c >> $trackingDirectory/$statsFile
-echo '\n./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s' >> $trackingDirectory/$statsFile
-./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s >> $trackingDirectory/$statsFile
-echo '\n./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt' >> $trackingDirectory/$statsFile
-./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt >> $trackingDirectory/$statsFile
+echo '\n./noisy/noisy-darwin-EN -O0 Examples/noisy/helloWorld.n -s' >> $trackingDirectory/$statsFile
+./src/noisy/noisy-darwin-EN -O0 Examples/noisy/helloWorld.n -s >> $trackingDirectory/$statsFile
+echo '\n./newton/newton-linux-EN -S tmp.smt2 Examples/newton/pendulum_acceleration.nt' >> $trackingDirectory/$statsFile
+./src/newton/newton-linux-EN -S tmp.smt2 Examples/newton/pendulum_acceleration.nt >> $trackingDirectory/$statsFile
 rm tmp.smt2
 
-echo '\nsudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s"' >> $trackingDirectory/$statsFile
-sudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s" noisy/noisy-darwin-EN >> $trackingDirectory/$statsFile
+echo '\nsudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 Examples/noisy/helloWorld.n -s"' >> $trackingDirectory/$statsFile
+sudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 Examples/noisy/helloWorld.n -s" noisy/noisy-darwin-EN >> $trackingDirectory/$statsFile
 
-echo '\nsudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s"' >> $trackingDirectory/$statsFile
-sudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s" >> $trackingDirectory/$statsFile
+echo '\nsudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy/noisy-darwin-EN -O0 Examples/noisy/helloWorld.n -s"' >> $trackingDirectory/$statsFile
+sudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy/noisy-darwin-EN -O0 Examples/noisy/helloWorld.n -s" >> $trackingDirectory/$statsFile
 
 cp $trackingDirectory/$statsFile $trackingDirectory/latest.txt
