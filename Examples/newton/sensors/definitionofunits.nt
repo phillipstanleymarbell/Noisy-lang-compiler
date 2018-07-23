@@ -51,8 +51,7 @@ angle : signal =
 	derivation = distance / distance;
 }
 
-
-angular velocity : signal =
+angular_velocity : signal =
 {
 	name = "degree per second" English;
 	symbol = "o";
@@ -73,16 +72,16 @@ noise : signal =
 	derivation = (10 ** -6) * acceleration / (frequency ** 0.5);
 }
 
-magnetic flux density : signal =
+magnetic_flux_density : signal =
 {
 	name = "Tesla" English;
 	symbol = "T";
 	derivation = mass / (charge * time);
 }
 
-micro magnetic flux density : signal =
+micro_magnetic_flux_density : signal =
 {
 	name = "micro Tesla" English;
 	symbol = "b";
-	derivation = (10 ** -6) * magnetic flux density;
+	derivation = (10 ** -6) * magnetic_flux_density;
 }
