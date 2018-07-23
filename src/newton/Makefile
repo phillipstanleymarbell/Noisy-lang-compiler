@@ -189,7 +189,7 @@ version.c: #$(HEADERS) Makefile
 #
 #			Examples
 #
-examples: $(EXAMPLES)
+examples: $(EXAMPLES) target
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/AlSi10Mg.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/Beam.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/EosPEEK.nt
