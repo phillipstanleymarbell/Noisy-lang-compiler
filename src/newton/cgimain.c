@@ -838,7 +838,6 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 		printf("<span style=\"background-color:whitesmoke; display:none;\" id='newtonsmt2'>%s</span></pre></td></tr></table>", newtonCgiState->Fpsmt2->circbuf);
 	}
 
-
 	if (newtonCgiState->lastDotRender != NULL)
 	{
 		printf("<table width=\"%d\" border=\"0\">\n", fmtWidth);
@@ -961,8 +960,15 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	/*
 	 *	Was disabled (see #132). We now try both the dimensions pass's state as well as the main parser to find the line number.
 	 */
-	printf("            editor.gotoLine(%"PRIu64", %"PRIu64", true);\n", lexPeek(newtonCgiState, 1)->sourceInfo->lineNumber, lexPeek(newtonCgiState, 1)->sourceInfo->columnNumber);
-	printf("            editor.gotoLine(%"PRIu64", %"PRIu64", true);\n", lexPeek(newtonCgiDimensionsState, 1)->sourceInfo->lineNumber, lexPeek(newtonCgiDimensionsState, 1)->sourceInfo->columnNumber);
+	if (strlen(newtonCgiState->Fperr->circbuf) != 0)
+	{
+		printf("            editor.gotoLine(%"PRIu64", %"PRIu64", true);\n", lexPeek(newtonCgiState, 1)->sourceInfo->lineNumber, lexPeek(newtonCgiState, 1)->sourceInfo->columnNumber);
+	}
+	
+	if (strlen(newtonCgiDimensionsState->Fperr->circbuf) != 0)
+	{
+		printf("            editor.gotoLine(%"PRIu64", %"PRIu64", true);\n", lexPeek(newtonCgiDimensionsState, 1)->sourceInfo->lineNumber, lexPeek(newtonCgiDimensionsState, 1)->sourceInfo->columnNumber);
+	}
 
 	/*
 	 *	Have ACE autosize the height, with an upper limit at maxLines
