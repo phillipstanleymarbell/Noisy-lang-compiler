@@ -60,9 +60,9 @@ bmx055: sensor (
 	#	Range of Acceleration can be found in Table 2 on page 11
 	#
 	
-	range xAcceleration == [-16*g .. 16*g],
-	range yAcceleration == [-16*g .. 16*g],
-	range zAcceleration == [-16*g .. 16*g],
+	range xAcceleration == [-16*mj .. 16*mj],
+	range yAcceleration == [-16*mj .. 16*mj],
+	range zAcceleration == [-16*mj .. 16*mj],
 
 	#
 	#	Range of Temperature can be found in Table 2 on page 11
@@ -82,9 +82,9 @@ bmx055: sensor (
 	#	Range of Angular Rate can be found in Table 3 on page 14
 	#
 	
-	range xAngularRate == [0*o .. 2000*o],
-    range yAngularRate == [0*o .. 2000*o],
-    range zAngularRate == [0*o .. 2000*o],	
+	range xAngularRate == [0*aj .. 2000*aj],
+    range yAngularRate == [0*aj .. 2000*aj],
+    range zAngularRate == [0*aj .. 2000*aj],	
 	
 	#
 	#	The operation sequence needed to get a sample
@@ -472,14 +472,14 @@ bmx055: sensor (
 	#
 
 	accuracy xAngularRate == {
-				(0.1*o, 0.012),
+				(0.1*aj, 0.012),
 								},
 
 	accuracy xAngularRate == {
-				(0.1*o, 0.012),
+				(0.1*aj, 0.012),
 								},
 
 	accuracy xAngularRate == {
-				(0.1*o, 0.012),
+				(0.1*aj, 0.012),
 								}							
 }
