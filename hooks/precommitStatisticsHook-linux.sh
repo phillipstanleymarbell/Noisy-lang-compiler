@@ -1,8 +1,8 @@
 #!/bin/sh
 
-dtraceDirectory=
-libflexDirectory=
-trackingDirectory=analysis/Statistics
+dtraceDirectory=submodules/dtrace-scripts
+libflexDirectory=submodules/libflex
+trackingDirectory=analysis/statistics
 statsFile=`git rev-parse HEAD`.txt
 
 #
@@ -21,10 +21,10 @@ make -j
 make README.sloccount
 
 cat version.c >> $trackingDirectory/$statsFile
-echo '\n./noisy/noisy-linux-EN -O0 Examples/noisy/helloWorld.n -s' >> $trackingDirectory/$statsFile
-./src/noisy/noisy-linux-EN -O0 Examples/noisy/helloWorld.n -s >> $trackingDirectory/$statsFile
-echo '\n./newton/newton-linux-EN -S tmp.smt2 Examples/newton/pendulum_acceleration.nt' >> $trackingDirectory/$statsFile
-./src/newton/newton-linux-EN -S tmp.smt2 Examples/newton/pendulum_acceleration.nt >> $trackingDirectory/$statsFile
+echo '\n./noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s' >> $trackingDirectory/$statsFile
+./noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s >> $trackingDirectory/$statsFile
+echo '\n./newton/newton-linux-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt' >> $trackingDirectory/$statsFile
+./newton/newton-linux-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt >> $trackingDirectory/$statsFile
 rm tmp.smt2
 
 cp $trackingDirectory/$statsFile $trackingDirectory/latest.txt
