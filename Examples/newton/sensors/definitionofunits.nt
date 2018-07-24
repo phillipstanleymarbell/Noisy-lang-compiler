@@ -46,7 +46,7 @@ acceleration : signal =
 
 angle : signal =
 {
-	name = "degree" English;
+	name = "degree" Englgitish;
 	symbol = "deg";
 	derivation = distance / distance;
 }
