@@ -144,9 +144,9 @@ ADXL362: sensor (
 	{
 
 		#
-		#		Start up at normal mode, modify (write value register) if set to other modes ...
+		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
-		#		Get MSB and LSB of yAccel data...
+		#	Get MSB and LSB of yAccel data...
 		#
 		YDATA_H = read 16r11;
 		YDATA_L = read 16r10;
@@ -168,9 +168,9 @@ ADXL362: sensor (
 	{
 
 		#
-		#		Start up at normal mode, modify (write value register) if set to other modes ...
+		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
-		#		Get MSB and LSB of zAccel data...
+		#	Get MSB and LSB of zAccel data...
 		#
 		ZDATA_H = read 16r13;
 		ZDATA_L = read 16r12;
@@ -178,7 +178,7 @@ ADXL362: sensor (
 	},
 
 	#
-	#		Register address of temperature sensor can be found in Table 11 of register map on page 23.
+	#	Register address of temperature sensor can be found in Table 11 of register map on page 23.
 	#
 	interface Temperature == "spi" ()
 	{
@@ -205,7 +205,7 @@ ADXL362: sensor (
 	uncertainty Temperature == Gaussian(Temperature, kADXL362TemperatureStdev)*g,
 
 	#
-	#		When this token is returned by the sensor, it denotes invalid sensed value / erasure in communication with sensor.
+	#	When this token is returned by the sensor, it denotes invalid sensed value / erasure in communication with sensor.
 	#
 
 	erasuretoken xAcceleration == kADXL362xAccelerationErasureToken,
@@ -279,9 +279,9 @@ ADXL362: sensor (
 				},
 
 	#
-	#		Offset value of Temperature Sensor can be found in Table 2 of document 1.2 on page 12.
+	#	Offset value of Temperature Sensor can be found in Table 2 of document 1.2 on page 12.
 	#
-	#		Could not find the relevant information in data sheet so I left the cost as 0.
+	#	Could not find the relevant information in data sheet so I left the cost as 0.
 	#
 	accuracy Temperature == {
 					(4*K, 0),
