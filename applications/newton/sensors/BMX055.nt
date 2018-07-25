@@ -37,7 +37,6 @@
 #
 #	Description: Base signals used in most Newton descriptions.
 #
-
 include "NewtonBaseSignals.nt"
 
 #
