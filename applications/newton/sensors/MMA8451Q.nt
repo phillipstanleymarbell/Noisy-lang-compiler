@@ -98,7 +98,6 @@ MMA8451Q: sensor (
 		#
 		#	Get xAccel data...
 		#
-
 		xAcceleration@8*bits = read 16r01;
 	},
 
@@ -123,7 +122,6 @@ MMA8451Q: sensor (
 		#
 		#	Get yAccel data...
 		#
-
 		yAcceleration@8*bits = read 16r03;
 	},
 	
@@ -148,7 +146,6 @@ MMA8451Q: sensor (
 		#
 		#	Get zAccel data...
 		#
-
 		zAcceleration@8*bits = read 16r05;
 	},
 
