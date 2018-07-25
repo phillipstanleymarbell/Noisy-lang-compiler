@@ -268,7 +268,6 @@ bmx055: sensor (
 	},
 
 	interface zAngularRate == "i2c" (address: "0x68")
-
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
