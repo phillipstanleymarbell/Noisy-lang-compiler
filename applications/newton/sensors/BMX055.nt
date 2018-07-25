@@ -37,10 +37,11 @@
 #
 #	Description: Base signals used in most Newton descriptions.
 #
+
 include "NewtonBaseSignals.nt"
 
 #
-#	Description: Additional signals used in this particular newton description.
+#		Description: Additional signals used in this particular newton description.
 #
 noise : signal =
 {
@@ -77,7 +78,7 @@ kBMX055yAngularRateErasureToken: const = 16rFEFE;
 kBMX055zAngularRateErasureToken: const = 16rFEFE;
 
 #
-#	Standard Deviation is not available in data sheet.
+#		Standard Deviation is not available in data sheet.
 #
 kBMX055xAccelerationStdev: const = ;
 kBMX055yAccelerationStdev: const = ;
@@ -281,7 +282,7 @@ bmx055: sensor (
 	},
 
 	#
-	#	Uncertainty/noise model of the sensor as a function of mean value
+	#	Uncertainty/noise model of the sensor as a function of mean value	
 	#
 	#	Unsure about the function that describes the relationship between the following variables, so leave them as they are.
 	#
@@ -364,17 +365,17 @@ bmx055: sensor (
 				},
 
 	#
-	#	Accuracy settings list for the sensor. This is a list of (accuracy, cost) pairs.
+	#		Accuracy settings list for the sensor. This is a list of (accuracy, cost) pairs.
 	#
-	#	Noise and offset values are used here for accuracy.
+	#		Noise and offset values are used here for accuracy.
 	#
-	#	Noise values of Accelerometer can be found in Table 2 of document 1.2 on page 12.
+	#		Noise values of Accelerometer can be found in Table 2 of document 1.2 on page 12.
 	#
-	#	Product of the total supply current and supply voltage in normal mode is used as the cost value.
+	#		Product of the total supply current and supply voltage in normal mode is used as the cost value.
 	#
-	#	Supply voltage is 2.4 V which is stated in the footnote on page 11.
+	#		Supply voltage is 2.4 V which is stated in the footnote on page 11.
 	#
-	#	Current values (normal mode) of Accelerometer can be found in Table 2 of document 1.2 on page 11.
+	#		Current values (normal mode) of Accelerometer can be found in Table 2 of document 1.2 on page 11.
 	#
 	accuracy xAcceleration == {
 					(150*n, 312),
@@ -389,22 +390,22 @@ bmx055: sensor (
 				},
 
 	#
-	#	Offset value of Temperature Sensor can be found in Table 2 of document 1.2 on page 12.
+	#		Offset value of Temperature Sensor can be found in Table 2 of document 1.2 on page 12.
 	#
-	#	Product of the total supply current and supply voltage in normal mode is used as the cost value.
+	#		Product of the total supply current and supply voltage in normal mode is used as the cost value.
 	#
-	#	Current values (normal mode) of Temperature Sensor can be found in Table 2 of document 1.2 on page 11.
+	#		Current values (normal mode) of Temperature Sensor can be found in Table 2 of document 1.2 on page 11.
 	#
 	accuracy Temperature == {
 					(4.0*K, 312),
 				},
 
 	#
-	#	Noise values (normal mode with 4 different presets) of Magnetometer can be found in Table 37 of document 9.2.4 on page 122.
+	#		Noise values (normal mode with 4 different presets) of Magnetometer can be found in Table 37 of document 9.2.4 on page 122.
 	#
-	#	Product of the average current consumption and supply voltage in normal mode is used as the cost value.
+	#		Product of the average current consumption and supply voltage in normal mode is used as the cost value.
 	#
-	#	Current values (normal mode with 4 different presets) of Magnetometer can be found in Table 37 of document 9.2.4 on page 122.
+	#		Current values (normal mode with 4 different presets) of Magnetometer can be found in Table 37 of document 9.2.4 on page 122.
 	#
 	accuracy xMagneticFluxDensity == {
 						(1.0*uT, 408),
@@ -428,11 +429,11 @@ bmx055: sensor (
 					},
 
 	#
-	#	Noise values of Gyroscope can be found in Table 3 of document 1.2 on page 15.
+	#		Noise values of Gyroscope can be found in Table 3 of document 1.2 on page 15.
 	#
-	#	Product of the total supply current and supply voltage in normal mode is used as the cost value.
+	#		Product of the total supply current and supply voltage in normal mode is used as the cost value.
 	#
-	#	Current values (normal mode) of Gyroscope can be found in Table 3 of document 1.2 on page 14.
+	#		Current values (normal mode) of Gyroscope can be found in Table 3 of document 1.2 on page 14.
 	#
 	accuracy xAngularRate == {
 					(0.1*aj, 0.012),
