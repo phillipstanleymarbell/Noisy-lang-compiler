@@ -928,6 +928,7 @@ typedef struct
 	FlexPrintBuf *		Fperr;
 	FlexPrintBuf *		Fpinfo;
 	FlexPrintBuf *		Fpsmt2;
+	FlexPrintBuf *		Fpllvm;
 
 	/*
 	 *	The output file of the last render. TODO: Not very happy
