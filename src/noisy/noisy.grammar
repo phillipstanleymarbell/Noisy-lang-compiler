@@ -8,24 +8,24 @@ reservedOperatorOrSeparatorToken ::=	"~" | "!" | "%" | "^" | "&" | "*" | "(" | "
 				| "+=" | ":=" | "!=" | ">>" | ">>=" | "<<" | "<<=" | "<-=" | "&&" | "||" 
 				| "::" | "=>" | "<=>" | "==" | "++" | "--" | ">=<" | "@" .
 
-reservedIdentifiers		::=	"A" | "K" | "acceleration" | "adt" | "alpha" | "ampere" | "and" | "andover" |
-				"anglerate" | "bool" | "byte" | "candela" | "cardinality" | "cd" |
-				"chan" | "complex" | "const" | "crossproduct" | "current" | "dimensions" |
-				"distance" | "dotproduct" | "else" | "epsilon" | "erasures" |
+reservedIdentifiers		::=	"A" | "K" | "acceleration" | "adt" | "alpha" | "Ampere" | "and" |
+				"anglerate" | "bool" | "candela" | "cardinality" | "cd" |
+				"complex" | "const" | "crossproduct" | "current" | "dimensions" |
+				"distance" | "dotproduct" | "epsilon" | "erasures" |
 				"errors" | "exists" | "false" | "fixed" | "float128" "float16" |
 				"float32" | "float4" | "float64" | "float8" | "forall" | "fourier" |
-				"function" | "given" | "head" | "highpass" | "humidity" |
-				"imaginary" | "in" | "int" | "int128" | "int16" | "int32" | "int4" |
-				"int64" | "int8" | "iterate" | "kelvin" | "kg" | "kilogram" | "latency" |
+				"function" | "given" | "head" | "highpass" | "relativehumidity" |
+				"in" | "int128" | "int16" | "int32" | "int4" |
+				"int64" | "int8" | "iterate" | "Kelvin" | "kg" | "kilogram" | "latency" |
 				"length" | "list" | "load" | "lowpass" | "luminosity" | "m" | "magneticflux" |
 				"mass" | "match" | "matchseq" | "material" | "meter" | "module" | "mole" |
 				"nat128" | "nat16" | "nat32" | "nat4" | "nat64" | "nat8" | "nil" | "of" |
 				"omega" | "parallel" | "predicate" | "pressure" | "probdef" | "quantize" |
-				"rational" | "real" | "return" | "reverse" | "s" | "samples" | "second" |
+				"rational" | "return" | "reverse" | "s" | "samples" | "second" |
 				"sequence" | "set" | "sigfigs" | "signal" | "sort" | "string" | "tail" |
-				"tau" | "tderivative" | "temperature" | "time" | "timebase" |
+				"tailtip" | "tau" | "tderivative" | "temperature" | "time" | "timebase" |
 				"timeseries" | "tintegral" | "true" | "type" | "typeannote" | "typemax" |
-				"typemin" | "unionover" | "units" | "valfn" | "vector" .
+				"typemin" | "units" | "valfn" | "vector" .
 
 zeroToNine		=	"0-9" .
 oneToNine		=	"1-9" .
@@ -47,7 +47,7 @@ program			::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
 functionDefn		::=	identifier ":" "function" signature "->" signature "="  scopedStatementList .
 problemDefn		::=	identifier ":" "probdef" signature "->" signature "=>" scopedPredStmtList .
 predicateFnDefn		::=	identifier ":" "predicate" signature "=>" scopedPredStmtList .
-signature		::=	"(" [identifier ":" typeExpr] {"," identifier ":" typeExpr} ")" .
+signature		::=	"(" [identifier ":" typeExpr {"," identifier ":" typeExpr}] ")" .
 moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleBody "}" .
 moduleBody		=	{moduleTypeNameDecl ";"} .
 
@@ -69,7 +69,7 @@ predicateFnDecl		::=	"predicate" signature .
 identifierOrNil		=	(identifier {fieldSelect}) | "nil" .
 identifierOrNilList	=	identifierOrNil {"," identifierOrNil} .
 identifierList		=	identifier {"," identifier} .
-typeExpr		::=	(basicType [typeAnnoteList]) | anonAggregateType | typeName .
+typeExpr		::=	(basicType ["and" typeAnnoteList]) | anonAggregateType | typeName .
 typeAnnoteItem		= 	dimensionsDesignation | unitsDesignation | signalDesignation
 				| timeseriesDesignation | sigfigDesignation | tolerance .
 typeAnnoteList		=	typeAnnoteItem {"and" typeAnnoteItem} .
@@ -86,7 +86,7 @@ unitsArithFactor	::=	(basicSignalUnits | identifier | numericConst) | "(" unitsA
 unitsArithTerm		::=	unitsArithFactor {highPrecedenceArith2ArithOp unitsArithFactor} .
 unitsArithExpr		::=	unitsArithTerm {lowPrecedenceArith2ArithOp unitsArithTerm} .
 basicSignalDimension	::=	"distance" | "mass" | "time" | "material" | "current" | "luminosity" | "temperature" .
-basicSignalUnits	::=	"m" | "kg" | "s" | "mole" | "A" | "cd" | "K" .
+basicSignalUnits	::=	"m" | "kg" | "s" | "mole" | "A" | "cd" | "K" | "meter" | "kilogram" | "second" | "mole" | "Ampere" | "candela" | "Kelvin" .
 basicSignal		::=	basicSignalDimension | "pressure" | "acceleration" | "magneticfluxdensity"
 				| "relativehumidity" | "anglerate" .
 tolerance		::=	errormagTolerance | lossTolerance | latencyTolerance .
@@ -124,7 +124,7 @@ statement		::=	[ assignmentStatement | matchStatement | iterateStatement | seque
 assignmentStatement	::=	identifierOrNilList ((":" (constantDecl | typeDecl | typeExpr)) | (assignOp expression))
 				| "(" identifierOrNilList ")" assignOp expression .
 returnStatement		::=	"return" returnSignature .
-returnSignature		=	"(" [identifier ":" expression] {"," identifier ":" expression} ")" .
+returnSignature		=	"(" [identifier ":" expression {"," identifier ":" expression}] ")" .
 
 operatorToleranceDecl	=	(highPrecedenceBinaryOp | lowPrecedenceBinaryOp | unaryOp) ":" typeExpr .
 assignOp		::=	"=" | "^=" | "|=" | "&=" | "%=" | "/=" | "*=" | "-=" | "+=" | ">>="
@@ -160,14 +160,14 @@ factor			::=	(identifier {fieldSelect}) | integerConst | realConst | stringConst
 				| "(" expression ")" | tupleValue | namegenInvokeShorthand | typeMinExpr | typeMaxExpr .
 typeMinExpr		::=	"typemin" "(" arithmeticType ")" .
 typeMaxExpr		::=	"typemax" "(" arithmeticType ")" .
-namegenInvokeShorthand	=	identifier "(" [identifier ":" expression] {","  identifier ":" expression} ")" .
+namegenInvokeShorthand	=	identifier "(" [identifier ":" expression {","  identifier ":" expression}] ")" .
 tupleValue		::=	"(" identifierOrNilList ")" .
 fieldSelect		::=	("." identifier) | ("[" expression [":" expression] "]") .
 highPrecedenceBinaryOp	::=	"*" | "/" | "%" | "&" | "^" | "::" | "lowpass" | "highpass" | "dotproduct"
 				| "crossproduct" | "centralmoment" | highPrecedenceBinaryBoolOp .
 lowPrecedenceBinaryOp	::=	"+" | "-" | ">>" | "<<" | "|"  | cmpOp | lowPrecedenceBinaryBoolOp .
 cmpOp			::=	"==" | "!=" | ">" | "<" | "<=" | ">=" | ">=<" .
-unaryOp			::=	"~" | "-"  | "+" | "<-"  | "head" | "tail" | "length" | "sort" | "uncertainty"
+unaryOp			::=	"~" | "-"  | "+" | "<-"  | "head" | "tail" | "tailtip"| "length" | "sort" | "uncertainty"
 				| "tintegral" | "tderivative" | "timebase" | "sigfigs" | "samples" | "reverse"
 				\| "fourier" | "cardinality" | "frequencies" | "magnitudes" | unaryBoolOp .
 

@@ -243,6 +243,13 @@ production	kNoisyIrNodeType_PbasicSignalUnits:		firstset = {
 										kNoisyIrNodeType_TA,
 										kNoisyIrNodeType_Tcd,
 										kNoisyIrNodeType_TK,
+										kNoisyIrNodeType_Tmeter,
+										kNoisyIrNodeType_Tkilogram,
+										kNoisyIrNodeType_Tsecond,
+										kNoisyIrNodeType_Tmole,
+										kNoisyIrNodeType_TAmpere,
+										kNoisyIrNodeType_Tcandela,
+										kNoisyIrNodeType_TKelvin, 
 									}
 
 --//		basicSignal		::=	basicSignalDimension | "pressure" | "acceleration" | "magneticfluxdensity"
@@ -1222,7 +1229,7 @@ production	kNoisyIrNodeType_PlatencyTolerance:		followset = {
 
 --//		basicType		::=	"bool" | integerType | realType | "string" .
 production	kNoisyIrNodeType_PbasicType:			followset = {
-										firstset(kNoisyIrNodeType_PtypeAnnoteList),
+										kNoisyIrNodeType_Tand,
 										firstset(kNoisyIrNodeType_PunaryOp),
 										firstset(kNoisyIrNodeType_Pfactor),
 }
@@ -1946,625 +1953,737 @@ token	kNoisyIrNodeType_TleftBrace:				followset = {
 									}
 
 --//
---//	TODO: the rest of these are not filled in yet. Leave for later. Get the info needed from shell by doing, e.g., grep -C 1 '\"(\"' noisy.grammar
+--//	We get the info needed from shell by doing, e.g., grep -C 1 '\"(\"' noisy.grammar
 --//
 token	kNoisyIrNodeType_TleftParens:				followset = {
-										,
-									}
-token	kNoisyIrNodeType_TleftShiftAssign:			followset = {
-										,
+										kNoisyIrNodeType_TrightParens,
+										kNoisyIrNodeType_Tidentifier,
+										firstset(kNoisyIrNodeType_PtypeParameterList),
+										firstset(kNoisyIrNodeType_PdimensionArithExpr),
+										firstset(kNoisyIrNodeType_PunitsArithExpr),
+										kNoisyIrNodeType_TrealConst,
+										firstset(kNoisyIrNodeType_PtypeExpr),
+										firstset(kNoisyIrNodeType_PidentifierOrNilList),
+										firstset(kNoisyIrNodeType_PassignmentStatement),
+										firstset(kNoisyIrNodeType_Pexpression),
+										firstset(kNoisyIrNodeType_ParithmeticType),
+										firstset(kNoisyIrNodeType_PpredExpr),
+										firstset(kNoisyIrNodeType_PpredArithExpr),
+										firstset(kNoisyIrNodeType_PsetExpr),
+										firstset(kNoisyIrNodeType_PbaseConst),
 									}
 
-token	kNoisyIrNodeType_TleftShort:				followset = {
-										,
+token	kNoisyIrNodeType_TleftShiftAssign:			followset = {
+										followset(kNoisyIrNodeType_PassignOp),
+									}
+
+token	kNoisyIrNodeType_TleftShift:				followset = {
+										followset(kNoisyIrNodeType_PlowPrecedenceBinaryOp),
 									}
 
 token	kNoisyIrNodeType_TlessThan:				followset = {
-										,
+										followset(kNoisyIrNodeType_PcmpOp),
+										followset(kNoisyIrNodeType_Parith2BoolOp),
 									}
 
 token	kNoisyIrNodeType_TlessThanEqual:			followset = {
-										,
+										followset(kNoisyIrNodeType_PcmpOp),
+										followset(kNoisyIrNodeType_Parith2BoolOp),
 									}
 
 token	kNoisyIrNodeType_TlogicalAnd:				followset = {
-										,
+										followset(kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp),
 									}
 
 token	kNoisyIrNodeType_Tminus:				followset = {
-										,
+										kNoisyIrNodeType_TdrealConst,
+										followset(kNoisyIrNodeType_PlowPrecedenceBinaryOp),
+										followset(kNoisyIrNodeType_PunaryOp),
+										followset(kNoisyIrNodeType_PlowPrecedenceArith2ArithOp),
+										followset(kNoisyIrNodeType_PlowPrecedenceBoolSetOp),
 									}
 
 token	kNoisyIrNodeType_TminusAssign:				followset = {
-										,
+										followset(kNoisyIrNodeType_PassignOp),
 									}
 
 token	kNoisyIrNodeType_TminusMinus:				followset = {
-										,
+										firstset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 									}
 
 token	kNoisyIrNodeType_Tnot:					followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryBoolOp),
 									}
 
 token	kNoisyIrNodeType_TnotEqual:				followset = {
-										,
+										followset(kNoisyIrNodeType_PcmpOp),
+										followset(kNoisyIrNodeType_Parith2BoolOp),
 									}
 
 token	kNoisyIrNodeType_TorAssign:				followset = {
-										,
+										followset(kNoisyIrNodeType_PassignOp),
 									}
 
 token	kNoisyIrNodeType_Tpercent:				followset = {
-										,
+										followset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
+										followset(kNoisyIrNodeType_PhighPrecedenceArith2ArithOp),
 									}
 
 token	kNoisyIrNodeType_TpercentAssign:			followset = {
-										,
-									}
-
-token	kNoisyIrNodeType_TpercentEqual:				followset = {
-										,
+										followset(kNoisyIrNodeType_PassignOp),
 									}
 
 token	kNoisyIrNodeType_Tplus:					followset = {
-										,
+										followset(kNoisyIrNodeType_PlowPrecedenceBinaryOp),
+										followset(kNoisyIrNodeType_PunaryOp),
+										followset(kNoisyIrNodeType_PlowPrecedenceArith2ArithOp),
+										followset(kNoisyIrNodeType_PlowPrecedenceBoolSetOp),
 									}
 
 token	kNoisyIrNodeType_TplusAssign:				followset = {
-										,
+										followset(kNoisyIrNodeType_PassignOp),
 									}
 
 token	kNoisyIrNodeType_TplusPlus:				followset = {
-										,
+										firstset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 									}
 
 token	kNoisyIrNodeType_TrightBrace:				followset = {
-										,
+										followset(kNoisyIrNodeType_PmoduleDecl),
+										followset(kNoisyIrNodeType_PadtTypeDecl),
+										followset(kNoisyIrNodeType_PinitList),
+										followset(kNoisyIrNodeType_PidxInitList),
+										followset(kNoisyIrNodeType_PstarInitList),
+										followset(kNoisyIrNodeType_PscopedStatementList),
+										followset(kNoisyIrNodeType_PmatchStatement),
+										followset(kNoisyIrNodeType_PiterateStatement),
+										followset(kNoisyIrNodeType_PquantizeExpression),
+										followset(kNoisyIrNodeType_PscopedPredStmtList),
+										followset(kNoisyIrNodeType_PsetFactor),
+										followset(kNoisyIrNodeType_PconstSetExpr)
 									}
 
 token	kNoisyIrNodeType_TrightParens:				followset = {
-										,
+										followset(kNoisyIrNodeType_Psignature),
+										kNoisyIrNodeType_TleftBrace,
+										followset(kNoisyIrNodeType_PdimensionArithFactor),
+										followset(kNoisyIrNodeType_PunitsArithFactor),
+										followset(kNoisyIrNodeType_PerrormagTolerance),
+										followset(kNoisyIrNodeType_PlossTolerance),
+										followset(kNoisyIrNodeType_PlatencyTolerance),
+										followset(kNoisyIrNodeType_PtupleType),
+										firstset(kNoisyIrNodeType_PassignOp),
+										followset(kNoisyIrNodeType_PreturnSignature),
+										followset(kNoisyIrNodeType_PsetHead),
+										followset(kNoisyIrNodeType_PorderingHead),
+										followset(kNoisyIrNodeType_PcomplexCastExpr),
+										followset(kNoisyIrNodeType_PrationalCastExpr),
+										followset(kNoisyIrNodeType_Pfactor),
+										followset(kNoisyIrNodeType_PtypeMinExpr),
+										followset(kNoisyIrNodeType_PtypeMaxExpr),
+										followset(kNoisyIrNodeType_PnamegenInvokeShorthand),
+										followset(kNoisyIrNodeType_PtupleValue),
+										followset(kNoisyIrNodeType_PpredFactor),
+										followset(kNoisyIrNodeType_PvarTuple),
+										followset(kNoisyIrNodeType_PpredArithFactor),
+										followset(kNoisyIrNodeType_PsumProdMinMaxBody),
+										followset(kNoisyIrNodeType_PquantifiedBoolTerm),
+										followset(kNoisyIrNodeType_PsetFactor),
+										followset(kNoisyIrNodeType_Ptuple),
 									}
 
 token	kNoisyIrNodeType_TrightShift:				followset = {
-										,
+										followset(kNoisyIrNodeType_PlowPrecedenceBinaryOp),
 									}
 
 token	kNoisyIrNodeType_TrightShiftAssign:			followset = {
-										,
+										followset(kNoisyIrNodeType_PassignOp),
 									}
 
 token	kNoisyIrNodeType_Tsemicolon:				followset = {
-										,
+										followset(kNoisyIrNodeType_PmoduleBody),
+										firstset(kNoisyIrNodeType_PidentifierList),
+										firstset(kNoisyIrNodeType_PvalfnSignature),
+										kNoisyIrNodeType_TrightBrace,
+										followset(kNoisyIrNodeType_Pstatement),
+										firstset(kNoisyIrNodeType_Pexpression),
+										firstset(kNoisyIrNodeType_PassignmentStatement),
 									}
 
 token	kNoisyIrNodeType_TsetCross:				followset = {
-										,
+										followset(kNoisyIrNodeType_PhighPrecedenceBoolSetOp),
 									}
 
 token	kNoisyIrNodeType_TsetIntersect:				followset = {
-										,
-									}
-
-token	kNoisyIrNodeType_TsingleQuote:				followset = {
-										,
+										followset(kNoisyIrNodeType_PhighPrecedenceBoolSetOp),
 									}
 
 token	kNoisyIrNodeType_Ttilde:				followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_TxorAssign:				followset = {
-										,
+										followset(kNoisyIrNodeType_PassignOp),
 									}
 
 token	kNoisyIrNodeType_Tgoes:					followset = {
-										,
+										firstset(kNoisyIrNodeType_Psignature),
+										firstset(kNoisyIrNodeType_PreadTypeSignature),
+										kNoisyIrNodeType_Tidentifier,
 									}
 
 token	kNoisyIrNodeType_TA:					followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalUnits),
 									}
 
 token	kNoisyIrNodeType_TK:					followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalUnits),
 									}
 
 token	kNoisyIrNodeType_TleftBracket:				followset = {
-										,
-									}
-
-token	kNoisyIrNodeType_Tquote:				followset = {
-										,
+										kNoisyIrNodeType_TintegerConst,
+										firstset(kNoisyIrNodeType_Pexpression)
 									}
 
 token	kNoisyIrNodeType_TrightBracket:				followset = {
-										,
+										kNoisyIrNodeType_Tof,
+										followset(kNoisyIrNodeType_PfieldSelect),
 									}
 
 token	kNoisyIrNodeType_Txor:					followset = {
-										,
-									}
-
-token	kNoisyIrNodeType_TxorAssign:				followset = {
-										,
+										followset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
+										followset(kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp),
+										followset(kNoisyIrNodeType_PlowPrecedenceBoolSetOp),
 									}
 
 token	kNoisyIrNodeType_Tacceleration:				followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignal),
 									}
 
 token	kNoisyIrNodeType_Tadt:					followset = {
-										,
+										kNoisyIrNodeType_TleftBrace,
 									}
 
 token	kNoisyIrNodeType_Talpha:				followset = {
-										,
+										kNoisyIrNodeType_TleftParens,
 									}
 
-token	kNoisyIrNodeType_Tampere:				followset = {
-										,
-									}
+token	kNoisyIrNodeType_TAmpere:				followset = {
+										followset(kNoisyIrNodeType_PbasicSignalUnits),
+								}
 
 token	kNoisyIrNodeType_Tand:					followset = {
-										,
-									}
-
-token	kNoisyIrNodeType_Tandover:				followset = {
-										,
+										firstset(kNoisyIrNodeType_PtypeAnnoteItem),
 									}
 
 token	kNoisyIrNodeType_Tanglerate:				followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignal),
 									}
 
 token	kNoisyIrNodeType_Tbool:					followset = {
-										,
-									}
-
-token	kNoisyIrNodeType_Tbyte:					followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicType),
 									}
 
 token	kNoisyIrNodeType_Tcandela:				followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalUnits),
 									}
 
 token	kNoisyIrNodeType_Tcardinality:				followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Tcd:					followset = {
-										,
-									}
-
-token	kNoisyIrNodeType_Tchan:					followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalUnits),
 									}
 
 token	kNoisyIrNodeType_Tcomplex:				followset = {
-										,
+										firstset(kNoisyIrNodeType_ParithmeticType),
+										kNoisyIrNodeType_TleftParens
 									}
 
 token	kNoisyIrNodeType_Tconst:				followset = {
-										,
+										kNoisyIrNodeType_TintegerConst,
+										kNoisyIrNodeType_TrealConst,
+										kNoisyIrNodeType_TboolConst,
 									}
 
 token	kNoisyIrNodeType_Tcrossproduct:				followset = {
-										,
+										followset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 									}
 
 token	kNoisyIrNodeType_Tcurrent:				followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalDimension),
 									}
 
 token	kNoisyIrNodeType_Tdimensions:				followset = {
-										,
+										firstset(kNoisyIrNodeType_PdimensionArithExpr),
 									}
 
 token	kNoisyIrNodeType_Tdistance:				followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalDimension),
 									}
 
 token	kNoisyIrNodeType_Tdotproduct:				followset = {
-										,
-									}
-
-token	kNoisyIrNodeType_Telse:					followset = {
-										,
+										followset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 									}
 
 token	kNoisyIrNodeType_Tepsilon:				followset = {
-										,
+										kNoisyIrNodeType_TleftParens,
 									}
 
 token	kNoisyIrNodeType_Terasures:				followset = {
-										,
+										kNoisyIrNodeType_Tof,
 									}
 
 token	kNoisyIrNodeType_Terrors:				followset = {
-										,
+										kNoisyIrNodeType_Tof,
 									}
 
 token	kNoisyIrNodeType_Texists:				followset = {
-										,
+										followset(kNoisyIrNodeType_PquantifierOp),
 									}
 
 token	kNoisyIrNodeType_Tfalse:				followset = {
-										,
+										followset(kNoisyIrNodeType_TboolConst),
 									}
 
 token	kNoisyIrNodeType_Tfixed:				followset = {
-										,
+										kNoisyIrNodeType_TintegerConst,
 									}
 
 token	kNoisyIrNodeType_Tfloat128:				followset = {
-										,
+										followset(kNoisyIrNodeType_PrealType),
 									}
 
 token	kNoisyIrNodeType_Tfloat16:				followset = {
-										,
+										followset(kNoisyIrNodeType_PrealType),
 									}
 
 token	kNoisyIrNodeType_Tfloat32:				followset = {
-										,
+										followset(kNoisyIrNodeType_PrealType),
 									}
 
 token	kNoisyIrNodeType_Tfloat4:				followset = {
-										,
+										followset(kNoisyIrNodeType_PrealType),
 									}
 
 token	kNoisyIrNodeType_Tfloat64:				followset = {
-										,
+										followset(kNoisyIrNodeType_PrealType),
 									}
 
 token	kNoisyIrNodeType_Tfloat8:				followset = {
-										,
+										followset(kNoisyIrNodeType_PrealType),
 									}
 
 token	kNoisyIrNodeType_Tforall:				followset = {
-										,
+										followset(kNoisyIrNodeType_PquantifierOp),
 									}
 
 token	kNoisyIrNodeType_Tfourier:				followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Tfunction:				followset = {
-										,
+										firstset(kNoisyIrNodeType_Psignature),
+										firstset(kNoisyIrNodeType_PwriteTypeSignature)
 									}
 
 token	kNoisyIrNodeType_Tgiven:				followset = {
-										,
+										followset(kNoisyIrNodeType_PquantifierOp),
 									}
 
 token	kNoisyIrNodeType_Thead:					followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Ttailtip:				followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Thighpass:				followset = {
-										,
+										followset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 									}
 
-token	kNoisyIrNodeType_Thumidity:				followset = {
-										,
-									}
-
-token	kNoisyIrNodeType_Timaginary:				followset = {
-										,
+token	kNoisyIrNodeType_Trelativehumidity:			followset = {
+										followset(kNoisyIrNodeType_PbasicSignal),
 									}
 
 token	kNoisyIrNodeType_Tin:					followset = {
-										,
-									}
-
-token	kNoisyIrNodeType_Tint:					followset = {
-										,
+										firstset(kNoisyIrNodeType_Pexpression),
+										kNoisyIrNodeType_Tat,
+										firstset(kNoisyIrNodeType_PsetExpr),
+										firstset(kNoisyIrNodeType_PtypeExpr),
 									}
 
 token	kNoisyIrNodeType_Tint128:				followset = {
-										,
+										followset(kNoisyIrNodeType_PintegerType),
 									}
 
 token	kNoisyIrNodeType_Tint16:				followset = {
-										,
+										followset(kNoisyIrNodeType_PintegerType),
 									}
 
 token	kNoisyIrNodeType_Tint32:				followset = {
-										,
+										followset(kNoisyIrNodeType_PintegerType),
 									}
 
 token	kNoisyIrNodeType_Tint4:					followset = {
-										,
+										followset(kNoisyIrNodeType_PintegerType),
 									}
 
 token	kNoisyIrNodeType_Tint64:				followset = {
-										,
+										followset(kNoisyIrNodeType_PintegerType),
 									}
 
 token	kNoisyIrNodeType_Tint8:					followset = {
-										,
+										followset(kNoisyIrNodeType_PintegerType),
 									}
 
-token	kNoisyIrNodeType_Titerate:				followset = {kNoisyIrNodeType_TleftBrace}
+token	kNoisyIrNodeType_Titerate:				followset = {
+										kNoisyIrNodeType_TleftBrace
+									}
 
-token	kNoisyIrNodeType_Tkelvin:				followset = {
-										,
+token	kNoisyIrNodeType_TKelvin:				followset = {
+										followset(kNoisyIrNodeType_PbasicSignalUnits),
 									}
 
 token	kNoisyIrNodeType_Tkg:					followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalUnits),
 									}
 
 token	kNoisyIrNodeType_Tkilogram:				followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalUnits),
 									}
 
 token	kNoisyIrNodeType_Tlatency:				followset = {
-										,
+										kNoisyIrNodeType_Tof,
 									}
 
-token	kNoisyIrNodeType_Tlen:					followset = {
-										,
+token	kNoisyIrNodeType_Tlength:				followset = {
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Tlist:					followset = {
-										,
+										kNoisyIrNodeType_Tof,
 									}
 
 token	kNoisyIrNodeType_Tload:					followset = {
-										,
+										kNoisyIrNodeType_Tidentifier,
 									}
 
 token	kNoisyIrNodeType_Tlowpass:				followset = {
-										,
+										followset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 									}
 
 token	kNoisyIrNodeType_Tluminosity:				followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalDimension),
 									}
 
 token	kNoisyIrNodeType_Tm:					followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalUnits),
 									}
 
-token	kNoisyIrNodeType_Tmagneticflux:				followset = {
-										,
+token	kNoisyIrNodeType_Tmagneticfluxdensity:			followset = {
+										followset(kNoisyIrNodeType_PbasicSignal),
 									}
 
 token	kNoisyIrNodeType_Tmass:					followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalDimension),
 									}
 
 token	kNoisyIrNodeType_Tmatch:				followset = {
-										,
+										kNoisyIrNodeType_TleftBrace,
 									}
 
 token	kNoisyIrNodeType_Tmatchseq:				followset = {
-										,
+										kNoisyIrNodeType_TleftBrace,
 									}
 
 token	kNoisyIrNodeType_Tmaterial:				followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalDimension),
 									}
 
 token	kNoisyIrNodeType_Tmeter:				followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalUnits),
 									}
 
 token	kNoisyIrNodeType_Tmodule:				followset = {
-										,
+										kNoisyIrNodeType_TleftParens,
 									}
 
 token	kNoisyIrNodeType_Tmole:					followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalUnits),
 									}
 
 token	kNoisyIrNodeType_Tnat128:				followset = {
-										,
+										followset(kNoisyIrNodeType_PintegerType),
 									}
 
 token	kNoisyIrNodeType_Tnat16:				followset = {
-										,
+										followset(kNoisyIrNodeType_PintegerType),
 									}
 
 token	kNoisyIrNodeType_Tnat32:				followset = {
-										,
+										followset(kNoisyIrNodeType_PintegerType),
 									}
 
 token	kNoisyIrNodeType_Tnat4:					followset = {
-										,
+										followset(kNoisyIrNodeType_PintegerType),
 									}
 
 token	kNoisyIrNodeType_Tnat64:				followset = {
-										,
+										followset(kNoisyIrNodeType_PintegerType),
 									}
 
 token	kNoisyIrNodeType_Tnat8:					followset = {
-										,
+										followset(kNoisyIrNodeType_PintegerType),
 									}
 
 token	kNoisyIrNodeType_Tnil:					followset = {
-										,
+										followset(kNoisyIrNodeType_PidentifierOrNil),
 									}
 
 token	kNoisyIrNodeType_Tof:					followset = {
-										,
+										firstset(kNoisyIrNodeType_PtypeExpr),
+										firstset(kNoisyIrNodeType_PinitList),
+										firstset(kNoisyIrNodeType_PstarInitList),
+										kNoisyIrNodeType_Tidentifier,
+										kNoisyIrNodeType_TleftParens,
 									}
 
 token	kNoisyIrNodeType_Tomega:				followset = {
-										,
+										followset(kNoisyIrNodeType_PsetFactor),
 									}
 
 token	kNoisyIrNodeType_Tparallel:				followset = {
-										,
+										firstset(kNoisyIrNodeType_PsetHead),
 									}
 
 token	kNoisyIrNodeType_Tpredicate:				followset = {
-										,
+										firstset(kNoisyIrNodeType_Psignature),
 									}
 
 token	kNoisyIrNodeType_Tpressure:				followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignal),
 									}
 
 token	kNoisyIrNodeType_Tprobdef:				followset = {
-										,
+										firstset(kNoisyIrNodeType_Psignature),
+										firstset(kNoisyIrNodeType_PwriteTypeSignature),
 									}
 
 token	kNoisyIrNodeType_Tquantize:				followset = {
-										,
+										kNoisyIrNodeType_TleftBrace,
 									}
 
 token	kNoisyIrNodeType_Trational:				followset = {
-										,
-									}
-
-token	kNoisyIrNodeType_Treal:					followset = {
-										,
+										firstset(kNoisyIrNodeType_ParithmeticType),
+										kNoisyIrNodeType_TleftParens
 									}
 
 token	kNoisyIrNodeType_Treturn:				followset = {
-										,
+										firstset(kNoisyIrNodeType_PreturnSignature),
 									}
 
 token	kNoisyIrNodeType_Treverse:				followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Ts:					followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalUnits),
 									}
 
 token	kNoisyIrNodeType_Tsamples:				followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Tsecond:				followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalUnits),
 									}
 
 token	kNoisyIrNodeType_Tsequence:				followset = {
-										,
+										firstset(kNoisyIrNodeType_PsetHead),
+										firstset(kNoisyIrNodeType_PorderingHead),
 									}
 
 token	kNoisyIrNodeType_Tset:					followset = {
-										,
+										kNoisyIrNodeType_TleftBracket,
+										kNoisyIrNodeType_Tof,
 									}
 
 token	kNoisyIrNodeType_Tsigfigs:				followset = {
-										,
+										kNoisyIrNodeType_TintegerConst,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Tsignal:				followset = {
-										,
+										firstset(kNoisyIrNodeType_PbasicSignal),
+										kNoisyIrNodeType_Tidentifier,
 									}
 
 token	kNoisyIrNodeType_Tsort:					followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Tstring:				followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicType),
 									}
 
 token	kNoisyIrNodeType_Ttail:					followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Ttau:					followset = {
-										,
+										kNoisyIrNodeType_TleftParens,
 									}
 
 token	kNoisyIrNodeType_Ttderivative:				followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Ttemperature:				followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalDimension),
 									}
 
 token	kNoisyIrNodeType_Ttime:					followset = {
-										,
+										followset(kNoisyIrNodeType_PbasicSignalDimension),
 									}
 
 token	kNoisyIrNodeType_Ttimebase:				followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Ttimeseries:				followset = {
-										,
+										followset(kNoisyIrNodeType_PtimeseriesDesignation),
 									}
 
 token	kNoisyIrNodeType_Ttintegral:				followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Ttrue:					followset = {
-										,
+										kNoisyIrNodeType_TboolConst,
 									}
 
 token	kNoisyIrNodeType_Ttype:					followset = {
-										,
+										firstset(kNoisyIrNodeType_PtypeExpr),
+										kNoisyIrNodeType_TleftBrace,
+										followset(kNoisyIrNodeType_PtypeParameterList),
 									}
 
 token	kNoisyIrNodeType_Ttypeannote:				followset = {
-										,
+										firstset(kNoisyIrNodeType_PtypeAnnoteList),
 									}
 
 token	kNoisyIrNodeType_Ttypemax:				followset = {
-										,
+										kNoisyIrNodeType_TleftParens,
 									}
 
 token	kNoisyIrNodeType_Ttypemin:				followset = {
-										,
-									}
-
-token	kNoisyIrNodeType_Tunionover:				followset = {
-										,
+										kNoisyIrNodeType_TleftParens,
 									}
 
 token	kNoisyIrNodeType_Tunits:				followset = {
-										,
+										firstset(kNoisyIrNodeType_PunitsArithExpr),
 									}
 
 token	kNoisyIrNodeType_Tvalfn:				followset = {
-										,
+										followset(kNoisyIrNodeType_PvalfnSignature),
 									}
 
 token	kNoisyIrNodeType_Tvector:				followset = {
-										,
+										kNoisyIrNodeType_TleftBracket,
 									}
 
 token	kNoisyIrNodeType_Tfrequencies:				followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_Tmagnitudes:				followset = {
-										,
+										followset(kNoisyIrNodeType_PunaryOp),
 									}
 
 token	kNoisyIrNodeType_TboolConst:				followset = {
-										,
+										followset(kNoisyIrNodeType_PconstantDecl),
+										followset(kNoisyIrNodeType_Pfactor),
+										followset(kNoisyIrNodeType_PpredFactor),
 									}
 
 token	kNoisyIrNodeType_Tidentifier:				followset = {
-										,
+										kNoisyIrNodeType_Tcolon,
+										kNoisyIrNodeType_Tcomma,
+										kNoisyIrNodeType_Tgoes,
+										follow(kNoisyIrNodeType_PtypeName),
+										follow(kNoisyIrNodeType_PsignalDesignation),
+										follow(kNoisyIrNodeType_PunitsArithFactor),
+										kNoisyIrNodeType_Tin,
+										kNoisyIrNodeType_Tquantize,
+										firstset(kNoisyIrNodeType_PcmpOp),
+										firstset(kNoisyIrNodeType_PtupleType),
+										kNoisyIrNodeType_TstringConst,
+										kNoisyIrNodeType_Tpath,
+										firstset(kNoisyIrNodeType_PfieldSelect),
+										kNoisyIrNodeType_TleftParens,
+										followset(kNoisyIrNodeType_PfieldSelect),
+										followset(kNoisyIrNodeType_PpredFactor),
+										kNoisyIrNodeType_TrightParens,
+										followset(kNoisyIrNodeType_PpredArithFactor),
+										followset(kNoisyIrNodeType_PintParamOrConst),
+										followset(kNoisyIrNodeType_PrealParamOrConst),
+										followset(kNoisyIrNodeType_PstringParamOrConst),
 									}
 
 token	kNoisyIrNodeType_TintegerConst:				followset = {
-										,
+										followset(kNoisyIrNodeType_PconstantDecl),
+										kNoisyIrNodeType_TrightBracket,
+										followset(kNoisyIrNodeType_PsigfigDesignation),
+										kNoisyIrNodeType_Tdot,
+										followset(kNoisyIrNodeType_PfixedType),
+										followset(kNoisyIrNodeType_PnumericConst),
+										followset(kNoisyIrNodeType_Pfactor),
+										followset(kNoisyIrNodeType_PintParamOrConst),
+										followset(kNoisyIrNodeType_PrealParamOrConst),
 									}
 
 token	kNoisyIrNodeType_TrealConst:				followset = {
-										,
+										followset(kNoisyIrNodeType_PconstantDecl),
+										kNoisyIrNodeType_Tcomma,
+										kNoisyIrNodeType_TrightParens,
+										followset(kNoisyIrNodeType_PnumericConst),
+										followset(kNoisyIrNodeType_Pfactor),
+										followset(kNoisyIrNodeType_PrealParamOrConst),
 									}
 
 token	kNoisyIrNodeType_TstringConst:				followset = {
-										,
+										followset(kNoisyIrNodeType_PloadExpr),
+										followset(kNoisyIrNodeType_Pfactor),
+										followset(kNoisyIrNodeType_PstringParamOrConst),
 									}
+
+token	kNoisyIrNodeType_Tmeter:				followset = {
+									followset(kNoisyIrNodeType_PbasicSignalUnits),
+								}
+
+token	kNoisyIrNodeType_Tkilogram:				followset = {
+									followset(kNoisyIrNodeType_PbasicSignalUnits),
+								}
+
+token	kNoisyIrNodeType_Tsecond:				followset = {
+									followset(kNoisyIrNodeType_PbasicSignalUnits),
+								}
+
+token	kNoisyIrNodeType_Tmole:					followset = {
+									followset(kNoisyIrNodeType_PbasicSignalUnits),
+								}
+
+token	kNoisyIrNodeType_TAmpere:				followset = {
+									followset(kNoisyIrNodeType_PbasicSignalUnits),
+								}
+
+token	kNoisyIrNodeType_Tcandela:				followset = {
+									followset(kNoisyIrNodeType_PbasicSignalUnits),
+								}
+
+token	kNoisyIrNodeType_TKelvin:				followset = {
+									followset(kNoisyIrNodeType_PbasicSignalUnits),
+								}
