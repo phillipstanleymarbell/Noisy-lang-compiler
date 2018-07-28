@@ -43,18 +43,18 @@ identifier		::=	(idchar-except-zeroToNine) {idchar} .
 /*
  *	Syntactic elements: top-level program structure
  */
-program			::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
-functionDefn		::=	identifier ":" "function" signature "->" signature "="  scopedStatementList .
-problemDefn		::=	identifier ":" "probdef" signature "->" signature "=>" scopedPredStmtList .
-predicateFnDefn		::=	identifier ":" "predicate" signature "=>" scopedPredStmtList .
-signature		::=	"(" [identifier ":" typeExpr {"," identifier ":" typeExpr}] ")" .
-moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleBody "}" .
-moduleBody		=	{moduleTypeNameDecl ";"} .
+x program			::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
+x functionDefn		::=	identifier ":" "function" signature "->" signature "="  scopedStatementList .
+x problemDefn		::=	identifier ":" "probdef" signature "->" signature "=>" scopedPredStmtList .
+x predicateFnDefn		::=	identifier ":" "predicate" signature "=>" scopedPredStmtList .
+x signature		::=	"(" [identifier ":" typeExpr {"," identifier ":" typeExpr}] ")" .
+x moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
+x moduleDeclBody		=	{moduleTypeNameDecl ";"} .
 
 /*
  *	Types
  */
-moduleTypeNameDecl	::=	identifierList ":" (constantDecl | typeDecl | typeAnnoteDecl | functionDecl | probdefDecl | predicateFnDecl) .
+x moduleTypeNameDecl	::=	identifier ":" (constantDecl | typeDecl | typeAnnoteDecl | functionDecl | probdefDecl | predicateFnDecl) .
 constantDecl		=	"const" (integerConst | realConst | boolConst) .
 typeDecl		=	("type" typeExpr) | adtTypeDecl | vectorTypeDecl .
 typeAnnoteDecl		::=	"typeannote" typeAnnoteList .

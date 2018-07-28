@@ -83,20 +83,20 @@
  *		they take an explicit message string.
  *
  *	(2)	assignTypes(N, IrNode *  n, IrNode *  typeExpression)
- *			the typeExpr might be, say, an identifier that is
- *			an alias for a type. We should check for this case
- *			and get the identifier's symbol->typeTree. Also, do
- *			sanity checks to validate the typeTree, e.g. make
- *			sure it is always made up of basic types and also
- *			that it's not NULL
+ *		the typeExpr might be, say, an identifier that is
+ *		an alias for a type. We should check for this case
+ *		and get the identifier's symbol->typeTree. Also, do
+ *		sanity checks to validate the typeTree, e.g. make
+ *		sure it is always made up of basic types and also
+ *		that it's not NULL
  *
  *
- *	(3)	Urgent: we need to figure out a strategy for recovering
- *			from syntax or semantic errors. We currently just
- *			exit. We can't simply ignore and continue either,
- *			since some errors lead to NULL structures (e.g.,
- *			ident not in symtab, so node->symbol field not
- *			set...
+ *	(3)	We need to figure out a strategy for recovering
+ *		from syntax or semantic errors. We currently just
+ *		exit. We can't simply ignore and continue either,
+ *		since some errors lead to NULL structures (e.g.,
+ *		ident not in symtab, so node->symbol field not
+ *		set...
  *
  *
  */
@@ -132,10 +132,12 @@ noisyParse(State *  N, Scope *  currentScope)
 /*
  *	kNoisyIrNodeType_Pprogram
  *
+program			::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
+
  *	Generated AST subtree:
  *
- *		node.left	= kNoisyIrNodeType_PprogtypeDeclaration
- *		node.right	= Xseq of kNoisyIrNodeType_PnamegenDefinition
+ *		node.left	= kNoisyIrNodeType_PmoduleDecl
+ *		node.right	= Xseq of one or more of kNoisyIrNodeType_PfunctionDefn, kNoisyIrNodeType_PproblemDefn, or kNoisyIrNodeType_PpredicateFnDefn
  */
 IrNode *
 noisyParseProgram(State *  N, Scope *  currentScope)
@@ -177,12 +179,14 @@ noisyParseProgram(State *  N, Scope *  currentScope)
 
 
 /*
- *	kNoisyIrNodeType_PprogtypeDeclaration
+ *	kNoisyIrNodeType_PmoduleDecl
  *
+moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
+
  *	Generated AST subtree:
  *
  *		node.left	= kNoisyIrNodeType_Tidentifier
- *		node.right	= kNoisyIrNodeType_PprogtypeBody
+ *		node.right	= Xseq of kNoisyIrNodeType_PtypeParameterList and kNoisyIrNodeType_PmoduleDeclBody
  */
 IrNode *
 noisyParseProgtypeDeclaration(State *  N, Scope *  scope)
@@ -190,7 +194,7 @@ noisyParseProgtypeDeclaration(State *  N, Scope *  scope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeDeclaration);
 
 
-	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PprogtypeDeclaration,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PmoduleDecl,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
@@ -226,12 +230,13 @@ noisyParseProgtypeDeclaration(State *  N, Scope *  scope)
 
 
 /*	
- *	kNoisyIrNodeType_PprogtypeBody
+ *	kNoisyIrNodeType_PmoduleDeclBody
  *
+moduleDeclBody		=	{moduleTypeNameDecl ";"} .
  *	Generated AST subtree:
  *
- *		node.left	= kNoisyIrNodeType_PprogtypeTypenameDecl
- *		node.right	= Xseq of kNoisyIrNodeType_PprogtypeTypenameDecl
+ *		node.left	= kNoisyIrNodeType_PmoduleTypeNameDecl
+ *		node.right	= Xseq of one or more kNoisyIrNodeType_PmoduleTypeNameDecl
  */
 IrNode *
 noisyParseProgtypeBody(State *  N, Scope *  scope)
@@ -239,13 +244,13 @@ noisyParseProgtypeBody(State *  N, Scope *  scope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeBody);
 
 
-	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PprogtypeBody,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PmoduleDeclBody,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	while (!inFollow(N, kNoisyIrNodeType_PprogtypeBody, gNoisyFollows, kNoisyIrNodeTypeMax))
+	while (!inFollow(N, kNoisyIrNodeType_PmoduleDeclBody, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
 		addLeafWithChainingSeq(N, n, noisyParseProgtypeTypenameDeclaration(N, scope));
 		noisyParseTerminal(N, kNoisyIrNodeType_Tsemicolon);
@@ -261,12 +266,15 @@ noisyParseProgtypeBody(State *  N, Scope *  scope)
 }
 
 /*
- *	kNoisyIrNodeType_PprogtypeTypenameDeclaration
+ *	kNoisyIrNodeType_PmoduleTypeNameDeclaration
  *
+moduleTypeNameDecl	::=	identifier ":" (constantDecl | typeDecl | typeAnnoteDecl | functionDecl | probdefDecl | predicateFnDecl) .
+
  *	Generated AST subtree:
  *
- *		node.left	= kNoisyIrNodeType_PidentifierList
- *		node.right	= kNoisyIrNodeType_PconstantDeclaration | kNoisyIrNodeType_PtypeDeclaration | kNoisyIrNodeType_PnamegenDeclaration
+ *		node.left	= kNoisyIrNodeType_Pidentifier
+ *		node.right	= kNoisyIrNodeType_PconstantDecl | kNoisyIrNodeType_PtypeDecl | kNoisyIrNodeType_PtypeAnnoteDecl
+ *				  kNoisyIrNodeType_PfunctionDecl | kNoisyIrNodeType_PprobdefDecl | kNoisyIrNodeType_PpredicateFnDecl
  */
 IrNode *
 noisyParseProgtypeTypenameDeclaration(State *  N, Scope *  scope)
@@ -274,33 +282,33 @@ noisyParseProgtypeTypenameDeclaration(State *  N, Scope *  scope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeTypenameDeclaration);
 
 
-	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PprogtypeTypenameDeclaration,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PmoduleTypeNameDeclaration,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	IrNode *	identifierList = noisyParseIdentifierList(N, scope);
-	addLeaf(N, n, identifierList);
+	IrNode *	identifier = noisyParseIdentifier(N, scope);
+	addLeaf(N, n, identifier);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 
 	IrNode *	typeExpression;
-	if (inFirst(N, kNoisyIrNodeType_PconstantDeclaration, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	if (inFirst(N, kNoisyIrNodeType_PconstantDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		typeExpression = noisyParseConstantDeclaration(N, scope);
 	}
-	else if (inFirst(N, kNoisyIrNodeType_PtypeDeclaration, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	else if (inFirst(N, kNoisyIrNodeType_PtypeDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		typeExpression = noisyParseTypeDeclaration(N, scope);
 	}
-	else if (inFirst(N, kNoisyIrNodeType_PnamegenDeclaration, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	else if (inFirst(N, kNoisyIrNodeType_PfunctionDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		typeExpression = noisyParseNamegenDeclaration(N, scope);
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PprogtypeTypenameDeclaration, kNoisyIrNodeTypeMax, gNoisyFirsts);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_PprogtypeTypenameDeclaration);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PmoduleTypeNameDeclaration, kNoisyIrNodeTypeMax, gNoisyFirsts);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PmoduleTypeNameDeclaration);
 	}
 	addLeaf(N, n, typeExpression);
 
@@ -320,7 +328,7 @@ noisyParseProgtypeTypenameDeclaration(State *  N, Scope *  scope)
 
 
 /*
- *	kNoisyIrNodeType_PconstantDeclaration
+ *	kNoisyIrNodeType_PconstantDecl
  *
  *	Generated AST subtree:
  *
@@ -351,8 +359,8 @@ noisyParseConstantDeclaration(State *  N, Scope *  scope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PconstantDeclaration, kNoisyIrNodeTypeMax, gNoisyFirsts);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_PconstantDeclaration);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PconstantDecl, kNoisyIrNodeTypeMax, gNoisyFirsts);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PconstantDecl);
 	}
 
 	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
@@ -365,7 +373,7 @@ noisyParseConstantDeclaration(State *  N, Scope *  scope)
 }
 
 /*
- *	kNoisyIrNodeType_PtypeDeclaration
+ *	kNoisyIrNodeType_PtypeDecl
  *
  *	Generated AST subtree:
  *
@@ -378,7 +386,7 @@ noisyParseTypeDeclaration(State *  N, Scope *  currentScope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseTypeDeclaration);
 
 
-	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PtypeDeclaration,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PtypeDecl,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
@@ -395,8 +403,8 @@ noisyParseTypeDeclaration(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeDeclaration, kNoisyIrNodeTypeMax, gNoisyFirsts);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeDeclaration);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeDecl, kNoisyIrNodeTypeMax, gNoisyFirsts);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeDecl);
 	}
 
 	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
@@ -505,7 +513,7 @@ noisyParseVectorType(State *  N, Scope *  currentScope)
 }
 
 /*
- *	kNoisyIrNodeType_PnamegenDeclaration
+ *	kNoisyIrNodeType_PfunctionDecl
  *
  *	Generated AST subtree:
  *
@@ -518,7 +526,7 @@ noisyParseNamegenDeclaration(State *  N, Scope *  scope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseNamegenDeclaration);
 
 
-	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PnamegenDeclaration,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PfunctionDecl,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
@@ -1481,8 +1489,9 @@ noisyParseElement(State *  N, Scope *  scope)
 }
 
 /*
- *	kNoisyIrNodeType_PnamegenDefinition
+ *	kNoisyIrNodeType_PfunctionDefn
  *
+functionDefn		::=	identifier ":" "function" signature "->" signature "="  scopedStatementList .
  *	Generated AST subtree:
  *
  *		node.left	= kNoisyIrNodeType_Tidentifier
@@ -1494,7 +1503,7 @@ noisyParseNamegenDefinition(State *  N, Scope *  scope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseNamegenDefinition);
 
 
-	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PnamegenDefinition,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PfunctionDefn,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
@@ -1539,7 +1548,7 @@ noisyParseNamegenDefinition(State *  N, Scope *  scope)
 			char *	details;
 			
 			asprintf(&details, "%s: %s\n", Eundeclared, identifier->symbol->identifier);
-			noisyParserSemanticError(N, kNoisyIrNodeType_PnamegenDefinition, details);
+			noisyParserSemanticError(N, kNoisyIrNodeType_PfunctionDefn, details);
 		}
 		else
 		{
@@ -1558,6 +1567,11 @@ noisyParseNamegenDefinition(State *  N, Scope *  scope)
 
 	return n;
 }
+
+problemDefn		::=	identifier ":" "probdef" signature "->" signature "=>" scopedPredStmtList .
+predicateFnDefn		::=	identifier ":" "predicate" signature "=>" scopedPredStmtList .
+signature		::=	"(" [identifier ":" typeExpr {"," identifier ":" typeExpr}] ")" .
+
 
 /*
  *	kNoisyIrNodeType_PscopedStatmentList
@@ -1639,7 +1653,7 @@ noisyParseStatementList(State *  N, Scope *  currentScope)
  *	Generated AST subtree:
  *
  *		node.left	= NULL | kNoisyIrNodeType_PidentifierOrNilList
- *		node.right	= NULL | kNoisyIrNodeType_PconstantDeclaration | .. | kNoisyIrNodeType_Pexpression
+ *		node.right	= NULL | kNoisyIrNodeType_PconstantDecl | .. | kNoisyIrNodeType_Pexpression
  */
 IrNode *
 noisyParseStatement(State *  N, Scope *  currentScope)
@@ -1670,12 +1684,12 @@ noisyParseStatement(State *  N, Scope *  currentScope)
 			IrNode *	typeExpr;
 
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
-			if (inFirst(N, kNoisyIrNodeType_PconstantDeclaration, gNoisyFirsts, kNoisyIrNodeTypeMax))
+			if (inFirst(N, kNoisyIrNodeType_PconstantDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 			{
 				typeExpr = noisyParseConstantDeclaration(N, currentScope);
 				addLeaf(N, n, typeExpr);
 			}
-			else if (inFirst(N, kNoisyIrNodeType_PtypeDeclaration, gNoisyFirsts, kNoisyIrNodeTypeMax))
+			else if (inFirst(N, kNoisyIrNodeType_PtypeDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 			{
 				typeExpr = noisyParseTypeDeclaration(N, currentScope);
 				addLeaf(N, n, typeExpr);

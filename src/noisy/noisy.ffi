@@ -47,13 +47,13 @@ production	kNoisyIrNodeType_Psignature:			firstset = {
 										firstset(kNoisyIrNodeType_TleftParens),
 									}
 
---//		moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleBody "}" .
+--//		moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
 production	kNoisyIrNodeType_PmoduleDecl:			firstset = {
 										firstset(kNoisyIrNodeType_Tidentifier),
 									}
 
---//		moduleBody		=	{moduleTypeNameDecl ";"} .
-production	kNoisyIrNodeType_PmoduleBody:			firstset = {
+--//		moduleDeclBody		=	{moduleTypeNameDecl ";"} .
+production	kNoisyIrNodeType_PmoduleDeclBody:			firstset = {
 										kNoisyIrNodeType_Zepsilon,
 										firstset(kNoisyIrNodeType_PmoduleTypeNameDecl),
 									}
@@ -995,13 +995,15 @@ production	kNoisyIrNodeType_Psignature:			followset = {
 										
 									}
 
---//		moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleBody "}" .
+--//		moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
 production	kNoisyIrNodeType_PmoduleDecl:			followset = {
-										followset(kNoisyIrNodeType_Pprogram),
+										firstset(kNoisyIrNodeType_PfunctionDefn),
+										firstset(kNoisyIrNodeType_PproblemDefn),
+										firstset(kNoisyIrNodeType_PpredicateFnDefn),
 									}
 
---//		moduleBody		=	{moduleTypeNameDecl ";"} .
-production	kNoisyIrNodeType_PmoduleBody:			followset = {	
+--//		moduleDeclBody		=	{moduleTypeNameDecl ";"} .
+production	kNoisyIrNodeType_PmoduleDeclBody:			followset = {	
 										kNoisyIrNodeType_TrightBrace
 									}
 
@@ -1940,7 +1942,7 @@ token	kNoisyIrNodeType_TisPermutationOf:			followset = {
 									}
 
 token	kNoisyIrNodeType_TleftBrace:				followset = {
-										firstset(kNoisyIrNodeType_PmoduleBody),
+										firstset(kNoisyIrNodeType_PmoduleDeclBody),
 										firstset(kNoisyIrNodeType_PidentifierList),
 										firstset(kNoisyIrNodeType_Pexpression),
 										firstset(kNoisyIrNodeType_Pelement),
@@ -2101,7 +2103,7 @@ token	kNoisyIrNodeType_TrightShiftAssign:			followset = {
 									}
 
 token	kNoisyIrNodeType_Tsemicolon:				followset = {
-										followset(kNoisyIrNodeType_PmoduleBody),
+										followset(kNoisyIrNodeType_PmoduleDeclBody),
 										firstset(kNoisyIrNodeType_PidentifierList),
 										firstset(kNoisyIrNodeType_PvalfnSignature),
 										kNoisyIrNodeType_TrightBrace,
