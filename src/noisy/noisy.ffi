@@ -263,15 +263,15 @@ production	kNoisyIrNodeType_PbasicSignal:			firstset = {
 										kNoisyIrNodeType_Tanglerate,
 									}
 
---//		tolerance		::=	errormagTolerance | lossTolerance | latencyTolerance .
+--//		tolerance		::=	accuracyTolerance | lossTolerance | latencyTolerance .
 production	kNoisyIrNodeType_Ptolerance:			firstset = {
-										firstset(kNoisyIrNodeType_PerrormagTolerance),
+										firstset(kNoisyIrNodeType_PaccuracyTolerance),
 										firstset(kNoisyIrNodeType_PlossTolerance),
 										firstset(kNoisyIrNodeType_PlatencyTolerance),
 									}
 
---//		errormagTolerance	::=	"epsilon" "(" realConst "," realConst ")" .
-production	kNoisyIrNodeType_PerrormagTolerance:		firstset = {
+--//		accuracyTolerance	::=	"epsilon" "(" realConst "," realConst ")" .
+production	kNoisyIrNodeType_PaccuracyTolerance:		firstset = {
 										kNoisyIrNodeType_Tepsilon,
 									}
 
@@ -564,10 +564,10 @@ production	kNoisyIrNodeType_PanonAggrCastExpr:		firstset = {
 										firstset(kNoisyIrNodeType_PrationalCastExpr),
 									}
 
---//		chanEventExpr		::=	("erasures" | "errors" | "latency") "of" identifier cmpOp expression .
+--//		chanEventExpr		::=	("erasures" | "distortions" | "latency") "of" identifier cmpOp expression .
 production	kNoisyIrNodeType_PchanEventExpr:		firstset = {
 										kNoisyIrNodeType_Terasures,
-										kNoisyIrNodeType_Terrors,
+										kNoisyIrNodeType_Tdistortions,
 										kNoisyIrNodeType_Tlatency,
 									}
 
@@ -1209,13 +1209,13 @@ production	kNoisyIrNodeType_PbasicSignal:			followset = {
 										followset(kNoisyIrNodeType_PsignalDesignation),
 									}
 
---//		tolerance		::=	errormagTolerance | lossTolerance | latencyTolerance .
+--//		tolerance		::=	accuracyTolerance | lossTolerance | latencyTolerance .
 production	kNoisyIrNodeType_Ptolerance:			followset = {
 										followset(kNoisyIrNodeType_PtypeAnnoteItem),
 									}
 
---//		errormagTolerance	::=	"epsilon" "(" realConst "," realConst ")" .
-production	kNoisyIrNodeType_PerrormagTolerance:		followset = {
+--//		accuracyTolerance	::=	"epsilon" "(" realConst "," realConst ")" .
+production	kNoisyIrNodeType_PaccuracyTolerance:		followset = {
 										followset(kNoisyIrNodeType_Ptolerance),
 									}
 
@@ -1477,7 +1477,7 @@ production	kNoisyIrNodeType_PanonAggrCastExpr:		followset = {
 										followset(kNoisyIrNodeType_Pexpression),
 									}
 
---//		chanEventExpr		::=	("erasures" | "errors" | "latency") "of" identifier cmpOp expression .
+--//		chanEventExpr		::=	("erasures" | "distortions" | "latency") "of" identifier cmpOp expression .
 production	kNoisyIrNodeType_PchanEventExpr:		followset = {
 										kNoisyIrNodeType_Pimplies,
 									}
@@ -2070,7 +2070,7 @@ token	kNoisyIrNodeType_TrightParens:				followset = {
 										kNoisyIrNodeType_TleftBrace,
 										followset(kNoisyIrNodeType_PdimensionArithFactor),
 										followset(kNoisyIrNodeType_PunitsArithFactor),
-										followset(kNoisyIrNodeType_PerrormagTolerance),
+										followset(kNoisyIrNodeType_PaccuracyTolerance),
 										followset(kNoisyIrNodeType_PlossTolerance),
 										followset(kNoisyIrNodeType_PlatencyTolerance),
 										followset(kNoisyIrNodeType_PtupleType),
@@ -2237,7 +2237,7 @@ token	kNoisyIrNodeType_Terasures:				followset = {
 										kNoisyIrNodeType_Tof,
 									}
 
-token	kNoisyIrNodeType_Terrors:				followset = {
+token	kNoisyIrNodeType_Tdistortions:				followset = {
 										kNoisyIrNodeType_Tof,
 									}
 

@@ -12,7 +12,7 @@ reservedIdentifiers		::=	"A" | "K" | "acceleration" | "adt" | "alpha" | "Ampere"
 				"anglerate" | "bool" | "candela" | "cardinality" | "cd" |
 				"complex" | "const" | "crossproduct" | "current" | "dimensions" |
 				"distance" | "dotproduct" | "epsilon" | "erasures" |
-				"errors" | "exists" | "false" | "fixed" | "float128" "float16" |
+				"distortions" | "exists" | "false" | "fixed" | "float128" "float16" |
 				"float32" | "float4" | "float64" | "float8" | "forall" | "fourier" |
 				"function" | "given" | "head" | "highpass" | "relativehumidity" |
 				"in" | "int128" | "int16" | "int32" | "int4" |
@@ -43,18 +43,18 @@ identifier		::=	(idchar-except-zeroToNine) {idchar} .
 /*
  *	Syntactic elements: top-level program structure
  */
-x program			::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
-x functionDefn		::=	identifier ":" "function" signature "->" signature "="  scopedStatementList .
-x problemDefn		::=	identifier ":" "probdef" signature "->" signature "=>" scopedPredStmtList .
-x predicateFnDefn		::=	identifier ":" "predicate" signature "=>" scopedPredStmtList .
-x signature		::=	"(" [identifier ":" typeExpr {"," identifier ":" typeExpr}] ")" .
-x moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
-x moduleDeclBody		=	{moduleTypeNameDecl ";"} .
+program			::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
+functionDefn		::=	identifier ":" "function" signature "->" signature "="  scopedStatementList .
+problemDefn		::=	identifier ":" "probdef" signature "->" signature "=>" scopedPredStmtList .
+predicateFnDefn		::=	identifier ":" "predicate" signature "=>" scopedPredStmtList .
+signature		::=	"(" [identifier ":" typeExpr {"," identifier ":" typeExpr}] ")" .
+moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
+moduleDeclBody		=	{moduleTypeNameDecl ";"} .
 
 /*
  *	Types
  */
-x moduleTypeNameDecl	::=	identifier ":" (constantDecl | typeDecl | typeAnnoteDecl | functionDecl | probdefDecl | predicateFnDecl) .
+moduleTypeNameDecl	::=	identifier ":" (constantDecl | typeDecl | typeAnnoteDecl | functionDecl | probdefDecl | predicateFnDecl) .
 constantDecl		=	"const" (integerConst | realConst | boolConst) .
 typeDecl		=	("type" typeExpr) | adtTypeDecl | vectorTypeDecl .
 typeAnnoteDecl		::=	"typeannote" typeAnnoteList .
@@ -89,8 +89,8 @@ basicSignalDimension	::=	"distance" | "mass" | "time" | "material" | "current" |
 basicSignalUnits	::=	"m" | "kg" | "s" | "mole" | "A" | "cd" | "K" | "meter" | "kilogram" | "second" | "mole" | "Ampere" | "candela" | "Kelvin" .
 basicSignal		::=	basicSignalDimension | "pressure" | "acceleration" | "magneticfluxdensity"
 				| "relativehumidity" | "anglerate" .
-tolerance		::=	errormagTolerance | lossTolerance | latencyTolerance .
-errormagTolerance	::=	"epsilon" "(" realConst "," realConst ")" .
+tolerance		::=	accuracyTolerance | lossTolerance | latencyTolerance .
+accuracyTolerance	::=	"epsilon" "(" realConst "," realConst ")" .
 lossTolerance		::=	"alpha" "(" realConst "," realConst ")" .
 latencyTolerance	::=	"tau" "(" realConst "," realConst ")" .
 basicType		::=	"bool" | integerType | realType | "string" .
@@ -107,7 +107,6 @@ tupleType		::=	"(" typeExpr {"," typeExpr} ")" .
 setType			::=	"set" "[" integerConst "]" "of" typeExpr .
 rationalType		::=	"rational" arithmeticType .
 numericConst		=	integerConst | realConst .
-
 initList		=	"{" expression {"," expression} "}" .
 idxInitList		=	"{" element {"," element} "}" .
 starInitList		=	"{" element {"," element} ["," "*" "=>" expression] "}" .
@@ -125,7 +124,6 @@ assignmentStatement	::=	identifierOrNilList ((":" (constantDecl | typeDecl | typ
 				| "(" identifierOrNilList ")" assignOp expression .
 returnStatement		::=	"return" returnSignature .
 returnSignature		=	"(" [identifier ":" expression {"," identifier ":" expression}] ")" .
-
 operatorToleranceDecl	=	(highPrecedenceBinaryOp | lowPrecedenceBinaryOp | unaryOp) ":" typeExpr .
 assignOp		::=	"=" | "^=" | "|=" | "&=" | "%=" | "/=" | "*=" | "-=" | "+=" | ">>="
 				| "<<=" | "<-=" | ":=" .
@@ -150,10 +148,7 @@ arrayCastExpr		::=	"array" (("of" idxInitList) | ("[" integerConst "]" "of" star
 complexCastExpr		::=	"complex" "(" expression "," expression ")" .
 rationalCastExpr	::=	"rational" "(" expression "," expression ")" .
 anonAggrCastExpr	::=	listCastExpr | setCastExpr | arrayCastExpr | complexCastExpr | rationalCastExpr .
-/*
- *
- */
-chanEventExpr		::=	("erasures" | "errors" | "latency") "of" identifier cmpOp expression .
+chanEventExpr		::=	("erasures" | "distortions" | "latency") "of" identifier cmpOp expression .
 loadExpr		::=	"load" identifier [tupleType] (stringConst | ("path" typeName)) .
 term			::=	[basicType] [unaryOp] factor ["++" | "--"] {highPrecedenceBinaryOp factor} .
 factor			::=	(identifier {fieldSelect}) | integerConst | realConst | stringConst | boolConst
@@ -172,7 +167,7 @@ unaryOp			::=	"~" | "-"  | "+" | "<-"  | "head" | "tail" | "tailtip"| "length" |
 				\| "fourier" | "cardinality" | "frequencies" | "magnitudes" | unaryBoolOp .
 
 /*
- *	Predicate expressions, the delcarative subset of Noisy.
+ *	Predicate expressions, the declarative subset of Noisy.
  */
 lowPrecedenceBinaryBoolOp	::=	"||" .
 highPrecedenceBinaryBoolOp	::=	"&&" | "^" .
