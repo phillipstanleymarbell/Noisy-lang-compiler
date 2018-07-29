@@ -64,43 +64,6 @@
 #include "common-firstAndFollow.h"
 
 
-/*
- *
- *	TODO/BUG: We technically don't need the Xseq nodes at all, since we
- *		can figure out from context whether we are chaning a list
- *		of nodes at same level or not. Draw it out on paper, and
- *		you'll see. having the Xseq's however makes thinking about
- *		many things easier, as does visualizing, since we can easily
- *		pick out the cases where we are stringing together things
- *		at the same level, as opposed to having a hierarchy.
- *
- *	(1)	Need to flesh out the noisyParserSyntaxError/ErrorRecovery
- *		stuff. Added also a 'noisyParserSemanticError(N, )' for where
- *		we want to deliver information on a semantic error (e.g.,
- *		identifier use b/4 declaration). The 'noisyParserSemanticError'
- *		messages can't be implicit in the parse state (i.e., can't
- *		figure out error msg from current parse state and mlex), and
- *		they take an explicit message string.
- *
- *	(2)	assignTypes(N, IrNode *  n, IrNode *  typeExpression)
- *		the typeExpr might be, say, an identifier that is
- *		an alias for a type. We should check for this case
- *		and get the identifier's symbol->typeTree. Also, do
- *		sanity checks to validate the typeTree, e.g. make
- *		sure it is always made up of basic types and also
- *		that it's not NULL
- *
- *
- *	(3)	We need to figure out a strategy for recovering
- *		from syntax or semantic errors. We currently just
- *		exit. We can't simply ignore and continue either,
- *		since some errors lead to NULL structures (e.g.,
- *		ident not in symtab, so node->symbol field not
- *		set...
- *
- *
- */
-
 
 extern char *		gProductionDescriptions[];
 extern const char *	gNoisyTokenDescriptions[];
@@ -132,8 +95,9 @@ noisyParse(State *  N, Scope *  currentScope)
 /*
  *	kNoisyIrNodeType_Pprogram
  *
-program			::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
-
+ *	Grammar production:
+ *		program		::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
+ *
  *	Generated AST subtree:
  *
  *		node.left	= kNoisyIrNodeType_PmoduleDecl
@@ -156,10 +120,26 @@ noisyParseProgram(State *  N, Scope *  currentScope)
 	 */
 	currentScope->begin = lexPeek(N, 1)->sourceInfo;
 
-	addLeaf(N, n, noisyParseProgtypeDeclaration(N, currentScope));
+	addLeaf(N, n, noisyParseModuleDecl(N, currentScope));
 	while (!inFollow(N, kNoisyIrNodeType_Pprogram, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		addLeafWithChainingSeq(N, n, noisyParseNamegenDefinition(N, currentScope));
+		if (inFirst(N, kNoisyIrNodeType_PfunctionDefn, gNoisyFirsts, kNoisyIrNodeTypeMax))
+		{
+			addLeafWithChainingSeq(N, n, noisyParseFunctionDefn(N, currentScope));
+		}
+		else if (inFirst(N, kNoisyIrNodeType_PproblemDefn, gNoisyFirsts, kNoisyIrNodeTypeMax))
+		{
+			addLeafWithChainingSeq(N, n, noisyParseProblemDefn(N, currentScope));
+		}
+		else if (inFirst(N, kNoisyIrNodeType_PpredicateFnDefn, gNoisyFirsts, kNoisyIrNodeTypeMax))
+		{
+			addLeafWithChainingSeq(N, n, noisyParsePredicateFnDefn(N, currentScope));
+		}
+		else
+		{
+			noisyParserSyntaxError(N, kNoisyIrNodeType_Pprogram, kNoisyIrNodeTypeMax, gNoisyFollows);
+			noisyParserErrorRecovery(N, kNoisyIrNodeType_Pprogram);
+		}
 	}
 
 	/*
@@ -167,10 +147,10 @@ noisyParseProgram(State *  N, Scope *  currentScope)
 	 */
 	currentScope->end = lexPeek(N, 1)->sourceInfo;
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_Pprogram, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pprogram, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pprogram);
 	}
 
 	return n;
@@ -181,17 +161,18 @@ noisyParseProgram(State *  N, Scope *  currentScope)
 /*
  *	kNoisyIrNodeType_PmoduleDecl
  *
-moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
-
+ *	Grammar production:
+ *		moduleDecl	::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
+ *
  *	Generated AST subtree:
  *
  *		node.left	= kNoisyIrNodeType_Tidentifier
  *		node.right	= Xseq of kNoisyIrNodeType_PtypeParameterList and kNoisyIrNodeType_PmoduleDeclBody
  */
 IrNode *
-noisyParseProgtypeDeclaration(State *  N, Scope *  scope)
+noisyParseModuleDecl(State *  N, Scope *  scope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeDeclaration);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseModuleDecl);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PmoduleDecl,
@@ -203,14 +184,17 @@ noisyParseProgtypeDeclaration(State *  N, Scope *  scope)
 	IrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
 	addLeaf(N, n, identifier);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
-	noisyParseTerminal(N, kNoisyIrNodeType_Tprogtype);
+	noisyParseTerminal(N, kNoisyIrNodeType_Tmodule);
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftParens);
+	addLeafWithChainingSeq(N, n, noisyParseTypeParameterList(N, currentScope));
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightParens);
 
 	/*
 	 *	We keep a global handle on the progtype scope
 	 */
 	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
-	Scope *	progtypeScope	= noisySymbolTableOpenScope(N, scope, scopeBegin);
-	IrNode *	typeTree	= noisyParseProgtypeBody(N, progtypeScope);
+	Scope *	progtypeScope		= noisySymbolTableOpenScope(N, scope, scopeBegin);
+	IrNode *	typeTree	= noisyParseModuleDeclBody(N, progtypeScope);
 	addLeaf(N, n, typeTree);
 	IrNode *	scopeEnd	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
 	noisySymbolTableCloseScope(N, progtypeScope, scopeEnd);
@@ -218,10 +202,10 @@ noisyParseProgtypeDeclaration(State *  N, Scope *  scope)
 
 	addToProgtypeScopes(N, identifier->symbol->identifier, progtypeScope);
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_PmoduleDecl, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PmoduleDecl, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PmoduleDecl);
 	}
 
 	return n;
@@ -229,19 +213,21 @@ noisyParseProgtypeDeclaration(State *  N, Scope *  scope)
 
 
 
-/*	
+/*
  *	kNoisyIrNodeType_PmoduleDeclBody
  *
-moduleDeclBody		=	{moduleTypeNameDecl ";"} .
+ *	Grammar production:
+ *		moduleDeclBody		::=	{moduleTypeNameDecl ";"} .
+ *
  *	Generated AST subtree:
  *
  *		node.left	= kNoisyIrNodeType_PmoduleTypeNameDecl
  *		node.right	= Xseq of one or more kNoisyIrNodeType_PmoduleTypeNameDecl
  */
 IrNode *
-noisyParseProgtypeBody(State *  N, Scope *  scope)
+noisyParseModuleDeclBody(State *  N, Scope *  scope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeBody);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseModuleDeclBody);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PmoduleDeclBody,
@@ -252,24 +238,27 @@ noisyParseProgtypeBody(State *  N, Scope *  scope)
 
 	while (!inFollow(N, kNoisyIrNodeType_PmoduleDeclBody, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		addLeafWithChainingSeq(N, n, noisyParseProgtypeTypenameDeclaration(N, scope));
+		addLeafWithChainingSeq(N, n, noisyParseModuleTypeNameDecl(N, scope));
 		noisyParseTerminal(N, kNoisyIrNodeType_Tsemicolon);
 	}
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_PmoduleDeclBody, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PmoduleDeclBody, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PmoduleDeclBody);
 	}
 
 	return n;
 }
 
-/*
- *	kNoisyIrNodeType_PmoduleTypeNameDeclaration
- *
-moduleTypeNameDecl	::=	identifier ":" (constantDecl | typeDecl | typeAnnoteDecl | functionDecl | probdefDecl | predicateFnDecl) .
 
+
+/*
+ *	kNoisyIrNodeType_PmoduleTypeNameDecl
+ *
+ *	Grammar production:
+ *		moduleTypeNameDecl	::=	identifier ":" (constantDecl | typeDecl | typeAnnoteDecl | functionDecl | probdefDecl | predicateFnDecl) .
+ *
  *	Generated AST subtree:
  *
  *		node.left	= kNoisyIrNodeType_Pidentifier
@@ -277,12 +266,12 @@ moduleTypeNameDecl	::=	identifier ":" (constantDecl | typeDecl | typeAnnoteDecl 
  *				  kNoisyIrNodeType_PfunctionDecl | kNoisyIrNodeType_PprobdefDecl | kNoisyIrNodeType_PpredicateFnDecl
  */
 IrNode *
-noisyParseProgtypeTypenameDeclaration(State *  N, Scope *  scope)
+noisyParseModuleTypeNameDecl(State *  N, Scope *  scope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeTypenameDeclaration);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseProgtypeTypenameDecl);
 
 
-	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PmoduleTypeNameDeclaration,
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PmoduleTypeNameDecl,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
@@ -292,23 +281,36 @@ noisyParseProgtypeTypenameDeclaration(State *  N, Scope *  scope)
 	addLeaf(N, n, identifier);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 
+
 	IrNode *	typeExpression;
 	if (inFirst(N, kNoisyIrNodeType_PconstantDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		typeExpression = noisyParseConstantDeclaration(N, scope);
+		typeExpression = noisyParseConstantDecl(N, scope);
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PtypeDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		typeExpression = noisyParseTypeDeclaration(N, scope);
+		typeExpression = noisyParseTypeDecl(N, scope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PtypeAnnotenDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	{
+		typeExpression = noisyParseTypeAnnoteDecl(N, scope);
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PfunctionDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		typeExpression = noisyParseFunctionDecl(N, scope);
 	}
+	else if (inFirst(N, kNoisyIrNodeType_PprobdefDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	{
+		typeExpression = noisyParseProbdefDecl(N, scope);
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PpredicateFnDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	{
+		typeExpression = noisyParsePredicateFnDecl(N, scope);
+	}
 	else
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_PmoduleTypeNameDeclaration, kNoisyIrNodeTypeMax, gNoisyFirsts);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_PmoduleTypeNameDeclaration);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PmoduleTypeNameDecl, kNoisyIrNodeTypeMax, gNoisyFirsts);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PmoduleTypeNameDecl);
 	}
 	addLeaf(N, n, typeExpression);
 
@@ -317,20 +319,23 @@ noisyParseProgtypeTypenameDeclaration(State *  N, Scope *  scope)
 	 */
 	assignTypes(N, identifierList, typeExpression);
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_PmoduleTypeNameDecl, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PmoduleTypeNameDecl, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PmoduleTypeNameDecl);
 	}
 
 	return n;
 }
 
 
+
 /*
  *	kNoisyIrNodeType_PconstantDecl
  *
-constantDecl		=	"const" (integerConst | realConst | boolConst) .
+ *	Grammar production:
+ *		constantDecl	=	"const" (integerConst | realConst | boolConst) .
+ *
  *	Generated AST subtree:
  *
  *		node		= kNoisyIrNodeType_TintegerConst | kNoisyIrNodeType_TrealConst | kNoisyIrNodeType_TboolConst
@@ -338,25 +343,29 @@ constantDecl		=	"const" (integerConst | realConst | boolConst) .
  *		node.right	= NULL
  */
 IrNode *
-noisyParseConstantDeclaration(State *  N, Scope *  scope)
+noisyParseConstantDecl(State *  N, Scope *  scope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseConstantDeclaration);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseConstantDecl);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_PconstantDecl,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tconst);
+
 	if (peekCheck(N, 1, kNoisyIrNodeType_TintegerConst))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TintegerConst);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TintegerConst));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TrealConst))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TrealConst);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrealConst));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TboolConst))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TboolConst);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TboolConst));
 	}
 	else
 	{
@@ -364,28 +373,32 @@ noisyParseConstantDeclaration(State *  N, Scope *  scope)
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PconstantDecl);
 	}
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_PconstantDecl, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PconstantDecl, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PconstantDecl);
 	}
 
 	return n;
 }
 
+
+
 /*
  *	kNoisyIrNodeType_PtypeDecl
  *
-typeDecl		=	("type" typeExpr) | adtTypeDecl | vectorTypeDecl .
+ *	Grammar production:
+ *		typeDecl		=	("type" typeExpr) | adtTypeDecl | vectorTypeDecl .
+ *
  *	Generated AST subtree:
  *
  *		node.left	= kNoisyIrNodeType_Ttype | kNoisyIrNodeType_PadtTypeDecl | kNoisyIrNodeType_PvectorTypeDecl
  *		node.right	= kNoisyIrNodeType_PtypeExpr | NULL
  */
 IrNode *
-noisyParseTypeDeclaration(State *  N, Scope *  currentScope)
+noisyParseTypeDecl(State *  N, Scope *  currentScope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseTypeDeclaration);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseTypeDecl);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PtypeDecl,
@@ -401,7 +414,11 @@ noisyParseTypeDeclaration(State *  N, Scope *  currentScope)
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tadt))
 	{
-		addLeaf(N, n, noisyParseAdtTypeDeclaration(N, currentScope));
+		addLeaf(N, n, noisyParseAdtTypeDecl(N, currentScope));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tvector))
+	{
+		addLeaf(N, n, noisyParseVectorTypeDecl(N, currentScope));
 	}
 	else
 	{
@@ -409,16 +426,43 @@ noisyParseTypeDeclaration(State *  N, Scope *  currentScope)
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeDecl);
 	}
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_PtypeDecl, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PtypeDecl, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PtypeDecl);
 	}
 
 	return n;
 }
 
-typeAnnoteDecl		::=	"typeannote" typeAnnoteList .
+
+
+/*
+ *	kNoisyIrNodeType_PtypeAnnoteDecl
+ *
+ *	Grammar production:
+ *		typeAnnoteDecl		::=	"typeannote" typeAnnoteList .
+ *
+ *	Generated AST subtree:
+ *
+ *		node.left	= kNoisyIrNodeType_PtypeAnnoteList
+ *		node.right	= NULL
+ */
+IrNode *
+noisyParseTypeAnnoteDecl(State *  N, Scope *  currentScope)
+{
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseTypeAnnoteDecl);
+
+
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PtypeAnnoteDecl,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
+
+	noisyParseTerminal(N, kNoisyIrNodeType_TtypeAnnote);
+}
+
+
 
 /*
  *	kNoisyIrNodeType_PadtTypeDecl
@@ -430,9 +474,9 @@ adtTypeDecl		::=	"adt" "{" identifierList ":" typeExpr ";" {identifierList ":" t
  *		node.right	= Xseq of kNoisyIrNodeType_PtypeExpr + zero or more kNoisyIrNodeType_PidentifierList+kNoisyIrNodeType_PtypeExpr
  */
 IrNode *
-noisyParseAdtTypeDeclaration(State *  N, Scope *  scope)
+noisyParseAdtTypeDecl(State *  N, Scope *  scope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseAdtTypeDeclaration);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseAdtTypeDecl);
 
 
 	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PadtTypeDecl,
@@ -556,9 +600,13 @@ noisyParseFunctionDecl(State *  N, Scope *  scope)
 }
 
 probdefDecl		::=	"probdef" writeTypeSignature "->" readTypeSignature .
+noisyParseProblemDefn 
+
 readTypeSignature	=	signature .
 writeTypeSignature	=	signature .
+
 predicateFnDecl		::=	"predicate" signature .
+noisyParsePredicateFnDefn
 
 /*
  *	kNoisyIrNodeType_PidentifierOrNil
@@ -574,14 +622,17 @@ noisyParseIdentifierOrNil(State *  N, Scope *  currentScope)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierOrNil);
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_PdentifierOrNil,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
 		/*
 		 *	The typeTree's get filled-in in our caller
 		 */
-		n = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
 
 		while (inFirst(N, kNoisyIrNodeType_PfieldSelect, gNoisyFirsts, kNoisyIrNodeTypeMax))
 		{
@@ -590,7 +641,7 @@ noisyParseIdentifierOrNil(State *  N, Scope *  currentScope)
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tnil))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tnil);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tnil));
 	}
 	else
 	{
@@ -623,13 +674,16 @@ noisyParseIdentifierOrNilList(State *  N, Scope *  currentScope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierOrNilList);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N,	kNoisyIrNodeType_PidentifierOrNilList,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	/*
 	 *	The typeTree's get filled in in our caller
 	 */
-	n = noisyParseIdentifierOrNil(N, currentScope);
+	addLeaf(N, n, noisyParseIdentifierOrNil(N, currentScope));
 	
 	/*
 	 *	Could also have done
@@ -666,13 +720,16 @@ noisyParseIdentifierList(State *  N, Scope *  currentScope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierList);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	/*
 	 *	The typeTree's get filled in in our caller
 	 */
-	n = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+	addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
 	
 	/*
 	 *	Could also have done
@@ -709,12 +766,15 @@ noisyParseTypeExpression(State *  N, Scope *  currentScope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseTypeExpression);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	if (inFirst(N, kNoisyIrNodeType_PbasicType, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseBasicType(N, currentScope);
+		addLeaf(N, n, noisyParseBasicType(N, currentScope));
 
 		if (inFollow(N, kNoisyIrNodeType_PtypeExpr, gNoisyFollows, kNoisyIrNodeTypeMax))
 		{
@@ -735,11 +795,11 @@ noisyParseTypeExpression(State *  N, Scope *  currentScope)
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PanonAggregateType, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseAnonAggregateType(N, currentScope);
+		addLeaf(N, n, noisyParseAnonAggregateType(N, currentScope));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_Ptypename, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseTypeName(N, currentScope);
+		addLeaf(N, n, noisyParseTypeName(N, currentScope));
 	}
 	else
 	{
@@ -791,10 +851,8 @@ noisyParseTypeName(State *  N, Scope *  scope)
 	id1 = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
 	if (id1->symbol == NULL)
 	{
-		/*
-		 *	TODO: we need a comprehensive error-recovery strategy
-		 */
-		fatal(N, Esanity);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Tidentifier, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Tidentifier);
 	}
 
 	addLeaf(N, n, id1);
@@ -886,20 +944,23 @@ noisyParseTolerance(State *  N, Scope *  currentScope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseTolerance);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	if (inFirst(N, kNoisyIrNodeType_PaccuracyTolerance, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseErrorMagnitudeTolerance(N);
+		addLeaf(N, n, noisyParseErrorMagnitudeTolerance(N));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PlossTolerance, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseLossTolerance(N);
+		addLeaf(N, n, noisyParseLossTolerance(N));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PlatencyTolerance, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseLatencyTolerance(N);
+		addLeaf(N, n, noisyParseLatencyTolerance(N));
 	}
 	else
 	{
@@ -1043,32 +1104,35 @@ noisyParseBasicType(State *  N, Scope *  currentScope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseBasicType);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tbool))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tbool);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tbool));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tnybble))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tnybble);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tnybble));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tbyte))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tbyte);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tbyte));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tint))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tint);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tint));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PrealType, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseRealType(N, currentScope);
+		addLeaf(N, n, noisyParseRealType(N, currentScope));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tstring))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tstring);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tstring));
 	}
 	else
 	{
@@ -1104,16 +1168,19 @@ noisyParseRealType(State *  N, Scope *  currentScope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseRealType);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Treal))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Treal);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Treal));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PfixedType, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseFixedType(N);
+		addLeaf(N, n, noisyParseFixedType(N));
 	}
 	else
 	{
@@ -1184,24 +1251,27 @@ noisyParseAnonAggregateType(State *  N, Scope *  currentScope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseAnonAggregateType);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	if (inFirst(N, kNoisyIrNodeType_ParrayType, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseArrayType(N, currentScope);
+		addLeaf(N, n, noisyParseArrayType(N, currentScope));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PlistType, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseListType(N, currentScope);
+		addLeaf(N, n, noisyParseListType(N, currentScope));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PtupleType, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseTupleType(N, currentScope);
+		addLeaf(N, n, noisyParseTupleType(N, currentScope));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PsetType, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseSetType(N, currentScope);
+		addLeaf(N, n, noisyParseSetType(N, currentScope));
 	}
 	else
 	{
@@ -1564,7 +1634,7 @@ functionDefn		::=	identifier ":" "function" signature "->" signature "="  scoped
  *		node.right	= [Xseq of 2 tupletypes] kNoisyIrNodeType_PscopeStatementList
  */
 IrNode *
-noisyParseNamegenDefinition(State *  N, Scope *  scope)
+noisyParseFunctionDefn(State *  N, Scope *  scope)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseNamegenDefinition);
 
@@ -1756,12 +1826,12 @@ noisyParseStatement(State *  N, Scope *  currentScope)
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 			if (inFirst(N, kNoisyIrNodeType_PconstantDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 			{
-				typeExpr = noisyParseConstantDeclaration(N, currentScope);
+				typeExpr = noisyParseConstantDecl(N, currentScope);
 				addLeaf(N, n, typeExpr);
 			}
 			else if (inFirst(N, kNoisyIrNodeType_PtypeDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 			{
-				typeExpr = noisyParseTypeDeclaration(N, currentScope);
+				typeExpr = noisyParseTypeDecl(N, currentScope);
 				addLeaf(N, n, typeExpr);
 			}
 			else if (inFirst(N, kNoisyIrNodeType_PtypeExpr, gNoisyFirsts, kNoisyIrNodeTypeMax))
@@ -1857,60 +1927,63 @@ noisyParseAssignOp(State *  N)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseAssignOp);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tas))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tas);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tas));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TxorAs))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TxorAs);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TxorAs));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TorAs))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TorAs);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TorAs));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TandAs))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TandAs);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TandAs));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TmodAs))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TmodAs);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TmodAs));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TdivAs))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TdivAs);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TdivAs));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TmulAs))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TmulAs);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TmulAs));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TsubAs))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TsubAs);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TsubAs));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TaddAs))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TaddAs);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TaddAs));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TrightShiftAs))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TrightShiftAs);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrightShiftAs));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TleftShiftAs))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TleftShiftAs);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TleftShiftAs));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TchanWrite))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TchanWrite);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TchanWrite));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TdefineAs))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TdefineAs);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TdefineAs));
 	}
 	else
 	{
@@ -1943,16 +2016,19 @@ noisyParseMatchStatement(State *  N, Scope *  scope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseMatchStatement);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tmatch))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tmatch);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tmatch));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TmatchSeq))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TmatchSeq);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TmatchSeq));
 	}
 	else
 	{
@@ -2038,21 +2114,6 @@ noisyParseGuardedStatementList(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	if (inFollow(N, kNoisyIrNodeType_PguardedStatementList, gNoisyFollows, kNoisyIrNodeTypeMax))
-	{
-		if (N->verbosityLevel & kNoisyVerbosityDebugParser)
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParseGuardedStatementList(), known bug (inFollow(N, kNoisyIrNodeType_PguardedStatementList, gNoisyFollows, kNoisyIrNodeTypeMax))\n");
-		}
-
-		/*
-		 *	BUG/TODO: we should not be returning NULL: return the childless Node n.
-		 *
-		 *	Leave this comment here for later cleanup
-		 */
-		return NULL;
-	}
-
 	while (inFirst(N, kNoisyIrNodeType_Pexpression, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
@@ -2095,11 +2156,15 @@ noisyParseExpression(State *  N, Scope *  currentScope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseExpression);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
+
 
 	if (inFirst(N, kNoisyIrNodeType_Pterm, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseTerm(N, currentScope);
+		addLeaf(N, n, noisyParseTerm(N, currentScope));
 
 		while (inFirst(N, kNoisyIrNodeType_PlowPrecedenceBinaryOp, gNoisyFirsts, kNoisyIrNodeTypeMax))
 		{
@@ -2109,23 +2174,23 @@ noisyParseExpression(State *  N, Scope *  currentScope)
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PanonAggrCastExpr, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseAnonAggrCastExpr(N, currentScope);
+		addLeaf(N, n, noisyParseAnonAggrCastExpr(N, currentScope));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PchanEventExpr, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseChanEventExpression(N, currentScope);
+		addLeaf(N, n, noisyParseChanEventExpression(N, currentScope));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_Pchan2nameExpression, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseChan2nameExpression(N, currentScope);
+		addLeaf(N, n, noisyParseChan2nameExpression(N, currentScope));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_Pvar2nameExpression, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseVar2nameExpression(N, currentScope);
+		addLeaf(N, n, noisyParseVar2nameExpression(N, currentScope));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_Pname2chanExpression, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseName2chanExpression(N, currentScope);
+		addLeaf(N, n, noisyParseName2chanExpression(N, currentScope));
 	}
 	else
 	{
@@ -2282,20 +2347,23 @@ noisyParseAnonAggrCastExpr(State *  N, Scope *  currentScope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseAnonAggrCastExpr);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */); 
 
 
 	if (inFirst(N, kNoisyIrNodeType_PlistCastExpression, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseListCastExpression(N, currentScope);
+		addLeaf(N, n,noisyParseListCastExpression(N, currentScope));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PsetCastExpression, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseSetCastExpression(N, currentScope);
+		addLeaf(N, n,noisyParseSetCastExpression(N, currentScope));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_ParrayCastExpression, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		n = noisyParseArrayCastExpression(N, currentScope);
+		addLeaf(N, n,noisyParseArrayCastExpression(N, currentScope));
 	}
 	else
 	{
@@ -2434,11 +2502,15 @@ noisyParseFactor(State *  N, Scope *  currentScope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseFactor);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
+
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		n = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
 
 		while (inFirst(N, kNoisyIrNodeType_PfieldSelect, gNoisyFirsts, kNoisyIrNodeTypeMax))
 		{
@@ -2450,19 +2522,19 @@ noisyParseFactor(State *  N, Scope *  currentScope)
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TintegerConst))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TintegerConst);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TintegerConst));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TrealConst))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TrealConst);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TrealConst));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TstringConst))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TstringConst);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TstringConst));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TboolConst))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TboolConst);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TboolConst));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TleftParen) && peekCheck(N, 3, kNoisyIrNodeType_Tcomma))
 	{
@@ -2473,33 +2545,14 @@ noisyParseFactor(State *  N, Scope *  currentScope)
 		 *
 		 *	then try to parse a tupleValue. Otherwise, parse an expression
 		 */
-		n = noisyParseTupleValue(N, currentScope);
+		addLeaf(N, n, noisyParseTupleValue(N, currentScope));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TleftParen))
 	{
 		noisyParseTerminal(N, kNoisyIrNodeType_TleftParen);
-		n = noisyParseExpression(N, currentScope);
+		addLeaf(N, n, noisyParseExpression(N, currentScope));
 		noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
 	}
-/*
- *	TODO/BUG: the following two should not be here. See grammar
- *
- *	else if (inFirst(N, kNoisyIrNodeType_Punop, gNoisyFirsts, kNoisyIrNodeTypeMax))
- *	{
- *		n = noisyParseunop(N, currentScope);
- *		addLeaf(N, n, noisyParseFactor(N, currentScope));
- *	}
- *	else if (peekCheck(N, 1, kNoisyIrNodeType_Tchan2name))
- *	{
- *		noisyParseTerminal(N, kNoisyIrNodeType_Tchan2name);
- *		n = noisyParseFactor(N, currentScope);
- *
- *		if (peekCheck(N, 1, kNoisyIrNodeType_Tstring))
- *		{
- *			addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tstring));
- *		}
- *	}
- */
 	else
 	{
 		noisyParserSyntaxError(N, kNoisyIrNodeType_Pfactor, kNoisyIrNodeTypeMax, gNoisyFirsts);
@@ -2535,16 +2588,23 @@ noisyParseTupleValue(State *  N, Scope *  currentScope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseTupleValue);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
+
+
 	noisyParseTerminal(N, kNoisyIrNodeType_TleftParen);
-	n = noisyParseIdentifierOrNilList(N, currentScope);
-	noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
 
 	/*
 	 *	Identical to the parse tree for an kNoisyIrNodeType_PidentifierOrNilList,
 	 *	but labeled as a kNoisyIrNodeType_PtupleValue.
 	 */
-	n->type = kNoisyIrNodeType_PtupleValue;
+	IrNode *  tmp	= noisyParseIdentifierOrNilList(N, currentScope)
+	tmp->type	= kNoisyIrNodeType_PtupleValue;
+	addLeaf(N, n, tmp);
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightParen);
+
 
 	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -2571,7 +2631,10 @@ noisyParseFieldSelect(State *  N, Scope *  currentScope)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseFieldSelect);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	/*
@@ -2580,12 +2643,12 @@ noisyParseFieldSelect(State *  N, Scope *  currentScope)
 	 */
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tdot))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tdot);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tdot));
 		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TleftBrac))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TleftBrac);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TleftBrac));
 		addLeaf(N, n, noisyParseExpression(N, currentScope));
 		
 		if (peekCheck(N, 1, kNoisyIrNodeType_Tcolon))
@@ -2628,28 +2691,31 @@ noisyParseHighPrecedenceBinaryOp(State *  N)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseHighPrecedenceBinaryO);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tasterisk))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tasterisk);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tasterisk));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tdiv))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tdiv);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tdiv));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tpercent))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tpercent);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tpercent));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tcaret))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tcaret);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tcaret));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tcons))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tcons);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tcons));
 	}
 	else
 	{
@@ -2687,55 +2753,55 @@ noisyParseLowPrecedenceBinaryOp(State *  N)
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tplus))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tplus);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tplus));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tminus))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tminus);
+		addLeaf(N, noisyParseTerminal(N, kNoisyIrNodeType_Tminus));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TrightShift))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TrightShift);
+		addLeaf(N, noisyParseTerminal(N, kNoisyIrNodeType_TrightShift));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TleftShift))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_TleftShift);
+		addLeaf(N, noisyParseTerminal(N, kNoisyIrNodeType_TleftShift));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tstroke))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tstroke);
+		addLeaf(N, noisyParseTerminal(N, kNoisyIrNodeType_Tstroke));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Teq))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Teq);
+		addLeaf(N, noisyParseTerminal(N, kNoisyIrNodeType_Teq));
 	}	
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tneq))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tneq);
+		addLeaf(N, noisyParseTerminal(N, kNoisyIrNodeType_Tneq));
 	}	
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tgt))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tgt);
+		addLeaf(N, noisyParseTerminal(N, kNoisyIrNodeType_Tgt));
 	}	
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tlt))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tlt);
+		addLeaf(N, noisyParseTerminal(N, kNoisyIrNodeType_Tlt));
 	}	
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tge))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tge);
+		addLeaf(N, noisyParseTerminal(N, kNoisyIrNodeType_Tge));
 	}	
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tle))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tle);
+		addLeaf(N, noisyParseTerminal(N, kNoisyIrNodeType_Tle));
 	}	
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tand))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tand);
+		addLeaf(N, noisyParseTerminal(N, kNoisyIrNodeType_Tand));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tor))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tor);
+		addLeaf(N, noisyParseTerminal(N, kNoisyIrNodeType_Tor));
 	}
 	else
 	{
@@ -2768,40 +2834,43 @@ noisyParseCmpOp(State *  N)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseCmpOp);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Teq))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Teq);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Teq));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tneq))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tneq);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tneq));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tgt))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tgt);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tgt));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tlt))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tlt);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tlt));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tle))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tle);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tle));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tge))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tge);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tge));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tand))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tand);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tand));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tor))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tor);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tor));
 	}
 	else
 	{
@@ -2837,51 +2906,43 @@ noisyParseUnaryOp(State *  N)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseUnaryOp);
 
 
-	IrNode *	n;
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	//name2chan is not a unary op. Why did we have it here?
-	//if (peekCheck(N, 1, kNoisyIrNodeType_Tname2chan))
-	//{
-	//	n = noisyParseTerminal(N, kNoisyIrNodeType_Tname2chan);
-	//}
-	//else
 	if (peekCheck(N, 1, kNoisyIrNodeType_Ttilde))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Ttilde);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Ttilde));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tbang))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tbang);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tbang));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tminus))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tminus);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tminus));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tplus))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tplus);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tplus));
 	}
-	//T_inc is not a unary op. Why did we have it here?
-	//else if (peekCheck(N, 1, kNoisyIrNodeType_Tinc))
-	//{
-	//	n = noisyParseTerminal(N, kNoisyIrNodeType_Tinc);
-	//}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tgets))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tgets);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tgets));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Thd))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Thd);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Thd));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Ttl))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Ttl);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Ttl));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tlen))
 	{
-		n = noisyParseTerminal(N, kNoisyIrNodeType_Tlen);
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tlen));
 	}
 	else
 	{
@@ -3015,7 +3076,7 @@ noisyParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  
 	if (n->symbol == NULL)
 	{
 		errorUseBeforeDefinition(N, t->identifier);
-		// TODO: do noisyParserErrorRecovery() here ?
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
 	}
 
 	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
@@ -3058,7 +3119,7 @@ noisyParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sco
 	if (sym->definition != NULL)
 	{
 		errorMultiDefinition(N, sym);
-		// TODO: do noisyParserErrorRecovery() here ?
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
 	}
 	n->symbol = sym;
 
@@ -3217,13 +3278,7 @@ noisyParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToken)
 		fprintf(stderr, "doing longjmp");
 
 		/*
-		 *	Could pass in case-specific info here, but just
-		 *	pass 0.
-		 *
-		 *	TODO: We could, e.g., return info on which line
-		 *	number of the input we have reached, and let, e.g.,
-		 *	the CGI version highlight the point at which
-		 *	processing stopped.
+		 *	See issue #291.
 		 */
 		longjmp(N->jmpbuf, 0);
 	}

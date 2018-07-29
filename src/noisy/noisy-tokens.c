@@ -49,11 +49,6 @@
 
 
 
-/*
- *	TODO:	Even though we would like to put the tokens in quotes, we cannot, 
- *	because we also use the array for checking to see if a token is a token.
- *	Create a separate array for the latter
- */
 const char *	gNoisyTokenDescriptions[kNoisyIrNodeTypeMax] = {
 									[kNoisyIrNodeType_TaddAs]		=	"+=",
 									[kNoisyIrNodeType_Tadt]			=	"adt",

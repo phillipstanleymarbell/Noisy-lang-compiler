@@ -242,7 +242,7 @@ typedef enum
 
 
 	/*
-	 *	IR pass helpers. TODO: should merge this into IR helpers...
+	 *	IR pass helpers. See issue #296.
 	 */
 	kNoisyTimeStampKeyIrPassHelperColorIr,
 	kNoisyTimeStampKeyIrPassHelperColorSymbolTable,

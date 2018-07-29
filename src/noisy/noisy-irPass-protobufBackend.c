@@ -88,7 +88,6 @@ noisyIrPassProtobufAstNodeEmitter(State *  N, IrNode *  irNode)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyIrPassProtobufAstEmitter);
 
-  // TODO fix this
 	//IrNode*	node = irNode; fix this NOISY__NOISY_IR_NODE__INIT();
 	// void *			buffer;
 	// unsigned		bufferLength;

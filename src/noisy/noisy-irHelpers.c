@@ -125,8 +125,8 @@ assignTypes(State *  N, IrNode *  node, IrNode *  typeExpression)
 	TimeStampTraceMacro(kNoisyTimeStampKeyParserAssignTypes);
 
 	/*
-	 *	TODO: The typeExpr might be, say, an identifier that is an
-	 *	alias for a type. We should check for this case and get the
+	 *	See issue #297: The typeExpr might be, say, an identifier that is
+	 *	an alias for a type. We should check for this case and get the
 	 *	identifier's sym->typeTree. Also, do sanity checks to validate
 	 *	the typeTree, e.g., make sure it is always made up of basic
 	 *	types and also that it's not NULL.
