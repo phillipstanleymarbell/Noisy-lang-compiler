@@ -144,7 +144,6 @@ bmx055: sensor (
 	#
 	interface xAcceleration == "i2c" (address: "0x18")
 	{
-
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
@@ -157,7 +156,6 @@ bmx055: sensor (
 
 	interface yAcceleration == "i2c" (address: "0x18")
 	{
-
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
@@ -170,7 +168,6 @@ bmx055: sensor (
 
 	interface zAcceleration == "i2c" (address: "0x18")
 	{
-
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
@@ -227,7 +224,6 @@ bmx055: sensor (
 
 	interface zMagneticFluxDensity == "i2c" (address: "0x10")
 	{
-
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#

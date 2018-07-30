@@ -92,7 +92,6 @@ MMA8451Q: sensor (
 	#
 	interface xAcceleration@8*bits == "i2c" (address: "0x1C")
 	{
-
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
@@ -103,7 +102,6 @@ MMA8451Q: sensor (
 
 	interface xAcceleration@14*bits == "i2c" (address: "0x1C")
 	{
-
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
@@ -116,7 +114,6 @@ MMA8451Q: sensor (
 	
 	interface yAcceleration@8*bits == "i2c" (address: "0x1C")
 	{
-
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
@@ -127,7 +124,6 @@ MMA8451Q: sensor (
 	
 	interface yAcceleration@14*bits == "i2c" (address: "0x1C")
 	{
-
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
@@ -140,7 +136,6 @@ MMA8451Q: sensor (
 	
 	interface zAcceleration@8*bits == "i2c" (address: "0x1C")
 	{
-
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
@@ -151,7 +146,6 @@ MMA8451Q: sensor (
 
 	interface zAcceleration@14*bits == "i2c" (address: "0x1C")
 	{
-
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
