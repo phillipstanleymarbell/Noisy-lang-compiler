@@ -323,43 +323,43 @@ bmx055: sensor (
 	#	Could not find the relevant information in data sheet so I left the cost as 0.
 	#
 	precision xAcceleration == {
-					(12*bits, 0),
+					(12*bits, nil),
 				},
 
 	precision yAcceleration == {
-					(12*bits, 0),
+					(12*bits, nil),
 				},
 
 	precision zAcceleration == {
-					(12*bits, 0),
+					(12*bits, nil),
 				},
 
 	precision Temperature == {
-					(8*bits, 0),
+					(8*bits, nil),
 				},
 
 	precision xMagneticFluxDensity == {
-						(13*bits, 0),
+						(13*bits, nil),
 					},
 
 	precision yMagneticFluxDensity == {
-						(13*bits, 0),
+						(13*bits, nil),
 					},
 
 	precision zMagneticFluxDensity == {
-						(15*bits, 0),
+						(15*bits, nil),
 					},
 
 	precision xAngularRate == {
-					(16*bits, 0),
+					(16*bits, nil),
 				},
 
 	precision yAngularRate == {
-					(16*bits, 0),
+					(16*bits, nil),
 				},
 
 	precision zAngularRate == {
-					(16*bits, 0),
+					(16*bits, nil),
 				},
 
 	#

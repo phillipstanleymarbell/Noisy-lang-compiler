@@ -215,22 +215,22 @@ ADXL362: sensor (
 	#	Could not find the relevant information in data sheet so I left the cost as 0.
 	#
 	precision xAcceleration == {
-					(8*bits, 0),
-					(12*bits, 0),
+					(8*bits, nil),
+					(12*bits, nil),
 				},
 
 	precision yAcceleration == {
-					(8*bits, 0),
-					(12*bits, 0),
+					(8*bits, nil),
+					(12*bits, nil),
 				},
 
 	precision zAcceleration == {
-					(8*bits, 0),
-					(12*bits, 0),
+					(8*bits, nil),
+					(12*bits, nil),
 				},
 
 	precision Temperature == {
-					(12*bits, 0),
+					(12*bits, nil),
 				},
 
 	#
@@ -265,9 +265,9 @@ ADXL362: sensor (
 				},
 
 	accuracy zAcceleration == {
-					(920*n, 0),
+					(920*n, nil),
 					(550*n, 3.6)
-					(350*n, 0),
+					(350*n, nil),
 					(250*n, 26),
 				},
 
@@ -277,6 +277,6 @@ ADXL362: sensor (
 	#	Could not find the relevant information in data sheet so I left the cost as 0.
 	#
 	accuracy Temperature == {
-					(4*K, 0),
+					(4*K, nil),
 				}
 }
