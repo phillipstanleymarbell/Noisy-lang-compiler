@@ -1,5 +1,5 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell. To be extended by Vlad-Mihai Mandric... (Vlad: please clean up this comment and add your name to the authors list when you get here --- Phillip)
+	Authored 2018. Phillip Stanley-Marbell, Vlad-Mihai Mandric
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -42,6 +41,7 @@
 #include <setjmp.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <time.h>
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
@@ -49,25 +49,21 @@
 #include "flexerror.h"
 #include "flex.h"
 #include "common-errors.h"
+#include "version.h"
 #include "newton-timeStamps.h"
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
-#include "newton-symbolTable.h"
+#include "noisy-parser.h"
+#include "noisy-lexer.h"
 #include "common-irPass-helpers.h"
-#include "common-astTransform.h"
-#include "newton-irPass-dotBackend.h"
-#include "newton-irPass-dimensionMatrixBackend.h"
 #include "newton-types.h"
-#include "newton.h"
 
-/*
- *	This is a template for Vlad to build on. See https://github.com/phillipstanleymarbell/Noisy-lang-compiler/pull/301#issuecomment-409131120
- */
+#ifdef NoisyOsLinux
+#	include <time.h>
+#endif
 
-extern char *	gNewtonAstNodeStrings[];
-
-static void
-irPassDimensionMatrixProcessInvariantList(State *  N)
+void
+irPassDimensionMatrixBackend(State *  N, IrNode * newtonIrRoot)
 {
 	Invariant *	invariant = N->invariantList;
 
@@ -96,15 +92,6 @@ irPassDimensionMatrixProcessInvariantList(State *  N)
 		}
 		invariant = invariant->next;
 	}
-
-	return;
-}
-
-
-void
-irPassDimensionMatrixBackend(State *  N)
-{
-	irPassDimensionMatrixProcessInvariantList(N);
 
 	return;
 }
