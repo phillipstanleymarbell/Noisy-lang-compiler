@@ -123,7 +123,6 @@ MAG3110: sensor (
 
 	interface zMagneticFluxDensity == "i2c" (address: "0x0E")
 	{
-
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#

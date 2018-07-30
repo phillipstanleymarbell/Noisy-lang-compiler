@@ -97,7 +97,7 @@ L3GD20H: sensor (
 	#
 	#	Register address of Gyroscope can be found in Table 17 of document 6 on page 34.
 	#
-	interface xAngularRate == "i2c" (address: "0xD5")
+	interface xAngularRate == "i2c" (address: "0x6A")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -121,7 +121,7 @@ L3GD20H: sensor (
 		xAngularRate = (OUT_X_H <<8) | (OUT_X_L);
 	},
 
-	interface yAngularRate == "i2c" (address: "0xD5")
+	interface yAngularRate == "i2c" (address: "0x6A")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -145,7 +145,7 @@ L3GD20H: sensor (
 		yAngularRate = (OUT_Y_H <<8) | (OUT_Y_L);
 	},
 
-	interface zAngularRate == "i2c" (address: "0xD5")
+	interface zAngularRate == "i2c" (address: "0x6A")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -170,11 +170,11 @@ L3GD20H: sensor (
 	},
 
 	#
-	#	Temperature sensor is part of the accelerometer so i2c address of Temperature Sensor is also 0xD5.
+	#	Temperature sensor is part of the accelerometer so i2c address of Temperature Sensor is also 0x6A.
 	#
 	#	Register address of temperature sensor can be found in Table 17 of document 6 on page 34.
 	#
-	interface Temperature == "i2c" (address: "0xD5")
+	interface Temperature == "i2c" (address: "0x6A")
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
