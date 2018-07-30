@@ -1,5 +1,9 @@
 #
-#	The function `computeSteps` takes a timeseries of samples and computes
+#	The function `computeStepsSamples` takes a timeseries of samples and computes
+#	the number of steps.
+#
+#
+#	The function `computeStepsMeasurement` takes a unsampled measurement and computes
 #	the number of steps.
 #
 #	The function `start` reads from the appropriate sensor and sends the 
@@ -12,13 +16,13 @@
 pedometer : module(lengthType: type, sampleType: type, countType: type)
 {
 	computeStepsSamples	: function (inputSamples: sampleType and timeseries) -> (count: countType);
-	computeStepsMeasurement	: function (measurement: signal) -> (count: countType);
-	sampler			: function (measurement: signal, rate: countType) -> (sampleTimes: list of countType);
+	computeStepsMeasurement	: function (analogMeasurement: sampleType and measurement) -> (count: countType);
+	sampler			: function (analogMeasurement: sampleType and measurement, rate: countType) -> (sampleTimes: list of countType);
 	start			: function (windowSampleCount: lengthType) -> (stepsChannel: chan of countType);
 
 	computeStepsSamples	: probdef (inputSamples: sampleType and timeseries) -> (count: countType);
-	computeStepsMeasurement	: probdef (measurement: signal) -> (count: countType);
-	sampler			: probdef (measurement: signal, rate: countType) -> (sampleTimes: list of countType);
+	computeStepsMeasurement	: probdef (analogMeasurement: sampleType and measurement) -> (count: countType);
+	sampleTimes		: probdef (analogMeasurement: sampleType and measurement, rate: countType) -> (sampleTimes: list of countType);
 	start			: probdef (windowSampleCount: lengthType) -> (stepsChannel: chan of countType);
 
 	init			: function (arguments: list of string) -> (results: list of string);
@@ -56,9 +60,9 @@ computeStepsSamples : probdef (inputSamples: sampleType and timeseries) -> (coun
 }
 
 #
-#	A `signal` (like the variable `measurement`) is a window of time of a continuous-time signal
+#	A `signal` (like the variable `analogMeasurement`) is a window of time of a continuous-time signal
 #
-computeStepsMeasurement : probdef (measurement: signal) -> (count: countType) =>
+computeStepsMeasurement : probdef (analogMeasurement: sampleType and measurement) -> (count: countType) =>
 {
 	#
 	#	The `timebase` operator applied to a time series yields
@@ -68,7 +72,7 @@ computeStepsMeasurement : probdef (measurement: signal) -> (count: countType) =>
 	#	binds one or more variables, introduced in its "head" in
 	#	its scope.
 	#
-	given (windowTime == (head (sort (timebase measurement))) - (head (reverse (sort (timebase measurement)))))
+	given (windowTime == (head (sort (timebase analogMeasurement))) - (head (reverse (sort (timebase analogMeasurement)))))
 	{
 		#
 		#	The `fourier` operator applied to a time series
@@ -77,7 +81,7 @@ computeStepsMeasurement : probdef (measurement: signal) -> (count: countType) =>
 		#
 		exists (cutoff in int8)
 		{
-			head (head (fourier (lowpass measurement cutoff))) == (count / windowTime)
+			head (head (fourier (lowpass analogMeasurement cutoff))) == (count / windowTime)
 		}
 	}
 }
@@ -85,7 +89,7 @@ computeStepsMeasurement : probdef (measurement: signal) -> (count: countType) =>
 #
 #	Problem definition (probdef) for the sampler function
 #
-sampler : probdef (measurement: signal, rate: countType) -> (sampleTimes: list of countType) =>
+sampleTimes : probdef (analogMeasurement: sampleType and measurement, rate: countType) -> (sampleTimes: list of countType) =>
 {
 	#
 	#	Specify tolerable sample rate deviation and tolerable jitter deviation

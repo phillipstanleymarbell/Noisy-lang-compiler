@@ -18,10 +18,10 @@ reservedIdentifiers		::=	"A" | "K" | "acceleration" | "adt" | "alpha" | "Ampere"
 				"in" | "int128" | "int16" | "int32" | "int4" |
 				"int64" | "int8" | "iterate" | "Kelvin" | "kg" | "kilogram" | "latency" |
 				"length" | "list" | "load" | "lowpass" | "luminosity" | "m" | "magneticflux" |
-				"mass" | "match" | "matchseq" | "material" | "meter" | "module" | "mole" |
+				"mass" | "match" | "matchseq" | "material" | "measurement" | "meter" | "module" | "mole" |
 				"nat128" | "nat16" | "nat32" | "nat4" | "nat64" | "nat8" | "nil" | "of" |
 				"omega" | "parallel" | "predicate" | "pressure" | "probdef" | "quantize" |
-				"rational" | "return" | "reverse" | "s" | "samples" | "second" |
+				"rational" | "return" | "reverse" | "s" | "samples" | "sample" | "second" |
 				"sequence" | "set" | "sigfigs" | "signal" | "sort" | "string" | "tail" |
 				"tailtip" | "tau" | "tderivative" | "temperature" | "time" | "timebase" |
 				"timeseries" | "tintegral" | "true" | "type" | "typeannote" | "typemax" |
@@ -77,7 +77,7 @@ typeName		::=	identifier ["->" identifier] .
 dimensionsDesignation	::=	"dimensions" dimensionArithExpr .
 sigfigDesignation	::=	"sigfigs" integerConst .
 signalDesignation	::=	"signal" (basicSignal | identifier) .
-timeseriesDesignation	::=	"timeseries" .
+timeseriesDesignation	::=	"timeseries" | "measurement" .
 unitsDesignation	::=	"units" unitsArithExpr .
 dimensionArithFactor	::=	basicSignalDimension | "(" dimensionArithExpr ")" .
 dimensionArithTerm	::=	dimensionArithFactor {highPrecedenceArith2ArithOp dimensionArithFactor} .
@@ -98,14 +98,14 @@ integerType		::=	"nat4" | "nat8" | "nat16" | "nat32" | "nat64" | "nat128"
 				| "int4" | "int8" | "int16" | "int32" | "int64" | "int128" .
 realType		::=	"float4" | "float8" | "float16" | "float32" | "float64" | "float128" | fixedType .
 fixedType		::=	"fixed" integerConst "." integerConst .
-arithmeticType		::=	integerType | realType | fixedType | rationalType .
-complexType		::=	"complex" arithmeticType .
+numericType		::=	integerType | realType | fixedType | rationalType .
+complexType		::=	"complex" numericType .
 anonAggregateType	::=	arrayType | listType | tupleType | setType | rationalType | complexType .
 arrayType		::=	"array" "[" integerConst "]" {"[" integerConst "]"} "of" typeExpr .
 listType		::=	"list" "of" typeExpr .
 tupleType		::=	"(" typeExpr {"," typeExpr} ")" .
 setType			::=	"set" "[" integerConst "]" "of" typeExpr .
-rationalType		::=	"rational" arithmeticType .
+rationalType		::=	"rational" numericType .
 numericConst		=	integerConst | realConst .
 initList		=	"{" expression {"," expression} "}" .
 idxInitList		=	"{" element {"," element} "}" .
@@ -140,8 +140,9 @@ guardedExpressionList	=	{expression "=>" expression} .
  *	Expressions
  */
 expression		::=	(term {lowPrecedenceBinaryOp term}) | anonAggrCastExpr
-				| loadExpr | quantizeExpression .
-quantizeExpression	::=	identifier "quantize" "{" guardedExpressionList "}" .
+				| loadExpr | quantizeExpression | sampleExpression .
+quantizeExpression	::=	identifier "quantize" expression .
+sampleExpression	::=	identifier "sample" expression .
 listCastExpr		::=	"list" "of" initList .
 setCastExpr		::=	"set" "of" initList .
 arrayCastExpr		::=	"array" (("of" idxInitList) | ("[" integerConst "]" "of" starInitList)) .
@@ -153,8 +154,8 @@ loadExpr		::=	"load" identifier [tupleType] (stringConst | ("path" typeName)) .
 term			::=	[basicType] [unaryOp] factor ["++" | "--"] {highPrecedenceBinaryOp factor} .
 factor			::=	(identifier {fieldSelect}) | integerConst | realConst | stringConst | boolConst
 				| "(" expression ")" | tupleValue | namegenInvokeShorthand | typeMinExpr | typeMaxExpr .
-typeMinExpr		::=	"typemin" "(" arithmeticType ")" .
-typeMaxExpr		::=	"typemax" "(" arithmeticType ")" .
+typeMinExpr		::=	"typemin" "(" numericType ")" .
+typeMaxExpr		::=	"typemax" "(" numericType ")" .
 namegenInvokeShorthand	=	identifier "(" [identifier ":" expression {","  identifier ":" expression}] ")" .
 tupleValue		::=	"(" identifierOrNilList ")" .
 fieldSelect		::=	("." identifier) | ("[" expression [":" expression] "]") .

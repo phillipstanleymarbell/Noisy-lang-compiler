@@ -220,6 +220,11 @@ addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode)
 
 	IrNode *	node = depthFirstWalk(N, parent);
 
+	if (node == NULL)
+	{
+		fatal(N, Esanity);
+	}
+
 	if (node->irLeftChild == NULL)
 	{
 		node->irLeftChild = newNode;

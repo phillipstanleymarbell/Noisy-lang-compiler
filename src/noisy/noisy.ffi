@@ -179,9 +179,10 @@ production	kNoisyIrNodeType_PsignalDesignation:		firstset = {
 										kNoisyIrNodeType_Tsignal,
 									}
 
---//		timeseriesDesignation	::=	"timeseries" .
+--//		timeseriesDesignation	::=	"timeseries" | "measurement" .
 production	kNoisyIrNodeType_PtimeseriesDesignation:	firstset = {
 										kNoisyIrNodeType_Ttimeseries,
+										kNoisyIrNodeType_Tmeasurement,
 									}
 
 --//		unitsDesignation	::=	"units" unitsArithExpr .
@@ -326,15 +327,15 @@ production	kNoisyIrNodeType_PfixedType:			firstset = {
 										kNoisyIrNodeType_Tfixed,
 									}
 
---//		arithmeticType		::=	integerType | realType | fixedType | rationalType .
-production	kNoisyIrNodeType_ParithmeticType:		firstset = {
+--//		numericType		::=	integerType | realType | fixedType | rationalType .
+production	kNoisyIrNodeType_PnumericType:		firstset = {
 										firstset(kNoisyIrNodeType_PintegerType),
 										firstset(kNoisyIrNodeType_PrealType),
 										firstset(kNoisyIrNodeType_PfixedType),
 										firstset(kNoisyIrNodeType_PrationalType),
 									}
 
---//		complexType		::=	"complex" arithmeticType .
+--//		complexType		::=	"complex" numericType .
 production	kNoisyIrNodeType_PcomplexType:			firstset = {
 										kNoisyIrNodeType_Tcomplex,
 									}
@@ -369,7 +370,7 @@ production	kNoisyIrNodeType_PsetType:			firstset = {
 										kNoisyIrNodeType_Tset,
 									}
 
---//		rationalType		::=	"rational" arithmeticType .
+--//		rationalType		::=	"rational" numericType .
 production	kNoisyIrNodeType_PrationalType:			firstset = {
 										kNoisyIrNodeType_Trational,
 									}
@@ -517,16 +518,22 @@ production	kNoisyIrNodeType_PguardedExpressionList:	firstset = {
 									}
 
 --//		expression		::=	(term {lowPrecedenceBinaryOp term}) | anonAggrCastExpr
---//						| loadExpr | quantizeExpression .
+--//						| loadExpr | quantizeExpression | sampleExpression .
 production	kNoisyIrNodeType_Pexpression:			firstset = {
 										firstset(kNoisyIrNodeType_Pterm),
 										firstset(kNoisyIrNodeType_PanonAggrCastExpr),
 										firstset(kNoisyIrNodeType_PloadExpr),
 										firstset(kNoisyIrNodeType_PquantizeExpression),
+										firstset(kNoisyIrNodeType_PsampleExpression),
 									}
 
---//		quantizeExpression	::=	identifier "quantize" "{" guardedExpressionList "}" .
+--//		quantizeExpression	::=	identifier "quantize" expression .
 production	kNoisyIrNodeType_PquantizeExpression:		firstset = {
+										kNoisyIrNodeType_Tidentifier,
+									}
+
+--//		sampleExpression	::=	identifier "sample" expression .
+production	kNoisyIrNodeType_PsampleExpression:		firstset = {
 										kNoisyIrNodeType_Tidentifier,
 									}
 
@@ -598,12 +605,12 @@ production	kNoisyIrNodeType_Pfactor:			firstset = {
 										firstset(kNoisyIrNodeType_PtypeMaxExpr),
 									}
 
---//		typeMinExpr		::=	"typemin" "(" arithmeticType ")" .
+--//		typeMinExpr		::=	"typemin" "(" numericType ")" .
 production	kNoisyIrNodeType_PtypeMinExpr:			firstset = {
 										kNoisyIrNodeType_Ttypemin,
 									}
 
---//		typeMaxExpr		::=	"typemax" "(" arithmeticType ")" .
+--//		typeMaxExpr		::=	"typemax" "(" numericType ")" .
 production	kNoisyIrNodeType_PtypeMaxExpr:			firstset = {
 										kNoisyIrNodeType_Ttypemax,
 									}
@@ -1146,7 +1153,7 @@ production	kNoisyIrNodeType_PsignalDesignation:		followset = {
 										followset(kNoisyIrNodeType_PtypeAnnoteItem),
 									}
 
---//		timeseriesDesignation	::=	"timeseries" .
+--//		timeseriesDesignation	::=	"timeseries" | "measurement" .
 production	kNoisyIrNodeType_PtimeseriesDesignation:	followset = {
 										followset(kNoisyIrNodeType_PtypeAnnoteItem),
 									}
@@ -1240,35 +1247,35 @@ production	kNoisyIrNodeType_PbasicType:			followset = {
 --//						| "int4" | "int8" | "int16" | "int32" | "int64" | "int128" .
 production	kNoisyIrNodeType_PintegerType:			followset = {
 										followset(kNoisyIrNodeType_PbasicType),
-										followset(kNoisyIrNodeType_ParithmeticType),
+										followset(kNoisyIrNodeType_PnumericType),
 									}
 
 --//		realType		::=	"float4" | "float8" | "float16" | "float32" | "float64" | "float128" | fixedType .
 production	kNoisyIrNodeType_PrealType:			followset = {
 										followset(kNoisyIrNodeType_PbasicType),
-										followset(kNoisyIrNodeType_ParithmeticType),
+										followset(kNoisyIrNodeType_PnumericType),
 									}
 
 --//		fixedType		::=	"fixed" integerConst "." integerConst .
 production	kNoisyIrNodeType_PfixedType:			followset = {
 										followset(kNoisyIrNodeType_PrealType),
-										followset(kNoisyIrNodeType_ParithmeticType),
+										followset(kNoisyIrNodeType_PnumericType),
 									}
 
---//		arithmeticType		::=	integerType | realType | fixedType | rationalType .
-production	kNoisyIrNodeType_ParithmeticType:		followset = {
+--//		numericType		::=	integerType | realType | fixedType | rationalType .
+production	kNoisyIrNodeType_PnumericType:		followset = {
 										followset(kNoisyIrNodeType_PcomplexType),
 										--//
 										--//	Defining the following is not really needed since
 										--//	since the `rationalType` production ends in a
-										--//	`arithmeticType`. Defining it would thus cause an
+										--//	`numericType`. Defining it would thus cause an
 										--//	unnecessary loop.
 										--//
 										--//	followset(kNoisyIrNodeType_PrationalType),
 										kNoisyIrNodeType_TrightParens,
 									}
 
---//		complexType		::=	"complex" arithmeticType .
+--//		complexType		::=	"complex" numericType .
 production	kNoisyIrNodeType_PcomplexType:			followset = {
 										followset(kNoisyIrNodeType_PanonAggregateType),
 									}
@@ -1300,10 +1307,10 @@ production	kNoisyIrNodeType_PsetType:			followset = {
 										followset(kNoisyIrNodeType_PanonAggregateType),
 									}
 
---//		rationalType		::=	"rational" arithmeticType .
+--//		rationalType		::=	"rational" numericType .
 production	kNoisyIrNodeType_PrationalType:			followset = {
 										followset(kNoisyIrNodeType_PanonAggregateType),
-										followset(kNoisyIrNodeType_ParithmeticType),
+										followset(kNoisyIrNodeType_PnumericType),
 									}
 
 --//		numericConst		=	integerConst | realConst .
@@ -1427,7 +1434,7 @@ production	kNoisyIrNodeType_PguardedExpressionList:	followset = {
 									}
 
 --//		expression		::=	(term {lowPrecedenceBinaryOp term}) | anonAggrCastExpr
---//						| loadExpr | quantizeExpression .
+--//						| loadExpr | quantizeExpression | sampleExpression .
 --//
 production	kNoisyIrNodeType_Pexpression:			followset = {
 										kNoisyIrNodeType_Tcomma,
@@ -1437,13 +1444,17 @@ production	kNoisyIrNodeType_Pexpression:			followset = {
 										followset(kNoisyIrNodeType_PassignmentStatement)
 										kNoisyIrNodeType_TrightParens,
 										kNoisyIrNodeType_Tsemicolon,
-										followset(kNoisyIrNodeType_PguardedExpressionList),
 										kNoisyIrNodeType_Tcomma,
 										kNoisyIrNodeType_Tcolon,
 									}
 
---//		quantizeExpression	::=	identifier "quantize" "{" guardedExpressionList "}" .
+--//		quantizeExpression	::=	identifier "quantize" expression .
 production	kNoisyIrNodeType_PquantizeExpression:		followset = {
+										followset(kNoisyIrNodeType_Pexpression),
+									}
+
+--//		sampleExpression	::=	identifier "sample" expression .
+production	kNoisyIrNodeType_PsampleExpression:		followset = {
 										followset(kNoisyIrNodeType_Pexpression),
 									}
 
@@ -1502,12 +1513,12 @@ production	kNoisyIrNodeType_Pfactor:			followset = {
 										followset(kNoisyIrNodeType_Pterm),
 									}
 
---//		typeMinExpr		::=	"typemin" "(" arithmeticType ")" .
+--//		typeMinExpr		::=	"typemin" "(" numericType ")" .
 production	kNoisyIrNodeType_PtypeMinExpr:			followset = {
 										followset(kNoisyIrNodeType_Pfactor),
 									}
 
---//		typeMaxExpr		::=	"typemax" "(" arithmeticType ")" .
+--//		typeMaxExpr		::=	"typemax" "(" numericType ")" .
 production	kNoisyIrNodeType_PtypeMaxExpr:			followset = {
 										followset(kNoisyIrNodeType_Pfactor),
 									}
@@ -1968,7 +1979,7 @@ token	kNoisyIrNodeType_TleftParens:				followset = {
 										firstset(kNoisyIrNodeType_PidentifierOrNilList),
 										firstset(kNoisyIrNodeType_PassignmentStatement),
 										firstset(kNoisyIrNodeType_Pexpression),
-										firstset(kNoisyIrNodeType_ParithmeticType),
+										firstset(kNoisyIrNodeType_PnumericType),
 										firstset(kNoisyIrNodeType_PpredExpr),
 										firstset(kNoisyIrNodeType_PpredArithExpr),
 										firstset(kNoisyIrNodeType_PsetExpr),
@@ -2059,7 +2070,6 @@ token	kNoisyIrNodeType_TrightBrace:				followset = {
 										followset(kNoisyIrNodeType_PscopedStatementList),
 										followset(kNoisyIrNodeType_PmatchStatement),
 										followset(kNoisyIrNodeType_PiterateStatement),
-										followset(kNoisyIrNodeType_PquantizeExpression),
 										followset(kNoisyIrNodeType_PscopedPredStmtList),
 										followset(kNoisyIrNodeType_PsetFactor),
 										followset(kNoisyIrNodeType_PconstSetExpr)
@@ -2199,7 +2209,7 @@ token	kNoisyIrNodeType_Tcd:					followset = {
 									}
 
 token	kNoisyIrNodeType_Tcomplex:				followset = {
-										firstset(kNoisyIrNodeType_ParithmeticType),
+										firstset(kNoisyIrNodeType_PnumericType),
 										kNoisyIrNodeType_TleftParens
 									}
 
@@ -2475,11 +2485,15 @@ token	kNoisyIrNodeType_Tprobdef:				followset = {
 									}
 
 token	kNoisyIrNodeType_Tquantize:				followset = {
-										kNoisyIrNodeType_TleftBrace,
+										firstset(kNoisyIrNodeType_Pexpression),
+									}
+
+token	kNoisyIrNodeType_Tsample:				followset = {
+										firstset(kNoisyIrNodeType_Pexpression),
 									}
 
 token	kNoisyIrNodeType_Trational:				followset = {
-										firstset(kNoisyIrNodeType_ParithmeticType),
+										firstset(kNoisyIrNodeType_PnumericType),
 										kNoisyIrNodeType_TleftParens
 									}
 
@@ -2559,6 +2573,10 @@ token	kNoisyIrNodeType_Ttimeseries:				followset = {
 										followset(kNoisyIrNodeType_PtimeseriesDesignation),
 									}
 
+token	kNoisyIrNodeType_Tmeasurement:				followset = {
+										followset(kNoisyIrNodeType_PtimeseriesDesignation),
+									}
+
 token	kNoisyIrNodeType_Ttintegral:				followset = {
 										followset(kNoisyIrNodeType_PunaryOp),
 									}
@@ -2620,6 +2638,7 @@ token	kNoisyIrNodeType_Tidentifier:				followset = {
 										follow(kNoisyIrNodeType_PunitsArithFactor),
 										kNoisyIrNodeType_Tin,
 										kNoisyIrNodeType_Tquantize,
+										kNoisyIrNodeType_Tsample,
 										firstset(kNoisyIrNodeType_PcmpOp),
 										firstset(kNoisyIrNodeType_PtupleType),
 										kNoisyIrNodeType_TstringConst,

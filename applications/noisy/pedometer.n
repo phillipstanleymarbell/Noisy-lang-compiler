@@ -46,7 +46,7 @@ computeStepsSamples : function (inputSamples: sampleType and timeseries) -> (ste
 #	Compute the number of steps taken in a given window of a non-sampled signal
 #	measurment, from a single axis signal.
 #
-computeStepsMeasurement : function (measurement: signal) -> (count: countType) =
+computeStepsMeasurement : function (analogMeasurement: sampleType and measurement) -> (count: countType) =
 {
 	windowMin, windowMax, windowMidPoint	: sampleType;
 	stepCount				: countType = 0;
@@ -64,22 +64,23 @@ computeStepsMeasurement : function (measurement: signal) -> (count: countType) =
 	vdbs := load VDBS (path VDBS);
 
 	#
-	#	Quantize the measurement with the VDBS quantizer from the VDBS module.
+	#	Quantize the analogMeasurement with the VDBS quantizer from the VDBS module.
 	#	In practice, this will mean re-quantizing the signal to apply VDBS
 	#	encoding. A program analysis should in principle be able to determine
 	#	that the signal is only used quantized, and to ensure only the quantized
-	#	version is reuqested from a sensor. vdbs8bitM64Quantizer is a constant
-	#	expression defined in the VDBS module.
+	#	version is reuqested from a sensor. kVdbs8bitM64Quantizer is a constant
+	#	expression (list of (analogMeasurement, quantization value) pairs) defined
+	#	in the VDBS module.
 	#
-	quantizedMeasurement := vdbs->vdbs8bitM64Quantizer(measurement);
+	quantizedMeasurement := analogMeasurement quantize vdbs->kVdbs8bitM64Quantizer;
 
 	#
-	#	Sample the signal at time offsets defined by the function sampler.
-	#	(defined below). The sampler could in principle be a non-uniform-time
+	#	Sample the signal at time offsets defined by the function sampleTimes().
+	#	(defined below). The sample times could in principle be a non-uniform-time
 	#	sampler (i.e., with jitter) or even a non-uniform-rate sampler (i.e.,
 	#	not always returning the same number of sampling points per second).
 	#
-	quantizedAndSampledMeasurement := sampler(measurement:quantizedMeasurement, rate:kPedometerSampleRate);
+	quantizedAndSampledMeasurement := quantizedMeasurement sample sampleTimes(analogMeasurement:quantizedMeasurement, rate:kPedometerSampleRate);
 
 	#
 	#	Low-pass filter the timeseries data passed in, with
@@ -123,11 +124,11 @@ stepsFromSamplesFourierAbstraction : function(samples: sampleType and timeseries
 }
 
 
-sampler : function (measurement: signal, rate: countType) -> (sampleTimes: list of countType)
+sampleTimes : function (analogMeasurement: signal, rate: countType) -> (sampleTimes: list of countType)
 {
 	times := nil;
 
-	sampleCount := rate * ((head (sort (timebase measurement))) - (head (reverse (sort (timebase measurement)))));
+	sampleCount := rate * ((head (sort (timebase analogMeasurement))) - (head (reverse (sort (timebase analogMeasurement)))));
 	sequence (i := 0; i < sampleCount; i++)
 	{
 		times = i::times;
@@ -166,7 +167,7 @@ start : function (windowSampleCount: lengthType) -> (stepsChannel: chan of count
 		#	Alternatively, could compute steps by working directly
 		#	on un-sampled signal (in practice, might mean re-sampling).
 		#
-		stepsChannel		<-= computeStepsSamples(measurement: <-accelerometer);
+		stepsChannel		<-= computeStepsSamples(analogMeasurement: <-accelerometer);
 	}
 }
 
