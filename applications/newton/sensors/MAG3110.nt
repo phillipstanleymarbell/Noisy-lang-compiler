@@ -153,7 +153,7 @@ MAG3110: sensor (
 	#
 	#	Unsure about the function that describes the relationship between the following variables, so leave them as they are.
 	#
-	uncertainty xMagneticFluxDensity == Gaussian(xMagneticFluxDensity, kMAG31116rMagneticFluxDensityStdev)*g,
+	uncertainty xMagneticFluxDensity == Gaussian(xMagneticFluxDensity, kMAG3110xMagneticFluxDensityStdev)*g,
 	uncertainty yMagneticFluxDensity == Gaussian(yMagneticFluxDensity, kMAG3110yMagneticFluxDensityStdev)*g,
 	uncertainty zMagneticFluxDensity == Gaussian(zMagneticFluxDensity, kMAG3110zMagneticFluxDensityStdev)*g,
 	uncertainty Temperature == Gaussian(Temperature, kMAG3110TemperatureStdev)*g,
@@ -161,7 +161,7 @@ MAG3110: sensor (
 	#
 	#	When this token is returned by the sensor, it denotes invalid sensed value / erasure in communication with sensor.
 	#
-	erasuretoken xMagneticFluxDensity == kMAG31116rMagneticFluxDensityErasureToken,
+	erasuretoken xMagneticFluxDensity == kMAG3110xMagneticFluxDensityErasureToken,
 	erasuretoken yMagneticFluxDensity == kMAG3110yMagneticFluxDensityErasureToken,
 	erasuretoken zMagneticFluxDensity == kMAG3110zMagneticFluxDensityErasureToken,
 	erasuretoken Temperature == kMAG3110TemperatureErasureToken,
