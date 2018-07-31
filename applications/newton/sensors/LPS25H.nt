@@ -80,7 +80,7 @@ LPS25H: sensor (
 	#
 	#	Register address of Temperature Sensor can be found in Table 15 of document 6 on page 21.
 	#
-	interface Temperature == "i2c" (address: "0x5C")
+	interface Temperature == "i2c" (address: "16r5C")
 	{
 		#
 		#	Get MSB and LSB of Temp data...
@@ -103,7 +103,7 @@ LPS25H: sensor (
 	#
 	#	Register address of Pressure Sensor can be found in Table 15 of document 6 on page 21.
 	#
-	interface Pressure == "i2c" (address: "0x5C")
+	interface Pressure == "i2c" (address: "16r5C")
 	{
 		#
 		#	Get MSB, LSB and XLSB of Press data...

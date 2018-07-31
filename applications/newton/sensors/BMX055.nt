@@ -142,7 +142,7 @@ bmx055: sensor (
 	#
 	#	Register address of Accelerometer can be found in Figure 12 of document 6.2 on page 49.
 	#
-	interface xAcceleration == "i2c" (address: "0x18")
+	interface xAcceleration == "i2c" (address: "16r18")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -154,7 +154,7 @@ bmx055: sensor (
 		xAcceleration = (xAccelHigh << 4) | (xAccelLow >> 4);
 	},
 
-	interface yAcceleration == "i2c" (address: "0x18")
+	interface yAcceleration == "i2c" (address: "16r18")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -166,7 +166,7 @@ bmx055: sensor (
 		yAcceleration = (yAccelHigh << 4) | (yAccelLow >> 4);
 	},
 
-	interface zAcceleration == "i2c" (address: "0x18")
+	interface zAcceleration == "i2c" (address: "16r18")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -179,11 +179,11 @@ bmx055: sensor (
 	},
 
 	#
-	#	Temperature sensor is part of the accelerometer so i2c address of Temperature Sensor is also 0x18.
+	#	Temperature sensor is part of the accelerometer so i2c address of Temperature Sensor is also 16r18.
 	#
 	#	Register address of temperature sensor can be found in Figure 12 of document 6.2 on page 49.
 	#
-	interface Temperature == "i2c" (address: "0x18")
+	interface Temperature == "i2c" (address: "16r18")
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -198,7 +198,7 @@ bmx055: sensor (
 	#
 	#	Register address of Magnetometer can be found in document 10.2 on page 130.
 	#
-	interface xMagneticFluxDensity == "i2c" (address: "0x10")
+	interface xMagneticFluxDensity == "i2c" (address: "16r10")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -210,7 +210,7 @@ bmx055: sensor (
 		xMagneticFluxDensity = (xMagnetoHigh << 5) | (xMagnetoLow >> 3);
 	},
 
-	interface yMagneticFluxDensity == "i2c" (address: "0x10")
+	interface yMagneticFluxDensity == "i2c" (address: "16r10")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -222,7 +222,7 @@ bmx055: sensor (
 		yMagneticFluxDensity = (yMagnetoHigh << 5) | (yMagnetoLow >> 3);
 	},
 
-	interface zMagneticFluxDensity == "i2c" (address: "0x10")
+	interface zMagneticFluxDensity == "i2c" (address: "16r10")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -239,7 +239,7 @@ bmx055: sensor (
 	#
 	#	Register address of Gyroscope can be found in Figure 19 of document 8.2 on page 92.
 	#
-	interface xAngularRate == "i2c" (address: "0x68")
+	interface xAngularRate == "i2c" (address: "16r68")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -251,7 +251,7 @@ bmx055: sensor (
 		xAngularRate = (xAngularRateHigh << 8) | (xAngularRateLow);
 	},
 
-	interface yAngularRate == "i2c" (address: "0x68")
+	interface yAngularRate == "i2c" (address: "16r68")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -263,7 +263,7 @@ bmx055: sensor (
 		yAngularRate = (yAngularRateHigh << 8) | (yAngularRateLow);
 	},
 
-	interface zAngularRate == "i2c" (address: "0x68")
+	interface zAngularRate == "i2c" (address: "16r68")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...

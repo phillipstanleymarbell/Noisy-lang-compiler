@@ -141,7 +141,7 @@ TCS37725: sensor (
 	#
 	#	Register address of clear, red, green and blue data can be found in Table 17 on page 25.
 	#
-	interface LambdaDominant465B == "i2c" (address: "0x29")
+	interface LambdaDominant465B == "i2c" (address: "16r29")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -153,7 +153,7 @@ TCS37725: sensor (
 		LambdaDominant465B = (B465DATAH << 8) | (B465DATA);
 	},
 
-	interface LambdaDominant465G == "i2c" (address: "0x29")
+	interface LambdaDominant465G == "i2c" (address: "16r29")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -165,7 +165,7 @@ TCS37725: sensor (
 		LambdaDominant465G = (G465DATAH << 8) | (G465DATA);
 	},
 
-	interface LambdaDominant465R == "i2c" (address: "0x29")
+	interface LambdaDominant465R == "i2c" (address: "16r29")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -177,7 +177,7 @@ TCS37725: sensor (
 		LambdaDominant465R = (R465DATAH << 8) | (R465DATA);
 	},
 
-	interface LambdaDominant465C == "i2c" (address: "0x29")
+	interface LambdaDominant465C == "i2c" (address: "16r29")
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -189,7 +189,7 @@ TCS37725: sensor (
 		LambdaDominant465C = (C465DATAH << 8) | (C465DATA);
 	},
 
-	interface LambdaDominant525B == "i2c" (address: "0x29")
+	interface LambdaDominant525B == "i2c" (address: "16r29")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -201,7 +201,7 @@ TCS37725: sensor (
 		LambdaDominant525B = (B525DATAH << 8) | (B525DATA);
 	},
 
-	interface LambdaDominant525G == "i2c" (address: "0x29")
+	interface LambdaDominant525G == "i2c" (address: "16r29")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -213,7 +213,7 @@ TCS37725: sensor (
 		LambdaDominant525G = (G525DATAH << 8) | (G525DATA);
 	},
 
-	interface LambdaDominant525R == "i2c" (address: "0x29")
+	interface LambdaDominant525R == "i2c" (address: "16r29")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -225,7 +225,7 @@ TCS37725: sensor (
 		LambdaDominant525R = (R525DATAH << 8) | (R525DATA);
 	},
 
-	interface LambdaDominant525C == "i2c" (address: "0x29")
+	interface LambdaDominant525C == "i2c" (address: "16r29")
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -237,7 +237,7 @@ TCS37725: sensor (
 		LambdaDominant525C = (C525DATAH << 8) | (C525DATA);
 	},
 
-	interface LambdaDominant615B == "i2c" (address: "0x29")
+	interface LambdaDominant615B == "i2c" (address: "16r29")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -249,7 +249,7 @@ TCS37725: sensor (
 		LambdaDominant615B = (B615DATAH << 8) | (B615DATA);
 	},
 
-	interface LambdaDominant615G == "i2c" (address: "0x29")
+	interface LambdaDominant615G == "i2c" (address: "16r29")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -261,7 +261,7 @@ TCS37725: sensor (
 		LambdaDominant615G = (G615DATAH << 8) | (G615DATA);
 	},
 
-	interface LambdaDominant615R == "i2c" (address: "0x29")
+	interface LambdaDominant615R == "i2c" (address: "16r29")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -273,7 +273,7 @@ TCS37725: sensor (
 		LambdaDominant615R = (R615DATAH << 8) | (R615DATA);
 	},
 
-	interface LambdaDominant615C == "i2c" (address: "0x29")
+	interface LambdaDominant615C == "i2c" (address: "16r29")
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
