@@ -97,7 +97,7 @@ MAG3110: sensor (
 	#
 	#	Register address of Magnetometer can be found in Table 11 of document 5 on page 15.
 	#
-	interface xMagneticFluxDensity == "i2c" (address: "0x0E")
+	interface xMagneticFluxDensity == "i2c" (address: "16r0E")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -109,7 +109,7 @@ MAG3110: sensor (
 		xMagneticFluxDensity = (OUT_X_MSB << 8) | (OUT_X_LSB);
 	},
 
-	interface yMagneticFluxDensity == "i2c" (address: "0x0E")
+	interface yMagneticFluxDensity == "i2c" (address: "16r0E")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -121,7 +121,7 @@ MAG3110: sensor (
 		yMagneticFluxDensity = (OUT_Y_MSB << 8) | (OUT_Y_LSB);
 	},
 
-	interface zMagneticFluxDensity == "i2c" (address: "0x0E")
+	interface zMagneticFluxDensity == "i2c" (address: "16r0E")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -134,11 +134,11 @@ MAG3110: sensor (
 	},
 
 	#
-	#	Temperature sensor is part of the magnetometer so i2c address of Temperature Sensor is also 0x0E.
+	#	Temperature sensor is part of the magnetometer so i2c address of Temperature Sensor is also 16r0E.
 	#
 	#	Register address of temperature sensor can be found in Table 11 of document 5 on page 15.
 	#
-	interface Temperature == "i2c" (address: "0x0E")
+	interface Temperature == "i2c" (address: "16r0E")
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...

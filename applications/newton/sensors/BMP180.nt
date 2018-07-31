@@ -80,12 +80,12 @@ BMP180: sensor (
 	#
 	#	Register address of Temperature Sensor can be found in Figure 6 of document 4 on page 18.
 	#
-	interface Temperature == "i2c" (address: "0x77")
+	interface Temperature == "i2c" (address: "16r77")
 	{
 		#
-		#	write to temperature value in register address 0xF4
+		#	write to temperature value in register address 16rF4
 		#
-		write 0x2E 0xF4
+		write 16r2E 16rF4
 		
 		#
 		#	Get MSB and LSB of Temp data...
@@ -98,12 +98,12 @@ BMP180: sensor (
 	#
 	#	Register address of Pressure Sensor can be found in Figure 6 of document 4 on page 18.
 	#
-	interface Pressure@16*bits == "i2c" (address: "0x77")
+	interface Pressure@16*bits == "i2c" (address: "16r77")
 	{
 		#
-		#	write to pressure value (oss=0) in register address 0xF4
+		#	write to pressure value (oss=0) in register address 16rF4
 		#
-		write 0x34 0xF4
+		write 16r34 16rF4
 
 		#
 		#	Get MSB and LSB of Press data...
@@ -116,12 +116,12 @@ BMP180: sensor (
 	#
 	#	Datasheet states that we could extend it to 19 bits though the conversion is not given. However, extending it to 21 bits makes more sense to me.
 	#
-	interface Pressure@21*bits == "i2c" (address: "0x77")
+	interface Pressure@21*bits == "i2c" (address: "16r77")
 	{
 		#
-		#	write to pressure value (oss=0) in register address 0xF4
+		#	write to pressure value (oss=0) in register address 16rF4
 		#
-		write 0x34 0xF4
+		write 16r34 16rF4
 
 		#
 		#	Get MSB, LSB and XLSB of Press data...
@@ -167,7 +167,7 @@ BMP180: sensor (
 	#
 	#	Could not find the relevant information in data sheet so I left the cost as 0.
 	#
-	#	Accuracy of Temperature Sensor can be found in features on Table 1 of document 1 on page 6.
+	#	Accuracy of Temperature Sensor can be found in Table 1 of document 1 on page 6.
 	#
 	accuracy Temperature == {
 					(0.5*K, nil),
