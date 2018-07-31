@@ -117,7 +117,7 @@ TCS37725: sensor (
 	#
 	#	The full range of the sensor
 	#
-	#	Range of Irradiance resposivity (ratio of the respective RGB blue channel values to the clear channel value) can be found in page 4.
+	#	Range of Irradiance resposivity (ratio of the respective RGB channel values to the clear channel value) can be found in page 4.
 	#
 	range LambdaDominant465B == [7.15*c .. 14.608*c],
 	range LambdaDominant465G == [1.10*c .. 6.972*c],
