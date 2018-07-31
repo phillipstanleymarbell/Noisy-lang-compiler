@@ -133,8 +133,10 @@ all: installhooks lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a target $(CONFIGPATH)/
 #
 installhooks:
 	cp $(TREEROOT)/hooks/$(PRECOMMITHOOK) $(TREEROOT)/.git/hooks/pre-commit
+	cp $(TREEROOT)/hooks/commitMessageHook.sh $(TREEROOT)/.git/hooks/commit-msg
 	cp $(TREEROOT)/hooks/postcommitStatisticsHook.sh $(TREEROOT)/.git/hooks/post-commit
 	chmod +x $(TREEROOT)/.git/hooks/pre-commit
+	chmod +x $(TREEROOT)/.git/hooks/commit-msg
 	chmod +x $(TREEROOT)/.git/hooks/post-commit
 
 
