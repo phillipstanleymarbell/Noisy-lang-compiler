@@ -60,6 +60,7 @@
 #include "newton.h"
 #include "newton-irPass-dotBackend.h"
 #include "newton-irPass-smtBackend.h"
+#include "newton-irPass-dimensionMatrixBackend.h"
 #include "newton-dimension-pass.h"
 
 extern char *	gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
@@ -87,6 +88,15 @@ processNewtonFile(State *  N, char *  filename)
 	assert(N->newtonIrTopScope->firstDimension != NULL);
 
 	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
+
+
+	/*
+	 *	Dimensional matrix pass
+	 */
+	if (N->irPasses & kNoisyIrDimensionMatrixPass)
+	{
+		irPassDimensionMatrixBackend(N);
+	}
 
 	/*
 	 *	Dot backend.
