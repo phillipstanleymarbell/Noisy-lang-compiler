@@ -89,8 +89,10 @@ all: installhooks lib$(LIBCOMMON)-$(OSTYPE)-$(COMMON_L10N).a $(CONFIGPATH)/confi
 #
 installhooks:
 	cp $(TREEROOT)/hooks/$(PRECOMMITHOOK) $(TREEROOT)/.git/hooks/pre-commit
+	cp $(TREEROOT)/hooks/commitMessageHook.sh $(TREEROOT)/.git/hooks/commit-msg
 	cp $(TREEROOT)/hooks/postcommitStatisticsHook.sh $(TREEROOT)/.git/hooks/post-commit
 	chmod +x $(TREEROOT)/.git/hooks/pre-commit
+	chmod +x $(TREEROOT)/.git/hooks/commit-msg
 	chmod +x $(TREEROOT)/.git/hooks/post-commit
 
 
