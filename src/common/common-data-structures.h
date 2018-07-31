@@ -1010,6 +1010,11 @@ typedef struct
 	 */
 	IntegralList * scalarIntegralLists;
 	Invariant * invariantList;
+
+	/*
+	 *	Pointer to the state of the individual backends
+	 */
+	void *			backendState;
 } State;
 
 
