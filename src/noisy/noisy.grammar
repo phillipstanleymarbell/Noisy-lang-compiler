@@ -47,7 +47,7 @@ program			::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
 functionDefn		::=	identifier ":" "function" signature "->" signature "="  scopedStatementList .
 problemDefn		::=	identifier ":" "probdef" signature "->" signature "=>" scopedPredStmtList .
 predicateFnDefn		::=	identifier ":" "predicate" signature "=>" scopedPredStmtList .
-signature		::=	"(" [identifier ":" typeExpr {"," identifier ":" typeExpr}] ")" .
+signature		::=	"(" ((identifier ":" typeExpr {"," identifier ":" typeExpr}) | "nil") ")" .
 moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
 moduleDeclBody		=	{moduleTypeNameDecl ";"} .
 
@@ -123,7 +123,7 @@ statement		::=	[ assignmentStatement | matchStatement | iterateStatement | seque
 assignmentStatement	::=	identifierOrNilList ((":" (constantDecl | typeDecl | typeExpr)) | (assignOp expression))
 				| "(" identifierOrNilList ")" assignOp expression .
 returnStatement		::=	"return" returnSignature .
-returnSignature		=	"(" [identifier ":" expression {"," identifier ":" expression}] ")" .
+returnSignature		=	"(" identifier ":" expression {"," identifier ":" expression} ")" .
 operatorToleranceDecl	=	(highPrecedenceBinaryOp | lowPrecedenceBinaryOp | unaryOp) ":" typeExpr .
 assignOp		::=	"=" | "^=" | "|=" | "&=" | "%=" | "/=" | "*=" | "-=" | "+=" | ">>="
 				| "<<=" | "<-=" | ":=" .

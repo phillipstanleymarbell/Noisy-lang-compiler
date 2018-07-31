@@ -1,7 +1,7 @@
-tiny3 : progtype
+tiny3 : module
 {
 	init	: function (list of string) -> (list of string);
-	first	: function (int) -> (int);
-	second	: function (int) -> (int);
-	third	: function (int) -> (int);
+	first	: function (int16) -> (int16);
+	second	: function (int16) -> (int16);
+	third	: function (int16) -> (int16);
 }

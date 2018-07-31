@@ -1,34 +1,34 @@
-tiny9 : progtype
+tiny9 : module
 {
-	intconst	: const 1;
-	#realconst	: const 1.;
-	erealconst1	: const 10E5;
-	erealconst2	: const 1.0E5;
-	#erealconst2	: const 1.0E-5;
+	int16const	: const 1;
+	#float128const	: const 1.;
+	efloat128const1	: const 10E5;
+	efloat128const2	: const 1.0E5;
+	#efloat128const2	: const 1.0E-5;
 	#strconst	: const "somestring";
 	#boolconst	: const true;
 
-	complexint	: type (int, int);
-	complexreal	: type (real, real);
+	complexint16	: type (int16, int16);
+	complexfloat128	: type (float128, float128);
 
-	#tolerancevar1	: type int epsilon(1., 0.001);
-	tolerancevar2	: type int epsilon(1.0, 0.001), epsilon(2.0, 0.0001);
-	#tolerancevar3	: type int epsilon(1.0, 0.1), alpha(1.0, 0.1), tau(1.0, 0.1), epsilon(10.0, 0.001);
+	#tolerancevar1	: type int16 epsilon(1., 0.001);
+	tolerancevar2	: type int16 epsilon(1.0, 0.001), epsilon(2.0, 0.0001);
+	#tolerancevar3	: type int16 epsilon(1.0, 0.1), alpha(1.0, 0.1), tau(1.0, 0.1), epsilon(10.0, 0.001);
 
 	someadt : adt
 	{
-		a	: int;
-		b	: (int, int);
-		c	: ((int, int), (int, int));
+		a	: int16;
+		b	: (int16, int16);
+		c	: ((int16, int16), (int16, int16));
 	};
 
-	init		: function (int) -> (int);
+	init		: function (int16) -> (int16);
 }
 
-init =
+init : function (list of string) -> (list of string)
 {
 	i := 0;
-	iter
+	iterate
 	{
 	#	i < 100	=> ;
 	};

@@ -1,12 +1,12 @@
 #!/bin/sh
 
 #
-#	Usage: ./noisyIr2dot.sh <noisy file> <pdf|png|other dot format>
+#	Usage: ./newtonIr2dot.sh <newton file> <pdf|png|other dot format>
 #
 
 if [ $# -ne 2 ]
 then
-	echo '\n\nUsage: ./noisyIr2dot.sh <noisy file> <pdf|png|other dot format>\n\n'
+	echo '\n\nUsage: ./newtonIr2dot.sh <newton file> <pdf|png|other dot format>\n\n'
 	exit 1
 fi
 

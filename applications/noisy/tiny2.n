@@ -1,4 +1,4 @@
-tiny2 : progtype
+tiny2 : module
 {
-	a	: function (int) -> (int);
+	a	: function (int32) -> (int32);
 }

@@ -993,7 +993,7 @@ production	kNoisyIrNodeType_PpredicateFnDefn:		followset = {
 
 --//		signature		::=	"(" [identifier ":" typeExpr] {"," identifier ":" typeExpr} ")" .
 production	kNoisyIrNodeType_Psignature:			followset = {
-										kNoisyIrNodeType_Tgoes,
+										kNoisyIrNodeType_Tarrow,
 										kNoisyIrNodeType_Tequal,
 										kNoisyIrNodeType_Timplies,
 										followset(kNoisyIrNodeType_PreadTypeSignature),
@@ -1069,7 +1069,7 @@ production	kNoisyIrNodeType_PreadTypeSignature:		followset = {
 
 --//		writeTypeSignature	=	signature .
 production	kNoisyIrNodeType_PwriteTypeSignature:		followset = {
-										kNoisyIrNodeType_Tgoes,
+										kNoisyIrNodeType_Tarrow,
 									}
 
 --//		predicateFnDecl		::=	"predicate" signature .
@@ -1970,6 +1970,7 @@ token	kNoisyIrNodeType_TleftBrace:				followset = {
 --//
 token	kNoisyIrNodeType_TleftParens:				followset = {
 										kNoisyIrNodeType_TrightParens,
+										kNoisyIrNodeType_Tnil,
 										kNoisyIrNodeType_Tidentifier,
 										firstset(kNoisyIrNodeType_PtypeParameterList),
 										firstset(kNoisyIrNodeType_PdimensionArithExpr),
@@ -2138,7 +2139,7 @@ token	kNoisyIrNodeType_TxorAssign:				followset = {
 										followset(kNoisyIrNodeType_PassignOp),
 									}
 
-token	kNoisyIrNodeType_Tgoes:					followset = {
+token	kNoisyIrNodeType_Tarrow:				followset = {
 										firstset(kNoisyIrNodeType_Psignature),
 										firstset(kNoisyIrNodeType_PreadTypeSignature),
 										kNoisyIrNodeType_Tidentifier,
@@ -2632,7 +2633,7 @@ token	kNoisyIrNodeType_TboolConst:				followset = {
 token	kNoisyIrNodeType_Tidentifier:				followset = {
 										kNoisyIrNodeType_Tcolon,
 										kNoisyIrNodeType_Tcomma,
-										kNoisyIrNodeType_Tgoes,
+										kNoisyIrNodeType_Tarrow,
 										follow(kNoisyIrNodeType_PtypeName),
 										follow(kNoisyIrNodeType_PsignalDesignation),
 										follow(kNoisyIrNodeType_PunitsArithFactor),
