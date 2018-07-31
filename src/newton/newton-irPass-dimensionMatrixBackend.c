@@ -1,6 +1,5 @@
 /*
-	Authored 2017. Jonathan Lim
-
+	Authored 2018. Phillip Stanley-Marbell. To be extended by Vlad-Mihai Mandric... (Vlad: please clean up this comment and add your name to the authors list when you get here --- Phillip)
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -35,94 +34,77 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <math.h>
+#include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
-#include <sys/time.h>
-#include <getopt.h>
-#include <setjmp.h>
-#include <stdint.h>
 #include <assert.h>
+#include <stdlib.h>
+#include <setjmp.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <string.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
 #include "common-errors.h"
-#include "version.h"
 #include "newton-timeStamps.h"
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
-
-#include "newton-parser.h"
-#include "newton-lexer.h"
 #include "newton-symbolTable.h"
-#include "newton.h"
+#include "common-irPass-helpers.h"
+#include "common-astTransform.h"
 #include "newton-irPass-dotBackend.h"
-#include "newton-irPass-smtBackend.h"
 #include "newton-irPass-dimensionMatrixBackend.h"
-#include "newton-dimension-pass.h"
+#include "newton-types.h"
+#include "newton.h"
 
-extern char *	gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
+/*
+ *	This is a template for Vlad to build on. See https://github.com/phillipstanleymarbell/Noisy-lang-compiler/pull/301#issuecomment-409131120
+ */
 
-static State *
-processNewtonFileDimensionPass(char * filename);
+extern char *	gNewtonAstNodeStrings[];
+
+static void
+irPassDimensionMatrixProcessInvariantList(State *  N)
+{
+	Invariant *	invariant = N->invariantList;
+
+	while (invariant)
+	{
+		fprintf(stderr, "invariant: [%s]\n", invariant->identifier);
+		
+		IrNode *	parameter = invariant->parameterList;
+		while (parameter)
+		{
+			if (parameter->irLeftChild && parameter->irLeftChild->physics)
+			{
+				fprintf(stderr, "\tParameter: [%s]\n", parameter->irLeftChild->physics->identifier);
+				fprintf(stderr, "\tDimensions:\n");
+
+				Dimension *	dimension = parameter->irLeftChild->physics->dimensions;
+				while (dimension)
+				{
+					fprintf(stderr, "\t\t%s^%1.f:\n", dimension->identifier, dimension->exponent);
+					dimension = dimension->next;
+				}
+
+				fprintf(stderr, "\n");
+			}
+			parameter = parameter->irRightChild;
+		}
+		invariant = invariant->next;
+	}
+
+	return;
+}
 
 
 void
-processNewtonFile(State *  N, char *  filename)
+irPassDimensionMatrixBackend(State *  N)
 {
-	/*
-	 *	Tokenize input, then parse it and build AST + symbol table.
-	 */
-	newtonLexInit(N, filename);
+	irPassDimensionMatrixProcessInvariantList(N);
 
-	/*
-	 *	Create a top-level scope, then parse.
-	 */
-	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
-
-	State *	N_dim = processNewtonFileDimensionPass(filename);
-	N->newtonIrTopScope->firstDimension = N_dim->newtonIrTopScope->firstDimension;
-
-	assert(N->newtonIrTopScope->firstDimension != NULL);
-
-	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
-
-
-	/*
-	 *	Dimensional matrix pass
-	 */
-	if (N->irPasses & kNoisyIrDimensionMatrixPass)
-	{
-		irPassDimensionMatrixBackend(N);
-	}
-
-	/*
-	 *	Dot backend.
-	 */
-	if (N->irBackends & kNoisyIrBackendDot)
-	{
-		fprintf(stdout, "%s\n", irPassDotBackend(N, N->newtonIrTopScope, N->newtonIrRoot, gNewtonAstNodeStrings));
- 	}
-
-	/*
-	 *	Smt backend
-	 */
-	if (N->irBackends & kNewtonIrBackendSmt)
-	{
-		irPassSmtBackend(N);
-	}
-}
-
-static State*
-processNewtonFileDimensionPass(char * filename)
-{
-	State *		N = init(kNoisyModeDefault);
-	newtonLexInit(N, filename);
-
-	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
-	newtonDimensionPassParse(N, N->newtonIrTopScope);
-
-	return N;
+	return;
 }

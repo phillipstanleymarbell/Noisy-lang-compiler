@@ -1,0 +1,22 @@
+
+    Hardware Overview:
+
+      Model Name: MacBook
+      Model Identifier: MacBook9,1
+      Processor Name: Intel Core m5
+      Processor Speed: 1.2 GHz
+      Number of Processors: 1
+      Total Number of Cores: 2
+      L2 Cache (per Core): 256 KB
+      L3 Cache: 4 MB
+      Memory: 8 GB
+
+changeset: 378:7169c57dcb0e864d2d5e59072637eed3b3bde8c0
+
+./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s
+
+./newton/newton-linux-EN -S tmp.smt2 Examples/pendulum_acceleration.nt
+
+sudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s"
+
+sudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy/noisy-darwin-EN -O0 Examples/helloWorld.n -s"

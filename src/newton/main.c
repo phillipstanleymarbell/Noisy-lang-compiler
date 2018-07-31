@@ -216,8 +216,7 @@ main(int argc, char *argv[])
 				/*
 				 *	Implies the following (basic) passes:
 				 */
-				//N->irPasses |= xxx;
-				//N->irPasses |= yyy;
+				N->irPasses |= kNoisyIrDimensionMatrixPass;
 
 				uint64_t tmpInt = strtoul(optarg, &ep, 0);
 				if (*ep == '\0')

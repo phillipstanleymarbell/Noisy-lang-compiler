@@ -388,7 +388,7 @@ typedef enum
 
 typedef enum
 {
-	kNoisyIrPassXXX					= (0 << 0),
+	kNoisyIrDimensionMatrixPass			= (1 << 0),
 	
 	/*
 	 *	Code depends on this bringing up the rear.
