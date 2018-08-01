@@ -6364,108 +6364,220 @@ noisyParsePredArithTerm(State *  N, Scope *  currentScope)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-predArithExpr		::=	predArithTerm {lowPrecedenceArith2ArithOp predArithTerm}
-				| sumOverExpr | productOverExpr | minOverExpr | maxOverExpr .
-				{
-	
-				}
-				/*
-				 *	kNoisyIrNodeType_Pxxx
-				 *
-				 *	Grammar production:
-				 *		xxx
-				 *
-				 *	Generated AST subtree:
-				 *
-				 *		node		= xxx
-				 *		node.left	= xxx
-				 *		node.right	= xxx
-				 */
-				IrNode *
-				noisyParseXxx(State *  N, Scope *  currentScope)
-				{
-					TimeStampTraceMacro(kNoisyTimeStampKeyParseXxx);
-
-
-					IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
-										NULL /* left child */,
-										NULL /* right child */,
-										lexPeek(N, 1)->sourceInfo /* source info */);
-
-
-					if (inFirst(N, kNoisyIrNodeType_Pxxx, gNoisyFirsts, kNoisyIrNodeTypeMax))
-					{
-						addLeaf(N, n, noisyParsexxx(N, currentScope));
-					...
-				}
-
-
-
-
-
-sumOverExpr		::=	"sum" sumProdMinMaxBody .
-{
-	
-}
 /*
- *	kNoisyIrNodeType_Pxxx
+ *	kNoisyIrNodeType_PpredArithExpr
  *
  *	Grammar production:
- *		xxx
+ *		predArithExpr		::=	predArithTerm {lowPrecedenceArith2ArithOp predArithTerm}
+ *				| sumOverExpr | productOverExpr | minOverExpr | maxOverExpr .
+ *
  *
  *	Generated AST subtree:
  *
- *		node		= xxx
- *		node.left	= xxx
- *		node.right	= xxx
+ *		node		= kNoisyIrNodeType_PpredArithExpr
+ *		node.left	= kNoisyIrNodeType_PpredArithTerm | kNoisyIrNodeType_PsumOverExpr | kNoisyIrNodeType_PproductOverExpr | kNoisyIrNodeType_PminOverExpr | kNoisyIrNodeType_PmaxOverExpr
+ *		node.right	= NULL or Xseq of repeating kNoisyIrNodeType_PlowPrecedenceArith2ArithOp kNoisyIrNodeType_PpredArithTerm
+ *				
  */
 IrNode *
-noisyParseXxx(State *  N, Scope *  currentScope)
+noisyParsePredArithExpr(State *  N, Scope *  currentScope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseXxx);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParsePredArithExpr);
 
 
-	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_PpredArithExpr,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	if (inFirst(N, kNoisyIrNodeType_Pxxx, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	if (inFirst(N, kNoisyIrNodeType_PpredArithTerm, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		addLeaf(N, n, noisyParsexxx(N, currentScope));
-	}...
+		addLeaf(N, n, noisyParsePredArithTerm(N, currentScope));
+		while (inFirst(N, kNoisyIrNodeType_PlowPrecedenceArith2ArithOp, gNoisyFirsts, kNoisyIrNodeTypeMax))
+		{
+			addLeaf(N, n, noisyParseLowPrecedenceArith2ArithOp(N, currentScope));
+			addLeaf(N, n, noisyParsePredArithTerm(N, currentScope));
+		}
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PsumOverExpr, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	{
+		addLeaf(N, n, noisyParseSumOverExpr(N, currentScope));
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PproductOverExpr, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	{
+		addLeaf(N, n, noisyParseProductOverExpr(N, currentScope));
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PminOverExpr, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	{
+		addLeaf(N, n, noisyParseMinOverExpr(N, currentScope));
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PmaxOverExpr, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	{
+		addLeaf(N, n, noisyParseMaxOverExpr(N, currentScope));
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PpredArithExpr, kNoisyIrNodeTypeMax, gNoisyFirsts);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PpredArithExpr);
+	}
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_PpredArithExpr, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PpredArithExpr, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PpredArithExpr);
+	}
+
+	return n;
+}
+
+
+
+/*
+ *	kNoisyIrNodeType_PsumOverExpr
+ *
+ *	Grammar production:
+ *		sumOverExpr		::=	"sum" sumProdMinMaxBody .
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_PsumOverExpr
+ *		node.left	= kNoisyIrNodeType_PsumProdMinMaxBody
+ *		node.right	= NULL
+ */
+IrNode *
+noisyParseSumOverExpr(State *  N, Scope *  currentScope)
+{
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseSumOverExpr);
+
+
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_PsumOverExpr,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tsum);
+	addLeaf(N, n, noisyParseSumProdMinMaxBody(N, currentScope));
+
+	if (!inFollow(N, kNoisyIrNodeType_PsumOverExpr, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PsumOverExpr, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PsumOverExpr);
+	}
+
+	return n;
+}
+
+
+
+/*
+ *	kNoisyIrNodeType_PproductOverExpr
+ *
+ *	Grammar production:
+ *		productOverExpr		::=	"product" sumProdMinMaxBody .
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_PproductOverExpr
+ *		node.left	= kNoisyIrNodeType_PsumProdMinMaxBody
+ *		node.right	= NULL
+ */
+IrNode *
+noisyParseProductOverExpr(State *  N, Scope *  currentScope)
+{
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseProductOverExpr);
+
+
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_PproductOverExpr,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tproduct);
+	addLeaf(N, n, noisyParseSumProdMinMaxBody(N, currentScope));
+
+	if (!inFollow(N, kNoisyIrNodeType_PproductOverExpr, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PproductOverExpr, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PproductOverExpr);
+	}
+
+	return n;
+}
+
+
+
+/*
+ *	kNoisyIrNodeType_PminOverExpr
+ *
+ *	Grammar production:
+ *		minOverExpr		::=	"min" sumProdMinMaxBody .
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_PminOverExpr
+ *		node.left	= kNoisyIrNodeType_PsumProdMinMaxBody
+ *		node.right	= NULL
+ */
+IrNode *
+noisyParseSumOverExpr(State *  N, Scope *  currentScope)
+{
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseSumOverExpr);
+
+
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_PminOverExpr,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tmin);
+	addLeaf(N, n, noisyParseSumProdMinMaxBody(N, currentScope));
+
+	if (!inFollow(N, kNoisyIrNodeType_PminOverExpr, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PminOverExpr, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PminOverExpr);
+	}
+
+	return n;
+}
+
+
+
+/*
+ *	kNoisyIrNodeType_PmaxOverExpr
+ *
+ *	Grammar production:
+ *		maxOverExpr		::=	"max" sumProdMinMaxBody .
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_PmaxOverExpr
+ *		node.left	= kNoisyIrNodeType_PsumProdMinMaxBody
+ *		node.right	= NULL
+ */
+IrNode *
+noisyParseSumOverExpr(State *  N, Scope *  currentScope)
+{
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseSumOverExpr);
+
+
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_PmaxOverExpr,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
+
+
+	noisyParseTerminal(N, kNoisyIrNodeType_Tmax);
+	addLeaf(N, n, noisyParseSumProdMinMaxBody(N, currentScope));
+
+	if (!inFollow(N, kNoisyIrNodeType_PmaxOverExpr, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PmaxOverExpr, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PmaxOverExpr);
 	}
 
 	return n;
@@ -6475,139 +6587,25 @@ noisyParseXxx(State *  N, Scope *  currentScope)
 
 
 
-productOverExpr		::=	"product" sumProdMinMaxBody .
-{
-	
-}
-/*
- *	kNoisyIrNodeType_Pxxx
- *
- *	Grammar production:
- *		xxx
- *
- *	Generated AST subtree:
- *
- *		node		= xxx
- *		node.left	= xxx
- *		node.right	= xxx
- */
-IrNode *
-noisyParseXxx(State *  N, Scope *  currentScope)
-{
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseXxx);
-
-
-	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
-						NULL /* left child */,
-						NULL /* right child */,
-						lexPeek(N, 1)->sourceInfo /* source info */);
-
-
-	if (inFirst(N, kNoisyIrNodeType_Pxxx, gNoisyFirsts, kNoisyIrNodeTypeMax))
-	{
-		addLeaf(N, n, noisyParsexxx(N, currentScope));
-	}...
-
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
-	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
-	}
-
-	return n;
-}
 
 
 
 
 
-minOverExpr		::=	"min" sumProdMinMaxBody .
-{
-	
-}
-/*
- *	kNoisyIrNodeType_Pxxx
- *
- *	Grammar production:
- *		xxx
- *
- *	Generated AST subtree:
- *
- *		node		= xxx
- *		node.left	= xxx
- *		node.right	= xxx
- */
-IrNode *
-noisyParseXxx(State *  N, Scope *  currentScope)
-{
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseXxx);
-
-
-	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
-						NULL /* left child */,
-						NULL /* right child */,
-						lexPeek(N, 1)->sourceInfo /* source info */);
-
-
-	if (inFirst(N, kNoisyIrNodeType_Pxxx, gNoisyFirsts, kNoisyIrNodeTypeMax))
-	{
-		addLeaf(N, n, noisyParsexxx(N, currentScope));
-	}...
-
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
-	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
-	}
-
-	return n;
-}
 
 
 
 
 
-maxOverExpr		::=	"max" sumProdMinMaxBody .
-{
-	
-}
-/*
- *	kNoisyIrNodeType_Pxxx
- *
- *	Grammar production:
- *		xxx
- *
- *	Generated AST subtree:
- *
- *		node		= xxx
- *		node.left	= xxx
- *		node.right	= xxx
- */
-IrNode *
-noisyParseXxx(State *  N, Scope *  currentScope)
-{
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseXxx);
 
 
-	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
-						NULL /* left child */,
-						NULL /* right child */,
-						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	if (inFirst(N, kNoisyIrNodeType_Pxxx, gNoisyFirsts, kNoisyIrNodeTypeMax))
-	{
-		addLeaf(N, n, noisyParsexxx(N, currentScope));
-	}...
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
-	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
-	}
 
-	return n;
-}
+
+
+
 
 
 
@@ -6654,6 +6652,25 @@ noisyParseXxx(State *  N, Scope *  currentScope)
 
 	return n;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -7384,6 +7401,25 @@ noisyParseXxx(State *  N, Scope *  currentScope)
 
 	return n;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
