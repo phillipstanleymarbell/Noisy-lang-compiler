@@ -1189,7 +1189,7 @@ noisyParseTypeName(State *  N, Scope *  scope)
 		if (id2->symbol == NULL)
 		{
 			char *	details;
-			
+	
 			asprintf(&details, "%s: '%s%s%s'\n", Eundeclared, id1->symbol->identifier, "->", "noisyParseTypeName: semantic Error" /*id2->symbol->identifier*/);
 			noisyParserSemanticError(N, kNoisyIrNodeType_Ptypename, details);
 		}
@@ -1203,7 +1203,7 @@ noisyParseTypeName(State *  N, Scope *  scope)
 		if (idsym == NULL)
 		{
 			char *	details;
-			
+	
 			asprintf(&details, "%s: %s\n", Eundeclared, id1->symbol->identifier);
 			noisyParserSemanticError(N, kNoisyIrNodeType_Ptypename, details);
 		}
@@ -2932,9 +2932,6 @@ noisyParseStarInitList(State *  N, Scope *  scope)
 	{
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
 
-		/*
-		 *	BUG?: verify w/ grammar (fixed from a yuck version)
-		 */
 		if (inFirst(N, kNoisyIrNodeType_Pelement, gNoisyFirsts, kNoisyIrNodeTypeMax))
 		{
 			addLeafWithChainingSeq(N, n, noisyParseElement(N, scope));
@@ -4701,9 +4698,6 @@ noisyParseTerm(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	/*
-	 *	TODO/BUG: Double-check our handling of [basictype] and [unop] here
-	 */
 	if (inFirst(N, kNoisyIrNodeType_PbasicType, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		addLeaf(N, n, noisyParseBasicType(N, currentScope));
@@ -5062,7 +5056,7 @@ noisyParseFieldSelect(State *  N, Scope *  currentScope)
 	{
 		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TleftBrac));
 		addLeaf(N, n, noisyParseExpression(N, currentScope));
-		
+
 		if (peekCheck(N, 1, kNoisyIrNodeType_Tcolon))
 		{
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
@@ -5308,10 +5302,10 @@ noisyParseCmpOp(State *  N)
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PcmpOp);
 	}
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_PcmpOp, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PcmpOp, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PcmpOp);
 	}
 
 	return n;
@@ -5437,10 +5431,10 @@ noisyParseUnaryOp(State *  N)
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PunaryOp);
 	}
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_Punop, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Punop, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Punop);
 	}
 
 	return n;
@@ -5448,37 +5442,54 @@ noisyParseUnaryOp(State *  N)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-lowPrecedenceBinaryBoolOp	::= "||" .
-{
-	
-}
 /*
- *	kNoisyIrNodeType_Pxxx
+ *	kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp
  *
  *	Grammar production:
- *		xxx
+ *		lowPrecedenceBinaryBoolOp	::= "||" .
  *
  *	Generated AST subtree:
  *
- *		node		= xxx
- *		node.left	= xxx
- *		node.right	= xxx
+ *		node		= kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp
+ *		node.left	= kNoisyIrNodeType_TlogicalOr
+ *		node.right	= NULL
+ */
+IrNode *
+noisyParseLowPrecedenceBinaryBoolOp(State *  N, Scope *  currentScope)
+{
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseLowPrecedenceBinaryBoolOp);
+
+
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */);
+
+
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TlogicalOr));
+
+	if (!inFollow(N, kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp);
+	}
+
+	return n;
+}
+
+
+
+/*
+ *	kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp
+ *
+ *	Grammar production:
+ *		highPrecedenceBinaryBoolOp	::=	"&&" | "^" .
+ *
+ *	Generated AST subtree:
+ *
+ *		node		= kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp
+ *		node.left	= kNoisyIrNodeType_TlogicalAnd | kNoisyIrNodeType_Txor
+ *		node.right	= NULL
  */
 IrNode *
 noisyParseXxx(State *  N, Scope *  currentScope)
@@ -5492,15 +5503,24 @@ noisyParseXxx(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	if (inFirst(N, kNoisyIrNodeType_Pxxx, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	if (peekCheck(N, 1, kNoisyIrNodeType_TlogicalAnd))
 	{
-		addLeaf(N, n, noisyParsexxx(N, currentScope));
-	}...
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TlogicalAnd));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Txor))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Txor));
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp, kNoisyIrNodeTypeMax, gNoisyFirsts);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp);
+	}
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp);
 	}
 
 	return n;
@@ -5508,45 +5528,36 @@ noisyParseXxx(State *  N, Scope *  currentScope)
 
 
 
-
-
-highPrecedenceBinaryBoolOp	::=	"&&" | "^" .
-{
-	
-}
 /*
- *	kNoisyIrNodeType_Pxxx
+ *	kNoisyIrNodeType_PunaryBoolOp
  *
  *	Grammar production:
- *		xxx
+ *		unaryBoolOp			::=	"!" .
  *
  *	Generated AST subtree:
  *
- *		node		= xxx
- *		node.left	= xxx
- *		node.right	= xxx
+ *		node		= kNoisyIrNodeType_PunaryBoolOp
+ *		node.left	= kNoisyIrNodeType_Tbang
+ *		node.right	= NULL
  */
 IrNode *
-noisyParseXxx(State *  N, Scope *  currentScope)
+noisyParseUnaryBoolOp(State *  N, Scope *  currentScope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseXxx);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseUnaryBoolOp);
 
 
-	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_PunaryBoolOp,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	if (inFirst(N, kNoisyIrNodeType_Pxxx, gNoisyFirsts, kNoisyIrNodeTypeMax))
-	{
-		addLeaf(N, n, noisyParsexxx(N, currentScope));
-	}...
+	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tbang));
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_PunaryBoolOp, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PunaryBoolOp, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PunaryBoolOp);
 	}
 
 	return n;
@@ -5554,45 +5565,65 @@ noisyParseXxx(State *  N, Scope *  currentScope)
 
 
 
-
-
-unaryBoolOp			::=	"!" .
-{
-	
-}
 /*
- *	kNoisyIrNodeType_Pxxx
+ *	kNoisyIrNodeType_Parith2BoolOp
  *
  *	Grammar production:
- *		xxx
+ *		arith2BoolOp	::=	"==" | "!=" | ">" | ">=" | "<" | "<=" .
  *
  *	Generated AST subtree:
  *
- *		node		= xxx
- *		node.left	= xxx
- *		node.right	= xxx
+ *		node		= kNoisyIrNodeType_Parith2BoolOp
+ *		node.left	= kNoisyIrNodeType_Tequals | kNoisyIrNodeType_TnotEquals | kNoisyIrNodeType_TgreaterThan
+ *				| kNoisyIrNodeType_TgreaterThanEqual | kNoisyIrNodeType_TlessThan | kNoisyIrNodeType_TlessThanEqual
+ *		node.right	= NULL
  */
 IrNode *
-noisyParseXxx(State *  N, Scope *  currentScope)
+noisyParseArith2BoolOp(State *  N, Scope *  currentScope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseXxx);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseArith2BoolOp);
 
 
-	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Parith2BoolOp,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	if (inFirst(N, kNoisyIrNodeType_Pxxx, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	if (peekCheck(N, 1, kNoisyIrNodeType_Tequals))
 	{
-		addLeaf(N, n, noisyParsexxx(N, currentScope));
-	}...
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tequals));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_TnotEquals))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TnotEquals));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_TgreaterThan))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TgreaterThan));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_TgreaterThanEqual))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TgreaterThanEqual));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_TlessThan))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TlessThan));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_TlessThanEqual))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TlessThanEqual));
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Parith2BoolOp, kNoisyIrNodeTypeMax, gNoisyFirsts);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Parith2BoolOp);
+	}
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_Parith2BoolOp, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Parith2BoolOp, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Parith2BoolOp);
 	}
 
 	return n;
@@ -5600,45 +5631,69 @@ noisyParseXxx(State *  N, Scope *  currentScope)
 
 
 
-
-
-arith2BoolOp			::=	"==" | "!=" | ">" | ">=" | "<" | "<=" .
-{
-	
-}
 /*
- *	kNoisyIrNodeType_Pxxx
+ *	kNoisyIrNodeType_PhighPrecedenceArith2ArithOp
  *
  *	Grammar production:
- *		xxx
+ *		highPrecedenceArith2ArithOp	::=	"*" | "/" | "%" | "&" | "pow" | "nrt" | "log" .
  *
  *	Generated AST subtree:
  *
- *		node		= xxx
- *		node.left	= xxx
- *		node.right	= xxx
+ *		node		= kNoisyIrNodeType_PhighPrecedenceArith2ArithOp
+ *		node.left	= kNoisyIrNodeType_Tasterisk | kNoisyIrNodeType_Tdivide | kNoisyIrNodeType_Tpercent
+ *				| kNoisyIrNodeType_TarithmeticAnd | kNoisyIrNodeType_Tpow | kNoisyIrNodeType_Tnrt | kNoisyIrNodeType_Tlog .
+ *		node.right	= NULL
  */
 IrNode *
-noisyParseXxx(State *  N, Scope *  currentScope)
+noisyParseHighPrecedenceArith2ArithOp(State *  N, Scope *  currentScope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseXxx);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseHighPrecedenceArith2ArithOp);
 
 
-	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_PhighPrecedenceArith2ArithOp,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	if (inFirst(N, kNoisyIrNodeType_Pxxx, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	if (peekCheck(N, 1, kNoisyIrNodeType_Tasterisk))
 	{
-		addLeaf(N, n, noisyParsexxx(N, currentScope));
-	}...
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tasterisk));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tdivide))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tdivide));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tpercent))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tpercent));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_TarithmeticAnd))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TarithmeticAnd));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tpow))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tpow));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tnrt))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tnrt));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tlog))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tlog));
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PhighPrecedenceArith2ArithOp, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PhighPrecedenceArith2ArithOp);
+	}
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_PhighPrecedenceArith2ArithOp, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PhighPrecedenceArith2ArithOp, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PhighPrecedenceArith2ArithOp);
 	}
 
 	return n;
@@ -5646,45 +5701,48 @@ noisyParseXxx(State *  N, Scope *  currentScope)
 
 
 
-
-
-highPrecedenceArith2ArithOp	::=	"*" | "/" | "%" | "&" | "pow" | "nrt" | "log" .
-{
-	
-}
 /*
- *	kNoisyIrNodeType_Pxxx
+ *	kNoisyIrNodeType_PlowPrecedenceArith2ArithOp
  *
  *	Grammar production:
- *		xxx
+ *		lowPrecedenceArith2ArithOp	::=	"+" | "-" .
  *
  *	Generated AST subtree:
  *
- *		node		= xxx
- *		node.left	= xxx
- *		node.right	= xxx
+ *		node		= kNoisyIrNodeType_PlowPrecedenceArith2ArithOp
+ *		node.left	= kNoisyIrNodeType_Tplus | kNoisyIrNodeType_Tminus
+ *		node.right	= NULL
  */
 IrNode *
-noisyParseXxx(State *  N, Scope *  currentScope)
+noisyParseLowPrecedenceArith2ArithOp(State *  N, Scope *  currentScope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseXxx);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseLowPrecedenceArith2ArithOp);
 
 
-	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_PlowPrecedenceArith2ArithOp,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	if (inFirst(N, kNoisyIrNodeType_Pxxx, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	if (peekCheck(N, 1, kNoisyIrNodeType_Tplus))
 	{
-		addLeaf(N, n, noisyParsexxx(N, currentScope));
-	}...
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tplus));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tminus))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tminus));
+	}
+	else
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PhighPrecedenceArith2ArithOp, kNoisyIrNodeTypeMax, gNoisyFirsts);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PhighPrecedenceArith2ArithOp);
+	}
 
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
+	if (!inFollow(N, kNoisyIrNodeType_PlowPrecedenceArith2ArithOp, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PlowPrecedenceArith2ArithOp, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PlowPrecedenceArith2ArithOp);
 	}
 
 	return n;
@@ -5692,92 +5750,38 @@ noisyParseXxx(State *  N, Scope *  currentScope)
 
 
 
-
-
-lowPrecedenceArith2ArithOp	::=	"+" | "-" .
-{
-	
-}
 /*
- *	kNoisyIrNodeType_Pxxx
+ *	kNoisyIrNodeType_PscopedPredStmtList
  *
  *	Grammar production:
- *		xxx
+ *		scopedPredStmtList	::=	"{" predStmtList "}" .
  *
  *	Generated AST subtree:
  *
- *		node		= xxx
+ *		node		= kNoisyIrNodeType_PscopedPredStmtList
  *		node.left	= xxx
  *		node.right	= xxx
  */
 IrNode *
-noisyParseXxx(State *  N, Scope *  currentScope)
+noisyParseScopedPredStmtList(State *  N, Scope *  currentScope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseXxx);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseScopedPredStmtList);
 
 
-	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
+	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_PscopedPredStmtList,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	if (inFirst(N, kNoisyIrNodeType_Pxxx, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
+	addLeaf(N, n, noisyParsePredStmtList(N, currentScope));
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
+
+	if (!inFollow(N, kNoisyIrNodeType_PscopedPredStmtList, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
-		addLeaf(N, n, noisyParsexxx(N, currentScope));
-	}...
-
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
-	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
-	}
-
-	return n;
-}
-
-
-
-
-
-
-scopedPredStmtList	::=	"{" predStmtList "}" .
-{
-	
-}
-/*
- *	kNoisyIrNodeType_Pxxx
- *
- *	Grammar production:
- *		xxx
- *
- *	Generated AST subtree:
- *
- *		node		= xxx
- *		node.left	= xxx
- *		node.right	= xxx
- */
-IrNode *
-noisyParseXxx(State *  N, Scope *  currentScope)
-{
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseXxx);
-
-
-	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_Pxxx,
-						NULL /* left child */,
-						NULL /* right child */,
-						lexPeek(N, 1)->sourceInfo /* source info */);
-
-
-	if (inFirst(N, kNoisyIrNodeType_Pxxx, gNoisyFirsts, kNoisyIrNodeTypeMax))
-	{
-		addLeaf(N, n, noisyParsexxx(N, currentScope));
-	}...
-
-	if (!inFollow(N, kNoisyIrNodeType_Pxxx, gNoisyFollows, kNoisyIrNodeTypeMax))
-	{
-		noisyParserSyntaxError(N, kNoisyIrNodeType_Pxxx, kNoisyIrNodeTypeMax, gNoisyFollows);
-		noisyParserErrorRecovery(N, kNoisyIrNodeType_Pxxx);
+		noisyParserSyntaxError(N, kNoisyIrNodeType_PscopedPredStmtList, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_PscopedPredStmtList);
 	}
 
 	return n;
