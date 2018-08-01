@@ -5088,12 +5088,6 @@ noisyParseFieldSelect(State *  N, Scope *  currentScope)
 
 
 
-
-
-
-Re-check from here:
-
-
 /*
  *	kNoisyIrNodeType_PhighPrecedenceBinaryOp
  *
@@ -5231,6 +5225,14 @@ noisyParseLowPrecedenceBinaryOp(State *  N)
 	{
 		addLeaf(N, noisyParseTerminal(N, kNoisyIrNodeType_Tstroke));
 	}
+	else if (inFirst(N, kNoisyIrNodeType_PcmpOp, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	{
+		addLeaf(N, n, noisyParseCmpOp(N, currentScope));
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	{
+		addLeaf(N, n, noisyParseLowPrecedenceBinaryBoolOp(N, currentScope));
+	}
 	else
 	{
 		noisyParserSyntaxError(N, kNoisyIrNodeType_PlowPrecedenceBinaryOp, kNoisyIrNodeTypeMax, gNoisyFirsts);
@@ -5322,7 +5324,7 @@ noisyParseCmpOp(State *  N)
  *
  *	unaryOp			::=	"~" | "-"  | "+" | "<-"  | "head" | "tail" | "tailtip"| "length" | "sort" | "uncertainty"
  *				| "tintegral" | "tderivative" | "timebase" | "sigfigs" | "samples" | "reverse"
- *				\| "fourier" | "cardinality" | "frequencies" | "magnitudes" | unaryBoolOp .
+ *				| "fourier" | "cardinality" | "frequencies" | "magnitudes" | unaryBoolOp .
  *	Generated AST subtree:
  *
  *		node		= kNoisyIrNodeType_Tname2chan | ... | kNoisyIrNodeType_Tgets
@@ -5357,21 +5359,77 @@ noisyParseUnaryOp(State *  N)
 	{
 		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tplus));
 	}
-	else if (peekCheck(N, 1, kNoisyIrNodeType_Tgets))
+	else if (peekCheck(N, 1, kNoisyIrNodeType_TchannelOperator))
 	{
-		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tgets));
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TchannelOperator));
 	}
-	else if (peekCheck(N, 1, kNoisyIrNodeType_Thd))
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Thead))
 	{
-		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Thd));
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Thead));
 	}
-	else if (peekCheck(N, 1, kNoisyIrNodeType_Ttl))
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Ttail))
 	{
-		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Ttl));
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Ttail));
 	}
-	else if (peekCheck(N, 1, kNoisyIrNodeType_Tlen))
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Ttailtip))
 	{
-		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tlen));
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Ttailtip));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tlength))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tlength));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tsort))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tsort));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tuncertainty))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tuncertainty));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Ttintegral))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Ttintegral));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Ttderivative))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Ttderivative));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Ttimebase))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Ttimebase));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tsigfigs))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tsigfigs));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tsamples))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tsamples));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Treverse))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Treverse));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tfourier))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tfourier));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tcardinality))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tcardinality));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tfrequencies))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tfrequencies));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Tmagnitudes))
+	{
+		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tmagnitudes));
+	}
+	else if (inFirst(N, kNoisyIrNodeType_PunaryBoolOp, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	{
+		addLeaf(N, n, noisyParseUnaryBoolOp(N, currentScope));
 	}
 	else
 	{
