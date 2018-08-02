@@ -73,7 +73,7 @@ HDC1000: sensor (
 	#
 	#	The units of humidity is %RH which is the measured relative humidity value.
 	#
-	range Humidity == [0 .. 100],
+	range Humidity == [0*RH .. 100*RH],
 
 	#
 	#	The operation sequence needed to get a sample
@@ -147,6 +147,6 @@ HDC1000: sensor (
 	#	Accuracy values of Humidity Sensor can be found in document 7.5 on page 5.
 	#
 	accuracy Humidity == {
-					(4, nil),
+					(4*RH, nil),
 				}
 }

@@ -97,20 +97,20 @@ kTCS37725LambdaDominant615RStdev: const = ;
 kTCS37725LambdaDominant615CStdev: const = ;
 
 TCS37725: sensor (
-			Lambda465B: wavelength@0,
-			Lambda465G: wavelength@1,
-			Lambda465R: wavelength@2,
-			Lambda465C: wavelength@3,
+			Lambda465B: irradianceResponsivity@0,
+			Lambda465G: irradianceResponsivity@1,
+			Lambda465R: irradianceResponsivity@2,
+			Lambda465C: irradianceResponsivity@3,
 
-			Lambda525B: wavelength@4,
-			Lambda525G: wavelength@5,
-			Lambda525R: wavelength@6,
-			Lambda525C: wavelength@7,
+			Lambda525B: irradianceResponsivity@4,
+			Lambda525G: irradianceResponsivity@5,
+			Lambda525R: irradianceResponsivity@6,
+			Lambda525C: irradianceResponsivity@7,
 
-			Lambda615B: wavelength@8,
-			Lambda615G: wavelength@9,
-			Lambda615R: wavelength@10,
-			Lambda615C: wavelength@11
+			Lambda615B: irradianceResponsivity@8,
+			Lambda615G: irradianceResponsivity@9,
+			Lambda615R: irradianceResponsivity@10,
+			Lambda615C: irradianceResponsivity@11
 		)
 {
 

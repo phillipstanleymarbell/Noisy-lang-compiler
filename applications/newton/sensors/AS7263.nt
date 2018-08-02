@@ -82,12 +82,12 @@ kAS7263Lambda860WStdev: const = ;
 
 
 AS7263: device (
-			Lambda610R: wavelength@0,
-			Lambda680S: wavelength@1,
-			Lambda730T: wavelength@2,
-			Lambda760U: wavelength@3,
-			Lambda810V: wavelength@4,
-			Lambda860W: wavelength@5
+			Lambda610R: irradianceResponsivity@0,
+			Lambda680S: irradianceResponsivity@1,
+			Lambda730T: irradianceResponsivity@2,
+			Lambda760U: irradianceResponsivity@3,
+			Lambda810V: irradianceResponsivity@4,
+			Lambda860W: irradianceResponsivity@5
 		)
 {
 
