@@ -82,12 +82,12 @@ kAS7262Lambda650RStdev: const = ;
 
 
 AS7262: device (
-			Lambda450V: wavelength@0,
-			Lambda500B: wavelength@1,
-			Lambda550G: wavelength@2,
-			Lambda570Y: wavelength@3,
-			Lambda600O: wavelength@4,
-			Lambda650R: wavelength@5
+			Lambda450V: irradianceResponsivity@0,
+			Lambda500B: irradianceResponsivity@1,
+			Lambda550G: irradianceResponsivity@2,
+			Lambda570Y: irradianceResponsivity@3,
+			Lambda600O: irradianceResponsivity@4,
+			Lambda650R: irradianceResponsivity@5
 		)
 {
 
