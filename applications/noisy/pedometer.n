@@ -46,17 +46,8 @@ computeStepsSamples : function (inputSamples: sampleType and timeseries) -> (ste
 #	Compute the number of steps taken in a given window of a non-sampled signal
 #	measurment, from a single axis signal.
 #
-computeStepsMeasurement : function (analogMeasurement: sampleType and measurement) -> (count: countType) =
+computeStepsMeasurementViaSampleAndQuantize : function (analogMeasurement: sampleType and measurement) -> (count: countType) =
 {
-	windowMin, windowMax, windowMidPoint	: sampleType;
-	stepCount				: countType = 0;
-
-	#
-	#	Load the math module implementation (at the path determined by
-	#	applying the `path` operator to the `Math` module type).
-	#
-	math := load Math (path Math);
-
 	#
 	#	Load the VDBS module implementation (at the path determined by
 	#	applying the `path` operator to the `VDBS` module type).
@@ -91,8 +82,45 @@ computeStepsMeasurement : function (analogMeasurement: sampleType and measuremen
 	return (count: stepsFromSamplesLowLevel(samples: filteredSamples));
 }
 
+#
+#	Compute the number of steps taken in a given window of a non-sampled signal
+#	measurment, from a single axis signal, but without explicitly sampling and quantizing.
+#
+computeStepsMeasurementDirect : function (analogMeasurement: sampleType and measurement) -> (count: countType) =
+{
+	#
+	#	Low-pass filter the timeseries data passed in, with
+	#	a cutoff frequency of 20Hz
+	#
+	filteredSamples	:= lowpass analogMeasurement kPedometerLowpassCutoffFrequency;
+	windowTime 	:= (head (sort (timebase analogMeasurement))) - (head (reverse (sort (timebase analogMeasurement))));
+
+	#
+	#	1.	`fourier filteredSamples` computes the Fourier transform of the measurement
+	#		(without indicating how many frequency bins).
+	#
+	#	2.	`(head (sort (fourier filteredSamples)))` then picks out the largest peak (frequency, amplitude) pair
+	#		(leaving the frequency granularity unspecified)
+	#
+	#	3.	`(head (head (sort (fourier filteredSamples))))` picks out the frequency from the (frequency, amplitude) pair
+	#
+	stepCount	:= (head (head (sort (fourier filteredSamples)))) * windowTime;
+	
+	return (count: stepCount);
+}
+
 stepsFromSamplesLowLevel : function(samples: sampleType and timeseries) -> (stepCount: countType) =
 {
+	windowMin, windowMax, windowMidPoint	: sampleType;
+	stepCount				: countType = 0;
+
+	#
+	#	Load the math module implementation (at the path determined by
+	#	applying the `path` operator to the `Math` module type).
+	#
+	math := load Math (path Math);
+
+
 	windowMin = typemax(sampleType);
 	windowMax = typemin(sampleType);
 

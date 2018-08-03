@@ -138,31 +138,31 @@ noisyLexInit(State *  N, char *  fileName)
 					 */
 					case '&':
 					{
-						checkWeq3(N, kNoisyIrNodeType_TandAs, kNoisyIrNodeType_Tand, '&', kNoisyIrNodeType_Tampersand);
+						checkWeq3(N, kNoisyIrNodeType_TandAssign, kNoisyIrNodeType_Tand, '&', kNoisyIrNodeType_TarithmeticAnd);
 						continue;
 					}
 
 					case '|':
 					{
-						checkWeq3(N, kNoisyIrNodeType_TorAs, kNoisyIrNodeType_Tor, '|', kNoisyIrNodeType_Tstroke);
+						checkWeq3(N, kNoisyIrNodeType_TorAssign, kNoisyIrNodeType_TlogicalOr, '|', kNoisyIrNodeType_TbitwiseOr);
 						continue;
 					}
 
 					case ':':
 					{
-						checkWeq3(N, kNoisyIrNodeType_TdefineAs, kNoisyIrNodeType_Tcons, ':', kNoisyIrNodeType_Tcolon);
+						checkWeq3(N, kNoisyIrNodeType_TcolonAssign, kNoisyIrNodeType_TcolonColon, ':', kNoisyIrNodeType_Tcolon);
 						continue;
 					}
 
 					case '=':
 					{
-						checkWeq3(N, kNoisyIrNodeType_Teq, kNoisyIrNodeType_Tgoes, '>', kNoisyIrNodeType_Tas);
+						checkWeq3(N, kNoisyIrNodeType_Tequals, kNoisyIrNodeType_Timplies, '>', kNoisyIrNodeType_Tassign);
 						continue;
 					}
 
 					case '+':
 					{
-						checkWeq3(N, kNoisyIrNodeType_TaddAs, kNoisyIrNodeType_Tinc, '+', kNoisyIrNodeType_Tplus);
+						checkWeq3(N, kNoisyIrNodeType_TplusAssign, kNoisyIrNodeType_TplusPlus, '+', kNoisyIrNodeType_Tplus);
 						continue;
 					}
 
@@ -174,31 +174,31 @@ noisyLexInit(State *  N, char *  fileName)
 					 */
 					case '!':
 					{
-						checkWeq(N, kNoisyIrNodeType_Tneq, kNoisyIrNodeType_Tbang);
+						checkWeq(N, kNoisyIrNodeType_TnotEqual, kNoisyIrNodeType_Tnot);
 						continue;
 					}
 
 					case '%':
 					{
-						checkWeq(N, kNoisyIrNodeType_TmodAs, kNoisyIrNodeType_Tpercent);
+						checkWeq(N, kNoisyIrNodeType_TpercentAssign, kNoisyIrNodeType_Tpercent);
 						continue;
 					}
 
 					case '^':
 					{
-						checkWeq(N, kNoisyIrNodeType_TxorAs, kNoisyIrNodeType_Tcaret);
+						checkWeq(N, kNoisyIrNodeType_TxorAssign, kNoisyIrNodeType_Txor);
 						continue;
 					}
 
 					case '*':
 					{
-						checkWeq(N, kNoisyIrNodeType_TmulAs, kNoisyIrNodeType_Tasterisk);
+						checkWeq(N, kNoisyIrNodeType_TasteriskAssign, kNoisyIrNodeType_Tasterisk);
 						continue;
 					}
 
 					case '/':
 					{
-						checkWeq(N, kNoisyIrNodeType_TdivAs, kNoisyIrNodeType_Tdiv);
+						checkWeq(N, kNoisyIrNodeType_TdivideAssign, kNoisyIrNodeType_Tdivide);
 						continue;
 					}
 
@@ -216,13 +216,13 @@ noisyLexInit(State *  N, char *  fileName)
 
 					case '(':
 					{
-						checkSingle(N, kNoisyIrNodeType_TleftParen);
+						checkSingle(N, kNoisyIrNodeType_TleftParens);
 						continue;
 					}
 
 					case ')':
 					{
-						checkSingle(N, kNoisyIrNodeType_TrightParen);
+						checkSingle(N, kNoisyIrNodeType_TrightParens);
 						continue;
 					}
 
@@ -246,13 +246,13 @@ noisyLexInit(State *  N, char *  fileName)
 
 					case '[':
 					{
-						checkSingle(N, kNoisyIrNodeType_TleftBrac);
+						checkSingle(N, kNoisyIrNodeType_TleftBracket);
 						continue;
 					}
 
 					case ']':
 					{
-						checkSingle(N, kNoisyIrNodeType_TrightBrac);
+						checkSingle(N, kNoisyIrNodeType_TrightBracket);
 						continue;
 					}
 
@@ -584,14 +584,14 @@ checkGt(State *  N)
 	if (eqf(N))
 	{
 		gobble(N, 2);
-		type = kNoisyIrNodeType_Tge;
+		type = kNoisyIrNodeType_TgreaterThanEqual;
 	}
 	else if (N->lineLength >= 3 &&
 		N->lineBuffer[N->columnNumber+1] == '>' &&
 		N->lineBuffer[N->columnNumber+2] == '=')
 	{
 		gobble(N, 3);
-		type = kNoisyIrNodeType_TrightShiftAs;
+		type = kNoisyIrNodeType_TrightShiftAssign;
 	}
 	else if (N->lineLength >= 2 &&
 		N->lineBuffer[N->columnNumber+1] == '>')
@@ -602,7 +602,7 @@ checkGt(State *  N)
 	else
 	{
 		gobble(N, 1);
-		type = kNoisyIrNodeType_Tgt;
+		type = kNoisyIrNodeType_TgreaterThan;
 	}
 
 	Token *		newToken = lexAllocateToken(N,	type	/* type		*/,
@@ -634,21 +634,21 @@ checkLt(State *  N)
 	if (eqf(N))
 	{
 		gobble(N, 2);
-		type = kNoisyIrNodeType_Tle;
+		type = kNoisyIrNodeType_TlessThanEqual;
 	}
 	else if (N->lineLength >= 3 &&
 		N->lineBuffer[N->columnNumber+1] == '<' &&
 		N->lineBuffer[N->columnNumber+2] == '=')
 	{
 		gobble(N, 3);
-		type = kNoisyIrNodeType_TleftShiftAs;
+		type = kNoisyIrNodeType_TleftShiftAssign;
 	}
 	else if (N->lineLength >= 3 &&
 		N->lineBuffer[N->columnNumber+1] == '-' &&
 		N->lineBuffer[N->columnNumber+2] == '=')
 	{
 		gobble(N, 3);
-		type = kNoisyIrNodeType_TchanWrite;
+		type = kNoisyIrNodeType_TchannelOperatorAssign;
 	}
 	else if (N->lineLength >= 2 &&
 		N->lineBuffer[N->columnNumber+1] == '<')
@@ -660,12 +660,12 @@ checkLt(State *  N)
 		N->lineBuffer[N->columnNumber+1] == '-')
 	{
 		gobble(N, 2);
-		type = kNoisyIrNodeType_Tgets;
+		type = kNoisyIrNodeType_TchannelOperator;
 	}
 	else
 	{
 		gobble(N, 1);
-		type = kNoisyIrNodeType_Tlt;
+		type = kNoisyIrNodeType_TlessThan;
 	}
 
 	Token *		newToken = lexAllocateToken(N,	type	/* type		*/,
@@ -825,17 +825,17 @@ checkMinus(State *  N)
 	if (eqf(N))
 	{
 		gobble(N, 2);
-		type = kNoisyIrNodeType_TsubAs;
+		type = kNoisyIrNodeType_TminusAssign;
 	}
 	else if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '-')
 	{
 		gobble(N, 2);
-		type = kNoisyIrNodeType_Tdec;
+		type = kNoisyIrNodeType_TminusMinus;
 	}
 	else if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '>')
 	{
 		gobble(N, 2);
-		type = kNoisyIrNodeType_TprogtypeQualifier;
+		type = kNoisyIrNodeType_Tarrow;
 	}
 	else
 	{
@@ -884,7 +884,7 @@ makeNumericConst(State *  N)
 	{
 		if (N->currentTokenLength == 1)
 		{
-			Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
+			Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_TintegerConst	/* type		*/,
 										NULL	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -964,7 +964,7 @@ makeNumericConst(State *  N)
 	 */
 	if (isRadixConst(N, N->currentToken))
 	{
-		Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_TintegerConst	/* type		*/,
 									NULL				/* identifier	*/,
 									stringToRadixConst(N, N->currentToken)	/* integerConst	*/,
 									0				/* realConst	*/,
@@ -1007,7 +1007,7 @@ makeNumericConst(State *  N)
 	uint64_t 	decimalValue = strtoul(N->currentToken, &ep, 0);
 	if (*ep == '\0')
 	{
-		Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_TintConst	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,	kNoisyIrNodeType_TintegerConst	/* type		*/,
 									NULL				/* identifier	*/,
 									decimalValue			/* integerConst	*/,
 									0				/* realConst	*/,

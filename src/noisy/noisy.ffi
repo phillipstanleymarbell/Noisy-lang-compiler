@@ -1829,6 +1829,11 @@ production	kNoisyIrNodeType_PsetCmpOp:			followset = {
 --//
 --//
 --//
+token	kNoisyIrNodeType_Tarray:				followset = {
+										firstset(kNoisyIrNodeType_TleftBracket),
+										firstset(kNoisyIrNodeType_Tof),
+									}
+
 token	kNoisyIrNodeType_Tat:					followset = {
 										firstset(kNoisyIrNodeType_PintParamOrConst),
 										firstset(kNoisyIrNodeType_PrealParamOrConst),
@@ -2007,6 +2012,10 @@ token	kNoisyIrNodeType_TlessThanEqual:			followset = {
 
 token	kNoisyIrNodeType_TlogicalAnd:				followset = {
 										followset(kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp),
+									}
+
+token	kNoisyIrNodeType_TlogicalOr:				followset = {
+										followset(kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp),
 									}
 
 token	kNoisyIrNodeType_Tminus:				followset = {

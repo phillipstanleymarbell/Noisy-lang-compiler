@@ -57,11 +57,11 @@
 
 
 Scope *
-progtypeName2scope(State *  N, const char *  identifier)
+moduleName2scope(State *  N, const char *  identifier)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParserProgtypeName2scope);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserModuleName2scope);
 
-//	FlexListItem *	tmp = N->progtypeScopes->hd;
+//	FlexListItem *	tmp = N->moduleScopes->hd;
 
 	/*
 	 *	Each item is a tuple of (identifier, scope).
@@ -85,25 +85,25 @@ progtypeName2scope(State *  N, const char *  identifier)
 
 
 void
-addToProgtypeScopes(State *  N, char *  identifier, Scope *  progtypeScope)
+addToModuleScopes(State *  N, char *  identifier, Scope *  moduleScope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddToProgtypeScopes);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddToModuleScopes);
 
-	progtypeScope->identifier = identifier;
+	moduleScope->identifier = identifier;
 
-	if (N->progtypeScopes == NULL)
+	if (N->moduleScopes == NULL)
 	{
-		N->progtypeScopes = progtypeScope;
+		N->moduleScopes = moduleScope;
 
 		return;
 	}
 
-	Scope *	p = N->progtypeScopes;
+	Scope *	p = N->moduleScopes;
 	while (p->next != NULL)
 	{
 		p = p->next;
 	}
-	p->next = progtypeScope;;
+	p->next = moduleScope;;
 
 	return;
 }
