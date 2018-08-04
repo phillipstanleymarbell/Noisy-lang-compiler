@@ -277,7 +277,7 @@ noisyParseModuleTypeNameDecl(State *  N, Scope *  scope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	IrNode *	identifier = noisyParseIdentifier(N, scope);
+	IrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
 	addLeaf(N, n, identifier);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 
@@ -3252,7 +3252,7 @@ noisyParseSignature(State *  N, Scope *  currentScope)
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		addLeaf(N, n, noisyParseIdentifier(N, currentScope));
+		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 		addLeafWithChainingSeq(N, n, noisyParseTypeExpr(N, currentScope));
 
