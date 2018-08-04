@@ -77,7 +77,7 @@ production	kNoisyIrNodeType_PtypeDecl:			firstset = {
 
 --//		typeAnnoteDecl		::=	"typeannote" typeAnnoteList .
 production	kNoisyIrNodeType_PtypeAnnoteDecl:		firstset = {
-										kNoisyIrNodeType_TtypeAnnote
+										kNoisyIrNodeType_Ttypeannote
 									}
 
 --//		adtTypeDecl		::=	"adt" "{" identifierList ":" typeExpr ";" {identifierList ":" typeExpr ";"} [valfnSignature ";"] "}" .
@@ -635,7 +635,7 @@ production	kNoisyIrNodeType_PfieldSelect:			firstset = {
 --//						| "crossproduct" | "centralmoment" | highPrecedenceBinaryBoolOp .
 production	kNoisyIrNodeType_PhighPrecedenceBinaryOp:	firstset = {
 										kNoisyIrNodeType_Tasterisk,
-										kNoisyIrNodeType_Tdiv,
+										kNoisyIrNodeType_Tdivide,
 										kNoisyIrNodeType_Tpercent,
 										kNoisyIrNodeType_TarithmeticAnd,
 										kNoisyIrNodeType_Txor,
@@ -661,7 +661,7 @@ production	kNoisyIrNodeType_PlowPrecedenceBinaryOp:	firstset = {
 
 --//		cmpOp			::=	"==" | "!=" | ">" | "<" | "<=" | ">=" .
 production	kNoisyIrNodeType_PcmpOp:			firstset = {
-										kNoisyIrNodeType_Tequal,
+										kNoisyIrNodeType_Tequals,
 										kNoisyIrNodeType_TnotEqual,
 										kNoisyIrNodeType_TgreaterThan,
 										kNoisyIrNodeType_TlessThan,
@@ -715,7 +715,7 @@ production	kNoisyIrNodeType_PunaryBoolOp:			firstset = {
 
 --//		arith2BoolOp			::=	"==" | "!=" | ">" | ">=" | "<" | "<=" .
 production	kNoisyIrNodeType_Parith2BoolOp:			firstset = {
-										kNoisyIrNodeType_Tequal,
+										kNoisyIrNodeType_Tequals,
 										kNoisyIrNodeType_TnotEqual,
 										kNoisyIrNodeType_TgreatherThan,
 										kNoisyIrNodeType_TgreatherThanEqual,
@@ -726,7 +726,7 @@ production	kNoisyIrNodeType_Parith2BoolOp:			firstset = {
 --//		highPrecedenceArith2ArithOp	::=	"*" | "/" | "%" | "&" | "pow" | "nrt" | "log" .
 production	kNoisyIrNodeType_PhighPrecedenceArith2ArithOp:	firstset = {
 										kNoisyIrNodeType_Tasterisk,
-										kNoisyIrNodeType_Tdiv,
+										kNoisyIrNodeType_Tdivide,
 										kNoisyIrNodeType_Tpercent,
 										kNoisyIrNodeType_TarithmeticAnd,
 										kNoisyIrNodeType_Tpow,
@@ -994,7 +994,7 @@ production	kNoisyIrNodeType_PpredicateFnDefn:		followset = {
 --//		signature		::=	"(" [identifier ":" typeExpr] {"," identifier ":" typeExpr} ")" .
 production	kNoisyIrNodeType_Psignature:			followset = {
 										kNoisyIrNodeType_Tarrow,
-										kNoisyIrNodeType_Tequal,
+										kNoisyIrNodeType_Tequals,
 										kNoisyIrNodeType_Timplies,
 										followset(kNoisyIrNodeType_PreadTypeSignature),
 										followset(kNoisyIrNodeType_PwriteTypeSignature),
@@ -1490,7 +1490,7 @@ production	kNoisyIrNodeType_PanonAggrCastExpr:		followset = {
 
 --//		chanEventExpr		::=	("erasures" | "distortions" | "latency") "of" identifier cmpOp expression .
 production	kNoisyIrNodeType_PchanEventExpr:		followset = {
-										kNoisyIrNodeType_Pimplies,
+										kNoisyIrNodeType_Timplies,
 									}
 
 --//		loadExpr		::=	"load" identifier [tupleType] (stringConst | ("path" typeName)) .
@@ -2019,7 +2019,7 @@ token	kNoisyIrNodeType_TlogicalOr:				followset = {
 									}
 
 token	kNoisyIrNodeType_Tminus:				followset = {
-										kNoisyIrNodeType_TdrealConst,
+										kNoisyIrNodeType_TrealConst,
 										followset(kNoisyIrNodeType_PlowPrecedenceBinaryOp),
 										followset(kNoisyIrNodeType_PunaryOp),
 										followset(kNoisyIrNodeType_PlowPrecedenceArith2ArithOp),
@@ -2643,9 +2643,9 @@ token	kNoisyIrNodeType_Tidentifier:				followset = {
 										kNoisyIrNodeType_Tcolon,
 										kNoisyIrNodeType_Tcomma,
 										kNoisyIrNodeType_Tarrow,
-										follow(kNoisyIrNodeType_PtypeName),
-										follow(kNoisyIrNodeType_PsignalDesignation),
-										follow(kNoisyIrNodeType_PunitsArithFactor),
+										followset(kNoisyIrNodeType_PtypeName),
+										followset(kNoisyIrNodeType_PsignalDesignation),
+										followset(kNoisyIrNodeType_PunitsArithFactor),
 										kNoisyIrNodeType_Tin,
 										kNoisyIrNodeType_Tquantize,
 										kNoisyIrNodeType_Tsample,

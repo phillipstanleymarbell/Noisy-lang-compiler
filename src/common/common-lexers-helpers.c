@@ -599,7 +599,7 @@ lexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 			break;
 		}
 
-		case kNoisyIrNodeType_TintConst:
+		case kNoisyIrNodeType_TintegerConst:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, "\"%d\"", t->integerConst);
 			break;
@@ -648,7 +648,7 @@ lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 			break;
 		}
 
-		case kNoisyIrNodeType_TintConst:
+		case kNoisyIrNodeType_TintegerConst:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, "\"%20d\", ", t->integerConst);
 			break;
@@ -744,7 +744,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 					break;
 				}
 
-				case kNoisyIrNodeType_TintConst:
+				case kNoisyIrNodeType_TintegerConst:
 				{
 					flexprint(N->Fe, N->Fm, N->Fperr, "'%"PRIu64"' ", tmp->integerConst);
 

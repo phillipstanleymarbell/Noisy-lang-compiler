@@ -59,7 +59,7 @@ void		noisyParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProdu
 void		noisyParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToken) __attribute__((noreturn));
 
 IrNode *	noisyParse(State *  N, Scope *  currentScope);
-IrNode *	noisyParseAccuracyMagnitudeTolerance(State *  N);
+IrNode *	noisyParseAccuracyTolerance(State *  N);
 IrNode *	noisyParseAdtTypeDecl(State *  N, Scope *  scope);
 IrNode *	noisyParseAnonAggrCastExpr(State *  N, Scope *  currentScope);
 IrNode *	noisyParseAnonAggregateType(State *  N, Scope *  currentScope);

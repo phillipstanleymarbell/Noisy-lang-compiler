@@ -1,5 +1,5 @@
 /*
-    Authored 2015, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim.
+    Authored 2015-2018, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim.
 
 	All rights reserved.
 
@@ -52,6 +52,27 @@
 #include "common-irHelpers.h"
 #include "common-lexers-helpers.h"
 
+
+/*
+ *	This implements a very shallow copy: all the constituent pointers
+ *	are still the original references. The only thing new are the
+ *	child pointers, which get reset.
+ */
+IrNode *
+shallowCopyIrNode(State *  N, IrNode *  original)
+{
+	IrNode *	clone = calloc(1, sizeof(IrNode));
+	if (clone == NULL)
+	{
+		fatal(N, Emalloc);
+	}
+
+	memcpy(clone, original, sizeof(IrNode));
+	clone->irLeftChild = NULL;
+	clone->irRightChild = NULL;
+
+	return clone;
+}
 
 
 IrNode *

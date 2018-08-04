@@ -936,16 +936,16 @@ typedef struct
 
 
 	/*
-	 *	This is the name of the progtype that the file we're parsing implements
+	 *	This is the name of the module that the file we're parsing implements
 	 */
-	char *			progtypeOfFile;
+	char *			moduleOfFile;
 
 	/*
-	 *	We keep a global handle on the list of progtype scopes, for easy reference.
+	 *	We keep a global handle on the list of module scopes, for easy reference.
 	 *	In this use case, the node->identifier holds the scopes string name, and we
 	 *	chain then using their prev/next fields.
 	 */
-	Scope *		progtypeScopes;
+	Scope *		moduleScopes;
 
 	/*
 	 *	Lexer state

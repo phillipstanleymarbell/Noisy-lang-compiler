@@ -1,5 +1,5 @@
 /*
-	Authored 2015, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim.
+	Authored 2015-2018, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim.
 
 	All rights reserved.
 
@@ -36,6 +36,7 @@
 */
 
 IrNode *	genIrNode(State *  N, IrNodeType type, IrNode *  irLeftChild, IrNode *  irRightChild, SourceInfo *  sourceInfo);
+IrNode *	shallowCopyIrNode(State *  N, IrNode *  original);
 void		errorUseBeforeDefinition(State *  N, const char *  identifier);
 void		errorMultiDefinition(State *  N, Symbol *  symbol);
 IrNode *	depthFirstWalk(State *  N, IrNode *  node);
