@@ -578,7 +578,7 @@ production	kNoisyIrNodeType_PchanEventExpr:		firstset = {
 										kNoisyIrNodeType_Tlatency,
 									}
 
---//		loadExpr		::=	"load" typeExpr expression realConst .
+--//		loadExpr		::=	"load" identifier [tupleType] (stringConst | ("path" typeName)) .
 production	kNoisyIrNodeType_PloadExpr:			firstset = {
 										kNoisyIrNodeType_Tload,
 									}
@@ -1493,7 +1493,7 @@ production	kNoisyIrNodeType_PchanEventExpr:		followset = {
 										kNoisyIrNodeType_Pimplies,
 									}
 
---//		loadExpr		::=	"load" typeExpr expression realConst .
+--//		loadExpr		::=	"load" identifier [tupleType] (stringConst | ("path" typeName)) .
 production	kNoisyIrNodeType_PloadExpr:			followset = {
 										followset(kNoisyIrNodeType_Pexpression),
 									}
@@ -2717,4 +2717,12 @@ token	kNoisyIrNodeType_Tcandela:				followset = {
 
 token	kNoisyIrNodeType_TKelvin:				followset = {
 									followset(kNoisyIrNodeType_PbasicSignalUnits),
+								}
+
+token	kNoisyIrNodeType_Tpath:					followset = {
+									firstset(kNoisyIrNodeType_PtypeName),
+								}
+
+token	kNoisyIrNodeType_Tcentralmoment:			followset = {
+									followset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 								}

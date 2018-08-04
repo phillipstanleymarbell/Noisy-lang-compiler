@@ -47,13 +47,14 @@ typedef enum
 	 *	Parser global routines in noisy-parser.c.
 	 */
 	kNoisyTimeStampKeyParse,
+	kNoisyTimeStampKeyParseAccuracyTolerance,
 	kNoisyTimeStampKeyParseAdtTypeDecl,
 	kNoisyTimeStampKeyParseAnonAggrCastExpr,
 	kNoisyTimeStampKeyParseAnonAggregateType,
 	kNoisyTimeStampKeyParseArith2BoolOp,
 	kNoisyTimeStampKeyParseArithConst,
-	kNoisyTimeStampKeyParseArithmeticType,
-	kNoisyTimeStampKeyParseArrayCastExpression,
+	kNoisyTimeStampKeyParseNumericType,
+	kNoisyTimeStampKeyParseArrayCastExpr,
 	kNoisyTimeStampKeyParseArrayType,
 	kNoisyTimeStampKeyParseAssignOp,
 	kNoisyTimeStampKeyParseAssignmentStatement,
@@ -70,6 +71,7 @@ typedef enum
 	kNoisyTimeStampKeyParseConstantDecl,
 	kNoisyTimeStampKeyParseDimensionArithExpr,
 	kNoisyTimeStampKeyParseDimensionArithFactor,
+	kNoisyTimeStampKeyParseDimensionArithTerm,
 	kNoisyTimeStampKeyParseDimensionsDesignation,
 	kNoisyTimeStampKeyParseElement,
 	kNoisyTimeStampKeyParseErrorMagnitudeTolerance,
@@ -82,7 +84,7 @@ typedef enum
 	kNoisyTimeStampKeyParseGuardedStatementList,
 	kNoisyTimeStampKeyParseHighPrecedenceArith2ArithOp,
 	kNoisyTimeStampKeyParseHighPrecedenceBinaryBoolOp,
-	kNoisyTimeStampKeyParseHighPrecedenceBinaryO,
+	kNoisyTimeStampKeyParseHighPrecedenceBinaryOp,
 	kNoisyTimeStampKeyParseHighPrecedenceBoolSetOp,
 	kNoisyTimeStampKeyParseIdentifierDefinitionTerminal,
 	kNoisyTimeStampKeyParseIdentifierList,
@@ -95,7 +97,7 @@ typedef enum
 	kNoisyTimeStampKeyParseIntegerType,
 	kNoisyTimeStampKeyParseIterStatement,
 	kNoisyTimeStampKeyParseLatencyTolerance,
-	kNoisyTimeStampKeyParseListCastExpression,
+	kNoisyTimeStampKeyParseListCastExpr,
 	kNoisyTimeStampKeyParseListType,
 	kNoisyTimeStampKeyParseLoadExpr,
 	kNoisyTimeStampKeyParseLossTolerance,
@@ -121,6 +123,7 @@ typedef enum
 	kNoisyTimeStampKeyParsePredStmt,
 	kNoisyTimeStampKeyParsePredStmtList,
 	kNoisyTimeStampKeyParsePredTerm,
+	kNoisyTimeStampKeyParsePredicateFnDecl,
 	kNoisyTimeStampKeyParsePredicateFnDefn,
 	kNoisyTimeStampKeyParseProbdefDecl,
 	kNoisyTimeStampKeyParseProblemDefn,
@@ -141,7 +144,7 @@ typedef enum
 	kNoisyTimeStampKeyParseScopedPredStmtList,
 	kNoisyTimeStampKeyParseScopedStatementList,
 	kNoisyTimeStampKeyParseSequenceStatement,
-	kNoisyTimeStampKeyParseSetCastExpression,
+	kNoisyTimeStampKeyParseSetCastExpr,
 	kNoisyTimeStampKeyParseSetCmpOp,
 	kNoisyTimeStampKeyParseSetCmpTerm,
 	kNoisyTimeStampKeyParseSetExpr,
@@ -187,6 +190,7 @@ typedef enum
 	kNoisyTimeStampKeyParseVarTuple,
 	kNoisyTimeStampKeyParseVectorType,
 	kNoisyTimeStampKeyParseWriteTypeSignature,
+
 
 	/*
 	 *	Parser local routines in noisy-parser.c.
