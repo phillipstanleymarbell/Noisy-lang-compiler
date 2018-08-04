@@ -2726,3 +2726,79 @@ token	kNoisyIrNodeType_Tpath:					followset = {
 token	kNoisyIrNodeType_Tcentralmoment:			followset = {
 									followset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 								}
+
+token	kNoisyIrNodeType_Tuncertainty:				followset = {
+									followset(kNoisyIrNodeType_PunaryOp),
+								}
+
+token	kNoisyIrNodeType_Tpow:					followset = {
+									followset(kNoisyIrNodeType_PhighPrecedenceArith2ArithOp),
+								}
+
+token	kNoisyIrNodeType_Tnrt:					followset = {
+									followset(kNoisyIrNodeType_PhighPrecedenceArith2ArithOp),
+								}
+
+token	kNoisyIrNodeType_Tlog:					followset = {
+									followset(kNoisyIrNodeType_PhighPrecedenceArith2ArithOp),
+								}
+kNoisyIrNodeType_Tsum:						followset = {
+									firstset(kNoisyIrNodeType_PsumProdMinMaxBody),
+								}
+
+kNoisyIrNodeType_Tproduct:						followset = {
+									firstset(kNoisyIrNodeType_PsumProdMinMaxBody),
+								}
+
+kNoisyIrNodeType_Tmin:						followset = {
+									firstset(kNoisyIrNodeType_PsumProdMinMaxBody),
+								}
+
+kNoisyIrNodeType_Tmax:						followset = {
+									firstset(kNoisyIrNodeType_PsumProdMinMaxBody),
+								}
+
+kNoisyIrNodeType_Tfor:						followset = {
+									firstset(kNoisyIrNodeType_PvarIntro),
+								}
+
+kNoisyIrNodeType_Tfrom:						followset = {
+									firstset(kNoisyIrNodeType_PpredArithExpr),
+								}
+
+kNoisyIrNodeType_Tto:						followset = {
+									firstset(kNoisyIrNodeType_PpredArithExpr),
+								}
+
+kNoisyIrNodeType_Twith:						followset = {
+									firstset(kNoisyIrNodeType_PpredExpr),
+								}
+
+kNoisyIrNodeType_Tpowerset:					followset = {
+									followset(kNoisyIrNodeType_PunarySetOp),
+								}
+
+kNoisyIrNodeType_Tcomplement:					followset = {
+									followset(kNoisyIrNodeType_PunarySetOp),
+								}
+
+kNoisyIrNodeType_Tforall:					followset = {
+									followset(kNoisyIrNodeType_PquantifierOp),
+								}
+
+kNoisyIrNodeType_Texists:					followset = {
+									followset(kNoisyIrNodeType_PquantifierOp),
+								}
+
+kNoisyIrNodeType_Tgiven:					followset = {
+									followset(kNoisyIrNodeType_PquantifierOp),
+								}
+
+kNoisyIrNodeType_Tstrongdominates:				followset = {
+									followset(kNoisyIrNodeType_PsetCmpOp),
+								}
+
+kNoisyIrNodeType_Tweakdominates:				followset = {
+									followset(kNoisyIrNodeType_PsetCmpOp),
+								}
+	
