@@ -348,7 +348,7 @@ int gNewtonFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                  kNewtonIrNodeTypeMax
                                                             },
             [kNewtonIrNodeType_PconstraintList]            = {kNewtonIrNodeType_TrightBrace, kNewtonIrNodeTypeMax},
-            [kNewtonIrNodeType_PbaseSignal   ]            = {kNewtonIrNodeType_TrightBrace, kNewtonIrNodeTypeMax},
+            [kNewtonIrNodeType_PbaseSignal   ]            = {kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax},
             [kNewtonIrNodeType_Pinvariant    ]            = {kNewtonIrNodeType_TrightBrace, kNewtonIrNodeTypeMax},
             [kNewtonIrNodeType_Pconstant     ]            = {kNewtonIrNodeType_TrightBrace, kNewtonIrNodeTypeMax},
             [kNewtonIrNodeType_Pstatement         ]            = {

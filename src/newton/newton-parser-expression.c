@@ -233,7 +233,7 @@ newtonParseQuantityExpression(State * N, Scope * currentScope)
 
 		if(!areTwoPhysicsEquivalent(N, leftTerm->physics, rightTerm->physics))
 		{
-			newtonParserSyntaxError(N, kNewtonIrNodeType_PquantityExpression, kNewtonIrNodeTypeMax);
+			newtonParserSemanticError(N, kNewtonIrNodeType_PquantityExpression, (char *)EexpressionPhysicsMismatch);
 			newtonParserErrorRecovery(N, kNewtonIrNodeType_PquantityExpression);
 		}
 	}

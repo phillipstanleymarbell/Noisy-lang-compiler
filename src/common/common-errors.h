@@ -65,6 +65,7 @@ extern const char	EcannotFindTypeSignatureForNodeType[];
 extern const char	EassignTypeSanity[];
 extern const char	Efd2path[];
 extern const char	EtokenInSMT[];
+extern const char	EexpressionPhysicsMismatch[];
 
 
 /*

@@ -831,13 +831,6 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	}
 
 
-
-
-
-
-
-
-
 	printf("<table cellpadding=0; border=0; style=\"width:100%%;\">\n");
 	printf("<tr>\n");
 

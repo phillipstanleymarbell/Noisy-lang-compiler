@@ -86,7 +86,7 @@ newtonDimensionPassParseFile(State *  N, Scope *  currentScope)
 
 	if (lexPeek(N, 1)->type != kNewtonIrNodeType_Zeof)
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Zeof, kNewtonIrNodeTypeMax);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_Zeof, kNewtonIrNodeTypeMax, gNewtonFirsts);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Zeof);
 	}
 
@@ -176,7 +176,6 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 	if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		unitName = newtonParseName(N, currentScope);
-		newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 	}
 
 	/*
@@ -186,7 +185,6 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 	if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		unitAbbreviation = newtonParseSymbol(N, currentScope);
-		newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 	}
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tderivation, currentScope);
@@ -229,8 +227,8 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 			unitAbbreviation->token
 			);
 	}
-
 	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
+
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
 }
 
@@ -261,6 +259,9 @@ newtonDimensionPassParseName(State * N, Scope * currentScope)
 	return node;
 }
 
+/*
+ *	PSM: This is never used. Should be deleted.
+ */
 IrNode *
 newtonDimensionPassParseSymbol(State * N, Scope * currentScope)
 {

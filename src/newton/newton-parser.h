@@ -36,7 +36,7 @@
 */
 
 void			newtonParserSemanticError(State *  N, IrNodeType currentlyParsingTokenOrProduction, char *  details);
-void			newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingProduction, IrNodeType expectedProductionOrToken);
+void			newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction, IrNodeType expectedProductionOrToken, int firstOrFollowsArray[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]);
 void			newtonParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToken) __attribute__((noreturn));
 
 IrNode *		newtonParse(State *  N, Scope *  currentScope);

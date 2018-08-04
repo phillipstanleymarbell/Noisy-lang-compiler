@@ -65,6 +65,7 @@ const char	EcannotFindTypeSignatureForNodeType[] 	= "Cannot find type signature 
 const char	EassignTypeSanity[]			= "Sanity check failed in type assignment";
 const char	Efd2path[]				= "fcntl() failed to get path for file descriptor";
 const char	EtokenInSMT[]				= "Unrecognized token type seen while processing SMT backend pass";
+const char	EexpressionPhysicsMismatch[]		= "Mismatched physics in expression";
 
 /*
  *	These are mostly passed in eSemantics()
