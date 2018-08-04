@@ -1,7 +1,9 @@
-sad : progtype (indexType: type, sadType: type, diffType: type, absDiffType: type)
+sad : module (indexType: type, sadType: type, diffType: type, absDiffType: type)
 {
-	init	: namegen (N: indexType, diff: array [N] of diffType) -> (sad: sadType);
-	abs	: namegen (in: diffType) -> (out: absDiffType);
+	sad	: function (N: indexType, diff: array [N] of diffType) -> (sad: sadType);
+	abs	: function (in: diffType) -> (out: absDiffType);
+
+	init	: function (arguments: list of string) -> (results: list of string);
 }
 
 
@@ -23,7 +25,7 @@ init : probdef (N: indexType, diff: array [N] of indexType) -> (sad: sadType) =>
 	)
 }
 
-abs : namegen (in: diffType) -> (out: absDiffType) =
+abs : function (in: diffType) -> (out: absDiffType) =
 {
 	if (in < 0)
 	{
@@ -38,6 +40,10 @@ abs : namegen (in: diffType) -> (out: absDiffType) =
 #
 #	Algorithm implementation
 #
-init : namegen (N: indexType, diff: array [N] of indexType) -> (sad: sadType) =
+sad : function (N: indexType, diff: array [N] of indexType) -> (sad: sadType) =
+{
+}
+
+init : function	(arguments: list of string) -> (results: list of string) =
 {
 }

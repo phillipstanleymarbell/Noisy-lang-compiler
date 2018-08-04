@@ -1,11 +1,20 @@
 include "sortList-variantA.nd"
 
-InsertionSort : progtype
+#
+#	The module definition gives its signature for other
+#	modules (e.g., the runtime system) that want to execute
+#	it.
+#
+#	The module definition need not export the function init
+#	if it is not intended to by loaded by the "conventional loader"
+#	(e.g., the OS shell).
+#
+InsertionSort : module
 {
-	init		: namegen (args: list of string) -> (results: list of string);
-	insert		: namegen (item: string, stringlist: list of string) -> (list of string);
+	init		: function (args: list of string) -> (results: list of string);
+	insert		: function (item: string, stringlist: list of string) -> (list of string);
 
-	sort		: namegen (inputList: list of valueType) -> (outputList: list of valueType);
+	sort		: function (inputList: list of valueType) -> (outputList: list of valueType);
 	sort		: probdef (inputList: list of valueType) -> (outputList: list of valueType);
 }
 
@@ -16,22 +25,22 @@ init (args: list of string) -> (results: list of string) =
 	init <- sort;
 }
 
-sort : namegen (inputList: list of valueType) : (outputList: list of valueType) =
+sort : function (inputList: list of valueType) : (outputList: list of valueType) =
 {
 	#
-	#	Pre-conditions: The init namegen is created, and a valid	
+	#	Pre-conditions: The init function is created, and a valid	
 	#		list-of-string input is written to it.
 	#
-	#	Post-conditions: The reader of the init namegen reads a
+	#	Post-conditions: The reader of the init function reads a
 	#		list of string whose head is the largest item,
 	#		and the items are in non-increasing order from
 	#		head to tail, lexicographically.
 	#
 	result		: list of string;
-	insertChannel	:= name2chan (typeof InsertionSort->insert) (string InsertionSort->insert);
+	insertChannel	:= load InsertionSort->insert (path InsertionSort->insert);
 
 	input := <-init;
-	iter
+	iterate
 	{
 		#
 		#	Loop invariants: 'result' list is always a sorted
@@ -52,21 +61,21 @@ sort : namegen (inputList: list of valueType) : (outputList: list of valueType) 
 	}
 }
 
-insert : namegen (item: string, stringlist: list of string) -> (list of string) =
+insert : function (item: string, stringlist: list of string) -> (list of string) =
 {
 	#
-	#	Pre-conditions: The insert namegen is created, and a	
+	#	Pre-conditions: The insert function is created, and a	
 	#		valid tuple comprising a single element, and
 	#		an already sorted (or empty) list-of-string
 	#		input is written to it.
 	#
-	#	Post-conditions: The reader of the insert  namegen
+	#	Post-conditions: The reader of the insert  function
 	#		reads a sorted list of strings.
 	#
 	result	: list of string;
 
 	(new, inputlist) := <-insert;
-	iter
+	iterate
 	{
 		#
 		#	Loop invariant: the list result is always a sorted

@@ -1,23 +1,23 @@
-tiny6 : progtype
+tiny6 : module
 {
 	Pixel : adt
 	{
-		r : byte;
-		g : byte;
-		b : byte;
-		a : byte;
+		r : nat8;
+		g : nat8;
+		b : nat8;
+		a : nat8;
 	};
 
 	pi	: const 3.1415926535897932384626433832795028841971693993751;
-	complex	: type (int, int);
-	rational: type (int, int);
+	complex	: type (int64, int64);
+	rational: type (int64, int64);
 
-	init	: namegen (list of string):(list of string);
+	init	: function (list of string) -> (list of string);
 }
 
-init =
+init : function (list of string) -> (list of string)
 {
-	a : int;
+	a : int64;
 
 	match
 	{

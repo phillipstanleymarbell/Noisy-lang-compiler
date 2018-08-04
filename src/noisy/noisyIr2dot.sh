@@ -10,4 +10,4 @@ then
 	exit 1
 fi
 
-./noisy-darwin-EN --optimize 0 --dot 4 $1 | dot -T$2 -O ; open noname.gv.$2
+./noisy-`uname | tr '[:upper:]' '[:lower:]'`-EN --optimize 0 --dot 4 $1 | dot -T$2 -O ; open noname.gv.$2

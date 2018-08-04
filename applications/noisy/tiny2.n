@@ -1,4 +1,4 @@
-tiny2 : progtype
+tiny2 : module
 {
-	a	: namegen (int):(int);
+	a	: function (int32) -> (int32);
 }

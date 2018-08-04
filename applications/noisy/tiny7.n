@@ -1,25 +1,25 @@
-tiny7 : progtype
+tiny7 : module
 {
 	Pixel : adt
 	{
-		r : byte;
-		g : byte;
-		b : byte;
-		a : byte;
+		r : nat8;
+		g : nat8;
+		b : nat8;
+		a : nat8;
 	};
 
-	complex	: type (int, int);
-	rational: type (int, int);
+	complex	: type (int64, int64);
+	rational: type (int64, int64);
 
-	init	: namegen (list of string):(list of string);
-	first	: namegen ((int, int), byte, int):(int);
-	second	: namegen (int, string):(int, (int, int));
-	third	: namegen (real):(int, real, (int, string, (int, byte)), string);
+	init	: function (list of string) -> (list of string);
+	first	: function ((int64, int64), nat8, int64) -> (int64);
+	second	: function (int64, string) -> (int64, (int64, int64));
+	third	: function (real) -> (int64, real, (int64, string, (int64, nat8)), string);
 }
 
-init =
+init : function (list of string) -> (list of string)
 {
-	a : int;
+	a : int64;
 
 	match
 	{
@@ -27,30 +27,30 @@ init =
 	};
 }
 
-first =
+first : function ((int64, int64), nat8, int64) -> (int64)
 {
 }
 
-second =
+second : function (int64, string) -> (int64, (int64, int64))
 {
 }
 
-third =
+third : function (real) -> (int64, real, (int64, string, (int64, nat8)), string)
 {
 }
 
-localfunc1 : (int, int):(int) =
+localfunc1 : function (int64, int64) -> (int64) =
 {
 }
 
-localfunc2 : (real, int, byte, string):(int) =
+localfunc2 : function (real, int64, nat8, string) -> (int64) =
 {
 }
 
-localfunc3 : (int, int):(int, (int, int)) =
+localfunc3 : function (int64, int64) -> (int64, (int64, int64)) =
 {
 }
 
-localfunc4 : (int, int):((int, int)) =
+localfunc4 : function (int64, int64) -> ((int64, int64)) =
 {
 }

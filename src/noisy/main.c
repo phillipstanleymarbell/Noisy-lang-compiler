@@ -143,7 +143,10 @@ main(int argc, char *argv[])
 			{
 				N->irBackends |= kNoisyIrBackendDot;
 				
-				//TODO: rather than accepting the raw enum value as integer, accept string and compare to table of options
+				/*
+				 *	See issue #293.
+				 */
+
 				uint64_t tmpInt = strtoul(optarg, &ep, 0);
 				if (*ep == '\0')
 				{
@@ -212,10 +215,8 @@ main(int argc, char *argv[])
 
 			case 'O':
 			{
-				//TODO: define a structured way for which passes depend on which
-
 				/*
-				 *	Implies the following (basic) passes:
+				 *	Implies one or more passes (see issue #294)
 				 */
 				//N->irPasses |= xxx;
 				//N->irPasses |= yyy;
@@ -238,7 +239,7 @@ main(int argc, char *argv[])
 			case '?':
 			{
 				/*
-				 *    getopt_long() should have already printed an error message.
+				 *	getopt_long() should have already printed an error message.
 				 */
 				usage(N);
 				consolePrintBuffers(N);
@@ -267,7 +268,9 @@ main(int argc, char *argv[])
 			}
 			else
 			{
-				//TODO: we could intelligently use the incoming jumpParameter
+				/*
+				 *	See issue #291
+				 */
 
 				/*	Return again after longjmp	*/
 			}

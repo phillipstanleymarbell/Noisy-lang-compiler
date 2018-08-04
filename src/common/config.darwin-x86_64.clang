@@ -7,4 +7,4 @@ PLATFORM_OPTFLAGS	= -O0
 PLATFORM_DBGFLAGS	+= -g
 PLATFORM_CFLAGS		+= -D$(SYSNAME)OsMacOSX
 CGI_BIN			= /Library/WebServer/CGI-Executables/
-LINTFLAGS		= --analyze #-Xclang -analyzer-output=html -o htmlreports
+LINTFLAGS		= --analyze -Xanalyzer -analyzer-output=html -o htmlreports

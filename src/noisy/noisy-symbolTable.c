@@ -53,12 +53,8 @@
 
 
 /*
- *	TODO: need to tag scopes corresponding to progtypes with a name, so
- *	that when we want to lookup a progtype-qualified-name in symtab, we
- *	can use the "a" of "a->b" to lookup, and get the type structure of
- *	"b".  See, e.g., comments at P_TYPENAME in noisy-irPass-cBackend.
+ *	See issue #295.
  */
-
 
 Scope *
 noisySymbolTableAllocScope(State *  N)

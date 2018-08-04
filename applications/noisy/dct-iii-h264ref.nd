@@ -1,17 +1,26 @@
 #
-#	For kMathPi and cos (we need both the namegen prototype as well as the probdef prototype)
+#	For kMathPi and cos (we need both the function prototype as well as the probdef prototype)
 #
 include "math.nd"
 
+#
+#	The module definition gives its signature for other
+#	modules (e.g., the runtime system) that want to execute
+#	it.
+#
+#	The module definition need not export the function init
+#	if it is not intended to by loaded by the "conventional loader"
+#	(e.g., the OS shell).
+#
 #
 #	N: number of samples.
 #	x: time-domain samples.
 #	X: frequency-domain samples.
 #
-dctIIIh264ref : progtype (countType: type, sampleType: type)
+DctIIIh264ref : module (countType: type, sampleType: type)
 {
-	init	: namegen (N: countType, x: array [N][N] of sampleType) -> (X: array [N][N] of sampleType);
-	init	: probdef (N: countType, x: array [N][N] of sampleType) -> (X: array [N][N] of sampleType);
+	dctIIIh264ref	: function (N: countType, x: array [N][N] of sampleType) -> (X: array [N][N] of sampleType);
+	dctIIIh264ref	: probdef (N: countType, x: array [N][N] of sampleType) -> (X: array [N][N] of sampleType);
 }
 
 
@@ -25,11 +34,11 @@ dctIIIh264ref : progtype (countType: type, sampleType: type)
 #
 #	DCT II in h264 is a straightforward NxN transform
 #
-init	: namegen (N: countType, x: array [N][N] of sampleType) -> (X: array [N][N] of sampleType) =>
+dctIIIh264ref	: probdef (N: countType, x: array [N][N] of sampleType) -> (X: array [N][N] of sampleType) =>
 {
 	#
 	#	The outer 'given (X...)' is not needed since N, x, and X are already
-	#	bound to the read / write types of the namegen
+	#	bound to the read / write types of the function
 	#
 	given (X in array [N][N] of sampleType)
 	(
@@ -50,8 +59,4 @@ init	: namegen (N: countType, x: array [N][N] of sampleType) -> (X: array [N][N]
 			)
 		)
 	)
-}
-
-init	: namegen (N: countType, x: array [N][N] of sampleType) -> (X: array [N][N] of sampleType) =
-{
 }

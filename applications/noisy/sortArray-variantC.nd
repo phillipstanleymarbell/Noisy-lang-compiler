@@ -1,13 +1,13 @@
 sortArrayVariantC : progtype (indexType: type, valueType: type)
 {
-	sort	: namegen (inputArray: array of valueType) -> (outputArray: array of valueType);
-	sort	: probdef (inputArray: array of valueType) -> (outputArray: array of valueType);
+	sorter	: function (inputArray: array of valueType) -> (outputArray: array of valueType);
+	sorter	: probdef (inputArray: array of valueType) -> (outputArray: array of valueType);
 }
 
 #
 #	Problem definition
 #
-sort : probdef (inputArray: array of valueType) : (outputArray: array of valueType) =>
+sorter : probdef (inputArray: array of valueType) : (outputArray: array of valueType) =>
 {
 	#
 	#	The output should be a permutation of the input.

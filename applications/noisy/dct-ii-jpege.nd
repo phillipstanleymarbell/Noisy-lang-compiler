@@ -1,22 +1,28 @@
 #
-#	For the numeric constant kMathPi, the path string pathMathModule, and the math->cos namegen:
+#	For the numeric constant kMathPi, the path string pathMathModule, and the math->cos function:
 #
 include "math.nd"
 math	: Math;
 cos	: import math;
 
 #
+#	The module definition gives its signature for other
+#	modules (e.g., the runtime system) that want to execute
+#	it.
 #
+#	The module definition need not export the function init
+#	if it is not intended to by loaded by the "conventional loader"
+#	(e.g., the OS shell).
 #
-sad : progtype (timeDomainType: type, dctDomainType: type, indexType: type)
+DCTIIenc : module (timeDomainType: type, dctDomainType: type, indexType: type)
 {
-	init	: namegen (length: indexType, x: array [length][length] of timeDomainType) -> (X: array [length][length] of dctDomainType);
+	dctIIenc	: function (length: indexType, x: array [length][length] of timeDomainType) -> (X: array [length][length] of dctDomainType);
 }
 
 
 
 #
-#	The probdef is transliterated from sort-gobmk.cp
+#	The probdef is transliterated from dct-ii-jpeg.cp
 #
 #	See R. Jongerius and P. Stanley-Marbell
 #	"Language Definition for a Notation of Computational Problems",
@@ -24,11 +30,11 @@ sad : progtype (timeDomainType: type, dctDomainType: type, indexType: type)
 #
 #	DCT II in jpeg encode. A straightforward 8x8 transform.
 #
-init : probdef (dftSize: indexType, x: array [dftSize][dftSize] of timeDomainType) -> (X: array [dftSize][dftSize] of dctDomainType) =>
+dctIIenc : probdef (dftSize: indexType, x: array [dftSize][dftSize] of timeDomainType) -> (X: array [dftSize][dftSize] of dctDomainType) =>
 {
 	#
 	#	The outer 'given (X...)' is not needed since dftSize, x, and X are already
-	#	bound to the read / write types of the namegen
+	#	bound to the read / write types of the function
 	#
 	given (X in array [dftSize][dftSize] of dctDomainType)
 	(
@@ -47,15 +53,4 @@ init : probdef (dftSize: indexType, x: array [dftSize][dftSize] of timeDomainTyp
 			)
 		)
 	)
-}
-
-#
-#	Algorithm implementation
-#
-init : namegen (dftSize: indexType, x: array [dftSize][dftSize] of timeDomainType) -> (X: array [dftSize][dftSize] of dctDomainType) =
-{
-	#
-	#	Load the math module implementation (at path pathMathModule)
-	#
-	math := name2chan pathMathModule;
 }

@@ -1,13 +1,15 @@
-matrixMultiplicationMCF : progtype (valueType: type, indexType: type)
+matrixMultiplicationMCF : module (valueType: type, indexType: type)
 {
-	init	: namegen (size: indexType, A: array [size][size] of complex valueType, B: array [size][size] of complex valueType) -> (C: array [size][size] of complex valueType);
-	init	: probdef (size: indexType, A: array [size][size] of complex valueType, B: array [size][size] of complex valueType) -> (C: array [size][size] of complex valueType);
+	init			: function (args: list of string) -> (results: list of string);
+
+	matrixMultiplicationMCF	: function (size: indexType, A: array [size][size] of complex valueType, B: array [size][size] of complex valueType) -> (C: array [size][size] of complex valueType);
+	matrixMultiplicationMCF	: probdef (size: indexType, A: array [size][size] of complex valueType, B: array [size][size] of complex valueType) -> (C: array [size][size] of complex valueType);
 }
 
 
 
 #
-#	The probdef is transliterated from xxx
+#	The probdef is transliterated from matrixMultiplicationMCF.cpd
 #
 #	See R. Jongerius and P. Stanley-Marbell
 #	"Language Definition for a Notation of Computational Problems",
@@ -15,7 +17,7 @@ matrixMultiplicationMCF : progtype (valueType: type, indexType: type)
 #
 #	One of the most-used matrix operations from from the SPEC MILC benchmark
 #
-init	: namegen (size: indexType, A: array [size][size] of complex valueType, B: array [size][size] of complex valueType) -> (C: array [size][size] of complex valueType) => 
+matrixMultiplicationMCF	: function (size: indexType, A: array [size][size] of complex valueType, B: array [size][size] of complex valueType) -> (C: array [size][size] of complex valueType) => 
 {
 	forall (n in indexType, m in indexType)
 	(
@@ -30,7 +32,10 @@ init	: namegen (size: indexType, A: array [size][size] of complex valueType, B: 
 	)
 }
 
-init	: namegen (size: indexType, A: array [size][size] of complex valueType, B: array [size][size] of complex valueType) -> (C: array [size][size] of complex valueType) =
+matrixMultiplicationMCF	: function (size: indexType, A: array [size][size] of complex valueType, B: array [size][size] of complex valueType) -> (C: array [size][size] of complex valueType) =
 {
-	
+}
+
+init : function	(arguments: list of string) -> (results: list of string) =
+{
 }

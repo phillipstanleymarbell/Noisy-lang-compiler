@@ -51,7 +51,7 @@ SOURCES		=\
 
 #
 #	Clang seems to be unable to do LTO unless we have all the objects
-#	not tucked into a library, so we don't just simply link maain against
+#	not tucked into a library, so we don't just simply link main against
 #	-l$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N)
 #
 OBJS		=\
@@ -74,7 +74,7 @@ OBJS		=\
 
 #
 #	Clang seems to be unable to do LTO unless we have all the objects
-#	not tucked into a library, so we don't just simply link maain against
+#	not tucked into a library, so we don't just simply link main against
 #	-l$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N)
 #
 CGIOBJS		=\

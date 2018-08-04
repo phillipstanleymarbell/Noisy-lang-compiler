@@ -1,39 +1,39 @@
-tiny4 : progtype
+tiny4 : module
 {
 	Pixel : adt
 	{
-		r : byte;
-		g : byte;
-		b : byte;
-		a : byte;
+		r : nat8;
+		g : nat8;
+		b : nat8;
+		a : nat8;
 	};
 
-	init	: namegen (list of string):(list of string);
-	first	: namegen (byte, int):(int);
-	second	: namegen (int, string):(int);
-	third	: namegen (real):(int, real, string);
+	init	: function (list of string) -> (list of string);
+	first	: function (nat8, int4) -> (int4);
+	second	: function (int4, string) -> (int4);
+	third	: function (float8) -> (int4, float8, string);
 }
 
-init =
+init : function (list of string) -> (list of string)
 {
 }
 
-first =
+first : function (nat8, int4) -> (int4)
 {
 }
 
-second =
+second : function (int4, string) -> (int4)
 {
 }
 
-third =
+third : function (float8) -> (int4, float8, string)
 {
 }
 
-localfunc1 : (int, int):(int) =
+localfunc1 : function (int4, int4) -> (int4) =
 {
 }
 
-localfunc2 : (real, int, byte, string):(int) =
+localfunc2 : function (float8, int4, nat8, string) -> (int4) =
 {
 }

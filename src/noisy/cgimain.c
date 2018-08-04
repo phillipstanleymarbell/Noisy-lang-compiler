@@ -501,7 +501,7 @@ main(void)
 
 
 	/*
-	 *	TODO: move logo URL into a constant definition
+	 *	See issue #292
 	 */
 	printf("<link rel=\"mask-icon\" href=\"../tmp/noisy-pinned-tab-logo.svg\" color=\"orange\">");
 
@@ -705,7 +705,7 @@ main(void)
 	else
 	{
 		/*
-		 *	TODO: we could intelligently set (and use) the jumpParameter...
+		 *	See issue #291
 		 */
 
 		/*	Return again after longjmp	*/
@@ -829,13 +829,6 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 		printf("<img src=\"%s%s.png\" width=\"%d\">\n",
 			kNoisyCgiFileUrlBase, noisyCgiState->lastDotRender, fmtWidth);
 	}
-
-
-
-
-
-
-
 
 
 	printf("<table cellpadding=0; border=0; style=\"width:100%%;\">\n");

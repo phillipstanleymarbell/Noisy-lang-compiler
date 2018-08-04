@@ -523,18 +523,34 @@ isType(State *  N, IrNode *  node)
 
 	switch (node->type)
 	{
-		case kNoisyIrNodeType_PconstantDeclaration:
-		case kNoisyIrNodeType_PtypeDeclaration:
-		case kNoisyIrNodeType_PnamegenDeclaration:
+		case kNoisyIrNodeType_PconstantDecl:
+		case kNoisyIrNodeType_PtypeDecl:
+		case kNoisyIrNodeType_PmoduleDecl:
 		case kNoisyIrNodeType_PfixedType:
+		case kNoisyIrNodeType_PrationalType:
+		case kNoisyIrNodeType_PcomplexType:
 		case kNoisyIrNodeType_PanonAggregateType:
 		case kNoisyIrNodeType_Tbool:
-		case kNoisyIrNodeType_Tnybble:
-		case kNoisyIrNodeType_Tbyte:
-		case kNoisyIrNodeType_Tint:
 		case kNoisyIrNodeType_Tstring:
-		case kNoisyIrNodeType_Treal:
  		case kNoisyIrNodeType_Ttype:
+		case kNoisyIrNodeType_Tnat128:
+		case kNoisyIrNodeType_Tnat16:
+		case kNoisyIrNodeType_Tnat32:
+		case kNoisyIrNodeType_Tnat4:
+		case kNoisyIrNodeType_Tnat64:
+		case kNoisyIrNodeType_Tnat8:
+		case kNoisyIrNodeType_Tint128:
+		case kNoisyIrNodeType_Tint16:
+		case kNoisyIrNodeType_Tint32:
+		case kNoisyIrNodeType_Tint4:
+		case kNoisyIrNodeType_Tint64:
+		case kNoisyIrNodeType_Tint8:
+		case kNoisyIrNodeType_Tfloat128:
+		case kNoisyIrNodeType_Tfloat16:
+		case kNoisyIrNodeType_Tfloat32:
+		case kNoisyIrNodeType_Tfloat4:
+		case kNoisyIrNodeType_Tfloat64:
+		case kNoisyIrNodeType_Tfloat8:
 		{
 			return true;
 		}

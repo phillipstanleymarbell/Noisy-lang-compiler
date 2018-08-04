@@ -2,84 +2,82 @@
  *	Lexical elements
  */
 character		::=	Unicode-0000h-to-Unicode-FFFFh .
-rsvopseptoken		::=	"~" | "!" | "%" | "^" | "&" | "*" | "(" | ")" | "," | "-" | "+" | "="
+reservedOperatorOrSeparatorToken ::=	"~" | "!" | "%" | "^" | "&" | "*" | "(" | ")" | "," | "-" | "+" | "="
 				| "/" | ">" | "<" | ";" | ":" | "'" | "\"" | "{" | "}" | "[" | "]" | "|" 
 				| "<-" | "." | "<=" | ">=" | "^=" | "|=" | "&=" | "%=" | "/=" | "*=" | "-="
 				| "+=" | ":=" | "!=" | ">>" | ">>=" | "<<" | "<<=" | "<-=" | "&&" | "||" 
-				| "::" | "=>" | "<=>" | "==" | "++" | "--" | ">=<" .
+				| "::" | "=>" | "<=>" | "==" | "++" | "--" | ">=<" | "@" .
 
-***** TODO: check where each of these is used in grammar
-					
-rsvdidentifiers		::=	"A", "acceleration", "adt", "alpha", "K", "ampere", "andover",
-				"anglerate", "bool", "byte", "candela", "cardinality", "cd", "chan", "chan2name",
-				"complex", "const", "crossproduct", "current", "dimensions",
-				"dimparam", "distance", "dotproduct", "else", "epsilon", "erasures",
-				"errors", "false", "fixed", "float128" "float16", "float32",
-				"float4", "float64", "float8", "fn", "foreach", "given", "head",
-				"highpass", "if", "imaginary", "int", "int128", "int16", "int32", "int4",
-				"int64", "int8", "iter", "kelvin", "kg", "kilogram", "latency",
-				"len", "list", "lowpass", "luminosity", "m", "magneticflux", "mass",
-				"match", "matchseq", "material", "meter", "mole", "name2chan",
-				"namegen", "nat128", "nat16", "nat32", "nat4", "nat64", "nat8",
-				"nil", "of", "omega", "fourier", "predicate", "pressure",
-				"progtype", "rat", "real", "humidity", "reverse", "s", "samples",
-				"second", "sequence", "set", "sigfigs", "signal", "sort", "string",
-				"tau", "tderivative", "temperature", "time", "timebase",
-				"timeseries", "tintegral", "tail", "true", "type", "typeof", "typeannote",
-				"typemin", "typemax", "unionover", "units", "valfn", "var2name",
-				"vector" .
+reservedIdentifiers		::=	"A" | "K" | "acceleration" | "adt" | "alpha" | "Ampere" | "and" |
+				"anglerate" | "bool" | "candela" | "cardinality" | "cd" |
+				"complex" | "const" | "crossproduct" | "current" | "dimensions" |
+				"distance" | "dotproduct" | "epsilon" | "erasures" |
+				"distortions" | "exists" | "false" | "fixed" | "float128" "float16" |
+				"float32" | "float4" | "float64" | "float8" | "forall" | "fourier" |
+				"function" | "given" | "head" | "highpass" | "relativehumidity" |
+				"in" | "int128" | "int16" | "int32" | "int4" |
+				"int64" | "int8" | "iterate" | "Kelvin" | "kg" | "kilogram" | "latency" |
+				"length" | "list" | "load" | "lowpass" | "luminosity" | "m" | "magneticflux" |
+				"mass" | "match" | "matchseq" | "material" | "measurement" | "meter" | "module" | "mole" |
+				"nat128" | "nat16" | "nat32" | "nat4" | "nat64" | "nat8" | "nil" | "of" |
+				"omega" | "parallel" | "predicate" | "pressure" | "probdef" | "quantize" |
+				"rational" | "return" | "reverse" | "s" | "samples" | "sample" | "second" |
+				"sequence" | "set" | "sigfigs" | "signal" | "sort" | "string" | "tail" |
+				"tailtip" | "tau" | "tderivative" | "temperature" | "time" | "timebase" |
+				"timeseries" | "tintegral" | "true" | "type" | "typeannote" | "typemax" |
+				"typemin" | "units" | "valfn" | "vector" .
 
-zeronine		=	"0-9" .
-onenine			=	"1-9" .
-radix			=	onenine {zeronine} "r" .
-charconst		=	"'" character "'" .
-integerConst		::=	["+" | "-"] [radix] ("0" | onenine {zeronine}) | charconst .
+zeroToNine		=	"0-9" .
+oneToNine		=	"1-9" .
+radix			=	oneToNine {zeroToNine} "r" .
+charConst		=	"'" character "'" .
+integerConst		::=	["+" | "-"] [radix] ("0" | oneToNine {zeroToNine}) | charConst .
 boolConst		::=	"true" | "false" .
-drealConst		=	("0" | onenine {zeronine}) "." {zeronine} .
+drealConst		=	("0" | oneToNine {zeroToNine}) "." {zeroToNine} .
 erealConst		=	(drealConst | integerConst) ("e" | "E") integerConst .
 realConst		::=	["+" | "-"] (drealConst | erealConst) .
-numericConst		::=	integerConst | realConst .
 stringConst		::=	"\"" {character} "\"" .
 idchar			=	char-except-rsvopseptoken .
-identifier		::=	(idchar-except-zeronine) {idchar} .
+identifier		::=	(idchar-except-zeroToNine) {idchar} .
 
 /*
- *	Syntactic elements
+ *	Syntactic elements: top-level program structure
  */
-program			::=	progtypedecl {(namegendefn | problemdefn | predicatefndefn)} .
-progtypedecl		=	identifier ":" "progtype" "(" typeParameterList ")" "{" progtypebody "}" .
-progtypebody		=	{ptypenamedecl ";"} .
-ptypenamedecl		::=	identlist ":" (condecl | typedecl | namegendecl | probdefdecl | predicatefndecl) .
-condecl			=	"const" (integerConst | realConst | boolConst) .
-typedecl		=	("type" typeExpr) | adttypedecl | vectortypedecl .
+program			::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
+functionDefn		::=	identifier ":" "function" signature "->" signature "="  scopedStatementList .
+problemDefn		::=	identifier ":" "probdef" signature "->" signature "=>" scopedPredStmtList .
+predicateFnDefn		::=	identifier ":" "predicate" signature "=>" scopedPredStmtList .
+signature		::=	"(" ((identifier ":" typeExpr {"," identifier ":" typeExpr}) | "nil") ")" .
+moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
+moduleDeclBody		=	{moduleTypeNameDecl ";"} .
+
+/*
+ *	Types
+ */
+moduleTypeNameDecl	::=	identifier ":" (constantDecl | typeDecl | typeAnnoteDecl | functionDecl | probdefDecl | predicateFnDecl) .
+constantDecl		=	"const" (integerConst | realConst | boolConst) .
+typeDecl		=	("type" typeExpr) | adtTypeDecl | vectorTypeDecl .
 typeAnnoteDecl		::=	"typeannote" typeAnnoteList .
-adttypedecl		::=	"adt" "{" identlist ":" typeExpr ";" {identlist ":" typeExpr ";"} [valfnsignature ";"] "}" .
-valfndefn		=	identifier ":" "valfn" .
-vectortypedecl		::=	"vector" "[" integerConst "]" of typeExpr .
-namegendecl		::=	"namegen" writeTypeSignature "->" readTypeSignature .
-probdefdecl		::=	"probdef" writeTypeSignature "->" readTypeSignature .
+adtTypeDecl		::=	"adt" "{" identifierList ":" typeExpr ";" {identifierList ":" typeExpr ";"} [valfnSignature ";"] "}" .
+valfnSignature		=	identifier ":" "valfn" .
+vectorTypeDecl		::=	"vector" "[" integerConst "]" "of" typeExpr .
+functionDecl		::=	"function" writeTypeSignature "->" readTypeSignature .
+probdefDecl		::=	"probdef" writeTypeSignature "->" readTypeSignature .
 readTypeSignature	=	signature .
 writeTypeSignature	=	signature .
-predicatefndecl		::=	"predicate" boundVariablesSignature "@" freeVariablesSignature .
-boundVariablesSignature	=	signature .
-freeVariablesSignature	=	signature .
-identornil		::=	(identifier {fieldselect}) | "nil" .
-identornillist		=	identornil {"," identornil} .
-identlist		=	identifier {"," identifier} .
-typeExpr		::=	(basictype typeAnnoteList) | anonaggrtype | typename .
-
-***** TODO: this needs to be cleaned up.....
-typeAnnoteList		::= 	[dimensionsDesignation]
-				["," unitsDesignation]
-				["," signalDesignation]
-				["," timeseriesDesignation]
-				["," sigfigDesignation]
-				["," tolerance {"," tolerance}] .
-typename		::=	identifier ["->" identifier] .
-dimensionsDesignation	::=	"dimensions" dimensionArithExpr.
+predicateFnDecl		::=	"predicate" signature .
+identifierOrNil		=	(identifier {fieldSelect}) | "nil" .
+identifierOrNilList	=	identifierOrNil {"," identifierOrNil} .
+identifierList		=	identifier {"," identifier} .
+typeExpr		::=	(basicType ["and" typeAnnoteList]) | anonAggregateType | typeName .
+typeAnnoteItem		= 	dimensionsDesignation | unitsDesignation | signalDesignation
+				| timeseriesDesignation | sigfigDesignation | tolerance .
+typeAnnoteList		=	typeAnnoteItem {"and" typeAnnoteItem} .
+typeName		::=	identifier ["->" identifier] .
+dimensionsDesignation	::=	"dimensions" dimensionArithExpr .
 sigfigDesignation	::=	"sigfigs" integerConst .
-signalDesignation	::=	"signal" (basicSignal | identifier)
-timeseriesDesignation	::=	"timeseries" .
+signalDesignation	::=	"signal" (basicSignal | identifier) .
+timeseriesDesignation	::=	"timeseries" | "measurement" .
 unitsDesignation	::=	"units" unitsArithExpr .
 dimensionArithFactor	::=	basicSignalDimension | "(" dimensionArithExpr ")" .
 dimensionArithTerm	::=	dimensionArithFactor {highPrecedenceArith2ArithOp dimensionArithFactor} .
@@ -88,103 +86,106 @@ unitsArithFactor	::=	(basicSignalUnits | identifier | numericConst) | "(" unitsA
 unitsArithTerm		::=	unitsArithFactor {highPrecedenceArith2ArithOp unitsArithFactor} .
 unitsArithExpr		::=	unitsArithTerm {lowPrecedenceArith2ArithOp unitsArithTerm} .
 basicSignalDimension	::=	"distance" | "mass" | "time" | "material" | "current" | "luminosity" | "temperature" .
-basicSignalUnits	::=	"m" | "kg" | "s" | "mole" | "A" | "cd" | "K" .
+basicSignalUnits	::=	"m" | "kg" | "s" | "mole" | "A" | "cd" | "K" | "meter" | "kilogram" | "second" | "mole" | "Ampere" | "candela" | "Kelvin" .
 basicSignal		::=	basicSignalDimension | "pressure" | "acceleration" | "magneticfluxdensity"
 				| "relativehumidity" | "anglerate" .
-tolerance		=	errormagtolerance | losstolerance | latencytolerance .
-errormagtolerance	=	"epsilon" "(" realConst "," realConst ")" .
-losstolerance		=	"alpha" "(" realConst "," realConst ")" .
-latencytolerance	=	"tau" "(" realConst "," realConst ")" .
-basictype		::=	"bool" | integertype | realtype | "string" .
-integertype		::=	"nat4" | "nat8" | "nat16" | "nat32" | "nat64" | "nat128"
+tolerance		::=	accuracyTolerance | lossTolerance | latencyTolerance .
+accuracyTolerance	::=	"epsilon" "(" realConst "," realConst ")" .
+lossTolerance		::=	"alpha" "(" realConst "," realConst ")" .
+latencyTolerance	::=	"tau" "(" realConst "," realConst ")" .
+basicType		::=	"bool" | integerType | realType | "string" .
+integerType		::=	"nat4" | "nat8" | "nat16" | "nat32" | "nat64" | "nat128"
 				| "int4" | "int8" | "int16" | "int32" | "int64" | "int128" .
-realtype		=	"float4" | "float8" | "float16" | "float32" | "float64" | "float128" | fixedtype .
-fixedtype		=	"fixed" integerConst "." integerConst .
-arithmeticType		::=	integerType | realType | fixedType | rationalType .
-complexType		=	"complex" arithmeticType .
-anonaggrtype		::=	arraytype | listtype | tupletype | settype | rationalType | complexType .
-arraytype		=	"array" "[" integerConst "]" {"[" integerConst "]"} of typeExpr .
-listtype		=	"list" "of" typeExpr .
-tupletype		=	"(" typeExpr {"," typeExpr} ")" .
-settype			=	"set" "[" integerConst "]" "of" typeExpr .
-rationalType		=	"rational" arithmeticType .
-initlist		=	"{" expr {"," expr} "}" .
-idxinitlist		=	"{" element {"," element} "}" .
-starinitlist		=	"{" element {"," element} ["," "*" "=>" expr] "}" .
-element			=	expr [ "=>" expr ] .
-signature		::=	"(" [identifier ":" typeExpr], {"," identifier ":" typeExpr} ")" .
-typeParameterList	::=	"(" [identifier ":" "type"], {"," identifier ":"  "type"} ")" .
-valfndefn		::=	identifier ":" "valfn" adtType "="  scopedstmtlist .
-namegendefn		::=	identifier ":" "namegen" signature "->" signature "="  scopedstmtlist .
-problemdefn		::=	identifier ":" "probdef" signature "->" signature "=>" scopedPredStmtList .
-predicatefndefn		::=	identifier ":" "predicate" signature "@" signature "=>" scopedPredStmtList .
-scopedstmtlist		::=	"{" stmtlist "}" .
-stmtlist		=	{stmt} .
-stmt			::=	[ identornillist ((":" (condecl | typedecl | typeExpr)) | (assignop expr))
-				| "(" identornillist ")" assignop expr | matchstmt | iterstmt | sequencestmt 
-				| foreachstmt | scopedstmtlist | operatorToleranceDecl] ";" .
-operatorToleranceDecl	::=	(hprecbinop | lprecbinop | unop) ":" typeExpr .
-assignop		::=	"=" | "^=" | "|=" | "&=" | "%=" | "/=" | "*=" | "-=" | "+=" | ">>="
-				| "<<=" | "<-=" | ":=" .
-matchstmt		::=	("match" | "matchseq") "{" guardbody "}" .
-iterstmt		::=	"iter" "{" guardbody "}" .
-sequencestmt		::=	"sequence" "(" assignmentStatement ";" booleanExpression ";" assignmentStatement
-				")" scopedStatementList .
-foreachstmt		::=	"foreach" "(" identifier "in" expr ")" scopedStatementList .
-guardbody		=	{expr "=>" (stmtlist | scopedstmtlist)} .
-expr			::=	(term {lprecbinop term}) | anonaggrcastexpr | chanevtexpr
-				| chan2nameexpr | var2nameexpr | name2chanexpr .
-listcastexpr		=	"list" "of" initlist .
-setcastexpr		=	"set" "of" initlist .
-arrcastexpr		=	"array" (("of" idxinitlist) | ("[" integerConst "]" of starinitlist)) .
-complexCastExpr		=	"complex" "(" arithConst "," arithConst ")" .
-rationalCastExpr	=	"rat" expression expression .
-anonaggrcastexpr	::=	listcastexpr | setcastexpr | arrcastexpr | complexCastExpr | rationalCastExpr .
-chanevtexpr		::=	("erasures" | "errors" | "latency") "of" identifier cmpop expr .
-chan2nameexpr		::=	"chan2name" factor [stringConst] .
-var2nameexpr		::=	"var2name" factor [stringConst] .
-name2chanexpr		::=	"name2chan" typeExpr expr realConst .
-term			::=	[basictype] [unop] factor ["++" | "--"] {hprecbinop factor} .
-factor			::=	(identifier {fieldselect}) | integerConst | realConst | stringConst | boolConst
-				| "(" expr ")" | tuplevalue | namegenInvokeShorthand | typeMinExpr | typeMaxExpr
-				| namegenWriteShorthand .
-namegenWriteShorthand	::=	identifier "(" argumentList ")" .
-argumentList		=	[identifier ":" expr {"," identifier ":" expr}] .
-typeMinExpr		::=	"typemin" "(" arithType ")" .
-typeMaxExpr		::=	"typemax" "(" arithType ")" .
-namegenInvokeShorthand	::=	identifier "(" [expr] {"," expr} ")" .
-tuplevalue		::=	"(" identornillist ")" .
-fieldselect		::=	("." identifier) | ("[" expr [":" expr] "]") .
-hprecbinop		::=	"*" | "/" | "%" | "^" | "::" | "lowpass" | "highpass" | "dotproduct"
-				| "crossproduct" | "centralmoment" .
-lprecbinop		::=	"+" | "-" | ">>" | "<<" | "|"  | cmpop | booleanop .
-cmpop			::=	"==" | "!=" | ">" | "<" | "<=" | ">=" .
-booleanop		::=	"&&" | "||" .
-unop			::=	"~" | "!" | "-"  | "+" | "<-"  | "head" | "tail" | "len" | "sort" | "uncertainty"
-				| "tintegral" | "tderivative" | "timebase" | "sigfigs" | "samples" | "reverse"
-				| "fourier" | "typeof" | "cardinality" .
-highPrecedenceBinaryBoolOp	::=	"&&" | "^" .
-lowPrecedenceBinaryBoolOp	::=	"||" .
-unaryBoolOp		::=	"!" .
-arith2BoolOp		::=	"==" | "!=" | ">" | ">=" | "<" | "<=" .
-highPrecedenceArith2ArithOp	::=	"*" | "/" | "%" | "pow" | "nrt" | "log" . 
-lowPrecedenceArith2ArithOp	::=	"+" | "-" .
+realType		::=	"float4" | "float8" | "float16" | "float32" | "float64" | "float128" | fixedType .
+fixedType		::=	"fixed" integerConst "." integerConst .
+numericType		::=	integerType | realType | fixedType | rationalType .
+complexType		::=	"complex" numericType .
+anonAggregateType	::=	arrayType | listType | tupleType | setType | rationalType | complexType .
+arrayType		::=	"array" "[" integerConst "]" {"[" integerConst "]"} "of" typeExpr .
+listType		::=	"list" "of" typeExpr .
+tupleType		::=	"(" typeExpr {"," typeExpr} ")" .
+setType			::=	"set" "[" integerConst "]" "of" typeExpr .
+rationalType		::=	"rational" numericType .
+numericConst		=	integerConst | realConst .
+initList		=	"{" expression {"," expression} "}" .
+idxInitList		=	"{" element {"," element} "}" .
+starInitList		=	"{" element {"," element} ["," "*" "=>" expression] "}" .
+element			=	expression [ "=>" expression ] .
+typeParameterList	=	[identifier ":" "type" {"," identifier ":"  "type"}] .
 
 /*
- *	Predicate expressions, the delcarative subset of Noisy.
+ *	Statements
  */
+scopedStatementList	::=	"{" statementList "}" .
+statementList		=	{statement} .
+statement		::=	[ assignmentStatement | matchStatement | iterateStatement | sequenceStatement
+				| parallelStatement | scopedStatementList | operatorToleranceDecl | returnStatement] ";" .
+assignmentStatement	::=	identifierOrNilList ((":" (constantDecl | typeDecl | typeExpr)) | (assignOp expression))
+				| "(" identifierOrNilList ")" assignOp expression .
+returnStatement		::=	"return" returnSignature .
+returnSignature		=	"(" identifier ":" expression {"," identifier ":" expression} ")" .
+operatorToleranceDecl	=	(highPrecedenceBinaryOp | lowPrecedenceBinaryOp | unaryOp) ":" typeExpr .
+assignOp		::=	"=" | "^=" | "|=" | "&=" | "%=" | "/=" | "*=" | "-=" | "+=" | ">>="
+				| "<<=" | "<-=" | ":=" .
+matchStatement		::=	("match" | "matchseq") "{" guardedStatementList "}" .
+iterateStatement	::=	"iterate" "{" guardedStatementList "}" .
+sequenceStatement	::=	"sequence" (orderingHead | setHead) scopedStatementList .
+parallelStatement	::=	"parallel" setHead scopedStatementList .
+setHead			=	"(" identifier "in" expression ")" .
+orderingHead		=	"(" assignmentStatement ";" expression ";" assignmentStatement ")" .
+guardedStatementList	=	{(expression | chanEventExpr) "=>" (statementList | scopedStatementList)} .
+guardedExpressionList	=	{expression "=>" expression} .
+
+/*
+ *	Expressions
+ */
+expression		::=	(term {lowPrecedenceBinaryOp term}) | anonAggrCastExpr
+				| loadExpr | quantizeExpression | sampleExpression .
+quantizeExpression	::=	identifier "quantize" expression .
+sampleExpression	::=	identifier "sample" expression .
+listCastExpr		::=	"list" "of" initList .
+setCastExpr		::=	"set" "of" initList .
+arrayCastExpr		::=	"array" (("of" idxInitList) | ("[" integerConst "]" "of" starInitList)) .
+complexCastExpr		::=	"complex" "(" expression "," expression ")" .
+rationalCastExpr	::=	"rational" "(" expression "," expression ")" .
+anonAggrCastExpr	::=	listCastExpr | setCastExpr | arrayCastExpr | complexCastExpr | rationalCastExpr .
+chanEventExpr		::=	("erasures" | "distortions" | "latency") "of" identifier cmpOp expression .
+loadExpr		::=	"load" identifier [tupleType] (stringConst | ("path" typeName)) .
+term			::=	[basicType] [unaryOp] factor ["++" | "--"] {highPrecedenceBinaryOp factor} .
+factor			::=	(identifier {fieldSelect}) | integerConst | realConst | stringConst | boolConst
+				| "(" expression ")" | tupleValue | namegenInvokeShorthand | typeMinExpr | typeMaxExpr .
+typeMinExpr		::=	"typemin" "(" numericType ")" .
+typeMaxExpr		::=	"typemax" "(" numericType ")" .
+namegenInvokeShorthand	=	identifier "(" [identifier ":" expression {","  identifier ":" expression}] ")" .
+tupleValue		::=	"(" identifierOrNilList ")" .
+fieldSelect		::=	("." identifier) | ("[" expression [":" expression] "]") .
+highPrecedenceBinaryOp	::=	"*" | "/" | "%" | "&" | "^" | "::" | "lowpass" | "highpass" | "dotproduct"
+				| "crossproduct" | "centralmoment" | highPrecedenceBinaryBoolOp .
+lowPrecedenceBinaryOp	::=	"+" | "-" | ">>" | "<<" | "|"  | cmpOp | lowPrecedenceBinaryBoolOp .
+cmpOp			::=	"==" | "!=" | ">" | "<" | "<=" | ">=" | ">=<" .
+unaryOp			::=	"~" | "-"  | "+" | "<-"  | "head" | "tail" | "tailtip"| "length" | "sort" | "uncertainty"
+				| "tintegral" | "tderivative" | "timebase" | "sigfigs" | "samples" | "reverse"
+				\| "fourier" | "cardinality" | "frequencies" | "magnitudes" | unaryBoolOp .
+
+/*
+ *	Predicate expressions, the declarative subset of Noisy.
+ */
+lowPrecedenceBinaryBoolOp	::=	"||" .
+highPrecedenceBinaryBoolOp	::=	"&&" | "^" .
+unaryBoolOp			::=	"!" .
+arith2BoolOp			::=	"==" | "!=" | ">" | ">=" | "<" | "<=" .
+highPrecedenceArith2ArithOp	::=	"*" | "/" | "%" | "&" | "pow" | "nrt" | "log" .
+lowPrecedenceArith2ArithOp	::=	"+" | "-" .
+
 scopedPredStmtList	::=	"{" predStmtList "}" .
 predStmtList		=	{predStmt} .
 predStmt		::=	predExpr "," .
 predFactor		::=	boolConst | identifier | "(" predExpr ")" .
 predTerm		::=	predFactor {highPrecedenceBinaryBoolOp predFactor}
-			|	predArithExpr arith2BoolOp ["@" (intParamOrConst | realParamOrConst)]
-				predArithExpr
-			|	quantifiedBoolTerm | setCmpTerm | varTuple "in"
-				["@" (intParamOrConst | realParamOrConst)] setExpr
-			|	unaryBoolOp predFactor .
+				| predArithExpr arith2BoolOp ["@" (intParamOrConst | realParamOrConst)] predArithExpr
+				| quantifiedBoolTerm | setCmpTerm | varTuple "in" ["@" (intParamOrConst | realParamOrConst)] setExpr
+				| unaryBoolOp predFactor .
 predExpr		::=	predTerm {lowPrecedenceBinaryBoolOp predTerm} .
-boolConst		::=	"true" | "false" .
 varIntro		::=	identifier "in" (setExpr | typeExpr) .
 varIntroList		::=	varIntro {"," varIntro} .
 varTuple		::=	"(" identifier {"," identifier} ")" .
@@ -197,23 +198,22 @@ sumOverExpr		::=	"sum" sumProdMinMaxBody .
 productOverExpr		::=	"product" sumProdMinMaxBody .
 minOverExpr		::=	"min" sumProdMinMaxBody .
 maxOverExpr		::=	"max" sumProdMinMaxBody .
-sumProdMinMaxBody	::=	["for" varIntro ["from" predArithExpr "to" predArithExpr]] ["with" predExpr] "of" predArithExpr .
-quantifiedBoolTerm	::=	quantifierOp varIntroList predExpr .
+sumProdMinMaxBody	::=	["for" varIntro ["from" predArithExpr "to" predArithExpr]] ["with" predExpr] "of" "(" predArithExpr ")" .
+quantifiedBoolTerm	::=	quantifierOp varIntroList "(" predExpr ")" .
 setCmpTerm		::=	setExpr setCmpOp setExpr .
 setFactor		::=	constSetExpr ":" typeExpr | "{" "}" | "omega"
-			|	"(" setExpr ")" | "(" predExpr ":" typeExpr ")" .
+				| "(" setExpr ")" | "(" predExpr ":" typeExpr ")" .
 setTerm			::=	setFactor {highPrecedenceBoolSetOp setFactor}
-			|	unarySetOp setFactor .
+				| unarySetOp setFactor .
 setExpr			::=	setTerm {lowPrecedenceBoolSetOp setTerm} .
 intParamOrConst		::=	integerConst | identifier .
 realParamOrConst	::=	realConst | identifier .
 stringParamOrConst	::=	stringConst | identifier .
 baseConst		=	intParamOrConst | realParamOrConst | stringParamOrConst .
 tuple			::=	"(" baseConst {"," baseConst} ")" .
-constSetExpr		::=	"{" tuple {"," tuple} "}"
-			|	"{" baseConst {"," baseConst} "}" .
+constSetExpr		::=	"{" tuple {"," tuple} "}" | "{" baseConst {"," baseConst} "}" .
 highPrecedenceBoolSetOp	::=	"#" | "><" .
 lowPrecedenceBoolSetOp	::=	"+" | "-" | "^" | "=>" | "<=>" .
 unarySetOp		::=	"powerset" | "complement" .
 quantifierOp		::=	"forall" | "exists" | "given" .
-setCmpOp		::=	"sd" | "wd" .
+setCmpOp		::=	"strongdominates" | "weakdominates" .
