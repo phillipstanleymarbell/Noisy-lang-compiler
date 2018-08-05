@@ -1,0 +1,166 @@
+#
+#	Authored 2018, Phillip Stanley-Marbell.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description: Base signals used in most Newton descriptions.
+#
+
+time : signal =
+{
+	name		= "second" English;
+	symbol		= "s";
+	derivation	= none;
+}
+
+distance : signal =
+{
+	name		= "meter" English;
+	symbol		= "m";
+	derivation	= none;
+}
+
+mass : signal =
+{
+	name		= "kilogram" English;
+	symbol		= "kg";
+	derivation	= none;
+}
+
+material : signal =
+{
+	name		= "mole" English;
+	symbol		= "mol";
+	derivation	= none;
+}
+
+temperature : signal =
+{
+	name		= "Kelvin" English;
+	symbol		= "K";
+	derivation	= none;
+}
+
+charge : signal =
+{
+	name		= "Coulomb" English;
+	symbol		= "C";
+	derivation	= none;
+}
+
+angle : signal =
+{
+	name		= "degree" English;
+	symbol		= "deg";
+	derivation	= distance / distance;
+}
+
+speed : signal =
+{
+	name		= "jiffies" English;
+	symbol		= "jf";
+	derivation	= distance / time;
+}
+
+acceleration : signal =
+{
+	name		= "metajiffies" English;
+	symbol		= "mj";
+	derivation	= speed / time;
+}
+
+
+force : signal =
+{
+	name		= "Newton" English;
+	symbol		= "N";
+	derivation	= mass * acceleration;
+}
+
+work : signal = 
+{
+	name		= "Joule" English;
+	symbol		= "J";
+	derivation	= force * distance;
+}
+
+magneticFluxDensity : signal =
+{
+	name		= "Tesla" English;
+	symbol		= "T";
+	derivation	= mass / (charge * time);
+}
+
+angularRate : signal =
+{
+	name		= "anglejiffies" English;
+	symbol		= "aj";
+	derivation	= angle / time;
+}
+
+frequency : signal =
+{
+	name		= "Hertz" English;
+	symbol		= "Hz";
+	derivation	= 1 / time;
+}
+
+area : signal =
+{
+	name		= "squares" English;
+	symbol		= "sq";
+	derivation	= distance ** 2;
+}
+
+pressure : signal =
+{
+	name		= "Pascal" English;
+	symbol		= "Pa";
+	derivation	= force / area;
+}
+
+kNewtonUnitfree_pi				: constant = 3.1415926535897932384626433832795;
+
+#
+#	The data below are from Mathematica Version 9's PhysicalConstants comunity-created package.
+#
+kNewtonUnithave_SpeedOfLight			: constant = 299792458 * meter * second ** -1;
+kNewtonUnithave_AccelerationDueToGravity	: constant = (196133 / 20000) * meter * second ** -2;
+kNewtonUnithave_GravitationalConstant		: constant = 6.67428E-11 * meter ** 3 * kilogram ** -1 * second ** -2;
+kNewtonUnithave_AvogadroConstant		: constant = 6.02214E23 * mole;
+kNewtonUnithave_BoltzmannConstant		: constant = 1.38065E-23 * Joule / Kelvin;
+kNewtonUnithave_ElectronCharge			: constant = 1.60218E-19 * Coulomb;
+kNewtonUnithave_SpeedOfSound			: constant = 340.292 * meter * second ** -1;
+kNewtonUnithave_EarthMass			: constant = 5.9742E24 * kilogram;

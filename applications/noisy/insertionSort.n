@@ -9,7 +9,7 @@ include "sortList-variantA.nd"
 #	if it is not intended to by loaded by the "conventional loader"
 #	(e.g., the OS shell).
 #
-InsertionSort : module
+InsertionSort : module ()
 {
 	init		: function (args: list of string) -> (results: list of string);
 	insert		: function (item: string, stringlist: list of string) -> (list of string);

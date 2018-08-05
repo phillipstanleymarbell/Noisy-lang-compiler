@@ -1,4 +1,4 @@
-tiny9 : module
+tiny9 : module ()
 {
 	int16const	: const 1;
 	#float128const	: const 1.;

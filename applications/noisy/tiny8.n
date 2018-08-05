@@ -1,4 +1,4 @@
-tiny8 : module
+tiny8 : module ()
 {
 	complex	: type (int4, int4);
 }

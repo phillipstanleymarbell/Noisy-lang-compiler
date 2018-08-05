@@ -141,6 +141,7 @@ IrNode *	noisyParseProbdefDecl(State *  N, Scope *  scope);
 IrNode *	noisyParseProblemDefn(State *  N, Scope *  currentScope);
 IrNode *	noisyParseProductOverExpr(State *  N, Scope *  currentScope);
 IrNode *	noisyParseProgram(State *  N, Scope *  currentScope);
+IrNode *	noisyParseQualifiedIdentifier(State *  N, Scope *  currentScope);
 IrNode *	noisyParseQuantifiedBoolTerm(State *  N, Scope *  currentScope);
 IrNode *	noisyParseQuantifierOp(State *  N, Scope *  currentScope);
 IrNode *	noisyParseQuantizeExpression(State *  N, Scope *  currentScope);

@@ -1,4 +1,4 @@
-tiny2 : module
+tiny2 : module ()
 {
 	a	: function (int32) -> (int32);
 }

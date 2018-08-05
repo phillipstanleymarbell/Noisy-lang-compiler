@@ -1,5 +1,5 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2015-2018. Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -67,8 +67,9 @@ static void		checkDot(State *  N);
 static void		checkGt(State *  N);
 static void		checkLt(State *  N);
 static void		checkSingleQuote(State *  N);
-static void		checkDoubleQuote(State *  N);
+static void		checkDoubleQuote(State *  N, bool callFinishTokenFlag);
 static void		checkMinus(State *  N);
+static void		noisyLex(State *  N, char *  fileName);
 
 
 
@@ -77,19 +78,75 @@ noisyLexInit(State *  N, char *  fileName)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexInit);
 
-	FILE *			filePointer;
-	size_t			lineBufferSize;
-
-
 	N->fileName 		= fileName;
 	N->columnNumber		= 1;
 	N->lineNumber		= 1;
 	N->lineLength		= 0;
 
 
-	filePointer = fopen(fileName, "r");
-	if (filePointer == NULL)
+	/*
+	 *	Notes:
+	 *
+	 *	(1)	The way we handle lexing in M and Noisy compilers does not use the
+	 *		'stickies' as we do in our Yacc-based parsers.
+	 *
+	 *	(2)	We currently split up the input by '\n'-separated newline. This is
+	 *		OK, since we also recognize '\r' as being a discardable whitespace.
+	 *
+	 *	(3)	In the CGI case, we dump the program to a temporary file (we do this
+	 *		anyway to keep copies of inputs), and feed that file to the compiler.
+	 */
+	
+	/*
+	 *	The following two are needed in order for getline() to allocate the buffer itself
+	 */
+	N->lineBuffer = NULL;
+
+	noisyLex(N, fileName);
+
+	SourceInfo *	eofSourceInfo = lexAllocateSourceInfo(N,	NULL /* genealogy */,
+										N->fileName /* fileName */,
+										N->lineNumber /* lineNumber */,
+										N->columnNumber /* columnNumber */,
+										0 /* length */);
+										
+	Token *		eofToken = lexAllocateToken(N,	kNoisyIrNodeType_Zeof /* type */,
+									NULL /* identifier */,
+									0 /* integerConst */,
+									0.0 /* realConst */,
+									NULL /* stringConst */,
+									eofSourceInfo /* sourceInfo */);
+	lexPut(N, eofToken);
+
+	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "Done lexing...\n");
+		
+		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
+		Token *	p = N->tokenList;
+		while (p != NULL)
+		{
+			lexDebugPrintToken(N, p, gNoisyTokenDescriptions);
+			p = p->next;
+		}
+		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
+	}
+
+
+	return;
+}
+
+
+static void
+noisyLex(State *  N, char *  fileName)
+{
+	size_t		lineBufferSize;
+
+
+	N->filePointer = fopen(fileName, "r");
+	if (N->filePointer == NULL)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "Could not open file \"%s\".\n", fileName);
 		fatal(N, Eopen);
 	}
 
@@ -113,7 +170,7 @@ noisyLexInit(State *  N, char *  fileName)
 	N->lineBuffer = NULL;
 	lineBufferSize = 0;
 
-	while ((N->lineLength = getline(&(N->lineBuffer), &lineBufferSize, filePointer)) != -1)
+	while ((N->lineLength = getline(&(N->lineBuffer), &lineBufferSize, N->filePointer)) != -1)
 	{
 		N->columnNumber = 0;
 		while (N->columnNumber < N->lineLength)
@@ -123,7 +180,7 @@ noisyLexInit(State *  N, char *  fileName)
 			{
 				//flexprint(N->Fe, N->Fm, N->Fperr, "N->lineBuffer[%llu] = [%c]\n",
 				//		N->columnNumber, N->lineBuffer[N->columnNumber]);
-//fprintf(stderr, "N->lineBuffer[%llu] = [%c]\n", N->columnNumber, N->lineBuffer[N->columnNumber]);
+				//fprintf(stderr, "N->lineBuffer[%llu] = [%c]\n", N->columnNumber, N->lineBuffer[N->columnNumber]);
 			}
 
 			if (isOperatorOrSeparator(N, cur(N)))
@@ -296,7 +353,7 @@ noisyLexInit(State *  N, char *  fileName)
 
 					case '\"':
 					{
-						checkDoubleQuote(N);
+						checkDoubleQuote(N, true /* callFinishTokenFlag */);
 						continue;
 					}
 
@@ -348,43 +405,9 @@ noisyLexInit(State *  N, char *  fileName)
 		lineBufferSize = 0;
 	}
 
-	fclose(filePointer);
-
-	SourceInfo *	eofSourceInfo = lexAllocateSourceInfo(N,	NULL /* genealogy */,
-										N->fileName /* fileName */,
-										N->lineNumber /* lineNumber */,
-										N->columnNumber /* columnNumber */,
-										0 /* length */);
-										
-	Token *		eofToken = lexAllocateToken(N,	kNoisyIrNodeType_Zeof /* type */,
-									NULL /* identifier */,
-									0 /* integerConst */,
-									0.0 /* realConst */,
-									NULL /* stringConst */,
-									eofSourceInfo /* sourceInfo */);
-	lexPut(N, eofToken);
-
-	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
-	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "Done lexing...\n");
-		
-		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
-		Token *	p = N->tokenList;
-		while (p != NULL)
-		{
-			lexDebugPrintToken(N, p, gNoisyTokenDescriptions);
-			p = p->next;
-		}
-		flexprint(N->Fe, N->Fm, N->Fperr, "\n\n");
-	}
-
-
-	return;
+	fclose(N->filePointer);
+	
 }
-
-
-
-
 
 
 
@@ -513,7 +536,7 @@ checkSingle(State *  N, IrNodeType tokenType)
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "checkSingle(), tokenType = %d\n", tokenType);
-//fprintf(stderr, "checkSingle(), tokenType = %d\n", tokenType);
+		//fprintf(stderr, "checkSingle(), tokenType = %d\n", tokenType);
 	}
 
 	Token *		newToken = lexAllocateToken(N,	tokenType /* type	*/,
@@ -688,7 +711,7 @@ checkSingleQuote(State *  N)
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckSingleQuote);
 
 	/*
-	 *	TODO/BUG: we do not handle escaped squotes in a charconst
+	 *	TODO/BUG: we do not handle escaped single quotes in a charconst
 	 */
 	IrNodeType		type;
 	char			quotedChar;
@@ -735,20 +758,25 @@ checkSingleQuote(State *  N)
 
 
 static void
-checkDoubleQuote(State *  N)
+checkDoubleQuote(State *  N, bool callFinishTokenFlag)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckDoubleQuote);
 
 	/*
-	 *	TODO/BUG: we do not handle escaped dquotes in a strconst
+	 *	TODO/BUG: we do not handle escaped double quotes in a strconst
 	 */
 	Token *	newToken;
 
 
 	/*
-	 *	Gobble any extant chars.
+	 *	Gobble any extant chars. We do not call finishToken() when we
+	 *	come here via finishToken() itself in the case of handling 
+	 *	include statements.
 	 */
-	finishToken(N);
+	if (callFinishTokenFlag)
+	{
+		finishToken(N);
+	}
 
 	/*
 	 *	String constants cannot contain an un-escaped newline;  the current
@@ -862,7 +890,6 @@ makeNumericConst(State *  N)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexerMakeNumericConst);
 
-//fprintf(stderr, "in makeNumericConst(), N->currentToken = [%s]\n", N->currentToken);
 
 	if (N->currentTokenLength == 0)
 	{
@@ -1081,7 +1108,7 @@ finishToken(State *  N)
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
-fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
+		//fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 	}
 
 	/*
@@ -1119,6 +1146,67 @@ fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 
 	for (int i = 0; i < kNoisyIrNodeTypeMax; i++)
 	{
+		if (!strcmp("include", N->currentToken))
+		{
+			/*
+			 *	Reset the index in the current token to place the filename string
+			 *	over the "include" since we don't need to keep that. Then, call
+			 *	checkDoubleQuote()
+			 */
+			N->currentTokenLength = 0;
+			checkDoubleQuote(N, false /* callFinishTokenFlag */);
+
+			/*
+			 *	Since we don't call done() (which sets the N->currentTokenLength
+			 *	to zero and bzero's the N->currentToken buffer), we need to do
+			 *	this manually.
+			 */
+			bzero(N->currentToken, kNoisyMaxBufferLength);
+			N->currentTokenLength = 0;
+
+			char *	newFileName = strdup(N->lastToken->stringConst);
+			if (!newFileName)
+			{
+				fatal(N, Emalloc);
+			}
+
+			Token *	tmp		= N->lastToken;
+			N->lastToken		= N->lastToken->prev;
+			if (N->lastToken == NULL)
+			{
+				N->tokenList = N->lastToken;
+			}
+
+			free(tmp->stringConst);
+			free(tmp);
+
+			char *	oldFileName	= N->fileName;
+			int	oldColumnNumber	= N->columnNumber;
+			int	oldLineNumber	= N->lineNumber;
+			FILE *	oldFilePointer	= N->filePointer;
+
+			N->fileName 		= newFileName;
+			N->columnNumber		= 1;
+			N->lineNumber		= 1;
+			N->lineLength		= 0;
+			N->lineBuffer		= NULL;
+			noisyLex(N, newFileName);
+			free(newFileName);
+
+			N->fileName		= oldFileName;
+			N->filePointer		= oldFilePointer;
+			N->lineNumber		= oldLineNumber;
+
+			/*
+			 *	Set the columnNumber and lineLength to be same to force
+			 *	ourselves to stop chomping on the same line.
+			 */
+			N->columnNumber		= oldColumnNumber;
+			N->lineLength		= oldColumnNumber;
+
+			return;
+		}
+
 		if ((gNoisyTokenDescriptions[i] != NULL) && !strcmp(gNoisyTokenDescriptions[i], N->currentToken))
 		{
 			Token *	newToken = lexAllocateToken(N,	i	/* type		*/,

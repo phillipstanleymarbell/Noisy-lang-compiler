@@ -7,7 +7,7 @@
 #	if it is not intended to by loaded by the "conventional loader"
 #	(e.g., the OS shell).
 #
-GoBmkSort : progtype
+GoBmkSort : module ()
 {
 	tMoves : adt
 	{

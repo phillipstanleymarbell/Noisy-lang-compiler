@@ -7,7 +7,7 @@
 #	if it is not intended to by loaded by the "conventional loader"
 #	(e.g., the OS shell).
 #
-gccSearch : progtype
+gccSearch : module ()
 {
 	search	: function (N: int32, elementBits: array [N] of int32) -> (found: bool);
 	search	: probdef (N: int32, elementBits: array [N] of int32) -> (found: bool);

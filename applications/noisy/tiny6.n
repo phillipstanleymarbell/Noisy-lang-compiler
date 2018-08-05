@@ -1,4 +1,4 @@
-tiny6 : module
+tiny6 : module ()
 {
 	Pixel : adt
 	{

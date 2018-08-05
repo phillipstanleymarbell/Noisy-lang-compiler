@@ -1,4 +1,4 @@
-tiny3 : module
+tiny3 : module ()
 {
 	init	: function (list of string) -> (list of string);
 	first	: function (int16) -> (int16);

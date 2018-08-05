@@ -110,15 +110,6 @@ addToModuleScopes(State *  N, char *  identifier, Scope *  moduleScope)
 
 
 
-/*
- *	kNoisyIrNodeType_PidentifierList
- *
- *	AST subtree:
- *
- *		node		= kNoisyIrNodeType_Tidentifier
- *		node.left	= kNoisyIrNodeType_Tidentifier
- *		node.right	= Xseq of kNoisyIrNodeType_Tidentifier
- */
 void
 assignTypes(State *  N, IrNode *  node, IrNode *  typeExpression)
 {
@@ -132,7 +123,11 @@ assignTypes(State *  N, IrNode *  node, IrNode *  typeExpression)
 	 *	types and also that it's not NULL.
 	 */
 
-	if (node->type != kNoisyIrNodeType_Tidentifier)
+	if (	node->type != kNoisyIrNodeType_Tidentifier &&
+		node->type != kNoisyIrNodeType_PidentifierList &&
+		node->type != kNoisyIrNodeType_PidentifierOrNilList &&
+		node->type != kNoisyIrNodeType_PqualifiedIdentifier
+		)
 	{
 		fatal(N, EassignTypeSanity);
 	}

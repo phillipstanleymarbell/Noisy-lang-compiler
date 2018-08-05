@@ -1,4 +1,4 @@
-sqrt : progtype
+sqrt : module ()
 {
 	init	: function (argument: integer) -> (result: integer);
 }
