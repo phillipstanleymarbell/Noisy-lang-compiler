@@ -148,9 +148,9 @@ The hooks can be enabled for mercurial by adding the following to
 	pretxncommit    = ./precommitStatisticsHook-<your-os-type>.sh
 	commit          = ./postcommitStatisticsHook.sh
 
-The generated statistics are stored in the `Statistics/` subdirectory,
+The generated statistics are stored in the ``analysis/statistics/` subdirectory,
 and can be analyzed using the Mathematica notebook that resides at
-`Mathematica/AnalyzeStatistics.nb`.
+`analysis/mathematica/AnalyzeStatistics.nb`.
 
 
 CGI on Mac OS X
@@ -200,11 +200,6 @@ Git clone `https://github.com/ajaxorg/ace-builds.git` and copy the `src-noconfli
 
 Details on command line parameters:
 -----------------------------------
-Compiler pass bitmaps:
-
-	TODO
-
-
 Compiler backend bitmaps:
 
 	typedef enum
