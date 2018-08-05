@@ -131,6 +131,8 @@ assignTypes(State *  N, IrNode *  node, IrNode *  typeExpression)
 	{
 		fatal(N, EassignTypeSanity);
 	}
+//XXX FIXME XXX
+return;
 
 	/*
 	 *	Walk subtree identifierList, set each node->symbol.typeExpr = typeExpr
