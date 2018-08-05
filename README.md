@@ -23,10 +23,10 @@ Building the Noisy compiler and debug tools depends on the following repositorie
 	Wirth tools:		git@github.com:phillipstanleymarbell/Wirth-tools.git
 
 The build also depends on the C protobuf compiler and on Graphviz. On Mac OS X, the easiest way to
-install these is to use macports (macports.org) to install the packages `protobuf-c`
+install these is to use macports (macports.org) to install the packages `protobuf-c`,
 `protobuf-cpp`, and `graphviz-devel`.
 
-After cloning the above two repositories, 
+Once you have the above repositories, 
 (1) Create a file `config.local` in the root of the Noisy tree and edit it to contain 
 
 	LIBFLEXPATH     = full-path-to-libflex-repository-clone 
@@ -36,8 +36,10 @@ After cloning the above two repositories,
 
 For example,
 
-	LIBFLEXPATH=/home/me/code/libflex-git-clone
-	CONFIGPATH=/home/me/code/libflex-git-clone
+	LIBFLEXPATH=/home/me/Noisy-lang-compiler/submodules/libflex
+	CONFIGPATH=/home/me/Noisy-lang-compiler/submodules/libflex
+	OSTYPE		= linux
+	MACHTYPE	= x86_64
 
 (2) Edit `precommitStatisticsHook-<your os type>.sh` to set
 
@@ -47,12 +49,12 @@ For example,
 For the following steps, valid options for OSTYPE are currently `linux` for Gnu/Linux and `darwin` for macOS.
 
 (3) Build Libflex by going to the directory you cloned for Libflex and running `make`.
-The makefiles assume the environment variables `OSTYPE` and `MACHTYPE` are set. If that
+The Makefile assumes the environment variables `OSTYPE` and `MACHTYPE` are set. If that
 is not the case, you will need to explicitly do:
 
 	make OSTYPE=darwin MACHTYPE=x86_64
 
-(4) Build the noisy compiler by running `make`. The makefiles assume the environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the case, you will need to explicitly do:
+(4) Build the noisy compiler by running `make`. The makefile assumes the environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the case, you will need to explicitly do:
 
 	make OSTYPE=darwin MACHTYPE=x86_64
 
@@ -83,12 +85,12 @@ with the flags `-h` or `--help` to see the usage:
 To compile a Noisy program and display statistics on internal
 routine calls:
 
-	% ./noisy-darwin-EN --optimize 0 --statistics Examples/helloWorld.n
+	% ./src/noisy/noisy-darwin-EN --optimize 0 --statistics applications/noisy/helloWorld.n
 
 To compile a Noisy program and emit its IR into `dot`, and render
 the generated `dot` code through `dot`:
 
-	% ./noisy-darwin-EN --optimize 0 --dot 0 Examples/helloWorld.n | dot -Tpdf -O ; open noname.gv.pdf
+	% ./src/noisy/noisy-darwin-EN --optimize 0 --dot 0 applications/noisy/helloWorld.n | dot -Tpdf -O ; open noname.gv.pdf
 
 The `dot` detail levels are bit masks: `1<<0`: no text, `1<<1`: no nil nodes
 
