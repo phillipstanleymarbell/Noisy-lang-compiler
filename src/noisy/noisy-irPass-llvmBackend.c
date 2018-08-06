@@ -102,14 +102,10 @@ irPassLlvmEmitHeader(State *  N)
 }
 
 void
-irPassLlvmEmitProgTypeNameDecl(State *  N, IrNode *  node)
+irPassLlvmEmitProgTypeNameDecl(State *  N, LlvmBackendState *  Nl, IrNode *  node)
 {
 	switch(R(node)->type)
 	{
-		case kNoisyIrNodeType_PnamegenDeclaration:
-		{
-			break;
-		}
 		case kNoisyIrNodeType_TrealConst:
 		{
 
@@ -129,20 +125,22 @@ irPassLlvmEmitProgTypeNameDecl(State *  N, IrNode *  node)
 				L(node)->identifier, *(unsigned int*)&(R(node)->intConst));
 			break;
 		}
+		case kNoisyIrNodeType_PnamegenDeclaration:
+		{
+			break;
+		}
 		case kNoisyIrNodeType_PtypeDeclaration:
 		{
-			LlvmBackendState *	llvmState = (LlvmBackendState *) N->backendState;
-			llvmState->nStructs += 1;
-			llvmState->structs = (StructFields **) realloc(llvmState->structs,
-				llvmState->nStructs * sizeof(StructFields *));
+			Nl->nStructs++;
+			Nl->structs = (StructFields **) realloc(Nl->structs, Nl->nStructs * sizeof(StructFields *));
 			
-			if (llvmState->firstStruct == NULL)
+			if (Nl->firstStruct == NULL)
 			{
 				fatal(NULL, Emalloc);
 			}
 
-			llvmState->structs[llvmState->nStructs - 1] = (StructFields *) calloc(1, sizeof(StructFields));
-			StructFields *	currentStruct = llvmState->structs[llvmState->nStructs - 1];
+			Nl->structs[Nl->nStructs - 1] = (StructFields *) calloc(1, sizeof(StructFields));
+			StructFields *	currentStruct = Nl->structs[Nl->nStructs - 1];
 
 			if (currentStruct == NULL)
 			{
@@ -152,7 +150,10 @@ irPassLlvmEmitProgTypeNameDecl(State *  N, IrNode *  node)
 			currentStruct->name = L(node)->tokenString;
 			flexprint(N->Fe, N->Fm, N->Fpllvm, "%%struct.%s = type {", L(node)->tokenString);
 			
-			assert(L(R(node))->type == kNoisyIrNodeType_PadtTypeDeclaration);
+			if(L(R(node))->type != kNoisyIrNodeType_PadtTypeDeclaration)
+			{
+				fatal(N, EtokenUnrecognized);
+			}
 			
 			currentStruct->nFields = 0;
 
@@ -208,10 +209,12 @@ irPassLlvmEmitProgTypeNameDecl(State *  N, IrNode *  node)
 }
 
 void
-irPassLlvmEmitProgtypeBody(State *  N, IrNode *  node)
+irPassLlvmEmitProgtypeBody(State *  N, LlvmBackendState *  Nl, IrNode *  node)
 {
-	assert(node->type = kNoisyIrNodeType_PprogtypeBody);
-
+	if (node->type != kNoisyIrNodeType_PprogtypeBody)
+	{
+		fatal(N, EtokenUnrecognized);
+	}
 	for(IrNode *	current = node; current != NULL; current = R(current))
 	{
 		irPassLlvmEmitProgTypeNameDecl(N, L(N));
@@ -221,9 +224,13 @@ irPassLlvmEmitProgtypeBody(State *  N, IrNode *  node)
 }
 
 void
-irPassLlvmEmitProgType(State *  N, IrNode *  node)
+irPassLlvmEmitProgType(State *  N, LlvmBackendState *  Nl, IrNode *  node)
 {
-	assert(node->type == kNoisyIrNodeType_PprogtypeDeclaration);
+	if(node->type != kNoisyIrNodeType_PprogtypeDeclaration)
+	{
+		fatal(N, EtokenUnrecognized);
+	}
+	Nl->module = L(node)->identifier;
 	flexprint(N->Fe, N->Fm, N->Fpllvm, "; ModuleID = %s\n", L(node)->identifier);
 
 	irPassLlvmEmitProgtypeBody(N, R(node));
@@ -232,18 +239,45 @@ irPassLlvmEmitProgType(State *  N, IrNode *  node)
 }
 
 void
+irPassLlvmEmitFuncIOTypes(State *  N, LlvmBackendState *  Nl, IrNode *  node)
+{
+	if(L(node)->type != kNoisyIrNodeType_PtupleType 
+	   || L(R(node))->type != kNoisyIrNodeType_PtupleType)
+	{
+		fatal(N, EtokenUnrecognized);
+	}
+
+	
+}
+
+void
+irPassLlvmEmitNameGen(State *  N, LlvmBackendState *  Nl, IrNode *  node)
+{
+	if(node->type != kNoisyIrNodeType_PnamegenDefinition)
+	{
+		fatal(N, EtokenUnrecognized);
+	}
+
+	Nl->currentFunc = L(node);
+
+
+}
+
+void
 irPassLlvmEmitProgram(State *  N, IrNode *  node)
 {
 	LlvmBackendState *	Nl = llvmBackendStateInit();
 	N->backendState = Nl;
 
-	assert(node->type == kNoisyIrNodeType_Pprogram);
+	if(node->type != kNoisyIrNodeType_Pprogram)
+	{
+		fatal(N, EtokenUnrecognized);
+	}
 	irPassLlvmEmitHeader();
-	irPassLlvmEmitProgType(N, L(node));
+	irPassLlvmEmitProgType(N, Nl, L(node));
 
 	for (IrNode *  current = R(node); current != NULL; current = R(current))
 	{
-		irPassLlvmEmitNameGen(L(current));
+		irPassLlvmEmitNameGen(N, Nl, L(current));
 	}
-
 }

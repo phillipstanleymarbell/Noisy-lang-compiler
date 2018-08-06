@@ -53,7 +53,6 @@
 
  * the array would simply be ["r", "g", "b", "a"]
  */
-
 typedef struct
 {
 	char *			name;
@@ -63,19 +62,15 @@ typedef struct
 
 typedef struct
 {
+	char *			module;
     /*
      * The last register ID we used in the current "scope"
      */
-    int             regID;
 
-    /*
-     * An array to hold the names of the functions imported,
-     * so that we can declare them together.
-     */
-    char *          loadedFunc[];
-    int             nLoadedFunc;
+	Scope *			currentScope;
+
+	char *			currentFunc;
 
 	StructFields *	structs[];
 	int				nStructs;
-
 } LlvmBackendState;

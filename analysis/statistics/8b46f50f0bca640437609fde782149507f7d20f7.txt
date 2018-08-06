@@ -1,0 +1,4 @@
+
+changeset: 440:8b46f50f0bca640437609fde782149507f7d20f7
+\n./noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s
+\n./newton/newton-linux-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt
