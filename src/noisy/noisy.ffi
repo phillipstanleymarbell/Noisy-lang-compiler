@@ -1011,6 +1011,7 @@ production	kNoisyIrNodeType_Psignature:			followset = {
 
 --//		moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
 production	kNoisyIrNodeType_PmoduleDecl:			followset = {
+										kNoisyIrNodeType_Zeof,
 										firstset(kNoisyIrNodeType_PmoduleDecl),
 										firstset(kNoisyIrNodeType_PfunctionDefn),
 										firstset(kNoisyIrNodeType_PproblemDefn),

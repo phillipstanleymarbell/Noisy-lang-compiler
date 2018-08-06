@@ -1,4 +1,4 @@
 tiny2 : module ()
 {
-	a	: function (int32) -> (int32);
+	a	: function (argumentA: int32) -> (argumentB: int32);
 }

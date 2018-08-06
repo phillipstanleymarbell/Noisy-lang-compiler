@@ -6056,7 +6056,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                [kNoisyIrNodeType_PconstantDecl                  ]            = {kNoisyIrNodeType_Tsemicolon, kNoisyIrNodeTypeMax},
                                                [kNoisyIrNodeType_PmoduleTypeNameDecl            ]            = {kNoisyIrNodeType_Tsemicolon, kNoisyIrNodeTypeMax},
                                                [kNoisyIrNodeType_PmoduleDeclBody                ]            = {kNoisyIrNodeType_TrightBrace, kNoisyIrNodeTypeMax},
-                                               [kNoisyIrNodeType_PmoduleDecl                    ]            = {kNoisyIrNodeType_Tidentifier, kNoisyIrNodeTypeMax},
+                                               [kNoisyIrNodeType_PmoduleDecl                    ]            = {kNoisyIrNodeType_Zeof, kNoisyIrNodeType_Tidentifier, kNoisyIrNodeTypeMax},
                                                [kNoisyIrNodeType_Psignature                     ]            = {
                                                                                                                     kNoisyIrNodeType_Tarrow,
                                                                                                                     kNoisyIrNodeType_Tassign,
