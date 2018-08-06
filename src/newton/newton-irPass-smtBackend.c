@@ -266,7 +266,7 @@ irPassSmtNodeToStr(State *  N, Invariant *  parentInvariant, IrNode *  node)
 
 		default:
 		{
-			fatal(N, EtokenInSMT);
+			fatal(N, EtokenUnrecognized);
 		}
 	}
 
