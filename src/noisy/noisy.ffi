@@ -22,7 +22,7 @@
 --//
 --//
 
---//		program			::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
+--//		program			::=	moduleDecl {(moduleDecl | functionDefn | problemDefn | predicateFnDefn)} .
 production	kNoisyIrNodeType_Pprogram:			firstset = {
 										firstset(kNoisyIrNodeType_PmoduleDecl),
 									}
@@ -594,6 +594,7 @@ production	kNoisyIrNodeType_Pterm:				firstset = {
 --//		factor			::=	qualifiedIdentifier | integerConst | realConst | stringConst | boolConst
 --//						| "(" expression ")" | tupleValue | namegenInvokeShorthand | typeMinExpr | typeMaxExpr .
 production	kNoisyIrNodeType_Pfactor:			firstset = {
+										kNoisyIrNodeType_Tnil,
 										kNoisyIrNodeType_Tidentifier,
 										kNoisyIrNodeType_TintegerConst,
 										kNoisyIrNodeType_TrealConst,
@@ -1010,6 +1011,7 @@ production	kNoisyIrNodeType_Psignature:			followset = {
 
 --//		moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
 production	kNoisyIrNodeType_PmoduleDecl:			followset = {
+										firstset(kNoisyIrNodeType_PmoduleDecl),
 										firstset(kNoisyIrNodeType_PfunctionDefn),
 										firstset(kNoisyIrNodeType_PproblemDefn),
 										firstset(kNoisyIrNodeType_PpredicateFnDefn),
@@ -1912,6 +1914,7 @@ token	kNoisyIrNodeType_TcolonAssign:				followset = {
 									}
 
 token	kNoisyIrNodeType_TcolonColon:				followset = {
+										kNoisyIrNodeType_Tnil,
 										followset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 									}
 
@@ -1988,6 +1991,7 @@ token	kNoisyIrNodeType_TleftBrace:				followset = {
 --//	We get the info needed from shell by doing, e.g., grep -C 1 '\"(\"' noisy.grammar
 --//
 token	kNoisyIrNodeType_TleftParens:				followset = {
+										kNoisyIrNodeType_Tpath,
 										kNoisyIrNodeType_TrightParens,
 										kNoisyIrNodeType_Tnil,
 										kNoisyIrNodeType_Tidentifier,

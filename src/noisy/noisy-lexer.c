@@ -191,11 +191,11 @@ noisyLex(State *  N, char *  fileName)
 					 *	These tokens may be paired with an equals sign or with another char (e.g., "::"),
 					 *	but otherwise do not require additional special handling as in the case of ".".
 					 *
-					 *	We process the chars see so far as a finished token, then handle the following chars.
+					 *	We process the chars seen so far as a finished token, then handle the following chars.
 					 */
 					case '&':
-					{
-						checkWeq3(N, kNoisyIrNodeType_TandAssign, kNoisyIrNodeType_Tand, '&', kNoisyIrNodeType_TarithmeticAnd);
+					{							
+						checkWeq3(N, kNoisyIrNodeType_TandAssign, kNoisyIrNodeType_TlogicalAnd, '&', kNoisyIrNodeType_TarithmeticAnd);
 						continue;
 					}
 

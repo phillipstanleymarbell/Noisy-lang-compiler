@@ -373,6 +373,7 @@ int    gNoisyFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                [kNoisyIrNodeType_PtypeMaxExpr                   ]            = {kNoisyIrNodeType_Ttypemax, kNoisyIrNodeTypeMax},
                                                [kNoisyIrNodeType_PtypeMinExpr                   ]            = {kNoisyIrNodeType_Ttypemin, kNoisyIrNodeTypeMax},
                                                [kNoisyIrNodeType_Pfactor                        ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tidentifier,
                                                                                                                     kNoisyIrNodeType_TintegerConst,
                                                                                                                     kNoisyIrNodeType_TrealConst,
@@ -384,6 +385,7 @@ int    gNoisyFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_Pterm                          ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -459,6 +461,7 @@ int    gNoisyFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                [kNoisyIrNodeType_PsampleExpression              ]            = {kNoisyIrNodeType_Tidentifier, kNoisyIrNodeTypeMax},
                                                [kNoisyIrNodeType_PquantizeExpression            ]            = {kNoisyIrNodeType_Tidentifier, kNoisyIrNodeTypeMax},
                                                [kNoisyIrNodeType_Pexpression                    ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -1962,6 +1965,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_PunaryOp                       ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tcolon,
                                                                                                                     kNoisyIrNodeType_Tidentifier,
                                                                                                                     kNoisyIrNodeType_TintegerConst,
@@ -2098,6 +2102,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_PhighPrecedenceBinaryOp        ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tcolon,
                                                                                                                     kNoisyIrNodeType_Tidentifier,
                                                                                                                     kNoisyIrNodeType_TintegerConst,
@@ -2465,6 +2470,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                [kNoisyIrNodeType_PiterateStatement              ]            = {kNoisyIrNodeType_Tsemicolon, kNoisyIrNodeTypeMax},
                                                [kNoisyIrNodeType_PmatchStatement                ]            = {kNoisyIrNodeType_Tsemicolon, kNoisyIrNodeTypeMax},
                                                [kNoisyIrNodeType_PassignOp                      ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -3772,6 +3778,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_PbasicType                     ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tand,
                                                                                                                     kNoisyIrNodeType_TarithmeticAnd,
                                                                                                                     kNoisyIrNodeType_Tarray,
@@ -11834,6 +11841,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TxorAssign                     ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -11978,6 +11986,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TrightShiftAssign              ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -12288,6 +12297,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TplusAssign                    ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -12430,6 +12440,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TpercentAssign                 ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -12539,6 +12550,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TorAssign                      ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -12695,6 +12707,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TminusAssign                   ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -13067,6 +13080,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TleftShiftAssign               ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -13126,6 +13140,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TleftParens                    ]            = {
+                                                                                                                    kNoisyIrNodeType_Tpath,
                                                                                                                     kNoisyIrNodeType_TrightParens,
                                                                                                                     kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tidentifier,
@@ -13749,6 +13764,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TdivideAssign                  ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -13875,6 +13891,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TcolonColon                    ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tcolon,
                                                                                                                     kNoisyIrNodeType_Tidentifier,
                                                                                                                     kNoisyIrNodeType_TintegerConst,
@@ -13905,6 +13922,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TcolonAssign                   ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -14046,6 +14064,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TchannelOperatorAssign         ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -14176,6 +14195,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TasteriskAssign                ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -14285,6 +14305,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_Tassign                        ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_TleftBrace,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
@@ -14395,6 +14416,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_TandAssign                     ]            = {
+                                                                                                                    kNoisyIrNodeType_Tnil,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -14457,6 +14479,10 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeType_TintegerConst,
                                                                                                                     kNoisyIrNodeType_Tidentifier,
                                                                                                                     kNoisyIrNodeType_TrealConst,
+                                                                                                                    kNoisyIrNodeTypeMax
+                                                                                               },
+                                               [kNoisyIrNodeType_Tpath                            ]            = {
+                                                                                                                    kNoisyIrNodeType_Tidentifier,
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                }
                                    };

@@ -1,5 +1,10 @@
 #include "system.nd"
 
+System : module ()
+{
+	print	: function (arguments: list of string) -> (results: int64);
+}
+
 #
 #	The module definition gives its signature for other
 #	modules (e.g., the runtime system) that want to execute
@@ -29,7 +34,7 @@ init : function	(arguments: list of string) -> (results: list of string) =
 	#	In this case, type of System.print is the type expression
 	#	`list of string`.
 	#
-#	print := load System->print (path System->print);
+	print := load System->print (path System);	#	load System->print (path System->print);
 
 	#
 	#	Functions in Noisy are shorthand for channels. We can
@@ -38,7 +43,7 @@ init : function	(arguments: list of string) -> (results: list of string) =
 	#	are that the statement completes when the call and return
 	#	have both completed.
 	#
-	utf8BytesPrinted = print("Hello World!"::nil);
+	utf8BytesPrinted = print();	#	print("Hello World!"::nil);
 
 	#
 	#	We can also treat the `print` function as a channel, in
@@ -50,7 +55,7 @@ init : function	(arguments: list of string) -> (results: list of string) =
 	#
 	#	Send a value with type `list of string` down the channel.
 	#
-#	print <-= "Hello World!"::nil;
+	print <-= "Hello World!"::nil;
 
 	#
 	#	The read type of the print channel, as defined in system.nd
@@ -63,7 +68,7 @@ init : function	(arguments: list of string) -> (results: list of string) =
 	#	a value down its return channel) before it has actually completed
 	#	printing.
 	#
-#	utf8BytesPrinted = <- print;
+	utf8BytesPrinted = <- print;
 
 	#
 	#	As long as the `print` channel is valid (i.e., in scope
@@ -73,5 +78,5 @@ init : function	(arguments: list of string) -> (results: list of string) =
 	#	at the function's end achieves the same, so this is not
 	#	really necessary.)
 	#
-#	print = nil;
+	print = nil;
 }

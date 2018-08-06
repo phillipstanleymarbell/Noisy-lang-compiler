@@ -35,7 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 const char	Esanity[]				= "Sanity check failed";
-const char	Eopen[]					= "Could not open \"%s\": %s\n";
+const char	Eopen[]					= "Could not open \"%s\": %s";
 const char	EbadXseqNode[]				= "Xseq node with no children seen";
 const char	EillegallyPlacedXseqNode[]		= "Illegally placed Xseq node in Node.left";
 const char	EexpectedElementOrStar[]		= "Expected element or \"*\"";
@@ -66,6 +66,10 @@ const char	EassignTypeSanity[]			= "Sanity check failed in type assignment";
 const char	Efd2path[]				= "fcntl() failed to get path for file descriptor";
 const char	EtokenInSMT[]				= "Unrecognized token type seen while processing SMT backend pass";
 const char	EexpressionPhysicsMismatch[]		= "Mismatched physics in expression";
+const char	Eusedef[]				= "Saw identifier \"%s\" in use before definition.";
+const char	Emultidef[]				= "Multiple definition of \"%s\".";
+
+
 
 /*
  *	These are mostly passed in eSemantics()
