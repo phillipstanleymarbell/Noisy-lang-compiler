@@ -5984,7 +5984,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeType_Tweakdominates,
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
-                                               [kNoisyIrNodeType_PidentifierList                ]            = {kNoisyIrNodeType_Tsemicolon, kNoisyIrNodeTypeMax},
+                                               [kNoisyIrNodeType_PidentifierList                ]            = {kNoisyIrNodeType_Tcolon, kNoisyIrNodeTypeMax},
                                                [kNoisyIrNodeType_PidentifierOrNilList           ]            = {
                                                                                                                     kNoisyIrNodeType_Tcolon,
                                                                                                                     kNoisyIrNodeType_TrightParens,
@@ -14797,4 +14797,10 @@ char	*gNoisyAstNodeStrings[kCommonIrNodeTypeMax]	= {
                                                [                 kNoisyIrNodeType_TarithmeticAnd]            = "kNoisyIrNodeType_TarithmeticAnd",
                                                [                     kNoisyIrNodeType_TandAssign]            = "kNoisyIrNodeType_TandAssign",
                                                [                            kNoisyIrNodeType_Tat]            = "kNoisyIrNodeType_Tat",
+
+/*
+ *	This needs to be added manually:
+ */
+
+                                               [                           kNoisyIrNodeType_Xseq]            = "kNoisyIrNodeType_Xseq",
                                    };

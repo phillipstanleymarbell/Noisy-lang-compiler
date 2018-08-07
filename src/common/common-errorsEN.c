@@ -68,6 +68,7 @@ const char	EtokenInSMT[]				= "Unrecognized token type seen while processing SMT
 const char	EexpressionPhysicsMismatch[]		= "Mismatched physics in expression";
 const char	Eusedef[]				= "Saw identifier \"%s\" in use before definition.";
 const char	Emultidef[]				= "Multiple definition of \"%s\".";
+const char	EunhandledNodeTypeInAstNodeStringsArray[]= "Unhandled node type in gNoisyAstNodeStrings[] array";
 
 
 

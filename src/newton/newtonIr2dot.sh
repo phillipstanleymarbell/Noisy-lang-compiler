@@ -1,13 +1,13 @@
 #!/bin/sh
 
 #
-#	Usage: ./newtonIr2dot.sh <newton file> <pdf|png|other dot format>
+#	Usage: ./newtonIr2dot.sh <newton file> <pdf|png|other dot format> <Newton Dot Level>
 #
 
-if [ $# -ne 2 ]
+if [ $# -ne 3 ]
 then
-	echo '\n\nUsage: ./newtonIr2dot.sh <newton file> <pdf|png|other dot format>\n\n'
+	echo '\n\nUsage: ./newtonIr2dot.sh <newton file> <pdf|png|other dot format> <Newton Dot Level>\n\n'
 	exit 1
 fi
 
-./noisy-`uname | tr '[:upper:]' '[:lower:]'`-EN --optimize 0 --dot 4 $1 | dot -T$2 -O ; open noname.gv.$2
+./noisy-`uname | tr '[:upper:]' '[:lower:]'`-EN --optimize 0 --dot $3 $1 | dot -T$2 -O ; open noname.gv.$2

@@ -1101,7 +1101,7 @@ production	kNoisyIrNodeType_PidentifierOrNilList:		followset = {
 
 --//		identifierList		=	identifier {"," identifier} .
 production	kNoisyIrNodeType_PidentifierList:		followset = {
-										kNoisyIrNodeType_Tsemicolon,
+										kNoisyIrNodeType_Tcolon,
 									}
 
 --//		typeExpr		::=	(basicType ["and" typeAnnoteList]) | anonAggregateType | typeName .

@@ -86,10 +86,10 @@ noisyIrPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irN
 
 
 	/*
-	 *	TODO: if we run out of space in print buffer, we should
+	 *	If we run out of space in print buffer, we should
 	 *	print a "..." rather than just ending like we do now.
+	 *	See  #321.
 	 */
-
 	if (irNode->tokenString != NULL)
 	{
 		tokenString = irNode->tokenString;
@@ -104,6 +104,11 @@ noisyIrPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irN
 	nodePropertiesString	= "";
 	nodeBorderString	= "M";
 	typeString		= &gNoisyAstNodeStrings[irNode->type][strlen("kNoisyIrNodeType_")];
+
+	if (gNoisyAstNodeStrings[irNode->type] == NULL)
+	{
+		typeString = (char *)EunhandledNodeTypeInAstNodeStringsArray;
+	}
 
 	/*
 	 *	For identifiers, different graph node properties
@@ -157,19 +162,19 @@ noisyIrPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irN
 			src, (isType(N, irNode) ? "#" : ""), (isType(N, irNode) ? noisyTypeMakeTypeSignature(N, irNode) : ""), (isType(N, irNode) ? "#" : ""), nodeBorderString);
 	}
 
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	if (!(N->dotDetailLevel & kNoisyDotDetailLevelNoNilNodes) && (L(irNode) == NULL))
 	{
 		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH "_leftnil [%s];\n",
 			(FlexAddr)irNode, nilFormatString);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 	if (!(N->dotDetailLevel & kNoisyDotDetailLevelNoNilNodes) && (R(irNode) == NULL))
 	{
 		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH "_rightnil [%s];\n",
 			(FlexAddr)irNode, nilFormatString);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 
 	l = (char *)calloc(kNoisyMaxPrintBufferLength, sizeof(char));
@@ -205,13 +210,13 @@ noisyIrPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irN
 	if (strlen(l))
 	{
 		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH ":left -> %s;\n", (FlexAddr)irNode, l);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 
 	if (strlen(r))
 	{
 		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH ":right -> %s;\n", (FlexAddr)irNode, r);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 
 	USED(bufferLength);
@@ -235,26 +240,26 @@ noisyIrPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope
 
 
 	/*
-	 *	TODO: if we run out of space in print buffer, we should
+	 *	If we run out of space in print buffer, we should
 	 *	print a "..." rather than just ending like we do now.
+	 *	See  #321.
 	 */
-
 	nilFormatString		= "style=filled,color=\"#000000\",fontcolor=white,fontsize=8,width=0.3,height=0.16,fixedsize=true,fontname=\"LucidaSans-Typewriter\",label=\"nil\", shape=record";
 	symbolFormatString	= "style=filled,color=\"#dddddd\",fontcolor=black,fontsize=8,height=0.16,fontname=\"LucidaSans-Typewriter\", shape=record";
 
 	n += snprintf(	&buf[n], bufferLength, "\tscope%s [style=filled,color=\"#FFCC00\",fontname=\"LucidaSans-Typewriter\",fontsize=8,height=0.8,label=\"{%s | {<children> | <syms>}}\",shape=record];\n",
 			scope2id(N, scope), scope2id2(N, scope));
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	if (scope->firstChild == NULL)
 	{
 		n += snprintf(&buf[n], bufferLength, "\tscope%s_kidsnil [%s];\n", scope2id(N, scope), nilFormatString);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 	if (scope->firstSymbol == NULL)
 	{
 		n += snprintf(&buf[n], bufferLength, "\tscope%s_symsnil [%s];\n", scope2id(N, scope), nilFormatString);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 
 	Scope *	childScope  = scope->firstChild;
@@ -262,7 +267,7 @@ noisyIrPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope
 	{
 		n += snprintf(	&buf[n], bufferLength, "\tscope%s [style=filled,color=\"#FFCC00\",fontname=\"LucidaSans-Typewriter\",fontsize=8,height=0.8,label=\"{%s | {<children> | <syms>}}\",shape=record];\n",
 				scope2id(N, childScope), scope2id2(N, childScope));
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 
 		childScope = childScope->next;
 	}
@@ -272,7 +277,7 @@ noisyIrPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope
 	{
 		n += snprintf(&buf[n], bufferLength, "\tsym%s [%s,label=\"{%s}\",shape=rect];\n",
 			symbol2id(N, childSymbol), symbolFormatString, childSymbol->identifier);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 
 		childSymbol = childSymbol->next;
 	}
@@ -281,7 +286,7 @@ noisyIrPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope
 	if (scope->firstChild == NULL)
 	{
 		n += snprintf(&buf[n], bufferLength, "\tscope%s:children -> scope%s_kidsnil;\n", scope2id(N, scope), scope2id(N, scope));
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 	else
 	{
@@ -289,7 +294,7 @@ noisyIrPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope
 		while (childScope != NULL)
 		{
 			n += snprintf(&buf[n], bufferLength, "\tscope%s:children -> scope%s;\n", scope2id(N, scope), scope2id(N, childScope));
-			bufferLength -= n;
+			bufferLength = max(bufferLength - n, 0);
 			
 			childScope = childScope->next;
 		}
@@ -298,18 +303,18 @@ noisyIrPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope
 	if (scope->firstSymbol == NULL)
 	{
 		n += snprintf(&buf[n], bufferLength, "\tscope%s:syms -> scope%s_symsnil;\n", scope2id(N, scope), scope2id(N, scope));
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 	else
 	{
 		childSymbol = scope->firstSymbol;
 		n += snprintf(&buf[n], bufferLength, "\tscope%s:syms -> sym%s;\n", scope2id(N, scope), symbol2id(N, childSymbol));
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 
 		while (childSymbol != NULL && childSymbol->next != NULL)
 		{
 			n += snprintf(&buf[n], bufferLength, "\tsym%s:syms -> sym%s;\n", symbol2id(N, childSymbol), symbol2id(N, childSymbol->next));
-			bufferLength -= n;
+			bufferLength = max(bufferLength - n, 0);
 			childSymbol = childSymbol->next;
 		}
 	}
@@ -415,7 +420,7 @@ noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot
 
 
 	/*
-	 *	Heuristic
+	 *	Heuristic. Could be better. See #322.
 	 */
 	irAndSymbolTableSize += irPassHelperIrSize(N, noisyIrRoot);
 	irAndSymbolTableSize += irPassHelperSymbolTableSize(N, noisyIrTopScope);
@@ -440,38 +445,40 @@ noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot
 	dateString[24] = '.';
 
 	n += snprintf(&buf[n], bufferLength, "digraph Noisy\n{\n");
-//TODO: here and elsewhere, should be taking bufferLength = max(bufferLength - n, 0)
-//n = max(MAX_PRINT_BUF - strlen(buf), 0); like we do for universe_print in sal
 
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	/*
 	 *	When rendering bitmapped, don't restrict size, and
 	 *	leave dpi reasonable (~150).
 	 */
 	n += snprintf(&buf[n], bufferLength, "\tdpi=150;\n");
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 	n += snprintf(&buf[n], bufferLength, "\tfontcolor=\"#C0C0C0\";\n");
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 	n += snprintf(&buf[n], bufferLength, "\tfontsize=18;\n");
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
-//TODO: take the whole of this following string as one of the arguments, called, e.g., "dotplotlabel",
-//so we are not calling gettimeofday() from here, and don't need to have the VM_VERSION symbol here either.
+	/*
+	 *	Take the whole of this following string as one of the arguments,
+	 *	called, e.g., "dotplotlabel", so we are not calling gettimeofday()
+	 *	from here, and don't need to have the kNoisyVersion symbol here either.
+	 *	See #323.
+	 */
 	n += snprintf(&buf[n], bufferLength, "\tlabel = \"\\nAuto-generated by Noisy compiler, version %s, on %s\";\n",
 			kNoisyVersion, dateString);
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 	n += snprintf(&buf[n], bufferLength, "\tsplines = true;\n");
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	/*
 	 *	Don't restrict size when rendering bitmapped
 	 */
 	//n += snprintf(&buf[n], bufferLength, "\tsize = \"5,9\";\n");
-	//bufferLength -= n;
+	//bufferLength = max(bufferLength - n, 0);
 
 	n += snprintf(&buf[n], bufferLength, "\tmargin = 0.1;\n");
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	/*
 	 *	Temporarily color the graph, so we can know
@@ -482,20 +489,20 @@ noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot
 	irPassHelperColorSymbolTable(N, noisyIrTopScope, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
 
 	n += noisyIrPassDotAstPrintWalk(N, noisyIrRoot, &buf[n], bufferLength);
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	n += noisyIrPassDotSymbolTablePrintWalk(N, noisyIrTopScope, &buf[n], bufferLength);
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	n += snprintf(&buf[n], bufferLength, "}\n");
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 	USED(bufferLength);
 
 	/*
-	 *	TODO: this is not really necessary, since we now use individual
+	 *	This is not really necessary, since we now use individual
 	 *	bitfields for coloring in different passes, and we clear the
 	 *	colors of nodes above anyway. If/when we decide to get rid of
-	 *	this, be sure to document the associated gain.
+	 *	this, be sure to document the associated gain. See #324.
 	 */
 	irPassHelperColorIr(N, noisyIrRoot, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
 	irPassHelperColorSymbolTable(N, noisyIrTopScope, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
@@ -506,13 +513,9 @@ noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot
 
 
 
-
-
-
 /*
  *	Local functions.
  */
-
 
 
 
@@ -523,34 +526,63 @@ isType(State *  N, IrNode *  node)
 
 	switch (node->type)
 	{
-		case kNoisyIrNodeType_PconstantDecl:
-		case kNoisyIrNodeType_PtypeDecl:
-		case kNoisyIrNodeType_PmoduleDecl:
-		case kNoisyIrNodeType_PfixedType:
-		case kNoisyIrNodeType_PrationalType:
-		case kNoisyIrNodeType_PcomplexType:
+		case kNoisyIrNodeType_PaccuracyTolerance:
+		case kNoisyIrNodeType_PadtTypeDecl:
 		case kNoisyIrNodeType_PanonAggregateType:
+		case kNoisyIrNodeType_ParrayType:
+		case kNoisyIrNodeType_PcomplexType:
+		case kNoisyIrNodeType_PconstantDecl:
+		case kNoisyIrNodeType_PfixedType:
+		case kNoisyIrNodeType_PfunctionDecl:
+		case kNoisyIrNodeType_PlatencyTolerance:
+		case kNoisyIrNodeType_PlistType:
+		case kNoisyIrNodeType_PlossTolerance:
+		case kNoisyIrNodeType_PmoduleDecl:
+		case kNoisyIrNodeType_PrationalType:
+		case kNoisyIrNodeType_PtupleType:
+		case kNoisyIrNodeType_PtypeDecl:
+		case kNoisyIrNodeType_PtypeExpr:
+		case kNoisyIrNodeType_PtypeName:
+		case kNoisyIrNodeType_PtypeParameterList:
+		case kNoisyIrNodeType_Tadt:
+		case kNoisyIrNodeType_Talpha:
 		case kNoisyIrNodeType_Tbool:
-		case kNoisyIrNodeType_Tstring:
- 		case kNoisyIrNodeType_Ttype:
-		case kNoisyIrNodeType_Tnat128:
-		case kNoisyIrNodeType_Tnat16:
-		case kNoisyIrNodeType_Tnat32:
-		case kNoisyIrNodeType_Tnat4:
-		case kNoisyIrNodeType_Tnat64:
-		case kNoisyIrNodeType_Tnat8:
-		case kNoisyIrNodeType_Tint128:
-		case kNoisyIrNodeType_Tint16:
-		case kNoisyIrNodeType_Tint32:
-		case kNoisyIrNodeType_Tint4:
-		case kNoisyIrNodeType_Tint64:
-		case kNoisyIrNodeType_Tint8:
+		case kNoisyIrNodeType_Tconst:
+		case kNoisyIrNodeType_Tepsilon:
+		case kNoisyIrNodeType_Tfixed:
 		case kNoisyIrNodeType_Tfloat128:
 		case kNoisyIrNodeType_Tfloat16:
 		case kNoisyIrNodeType_Tfloat32:
 		case kNoisyIrNodeType_Tfloat4:
 		case kNoisyIrNodeType_Tfloat64:
 		case kNoisyIrNodeType_Tfloat8:
+		case kNoisyIrNodeType_Tfunction:
+		case kNoisyIrNodeType_Tidentifier:
+		case kNoisyIrNodeType_Tint128:
+		case kNoisyIrNodeType_Tint16:
+		case kNoisyIrNodeType_Tint32:
+		case kNoisyIrNodeType_Tint4:
+		case kNoisyIrNodeType_Tint64:
+		case kNoisyIrNodeType_Tint8:
+		case kNoisyIrNodeType_Tlist:
+		case kNoisyIrNodeType_Tnat128:
+		case kNoisyIrNodeType_Tnat16:
+		case kNoisyIrNodeType_Tnat32:
+		case kNoisyIrNodeType_Tnat4:
+		case kNoisyIrNodeType_Tnat64:
+		case kNoisyIrNodeType_Tnat8:
+		case kNoisyIrNodeType_TrealConst:
+		case kNoisyIrNodeType_Tset:
+		case kNoisyIrNodeType_Tstring:
+		case kNoisyIrNodeType_Ttau:
+ 		case kNoisyIrNodeType_Ttype:
+		case kNoisyIrNodeType_PbasicType:
+		case kNoisyIrNodeType_PintegerType:
+		case kNoisyIrNodeType_PwriteTypeSignature:
+		case kNoisyIrNodeType_Psignature:
+		case kNoisyIrNodeType_PreadTypeSignature:
+		case kNoisyIrNodeType_PmoduleDeclBody:
+		case kNoisyIrNodeType_PmoduleTypeNameDecl:	
 		{
 			return true;
 		}

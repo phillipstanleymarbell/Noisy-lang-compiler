@@ -87,10 +87,10 @@ irPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irNode, 
 
 
 	/*
-	 *	TODO: if we run out of space in print buffer, we should
+	 *	If we run out of space in print buffer, we should
 	 *	print a "..." rather than just ending like we do now.
+	 *	See  #321.
 	 */
-
 	if (irNode->tokenString != NULL)
 	{
 		tokenString = irNode->tokenString;
@@ -105,6 +105,11 @@ irPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irNode, 
 	nodePropertiesString	= "";
 	nodeBorderString	= "M";
 	typeString		= astNodeStrings[irNode->type];
+
+	if (gNoisyAstNodeStrings[irNode->type] == NULL)
+	{
+		fatal(N, Esanity);
+	}
 
 	/*
 	 *	For identifiers, different graph node properties
@@ -151,26 +156,26 @@ irPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irNode, 
 	else
 	{
 		n += snprintf(&buf[n], bufferLength,
-                  "\tP" FLEX_PTRFMTH " [%sfontsize=8,height=0.8,fontname=\"LucidaSans-Typewriter\","
-                  "label=\"{P" FLEX_PTRFMTH "\\ntype=%s\\n%s%s\\n%s %s%s%s| {<left> | <right> }}\",shape=%srecord];\n",
-                  (FlexAddr)irNode, nodePropertiesString, (FlexAddr)irNode, typeString,
-                  ((tokenString == NULL || ((size_t) strlen(tokenString)) == 0) ? "" : " tokenString="), tokenString,
-                  src, (isType(N, irNode) ? "#" : ""), (isType(N, irNode) ? newtonTypeMakeTypeSignature(N, irNode) : ""), (isType(N, irNode) ? "#" : ""), nodeBorderString);
+			"\tP" FLEX_PTRFMTH " [%sfontsize=8,height=0.8,fontname=\"LucidaSans-Typewriter\","
+			"label=\"{P" FLEX_PTRFMTH "\\ntype=%s\\n%s%s\\n%s %s%s%s| {<left> | <right> }}\",shape=%srecord];\n",
+			(FlexAddr)irNode, nodePropertiesString, (FlexAddr)irNode, typeString,
+			((tokenString == NULL || ((size_t) strlen(tokenString)) == 0) ? "" : " tokenString="), tokenString,
+			src, (isType(N, irNode) ? "#" : ""), (isType(N, irNode) ? newtonTypeMakeTypeSignature(N, irNode) : ""), (isType(N, irNode) ? "#" : ""), nodeBorderString);
 	}
 
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	if (!(N->dotDetailLevel & kNoisyDotDetailLevelNoNilNodes) && (L(irNode) == NULL))
 	{
 		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH "_leftnil [%s];\n",
 			(FlexAddr)irNode, nilFormatString);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 	if (!(N->dotDetailLevel & kNoisyDotDetailLevelNoNilNodes) && (R(irNode) == NULL))
 	{
 		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH "_rightnil [%s];\n",
 			(FlexAddr)irNode, nilFormatString);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 
 	l = (char *)calloc(kNoisyMaxPrintBufferLength, sizeof(char));
@@ -206,13 +211,13 @@ irPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irNode, 
 	if (strlen(l))
 	{
 		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH ":left -> %s;\n", (FlexAddr)irNode, l);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 
 	if (strlen(r))
 	{
 		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH ":right -> %s;\n", (FlexAddr)irNode, r);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 
 	USED(bufferLength);
@@ -236,8 +241,9 @@ irPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope *  s
 
 
 	/*
-	 *	TODO: if we run out of space in print buffer, we should
+	 *	If we run out of space in print buffer, we should
 	 *	print a "..." rather than just ending like we do now.
+	 *	See  #321.
 	 */
 
 	nilFormatString		= "style=filled,color=\"#000000\",fontcolor=white,fontsize=8,width=0.3,height=0.16,fixedsize=true,fontname=\"LucidaSans-Typewriter\",label=\"nil\", shape=record";
@@ -245,17 +251,17 @@ irPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope *  s
 
 	n += snprintf(	&buf[n], bufferLength, "\tscope%s [style=filled,color=\"#FFCC00\",fontname=\"LucidaSans-Typewriter\",fontsize=8,height=0.8,label=\"{%s | {<children> | <syms>}}\",shape=record];\n",
 			scope2id(N, scope), scope2id2(N, scope));
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	if (scope->firstChild == NULL)
 	{
 		n += snprintf(&buf[n], bufferLength, "\tscope%s_kidsnil [%s];\n", scope2id(N, scope), nilFormatString);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 	if (scope->firstSymbol == NULL)
 	{
 		n += snprintf(&buf[n], bufferLength, "\tscope%s_symsnil [%s];\n", scope2id(N, scope), nilFormatString);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 
 	Scope *	childScope  = scope->firstChild;
@@ -263,7 +269,7 @@ irPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope *  s
 	{
 		n += snprintf(	&buf[n], bufferLength, "\tscope%s [style=filled,color=\"#FFCC00\",fontname=\"LucidaSans-Typewriter\",fontsize=8,height=0.8,label=\"{%s | {<children> | <syms>}}\",shape=record];\n",
 				scope2id(N, childScope), scope2id2(N, childScope));
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 
 		childScope = childScope->next;
 	}
@@ -273,7 +279,7 @@ irPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope *  s
 	{
 		n += snprintf(&buf[n], bufferLength, "\tsym%s [%s,label=\"{%s}\",shape=rect];\n",
 			symbol2id(N, childSymbol), symbolFormatString, childSymbol->identifier);
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 
 		childSymbol = childSymbol->next;
 	}
@@ -282,7 +288,7 @@ irPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope *  s
 	if (scope->firstChild == NULL)
 	{
 		n += snprintf(&buf[n], bufferLength, "\tscope%s:children -> scope%s_kidsnil;\n", scope2id(N, scope), scope2id(N, scope));
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 	else
 	{
@@ -290,7 +296,7 @@ irPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope *  s
 		while (childScope != NULL)
 		{
 			n += snprintf(&buf[n], bufferLength, "\tscope%s:children -> scope%s;\n", scope2id(N, scope), scope2id(N, childScope));
-			bufferLength -= n;
+			bufferLength = max(bufferLength - n, 0);
 			
 			childScope = childScope->next;
 		}
@@ -299,18 +305,18 @@ irPassDotSymbolTableDotFmt(State *  N, char *  buf, int bufferLength, Scope *  s
 	if (scope->firstSymbol == NULL)
 	{
 		n += snprintf(&buf[n], bufferLength, "\tscope%s:syms -> scope%s_symsnil;\n", scope2id(N, scope), scope2id(N, scope));
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 	}
 	else
 	{
 		childSymbol = scope->firstSymbol;
 		n += snprintf(&buf[n], bufferLength, "\tscope%s:syms -> sym%s;\n", scope2id(N, scope), symbol2id(N, childSymbol));
-		bufferLength -= n;
+		bufferLength = max(bufferLength - n, 0);
 
 		while (childSymbol != NULL && childSymbol->next != NULL)
 		{
 			n += snprintf(&buf[n], bufferLength, "\tsym%s:syms -> sym%s;\n", symbol2id(N, childSymbol), symbol2id(N, childSymbol->next));
-			bufferLength -= n;
+			bufferLength = max(bufferLength - n, 0);
 			childSymbol = childSymbol->next;
 		}
 	}
@@ -354,7 +360,7 @@ irPassDotAstPrintWalk(State *  N, IrNode *  irNode, char *  buf, int bufferLengt
 	 */
 	if (irNode->nodeColor & kNoisyIrNodeColorDotBackendColoring)
 	{
-    assert(astNodeStrings[irNode->type] != NULL);
+		assert(astNodeStrings[irNode->type] != NULL);
 		n2 = irPassDotAstDotFmt(N, &buf[n0+n1], bufferLength-(n0+n1), irNode, astNodeStrings);
 		irNode->nodeColor &= ~kNoisyIrNodeColorDotBackendColoring;
 	}
@@ -407,9 +413,8 @@ irPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot, cha
 
 
 
-
 	/*
-	 *	Heuristic
+	 *	Heuristic. Could be better. See #322.
 	 */
 	irAndSymbolTableSize += irPassHelperIrSize(N, noisyIrRoot);
 	irAndSymbolTableSize += irPassHelperSymbolTableSize(N, noisyIrTopScope);
@@ -437,40 +442,41 @@ irPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot, cha
 	 */
 	dateString[24] = '.';
 
-  int n = 0;
+	int n = 0;
 	n += snprintf(&buf[n], bufferLength, "digraph Newton\n{\n");
-//TODO: here and elsewhere, should be taking bufferLength = max(bufferLength - n, 0)
-//n = max(MAX_PRINT_BUF - strlen(buf), 0); like we do for universe_print in sal
-
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	/*
 	 *	When rendering bitmapped, don't restrict size, and
 	 *	leave dpi reasonable (~150).
 	 */
 	n += snprintf(&buf[n], bufferLength, "\tdpi=150;\n");
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 	n += snprintf(&buf[n], bufferLength, "\tfontcolor=\"#C0C0C0\";\n");
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 	n += snprintf(&buf[n], bufferLength, "\tfontsize=18;\n");
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
-//TODO: take the whole of this following string as one of the arguments, called, e.g., "dotplotlabel",
-//so we are not calling gettimeofday() from here, and don't need to have the VM_VERSION symbol here either.
+	/*
+	 *	Take the whole of this following string as one of the arguments,
+	 *	called, e.g., "dotplotlabel", so we are not calling gettimeofday()
+	 *	from here, and don't need to have the kNewtonVersion symbol here either.
+	 *	See #323.
+	 */
 	n += snprintf(&buf[n], bufferLength, "\tlabel = \"\\nAuto-generated by Newton compiler, version %s, on %s\";\n",
 			kNewtonVersion, dateString);
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 	n += snprintf(&buf[n], bufferLength, "\tsplines = true;\n");
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	/*
 	 *	Don't restrict size when rendering bitmapped
 	 */
 	//n += snprintf(&buf[n], bufferLength, "\tsize = \"5,9\";\n");
-	//bufferLength -= n;
+	//bufferLength = max(bufferLength - n, 0);
 
 	n += snprintf(&buf[n], bufferLength, "\tmargin = 0.1;\n");
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	/*
 	 *	Temporarily color the graph, so we can know
@@ -481,20 +487,20 @@ irPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot, cha
 	irPassHelperColorSymbolTable(N, noisyIrTopScope, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
 
 	n += irPassDotAstPrintWalk(N, noisyIrRoot, &buf[n], bufferLength, astNodeStrings);
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	n += irPassDotSymbolTablePrintWalk(N, noisyIrTopScope, &buf[n], bufferLength);
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 
 	n += snprintf(&buf[n], bufferLength, "}\n");
-	bufferLength -= n;
+	bufferLength = max(bufferLength - n, 0);
 	USED(bufferLength);
 
 	/*
-	 *	TODO: this is not really necessary, since we now use individual
+	 *	This is not really necessary, since we now use individual
 	 *	bitfields for coloring in different passes, and we clear the
 	 *	colors of nodes above anyway. If/when we decide to get rid of
-	 *	this, be sure to document the associated gain.
+	 *	this, be sure to document the associated gain. See #324.
 	 */
 	irPassHelperColorIr(N, noisyIrRoot, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
 	irPassHelperColorSymbolTable(N, noisyIrTopScope, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
@@ -504,13 +510,9 @@ irPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot, cha
 
 
 
-
-
-
 /*
  *	Local functions.
  */
-
 
 
 
@@ -610,79 +612,82 @@ isType(State *  N, IrNode *  node)
 {
 	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassDotIsType);
 
+	/*
+	 *	This is miusing the intent of isType(). See issue #320.
+	 */
 	switch (node->type)
-    {
-		case    kNewtonIrNodeType_Tlt:
-		case    kNewtonIrNodeType_Tle:
-		case    kNewtonIrNodeType_Tgt:
-		case    kNewtonIrNodeType_Tge:
-		case    kNewtonIrNodeType_Tproportionality:
-		case    kNewtonIrNodeType_Tequivalent:
-		case    kNewtonIrNodeType_Tsemicolon:
-		case    kNewtonIrNodeType_Tcolon:
-		case    kNewtonIrNodeType_Tcomma:
-		case    kNewtonIrNodeType_Tdot:
-		case	kNewtonIrNodeType_Tdiv:
-		case	kNewtonIrNodeType_Tmul:
-		case	kNewtonIrNodeType_Tplus:
-		case	kNewtonIrNodeType_Tminus:
-		case    kNewtonIrNodeType_Texponent:
-		case	kNewtonIrNodeType_Tequals:
-		case    kNewtonIrNodeType_TintConst:
-		case    kNewtonIrNodeType_TrealConst:	
-		case	kNewtonIrNodeType_TstringConst:
-		case	kNewtonIrNodeType_Tcross:
-		case	kNewtonIrNodeType_Tintegral:
-		case	kNewtonIrNodeType_Tderivative:
-		case	kNewtonIrNodeType_TSpanish:
-		case	kNewtonIrNodeType_TEnglish:
-		case	kNewtonIrNodeType_Tinvariant:
-		case	kNewtonIrNodeType_Tconstant:
-		case	kNewtonIrNodeType_Tsignal:
-		case	kNewtonIrNodeType_Tderivation:
-		case	kNewtonIrNodeType_Tsymbol:
-		case	kNewtonIrNodeType_Tname:
-		case	kNewtonIrNodeType_Pinteger:
-		case	kNewtonIrNodeType_Tnumber:
-		case	kNewtonIrNodeType_TrightBrace:
-		case	kNewtonIrNodeType_TleftBrace:
-		case	kNewtonIrNodeType_TrightParen:
-		case	kNewtonIrNodeType_TleftParen:
-		case	kNewtonIrNodeType_Tidentifier:
-		case    kNewtonIrNodeType_PlanguageSetting:
-		case	kNewtonIrNodeType_PcompareOp:
-		case	kNewtonIrNodeType_PvectorOp:
-		case	kNewtonIrNodeType_PhighPrecedenceBinaryOp:
-		case	kNewtonIrNodeType_PmidPrecedenceBinaryOp:
-		case	kNewtonIrNodeType_PlowPrecedenceBinaryOp:
-		case	kNewtonIrNodeType_PunaryOp:
-		case	kNewtonIrNodeType_PtimeOp:
-		case	kNewtonIrNodeType_Pquantity:
-		case	kNewtonIrNodeType_PquantityFactor:
-		case	kNewtonIrNodeType_PquantityTerm:
-		case	kNewtonIrNodeType_PquantityExpression:
-		case	kNewtonIrNodeType_Pparameter:
-		case	kNewtonIrNodeType_PparameterTuple:
-		case	kNewtonIrNodeType_Pderivation:
-		case	kNewtonIrNodeType_Psymbol:
-		case	kNewtonIrNodeType_Pname:
-		case	kNewtonIrNodeType_Pconstraint:
-		case	kNewtonIrNodeType_PconstraintList:
-		case	kNewtonIrNodeType_PbaseSignal:
-		case	kNewtonIrNodeType_Pinvariant:
-		case	kNewtonIrNodeType_Pconstant:
-		case	kNewtonIrNodeType_Pstatement:
-		case	kNewtonIrNodeType_PstatementList:
-		case	kNewtonIrNodeType_PnewtonFile:
-      {
-        return true;
-      }
+	{
+		case kNewtonIrNodeType_Tlt:
+		case kNewtonIrNodeType_Tle:
+		case kNewtonIrNodeType_Tgt:
+		case kNewtonIrNodeType_Tge:
+		case kNewtonIrNodeType_Tproportionality:
+		case kNewtonIrNodeType_Tequivalent:
+		case kNewtonIrNodeType_Tsemicolon:
+		case kNewtonIrNodeType_Tcolon:
+		case kNewtonIrNodeType_Tcomma:
+		case kNewtonIrNodeType_Tdot:
+		case kNewtonIrNodeType_Tdiv:
+		case kNewtonIrNodeType_Tmul:
+		case kNewtonIrNodeType_Tplus:
+		case kNewtonIrNodeType_Tminus:
+		case kNewtonIrNodeType_Texponent:
+		case kNewtonIrNodeType_Tequals:
+		case kNewtonIrNodeType_TintConst:
+		case kNewtonIrNodeType_TrealConst:	
+		case kNewtonIrNodeType_TstringConst:
+		case kNewtonIrNodeType_Tcross:
+		case kNewtonIrNodeType_Tintegral:
+		case kNewtonIrNodeType_Tderivative:
+		case kNewtonIrNodeType_TSpanish:
+		case kNewtonIrNodeType_TEnglish:
+		case kNewtonIrNodeType_Tinvariant:
+		case kNewtonIrNodeType_Tconstant:
+		case kNewtonIrNodeType_Tsignal:
+		case kNewtonIrNodeType_Tderivation:
+		case kNewtonIrNodeType_Tsymbol:
+		case kNewtonIrNodeType_Tname:
+		case kNewtonIrNodeType_Pinteger:
+		case kNewtonIrNodeType_Tnumber:
+		case kNewtonIrNodeType_TrightBrace:
+		case kNewtonIrNodeType_TleftBrace:
+		case kNewtonIrNodeType_TrightParen:
+		case kNewtonIrNodeType_TleftParen:
+		case kNewtonIrNodeType_Tidentifier:
+		case kNewtonIrNodeType_PlanguageSetting:
+		case kNewtonIrNodeType_PcompareOp:
+		case kNewtonIrNodeType_PvectorOp:
+		case kNewtonIrNodeType_PhighPrecedenceBinaryOp:
+		case kNewtonIrNodeType_PmidPrecedenceBinaryOp:
+		case kNewtonIrNodeType_PlowPrecedenceBinaryOp:
+		case kNewtonIrNodeType_PunaryOp:
+		case kNewtonIrNodeType_PtimeOp:
+		case kNewtonIrNodeType_Pquantity:
+		case kNewtonIrNodeType_PquantityFactor:
+		case kNewtonIrNodeType_PquantityTerm:
+		case kNewtonIrNodeType_PquantityExpression:
+		case kNewtonIrNodeType_Pparameter:
+		case kNewtonIrNodeType_PparameterTuple:
+		case kNewtonIrNodeType_Pderivation:
+		case kNewtonIrNodeType_Psymbol:
+		case kNewtonIrNodeType_Pname:
+		case kNewtonIrNodeType_Pconstraint:
+		case kNewtonIrNodeType_PconstraintList:
+		case kNewtonIrNodeType_PbaseSignal:
+		case kNewtonIrNodeType_Pinvariant:
+		case kNewtonIrNodeType_Pconstant:
+		case kNewtonIrNodeType_Pstatement:
+		case kNewtonIrNodeType_PstatementList:
+		case kNewtonIrNodeType_PnewtonFile:
+		{
+			return true;
+		}
 
 		default:
-      {
-        return false;
-      }
-    }
+		{
+			return false;
+		}
+	}
 
 	return false;
 }

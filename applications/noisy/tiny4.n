@@ -8,32 +8,32 @@ tiny4 : module ()
 		a : nat8;
 	};
 
-	init	: function (list of string) -> (list of string);
-	first	: function (nat8, int4) -> (int4);
-	second	: function (int4, string) -> (int4);
-	third	: function (float8) -> (int4, float8, string);
+	init	: function (argument: list of string)		-> (result: list of string);
+	first	: function (argumentA: nat8, argumentB: int4)	-> (result: int4);
+	second	: function (argumentA: int4, argumentB: string) -> (result: int4);
+	third	: function (argument: float8)			-> (resultA: int4, resultB: float8, resultC: string);
 }
 
-init : function (list of string) -> (list of string)
+init : function (argument: list of string) -> (result: list of string) =
 {
 }
 
-first : function (nat8, int4) -> (int4)
+first : function (argumentA: nat8, argumentB: int4) -> (result: int4) =
 {
 }
 
-second : function (int4, string) -> (int4)
+second : function (argumentA: int4, argumentB: string) -> (result: int4) =
 {
 }
 
-third : function (float8) -> (int4, float8, string)
+third : function (argument: float8) -> (resultA: int4, resultB: float8, resultC: string) =
 {
 }
 
-localfunc1 : function (int4, int4) -> (int4) =
+localfunc1 : function (argumentA: int4, argumentB: int4) -> (result: int4) =
 {
 }
 
-localfunc2 : function (float8, int4, nat8, string) -> (int4) =
+localfunc2 : function (argumentA: float8, argumentB: int4, agumentC: nat8, argumentD: string) -> (result: int4) =
 {
 }

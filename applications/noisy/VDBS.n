@@ -1,7 +1,7 @@
 #
 #	This is an 8-bit VDBS encoder/quantizer with worst-case deviation m=64
 #
-vdbs8bitM64Quantizer (input: valueType) -> (out: valueType);
+vdbs8bitM64Quantizer (input: valueType) -> (out: valueType) =
 {
 	return (out: 
 		input quantize 

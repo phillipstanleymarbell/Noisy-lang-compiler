@@ -65,7 +65,7 @@ const char *	gNoisyTokenDescriptions[kNoisyIrNodeTypeMax] = {
 									[kNoisyIrNodeType_Tadt]				=	"adt",
 									[kNoisyIrNodeType_Talpha]			=	"alpha",
 									[kNoisyIrNodeType_TandAssign]			=	"&=",
-									[kNoisyIrNodeType_Tand]				=	"&&",
+									[kNoisyIrNodeType_Tand]				=	"and",
 									[kNoisyIrNodeType_Tanglerate]			=	"anglerate",
 									[kNoisyIrNodeType_TarithmeticAnd]		=	"&",
 									[kNoisyIrNodeType_Tarray]			=	"array",
