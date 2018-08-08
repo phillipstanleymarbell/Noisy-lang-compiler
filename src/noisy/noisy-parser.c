@@ -3082,7 +3082,22 @@ noisyParseFunctionDefn(State *  N, Scope *  scope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	IrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+	IrNode *	identifier;
+	/*
+	 *	Depending on whether this is a local function definition or
+	 *	one defined in module interface, pick between using existing
+	 *	noisyParseIdentifierUsageTerminal vs noisyParseIdentifierDefinitionTerminal machinery.
+	 *	 
+	 */
+	if (noisySymbolTableSymbolForIdentifier(N, scope, lexPeek(N, 1)->identifier) != NULL)
+	{
+		identifier = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+	}
+	else
+	{
+		identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+	}
+
 	addLeaf(N, n, identifier);
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
@@ -3142,7 +3157,22 @@ noisyParseProblemDefn(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	IrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+	IrNode *	identifier;
+	/*
+	 *	Depending on whether this is a local problem definition or
+	 *	one defined in module interface, pick between using existing
+	 *	noisyParseIdentifierUsageTerminal vs noisyParseIdentifierDefinitionTerminal machinery.
+	 *	 
+	 */
+	if (noisySymbolTableSymbolForIdentifier(N, currentScope, lexPeek(N, 1)->identifier) != NULL)
+	{
+		identifier = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+	}
+	else
+	{
+		identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+	}
+
 	addLeaf(N, n, identifier);
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
@@ -3200,8 +3230,22 @@ noisyParsePredicateFnDefn(State *  N, Scope *  currentScope)
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
+	IrNode *	identifier;
+	/*
+	 *	Depending on whether this is a local predicate definition or
+	 *	one defined in module interface, pick between using existing
+	 *	noisyParseIdentifierUsageTerminal vs noisyParseIdentifierDefinitionTerminal machinery.
+	 *	 
+	 */
+	if (noisySymbolTableSymbolForIdentifier(N, currentScope, lexPeek(N, 1)->identifier) != NULL)
+	{
+		identifier = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+	}
+	else
+	{
+		identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+	}
 
-	IrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
 	addLeaf(N, n, identifier);
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
@@ -7604,6 +7648,10 @@ noisyParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  
 
 	n->tokenString = t->identifier;
 
+	/*
+	 *	noisySymbolTableSymbolForIdentifier() will first, try current scope
+	 *	(and its parents), and if not found, will try module scopes.
+	 */
 	n->symbol = noisySymbolTableSymbolForIdentifier(N, scope, t->identifier);
 	if (n->symbol == NULL)
 	{

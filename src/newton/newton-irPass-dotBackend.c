@@ -106,7 +106,7 @@ irPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irNode, 
 	nodeBorderString	= "M";
 	typeString		= astNodeStrings[irNode->type];
 
-	if (gNoisyAstNodeStrings[irNode->type] == NULL)
+	if (astNodeStrings[irNode->type] == NULL)
 	{
 		fatal(N, Esanity);
 	}

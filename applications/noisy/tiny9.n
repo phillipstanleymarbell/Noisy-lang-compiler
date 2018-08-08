@@ -30,6 +30,6 @@ init : function (arguments: list of string) -> (results: list of string) =
 	i := 0;
 	iterate
 	{
-	#	i < 100	=> ;
+		i < 100	=> ;
 	};
 }
