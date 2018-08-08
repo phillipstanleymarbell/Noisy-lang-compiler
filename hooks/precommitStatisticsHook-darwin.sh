@@ -19,7 +19,7 @@ cd $libflexDirectory && make clean all &
 
 #wait $!
 make clean
-make -j
+make #-j
 make README.sloccount
 
 cat src/noisy/version.c >> $trackingDirectory/$statsFile
