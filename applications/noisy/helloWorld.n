@@ -2,7 +2,7 @@
 
 System : module ()
 {
-	print	: function (arguments: list of string) -> (results: int64);
+	sysprint	: function (arguments: list of string) -> (results: int64);
 }
 
 #
