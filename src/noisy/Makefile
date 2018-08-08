@@ -6,6 +6,8 @@ PRECOMMITHOOK = precommitStatisticsHook-$(OSTYPE).sh
 COMMONPATH	= ../common
 COMPILERVARIANT	= clang
 
+SYSNAME		= Noisy
+SYSNAMELOWER	= noisy
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 

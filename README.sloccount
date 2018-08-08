@@ -1,0 +1,13 @@
+WARNING!!! Not a file nor a directory (so ignored): *.c
+WARNING!!! Not a file nor a directory (so ignored): *.h
+WARNING!!! Not a file nor a directory (so ignored): *.grammar
+WARNING!!! Not a file nor a directory (so ignored): *.ffi
+WARNING!!! Not a file nor a directory (so ignored): *.
+WARNING!!! Not a file nor a directory (so ignored): */*.
+Categorizing files.
+Skipping non-directory *
+Computing results.
+
+
+SLOC	Directory	SLOC-by-Language (Sorted)
+SLOC total is zero, no further analysis performed.

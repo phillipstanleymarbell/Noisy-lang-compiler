@@ -47,8 +47,14 @@
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
 
-
+/*
+ *	This array is used both in the lexer for two purposes: (1) match keywords in order
+ *	to return a kNewtonIrNodeType_Tabcd, as well as to print descriptions of keywords.
+ */
 const char *	gNewtonTokenDescriptions[kCommonIrNodeTypeMax] = {
+									/*
+									 *	Begin keywords
+									 */
 									[kNewtonIrNodeType_Tinclude]		= "include",
 									[kNewtonIrNodeType_TEnglish]		= "English",
 									[kNewtonIrNodeType_TSpanish]		= "Spanish",
@@ -67,7 +73,6 @@ const char *	gNewtonTokenDescriptions[kCommonIrNodeTypeMax] = {
 									[kNewtonIrNodeType_Tge]			= ">=",
 									[kNewtonIrNodeType_Tgt]			= ">",
 									[kNewtonIrNodeType_Tidentifier]		= "identifier",
-									[kNewtonIrNodeType_TintConst]		= "integer constant",
 									[kNewtonIrNodeType_Tintegral]		= "integral",
 									[kNewtonIrNodeType_Tinvariant]		= "invariant",
 									[kNewtonIrNodeType_Tle]			= "<=",
@@ -81,17 +86,29 @@ const char *	gNewtonTokenDescriptions[kCommonIrNodeTypeMax] = {
 									[kNewtonIrNodeType_Tnone]		= "none",
 									[kNewtonIrNodeType_Tnumber]		= "number",
 									[kNewtonIrNodeType_Tplus]		= "+",
-									[kNewtonIrNodeType_Tproportionality]	= "@<",
-									[kNewtonIrNodeType_TrealConst]		= "real-valued constant",
 									[kNewtonIrNodeType_TrightBrace]		= "}",
 									[kNewtonIrNodeType_TrightParen]		= ")",
 									[kNewtonIrNodeType_Tsemicolon]		= ";",
 									[kNewtonIrNodeType_Tsignal]		= "signal",
-									[kNewtonIrNodeType_TstringConst]	= "string constant",
+									[kNewtonIrNodeType_Tproportionality]	= "@<",
 									[kNewtonIrNodeType_Tsymbol]		= "symbol",
 									[kNewtonIrNodeType_Tto]			= "to",
+									/*
+									 *	End keywords
+									 */
+
+
+									/*
+									 *	Begin tokens returned by lexer that are not literal keywords
+									 */
+									[kNewtonIrNodeType_TintConst]		= "integer constant",
+									[kNewtonIrNodeType_TrealConst]		= "real-valued constant",
+									[kNewtonIrNodeType_TstringConst]	= "string constant",
 									[kNewtonIrNodeType_ZbadIdentifier]	= "bad identifier",
 									[kNewtonIrNodeType_ZbadStringConst]	= "bad string const",
 									[kNewtonIrNodeType_Zeof]		= "end of file",
 									[kNewtonIrNodeType_Zepsilon]		= "epsilon",
+									/*
+									 *	End non-keyword tokens
+									 */
 								};

@@ -122,81 +122,94 @@ errorUseBeforeDefinition(State *  N, const char *  identifier)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParserErrorUseBeforeDefinition);
 
-	flexprint(N->Fe, N->Fm, N->Fperr, "Saw identifier \"%s\" in use before definition\n", identifier);
+	flexprint(N->Fe, N->Fm, N->Fperr, Eusedef, identifier);
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
 }
 
 void
 errorMultiDefinition(State *  N, Symbol *  symbol)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
+
+	flexprint(N->Fe, N->Fm, N->Fperr, Emultidef, symbol->identifier);
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
 }
 
 IrNode*
 findNthIrNodeOfTypes(State * N, IrNode * root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int nth)
 {
-  int ith = nth; // copy so we do not modify the caller's count variable
-  return findNthIrNodeOfTypesHelper(N, root, productionOrToken, firsts, &ith);
+	int ith = nth; // copy so we do not modify the caller's count variable
+	return findNthIrNodeOfTypesHelper(N, root, productionOrToken, firsts, &ith);
 }
 
 IrNode*
 findNthIrNodeOfTypesHelper(State * N, IrNode * root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int *nth)
 {
-    assert(root != NULL);
+	assert(root != NULL);
 	for (int i = 0; i < kNoisyIrNodeTypeMax && firsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
 		if (firsts[productionOrToken][i] == root->type)
 		{
-            if(*nth == 0)
-                return root;
-            *nth = *nth - 1;
-            break;
+			if(*nth == 0)
+			{
+				return root;
+			}
+			*nth = *nth - 1;
+
+			break;
 		}
 	}
 
-    IrNode * nthNode;
-    if (root->irLeftChild != NULL &&\
-      (nthNode = findNthIrNodeOfTypesHelper(N, root->irLeftChild, productionOrToken, firsts, nth)) != NULL)
-    {
-      return nthNode;
-    }
+	IrNode * nthNode;
+	if (root->irLeftChild != NULL &&\
+		(nthNode = findNthIrNodeOfTypesHelper(N, root->irLeftChild, productionOrToken, firsts, nth)) != NULL)
+	{
+		return nthNode;
+	}
 
-    if (root->irRightChild != NULL &&\
-      (nthNode = findNthIrNodeOfTypesHelper(N, root->irRightChild, productionOrToken, firsts, nth)) != NULL)
-    {
-      return nthNode;
-    }
+	if (root->irRightChild != NULL &&\
+		(nthNode = findNthIrNodeOfTypesHelper(N, root->irRightChild, productionOrToken, firsts, nth)) != NULL)
+	{
+		return nthNode;
+	}
 
-    return NULL;
+	return NULL;
 }
 
 IrNode*
 findNthIrNodeOfType(State * N, IrNode * root, IrNodeType expectedType, int nth)
 {
-  int ith = nth;
-  return findNthIrNodeOfTypeHelper(N, root, expectedType, &ith);
+	int ith = nth;
+	return findNthIrNodeOfTypeHelper(N, root, expectedType, &ith);
 }
 
 
 IrNode*
 findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int* nth)
 {
-  if (root->type == expectedType)
-    {
-      if(*nth == 0)
-        return root;
-      *nth = *nth - 1;
-    }
+	if (root->type == expectedType)
+	{
+		if(*nth == 0)
+		{
+			return root;
+		}
+		*nth = *nth - 1;
+	}
 
-  IrNode * nthNode;
-  if (root->irLeftChild != NULL &&\
-      (nthNode = findNthIrNodeOfTypeHelper(N, root->irLeftChild, expectedType, nth)) != NULL)
-    return nthNode;
+	IrNode * nthNode;
+	if (root->irLeftChild != NULL &&\
+		(nthNode = findNthIrNodeOfTypeHelper(N, root->irLeftChild, expectedType, nth)) != NULL)
+	{
+		return nthNode;
+	}
 
-  if (root->irRightChild != NULL &&\
-      (nthNode = findNthIrNodeOfTypeHelper(N, root->irRightChild, expectedType, nth)) != NULL)
-    return nthNode;
+	if (root->irRightChild != NULL &&\
+		(nthNode = findNthIrNodeOfTypeHelper(N, root->irRightChild, expectedType, nth)) != NULL)
+	{
+		return nthNode;
+	}
 
-  return NULL;
+	return NULL;
 }
 
 IrNode *
@@ -263,12 +276,12 @@ addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode)
 bool
 peekCheck(State *  N, int lookAhead, IrNodeType expectedType)
 {
-    TimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
 
-    if (lexPeek(N, lookAhead) == NULL)
-    {
-        return false;
-    }
+	if (lexPeek(N, lookAhead) == NULL)
+	{
+		return false;
+	}
 
-    return (lexPeek(N, lookAhead)->type == expectedType);
+	return (lexPeek(N, lookAhead)->type == expectedType);
 }

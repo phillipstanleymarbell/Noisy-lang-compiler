@@ -1,4 +1,4 @@
-sortArrayVariantC : progtype (indexType: type, valueType: type)
+sortArrayVariantC : module (indexType: type, valueType: type)
 {
 	sorter	: function (inputArray: array of valueType) -> (outputArray: array of valueType);
 	sorter	: probdef (inputArray: array of valueType) -> (outputArray: array of valueType);

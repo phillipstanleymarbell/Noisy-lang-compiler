@@ -1,4 +1,4 @@
-tiny6 : module
+tiny6 : module ()
 {
 	Pixel : adt
 	{
@@ -8,14 +8,14 @@ tiny6 : module
 		a : nat8;
 	};
 
-	pi	: const 3.1415926535897932384626433832795028841971693993751;
-	complex	: type (int64, int64);
-	rational: type (int64, int64);
+	pi		: const 3.1415926535897932384626433832795028841971693993751;
+	anotherComplex	: type (int64, int64);
+	anotherRational	: type (int64, int64);
 
-	init	: function (list of string) -> (list of string);
+	init	: function (arguments: list of string) -> (results: list of string);
 }
 
-init : function (list of string) -> (list of string)
+init : function (arguments: list of string) -> (results: list of string) =
 {
 	a : int64;
 

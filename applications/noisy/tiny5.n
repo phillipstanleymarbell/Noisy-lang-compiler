@@ -1,4 +1,4 @@
-tiny5 : module
+tiny5 : module ()
 {
 	Pixel : adt
 	{
@@ -8,43 +8,43 @@ tiny5 : module
 		a : nat8;
 	};
 
-	complex	: type (int64, int64);
-	rational: type (int64, int64);
+	newComplex	: type (int64, int64);
+	newRational	: type (int64, int64);
 
-	init	: function (list of string) -> (list of string);
-	first	: function ((int64, int64), nat8, int64) -> (int64);
-	second	: function (int64, string) -> (int64, (int64, int64));
-	third	: function (float64) -> (int64, float64, (int64, string, (int64, nat8)), string);
+	init	: function (arguments: list of string) -> (results: list of string);
+	first	: function (argumentA: (int64, int64), argumentB: nat8, argumentC: int64) -> (result: int64);
+	second	: function (argumentA: int64, argumentB: string) -> (resultA: int64, resultB: (int64, int64));
+	third	: function (argument: float64) -> (resultA: int64, resultB: float64, resultC: (int64, string, (int64, nat8)), resultD: string);
 }
 
-init : function (list of string) -> (list of string)
+init : function (arguments: list of string) -> (results: list of string) =
 {
 }
 
-first : function ((int64, int64), nat8, int64) -> (int64)
+first : function (argumentA: (int64, int64), argumentB: nat8, argumentC: int64) -> (result: int64) =
 {
 }
 
-second : function (int64, string) -> (int64, (int64, int64))
+second : function (argumentA: int64, argumentB: string) -> (resultA: int64, resultB: (int64, int64)) =
 {
 }
 
-third : function (float64) -> (int64, float64, (int64, string, (int64, nat8)), string)
+third : function (argument: float64) -> (resultA: int64, resultB: float64, resultC: (int64, string, (int64, nat8)), resultD: string) =
 {
 }
 
-localfunc1 : function (int64, int64) -> (int64) =
+localfunc1 : function (argumentA: int64, argumentB: int64) -> (result: int64) =
 {
 }
 
-localfunc2 : function (float64, int64, nat8, string) -> (int64) =
+localfunc2 : function (argumentA: float64, argumentB: int64, argumentC: nat8, argumentD: string) -> (result: int64) =
 {
 }
 
-localfunc3 : function (int64, int64) -> (int64, (int64, int64)) =
+localfunc3 : function (argumentA: int64, argumentB: int64) -> (resultA: int64, resultB: (int64, int64)) =
 {
 }
 
-localfunc4 : function (int64, int64) -> ((int64, int64)) =
+localfunc4 : function (argumentA: int64, argumentB: int64) -> (result: (int64, int64)) =
 {
 }

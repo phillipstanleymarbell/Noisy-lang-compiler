@@ -109,6 +109,7 @@ typedef enum
 	kNoisyTimeStampKeyParseMinOverExpr,
 	kNoisyTimeStampKeyParseModuleDecl,
 	kNoisyTimeStampKeyParseModuleDeclBody,
+	kNoisyTimeStampKeyParseModuleTypenameDecl,
 	kNoisyTimeStampKeyParseNamegenDeclaration,
 	kNoisyTimeStampKeyParseNamegenDefinition,
 	kNoisyTimeStampKeyParseNamegenInvokeShorthand,
@@ -131,7 +132,6 @@ typedef enum
 	kNoisyTimeStampKeyParseProblemDefn,
 	kNoisyTimeStampKeyParseProductOverExpr,
 	kNoisyTimeStampKeyParseProgram,
-	kNoisyTimeStampKeyParseModuleTypenameDecl,
 	kNoisyTimeStampKeyParseQuantifiedBoolTerm,
 	kNoisyTimeStampKeyParseQuantifierOp,
 	kNoisyTimeStampKeyParseQuantizeExpression,
@@ -192,6 +192,7 @@ typedef enum
 	kNoisyTimeStampKeyParseVarTuple,
 	kNoisyTimeStampKeyParseVectorType,
 	kNoisyTimeStampKeyParseWriteTypeSignature,
+	kNoisyTimeStampKeyParsenQualifiedIdentifier,
 
 
 	/*

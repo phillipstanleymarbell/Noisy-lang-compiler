@@ -134,6 +134,7 @@ newtonLex(State *  N, char *  fileName)
 	N->filePointer = fopen(fileName, "r");
 	if (N->filePointer == NULL)
 	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "Could not open file \"%s\".\n", fileName);
 		fatal(N, Eopen);
 	}
 
@@ -362,7 +363,7 @@ static void
 checkDoubleQuote(State *  N, bool callFinishTokenFlag)
 {
 	/*
-	 *	TODO/BUG: we do not handle escaped dquotes in a strconst
+	 *	TODO/BUG: we do not handle escaped double quotes in a strconst
 	 */
 	Token *	newToken;
 
@@ -610,7 +611,6 @@ makeNumericConst(State *  N)
 			 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
 			 */
 			done(N, newToken);
-			fatal(N, "something gone wrong with newton lexer decimals\n");
 
 			return;
 		}

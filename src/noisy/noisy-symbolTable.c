@@ -123,24 +123,43 @@ noisySymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  id
 	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableSymbolForIdentifier);
 
 	/*
-	 *	Recursion falls out when we reach root which has nil parent
+	 *	Recursion falls out when we reach root which has nil parent,
+	 *	and this is the point at which we check the module scopes:
 	 */
 	if (scope == NULL)
 	{
+		Scope *	moduleScope = N->moduleScopes;
+
+		while (moduleScope != NULL)
+		{
+			Symbol *	moduleSym = moduleScope->firstSymbol;
+
+			while (moduleSym != NULL)
+			{
+				if (!strcmp(moduleSym->identifier, identifier))
+				{
+					return moduleSym;
+				}
+				moduleSym = moduleSym->next;
+			}
+
+			moduleScope = moduleScope->next;
+		}
+
 		return NULL;
 	}
 
 	/*
 	 *	Search current and parent (not siblings or children)
 	 */
-	Symbol *	p = scope->firstSymbol;
-	while (p != NULL)
+	Symbol *	sym = scope->firstSymbol;
+	while (sym != NULL)
 	{
-		if (!strcmp(p->identifier, identifier))
+		if (!strcmp(sym->identifier, identifier))
 		{
-			return p;
+			return sym;
 		}
-		p = p->next;
+		sym = sym->next;
 	}
 
 	return noisySymbolTableSymbolForIdentifier(N, scope->parent, identifier);

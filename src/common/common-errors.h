@@ -66,6 +66,9 @@ extern const char	EassignTypeSanity[];
 extern const char	Efd2path[];
 extern const char	EtokenInSMT[];
 extern const char	EexpressionPhysicsMismatch[];
+extern const char	Eusedef[];
+extern const char	Emultidef[];
+extern const char	EunhandledNodeTypeInAstNodeStringsArray[];
 
 
 /*

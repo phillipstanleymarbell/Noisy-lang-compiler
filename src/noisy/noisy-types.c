@@ -52,7 +52,7 @@
 
 
 extern const char	gNoisyTypeNodeSignatures[];
-extern const char	gNoisyAstNodeStrings[];
+extern const char *	gNoisyAstNodeStrings[];
 
 
 IrNode *

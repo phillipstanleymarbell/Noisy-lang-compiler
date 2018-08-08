@@ -81,7 +81,7 @@ gobble(State *  N, int count)
 	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "gobble, N->currentToken = \"%s\"\n", N->currentToken);
-//fprintf(stderr, "gobble, N->currentToken = \"%s\"\n", N->currentToken);
+		//fprintf(stderr, "gobble, N->currentToken = \"%s\"\n", N->currentToken);
 	}
 
 	N->columnNumber += count;
@@ -194,8 +194,6 @@ isDecimalSeparatedWithChar(State *  N, char *  string, char  character)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar);
 
-//fprintf(stderr, "isDecimalSeparatedWithChar, string = [%s]\n", string);
-
 	if (string == NULL)
 	{
 		return false;
@@ -209,9 +207,6 @@ isDecimalSeparatedWithChar(State *  N, char *  string, char  character)
 	char *	left = stringAtLeft(N, string, character);
 	char *	right = stringAtRight(N, string, character);
 	bool	result = isDecimal(N, left) && isDecimal(N, right);
-
-//fprintf(stderr, "isDecimalSeparatedWithChar. stringAtLeft(N, [%s], [%c]) = [%s]\n", string, character, left);
-//fprintf(stderr, "isDecimalSeparatedWithChar. stringAtRight(N, [%s], [%c]) = [%s]\n", string, character, right);
 
 	/*
 	 *	stringAtLeft() makes a copy, which needs to be freed.
@@ -245,9 +240,6 @@ isDecimalOrRealSeparatedWithChar(State *  N, char *  string, char  character)
 			&&
 			(isDecimal(N, right) || isRealConst(N, right));
 
-//fprintf(stderr, "stringAtLeft(N, [%s], [%c]) = [%s]\n", string, character, left);
-//fprintf(stderr, "stringAtRight(N, [%s], [%c]) = [%s]\n", string, character, right);
-
 	/*
 	 *	stringAtLeft() makes a copy, which needs to be freed.
 	 *	(stringAtRight on the other hand does not need to make
@@ -270,7 +262,6 @@ isRadixConst(State *  N, char *  string)
 		return false;
 	}
 
-//fprintf(stderr, "isRadixConst(N, %s) = %d\n", string, isDecimalSeparatedWithChar(N, string, 'r'));
 	return isDecimalSeparatedWithChar(N, string, 'r');
 }
 
@@ -285,8 +276,6 @@ isRealConst(State *  N, char *  string)
 		return false;
 	}
 
-//fprintf(stderr, "isRealConst, string = [%s]\n", string);
-//fprintf(stderr, "isRealConst(N, %s) = %d\n", string, isDecimalSeparatedWithChar(N, string, '.'));
 	return isDecimalSeparatedWithChar(N, string, '.');
 }
 
@@ -301,7 +290,6 @@ isEngineeringRealConst(State *  N, char *  string)
 		return false;
 	}
 
-//fprintf(stderr, "isEngineeringRealConst(N, %s)...\n", string);
 	return (isDecimalOrRealSeparatedWithChar(N, string, 'e') || isDecimalOrRealSeparatedWithChar(N, string, 'E'));
 }
 
@@ -578,7 +566,6 @@ lexPeek(State *  N, int lookAhead)
 	int 		which = 1;
 	while ((tmp != NULL) && (which++ < lookAhead))
 	{
-//fprintf(stderr, "*** which=%d, lookAhead=%d\n", which, lookAhead);
 		tmp = tmp->next;
 	}
 
@@ -682,12 +669,12 @@ lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 
 	if (N->mode & kNoisyModeCGI)
 	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "line %3d, pos %3d, length %3d\n",
+		flexprint(N->Fe, N->Fm, N->Fperr, "line %3d, position %3d, length %3d\n",
 			t->sourceInfo->lineNumber, t->sourceInfo->columnNumber, t->sourceInfo->length);
 	}
 	else
 	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "source file: %16s, line %3d, pos %3d, length %3d\n",
+		flexprint(N->Fe, N->Fm, N->Fperr, "source file: %16s, line %3d, position %3d, length %3d\n",
 			t->sourceInfo->fileName, t->sourceInfo->lineNumber, t->sourceInfo->columnNumber, t->sourceInfo->length);
 	}
 }
@@ -711,7 +698,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 	}
 	else
 	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "\tsource file: %40s, line %5d, token %3d\t", tmp->sourceInfo->fileName, tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
+		flexprint(N->Fe, N->Fm, N->Fperr, "\tsource file: %40s, line %5d, position %3d\t", tmp->sourceInfo->fileName, tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
 	}
 
 	while (tmp != NULL)

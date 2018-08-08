@@ -43,7 +43,7 @@ identifier		::=	(idchar-except-zeroToNine) {idchar} .
 /*
  *	Syntactic elements: top-level program structure
  */
-program			::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
+program			::=	moduleDecl {(moduleDecl | functionDefn | problemDefn | predicateFnDefn)} .
 functionDefn		::=	identifier ":" "function" signature "->" signature "="  scopedStatementList .
 problemDefn		::=	identifier ":" "probdef" signature "->" signature "=>" scopedPredStmtList .
 predicateFnDefn		::=	identifier ":" "predicate" signature "=>" scopedPredStmtList .
@@ -66,7 +66,7 @@ probdefDecl		::=	"probdef" writeTypeSignature "->" readTypeSignature .
 readTypeSignature	=	signature .
 writeTypeSignature	=	signature .
 predicateFnDecl		::=	"predicate" signature .
-identifierOrNil		=	(identifier {fieldSelect}) | "nil" .
+identifierOrNil		=	qualifiedIdentifier | "nil" .
 identifierOrNilList	=	identifierOrNil {"," identifierOrNil} .
 identifierList		=	identifier {"," identifier} .
 typeExpr		::=	(basicType ["and" typeAnnoteList]) | anonAggregateType | typeName .
@@ -150,10 +150,11 @@ complexCastExpr		::=	"complex" "(" expression "," expression ")" .
 rationalCastExpr	::=	"rational" "(" expression "," expression ")" .
 anonAggrCastExpr	::=	listCastExpr | setCastExpr | arrayCastExpr | complexCastExpr | rationalCastExpr .
 chanEventExpr		::=	("erasures" | "distortions" | "latency") "of" identifier cmpOp expression .
-loadExpr		::=	"load" identifier [tupleType] (stringConst | ("path" typeName)) .
+loadExpr		::=	"load" identifier ["->" identifier] [tupleType] (stringConst | "(" "path" typeName ")") .
 term			::=	[basicType] [unaryOp] factor ["++" | "--"] {highPrecedenceBinaryOp factor} .
-factor			::=	(identifier {fieldSelect}) | integerConst | realConst | stringConst | boolConst
-				| "(" expression ")" | tupleValue | namegenInvokeShorthand | typeMinExpr | typeMaxExpr .
+factor			::=	qualifiedIdentifier | integerConst | realConst | stringConst | boolConst
+				| "(" expression ")" | tupleValue | namegenInvokeShorthand | typeMinExpr | typeMaxExpr | "nil" .
+qualifiedIdentifier	=	identifier {fieldSelect} .
 typeMinExpr		::=	"typemin" "(" numericType ")" .
 typeMaxExpr		::=	"typemax" "(" numericType ")" .
 namegenInvokeShorthand	=	identifier "(" [identifier ":" expression {","  identifier ":" expression}] ")" .

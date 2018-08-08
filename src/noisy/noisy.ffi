@@ -22,7 +22,7 @@
 --//
 --//
 
---//		program			::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
+--//		program			::=	moduleDecl {(moduleDecl | functionDefn | problemDefn | predicateFnDefn)} .
 production	kNoisyIrNodeType_Pprogram:			firstset = {
 										firstset(kNoisyIrNodeType_PmoduleDecl),
 									}
@@ -120,7 +120,7 @@ production	kNoisyIrNodeType_PpredicateFnDecl:		firstset = {
 										kNoisyIrNodeType_Tpredicate
 									}
 
---//		identifierOrNil		=	(identifier {fieldSelect}) | "nil" .
+--//		identifierOrNil		=	qualifiedIdentifier | "nil" .
 production	kNoisyIrNodeType_PidentifierOrNil:		firstset = {
 										kNoisyIrNodeType_Tidentifier,
 										kNoisyIrNodeType_Tnil
@@ -136,7 +136,7 @@ production	kNoisyIrNodeType_PidentifierList:		firstset = {
 										kNoisyIrNodeType_Tidentifier,
 									}
 
---//		typeExpr		::=	(basicType typeAnnoteList) | anonAggregateType | typeName .
+--//		typeExpr		::=	(basicType ["and" typeAnnoteList]) | anonAggregateType | typeName .
 production	kNoisyIrNodeType_PtypeExpr:			firstset = {
 										firstset(kNoisyIrNodeType_PbasicType),
 										firstset(kNoisyIrNodeType_PanonAggregateType),
@@ -156,6 +156,7 @@ production	kNoisyIrNodeType_PtypeAnnoteItem:		firstset = {
 
 --//		typeAnnoteList		=	typeAnnoteItem {"and" typeAnnoteItem} .
 production	kNoisyIrNodeType_PtypeAnnoteList:		firstset = {
+										epsilon,
 										firstset(kNoisyIrNodeType_PtypeAnnoteItem),
 									}
 
@@ -578,7 +579,7 @@ production	kNoisyIrNodeType_PchanEventExpr:		firstset = {
 										kNoisyIrNodeType_Tlatency,
 									}
 
---//		loadExpr		::=	"load" identifier [tupleType] (stringConst | ("path" typeName)) .
+--//		loadExpr		::=	"load" identifier ["->" identifier] [tupleType] (stringConst | ("path" typeName)) .
 production	kNoisyIrNodeType_PloadExpr:			firstset = {
 										kNoisyIrNodeType_Tload,
 									}
@@ -590,9 +591,10 @@ production	kNoisyIrNodeType_Pterm:				firstset = {
 										firstset(kNoisyIrNodeType_Pfactor),
 									}
 
---//		factor			::=	(identifier {fieldSelect}) | integerConst | realConst | stringConst | boolConst
+--//		factor			::=	qualifiedIdentifier | integerConst | realConst | stringConst | boolConst
 --//						| "(" expression ")" | tupleValue | namegenInvokeShorthand | typeMinExpr | typeMaxExpr .
 production	kNoisyIrNodeType_Pfactor:			firstset = {
+										kNoisyIrNodeType_Tnil,
 										kNoisyIrNodeType_Tidentifier,
 										kNoisyIrNodeType_TintegerConst,
 										kNoisyIrNodeType_TrealConst,
@@ -603,6 +605,11 @@ production	kNoisyIrNodeType_Pfactor:			firstset = {
 										firstset(kNoisyIrNodeType_PnamegenInvokeShorthand),
 										firstset(kNoisyIrNodeType_PtypeMinExpr),
 										firstset(kNoisyIrNodeType_PtypeMaxExpr),
+									}
+
+--//		qualifiedIdentifier	=	identifier {fieldSelect} .
+production	kNoisyIrNodeType_PqualifiedIdentifier:		firstset = {
+										kNoisyIrNodeType_Tidentifier,
 									}
 
 --//		typeMinExpr		::=	"typemin" "(" numericType ")" .
@@ -666,7 +673,7 @@ production	kNoisyIrNodeType_PcmpOp:			firstset = {
 										kNoisyIrNodeType_TgreaterThan,
 										kNoisyIrNodeType_TlessThan,
 										kNoisyIrNodeType_TlessThanEqual,
-										kNoisyIrNodeType_TgreatherThanEqual,
+										kNoisyIrNodeType_TgreaterThanEqual,
 										kNoisyIrNodeType_TisPermutationOf,
 									}
 
@@ -717,8 +724,8 @@ production	kNoisyIrNodeType_PunaryBoolOp:			firstset = {
 production	kNoisyIrNodeType_Parith2BoolOp:			firstset = {
 										kNoisyIrNodeType_Tequals,
 										kNoisyIrNodeType_TnotEqual,
-										kNoisyIrNodeType_TgreatherThan,
-										kNoisyIrNodeType_TgreatherThanEqual,
+										kNoisyIrNodeType_TgreaterThan,
+										kNoisyIrNodeType_TgreaterThanEqual,
 										kNoisyIrNodeType_TlessThan,
 										kNoisyIrNodeType_TlessThanEqual,
 									}
@@ -994,7 +1001,7 @@ production	kNoisyIrNodeType_PpredicateFnDefn:		followset = {
 --//		signature		::=	"(" [identifier ":" typeExpr] {"," identifier ":" typeExpr} ")" .
 production	kNoisyIrNodeType_Psignature:			followset = {
 										kNoisyIrNodeType_Tarrow,
-										kNoisyIrNodeType_Tequals,
+										kNoisyIrNodeType_Tassign,
 										kNoisyIrNodeType_Timplies,
 										followset(kNoisyIrNodeType_PreadTypeSignature),
 										followset(kNoisyIrNodeType_PwriteTypeSignature),
@@ -1004,6 +1011,8 @@ production	kNoisyIrNodeType_Psignature:			followset = {
 
 --//		moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
 production	kNoisyIrNodeType_PmoduleDecl:			followset = {
+										kNoisyIrNodeType_Zeof,
+										firstset(kNoisyIrNodeType_PmoduleDecl),
 										firstset(kNoisyIrNodeType_PfunctionDefn),
 										firstset(kNoisyIrNodeType_PproblemDefn),
 										firstset(kNoisyIrNodeType_PpredicateFnDefn),
@@ -1077,10 +1086,10 @@ production	kNoisyIrNodeType_PpredicateFnDecl:		followset = {
 										followset(kNoisyIrNodeType_PmoduleTypeNameDecl),
 									}
 
---//		identifierOrNil		=	(identifier {fieldSelect}) | "nil" .
+--//		identifierOrNil		=	qualifiedIdentifier | "nil" .
 production	kNoisyIrNodeType_PidentifierOrNil:		followset = {
 										kNoisyIrNodeType_Tcomma,
-										followset(kNoisyIrNodeType_PidentifierList),
+										followset(kNoisyIrNodeType_PidentifierOrNilList),
 									}
 
 --//		identifierOrNilList	=	identifierOrNil {"," identifierOrNil} .
@@ -1092,10 +1101,10 @@ production	kNoisyIrNodeType_PidentifierOrNilList:		followset = {
 
 --//		identifierList		=	identifier {"," identifier} .
 production	kNoisyIrNodeType_PidentifierList:		followset = {
-										kNoisyIrNodeType_Tsemicolon,
+										kNoisyIrNodeType_Tcolon,
 									}
 
---//		typeExpr		::=	(basicType typeAnnoteList) | anonAggregateType | typeName .
+--//		typeExpr		::=	(basicType ["and" typeAnnoteList]) | anonAggregateType | typeName .
 production	kNoisyIrNodeType_PtypeExpr:			followset = {
 										kNoisyIrNodeType_Tcomma,
 										kNoisyIrNodeType_TrightParens,
@@ -1241,7 +1250,8 @@ production	kNoisyIrNodeType_PbasicType:			followset = {
 										kNoisyIrNodeType_Tand,
 										firstset(kNoisyIrNodeType_PunaryOp),
 										firstset(kNoisyIrNodeType_Pfactor),
-}
+										followset(kNoisyIrNodeType_PtypeExpr),
+									}
 
 --//		integerType		::=	"nat4" | "nat8" | "nat16" | "nat32" | "nat64" | "nat128"
 --//						| "int4" | "int8" | "int16" | "int32" | "int64" | "int128" .
@@ -1342,7 +1352,7 @@ production	kNoisyIrNodeType_Pelement:			followset = {
 
 --//		typeParameterList	=	[identifier ":" "type" {"," identifier ":"  "type"}] .
 production	kNoisyIrNodeType_PtypeParameterList:		followset = {
-										kNoisyIrNodeType_TrightBrace,
+										kNoisyIrNodeType_TrightParens,
 									}
 
 --//		scopedStatementList	::=	"{" statementList "}" .
@@ -1363,6 +1373,7 @@ production	kNoisyIrNodeType_PstatementList:		followset = {
 --//		statement		::=	[ assignmentStatement | matchStatement | iterateStatement | sequenceStatement
 --//						| parallelStatement | scopedStatementList | operatorToleranceDecl | returnStatement] ";" .
 production	kNoisyIrNodeType_Pstatement:			followset = {
+										firstset(kNoisyIrNodeType_Pstatement),
 										followset(kNoisyIrNodeType_PstatementList),
 									}
 
@@ -1493,7 +1504,7 @@ production	kNoisyIrNodeType_PchanEventExpr:		followset = {
 										kNoisyIrNodeType_Timplies,
 									}
 
---//		loadExpr		::=	"load" identifier [tupleType] (stringConst | ("path" typeName)) .
+--//		loadExpr		::=	"load" identifier ["->" identifier] [tupleType] (stringConst | ("path" typeName)) .
 production	kNoisyIrNodeType_PloadExpr:			followset = {
 										followset(kNoisyIrNodeType_Pexpression),
 									}
@@ -1504,13 +1515,19 @@ production	kNoisyIrNodeType_Pterm:				followset = {
 										followset(kNoisyIrNodeType_Pexpression),
 									}
 
---//		factor			::=	(identifier {fieldSelect}) | integerConst | realConst | stringConst | boolConst
+--//		factor			::=	qualifiedIdentifier | integerConst | realConst | stringConst | boolConst
 --//						| "(" expression ")" | tupleValue | namegenInvokeShorthand | typeMinExpr | typeMaxExpr .
 production	kNoisyIrNodeType_Pfactor:			followset = {
 										kNoisyIrNodeType_TplusPlus,
 										kNoisyIrNodeType_TminusMinus,
 										firstset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 										followset(kNoisyIrNodeType_Pterm),
+									}
+
+--//		qualifiedIdentifier	=	identifier {fieldSelect} .
+production	kNoisyIrNodeType_PqualifiedIdentifier:		followset = {
+										followset(kNoisyIrNodeType_PidentifierOrNil),
+										followset(kNoisyIrNodeType_Pfactor),
 									}
 
 --//		typeMinExpr		::=	"typemin" "(" numericType ")" .
@@ -1898,6 +1915,7 @@ token	kNoisyIrNodeType_TcolonAssign:				followset = {
 									}
 
 token	kNoisyIrNodeType_TcolonColon:				followset = {
+										kNoisyIrNodeType_Tnil,
 										followset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 									}
 
@@ -1974,6 +1992,7 @@ token	kNoisyIrNodeType_TleftBrace:				followset = {
 --//	We get the info needed from shell by doing, e.g., grep -C 1 '\"(\"' noisy.grammar
 --//
 token	kNoisyIrNodeType_TleftParens:				followset = {
+										kNoisyIrNodeType_Tpath,
 										kNoisyIrNodeType_TrightParens,
 										kNoisyIrNodeType_Tnil,
 										kNoisyIrNodeType_Tidentifier,
@@ -2662,6 +2681,8 @@ token	kNoisyIrNodeType_Tidentifier:				followset = {
 										followset(kNoisyIrNodeType_PintParamOrConst),
 										followset(kNoisyIrNodeType_PrealParamOrConst),
 										followset(kNoisyIrNodeType_PstringParamOrConst),
+										followset(kNoisyIrNodeType_PidentifierList),
+										followset(kNoisyIrNodeType_PidentifierOrNilList),
 									}
 
 token	kNoisyIrNodeType_TintegerConst:				followset = {
@@ -2742,63 +2763,63 @@ token	kNoisyIrNodeType_Tnrt:					followset = {
 token	kNoisyIrNodeType_Tlog:					followset = {
 									followset(kNoisyIrNodeType_PhighPrecedenceArith2ArithOp),
 								}
-kNoisyIrNodeType_Tsum:						followset = {
+
+token	kNoisyIrNodeType_Tsum:					followset = {
 									firstset(kNoisyIrNodeType_PsumProdMinMaxBody),
 								}
 
-kNoisyIrNodeType_Tproduct:						followset = {
+token	kNoisyIrNodeType_Tproduct:				followset = {
 									firstset(kNoisyIrNodeType_PsumProdMinMaxBody),
 								}
 
-kNoisyIrNodeType_Tmin:						followset = {
+token	kNoisyIrNodeType_Tmin:					followset = {
 									firstset(kNoisyIrNodeType_PsumProdMinMaxBody),
 								}
 
-kNoisyIrNodeType_Tmax:						followset = {
+token	kNoisyIrNodeType_Tmax:					followset = {
 									firstset(kNoisyIrNodeType_PsumProdMinMaxBody),
 								}
 
-kNoisyIrNodeType_Tfor:						followset = {
+token	kNoisyIrNodeType_Tfor:					followset = {
 									firstset(kNoisyIrNodeType_PvarIntro),
 								}
 
-kNoisyIrNodeType_Tfrom:						followset = {
+token	kNoisyIrNodeType_Tfrom:					followset = {
 									firstset(kNoisyIrNodeType_PpredArithExpr),
 								}
 
-kNoisyIrNodeType_Tto:						followset = {
+token	kNoisyIrNodeType_Tto:					followset = {
 									firstset(kNoisyIrNodeType_PpredArithExpr),
 								}
 
-kNoisyIrNodeType_Twith:						followset = {
+token	kNoisyIrNodeType_Twith:					followset = {
 									firstset(kNoisyIrNodeType_PpredExpr),
 								}
 
-kNoisyIrNodeType_Tpowerset:					followset = {
+token	kNoisyIrNodeType_Tpowerset:				followset = {
 									followset(kNoisyIrNodeType_PunarySetOp),
 								}
 
-kNoisyIrNodeType_Tcomplement:					followset = {
+token	kNoisyIrNodeType_Tcomplement:				followset = {
 									followset(kNoisyIrNodeType_PunarySetOp),
 								}
 
-kNoisyIrNodeType_Tforall:					followset = {
+token	kNoisyIrNodeType_Tforall:				followset = {
 									followset(kNoisyIrNodeType_PquantifierOp),
 								}
 
-kNoisyIrNodeType_Texists:					followset = {
+token	kNoisyIrNodeType_Texists:				followset = {
 									followset(kNoisyIrNodeType_PquantifierOp),
 								}
 
-kNoisyIrNodeType_Tgiven:					followset = {
+token	kNoisyIrNodeType_Tgiven:				followset = {
 									followset(kNoisyIrNodeType_PquantifierOp),
 								}
 
-kNoisyIrNodeType_Tstrongdominates:				followset = {
+token	kNoisyIrNodeType_Tstrongdominates:			followset = {
 									followset(kNoisyIrNodeType_PsetCmpOp),
 								}
 
-kNoisyIrNodeType_Tweakdominates:				followset = {
+token	kNoisyIrNodeType_Tweakdominates:			followset = {
 									followset(kNoisyIrNodeType_PsetCmpOp),
 								}
-	

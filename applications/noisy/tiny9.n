@@ -1,4 +1,4 @@
-tiny9 : module
+tiny9 : module ()
 {
 	int16const	: const 1;
 	#float128const	: const 1.;
@@ -11,9 +11,9 @@ tiny9 : module
 	complexint16	: type (int16, int16);
 	complexfloat128	: type (float128, float128);
 
-	#tolerancevar1	: type int16 epsilon(1., 0.001);
-	tolerancevar2	: type int16 epsilon(1.0, 0.001), epsilon(2.0, 0.0001);
-	#tolerancevar3	: type int16 epsilon(1.0, 0.1), alpha(1.0, 0.1), tau(1.0, 0.1), epsilon(10.0, 0.001);
+	#tolerancevar1	: type int16 and epsilon(1., 0.001);
+	tolerancevar2	: type int16 and epsilon(1.0, 0.001) and epsilon(2.0, 0.0001);
+	#tolerancevar3	: type int16 and epsilon(1.0, 0.1) and alpha(1.0, 0.1) and tau(1.0, 0.1) and epsilon(10.0, 0.001);
 
 	someadt : adt
 	{
@@ -22,14 +22,14 @@ tiny9 : module
 		c	: ((int16, int16), (int16, int16));
 	};
 
-	init		: function (int16) -> (int16);
+	init		: function (argument: int16) -> (result: int16);
 }
 
-init : function (list of string) -> (list of string)
+init : function (arguments: list of string) -> (results: list of string) =
 {
 	i := 0;
 	iterate
 	{
-	#	i < 100	=> ;
+		i < 100	=> ;
 	};
 }

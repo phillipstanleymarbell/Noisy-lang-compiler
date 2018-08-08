@@ -1,7 +1,7 @@
-tiny3 : module
+tiny3 : module ()
 {
-	init	: function (list of string) -> (list of string);
-	first	: function (int16) -> (int16);
-	second	: function (int16) -> (int16);
-	third	: function (int16) -> (int16);
+	init	: function (arguments: list of string)	-> (results: list of string);
+	first	: function (someArgument: int16)	-> (result: int16);
+	second	: function (anArgument: int16)		-> (aResult: int16);
+	third	: function (arg: int16)			-> (someResult: int16);
 }
