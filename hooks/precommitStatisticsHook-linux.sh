@@ -20,7 +20,8 @@ make clean
 make -j
 make README.sloccount
 
-cat version.c >> $trackingDirectory/$statsFile
+cat src/noisy/version.c >> $trackingDirectory/$statsFile
+cat src/newton/version.c >> $trackingDirectory/$statsFile
 echo '\n./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s' >> $trackingDirectory/$statsFile
 ./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s >> $trackingDirectory/$statsFile
 echo '\n./src/newton/newton-linux-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt' >> $trackingDirectory/$statsFile
