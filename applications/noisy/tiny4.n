@@ -8,25 +8,25 @@ tiny4 : module ()
 		a : nat8;
 	};
 
-	init	: function (argument: list of string)		-> (result: list of string);
-	first	: function (argumentA: nat8, argumentB: int4)	-> (result: int4);
-	second	: function (argumentA: int4, argumentB: string) -> (result: int4);
-	third	: function (argument: float8)			-> (resultA: int4, resultB: float8, resultC: string);
+	init		: function (argument: list of string)		-> (result: list of string);
+	firstFun	: function (argumentA: nat8, argumentB: int4)	-> (result: int4);
+	secondFun	: function (argumentA: int4, argumentB: string) -> (result: int4);
+	thirdFun	: function (argument: float8)			-> (resultA: int4, resultB: float8, resultC: string);
 }
 
 init : function (argument: list of string) -> (result: list of string) =
 {
 }
 
-first : function (argumentA: nat8, argumentB: int4) -> (result: int4) =
+firstFun : function (argumentA: nat8, argumentB: int4) -> (result: int4) =
 {
 }
 
-second : function (argumentA: int4, argumentB: string) -> (result: int4) =
+secondFun : function (argumentA: int4, argumentB: string) -> (result: int4) =
 {
 }
 
-third : function (argument: float8) -> (resultA: int4, resultB: float8, resultC: string) =
+thirdFun : function (argument: float8) -> (resultA: int4, resultB: float8, resultC: string) =
 {
 }
 

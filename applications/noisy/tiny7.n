@@ -11,10 +11,10 @@ tiny7 : module ()
 	customComplex	: type (int64, int64);
 	customRational	: type (int64, int64);
 
-	init	: function (arguments: list of string) -> (results: list of string);
-	first	: function (argumentA: (int64, int64), argumentB: nat8, argumentC: int64) -> (result: int64);
-	second	: function (argumentA: int64, argumentB: string) -> (resultA: int64, resultB: (int64, int64));
-	third	: function (argument: float4) -> (resultA: int64, resultB: float4, resultC: (int64, string, (int64, nat8)), resultD: string);
+	init		: function (arguments: list of string) -> (results: list of string);
+	firstFun	: function (argumentA: (int64, int64), argumentB: nat8, argumentC: int64) -> (result: int64);
+	secondFun	: function (argumentA: int64, argumentB: string) -> (resultA: int64, resultB: (int64, int64));
+	thirdFun	: function (argument: float4) -> (resultA: int64, resultB: float4, resultC: (int64, string, (int64, nat8)), resultD: string);
 }
 
 init : function (arguments: list of string) -> (results: list of string) =
@@ -27,15 +27,15 @@ init : function (arguments: list of string) -> (results: list of string) =
 	};
 }
 
-first : function (argumentA: (int64, int64), argumentB: nat8, argumentC: int64) -> (result: int64) =
+firstFun : function (argumentA: (int64, int64), argumentB: nat8, argumentC: int64) -> (result: int64) =
 {
 }
 
-second : function (intArgumen: int64, stringArgument: string) -> (intResult: int64, tupleResult: (int64, int64)) =
+secondFun : function (intArgumen: int64, stringArgument: string) -> (intResult: int64, tupleResult: (int64, int64)) =
 {
 }
 
-third : function (argument: Pixel) -> (intResult: int64, pixelResult: Pixel, tupleResult: (int64, string, (int64, nat8)), stringResult: string) =
+thirdFun : function (argument: Pixel) -> (intResult: int64, pixelResult: Pixel, tupleResult: (int64, string, (int64, nat8)), stringResult: string) =
 {
 }
 
