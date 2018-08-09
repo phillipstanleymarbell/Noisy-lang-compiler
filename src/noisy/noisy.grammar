@@ -15,7 +15,7 @@ reservedIdentifiers		::=	"A" | "K" | "acceleration" | "adt" | "alpha" | "Ampere"
 				"distortions" | "exists" | "false" | "fixed" | "float128" "float16" |
 				"float32" | "float4" | "float64" | "float8" | "forall" | "fourier" |
 				"function" | "given" | "head" | "highpass" | "relativehumidity" |
-				"in" | "int128" | "int16" | "int32" | "int4" |
+				"in" | "int128" | "int16" | "int32" | "int4" | "interrupt" | "exception" |
 				"int64" | "int8" | "iterate" | "Kelvin" | "kg" | "kilogram" | "latency" |
 				"length" | "list" | "load" | "lowpass" | "luminosity" | "m" | "magneticflux" |
 				"mass" | "match" | "matchseq" | "material" | "measurement" | "meter" | "module" | "mole" |
@@ -85,7 +85,7 @@ dimensionArithExpr	::=	dimensionArithTerm {lowPrecedenceArith2ArithOp dimensionA
 unitsArithFactor	::=	(basicSignalUnits | identifier | numericConst) | "(" unitsArithExpr ")" .
 unitsArithTerm		::=	unitsArithFactor {highPrecedenceArith2ArithOp unitsArithFactor} .
 unitsArithExpr		::=	unitsArithTerm {lowPrecedenceArith2ArithOp unitsArithTerm} .
-basicSignalDimension	::=	"distance" | "mass" | "time" | "material" | "current" | "luminosity" | "temperature" .
+basicSignalDimension	::=	"distance" | "mass" | "time" | "material" | "current" | "luminosity" | "temperature" | "interrupt" | "exception" .
 basicSignalUnits	::=	"m" | "kg" | "s" | "mole" | "A" | "cd" | "K" | "meter" | "kilogram" | "second" | "mole" | "Ampere" | "candela" | "Kelvin" .
 basicSignal		::=	basicSignalDimension | "pressure" | "acceleration" | "magneticfluxdensity"
 				| "relativehumidity" | "anglerate" .
@@ -101,7 +101,7 @@ fixedType		::=	"fixed" integerConst "." integerConst .
 numericType		::=	integerType | realType | fixedType | rationalType .
 complexType		::=	"complex" numericType .
 anonAggregateType	::=	arrayType | listType | tupleType | setType | rationalType | complexType .
-arrayType		::=	"array" "[" integerConst "]" {"[" integerConst "]"} "of" typeExpr .
+arrayType		::=	"array" "[" integerConst "]" {"[" integerConst "]"} "of" typeExpr ["rawmem" "@" intParamOrConst] .
 listType		::=	"list" "of" typeExpr .
 tupleType		::=	"(" typeExpr {"," typeExpr} ")" .
 setType			::=	"set" "[" integerConst "]" "of" typeExpr .
@@ -190,15 +190,15 @@ predExpr		::=	predTerm {lowPrecedenceBinaryBoolOp predTerm} .
 varIntro		::=	identifier "in" (setExpr | typeExpr) .
 varIntroList		::=	varIntro {"," varIntro} .
 varTuple		::=	"(" identifier {"," identifier} ")" .
-arithConst		::=	intParamOrConst | realParamOrConst .
-predArithFactor		::=	arithConst | varIntro | identifier | "(" predArithExpr ")" .
+arithParamOrConst	::=	intParamOrConst | realParamOrConst .
+predArithFactor		::=	arithParamOrConst | varIntro | identifier | "(" predArithExpr ")" .
 predArithTerm		::=	predArithFactor {highPrecedenceArith2ArithOp predArithFactor} .
 predArithExpr		::=	predArithTerm {lowPrecedenceArith2ArithOp predArithTerm}
-				| sumOverExpr | productOverExpr | minOverExpr | maxOverExpr .
-sumOverExpr		::=	"sum" sumProdMinMaxBody .
-productOverExpr		::=	"product" sumProdMinMaxBody .
-minOverExpr		::=	"min" sumProdMinMaxBody .
-maxOverExpr		::=	"max" sumProdMinMaxBody .
+				| sumForExpr | productForExpr | minForExpr | maxForExpr .
+sumForExpr		::=	"sum" sumProdMinMaxBody .
+productForExpr		::=	"product" sumProdMinMaxBody .
+minForExpr		::=	"min" sumProdMinMaxBody .
+maxForExpr		::=	"max" sumProdMinMaxBody .
 sumProdMinMaxBody	::=	["for" varIntro ["from" predArithExpr "to" predArithExpr]] ["with" predExpr] "of" "(" predArithExpr ")" .
 quantifiedBoolTerm	::=	quantifierOp varIntroList "(" predExpr ")" .
 setCmpTerm		::=	setExpr setCmpOp setExpr .

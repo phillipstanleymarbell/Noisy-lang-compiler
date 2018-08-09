@@ -50,7 +50,7 @@ runtime:
 	done; \
 
 README.sloccount:
-	sloccount src
+	sloccount src > README.sloccount
 
 clean:
 	@set -e; for dir in $(DIRS); do \

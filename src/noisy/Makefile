@@ -4,6 +4,8 @@ include		$(TREEROOT)/config.local
 
 PRECOMMITHOOK = precommitStatisticsHook-$(OSTYPE).sh 
 COMMONPATH	= ../common
+EXAMPLESPATH	= ../../applications/noisy
+
 COMPILERVARIANT	= clang
 
 SYSNAME		= Noisy
@@ -13,6 +15,7 @@ include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 
 PLATFORM_CFLAGS	+= -Wno-gnu-designator
 MAKEFLAGS	+= #-j -c
+EXAMPLES_NEWTON_FLAGS = #-O 1#--verbose 1
 
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
@@ -128,7 +131,7 @@ HEADERS		=\
 
 
 
-all: installhooks lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile
+all: installhooks lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile examples
 
 #
 #			Install the pre-commit hooks. There doesn't seem to be any other way to force people to install the hook when comitting on Noisy.
@@ -186,6 +189,15 @@ noisy.pb-c.$(OBJECTEXTENSION): noisy.pb-c.c noisy.proto Makefile
 version.c: $(HEADERS) Makefile
 	echo 'char kNoisyVersion[] = "0.1-alpha-'`git rev-list --count HEAD`' ('`git rev-parse HEAD`') (build '`date '+%m-%d-%Y-%H:%M'`-`whoami`@`hostname -s`-`uname -s`-`uname -r`-`uname -m`\)\"\; > version.c
 
+examples: $(EXAMPLES) target
+	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny2.n
+	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny3.n
+	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny4.n
+	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny5.n
+	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny6.n
+	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny7.n
+	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny8.n
+	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny9.n
 
 
 scan:	clean
@@ -193,7 +205,7 @@ scan:	clean
 
 
 README.sloccount: $(HEADERS) $(SOURCES)
-	sloccount *.c *.h *.grammar *.ffi *.$(NOISYEXTENSION) */*.$(NOISYEXTENSION) > README.sloccount
+	sloccount *.c *.h *.grammar *.ffi > README.sloccount
 
 
 installcgi: cgi
