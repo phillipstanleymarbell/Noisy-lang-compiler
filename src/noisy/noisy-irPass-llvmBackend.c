@@ -73,10 +73,9 @@ nyTypeToLlvm(IrNode node)
 		}
 	}
 }
-/*
- * Emits the source_filename, and place holders for target informations
- */
 
+void
+emit 
 LlvmBackendState *
 llvmBackendStateInit()
 {
@@ -87,8 +86,65 @@ llvmBackendStateInit()
 	{
 		fatal(NULL, Emalloc);
 	}
-
 	return Nl;
+}
+
+void
+irPassLlvmRegisterFunc(State *  N, LlvmBackendState *  Nl, IrNode *  node)
+{
+	Nl->nFuncs++;
+	Nl->funcs = (NoisyFunc **) realloc(Nl->funcs, Nl->nFuncs * sizeof(NoisyFunc *));
+
+	if (Nl->funcs == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	Nl->func[Nl->nFuncs] = (NoisyFunc *) calloc(1, sizeof(NoisyFunc));
+	currentFunc = Nl->func[Nl->nFuncs];
+
+	if (currentFunc == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	currentFunc->name = L(node)->tokenString;
+
+}
+
+NoisyADT *
+irPassLlvmEmitFuncIOTypes(State *  N, LlvmBackendState *  Nl, IrNode *  node, NoisyFunc *  currentFunc, bool isInput)
+{
+	if(node->type != kNoisyIrNodeType_PtupleType)
+	{
+		fatal(N, EtokenUnrecognized);
+	}
+
+	NoisyADT *  currentADT;
+	char *  varName;
+
+	if (isInput)
+	{
+		currentFunc->inputVar = ;
+		varName = currentFunc->inputVar;
+		currentFunc->inputADT = (NoisyADT *) calloc(1, sizeof(NoisyADT));
+		currentADT = currentFunc->inputADT;
+	}
+	else
+	{
+		currentFunc->outputVar = ;
+		varName = currentFunc->outputVar;
+		currentFunc->outputADT = (NoisyADT *) calloc(1, sizeof(NoisyADT));
+		currentADT = currentFunc->outputADT;
+	}
+
+	if (currentADT == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	asprintf(&(currentADT->name), "%s.%s", currentFunc->name, varName);
+
 }
 
 void
@@ -127,20 +183,21 @@ irPassLlvmEmitProgTypeNameDecl(State *  N, LlvmBackendState *  Nl, IrNode *  nod
 		}
 		case kNoisyIrNodeType_PnamegenDeclaration:
 		{
+			
 			break;
 		}
 		case kNoisyIrNodeType_PtypeDeclaration:
 		{
 			Nl->nStructs++;
-			Nl->structs = (StructFields **) realloc(Nl->structs, Nl->nStructs * sizeof(StructFields *));
+			Nl->structs = (NoisyADT **) realloc(Nl->structs, Nl->nStructs * sizeof(NoisyADT *));
 			
 			if (Nl->firstStruct == NULL)
 			{
 				fatal(NULL, Emalloc);
 			}
 
-			Nl->structs[Nl->nStructs - 1] = (StructFields *) calloc(1, sizeof(StructFields));
-			StructFields *	currentStruct = Nl->structs[Nl->nStructs - 1];
+			Nl->structs[Nl->nStructs - 1] = (NoisyADT *) calloc(1, sizeof(NoisyADT));
+			NoisyADT *	currentStruct = Nl->structs[Nl->nStructs - 1];
 
 			if (currentStruct == NULL)
 			{
@@ -236,18 +293,6 @@ irPassLlvmEmitProgType(State *  N, LlvmBackendState *  Nl, IrNode *  node)
 	irPassLlvmEmitProgtypeBody(N, R(node));
 
 	return;
-}
-
-void
-irPassLlvmEmitFuncIOTypes(State *  N, LlvmBackendState *  Nl, IrNode *  node)
-{
-	if(L(node)->type != kNoisyIrNodeType_PtupleType 
-	   || L(R(node))->type != kNoisyIrNodeType_PtupleType)
-	{
-		fatal(N, EtokenUnrecognized);
-	}
-
-	
 }
 
 void

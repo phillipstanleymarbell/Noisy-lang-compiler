@@ -58,7 +58,18 @@ typedef struct
 	char *			name;
 	char *			fields[];
 	int				nFields;
-} StructFields;
+} NoisyADT;
+
+typedef struct
+{
+	char *			name;
+
+	char *			inputVar;
+	NoisyADT *		inputADT;
+
+	char *			outputVar;
+	NoisyADT *		outputADT;
+} NoisyFunc;
 
 typedef struct
 {
@@ -71,6 +82,9 @@ typedef struct
 
 	char *			currentFunc;
 
-	StructFields *	structs[];
+	NoisyADT *		structs[];
 	int				nStructs;
+
+	NoisyFunc *		funcs[];
+	int				nFuncs;
 } LlvmBackendState;
