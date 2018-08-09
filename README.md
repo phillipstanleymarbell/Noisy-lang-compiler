@@ -46,15 +46,19 @@ For example,
 	dtraceDirectory=full-path-to-DTrace-repository-clone
 	libflexDirectory=full-path-to-libflex-repository-clone
 
-For the following steps, valid options for OSTYPE are currently `linux` for Gnu/Linux and `darwin` for macOS.
+For the following steps, valid options for OSTYPE are currently `linux` 
+for Gnu/Linux and `darwin` for macOS.
 
-(3) Build Libflex by going to the directory you cloned for Libflex and running `make`.
-The Makefile assumes the environment variables `OSTYPE` and `MACHTYPE` are set. If that
-is not the case, you will need to explicitly do:
+(3) Build Libflex by going to the directory you cloned for Libflex and 
+running `make`. The Makefile assumes the environment variables `OSTYPE`
+and `MACHTYPE` are set. If that is not the case, you will need to 
+explicitly do:
 
 	make OSTYPE=darwin MACHTYPE=x86_64
 
-(4) Build the noisy compiler by running `make`. The makefile assumes the environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the case, you will need to explicitly do:
+(4) Build the noisy compiler by running `make`. The makefile assumes the 
+environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the 
+case, you will need to explicitly do:
 
 	make OSTYPE=darwin MACHTYPE=x86_64
 
@@ -92,7 +96,8 @@ the generated `dot` code through `dot`:
 
 	% ./src/noisy/noisy-darwin-EN --optimize 0 --dot 0 applications/noisy/helloWorld.n | dot -Tpdf -O ; open noname.gv.pdf
 
-The `dot` detail levels are bit masks: `1<<0`: no text, `1<<1`: no nil nodes
+The `dot` detail levels are bit masks: `1<<0` (i.e., 1): no text,
+`1<<1` (i.e., 2): no nil nodes
 
 Rendering of the IR can be simplified by using one of the helper
 scripts described below.
@@ -102,14 +107,15 @@ scripts described below.
 The Noisy helper scripts: `noisyIr2dot.sh`
 ------------------------------------------
 The scripts `noisyIr2dot.sh` generates renderings of the Noisy AST
-and symbol table. It takes two arguments: a Noisy source file and
-a rendering format (e.g., "pdf" or "png").  It is a simple wrapper
-to the noisy compiler, which it invokes with a useful default set 
-of flags.
+and symbol table. It takes two arguments: a Noisy source file,
+a rendering format (e.g., "pdf" or "png"), and a `dot` detail level
+(see the section above in README.md) for the Noisy dot backend (e.g., 
+'0').  It is a simple wrapper to the noisy compiler, which it invokes
+with a useful default set of flags.
 
 For example, from the `noisy` build directory:
 
-	% ./noisyIr2dot.sh ../../applications/noisy/helloWorld.n pdf
+	% ./noisyIr2dot.sh ../../applications/noisy/helloWorld.n pdf 0
 
 
 Implementation and the Wirth tools
