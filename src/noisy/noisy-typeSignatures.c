@@ -110,6 +110,10 @@ const char gNoisyTypeNodeSignatures[kNoisyIrNodeTypeMax] = {
 								[kNoisyIrNodeType_PreadTypeSignature]		= '5',
 								[kNoisyIrNodeType_PmoduleDeclBody]		= '6',
 								[kNoisyIrNodeType_PmoduleTypeNameDecl]		= '7',
+								[kNoisyIrNodeType_PidentifierList]		= '8',
+								[kNoisyIrNodeType_PrealType]			= '9',
+								[kNoisyIrNodeType_TintegerConst]		= '0',
+								[kNoisyIrNodeType_Ptolerance]			= '#',
 								[kNoisyIrNodeType_Xseq]				= ':',
 };
 
