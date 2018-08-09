@@ -916,8 +916,9 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	/*
 	 *	Have ACE autosize the height, with an upper limit at maxLines
 	 */
-	printf("	editor.setOptions({maxLines: 20});\n");
+	printf("	editor.setOptions({maxLines: 60});\n");
 	printf("	editor.setOptions({minLines: 10});\n");
+
 	/*
 	 *	Copy the ACE editor contents back to textarea for form submission.
 	 */

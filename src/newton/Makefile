@@ -7,8 +7,9 @@ PRECOMMITHOOK = precommitStatisticsHook-$(OSTYPE).sh
 COMMONPATH	= ../common
 NOISYPATH	= ../noisy
 INCLUDEPATH	= ../include
-COMPILERVARIANT = clang
 EXAMPLESPATH	= ../../applications/newton
+
+COMPILERVARIANT = clang
 
 SYSNAME		= Newton
 SYSNAMELOWER	= newton

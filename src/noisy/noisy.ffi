@@ -225,7 +225,7 @@ production	kNoisyIrNodeType_PunitsArithExpr:		firstset = {
 										firstset(kNoisyIrNodeType_PunitsArithTerm),
 									}
 
---//		basicSignalDimension	::=	"distance" | "mass" | "time" | "material" | "current" | "luminosity" | "temperature" .
+--//		basicSignalDimension	::=	"distance" | "mass" | "time" | "material" | "current" | "luminosity" | "temperature"  | "interrupt" | "exception" .
 production	kNoisyIrNodeType_PbasicSignalDimension:		firstset = {
 										kNoisyIrNodeType_Tdistance,
 										kNoisyIrNodeType_Tmass,
@@ -234,6 +234,8 @@ production	kNoisyIrNodeType_PbasicSignalDimension:		firstset = {
 										kNoisyIrNodeType_Tcurrent,
 										kNoisyIrNodeType_Tluminosity,
 										kNoisyIrNodeType_Ttemperature,
+										kNoisyIrNodeType_Tinterrupt,
+										kNoisyIrNodeType_Texception,
 									}
 
 --//		basicSignalUnits	::=	"m" | "kg" | "s" | "mole" | "A" | "cd" | "K" .
@@ -801,15 +803,15 @@ production	kNoisyIrNodeType_PvarTuple:			firstset = {
 										kNoisyIrNodeType_TleftParens,
 									}
 
---//		arithConst		::=	intParamOrConst | realParamOrConst .
-production	kNoisyIrNodeType_ParithConst:			firstset = {
+--//		arithParamOrConst		::=	intParamOrConst | realParamOrConst .
+production	kNoisyIrNodeType_ParithParamOrConst:			firstset = {
 										firstset(kNoisyIrNodeType_PintParamOrConst),
 										firstset(kNoisyIrNodeType_PrealParamOrConst),
 									}
 
---//		predArithFactor		::=	arithConst | varIntro | identifier | "(" predArithExpr ")" .
+--//		predArithFactor		::=	arithParamOrConst | varIntro | identifier | "(" predArithExpr ")" .
 production	kNoisyIrNodeType_PpredArithFactor:		firstset = {
-										firstset(kNoisyIrNodeType_ParithConst),
+										firstset(kNoisyIrNodeType_ParithParamOrConst),
 										firstset(kNoisyIrNodeType_PvarIntro),
 										kNoisyIrNodeType_Tidentifier,
 										kNoisyIrNodeType_TleftParens
@@ -821,32 +823,32 @@ production	kNoisyIrNodeType_PpredArithTerm:		firstset = {
 									}
 
 --//		predArithExpr		::=	predArithTerm {lowPrecedenceArith2ArithOp predArithTerm}
---//						| sumOverExpr | productOverExpr | minOverExpr | maxOverExpr .
+--//						| sumForExpr | productForExpr | minForExpr | maxForExpr .
 production	kNoisyIrNodeType_PpredArithExpr:		firstset = {
 										firstset(kNoisyIrNodeType_PpredArithTerm),
-										firstset(kNoisyIrNodeType_PsumOverExpr),
-										firstset(kNoisyIrNodeType_PproductOverExpr),
-										firstset(kNoisyIrNodeType_PminOverExpr),
-										firstset(kNoisyIrNodeType_PmaxOverExpr),
+										firstset(kNoisyIrNodeType_PsumForExpr),
+										firstset(kNoisyIrNodeType_PproductForExpr),
+										firstset(kNoisyIrNodeType_PminForExpr),
+										firstset(kNoisyIrNodeType_PmaxForExpr),
 									}
 
---//		sumOverExpr		::=	"sum" sumProdMinMaxBody .
-production	kNoisyIrNodeType_PsumOverExpr:			firstset = {
+--//		sumForExpr		::=	"sum" sumProdMinMaxBody .
+production	kNoisyIrNodeType_PsumForExpr:			firstset = {
 										kNoisyIrNodeType_Tsum,
 									}
 
---//		productOverExpr		::=	"product" sumProdMinMaxBody .
-production	kNoisyIrNodeType_PproductOverExpr:		firstset = {
+--//		productForExpr		::=	"product" sumProdMinMaxBody .
+production	kNoisyIrNodeType_PproductForExpr:		firstset = {
 										kNoisyIrNodeType_Tproduct,
 									}
 
---//		minOverExpr		::=	"min" sumProdMinMaxBody .
-production	kNoisyIrNodeType_PminOverExpr:			firstset = {
+--//		minForExpr		::=	"min" sumProdMinMaxBody .
+production	kNoisyIrNodeType_PminForExpr:			firstset = {
 										kNoisyIrNodeType_Tmin,
 									}
 
---//		maxOverExpr		::=	"max" sumProdMinMaxBody .
-production	kNoisyIrNodeType_PmaxOverExpr:			firstset = {
+--//		maxForExpr		::=	"max" sumProdMinMaxBody .
+production	kNoisyIrNodeType_PmaxForExpr:			firstset = {
 										kNoisyIrNodeType_Tmax,
 									}
 
@@ -1208,7 +1210,7 @@ production	kNoisyIrNodeType_PunitsArithExpr:		followset = {
 										kNoisyIrNodeType_TrightParens,
 									}
 
---//		basicSignalDimension	::=	"distance" | "mass" | "time" | "material" | "current" | "luminosity" | "temperature" .
+--//		basicSignalDimension	::=	"distance" | "mass" | "time" | "material" | "current" | "luminosity" | "temperature" | "interrupt" | "exception" .
 production	kNoisyIrNodeType_PbasicSignalDimension:		followset = {
 										followset(kNoisyIrNodeType_PdimensionArithFactor),
 										followset(kNoisyIrNodeType_PbasicSignal),
@@ -1682,12 +1684,12 @@ production	kNoisyIrNodeType_PvarTuple:			followset = {
 										kNoisyIrNodeType_Tin,
 									}
 
---//		arithConst		::=	intParamOrConst | realParamOrConst .
-production	kNoisyIrNodeType_ParithConst:			followset = {
+--//		arithParamOrConst		::=	intParamOrConst | realParamOrConst .
+production	kNoisyIrNodeType_ParithParamOrConst:			followset = {
 										followset(kNoisyIrNodeType_PpredArithFactor),
 									}
 
---//		predArithFactor		::=	arithConst | varIntro | identifier | "(" predArithExpr ")" .
+--//		predArithFactor		::=	arithParamOrConst | varIntro | identifier | "(" predArithExpr ")" .
 production	kNoisyIrNodeType_PpredArithFactor:		followset = {
 										firstset(kNoisyIrNodeType_PhighPrecedenceArith2ArithOp),
 										followset(kNoisyIrNodeType_PpredArithTerm),
@@ -1700,7 +1702,7 @@ production	kNoisyIrNodeType_PpredArithTerm:		followset = {
 									}
 
 --//		predArithExpr		::=	predArithTerm {lowPrecedenceArith2ArithOp predArithTerm}
---//						| sumOverExpr | productOverExpr | minOverExpr | maxOverExpr .
+--//						| sumForExpr | productForExpr | minForExpr | maxForExpr .
 production	kNoisyIrNodeType_PpredArithExpr:		followset = {
 										firstset(kNoisyIrNodeType_Parith2BoolOp),
 										followset(kNoisyIrNodeType_PpredTerm),
@@ -1711,32 +1713,32 @@ production	kNoisyIrNodeType_PpredArithExpr:		followset = {
 										followset(kNoisyIrNodeType_PquantifiedBoolTerm),
 									}
 
---//		sumOverExpr		::=	"sum" sumProdMinMaxBody .
-production	kNoisyIrNodeType_PsumOverExpr:			followset = {
+--//		sumForExpr		::=	"sum" sumProdMinMaxBody .
+production	kNoisyIrNodeType_PsumForExpr:			followset = {
 										followset(kNoisyIrNodeType_PpredArithExpr),
 									}
 
---//		productOverExpr		::=	"product" sumProdMinMaxBody .
-production	kNoisyIrNodeType_PproductOverExpr:		followset = {
+--//		productForExpr		::=	"product" sumProdMinMaxBody .
+production	kNoisyIrNodeType_PproductForExpr:		followset = {
 										followset(kNoisyIrNodeType_PpredArithExpr),
 									}
 
---//		minOverExpr		::=	"min" sumProdMinMaxBody .
-production	kNoisyIrNodeType_PminOverExpr:			followset = {
+--//		minForExpr		::=	"min" sumProdMinMaxBody .
+production	kNoisyIrNodeType_PminForExpr:			followset = {
 										followset(kNoisyIrNodeType_PpredArithExpr),
 									}
 
---//		maxOverExpr		::=	"max" sumProdMinMaxBody .
-production	kNoisyIrNodeType_PmaxOverExpr:			followset = {
+--//		maxForExpr		::=	"max" sumProdMinMaxBody .
+production	kNoisyIrNodeType_PmaxForExpr:			followset = {
 										followset(kNoisyIrNodeType_PpredArithExpr),
 									}
 
 --//		sumProdMinMaxBody	::=	["for" varIntro ["from" predArithExpr "to" predArithExpr]] ["with" predExpr] "of" predArithExpr .
 production	kNoisyIrNodeType_PsumProdMinMaxBody:		followset = {
-										followset(kNoisyIrNodeType_PsumOverExpr),
-										followset(kNoisyIrNodeType_PproductOverExpr),
-										followset(kNoisyIrNodeType_PminOverExpr),
-										followset(kNoisyIrNodeType_PmaxOverExpr),
+										followset(kNoisyIrNodeType_PsumForExpr),
+										followset(kNoisyIrNodeType_PproductForExpr),
+										followset(kNoisyIrNodeType_PminForExpr),
+										followset(kNoisyIrNodeType_PmaxForExpr),
 									}
 
 --//		quantifiedBoolTerm	::=	quantifierOp varIntroList predExpr .
@@ -1775,7 +1777,7 @@ production	kNoisyIrNodeType_PsetExpr:			followset = {
 production	kNoisyIrNodeType_PintParamOrConst:		followset = {
 										firstset(kNoisyIrNodeType_PpredArithExpr),
 										firstset(kNoisyIrNodeType_PsetExpr),
-										followset(kNoisyIrNodeType_ParithConst),
+										followset(kNoisyIrNodeType_ParithParamOrConst),
 										followset(kNoisyIrNodeType_PbaseConst),
 									}
 
@@ -1783,7 +1785,7 @@ production	kNoisyIrNodeType_PintParamOrConst:		followset = {
 production	kNoisyIrNodeType_PrealParamOrConst:		followset = {
 										firstset(kNoisyIrNodeType_PpredArithExpr),
 										firstset(kNoisyIrNodeType_PsetExpr),
-										followset(kNoisyIrNodeType_ParithConst),
+										followset(kNoisyIrNodeType_ParithParamOrConst),
 										followset(kNoisyIrNodeType_PbaseConst),
 									}
 
@@ -2587,6 +2589,14 @@ token	kNoisyIrNodeType_Ttderivative:				followset = {
 									}
 
 token	kNoisyIrNodeType_Ttemperature:				followset = {
+										followset(kNoisyIrNodeType_PbasicSignalDimension),
+									}
+
+token	kNoisyIrNodeType_Tinterrupt:				followset = {
+										followset(kNoisyIrNodeType_PbasicSignalDimension),
+									}
+
+token	kNoisyIrNodeType_Texception:				followset = {
 										followset(kNoisyIrNodeType_PbasicSignalDimension),
 									}
 
