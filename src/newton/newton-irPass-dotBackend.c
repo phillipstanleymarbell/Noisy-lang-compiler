@@ -648,7 +648,7 @@ isType(State *  N, IrNode *  node)
 		case kNewtonIrNodeType_Tsymbol:
 		case kNewtonIrNodeType_Tname:
 		case kNewtonIrNodeType_Pinteger:
-		case kNewtonIrNodeType_Tnumber:
+		case kNewtonIrNodeType_TnumericConst:
 		case kNewtonIrNodeType_TrightBrace:
 		case kNewtonIrNodeType_TleftBrace:
 		case kNewtonIrNodeType_TrightParen:

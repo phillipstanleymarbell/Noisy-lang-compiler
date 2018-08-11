@@ -1,14 +1,15 @@
 /*
  *	Lexical elements
  */
-reservedIdentifiers		::=	"o<" | "~" | "<" | "<=" | ">" | ">=" | "==" | "<->"
+reservedIdentifiers		::=	":" | "," | "@" | "o<" | "~" | "<" | "<=" | ">" | ">=" | "==" | "<->"
 					| "**" | "*" | "/" | "+" | "-" | "<<" | ">>" | "|"
 					| "-" | "English" | "constant" | "invariant" | "signal"
 					| "sensor" | "name" | "symbol" | "derivation" | "none"
 					| "dot" | "cross" | "derivative" | "integral" | "interface"
-					| "i2c" | "spi"| "analog"| "write"| "read"| "delay"| "range"
+					| "i2c" | "spi" | "analog" | "write" | "read" | "delay" | "range"
 					| "erasuretoken" | "uncertainty" | "accuracy" | "precision"
-					| "Gaussian" | "exponential" | "biexponential" .
+					| "Gaussian" | "exponential" | "biexponential" | "to"
+					| "include" | "(" | ")" | "{" | "}" | ";" .
 
 zeroToNine			=	"0-9" .
 oneToNine			=	"1-9" .

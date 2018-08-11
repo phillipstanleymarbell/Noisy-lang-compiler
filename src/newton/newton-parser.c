@@ -282,9 +282,9 @@ newtonParseSubindex(State * N, Scope * currentScope)
 	addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
 
-	node->subindexStart = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope)->value;
+	node->subindexStart = newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope)->value;
 	newtonParseTerminal(N, kNewtonIrNodeType_Tto, currentScope);
-	node->subindexEnd = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope)->value;
+	node->subindexEnd = newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope)->value;
 
 	/*
 	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
@@ -394,7 +394,7 @@ newtonParseParameter(State * N, Scope * currentScope, int parameterNumber)
 			physicsName,
 			currentScope,
 			physicsName->token->identifier,
-			newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope)->value
+			newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope)->value
 		);
 	}
 
@@ -729,7 +729,7 @@ newtonParseTerminal(State *  N, IrNodeType expectedType, Scope * currentScope)
 	n->token = t;
 	n->tokenString = t->identifier;
 
-	if (t->type == kNewtonIrNodeType_Tnumber)
+	if (t->type == kNewtonIrNodeType_TnumericConst)
 	{
 		n->value = 0.0;
 		if (t->integerConst != 0)

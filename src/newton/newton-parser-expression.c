@@ -165,9 +165,9 @@ newtonParseNumericFactor(State * N, Scope * currentScope)
         node = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
         assert(node->physics->isConstant);
     }
-    else if (peekCheck(N, 1, kNewtonIrNodeType_Tnumber))
+    else if (peekCheck(N, 1, kNewtonIrNodeType_TnumericConst))
     {
-        node = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
+        node = newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope);
     }
     else if (peekCheck(N, 1, kNewtonIrNodeType_TleftParen))
     {
@@ -394,9 +394,9 @@ newtonParseQuantityFactor(State * N, Scope * currentScope)
 			factor->parameterNumber = matchingParameter->parameterNumber;
         }
     }
-    else if (peekCheck(N, 1, kNewtonIrNodeType_Tnumber))
+    else if (peekCheck(N, 1, kNewtonIrNodeType_TnumericConst))
     {
-        factor = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
+        factor = newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope);
     }
     else if (peekCheck(N, 1, kNewtonIrNodeType_TleftParen))
     {
@@ -582,7 +582,7 @@ newtonParseInteger(State * N, Scope * currentScope)
         node->value = -1;
     }
 
-    IrNode * number = newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
+    IrNode * number = newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope);
     addLeaf(N, node, number);
     node->value = node->value == -1 ? node->value * number->value : number->value;
 

@@ -140,9 +140,9 @@ newtonDimensionPassParseSubindex(State * N, Scope * currentScope)
 {
 	newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
-	newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
+	newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tto, currentScope);
-	newtonParseTerminal(N, kNewtonIrNodeType_Tnumber, currentScope);
+	newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope);
 }
 
 void

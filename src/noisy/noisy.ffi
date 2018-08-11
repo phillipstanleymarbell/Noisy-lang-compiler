@@ -971,6 +971,9 @@ production	kNoisyIrNodeType_PsetCmpOp:			firstset = {
 --//
 --//
 --//
+
+
+
 --//		program			::=	moduleDecl {(functionDefn | problemDefn | predicateFnDefn)} .
 production	kNoisyIrNodeType_Pprogram:			followset = {
 										kNoisyIrNodeType_Zeof,
