@@ -648,7 +648,7 @@ newtonParseSymbol(State * N, Scope * currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_Tsymbol, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 
-	IrNode *	baseSignalAbbreviation = newtonParseTerminal(N, kNewtonIrNodeType_TstringConst, currentScope);
+	IrNode *	baseSignalAbbreviation = newtonParseIdentifierDefinitionTerminal(N, currentScope);
 	node->token = baseSignalAbbreviation->token;
 
 	addLeaf(N, node, baseSignalAbbreviation);
