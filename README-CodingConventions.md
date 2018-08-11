@@ -9,7 +9,7 @@
 5.	C-style comments, in the form:
 ````c
 	/*
-	 *	Comment
+	 *	Comment (offset with a single tab)
 	 */
 ````
 
