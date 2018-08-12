@@ -9,7 +9,7 @@ reservedIdentifiers		::=	":" | "," | "@" | "o<" | "~" | "<" | "<=" | ">" | ">=" 
 					| "i2c" | "spi" | "analog" | "write" | "read" | "delay" | "range"
 					| "erasuretoken" | "uncertainty" | "accuracy" | "precision"
 					| "Gaussian" | "exponential" | "biexponential" | "to" | "bits"
-					| "dimensionless" | "include" | "(" | ")" | "{" | "}" | ";" .
+					| "dimensionless" | "include" | "(" | ")" | "{" | "}" | ";" | ".." .
 
 zeroToNine			=	"0-9" .
 oneToNine			=	"1-9" .
@@ -35,7 +35,7 @@ rule				::=	constantDefinition | invariantDefinition | baseSignalDefinition | se
 constantDefinition		::=	identifier ":" "constant" "=" numericConst [unitExpression] ";" .
 invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" constraintList "}" .
 baseSignalDefinition		::=	identifier ":" "signal" [subdimensionTuple] "=" "{" [nameStatement] symbolStatement derivationStatement "}" .
-sensorDefinition		::=	identifier ":" "sensor" parameterTuple = "{" sensorPropertyList "}" .
+sensorDefinition		::=	identifier ":" "sensor" parameterTuple "=" "{" sensorPropertyList "}" .
 
 nameStatement			::=	"name" "=" stringConst languageSetting ";" .
 symbolStatement			::=	"symbol" "=" identifier ";" .
@@ -89,7 +89,7 @@ numericConstTuple		::=	"(" numericConst [unitExpression] ".." numericConst ")" .
 
 expression			::=	term {lowPrecedenceBinaryOp term} .
 term				::=	[unaryOp] factor ["++" | "--"] {highPrecedenceBinaryOp factor} .
-factor				::=	numericConst | "(" expression ")" | distributionFactor | identifier ["[" numericConst "]"].
+factor				::=	numericConst | "(" expression ")" | distributionFactor | identifier ["[" numericConst "]"] .
 distributionFactor		::=	distribution parameterValueList .
 parameterValueList		::=	"(" identifier ":" expression {"," identifier ":" expression} .
 distribution			::=	"Gaussian" | "exponential" | "biexponential" .

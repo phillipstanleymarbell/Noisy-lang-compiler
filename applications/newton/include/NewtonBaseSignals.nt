@@ -41,63 +41,63 @@
 time : signal =
 {
 	name		= "second" English;
-	symbol		= "s";
+	symbol		= s;
 	derivation	= none;
 }
 
 distance : signal =
 {
 	name		= "meter" English;
-	symbol		= "m";
+	symbol		= m;
 	derivation	= none;
 }
 
 mass : signal =
 {
 	name		= "kilogram" English;
-	symbol		= "kg";
+	symbol		= kg;
 	derivation	= none;
 }
 
 material : signal =
 {
 	name		= "mole" English;
-	symbol		= "mol";
+	symbol		= mol;
 	derivation	= none;
 }
 
 temperature : signal =
 {
 	name		= "Kelvin" English;
-	symbol		= "K";
+	symbol		= K;
 	derivation	= none;
 }
 
 charge : signal =
 {
 	name		= "Coulomb" English;
-	symbol		= "C";
+	symbol		= C;
 	derivation	= none;
 }
 
 angle : signal =
 {
 	name		= "degree" English;
-	symbol		= "deg";
+	symbol		= deg;
 	derivation	= distance / distance;
 }
 
 speed : signal =
 {
 	name		= "jiffies" English;
-	symbol		= "jf";
+	symbol		= jf;
 	derivation	= distance / time;
 }
 
 acceleration : signal =
 {
 	name		= "metajiffies" English;
-	symbol		= "mj";
+	symbol		= mjf;
 	derivation	= speed / time;
 }
 
@@ -105,50 +105,57 @@ acceleration : signal =
 force : signal =
 {
 	name		= "Newton" English;
-	symbol		= "N";
+	symbol		= N;
 	derivation	= mass * acceleration;
 }
 
 work : signal = 
 {
 	name		= "Joule" English;
-	symbol		= "J";
+	symbol		= J;
 	derivation	= force * distance;
 }
 
 magneticFluxDensity : signal =
 {
 	name		= "Tesla" English;
-	symbol		= "T";
+	symbol		= T;
 	derivation	= mass / (charge * time);
 }
 
 angularRate : signal =
 {
 	name		= "anglejiffies" English;
-	symbol		= "aj";
+	symbol		= ajf;
 	derivation	= angle / time;
 }
 
 frequency : signal =
 {
 	name		= "Hertz" English;
-	symbol		= "Hz";
+	symbol		= Hz;
 	derivation	= 1 / time;
 }
 
 area : signal =
 {
 	name		= "squares" English;
-	symbol		= "sq";
+	symbol		= sq;
 	derivation	= distance ** 2;
 }
 
 pressure : signal =
 {
 	name		= "Pascal" English;
-	symbol		= "Pa";
+	symbol		= Pa;
 	derivation	= force / area;
+}
+
+bits : signal =
+{
+	name		= "Bits" English;
+	symbol		= b;
+	derivation	= dimensionless;
 }
 
 kNewtonUnitfree_pi				: constant = 3.1415926535897932384626433832795;

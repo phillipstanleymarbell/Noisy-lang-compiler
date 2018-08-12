@@ -15,7 +15,6 @@
 --//
 --//
 --//
---//
 --//	FIRST()s
 --//
 --//
@@ -30,245 +29,347 @@
 
 --//		numericConst			::=	integerConst | realConst .
 production kNewtonIrNodeType_PnumericConst:		firstset = {
-									}
+									firstset(kNewtonIrNodeType_PintegerConst),
+									firstset(kNewtonIrNodeType_PrealConst),
+								}
 
 --//		newtonDescription		::=	ruleList .
 production kNewtonIrNodeType_PnewtonDescription:	firstset = {
-									}
+									firstset(kNewtonIrNodeType_PruleList),
+								}
 
 --//		ruleList			::=	{rule} .
 production kNewtonIrNodeType_PruleList:			firstset = {
-									}
+									firstset(kNewtonIrNodeType_Prule),
+								}
 
 --//		rule				::=	constantDefinition | invariantDefinition | baseSignalDefinition | sensorDefinition .
 production kNewtonIrNodeType_Prule:			firstset = {
-									}
+									firstset(kNewtonIrNodeType_PconstantDefinition),
+									firstset(kNewtonIrNodeType_PinvariantDefinition),
+									firstset(kNewtonIrNodeType_PbaseSignalDefinition),
+									firstset(kNewtonIrNodeType_PsensorDefinition),
+								}
 
 --//		constantDefinition		::=	identifier ":" "constant" "=" numericConst [unitExpression] ";" .
 production kNewtonIrNodeType_PconstantDefinition:	firstset = {
-									}
+									kNewtonIrNodeType_Tidentifier,
+								}
 
 --//		invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" constraintList "}" .
 production kNewtonIrNodeType_PinvariantDefinition:	firstset = {
-									}
+									kNewtonIrNodeType_Tidentifier,
+								}
 
 --//		baseSignalDefinition		::=	identifier ":" "signal" [subdimensionTuple] "=" "{" [nameStatement] symbolStatement derivationStatement "}" .
 production kNewtonIrNodeType_PbaseSignalDefinition:	firstset = {
-									}
+									kNewtonIrNodeType_Tidentifier,
+								}
 
 --//		sensorDefinition		::=	identifier ":" "sensor" parameterTuple = "{" sensorPropertyList "}" .
 production kNewtonIrNodeType_PsensorDefinition:		firstset = {
-									}
+									kNewtonIrNodeType_Tidentifier,
+								}
 
 --//		nameStatement			::=	"name" "=" stringConst languageSetting ";" .
 production kNewtonIrNodeType_PnameStatement:		firstset = {
-									}
+									kNewtonIrNodeType_Tname,
+								}
 
 --//		symbolStatement			::=	"symbol" "=" identifier ";" .
 production kNewtonIrNodeType_PsymbolStatement:		firstset = {
-									}
+									kNewtonIrNodeType_Tsymbol,
+								}
 
 --//		derivationStatement		::=	"derivation" "=" ("none" | "dimensionless" | quantityExpression) ";" .
 production kNewtonIrNodeType_PderivationStatement:	firstset = {
-									}
+									kNewtonIrNodeType_Tderivation,
+								}
 
 --//		subdimensionTuple		::=	"(" identifier ":" numericConst "to" numericConst ")" .
 production kNewtonIrNodeType_PsubdimensionTuple:	firstset = {
-									}
+									kNewtonIrNodeType_Tleftparen,
+								}
 
 --//		parameterTuple			::=	"(" parameter {"," parameter} ")" .
 production kNewtonIrNodeType_PparameterTuple:		firstset = {
-									}
+									kNewtonIrNodeType_Tleftparen,
+								}
 
 --//		parameter			::=	identifier ":" identifier .
 production kNewtonIrNodeType_Pparameter:		firstset = {
-									}
+									kNewtonIrNodeType_Tidentifier,
+								}
 
 --//		constraintList			::=	constraint {"," constraint} .
 production kNewtonIrNodeType_PconstraintList:		firstset = {
-									}
+									firstset(kNewtonIrNodeType_Pconstraint),
+								}
 
 --//		constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
 production kNewtonIrNodeType_Pconstraint:		firstset = {
-									}
+									firstset(kNewtonIrNodeType_PquantityExpression),
+								}
 
 --//		quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
 production kNewtonIrNodeType_PquantityExpression:	firstset = {
-									}
+									firstset(kNewtonIrNodeType_PquantityTerm),
+								}
 
 --//		quantityTerm			::=	[unaryMinus] quantityFactor {midPrecedenceOperator quantityFactor} .
 production kNewtonIrNodeType_PquantityTerm:		firstset = {
-									}
+									firstset(kNewtonIrNodeType_PunaryMinus),
+									firstset(kNewtonIrNodeType_PquantityFactor),
+								}
 
 --//		quantityFactor			::=	quantity								|
 --//							quantity [highPrecedenceOperator quantityExpression]			|
 --//								timeOperator {timeOperator} quantityExpression			|
 --//								"(" quantityExpression ")" .
 production kNewtonIrNodeType_PquantityFactor:		firstset = {
-									}
+									kNewtonIrNodeType_TleftParen,
+									firstset(kNewtonIrNodeType_Pquantity),
+								}
 
 --//		quantity			::=	numericConst | (identifier {"@" numericConst}) .
 production kNewtonIrNodeType_Pquantity:			firstset = {
-									}
+									kNewtonIrNodeType_Tidentifier,
+									firstset(kNewtonIrNodeType_PnumericConst),
+								}
 
 --//		lowPrecedenceOperator		::=	"+" | "-" .
 production kNewtonIrNodeType_PlowPrecedenceOperator:	firstset = {
-									}
+									kNewtonIrNodeType_Tplus,
+									kNewtonIrNodeType_Tminus,
+								}
 
 --//		midPrecedenceOperator		::=	"*" | "/" | vectorOp .
 production kNewtonIrNodeType_PmidPrecedenceOperator:	firstset = {
-									}
+									kNewtonIrNodeType_Tmul,
+									kNewtonIrNodeType_Tdiv,
+									firstset(kNewtonIrNodeType_PvectorOp),
+								}
 
 --//		highPrecedenceOperator		::=	"**" .
 production kNewtonIrNodeType_PhighPrecedenceOperator:	firstset = {
-									}
+									kNewtonIrNodeType_Texponent,
+								}
 
 --//		vectorOp			::=	"dot" | "cross" .
 production kNewtonIrNodeType_PvectorOp:			firstset = {
-									}
+									kNewtonIrNodeType_Tdot,
+									kNewtonIrNodeType_Tcross,
+								}
 
 --//		timeOperator			::=	"derivative" | "integral" .
 production kNewtonIrNodeType_PtimeOperator:		firstset = {
-									}
+									kNewtonIrNodeType_Tderivative,
+									kNewtonIrNodeType_Tintegral,
+								}
 
 --//		comparisonOperator		::=	"o<" | "~" | "<" | "<=" | ">" | ">=" | "==" | "<->" .
 production kNewtonIrNodeType_PcomparisonOperator:	firstset = {
-									}
+									kNewtonIrNodeType_Tproportional,
+									kNewtonIrNodeType_Tequivalent,
+									kNewtonIrNodeType_Tlt,
+									kNewtonIrNodeType_Tle,
+									kNewtonIrNodeType_Tgt,
+									kNewtonIrNodeType_Tge,
+									kNewtonIrNodeType_Tequals,
+									kNewtonIrNodeType_Trelated,
+								}
 
 --//		unaryMinus			::=	"-" .
 production kNewtonIrNodeType_PunaryMinus:		firstset = {
-									}
+									kNewtonIrNodeType_Tminus,
+								}
 
 --//		languageSetting			::=	"English" .
 production kNewtonIrNodeType_PlanguageSetting:		firstset = {
-									}
+									kNewtonIrNodeType_TEnglish,
+								}
 
 --//		unitExpression			::=	unitTerm .
 production kNewtonIrNodeType_PunitExpression:		firstset = {
-									}
+									firstset(kNewtonIrNodeType_PunitTerm),
+								}
 
 --//		unitTerm			::=	unitFactor {midPrecedenceOperator unitFactor} .
 production kNewtonIrNodeType_PunitTerm:			firstset = {
-									}
+									firstset(kNewtonIrNodeType_PunitFactor),
+								}
 
 --//		unitFactor			::=	[unaryMinus] (unit [highPrecedenceOperator numericConst] | "(" unitExpression ")") .
 production kNewtonIrNodeType_PunitFactor:		firstset = {
-									}
+									firstset(kNewtonIrNodeType_PunaryMinus),
+									firstset(kNewtonIrNodeType_Punit),
+									kNewtonIrNodeType_TleftParen,
+								}
 
 --//		unit				::=	identifier .
 production kNewtonIrNodeType_Punit:			firstset = {
-									}
+									kNewtonIrNodeType_Tidentifier,
+								}
 
 --//		sensorPropertyList		::=	sensorProperty {"," sensorProperty} .
 production kNewtonIrNodeType_PsensorPropertyList:	firstset = {
-									}
+									firstset(kNewtonIrNodeType_PsensorProperty),
+								}
 
 --//		sensorProperty			::=	rangeStatement | uncertaintyStatement | erasureValueStatement | accuracyStatement | precisionStatement | sensorInterfaceStatement .
 production kNewtonIrNodeType_PsensorProperty:		firstset = {
-									}
+									firstset(kNewtonIrNodeType_PrangeStatement),
+									firstset(kNewtonIrNodeType_PuncertaintyStatement),
+									firstset(kNewtonIrNodeType_PerasureValueStatement),
+									firstset(kNewtonIrNodeType_PaccuracyStatement),
+									firstset(kNewtonIrNodeType_PprecisionStatement),
+									firstset(kNewtonIrNodeType_PsensorInterfaceStatement),
+								}
 
 --//		sensorInterfaceStatement	::=	"interface" identifier ["@" numericConst "*" "bits"] "==" sensorInterfaceType parameterTuple ["{" sensorInterfaceCommandList "}"] .
 production kNewtonIrNodeType_PsensorInterfaceStatement:	firstset = {
-									}
+									kNewtonIrNodeType_Tinterface,
+								}
 
 --//		sensorInterfaceType		::=	"i2c" | "spi" | "analog" .
 production kNewtonIrNodeType_PsensorInterfaceType:	firstset = {
-									}
+									kNewtonIrNodeType_Tspi,
+									kNewtonIrNodeType_Ti2c,
+									kNewtonIrNodeType_Tanalog,
+								}
 
 --//		sensorInterfaceCommandList	::=	sensorInterfaceCommand {";" sensorInterfaceCommand} .
 production kNewtonIrNodeType_PsensorInterfaceCommandList:	firstset = {
-									}
+									firstset(kNewtonIrNodeType_PsensorInterfaceCommand),
+								}
 
 --//		sensorInterfaceCommand		::=	readRegisterCommand | writeRegisterCommand | delayCommand | arithmeticCommand .
 production kNewtonIrNodeType_PsensorInterfaceCommand:	firstset = {
-									}
+									firstset(kNewtonIrNodeType_PreadRegisterCommand),
+									firstset(kNewtonIrNodeType_PwriteRegisterCommand),
+									firstset(kNewtonIrNodeType_PdelayCommand),
+									firstset(kNewtonIrNodeType_ParithmeticCommand),
+								}
 
 --//		readRegisterCommand		::=	identifier "=" "read" ["[" numericConst "]"] numericConst .
 production kNewtonIrNodeType_PreadRegisterCommand:	firstset = {
-									}
+									kNewtonIrNodeType_Tidentifier,
+								}
 
 --//		writeRegisterCommand		::=	"write" numericConst numericConst .
 production kNewtonIrNodeType_PwriteRegisterCommand:	firstset = {
-									}
+									kNewtonIrNodeType_Twrite,
+								}
 
 --//		delayCommand			::=	"delay" numericConst .
 production kNewtonIrNodeType_PdelayCommand:		firstset = {
-									}
+									kNewtonIrNodeType_Tdelay,
+								}
 
 --//		arithmeticCommand		::=	identifier "=" expression .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+production kNewtonIrNodeType_ParithmeticCommand:	firstset = {
+									kNewtonIrNodeType_Tidentifier,
+								}
 
 --//		rangeStatement			::=	"range" identifier "==" "[" numericConst [unitExpression] "," numericConst [unitExpression] "]" .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+production kNewtonIrNodeType_PrangeStatement:		firstset = {
+									kNewtonIrNodeType_Trange,
+								}
 
 --//		uncertaintyStatement		::=	"uncertainty" identifier "==" expression [unitExpression] .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+production kNewtonIrNodeType_PuncertaintyStatement:	firstset = {
+									kNewtonIrNodeType_Tuncertainty,
+								}
 
 --//		erasureValueStatement		::=	"erasuretoken" identifier "==" numericConst [unitExpression] .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+production kNewtonIrNodeType_PerasureValueStatement:	firstset = {
+									kNewtonIrNodeType_Terasuretoken,
+								}
 
 --//		accuracyStatement		::=	"accuracy" identifier "==" numericConstTupleList .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+production kNewtonIrNodeType_PaccuracyStatement:	firstset = {
+									kNewtonIrNodeType_Taccuracy,
+								}
 
 --//		precisionStatement		::=	"precision" identifier "==" numericConstTupleList .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+production kNewtonIrNodeType_PprecisionStatement:	firstset = {
+									kNewtonIrNodeType_Tprecision,
+								}
 
 --//		numericConstTupleList		::=	"{" numericConstTuple {"," numericConstTuple} "}" .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+production kNewtonIrNodeType_PnumericConstTupleList:	firstset = {
+									kNewtonIrNodeType_TleftBrace,
+								}
 
 --//		numericConstTuple		::=	"(" numericConst [unitExpression] ".." numericConst ")" .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+production kNewtonIrNodeType_PnumericConstTuple:	firstset = {
+									kNewtonIrNodeType_TleftParen,
+								}
 
 --//		expression			::=	term {lowPrecedenceBinaryOp term} .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+production kNewtonIrNodeType_Pexpression:		firstset = {
+									firstset(kNewtonIrNodeType_Pterm),
+								}
 
 --//		term				::=	[unaryOp] factor ["++" | "--"] {highPrecedenceBinaryOp factor} .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+production kNewtonIrNodeType_Pterm:			firstset = {
+									firstset(kNewtonIrNodeType_PunaryOp),
+									firstset(kNewtonIrNodeType_Pfactor),
+								}
 
---//		factor				::=	numericConst | "(" expression ")" | distributionFactor | identifier ["[" numericConst "]"].
-production kNewtonIrNodeType_P:				firstset = {
-									}
+--//		factor				::=	numericConst | "(" expression ")" | distributionFactor | identifier ["[" numericConst "]"] .
+production kNewtonIrNodeType_Pfactor:			firstset = {
+									firstset(kNewtonIrNodeType_PnumericConst),
+									kNewtonIrNodeType_TleftParen,
+									firstset(kNewtonIrNodeType_PdistributionFactor),
+									kNewtonIrNodeType_Tidentifier,
+								}
 
 --//		distributionFactor		::=	distribution parameterValueList .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+production kNewtonIrNodeType_PdistributionFactor:	firstset = {
+									firstset(kNewtonIrNodeType_Pdistribution),
+								}
 
---//		parameterValueList		::=	"(" identifier ":" expression {"," identifier ":" expression} .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+--//		parameterValueList		::=	"(" identifier ":" expression {"," identifier ":" expression} ")" .
+production kNewtonIrNodeType_PparameterValueList:	firstset = {
+									kNewtonIrNodeType_TleftParen,
+								}
 
 --//		distribution			::=	"Gaussian" | "exponential" | "biexponential" .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+production kNewtonIrNodeType_Pdistribution:		firstset = {
+									kNewtonIrNodeType_TGaussian,
+									kNewtonIrNodeType_Texponential,
+									kNewtonIrNodeType_Tbiexponential,
+								}
 
 --//		highPrecedenceBinaryOp		::=	"*" | "/" | "%" | "**" .
-production kNewtonIrNodeType_P:				firstset = {
+production kNewtonIrNodeType_PhighPrecedenceBinaryOp:	firstset = {
+									kNewtonIrNodeType_Tmul,
+									kNewtonIrNodeType_Tdiv,
+									kNewtonIrNodeType_Tpercent,
+									kNewtonIrNodeType_Texponent,
 									}
 
 --//		lowPrecedenceBinaryOp		::=	"+" | "-" | ">>" | "<<" | "|" .
-production kNewtonIrNodeType_P:				firstset = {
+production kNewtonIrNodeType_PlowPrecedenceBinaryOp:	firstset = {
+									kNewtonIrNodeType_Tplus,
+									kNewtonIrNodeType_Tminus,
+									kNewtonIrNodeType_TrightShift,
+									kNewtonIrNodeType_TleftShift,
+									kNewtonIrNodeType_TarithmeticOr,
 									}
 
 --//		unaryOp				::=	"-"  | "+" .
-production kNewtonIrNodeType_P:				firstset = {
-									}
+production kNewtonIrNodeType_PunaryOp:			firstset = {
+									kNewtonIrNodeType_Tplus,
+									kNewtonIrNodeType_Tminus,
+								}
 
 
 
 
 
 
---//
 --//
 --//
 --//
@@ -277,145 +378,216 @@ production kNewtonIrNodeType_P:				firstset = {
 --//
 --//
 --//
+--//
 
 --//		numericConst			::=	integerConst | realConst .
 production kNewtonIrNodeType_PnumericConst:		followset = {
-									}
+									firstset(kNewtonIrNodeType_PunitExpression),
+									kNewtonIrNodeType_Tsemicolon,
+									kNewtonIrNodeType_Tto,
+									kNewtonIrNodeType_TrightParen,
+									followset(kNewtonIrNodeType_Pquantity),
+									kNewtonIrNodeType_Tat,
+									followset(kNewtonIrNodeType_PunitFactor),
+									kNewtonIrNodeType_Tmul,
+									kNewtonIrNodeType_TrightBracket,
+									followset(kNewtonIrNodeType_PreadRegisterCommand),
+									followset(kNewtonIrNodeType_factor),
+								}
 
 --//		newtonDescription		::=	ruleList .
 production kNewtonIrNodeType_PnewtonDescription:	followset = {
-									}
+									kNewtonIrNodeType_Zeof,
+								}
 
 --//		ruleList			::=	{rule} .
 production kNewtonIrNodeType_PruleList:			followset = {
-									}
+									followset(kNewtonIrNodeType_PnewtonDescription),
+								}
 
 --//		rule				::=	constantDefinition | invariantDefinition | baseSignalDefinition | sensorDefinition .
 production kNewtonIrNodeType_Prule:			followset = {
-									}
+									firstset(kNewtonIrNodeType_Prule),
+								}
 
 --//		constantDefinition		::=	identifier ":" "constant" "=" numericConst [unitExpression] ";" .
 production kNewtonIrNodeType_PconstantDefinition:	followset = {
-									}
+									followset(kNewtonIrNodeType_Prule),
+								}
 
 --//		invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" constraintList "}" .
 production kNewtonIrNodeType_PinvariantDefinition:	followset = {
-									}
+									followset(kNewtonIrNodeType_Prule),
+								}
 
 --//		baseSignalDefinition		::=	identifier ":" "signal" [subdimensionTuple] "=" "{" [nameStatement] symbolStatement derivationStatement "}" .
 production kNewtonIrNodeType_PbaseSignalDefinition:	followset = {
-									}
+									followset(kNewtonIrNodeType_Prule),
+								}
 
 --//		sensorDefinition		::=	identifier ":" "sensor" parameterTuple = "{" sensorPropertyList "}" .
 production kNewtonIrNodeType_PsensorDefinition:		followset = {
-									}
+									followset(kNewtonIrNodeType_Prule),
+								}
 
 --//		nameStatement			::=	"name" "=" stringConst languageSetting ";" .
 production kNewtonIrNodeType_PnameStatement:		followset = {
-									}
+									firstset(kNewtonIrNodeType_PsymbolStatement),
+								}
 
 --//		symbolStatement			::=	"symbol" "=" identifier ";" .
 production kNewtonIrNodeType_PsymbolStatement:		followset = {
-									}
+									firstset(kNewtonIrNodeType_PderivationStatement),
+								}
 
 --//		derivationStatement		::=	"derivation" "=" ("none" | "dimensionless" | quantityExpression) ";" .
 production kNewtonIrNodeType_PderivationStatement:	followset = {
-									}
+									kNewtonIrNodeType_TrightBrace,
+								}
 
 --//		subdimensionTuple		::=	"(" identifier ":" numericConst "to" numericConst ")" .
 production kNewtonIrNodeType_PsubdimensionTuple:	followset = {
-									}
+									kNewtonIrNodeType_Tequals,
+								}
 
 --//		parameterTuple			::=	"(" parameter {"," parameter} ")" .
 production kNewtonIrNodeType_PparameterTuple:		followset = {
-									}
+									kNewtonIrNodeType_Tequals,
+									followset(kNewtonIrNodeType_Pconstraint),
+									kNewtonIrNodeType_TleftBrace,
+									followset(kNewtonIrNodeType_PsensorInterfaceStatement),
+								}
 
 --//		parameter			::=	identifier ":" identifier .
 production kNewtonIrNodeType_Pparameter:		followset = {
-									}
+									kNewtonIrNodeType_Tcomma,
+									kNewtonIrNodeType_TrightParen,
+								}
 
 --//		constraintList			::=	constraint {"," constraint} .
 production kNewtonIrNodeType_PconstraintList:		followset = {
-									}
+									kNewtonIrNodeType_TrightBrace,
+								}
 
 --//		constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
 production kNewtonIrNodeType_Pconstraint:		followset = {
-									}
+									kNewtonIrNodeType_Tcomma,
+									followset(kNewtonIrNodeType_PconsraintList),
+								}
 
 --//		quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
 production kNewtonIrNodeType_PquantityExpression:	followset = {
-									}
+									kNewtonIrNodeType_Tsemicolon,
+									firstset(kNewtonIrNodeType_PcomparisonOperator),
+									followset(kNewtonIrNodeType_Pconstraint),
+									followset(kNewtonIrNodeType_PquantityFactor),
+									kNewtonIrNodeType_TrightParen,
+								}
 
 --//		quantityTerm			::=	[unaryMinus] quantityFactor {midPrecedenceOperator quantityFactor} .
 production kNewtonIrNodeType_PquantityTerm:		followset = {
-									}
+									firstset(kNewtonIrNodeType_PlowPrecedenceOperator),
+									followset(kNewtonIrNodeType_PquantityExpression),
+								}
 
 --//		quantityFactor			::=	quantity								|
 --//							quantity [highPrecedenceOperator quantityExpression]			|
 --//								timeOperator {timeOperator} quantityExpression			|
 --//								"(" quantityExpression ")" .
 production kNewtonIrNodeType_PquantityFactor:		followset = {
-									}
+									firstset(kNewtonIrNodeType_PmidPrecedenceOperator),
+									followset(kNewtonIrNodeType_PquantityTerm),
+								}
 
 --//		quantity			::=	numericConst | (identifier {"@" numericConst}) .
 production kNewtonIrNodeType_Pquantity:			followset = {
-									}
+									followset(kNewtonIrNodeType_PquantityFactor),
+									firstset(kNewtonIrNodeType_PhighPrecedenceOperator),
+								}
 
 --//		lowPrecedenceOperator		::=	"+" | "-" .
 production kNewtonIrNodeType_PlowPrecedenceOperator:	followset = {
-									}
+									firstset(kNewtonIrNodeType_PquantityTerm),
+								}
 
 --//		midPrecedenceOperator		::=	"*" | "/" | vectorOp .
 production kNewtonIrNodeType_PmidPrecedenceOperator:	followset = {
-									}
+									firstset(kNewtonIrNodeType_PquantityFactor),
+									firstset(kNewtonIrNodeType_PunitFactor),
+								}
 
 --//		highPrecedenceOperator		::=	"**" .
 production kNewtonIrNodeType_PhighPrecedenceOperator:	followset = {
-									}
+									firstset(kNewtonIrNodeType_PquantityExpression),
+									firstset(kNewtonIrNodeType_PnumericConst),
+								}
 
 --//		vectorOp			::=	"dot" | "cross" .
 production kNewtonIrNodeType_PvectorOp:			followset = {
-									}
+									followset(kNewtonIrNodeType_PmidPrecedenceOperator),
+								}
 
 --//		timeOperator			::=	"derivative" | "integral" .
 production kNewtonIrNodeType_PtimeOperator:		followset = {
-									}
+									firstset(kNewtonIrNodeType_PtimeOperator),
+									firstset(kNewtonIrNodeType_PquantityExpression),
+								}
 
 --//		comparisonOperator		::=	"o<" | "~" | "<" | "<=" | ">" | ">=" | "==" | "<->" .
 production kNewtonIrNodeType_PcomparisonOperator:	followset = {
-									}
+									firstset(kNewtonIrNodeType_PquantityExpression),
+								}
 
 --//		unaryMinus			::=	"-" .
 production kNewtonIrNodeType_PunaryMinus:		followset = {
-									}
+									firstset(kNewtonIrNodeType_PquantityFactor),
+									kNewtonIrNodeType_TleftParen,
+									firstset(kNewtonIrNodeType_Punit),
+								}
 
 --//		languageSetting			::=	"English" .
 production kNewtonIrNodeType_PlanguageSetting:		followset = {
-									}
+									kNewtonIrNodeType_Tsemicolon,
+								}
 
 --//		unitExpression			::=	unitTerm .
 production kNewtonIrNodeType_PunitExpression:		followset = {
-									}
+									kNewtonIrNodeType_Tsemicolon,
+									kNewtonIrNodeType_TrightParen,
+									kNewtonIrNodeType_Tcomma,
+									kNewtonIrNodeType_TrightBracket,
+									followset(kNewtonIrNodeType_PuncertaintyStatement),
+									followset(kNewtonIrNodeType_PerasureValueStatement),
+									kNewtonIrNodeType_Tdotdot,
+								}
 
 --//		unitTerm			::=	unitFactor {midPrecedenceOperator unitFactor} .
 production kNewtonIrNodeType_PunitTerm:			followset = {
-									}
+									followset(kNewtonIrNodeType_PunitExpression),
+								}
 
 --//		unitFactor			::=	[unaryMinus] (unit [highPrecedenceOperator numericConst] | "(" unitExpression ")") .
 production kNewtonIrNodeType_PunitFactor:		followset = {
-									}
+									firstset(kNewtonIrNodeType_PmidPrecedenceOperator),
+									followset(kNewtonIrNodeType_PunitTerm),
+								}
 
 --//		unit				::=	identifier .
 production kNewtonIrNodeType_Punit:			followset = {
-									}
+									firstset(kNewtonIrNodeType_PhighPrecedenceOperator),
+									followset(kNewtonIrNodeType_PunitFactor),
+								}
 
 --//		sensorPropertyList		::=	sensorProperty {"," sensorProperty} .
 production kNewtonIrNodeType_PsensorPropertyList:	followset = {
-									}
+									kNewtonIrNodeType_TrightBrace,
+								}
 
 --//		sensorProperty			::=	rangeStatement | uncertaintyStatement | erasureValueStatement | accuracyStatement | precisionStatement | sensorInterfaceStatement .
 production kNewtonIrNodeType_PsensorProperty:		followset = {
-									}
+									kNewtonIrNodeType_Tcomma,
+									followset(kNewtonIrNodeType_PsensorPropertyList),
+								}
 
 --//		sensorInterfaceStatement	::=	"interface" identifier ["@" numericConst "*" "bits"] "==" sensorInterfaceType parameterTuple ["{" sensorInterfaceCommandList "}"] .
 production kNewtonIrNodeType_PsensorInterfaceStatement:	followset = {
@@ -446,71 +618,71 @@ production kNewtonIrNodeType_PdelayCommand:		followset = {
 									}
 
 --//		arithmeticCommand		::=	identifier "=" expression .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_ParithmeticCommand:	followset = {
 									}
 
 --//		rangeStatement			::=	"range" identifier "==" "[" numericConst [unitExpression] "," numericConst [unitExpression] "]" .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_PrangeStatement:		followset = {
 									}
 
 --//		uncertaintyStatement		::=	"uncertainty" identifier "==" expression [unitExpression] .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_PuncertaintyStatement:	followset = {
 									}
 
 --//		erasureValueStatement		::=	"erasuretoken" identifier "==" numericConst [unitExpression] .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_PerasureValueStatement:	followset = {
 									}
 
 --//		accuracyStatement		::=	"accuracy" identifier "==" numericConstTupleList .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_PaccuracyStatement:	followset = {
 									}
 
 --//		precisionStatement		::=	"precision" identifier "==" numericConstTupleList .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_PprecisionStatement:	followset = {
 									}
 
 --//		numericConstTupleList		::=	"{" numericConstTuple {"," numericConstTuple} "}" .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_PnumericConstTupleList:	followset = {
 									}
 
 --//		numericConstTuple		::=	"(" numericConst [unitExpression] ".." numericConst ")" .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_PnumericConstTuple:	followset = {
 									}
 
 --//		expression			::=	term {lowPrecedenceBinaryOp term} .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_Pexpression:		followset = {
 									}
 
 --//		term				::=	[unaryOp] factor ["++" | "--"] {highPrecedenceBinaryOp factor} .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_Pterm:			followset = {
 									}
 
---//		factor				::=	numericConst | "(" expression ")" | distributionFactor | identifier ["[" numericConst "]"].
-production kNewtonIrNodeType_P:				followset = {
+--//		factor				::=	numericConst | "(" expression ")" | distributionFactor | identifier ["[" numericConst "]"] .
+production kNewtonIrNodeType_Pfactor:			followset = {
 									}
 
 --//		distributionFactor		::=	distribution parameterValueList .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_PdistributionFactor:	followset = {
 									}
 
---//		parameterValueList		::=	"(" identifier ":" expression {"," identifier ":" expression} .
-production kNewtonIrNodeType_P:				followset = {
+--//		parameterValueList		::=	"(" identifier ":" expression {"," identifier ":" expression} ")" .
+production kNewtonIrNodeType_PparameterValueList:	followset = {
 									}
 
 --//		distribution			::=	"Gaussian" | "exponential" | "biexponential" .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_Pdistribution:		followset = {
 									}
 
 --//		highPrecedenceBinaryOp		::=	"*" | "/" | "%" | "**" .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_PhighPrecedenceBinaryOp:	followset = {
 									}
 
 --//		lowPrecedenceBinaryOp		::=	"+" | "-" | ">>" | "<<" | "|" .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_PlowPrecedenceBinaryOp:	followset = {
 									}
 
 --//		unaryOp				::=	"-"  | "+" .
-production kNewtonIrNodeType_P:				followset = {
+production kNewtonIrNodeType_PunaryOp:			followset = {
 									}
 
 
@@ -628,6 +800,9 @@ token	kNewtonIrNodeType_Tbits:			followset = {
 									}
 token	kNewtonIrNodeType_Tdimensionless:		followset = {
 									}
+token	kNewtonIrNodeType_Tdotdot:			followset = {
+									}
+
 
 
 token	kNewtonIrNodeType_TintegerConst:		followset = {
