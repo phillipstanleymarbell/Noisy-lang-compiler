@@ -37,12 +37,59 @@
 
 #include "newton-eigenLibraryInterface.h"
 
-#include <Eigen/Core>
+#include <Eigen/Eigen>
 #include <iostream>
 using namespace std;
 using namespace Eigen;
 
 extern "C"
 {
-	//	Function definitions will go here...
+	void kernelPiGroups(MatrixXf m, int rank, int x[]){
+		cout << endl << endl << endl;
+		cout << "The column basis is" << endl;
+		for(int i = 1; i <= rank; i++){
+			cout << x[i] << " ";
+			if(x[i] > i){
+				m.col(i-1).swap(m.col(x[i]-1));
+			}
+		}
+		cout << endl << endl;
+		cout << "Dimensional Matrix" << endl;
+		cout << m << endl << endl;
+
+		MatrixXf ker = m.fullPivLu().kernel();
+		cout << "The Kernel is" << endl;
+		cout << ker << endl << endl;
+		cout << "m * ker = " << endl << m * ker << endl;
+
+		return;
+	}
+	void constructPiGroups(int k, int M, int N, MatrixXf m, int x[], int rank){
+		if(k == rank + 1){
+			kernelPiGroups(m, rank, x);
+		}
+		else{
+			for(int i = x[k-1] + 1; i <= M -rank + k; i++){
+				x[k] = i;
+				constructPiGroups(k+1, M, N, m, x, rank);
+			}
+		}
+	}
+
+	void getPiGroups(float *m, int N, int M){
+		Map<MatrixXf> tmp (m, M, N);
+		MatrixXf mat = tmp.transpose();
+
+		int rank = mat.fullPivLu().rank();
+		cout << "The rank of the matrix is " << rank << endl;
+		
+		int x[rank+1];
+		x[0] = 0;
+		int k = 1;
+		constructPiGroups(k, M, N, mat, x, rank);
+	
+		return;
+	}
+
+	
 } /* extern "C" */

@@ -728,7 +728,7 @@ struct IrNode
 	 */
 	char *			tokenString;
 	Token *			token;
-	SourceInfo *		sourceInfo;
+	SourceInfo *	sourceInfo;
 	IrNode *		irParent;
 	IrNode *		irLeftChild;
 	IrNode *		irRightChild;

@@ -36,3 +36,4 @@
 */
 
 void	irPassDimensionMatrixBackend(State *  N);
+void 	getPiGroups(float *m, int N, int M);

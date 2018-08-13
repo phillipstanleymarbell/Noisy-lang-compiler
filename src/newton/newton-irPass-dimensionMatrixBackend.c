@@ -62,36 +62,60 @@
 #	include <time.h>
 #endif
 
-void
-irPassDimensionMatrixBackend(State *  N, IrNode * newtonIrRoot)
+extern char *	gNewtonAstNodeStrings[];
+
+void getPiGroups(float *m, int N, int M);
+
+void irPassDimensionMatrixBackend(State *  N)
 {
 	Invariant *	invariant = N->invariantList;
 
 	while (invariant)
 	{
 		fprintf(stderr, "invariant: [%s]\n", invariant->identifier);
-		
-		IrNode *	parameter = invariant->parameterList;
-		while (parameter)
+	
+		IrNode *	parameter1 = invariant->parameterList;
+		IrNode *	parameter2 = invariant->parameterList;
+		Dimension *	dimension1 = parameter1->irLeftChild->physics->dimensions;
+
+		int N = 0;
+		if (parameter1->irLeftChild && parameter1->irLeftChild->physics)
 		{
-			if (parameter->irLeftChild && parameter->irLeftChild->physics)
-			{
-				fprintf(stderr, "\tParameter: [%s]\n", parameter->irLeftChild->physics->identifier);
-				fprintf(stderr, "\tDimensions:\n");
-
-				Dimension *	dimension = parameter->irLeftChild->physics->dimensions;
-				while (dimension)
-				{
-					fprintf(stderr, "\t\t%s^%1.f:\n", dimension->abbreviation, dimension->exponent);
-					dimension = dimension->next;
-				}
-
-				fprintf(stderr, "\n");
+			while (dimension1){
+				N++;
+				dimension1 = dimension1->next;
 			}
-			parameter = parameter->irRightChild;
 		}
-		invariant = invariant->next;
-	}
 
-	return;
+		int M = 0;
+		while (parameter1)
+		{
+			M++;
+			parameter1 = parameter1->irRightChild;
+		}
+		
+		float *m;
+		m = calloc(N * M, sizeof(float));
+
+		printf("\nThe dimensional matrix is \n\n");
+		for(int i = 0; i < M; i++){		
+			printf("    %s        ", parameter2->irLeftChild->physics->identifier);
+
+			Dimension *	dimension2 = parameter2->irLeftChild->physics->dimensions;
+			for(int j = 0; j < N; j++)
+			{
+				printf("{%.1f}", dimension2->exponent);
+				*(m + i + j * M) = (float)dimension2->exponent;
+				dimension2 = dimension2->next;
+				printf("%.1f   ", *(m + i + j * M));
+			}
+			printf("\n");
+			parameter2 = parameter2->irRightChild;			
+		}
+
+		getPiGroups(m, N, M);
+		
+		invariant = invariant->next;
+		printf("\n\n");
+	}
 }
