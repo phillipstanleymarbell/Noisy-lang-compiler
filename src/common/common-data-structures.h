@@ -571,6 +571,7 @@ typedef enum
 	kNoisyIrBackendDot				= (1 << 0),
 	kNoisyIrBackendProtobuf				= (1 << 1),
 	kNewtonIrBackendSmt				= (1 << 2),
+	kNoisyIrBackendLlvm				= (1 << 3),
 
 	/*
 	 *	Code depends on this bringing up the rear.
@@ -976,6 +977,7 @@ typedef struct
 	 */
 	char *			outputFilePath;
 	char *			outputSmtFilePath;
+	char *			outputLlvmFilePath;
 
 	NoisyMode		mode;
 	uint64_t		verbosityLevel;

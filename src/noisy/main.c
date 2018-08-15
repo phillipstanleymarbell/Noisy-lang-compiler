@@ -57,6 +57,7 @@
 #include "noisy-symbolTable.h"
 #include "common-irPass-helpers.h"
 #include "noisy-irPass-dotBackend.h"
+#include "noisy-irPass-llvmBackend.h"
 #include "noisy-irPass-protobufBackend.h"
 
 //extern const char	gNoisyEol[];
@@ -96,13 +97,14 @@ main(int argc, char *argv[])
 			{"version",		no_argument,		0,	'V'},
 			{"dot",			required_argument,	0,	'd'},
 			{"bytecode",		required_argument,	0,	'b'},
+			{"llvm",		required_argument,	0,	'l'},
 			{"trace",		no_argument,		0,	't'},
 			{"statistics",		no_argument,		0,	's'},
 			{"optimize",		required_argument,	0,	'O'},
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:b:stO:", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:b:l:stO:", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -170,6 +172,14 @@ main(int argc, char *argv[])
 				break;
 			}
 
+			case 'l':
+			{
+				N->irBackends |= kNoisyIrBackendLlvm;
+				N->outputLlvmFilePath = optarg;
+
+				break;
+			}
+			
 			case 't':
 			{
 				N->mode |= kNoisyModeCallTracing;
@@ -334,6 +344,12 @@ processFile(State *  N, char *  fileName)
 	if (N->irBackends & kNoisyIrBackendDot)
 	{
 		fprintf(stdout, "%s\n", noisyIrPassDotBackend(N, N->noisyIrTopScope, N->noisyIrRoot));
+	}
+
+
+	if (N->irBackends & kNoisyIrBackendLlvm)
+	{
+		irPassLlvmBackend(N);
 	}
 
 

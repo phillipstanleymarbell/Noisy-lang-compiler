@@ -53,29 +53,39 @@
 #include "flex.h"
 #include "common-errors.h"
 #include "version.h"
-#include "noisy-irPass-llvmBackends"
+#include "noisy-timeStamps.h"
+#include "common-timeStamps.h"
 #include "common-data-structures.h"
+#include "noisy-irPass-llvmBackend.h"
 #include "noisy-parser.h"
 #include "noisy-lexer.h"
 #include "common-irPass-helpers.h"
 #include "noisy-types.h"
 
 char *
-nyTypeToLlvm(IrNode node)
+nyTypeToLlvm(IrNode *  node)
 {
 	switch(node->type)
 	{
 		case kNoisyIrNodeType_Tbool:
-		case kNoisyIrNodeType_T:
-		case kNoisyIrNodeType_T:
+		case kNoisyIrNodeType_Tint4:
+		case kNoisyIrNodeType_Tint8:
 		{
 			return "i8";
+		}
+		default:
+		{
+			fatal(NULL, "Not supported Type");
 		}
 	}
 }
 
 void
-emit 
+setupADT(IrNode *  node, NoisyADT *  adt)
+{
+	
+}
+ 
 LlvmBackendState *
 llvmBackendStateInit()
 {
@@ -89,8 +99,8 @@ llvmBackendStateInit()
 	return Nl;
 }
 
-void
-irPassLlvmRegisterFunc(State *  N, LlvmBackendState *  Nl, IrNode *  node)
+NoisyFunc *
+registerFunc(State *  N, LlvmBackendState *  Nl, IrNode *  node)
 {
 	Nl->nFuncs++;
 	Nl->funcs = (NoisyFunc **) realloc(Nl->funcs, Nl->nFuncs * sizeof(NoisyFunc *));
@@ -100,8 +110,8 @@ irPassLlvmRegisterFunc(State *  N, LlvmBackendState *  Nl, IrNode *  node)
 		fatal(NULL, Emalloc);
 	}
 
-	Nl->func[Nl->nFuncs] = (NoisyFunc *) calloc(1, sizeof(NoisyFunc));
-	currentFunc = Nl->func[Nl->nFuncs];
+	Nl->funcs[Nl->nFuncs] = (NoisyFunc *) calloc(1, sizeof(NoisyFunc));
+	NoisyFunc *  currentFunc = Nl->funcs[Nl->nFuncs];
 
 	if (currentFunc == NULL)
 	{
@@ -110,32 +120,82 @@ irPassLlvmRegisterFunc(State *  N, LlvmBackendState *  Nl, IrNode *  node)
 
 	currentFunc->name = L(node)->tokenString;
 
+	IrNode *  inputNode, *  outputNode;
+
+	switch(node->type)
+	{
+		case kNoisyIrNodeType_PfunctionDecl:
+		{
+			inputNode = L(L(L(R(node))));
+			outputNode = L(L(L(L(node))));
+			break;
+		}
+		case kNoisyIrNodeType_PfunctionDefn:
+		{
+			inputNode = L(R(node));
+			outputNode = L(R(R(node)));
+			break;
+		}
+		default:
+		{
+			fatal(NULL, EtokenUnrecognized);
+		}
+	}
+	currentFunc->outputVar = L(outputNode)->tokenString;
+	currentFunc->outputType = nyTypeToLlvm(L(R(outputNode)));
+	currentFunc->inputVar = L(inputNode)->tokenString;
+	currentFunc->inputType = nyTypeToLlvm(L(R(inputNode)));
+	// This should be the proper way of doing it
+	// irPassLlvmEmitFuncIOTypes(N, Nl, inputNode, currentFunc);
+	// irPassLlvmEmitFuncIOTypes(N, Nl, outputNode, currentFunc);
+	return currentFunc;
 }
 
-NoisyADT *
-irPassLlvmEmitFuncIOTypes(State *  N, LlvmBackendState *  Nl, IrNode *  node, NoisyFunc *  currentFunc, bool isInput)
+/*
+ * Searches for the function in the list of known function. If not known,
+ * register it.
+ */
+NoisyFunc *
+searchRegFunc(State *  N, LlvmBackendState *  Nl, IrNode *  node)
 {
-	if(node->type != kNoisyIrNodeType_PtupleType)
+	char *  funcName = L(node)->tokenString;
+	
+	int i = 0;
+	for (; i < Nl->nFuncs; ++i)
 	{
-		fatal(N, EtokenUnrecognized);
+		if (strcmp(funcName, Nl->funcs[i]->name) == 0)
+		{
+			return Nl->funcs[i];
+		}
 	}
 
+	return registerFunc(N, Nl, node);
+}
+/*
+NoisyADT *
+irPassLlvmEmitFuncIOTypes(State *  N, LlvmBackendState *  Nl, IrNode *  node, NoisyFunc *  currentFunc)
+{
 	NoisyADT *  currentADT;
 	char *  varName;
 
-	if (isInput)
+	switch(node->type)
 	{
-		currentFunc->inputVar = ;
-		varName = currentFunc->inputVar;
-		currentFunc->inputADT = (NoisyADT *) calloc(1, sizeof(NoisyADT));
-		currentADT = currentFunc->inputADT;
-	}
-	else
-	{
-		currentFunc->outputVar = ;
-		varName = currentFunc->outputVar;
-		currentFunc->outputADT = (NoisyADT *) calloc(1, sizeof(NoisyADT));
-		currentADT = currentFunc->outputADT;
+		case kNoisyIrNodeType_PwriteTypeSignature:
+		{
+			currentFunc->inputADT = (NoisyADT *) calloc(1, sizeof(NoisyADT));
+			asprintf(&(currentFunc->inputADT->name), "%s.input", currentFunc->name);
+			currentADT = currentFunc->inputADT;
+		}
+		case kNoisyIrNodeType_PreadTypeSignature:
+		{
+			currentFunc->outputADT = (NoisyADT *) calloc(1, sizeof(NoisyADT));
+			asprintf(&(currentFunc->outputADT->name), "%s.input", currentFunc->name);
+			currentADT = currentFunc->outputADT;
+		}
+		default:
+		{
+			fatal(N, EtokenUnrecognized);
+		}
 	}
 
 	if (currentADT == NULL)
@@ -143,10 +203,29 @@ irPassLlvmEmitFuncIOTypes(State *  N, LlvmBackendState *  Nl, IrNode *  node, No
 		fatal(NULL, Emalloc);
 	}
 
-	asprintf(&(currentADT->name), "%s.%s", currentFunc->name, varName);
+	asprintf(&(currentADT->name), "%s.input", currentFunc->name, vara);
+
+	IrNode *  currentNode = R(L(node));
+
+	for (IrNode *  current = currentNode; current != NULL; current = R(current))
+	{
+		currentADT->nFields++;
+	}
+
+	currentADT->fields = (char **)calloc(1, sizeof(char *) * currentADT->nFields);
+	currentADT->fieldTypes = (IrNode **)calloc(1, sizeof(IrNode *) * currentADT->nFields);
+	if (currentADT->fields == NULL || currentADT->fieldTypes == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	for (int i = 0; currentADT->nFields; ++i)
+	{
+		currentADT
+	}
 
 }
-
+*/
 void
 irPassLlvmEmitHeader(State *  N)
 {
@@ -166,32 +245,34 @@ irPassLlvmEmitProgTypeNameDecl(State *  N, LlvmBackendState *  Nl, IrNode *  nod
 		{
 
 			flexprint(N->Fe, N->Fm, N->Fpllvm, "@%s = constant float %x, align 4\n",
-				L(node)->identifier, *(unsigned int*)&(R(node)->realConst));
+				L(node)->tokenString, *(unsigned int*)&(R(node)->token->realConst));
 			break;
 		}
-		case kNoisyIrNodeType_TintConst:
+		case kNoisyIrNodeType_TintegerConst:
 		{
 			flexprint(N->Fe, N->Fm, N->Fpllvm, "@%s = constant int %d, align 4\n",
-				L(node)->identifier, *(unsigned int*)&(R(node)->intConst));
+				L(node)->tokenString, *(unsigned int*)&(R(node)->token->integerConst));
 			break;
 		}
 		case kNoisyIrNodeType_TboolConst:
 		{
 			flexprint(N->Fe, N->Fm, N->Fpllvm, "@%s = constant i8 %d, align 4\n",
-				L(node)->identifier, *(unsigned int*)&(R(node)->intConst));
+				L(node)->tokenString, *(unsigned int*)&(R(node)->token->integerConst));
 			break;
 		}
-		case kNoisyIrNodeType_PnamegenDeclaration:
+		case kNoisyIrNodeType_PfunctionDecl:
 		{
-			
+			registerFunc(N, Nl, node);
 			break;
 		}
-		case kNoisyIrNodeType_PtypeDeclaration:
+		case kNoisyIrNodeType_PtypeDecl:
 		{
+			fatal(NULL, "ADT not supported yet!");
+			/*
 			Nl->nStructs++;
 			Nl->structs = (NoisyADT **) realloc(Nl->structs, Nl->nStructs * sizeof(NoisyADT *));
 			
-			if (Nl->firstStruct == NULL)
+			if (Nl->Struct == NULL)
 			{
 				fatal(NULL, Emalloc);
 			}
@@ -205,7 +286,7 @@ irPassLlvmEmitProgTypeNameDecl(State *  N, LlvmBackendState *  Nl, IrNode *  nod
 			}
 
 			currentStruct->name = L(node)->tokenString;
-			flexprint(N->Fe, N->Fm, N->Fpllvm, "%%struct.%s = type {", L(node)->tokenString);
+			currentStruct->sourceInfo = node->sourceInfo;
 			
 			if(L(R(node))->type != kNoisyIrNodeType_PadtTypeDeclaration)
 			{
@@ -213,18 +294,26 @@ irPassLlvmEmitProgTypeNameDecl(State *  N, LlvmBackendState *  Nl, IrNode *  nod
 			}
 			
 			currentStruct->nFields = 0;
-
+			*/
 			/*
 			 * We first iterrate over the tree once to get the number of fields before we
-			 * can malloc
+			 * can malloc.
+			 * 
+			 * Does not supprot a,b,c:i8
 			 */
+			/*
 			for (IrNode *	current = L(R(node); current != NULL; current = R(R(current)))
 			{
 				currentStruct->nFields++;
 			}
-
+			
 			currentStruct->fields = (char **)calloc(1, sizeof(char *) * currentStruct->nFields);
-
+			currentStruct->fieldTypes = (IrNode **)calloc(1, sizeof(IrNode *) * currentStruct->nFields);
+			if (currentStruct->fields == NULL || currentStruct->fieldTypes == NULL)
+			{
+				fatal(NULL, Emalloc);
+			}
+			*/
 			/*
 			 * For an ADT, we store its field name under llvmState, and write the type of its
 			 * fields in the LLVM file, e.g.
@@ -238,91 +327,123 @@ irPassLlvmEmitProgTypeNameDecl(State *  N, LlvmBackendState *  Nl, IrNode *  nod
 	   		   };
 			 * ["r", "g", "b", "a"] will be stored under N->backendState->structs, and 
 			 * `%struct.Pixel = type { i8, i8, i8, i8 }` will be written to the output file.
-			 * 
-			 * Since LLVM IR does not permit extra comma after the last field, and that Noisy
-			 * ADTs must have at least one field, we treat the first field seperately.
 			 */
-
-			IrNode *	currentNode = L(R(node);
-			currentStruct->fields[0] = currentNode->tokenString;
-			flexprint(N->Fe, N->Fm, N->Fpllvm, " %s", nyTypeToLlvm(L(R(currentNode))));
-			currentNode = R(R(currentNode));
-
-			for (int i = 1; i < currentStruct->nFields; ++i)
+			/*
+			for (int i = 0; i < currentStruct->nFields; ++i)
 			{
 				currentStruct->fields[i] = currentNode->tokenString;
-				flexprint(N->Fe, N->Fm, N->Fpllvm, ", %s", nyTypeToLlvm(L(R(currentNode))));
+				currentStruct->fieldTypes[i] = L(R(currentNode));
+				currentNode = R(R(currentNode));
 			}
 
-			flexprint(N->Fe, N->Fm, N->Fpllvm, " }\n");
+			irPassLlvmEmitADT(N, Nl, currentStruct);
 			break;
+			*/
 		}
 		default:
 		{
-			fatal(N, )
+			fatal(N, EtokenUnrecognized);
 		}
 	}
 
 }
 
 void
-irPassLlvmEmitProgtypeBody(State *  N, LlvmBackendState *  Nl, IrNode *  node)
+irPassLlvmEmitModuleDeclBody(State *  N, LlvmBackendState *  Nl, IrNode *  node)
 {
-	if (node->type != kNoisyIrNodeType_PprogtypeBody)
+	if (node->type != kNoisyIrNodeType_PmoduleDeclBody)
 	{
 		fatal(N, EtokenUnrecognized);
 	}
 	for(IrNode *	current = node; current != NULL; current = R(current))
 	{
-		irPassLlvmEmitProgTypeNameDecl(N, L(N));
+		irPassLlvmEmitProgTypeNameDecl(N, Nl, L(node));
 	}
 
 	return;
 }
 
 void
-irPassLlvmEmitProgType(State *  N, LlvmBackendState *  Nl, IrNode *  node)
+irPassLlvmEmitModuleDecl(State *  N, LlvmBackendState *  Nl, IrNode *  node)
 {
-	if(node->type != kNoisyIrNodeType_PprogtypeDeclaration)
+	if(node->type != kNoisyIrNodeType_PmoduleDecl)
 	{
 		fatal(N, EtokenUnrecognized);
 	}
-	Nl->module = L(node)->identifier;
-	flexprint(N->Fe, N->Fm, N->Fpllvm, "; ModuleID = %s\n", L(node)->identifier);
+	Nl->module = L(node)->tokenString;
+	flexprint(N->Fe, N->Fm, N->Fpllvm, "; ModuleID = %s\n", L(node)->tokenString);
 
-	irPassLlvmEmitProgtypeBody(N, R(node));
+	irPassLlvmEmitModuleDeclBody(N, Nl, R(node));
 
 	return;
 }
 
 void
-irPassLlvmEmitNameGen(State *  N, LlvmBackendState *  Nl, IrNode *  node)
+irPassLlvmEmitFunction(State *  N, LlvmBackendState *  Nl, IrNode *  node)
 {
-	if(node->type != kNoisyIrNodeType_PnamegenDefinition)
+	if(node->type != kNoisyIrNodeType_PfunctionDefn)
 	{
 		fatal(N, EtokenUnrecognized);
 	}
 
-	Nl->currentFunc = L(node);
+	NoisyFunc *  currentFunc = searchRegFunc(N, Nl, node);
+	flexprint(N->Fe, N->Fm, N->Fpllvm, "define %s @%s( %s ) #0 {\n", currentFunc->outputType,
+			  currentFunc->name, currentFunc->inputType);
+	
+	flexprint(N->Fe, N->Fm, N->Fpllvm, "\t%%1 = alloca %s, align 4\n, \tstore %s %%0, %s* %%1, align 3\n",
+			  currentFunc->inputType, currentFunc->inputType);
+	
+	flexprint(N->Fe, N->Fm, N->Fpllvm, "\t%%1 = alloca %s, align 4\n", currentFunc->outputType);
 
+	Nl->lastReg = 2;
 
+	IrNode *  currentNode = R(R(R(node)));
+	if (currentNode->type != kNoisyIrNodeType_PscopedStatementList ||
+		L(currentNode)->type != kNoisyIrNodeType_PstatementList)
+	{
+		fatal(NULL, EtokenUnrecognized);
+	}
+
+	for (currentNode = L(currentNode); currentNode != NULL; currentNode = R(currentNode))
+	{
+		continue;
+	}	
 }
 
 void
-irPassLlvmEmitProgram(State *  N, IrNode *  node)
+irPassLlvmEmitProgram(State *  N, LlvmBackendState *  Nl, IrNode *  node)
 {
-	LlvmBackendState *	Nl = llvmBackendStateInit();
-	N->backendState = Nl;
-
 	if(node->type != kNoisyIrNodeType_Pprogram)
 	{
 		fatal(N, EtokenUnrecognized);
 	}
-	irPassLlvmEmitHeader();
-	irPassLlvmEmitProgType(N, Nl, L(node));
+	irPassLlvmEmitHeader(N);
+	irPassLlvmEmitModuleDecl(N, Nl, L(node));
 
 	for (IrNode *  current = R(node); current != NULL; current = R(current))
 	{
-		irPassLlvmEmitNameGen(N, Nl, L(current));
+		irPassLlvmEmitFunction(N, Nl, L(current));
+	}
+}
+
+void
+irPassLlvmBackend(State *  N)
+{
+	LlvmBackendState *	Nl = llvmBackendStateInit();
+	N->backendState = Nl;
+
+	irPassLlvmEmitProgram(N, Nl, N->noisyIrRoot);
+
+	if (N->outputLlvmFilePath)
+	{
+		FILE *  llvmFile = fopen(N->outputLlvmFilePath, "w");
+		if (llvmFile == NULL)
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, "\n%s: %s.\n", Eopen, N->outputLlvmFilePath);
+			consolePrintBuffers(N);
+		}
+
+		fprintf(llvmFile, "%s", N->Fpllvm->circbuf);
+		fclose(llvmFile);
 	}
 }

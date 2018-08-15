@@ -64,7 +64,7 @@ extern const char	EruntTokenInNumericConst[];
 extern const char	EcannotFindTypeSignatureForNodeType[];
 extern const char	EassignTypeSanity[];
 extern const char	Efd2path[];
-extern const char	EtokenInSMT[];
+extern const char	EtokenUnrecognized[];
 extern const char	EexpressionPhysicsMismatch[];
 extern const char	Eusedef[];
 extern const char	Emultidef[];

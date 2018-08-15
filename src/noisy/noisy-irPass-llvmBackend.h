@@ -53,22 +53,40 @@
 
  * the array would simply be ["r", "g", "b", "a"]
  */
+
 typedef struct
 {
 	char *			name;
-	char *			fields[];
+	char *			type;
+}Field;
+
+typedef struct
+{
+	char *			name;
+
+	SourceInfo *	sourceInfo;
+
 	int				nFields;
+	Field *			fields[];
 } NoisyADT;
 
+
+/*
+ *	For the first version, we only accept functions with 1 input and 1 output, non adt 
+ */
 typedef struct
 {
 	char *			name;
 
 	char *			inputVar;
-	NoisyADT *		inputADT;
+	//NoisyADT *		inputADT;
+	char *			inputType;
 
 	char *			outputVar;
-	NoisyADT *		outputADT;
+	//NoisyADT *		outputADT;
+	char *			outputType;
+
+	SourceInfo *	sourceInfo;
 } NoisyFunc;
 
 typedef struct
@@ -82,9 +100,14 @@ typedef struct
 
 	char *			currentFunc;
 
-	NoisyADT *		structs[];
+	NoisyADT **		structs;
 	int				nStructs;
 
-	NoisyFunc *		funcs[];
+	NoisyFunc **	funcs;
 	int				nFuncs;
+
+	int 			lastReg;
 } LlvmBackendState;
+
+void
+irPassLlvmBackend(State *  N);
