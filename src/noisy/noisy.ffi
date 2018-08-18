@@ -508,7 +508,7 @@ production	kNoisyIrNodeType_PorderingHead:			firstset = {
 										kNoisyIrNodeType_TleftParens,
 									}
 
---//		guardedStatementList	=	{expression "=>" (statementList | scopedStatementList)} .
+--//		guardedStatementList	=	{expression "=>" scopedStatementList} .
 production	kNoisyIrNodeType_PguardedStatementList:		firstset = {
 										kNoisyIrNodeType_Zepsilon,
 										firstset(kNoisyIrNodeType_Pexpression),
@@ -1366,6 +1366,7 @@ production	kNoisyIrNodeType_PscopedStatementList:		followset = {
 										followset(kNoisyIrNodeType_PsequenceStatement),
 										followset(kNoisyIrNodeType_PparallelStatement),
 										followset(kNoisyIrNodeType_PguardedStatementList),
+										firstset(kNoisyIrNodeType_Pexpression),
 										kNoisyIrNodeType_Tsemicolon,
 									}
 
@@ -1439,7 +1440,7 @@ production	kNoisyIrNodeType_PorderingHead:			followset = {
 										firstset(kNoisyIrNodeType_PscopedStatementList),
 									}
 
---//		guardedStatementList	=	{expression "=>" (statementList | scopedStatementList)} .
+--//		guardedStatementList	=	{expression "=>" scopedStatementList} .
 production	kNoisyIrNodeType_PguardedStatementList:		followset = {
 										kNoisyIrNodeType_TrightBrace,
 									}
