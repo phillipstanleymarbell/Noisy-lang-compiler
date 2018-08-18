@@ -741,7 +741,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 					break;
 				}
 
-				case kNewtonIrNodeType_Tnumber:
+				case kNewtonIrNodeType_TnumericConst:
 				case kNoisyIrNodeType_TrealConst:
 				{
 					flexprint(N->Fe, N->Fm, N->Fperr, "'%f' ", tmp->realConst);

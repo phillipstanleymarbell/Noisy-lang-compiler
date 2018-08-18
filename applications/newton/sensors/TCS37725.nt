@@ -37,23 +37,18 @@
 #
 #	Description: Base signals used in most Newton descriptions.
 #
+
 include "NewtonBaseSignals.nt"
 
 #
 #	Description: Additional signals used in this particular newton description.
 #
 
-power : signal =
-{
-	name = "Watts" English;
-	symbol = "W";
-	derivation = work / time;
-
 irradianceResponsivity : signal =
 {
-	name = "counts per micro watts per square centimetres" English;
-	symbol = "c";
-	derivation = (10 ** 10) / (power * area);
+	name		= "Counts per micro watts per square centimetres" English;
+	symbol		= c;
+	derivation	= 1/(1E-6 * power / (distance / 100)**2);
 }
 
 #
@@ -81,20 +76,20 @@ kTCS37725LambdaDominant615CErasureToken: const = 16rFEFE;
 #
 #	Standard Deviation is not available in data sheet.
 #
-kTCS37725LambdaDominant465BStdev: const = ;
-kTCS37725LambdaDominant465GStdev: const = ;
-kTCS37725LambdaDominant465RStdev: const = ;
-kTCS37725LambdaDominant465CStdev: const = ;
+kTCS37725LambdaDominant465BStdev: const = unknown;
+kTCS37725LambdaDominant465GStdev: const = unknown;
+kTCS37725LambdaDominant465RStdev: const = unknown;
+kTCS37725LambdaDominant465CStdev: const = unknown;
 
-kTCS37725LambdaDominant525BStdev: const = ;
-kTCS37725LambdaDominant525GStdev: const = ;
-kTCS37725LambdaDominant525RStdev: const = ;
-kTCS37725LambdaDominant525CStdev: const = ;
+kTCS37725LambdaDominant525BStdev: const = unknown;
+kTCS37725LambdaDominant525GStdev: const = unknown;
+kTCS37725LambdaDominant525RStdev: const = unknown;
+kTCS37725LambdaDominant525CStdev: const = unknown;
 
-kTCS37725LambdaDominant615BStdev: const = ;
-kTCS37725LambdaDominant615GStdev: const = ;
-kTCS37725LambdaDominant615RStdev: const = ;
-kTCS37725LambdaDominant615CStdev: const = ;
+kTCS37725LambdaDominant615BStdev: const = unknown;
+kTCS37725LambdaDominant615GStdev: const = unknown;
+kTCS37725LambdaDominant615RStdev: const = unknown;
+kTCS37725LambdaDominant615CStdev: const = unknown;
 
 TCS37725: sensor (
 			Lambda465B: irradianceResponsivity@0,
@@ -141,7 +136,7 @@ TCS37725: sensor (
 	#
 	#	Register address of clear, red, green and blue data can be found in Table 17 on page 25.
 	#
-	interface LambdaDominant465B == "i2c" (address: "16r29")
+	interface LambdaDominant465B == i2c (address: 16r29)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -153,7 +148,7 @@ TCS37725: sensor (
 		LambdaDominant465B = (B465DATAH << 8) | (B465DATA);
 	},
 
-	interface LambdaDominant465G == "i2c" (address: "16r29")
+	interface LambdaDominant465G == i2c (address: 16r29)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -165,7 +160,7 @@ TCS37725: sensor (
 		LambdaDominant465G = (G465DATAH << 8) | (G465DATA);
 	},
 
-	interface LambdaDominant465R == "i2c" (address: "16r29")
+	interface LambdaDominant465R == i2c (address: 16r29)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -177,7 +172,7 @@ TCS37725: sensor (
 		LambdaDominant465R = (R465DATAH << 8) | (R465DATA);
 	},
 
-	interface LambdaDominant465C == "i2c" (address: "16r29")
+	interface LambdaDominant465C == i2c (address: 16r29)
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -189,7 +184,7 @@ TCS37725: sensor (
 		LambdaDominant465C = (C465DATAH << 8) | (C465DATA);
 	},
 
-	interface LambdaDominant525B == "i2c" (address: "16r29")
+	interface LambdaDominant525B == i2c (address: 16r29)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -201,7 +196,7 @@ TCS37725: sensor (
 		LambdaDominant525B = (B525DATAH << 8) | (B525DATA);
 	},
 
-	interface LambdaDominant525G == "i2c" (address: "16r29")
+	interface LambdaDominant525G == i2c (address: 16r29)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -213,7 +208,7 @@ TCS37725: sensor (
 		LambdaDominant525G = (G525DATAH << 8) | (G525DATA);
 	},
 
-	interface LambdaDominant525R == "i2c" (address: "16r29")
+	interface LambdaDominant525R == i2c (address: 16r29)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -225,7 +220,7 @@ TCS37725: sensor (
 		LambdaDominant525R = (R525DATAH << 8) | (R525DATA);
 	},
 
-	interface LambdaDominant525C == "i2c" (address: "16r29")
+	interface LambdaDominant525C == i2c (address: 16r29)
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -237,7 +232,7 @@ TCS37725: sensor (
 		LambdaDominant525C = (C525DATAH << 8) | (C525DATA);
 	},
 
-	interface LambdaDominant615B == "i2c" (address: "16r29")
+	interface LambdaDominant615B == i2c (address: 16r29)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -249,7 +244,7 @@ TCS37725: sensor (
 		LambdaDominant615B = (B615DATAH << 8) | (B615DATA);
 	},
 
-	interface LambdaDominant615G == "i2c" (address: "16r29")
+	interface LambdaDominant615G == i2c (address: 16r29)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -261,7 +256,7 @@ TCS37725: sensor (
 		LambdaDominant615G = (G615DATAH << 8) | (G615DATA);
 	},
 
-	interface LambdaDominant615R == "i2c" (address: "16r29")
+	interface LambdaDominant615R == i2c (address: 16r29)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -273,7 +268,7 @@ TCS37725: sensor (
 		LambdaDominant615R = (R615DATAH << 8) | (R615DATA);
 	},
 
-	interface LambdaDominant615C == "i2c" (address: "16r29")
+	interface LambdaDominant615C == i2c (address: 16r29)
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -333,51 +328,51 @@ TCS37725: sensor (
 	#	Could not find the relevant information in data sheet so I left the cost as 0.
 	#
 	precision LambdaDominant465B == {
-					(16*bits, nil),
+					(16*bits, unknown),
 				},
 
 	precision LambdaDominant465G == {
-					(16*bits, nil),
+					(16*bits, unknown),
 				},
 
 	precision LambdaDominant465R == {
-					(16*bits, nil),
+					(16*bits, unknown),
 				},
 
 	precision LambdaDominant465C == {
-					(16*bits, nil),
+					(16*bits, unknown),
 				},
 
 	precision LambdaDominant525B == {
-					(16*bits, nil),
+					(16*bits, unknown),
 				},
 
 	precision LambdaDominant525G == {
-					(16*bits, nil),
+					(16*bits, unknown),
 				},
 
 	precision LambdaDominant525R == {
-					(16*bits, nil),
+					(16*bits, unknown),
 				},
 
 	precision LambdaDominant525C == {
-					(16*bits, nil),
+					(16*bits, unknown),
 				},
 
 	precision LambdaDominant615B == {
-					(16*bits, nil),
+					(16*bits, unknown),
 				},
 
 	precision LambdaDominant615G == {
-					(16*bits, nil),
+					(16*bits, unknown),
 				},
 
 	precision LambdaDominant615R == {
-					(16*bits, nil),
+					(16*bits, unknown),
 				},
 
 	precision LambdaDominant615C == {
-					(16*bits, nil),
+					(16*bits, unknown),
 				},
 
 	#
@@ -388,50 +383,50 @@ TCS37725: sensor (
 	#	Noise values of light sensor cannot be found.
 	#
 	accuracy LambdaDominant465B == {
-					(nil, nil),
+					(unknown, unknown),
 				},
 
 	accuracy LambdaDominant465G == {
-					(nil, nil),
+					(unknown, unknown),
 				},
 
 	accuracy LambdaDominant465R == {
-					(nil, nil),
+					(unknown, unknown),
 				},
 
 	accuracy LambdaDominant465C == {
-					(nil, nil),
+					(unknown, unknown),
 				},
 
 	accuracy LambdaDominant525B == {
-					(nil, nil),
+					(unknown, unknown),
 				},
 
 	accuracy LambdaDominant525G == {
-					(nil, nil),
+					(unknown, unknown),
 				},
 
 	accuracy LambdaDominant525R == {
-					(nil, nil),
+					(unknown, unknown),
 				},
 
 	accuracy LambdaDominant525C == {
-					(nil, nil),
+					(unknown, unknown),
 				},
 
 	accuracy LambdaDominant615B == {
-					(nil, nil),
+					(unknown, unknown),
 				},
 
 	accuracy LambdaDominant615G == {
-					(nil, nil),
+					(unknown, unknown),
 				},
 
 	accuracy LambdaDominant615R == {
-					(nil, nil),
+					(unknown, unknown),
 				},
 
 	accuracy LambdaDominant615C == {
-					(nil, nil),
+					(unknown, unknown),
 				}
 }

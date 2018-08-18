@@ -644,7 +644,7 @@ main(void)
 		/*
 		 *	Create a top-level scope, then parse.
 		 */
-		noisyCgiState->noisyIrTopScope = noisySymbolTableAllocScope(noisyCgiState);
+		noisyCgiState->noisyIrTopScope = commonSymbolTableAllocScope(noisyCgiState);
 		noisyCgiState->noisyIrRoot = noisyParse(noisyCgiState, noisyCgiState->noisyIrTopScope);
 		runPasses(noisyCgiState);
 

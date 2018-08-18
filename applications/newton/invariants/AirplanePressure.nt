@@ -38,53 +38,21 @@
 #	Description: Invariants for airplane sensors.
 #
 
-time : signal = {
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
-}
+include "NewtonBaseSignals.nt"
 
-mass : signal = {
-	name = "kilogram" English;
-	symbol = "kg";
-	derivation = none;
-}
-
-distance : signal = {
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
-}
-
-area : signal = {
-	derivation = distance ** 2;
-}
-
-speed : signal = {
-	derivation = distance / time;
-}
-
-acceleration : signal = {
-	derivation = speed / time;
-}
-
-force : signal =  {
-	name = "Newton" English;
-	symbol = "N" ;
-	derivation = mass * acceleration;
-}
-
-# 0 is the static pressure sensor for altimeter
-# 1 is the static pressure sensor for pitot tube
-pressure: signal(i: 0 to 1) = {
+#
+#	0 is the static pressure sensor for altimeter
+#	1 is the static pressure sensor for pitot tube
+#
+airplanePressures: signal(i: 0 to 1) = {
 	name = "Pascal" English;
-	symbol = "Pa" ;
+	symbol = xPa;
 	derivation = force / area;
 }
 
 AltimeterPitotPressuresShouldMatch: invariant(
-	altimeter_pressure: pressure@0, 
-	pitot_pressure: pressure@1
+	altimeter_pressure: airplanePressures@0, 
+	pitot_pressure: airplanePressures@1
 ) = {
 	altimeter_pressure > pitot_pressure - 10 * Pa,
 	altimeter_pressure < pitot_pressure + 10 * Pa

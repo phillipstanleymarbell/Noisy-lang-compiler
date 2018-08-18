@@ -131,7 +131,10 @@ errorMultiDefinition(State *  N, Symbol *  symbol)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
 
-	flexprint(N->Fe, N->Fm, N->Fperr, Emultidef, symbol->identifier);
+	flexprint(N->Fe, N->Fm, N->Fperr, Emultidef, symbol->identifier, symbol->sourceInfo->fileName, symbol->sourceInfo->lineNumber, symbol->sourceInfo->columnNumber);
+	flexprint(N->Fe, N->Fm, N->Fperr, " ");
+	flexprint(N->Fe, N->Fm, N->Fperr, Epreviousdef, symbol->definition->sourceInfo->fileName, symbol->definition->sourceInfo->lineNumber, symbol->definition->sourceInfo->columnNumber);
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
 	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
 }
 

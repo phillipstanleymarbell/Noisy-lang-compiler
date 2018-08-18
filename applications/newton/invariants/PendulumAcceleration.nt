@@ -38,29 +38,7 @@
 #	Description: Invariants for a sensor-instrumented pendulum
 #
 
-time : signal =
-{
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
-}
-
-distance : signal(n: 0 to 2) =
-{
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
-}
-
-speed : signal(n: 0 to 2) =
-{
-	derivation = distance@n / time;
-}
-
-acceleration : signal(n: 0 to 2) =
-{
-	derivation = speed@n / time;
-}
+include "NewtonBaseSignals.nt"
 
 AccelerationRange : invariant(X: acceleration@0, Y: acceleration@1, Z: acceleration@2) = 
 {

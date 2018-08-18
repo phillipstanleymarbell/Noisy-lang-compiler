@@ -86,7 +86,7 @@ irPassDimensionMatrixProcessInvariantList(State *  N)
 				Dimension *	dimension = parameter->irLeftChild->physics->dimensions;
 				while (dimension)
 				{
-					fprintf(stderr, "\t\t%s^%1.f:\n", dimension->identifier, dimension->exponent);
+					fprintf(stderr, "\t\t%s^%1.f:\n", dimension->abbreviation, dimension->exponent);
 					dimension = dimension->next;
 				}
 

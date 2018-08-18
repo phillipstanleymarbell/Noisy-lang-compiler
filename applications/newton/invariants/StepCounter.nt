@@ -38,42 +38,47 @@
 #	Description: Invariants for a pedometer.
 #
 
-time : signal = {
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
+include "NewtonBaseSignals.nt"
+
+multiAxisDistance : signal(i: 0 to 5) =
+{
+	name		= "meters" English;
+	symbol		= xm;
+	derivation	= none;
 }
 
-distance : signal(i: 0 to 5) = {
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
+multiAxisSpeed : signal(i: 0 to 5) =
+{
+	name		= "jiffies" English;
+	symbol		= xjf;
+	derivation	= multiAxisDistance@i / time;
 }
 
-speed : signal(i: 0 to 5) = {
-	derivation = distance@i / time;
+multiAxisAcceleration : signal(i: 0 to 5) =
+{
+	name		= "metajiffies" English;
+	symbol		= xmjf;
+	derivation	= multiAxisSpeed@i / time;
 }
 
-acceleration : signal(i: 0 to 5) = {
-	derivation = speed@i / time;
+multiAxisAngularDisplacement : signal(i: 0 to 5) =
+{
+	name		= "radians" English;
+	symbol		= xrad;
+	derivation	= none;
 }
 
-angular_displacement : signal(i: 0 to 5) = {
-	name = "radian" English;
-	symbol = "rad";
-	derivation = none;
+multiAxisAngularVelocity : signal(i: 0 to 5) =
+{
+	derivation = multiAxisAngularDisplacement@i / time;
 }
 
-angular_velocity : signal(i: 0 to 5) = {
-	derivation = angular_displacement / time;
-}
-
-SamplingTime : constant = 5 * 10 ** -4 * s;
+SamplingTime : constant = (5E-4) * s;
 
 maximumAcceleration: invariant(
-	x: acceleration@0, 
-	y: acceleration@1, 
-	z: acceleration@2
+	x: multiAxisAcceleration@0, 
+	y: multiAxisAcceleration@1, 
+	z: multiAxisAcceleration@2
 ) = {
 	x < 9.5 * m / s ** 2,
 	x > - 9.5 * m / s ** 2,
@@ -84,25 +89,27 @@ maximumAcceleration: invariant(
 }
 
 accelerationAndGyro : invariant(
-	x: acceleration@0, 
-	y: acceleration@1, 
-	z: acceleration@2, 
-	row: angular_velocity@0, 
-	pitch: angular_velocity@1, 
-	yaw: angular_velocity@2
+	x: multiAxisAcceleration@0, 
+	y: multiAxisAcceleration@1, 
+	z: multiAxisAcceleration@2, 
+	row: multiAxisAngularVelocity@0, 
+	pitch: multiAxisAngularVelocity@1, 
+	yaw: multiAxisAngularVelocity@2
 ) = {
-	# rectangular integration estimation
+	#
+	#	Rectangular integration estimation
+	#
 	((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) / (row ** 2 + pitch ** 2 + yaw ** 2) < (2 * m / rad) ** 2,
 	(row ** 2 + pitch ** 2 + yaw ** 2) / ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) > (0.1 * rad / m) ** 2
 }
 
 accelerationRedundancy: invariant (
-	x1: acceleration@0, 
-	y1: acceleration@1, 
-	z1: acceleration@2, 
-	x2: acceleration@3, 
-	y2: acceleration@4, 
-	z2: acceleration@5
+	x1: multiAxisAcceleration@0, 
+	y1: multiAxisAcceleration@1, 
+	z1: multiAxisAcceleration@2, 
+	x2: multiAxisAcceleration@3, 
+	y2: multiAxisAcceleration@4, 
+	z2: multiAxisAcceleration@5
 ) = {
 	x1 ~ x2,
 	y1 ~ y2,
@@ -110,12 +117,12 @@ accelerationRedundancy: invariant (
 }
 
 gyroRedundancy: invariant (
-	x1: angular_velocity@0, 
-	y1: angular_velocity@1, 
-	z1: angular_velocity@2, 
-	x2: angular_velocity@3, 
-	y2: angular_velocity@4, 
-	z2: angular_velocity@5
+	x1: multiAxisAngularVelocity@0, 
+	y1: multiAxisAngularVelocity@1, 
+	z1: multiAxisAngularVelocity@2, 
+	x2: multiAxisAngularVelocity@3, 
+	y2: multiAxisAngularVelocity@4, 
+	z2: multiAxisAngularVelocity@5
 ) = {
 	x1 ~ x2,
 	y1 ~ y2,

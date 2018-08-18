@@ -38,12 +38,7 @@
 #	Description: A simple Newton description.
 #
 
-time : signal = 
-{
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
-}
+include "NewtonBaseSignals.nt"
 
 Sample: invariant(t: time) = 
 {

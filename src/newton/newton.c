@@ -53,6 +53,7 @@
 #include "newton-timeStamps.h"
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
+#include "common-symbolTable.h"
 
 #include "newton-parser.h"
 #include "newton-lexer.h"
@@ -80,7 +81,7 @@ processNewtonFile(State *  N, char *  filename)
 	/*
 	 *	Create a top-level scope, then parse.
 	 */
-	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
+	N->newtonIrTopScope = commonSymbolTableAllocScope(N);
 
 	State *	N_dim = processNewtonFileDimensionPass(filename);
 	N->newtonIrTopScope->firstDimension = N_dim->newtonIrTopScope->firstDimension;
@@ -121,7 +122,7 @@ processNewtonFileDimensionPass(char * filename)
 	State *		N = init(kNoisyModeDefault);
 	newtonLexInit(N, filename);
 
-	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
+	N->newtonIrTopScope = commonSymbolTableAllocScope(N);
 	newtonDimensionPassParse(N, N->newtonIrTopScope);
 
 	return N;

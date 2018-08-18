@@ -14,17 +14,17 @@ Fibonacci : function (input: valueType) -> (output: valueType) =
 	{
 		(input == 0) =>
 		{
-			return (output:0);
+			#return (output:0);
 		}
 
 		(input == 1) =>
 		{
-			return (output:1);
+			#return (output:1);
 		}
 
 		true =>
 		{
-			return output:(Fibonacci(input - 1) + Fibonacci(input - 2));
+			#return output:(Fibonacci(input - 1) + Fibonacci(input - 2));
 		}
 	};
 }

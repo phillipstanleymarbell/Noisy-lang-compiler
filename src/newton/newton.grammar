@@ -1,14 +1,15 @@
 /*
  *	Lexical elements
  */
-reservedIdentifiers		::=	"o<" | "~" | "<" | "<=" | ">" | ">=" | "==" | "<->"
+reservedIdentifiers		::=	":" | "," | "@" | "o<" | "~" | "<" | "<=" | ">" | ">=" | "==" | "<->"
 					| "**" | "*" | "/" | "+" | "-" | "<<" | ">>" | "|"
 					| "-" | "English" | "constant" | "invariant" | "signal"
 					| "sensor" | "name" | "symbol" | "derivation" | "none"
 					| "dot" | "cross" | "derivative" | "integral" | "interface"
-					| "i2c" | "spi"| "analog"| "write"| "read"| "delay"| "range"
+					| "i2c" | "spi" | "analog" | "write" | "read" | "delay" | "range"
 					| "erasuretoken" | "uncertainty" | "accuracy" | "precision"
-					| "Gaussian" | "exponential" | "biexponential" .
+					| "Gaussian" | "exponential" | "biexponential" | "to" | "bits"
+					| "dimensionless" | "include" | "(" | ")" | "{" | "}" | ";" | ".." .
 
 zeroToNine			=	"0-9" .
 oneToNine			=	"1-9" .
@@ -34,24 +35,24 @@ rule				::=	constantDefinition | invariantDefinition | baseSignalDefinition | se
 constantDefinition		::=	identifier ":" "constant" "=" numericConst [unitExpression] ";" .
 invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" constraintList "}" .
 baseSignalDefinition		::=	identifier ":" "signal" [subdimensionTuple] "=" "{" [nameStatement] symbolStatement derivationStatement "}" .
-sensorDefinition		::=	identifier ":" "sensor" parameterTuple = "{" sensorPropertyList "}" .
+sensorDefinition		::=	identifier ":" "sensor" parameterTuple "=" "{" sensorPropertyList "}" .
 
 nameStatement			::=	"name" "=" stringConst languageSetting ";" .
 symbolStatement			::=	"symbol" "=" identifier ";" .
-derivationStatement		::=	"derivation" "=" ("none" | quantityExpression) ";" .
+derivationStatement		::=	"derivation" "=" ("none" | "dimensionless" | quantityExpression) ";" .
 
 subdimensionTuple		::=	"(" identifier ":" numericConst "to" numericConst ")" .
 parameterTuple			::=	"(" parameter {"," parameter} ")" .
 parameter			::=	identifier ":" identifier .
 
-constraintList			::=	constraint {"," constraint} .
-constraint			::=	quantityExpression comparisonOperator quantityExpression .
+constraintList			::=	[constraint] {"," constraint} .
+constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
 
 quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
 quantityTerm			::=	[unaryMinus] quantityFactor {midPrecedenceOperator quantityFactor} .
 quantityFactor			::=	quantity								|
-					quantity [highPrecedenceOperator quantityExpression]			| 
-						timeOperator {timeOperator} quantityExpression			| 
+					quantity [highPrecedenceOperator quantityExpression]			|
+						timeOperator {timeOperator} quantityExpression			|
 						"(" quantityExpression ")" .
 quantity			::=	numericConst | (identifier {"@" numericConst}) .
 lowPrecedenceOperator		::=	"+" | "-" .
@@ -70,15 +71,14 @@ unit				::=	identifier .
 
 sensorPropertyList		::=	sensorProperty {"," sensorProperty} .
 sensorProperty			::=	rangeStatement | uncertaintyStatement | erasureValueStatement | accuracyStatement | precisionStatement | sensorInterfaceStatement .
-sensorInterfaceStatement	::=	"interface" identifier "==" sensorInterfaceType parameterTuple ["{" sensorInterfaceCommandList "}"] .
+sensorInterfaceStatement	::=	"interface" identifier ["@" numericConst "*" "bits"] "==" sensorInterfaceType parameterTuple ["{" sensorInterfaceCommandList "}"] .
 sensorInterfaceType		::=	"i2c" | "spi" | "analog" .
 sensorInterfaceCommandList	::=	sensorInterfaceCommand {";" sensorInterfaceCommand} .
-sensorInterfaceCommand		::=	readRegisterCommand | writeRegisterCommand | delayCommand | ssaArithmeticCommand .
-readRegisterCommand		::=	ssaIdentifier ":=" "read" numericConst .
+sensorInterfaceCommand		::=	readRegisterCommand | writeRegisterCommand | delayCommand | arithmeticCommand .
+readRegisterCommand		::=	identifier "=" "read" ["[" numericConst "]"] numericConst .
 writeRegisterCommand		::=	"write" numericConst numericConst .
 delayCommand			::=	"delay" numericConst .
-ssaIdentifier			=	identifier .
-ssaArithmeticCommand		::=	identifier "=" expression .
+arithmeticCommand		::=	identifier "=" expression .
 rangeStatement			::=	"range" identifier "==" "[" numericConst [unitExpression] "," numericConst [unitExpression] "]" .
 uncertaintyStatement		::=	"uncertainty" identifier "==" expression [unitExpression] .
 erasureValueStatement		::=	"erasuretoken" identifier "==" numericConst [unitExpression] .
@@ -89,9 +89,9 @@ numericConstTuple		::=	"(" numericConst [unitExpression] ".." numericConst ")" .
 
 expression			::=	term {lowPrecedenceBinaryOp term} .
 term				::=	[unaryOp] factor ["++" | "--"] {highPrecedenceBinaryOp factor} .
-factor				::=	numericConst | "(" expression ")" | distributionFactor .
+factor				::=	numericConst | "(" expression ")" | distributionFactor | identifier ["[" numericConst "]"] .
 distributionFactor		::=	distribution parameterValueList .
-parameterValueList		::=	"(" identifier ":" expression {"," identifier ":" expression} .
+parameterValueList		::=	"(" identifier ":" expression {"," identifier ":" expression} ")" .
 distribution			::=	"Gaussian" | "exponential" | "biexponential" .
 highPrecedenceBinaryOp		::=	"*" | "/" | "%" | "**" .
 lowPrecedenceBinaryOp		::=	"+" | "-" | ">>" | "<<" | "|" .

@@ -58,7 +58,7 @@
 #include "noisy-parser.h"
 #include "common-lexers-helpers.h"
 #include "noisy-lexer.h"
-#include "noisy-symbolTable.h"
+#include "common-symbolTable.h"
 #include "common-irHelpers.h"
 #include "noisy-irHelpers.h"
 #include "common-firstAndFollow.h"
@@ -197,11 +197,14 @@ noisyParseModuleDecl(State *  N, Scope *  scope)
 	 *	We keep a global handle on the module scope
 	 */
 	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
-	Scope *	moduleScope		= noisySymbolTableOpenScope(N, scope, scopeBegin);
+	Scope *		moduleScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
 	IrNode *	typeTree	= noisyParseModuleDeclBody(N, moduleScope);
+
 	addLeaf(N, n, typeTree);
+
 	IrNode *	scopeEnd	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
-	noisySymbolTableCloseScope(N, moduleScope, scopeEnd);
+
+	commonSymbolTableCloseScope(N, moduleScope, scopeEnd);
 	identifier->symbol->typeTree = typeTree;
 
 	addToModuleScopes(N, identifier->symbol->identifier, moduleScope);
@@ -495,15 +498,20 @@ noisyParseAdtTypeDecl(State *  N, Scope *  scope)
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tadt);
+
 	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
-	Scope *	currentScope		= noisySymbolTableOpenScope(N, scope, scopeBegin);
+	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
 	IrNode *	identifierList	= noisyParseIdentifierList(N, currentScope);
+
 	addLeaf(N, n, identifierList);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
+
 	IrNode *	typeExpr	= noisyParseTypeExpr(N, currentScope);
+
 	addLeafWithChainingSeq(N, n, typeExpr);
 	assignTypes(N, identifierList, typeExpr);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tsemicolon);
+
 	while (!peekCheck(N, 1, kNoisyIrNodeType_TrightBrace))
 	{
 		IrNode *	identifierList2	= noisyParseIdentifierList(N, currentScope);
@@ -523,7 +531,7 @@ noisyParseAdtTypeDecl(State *  N, Scope *  scope)
 	}
 
 	IrNode *	scopeEnd  = noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
-	noisySymbolTableCloseScope(N, currentScope, scopeEnd);
+	commonSymbolTableCloseScope(N, currentScope, scopeEnd);
 
 	if (!inFollow(N, kNoisyIrNodeType_PadtTypeDecl, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -642,10 +650,16 @@ noisyParseFunctionDecl(State *  N, Scope *  scope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	noisyParseTerminal(N, kNoisyIrNodeType_Tfunction);
-	addLeaf(N, n, noisyParseWriteTypeSignature(N, scope));
+	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_Tfunction);
+	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
+
+	addLeaf(N, n, noisyParseWriteTypeSignature(N, currentScope));
 	noisyParseTerminal(N, kNoisyIrNodeType_Tarrow);
-	addLeaf(N, n, noisyParseReadTypeSignature(N, scope));
+
+	IrNode *	scopeEnd = noisyParseReadTypeSignature(N, currentScope);
+
+	addLeaf(N, n, scopeEnd);
+	commonSymbolTableCloseScope(N, currentScope, scopeEnd);
 
 	if (!inFollow(N, kNoisyIrNodeType_PfunctionDecl, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -681,11 +695,16 @@ noisyParseProbdefDecl(State *  N, Scope *  scope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	noisyParseTerminal(N, kNoisyIrNodeType_Tprobdef);
-	addLeaf(N, n, noisyParseWriteTypeSignature(N, scope));
-	noisyParseTerminal(N, kNoisyIrNodeType_Tarrow);
-	addLeaf(N, n, noisyParseWriteTypeSignature(N, scope));
+	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_Tprobdef);
+	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
 
+	addLeaf(N, n, noisyParseWriteTypeSignature(N, currentScope));
+	noisyParseTerminal(N, kNoisyIrNodeType_Tarrow);
+
+	IrNode *	scopeEnd = noisyParseWriteTypeSignature(N, currentScope);
+
+	addLeaf(N, n, scopeEnd);
+	commonSymbolTableCloseScope(N, currentScope, scopeEnd);
 
 	if (!inFollow(N, kNoisyIrNodeType_PprobdefDecl, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -722,7 +741,6 @@ noisyParseReadTypeSignature(State *  N, Scope *  scope)
 
 
 	addLeaf(N, n, noisyParseSignature(N, scope));
-
 
 	if (!inFollow(N, kNoisyIrNodeType_PreadTypeSignature, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -794,8 +812,13 @@ noisyParsePredicateFnDecl(State *  N, Scope *  scope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	addLeaf(N, n, noisyParseSignature(N, scope));
+	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_Tpredicate);
+	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
 
+	IrNode *	scopeEnd = noisyParseSignature(N, currentScope);
+
+	addLeaf(N, n, scopeEnd);
+	commonSymbolTableCloseScope(N, currentScope, scopeEnd);
 
 	if (!inFollow(N, kNoisyIrNodeType_PpredicateFnDecl, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -1209,7 +1232,7 @@ noisyParseTypeName(State *  N, Scope *  scope)
 	}
 	else
 	{
-		idsym = noisySymbolTableSymbolForIdentifier(N, scope, id1->symbol->identifier);
+		idsym = commonSymbolTableSymbolForIdentifier(N, scope, id1->symbol->identifier);
 		if (idsym == NULL)
 		{
 			char *	details;
@@ -3041,14 +3064,14 @@ noisyParseTypeParameterList(State *  N, Scope *  currentScope)
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 		noisyParseTerminal(N, kNoisyIrNodeType_Ttype);
 
 		while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 		{
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
-			addLeafWithChainingSeq(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+			addLeafWithChainingSeq(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 			noisyParseTerminal(N, kNoisyIrNodeType_Ttype);
 		}
@@ -3096,7 +3119,7 @@ noisyParseFunctionDefn(State *  N, Scope *  scope)
 	 *	noisyParseIdentifierUsageTerminal vs noisyParseIdentifierDefinitionTerminal machinery.
 	 *	 
 	 */
-	if (noisySymbolTableSymbolForIdentifier(N, scope, lexPeek(N, 1)->identifier) != NULL)
+	if (commonSymbolTableSymbolForIdentifier(N, scope, lexPeek(N, 1)->identifier) != NULL)
 	{
 		identifier = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
 	}
@@ -3108,12 +3131,14 @@ noisyParseFunctionDefn(State *  N, Scope *  scope)
 	addLeaf(N, n, identifier);
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
-	noisyParseTerminal(N, kNoisyIrNodeType_Tfunction);
 
-	IrNode *	t1 = noisyParseSignature(N, scope);
+	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_Tfunction);
+	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
+
+	IrNode *	t1 = noisyParseSignature(N, currentScope);
 	addLeafWithChainingSeq(N, n, t1);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tarrow);
-	IrNode *	t2 = noisyParseSignature(N, scope);
+	IrNode *	t2 = noisyParseSignature(N, currentScope);
 	addLeafWithChainingSeq(N, n, t2);
 
 	/*
@@ -3127,7 +3152,9 @@ noisyParseFunctionDefn(State *  N, Scope *  scope)
 	identifier->symbol->typeTree = typeTree;
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tassign);
-	addLeaf(N, n, noisyParseScopedStatementList(N, scope));
+	IrNode *	scopeEnd = noisyParseScopedStatementList(N, currentScope);
+	addLeaf(N, n, scopeEnd);
+	commonSymbolTableCloseScope(N, currentScope, scopeEnd);
 
 	if (!inFollow(N, kNoisyIrNodeType_PfunctionDefn, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -3153,7 +3180,7 @@ noisyParseFunctionDefn(State *  N, Scope *  scope)
  *		node.right	= Xseq of kNoisyIrNodeType_Psignature kNoisyIrNodeType_Psignature kNoisyIrNodeType_PscopedPredStmtList
  */
 IrNode *
-noisyParseProblemDefn(State *  N, Scope *  currentScope)
+noisyParseProblemDefn(State *  N, Scope *  scope)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseProblemDefn);
 
@@ -3171,19 +3198,21 @@ noisyParseProblemDefn(State *  N, Scope *  currentScope)
 	 *	noisyParseIdentifierUsageTerminal vs noisyParseIdentifierDefinitionTerminal machinery.
 	 *	 
 	 */
-	if (noisySymbolTableSymbolForIdentifier(N, currentScope, lexPeek(N, 1)->identifier) != NULL)
+	if (commonSymbolTableSymbolForIdentifier(N, scope, lexPeek(N, 1)->identifier) != NULL)
 	{
-		identifier = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+		identifier = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
 	}
 	else
 	{
-		identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+		identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
 	}
 
 	addLeaf(N, n, identifier);
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
-	noisyParseTerminal(N, kNoisyIrNodeType_Tprobdef);
+
+	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_Tprobdef);
+	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
 
 	IrNode *	t1 = noisyParseSignature(N, currentScope);
 	addLeafWithChainingSeq(N, n, t1);
@@ -3201,7 +3230,9 @@ noisyParseProblemDefn(State *  N, Scope *  currentScope)
 	identifier->symbol->typeTree = typeTree;
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Timplies);
-	addLeaf(N, n, noisyParseScopedPredStmtList(N, currentScope));
+	IrNode *	scopeEnd = noisyParseScopedPredStmtList(N, currentScope);
+	addLeaf(N, n, scopeEnd);
+	commonSymbolTableCloseScope(N, currentScope, scopeEnd);
 
 	if (!inFollow(N, kNoisyIrNodeType_PproblemDefn, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -3227,7 +3258,7 @@ noisyParseProblemDefn(State *  N, Scope *  currentScope)
  *		node.right	= Xseq of kNoisyIrNodeType_Psignature kNoisyIrNodeType_Psignature kNoisyIrNodeType_PscopedPredStmtList
  */
 IrNode *
-noisyParsePredicateFnDefn(State *  N, Scope *  currentScope)
+noisyParsePredicateFnDefn(State *  N, Scope *  scope)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParsePredicateFnDefn);
 
@@ -3244,19 +3275,21 @@ noisyParsePredicateFnDefn(State *  N, Scope *  currentScope)
 	 *	noisyParseIdentifierUsageTerminal vs noisyParseIdentifierDefinitionTerminal machinery.
 	 *	 
 	 */
-	if (noisySymbolTableSymbolForIdentifier(N, currentScope, lexPeek(N, 1)->identifier) != NULL)
+	if (commonSymbolTableSymbolForIdentifier(N, scope, lexPeek(N, 1)->identifier) != NULL)
 	{
-		identifier = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+		identifier = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
 	}
 	else
 	{
-		identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope);
+		identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
 	}
 
 	addLeaf(N, n, identifier);
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
-	noisyParseTerminal(N, kNoisyIrNodeType_Tpredicate);
+
+	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_Tpredicate);
+	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
 
 	IrNode *	t1 = noisyParseSignature(N, currentScope);
 	addLeafWithChainingSeq(N, n, t1);
@@ -3274,7 +3307,9 @@ noisyParsePredicateFnDefn(State *  N, Scope *  currentScope)
 	identifier->symbol->typeTree = typeTree;
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Timplies);
-	addLeaf(N, n, noisyParseScopedPredStmtList(N, currentScope));
+	IrNode *	scopeEnd = noisyParseScopedPredStmtList(N, currentScope);
+	addLeaf(N, n, scopeEnd);
+	commonSymbolTableCloseScope(N, currentScope, scopeEnd);
 
 	if (!inFollow(N, kNoisyIrNodeType_PpredicateFnDefn, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -3300,7 +3335,7 @@ noisyParsePredicateFnDefn(State *  N, Scope *  currentScope)
  *		node.right	= kNoisyIrNodeType_PtypeExpr with Xseq of kNoisyIrNodeType_T_identifier and kNoisyIrNodeType_PtypeExpr
  */
 IrNode *
-noisyParseSignature(State *  N, Scope *  scope)
+noisyParseSignature(State *  N, Scope *  currentScope)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseSignature);
 
@@ -3311,8 +3346,7 @@ noisyParseSignature(State *  N, Scope *  scope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftParens);
-	Scope *	currentScope	= noisySymbolTableOpenScope(N, scope, scopeBegin);
+	noisyParseTerminal(N, kNoisyIrNodeType_TleftParens);
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
 		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
@@ -3336,8 +3370,7 @@ noisyParseSignature(State *  N, Scope *  scope)
 		noisyParserSyntaxError(N, kNoisyIrNodeType_Psignature, kNoisyIrNodeTypeMax, gNoisyFirsts);
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_Psignature);
 	}
-	IrNode *	scopeEnd  	= noisyParseTerminal(N, kNoisyIrNodeType_TrightParens);
-	noisySymbolTableCloseScope(N, currentScope, scopeEnd);
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightParens);
 
 	if (!inFollow(N, kNoisyIrNodeType_Psignature, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -3374,10 +3407,13 @@ noisyParseScopedStatementList(State *  N, Scope *  scope)
 
 
 	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
-	Scope *	currentScope	= noisySymbolTableOpenScope(N, scope, scopeBegin);
+	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
+
 	addLeaf(N, n, noisyParseStatementList(N, currentScope));
-	IrNode *	scopeEnd  	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
-	noisySymbolTableCloseScope(N, currentScope, scopeEnd);
+
+	IrNode *	scopeEnd	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
+
+	commonSymbolTableCloseScope(N, currentScope, scopeEnd);
 
 	if (!inFollow(N, kNoisyIrNodeType_PscopedStatementList, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -3894,10 +3930,13 @@ noisyParseMatchStatement(State *  N, Scope *  scope)
 	}
 
 	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
-	Scope *	currentScope	= noisySymbolTableOpenScope(N, scope, scopeBegin);
+	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
+
 	addLeaf(N, n, noisyParseGuardedStatementList(N, currentScope));
+
 	IrNode *	scopeEnd	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
-	noisySymbolTableCloseScope(N, currentScope, scopeEnd);
+
+	commonSymbolTableCloseScope(N, currentScope, scopeEnd);
 
 	if (!inFollow(N, kNoisyIrNodeType_PmatchStatement, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -3935,11 +3974,15 @@ noisyParseIterStatement(State *  N, Scope *  scope)
 
 
 	addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Titerate));
+
 	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_TleftBrace);
-	Scope *	currentScope	= noisySymbolTableOpenScope(N, scope, scopeBegin);
+	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
+
 	addLeaf(N, n, noisyParseGuardedStatementList(N, currentScope));
+
 	IrNode *	scopeEnd	= noisyParseTerminal(N, kNoisyIrNodeType_TrightBrace);
-	noisySymbolTableCloseScope(N, currentScope, scopeEnd);
+
+	commonSymbolTableCloseScope(N, currentScope, scopeEnd);
 
 	if (!inFollow(N, kNoisyIrNodeType_PiterateStatement, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -5984,7 +6027,7 @@ noisyParsePredStmt(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	addLeaf(N, n, noisyParseExpression(N, currentScope));
+	addLeaf(N, n, noisyParsePredExpr(N, currentScope));
 
 	if (!inFollow(N, kNoisyIrNodeType_PpredStmt, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -6176,7 +6219,7 @@ noisyParsePredTerm(State *  N, Scope *  currentScope)
  *	kNoisyIrNodeType_PpredExpr
  *
  *	Grammar production:
- *		predExpr		::=	predTerm {lowPrecedenceBinaryBoolOp predTerm} .
+ *		predExpr		::=	predTerm {(lowPrecedenceBinaryBoolOp | cmpOp) predTerm} .
  *
  *	Generated AST subtree:
  *
@@ -6197,9 +6240,18 @@ noisyParsePredExpr(State *  N, Scope *  currentScope)
 
 
 	addLeaf(N, n, noisyParsePredTerm(N, currentScope));
-	while (inFirst(N, kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	while (	inFirst(N, kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp, gNoisyFirsts, kNoisyIrNodeTypeMax) ||
+		inFirst(N, kNoisyIrNodeType_PcmpOp, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
-		addLeafWithChainingSeq(N, n, noisyParseLowPrecedenceBinaryBoolOp(N));
+		if (inFirst(N, kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp, gNoisyFirsts, kNoisyIrNodeTypeMax) )
+		{
+			addLeafWithChainingSeq(N, n, noisyParseLowPrecedenceBinaryBoolOp(N));
+		}
+		else if (inFirst(N, kNoisyIrNodeType_PcmpOp, gNoisyFirsts, kNoisyIrNodeTypeMax))
+		{
+			addLeafWithChainingSeq(N, n, noisyParseCmpOp(N));
+		}
+
 		addLeafWithChainingSeq(N, n, noisyParsePredTerm(N, currentScope));
 	}
 
@@ -7656,10 +7708,10 @@ noisyParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  
 	n->tokenString = t->identifier;
 
 	/*
-	 *	noisySymbolTableSymbolForIdentifier() will first, try current scope
+	 *	commonSymbolTableSymbolForIdentifier() will first, try current scope
 	 *	(and its parents), and if not found, will try module scopes.
 	 */
-	n->symbol = noisySymbolTableSymbolForIdentifier(N, scope, t->identifier);
+	n->symbol = commonSymbolTableSymbolForIdentifier(N, scope, t->identifier);
 	if (n->symbol == NULL)
 	{
 		errorUseBeforeDefinition(N, t->identifier);
@@ -7703,10 +7755,16 @@ noisyParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sco
 	n->tokenString = t->identifier;
 
 	/*
-	 *	NOTE: noisySymbolTableAddOrLookupSymbolForToken(N, scope, t) adds token 't' to scope 'scope'
+	 *	NOTE: commonSymbolTableAddOrLookupSymbolForToken(N, scope, t) adds token 't' to scope 'scope'
 	 */
-	Symbol *	sym = noisySymbolTableAddOrLookupSymbolForToken(N, scope, t);
-	if (sym->definition != NULL)
+	Symbol *	sym = commonSymbolTableAddOrLookupSymbolForToken(N, scope, t);
+
+	/*
+	 *	We allow for definition of a function and probdef with the same name.
+	 *	TODO: there are more rigorous ways to enforce the above. The check below
+	 *	is to bootstrap examples.
+	 */
+	if ((sym->definition != NULL) && (peekCheck(N, 2, kNoisyIrNodeType_Tprobdef)))
 	{
 		errorMultiDefinition(N, sym);
 		noisyParserSyntaxError(N, kNoisyIrNodeType_Tidentifier, kNoisyIrNodeTypeMax, gNoisyFollows);

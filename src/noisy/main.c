@@ -54,18 +54,16 @@
 #include "common-data-structures.h"
 #include "noisy-parser.h"
 #include "noisy-lexer.h"
-#include "noisy-symbolTable.h"
+#include "common-symbolTable.h"
 #include "common-irPass-helpers.h"
 #include "noisy-irPass-dotBackend.h"
 #include "noisy-irPass-protobufBackend.h"
 
-//extern const char	gNoisyEol[];
-//extern const char	gNoisyWhitespace[];
-//extern const char	gNoisyStickies[];
-
 static void		usage(State *  N);
 static void		processFile(State *  N, char *  filename);
 static void		version(State *  N);
+
+
 
 int
 main(int argc, char *argv[])
@@ -304,7 +302,7 @@ processFile(State *  N, char *  fileName)
 	/*
 	 *	Create a top-level scope, then parse.
 	 */
-	N->noisyIrTopScope = noisySymbolTableAllocScope(N);
+	N->noisyIrTopScope = commonSymbolTableAllocScope(N);
 	N->noisyIrRoot = noisyParse(N, N->noisyIrTopScope);
 
 

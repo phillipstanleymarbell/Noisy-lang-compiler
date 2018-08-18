@@ -38,71 +38,66 @@
 #	Description: Invariants for an activity classifier.
 #
 
-time : signal = {
-	name = "time" English;
-	symbol = "s";
-	derivation = none;
+include "NewtonBaseSignals.nt"
+
+multiAxisDistance : signal(i: 0 to 5) =
+{
+	name		= "meters" English;
+	symbol		= xm;
+	derivation	= none;
 }
 
-distance : signal(i: 0 to 5) = {
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
+multiAxisSpeed : signal(i: 0 to 5) =
+{
+	name		= "jiffies" English;
+	symbol		= xjf;
+	derivation	= multiAxisDistance@i / time;
 }
 
-mass : signal = {
-	name = "kilogram" English;
-	symbol = "kg";
-	derivation = none;
+multiAxisAcceleration : signal(i: 0 to 5) =
+{
+	name		= "metajiffies" English;
+	symbol		= xmjf;
+	derivation	= multiAxisSpeed@i / time;
 }
 
-speed : signal(i: 0 to 5) = {
-	derivation = distance@i / time;
+multiAxisAngularDisplacement : signal(i: 0 to 2) =
+{
+	name		= "radians" English;
+	symbol		= xrad;
+	derivation	= none;
 }
 
-acceleration : signal(i: 0 to 5) = {
-	derivation = speed@i / time;
+multiAxisAngularVelocity : signal(i: 0 to 2) =
+{
+	derivation = multiAxisAngularDisplacement@i / time;
 }
 
-angular_displacement : signal(i: 0 to 2) = {
-	name = "radian" English;
-	symbol = "rad";
-	derivation = none;
-}
-
-angular_velocity : signal(i: 0 to 2) = {
-	derivation = angular_displacement@i / time / 60;
-}
-
-magnetic_field : signal = {
-	name = "Tesla" English;
-	symbol = "T";
-	derivation = none; # not a base SI unit, but can be defined as a Newton base unit
-}
-
-TimeBetweenSensors: constant = 5 * 10 ** -6 * s;
-SamplingTime : constant = 5 * 10 ** -4 * s;
+TimeBetweenSensors	: constant = (5E-6) * s;
+SamplingTime		: constant = (5E-4) * s;
 
 accelerationAndGyro : invariant(
-	x: acceleration@0, 
-	y: acceleration@1, 
-	z: acceleration@2, 
-	row: angular_velocity@0, 
-	pitch: angular_velocity@1, 
-	yaw: angular_velocity@2
+	x	: multiAxisAcceleration@0, 
+	y	: multiAxisAcceleration@1, 
+	z	: multiAxisAcceleration@2, 
+	row	: multiAxisAngularVelocity@0, 
+	pitch	: multiAxisAngularVelocity@1, 
+	yaw	: multiAxisAngularVelocity@2
 ) = {
-	# rectangular integration estimation
-	((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) / (row ** 2 + pitch ** 2 + yaw ** 2) < (2 * m / rad) ** 2,
-	(row ** 2 + pitch ** 2 + yaw ** 2) / ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) > (0.1 * rad / m) ** 2
+	#
+	#	Rectangular integration estimation
+	#
+	((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) / (row ** 2 + pitch ** 2 + yaw ** 2) < (2 * m / radians) ** 2,
+	(row ** 2 + pitch ** 2 + yaw ** 2) / ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) > (0.1 * radians / m) ** 2
 }
 
 redundantAccelerometers : invariant(
-	x1: acceleration@0, 
-	y1: acceleration@1, 
-	z1: acceleration@2, 
-	x2: acceleration@3, 
-	y2: acceleration@4, 
-	z2: acceleration@5
+	x1: multiAxisAcceleration@0, 
+	y1: multiAxisAcceleration@1, 
+	z1: multiAxisAcceleration@2, 
+	x2: multiAxisAcceleration@3, 
+	y2: multiAxisAcceleration@4, 
+	z2: multiAxisAcceleration@5
 ) = {
 	x1 ~ x2,
 	y1 ~ y2,

@@ -64,11 +64,13 @@ const char	EruntTokenInNumericConst[]		= "Run token passed to makeNumericConst()
 const char	EcannotFindTypeSignatureForNodeType[] 	= "Cannot find type signature character in TypeNodeSignatures for this node type";
 const char	EassignTypeSanity[]			= "Sanity check failed in type assignment";
 const char	Efd2path[]				= "fcntl() failed to get path for file descriptor";
-const char	EtokenInSMT[]				= "Unrecognized token type seen while processing SMT backend pass";
+const char	EtokenInSMT[]				= "Unrecognized token type seen while processing SMT pass";
 const char	EexpressionPhysicsMismatch[]		= "Mismatched physics in expression";
 const char	Eusedef[]				= "Saw identifier \"%s\" in use before definition.";
-const char	Emultidef[]				= "Multiple definition of \"%s\".";
+const char	Emultidef[]				= "Multiple definition of \"%s\" in \"%s\", at line %d, column %d.";
+const char	Epreviousdef[]				= "Previous definition in \"%s\", at line %d, column %d.";
 const char	EunhandledNodeTypeInAstNodeStringsArray[]= "Unhandled node type in gNoisyAstNodeStrings[] array";
+const char	EbaseDimensionNameOrAbbreviation[]	= "Base dimension missing name or abbreviation definition";
 
 
 

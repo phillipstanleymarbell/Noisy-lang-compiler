@@ -35,7 +35,7 @@
 #	POSSIBILITY OF SUCH DAMAGE.
 #
 #
-#	Description:	Mechanical properties of AlSi10Mg, used for 3D printing into a beam
+#	Description:	Mechanical properties of AlSi10Mg
 #
 #	Source of data:
 #
@@ -47,47 +47,7 @@
 #			}
 #
 
-time : signal =
-{
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
-}
+include "NewtonBaseSignals.nt"
 
-distance : signal =
-{
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
-}
-
-mass : signal =
-{
-	name = "kilogram" English;
-	symbol = "kg";
-	derivation = none;
-}
-
-speed : signal =
-{
-	name = "MegaSpeed" English;
-	symbol = "MegS";
-	derivation = distance / time;
-}
-
-acceleration : signal =
-{
-	name = "MegaAcceleration" English;
-	symbol = "MegA";
-	derivation = speed / time;
-}
-
-force : signal = 
-{
-	name = "Newton" English;
-	symbol = "N" ;
-	derivation = mass * acceleration;
-}
-
-rho : constant = 2670 * kilogram * meter ** -3;
-E : constant = 7e10 * Newton / meter ** -2;
+kNewtonUnithave_AlSi10Mg_Density	: constant = 2670 * kilogram * meter ** -3;
+kNewtonUnithave_AlSi10Mg_YoungsModulus	: constant = 7e10 * Newton / meter ** -2;

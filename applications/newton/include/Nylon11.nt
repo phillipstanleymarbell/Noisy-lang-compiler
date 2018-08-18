@@ -35,7 +35,7 @@
 #	POSSIBILITY OF SUCH DAMAGE.
 #
 #
-#	Description:	Mechanical properties of Nylon 11, used for 3D printing into a beam
+#	Description:	Mechanical properties of Nylon 11
 #
 #	Source of data:
 #
@@ -48,47 +48,7 @@
 #			}
 #
 
-time : signal =
-{
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
-}
+include "NewtonBaseSignals.nt"
 
-distance : signal =
-{
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
-}
-
-mass : signal =
-{
-	name = "kilogram" English;
-	symbol = "kg";
-	derivation = none;
-}
-
-speed : signal =
-{
-	name = "MegaSpeed" English;
-	symbol = "MegS";
-	derivation = distance / time;
-}
-
-acceleration : signal =
-{
-	name = "MegaAcceleration" English;
-	symbol = "MegA";
-	derivation = speed / time;
-}
-
-force : signal = 
-{
-	name = "Newton" English;
-	symbol = "N" ;
-	derivation = mass * acceleration;
-}
-
-rho : constant = 1040 * kilogram * meter ** -3;
-E : constant = 1.4e9 * Newton / meter ** -2;
+kNewtonUnithave_Nylon11_Density		: constant = 1040 * kilogram * meter ** -3;
+kNewtonUnithave_Nylon11_YoungsModulus	: constant = 1.4e9 * Newton / meter ** -2;

@@ -35,59 +35,19 @@
 #	POSSIBILITY OF SUCH DAMAGE.
 #
 #
-#	Description:	Mechanical properties of EOS PEEK, used for 3D printing into a beam
+#	Description:	Mechanical properties of EOS PEEK
 #
 #	Source of data:
 #
 #		@misc{EOS,
-#				title = {Eos_PEEK properties},
+#				title = {Eos PEEK properties},
 #				howpublished = 
 #				{\url{https://webbuilder5.asiannet.com/ftp/2684/sheet_07-08_en_provisional.pdf}},
 #				note = {Accessed: 2017-26-07}
 #			}
 #
 
-time : signal =
-{
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
-}
+include "NewtonBaseSignals.nt"
 
-distance : signal =
-{
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
-}
-
-mass : signal =
-{
-	name = "kilogram" English;
-	symbol = "kg";
-	derivation = none;
-}
-
-speed : signal =
-{
-	name = "MegaSpeed" English;
-	symbol = "MegS";
-	derivation = distance / time;
-}
-
-acceleration : signal =
-{
-	name = "MegaAcceleration" English;
-	symbol = "MegA";
-	derivation = speed / time;
-}
-
-force : signal = 
-{
-	name = "Newton" English;
-	symbol = "N" ;
-	derivation = mass * acceleration;
-}
-
-rho : constant = 1310 * kilogram * meter ** -3;
-E : constant = 4.4e9 * Newton / meter ** -2;
+kNewtonUnithave_EosPEEK_Density		: constant = 1310 * kilogram * meter ** -3;
+kNewtonUnithave_EosPEEK_YoungsModulus	: constant = 4.4e9 * Newton / meter ** -2;

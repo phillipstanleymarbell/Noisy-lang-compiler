@@ -1761,6 +1761,13 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_PpredTerm                      ]            = {
+                                                                                                                    kNoisyIrNodeType_Tequals,
+                                                                                                                    kNoisyIrNodeType_TnotEqual,
+                                                                                                                    kNoisyIrNodeType_TgreaterThan,
+                                                                                                                    kNoisyIrNodeType_TlessThan,
+                                                                                                                    kNoisyIrNodeType_TlessThanEqual,
+                                                                                                                    kNoisyIrNodeType_TgreaterThanEqual,
+                                                                                                                    kNoisyIrNodeType_TisPermutationOf,
                                                                                                                     kNoisyIrNodeType_TlogicalOr,
                                                                                                                     kNoisyIrNodeType_Tcomma,
                                                                                                                     kNoisyIrNodeType_TrightParens,
@@ -1769,6 +1776,13 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_PpredFactor                    ]            = {
+                                                                                                                    kNoisyIrNodeType_Tequals,
+                                                                                                                    kNoisyIrNodeType_TnotEqual,
+                                                                                                                    kNoisyIrNodeType_TgreaterThan,
+                                                                                                                    kNoisyIrNodeType_TlessThan,
+                                                                                                                    kNoisyIrNodeType_TlessThanEqual,
+                                                                                                                    kNoisyIrNodeType_TgreaterThanEqual,
+                                                                                                                    kNoisyIrNodeType_TisPermutationOf,
                                                                                                                     kNoisyIrNodeType_TlogicalAnd,
                                                                                                                     kNoisyIrNodeType_Txor,
                                                                                                                     kNoisyIrNodeType_TlogicalOr,
@@ -7239,6 +7253,8 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_Ttype                          ]            = {
+                                                                                                                    kNoisyIrNodeType_Tcomma,
+                                                                                                                    kNoisyIrNodeType_TrightParens,
                                                                                                                     kNoisyIrNodeType_Tbool,
                                                                                                                     kNoisyIrNodeType_Tstring,
                                                                                                                     kNoisyIrNodeType_Tnat4,
@@ -14753,10 +14769,39 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeType_TrealConst,
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
-                                               [kNoisyIrNodeType_Tpath                            ]            = {
+                                               [kNoisyIrNodeType_Tpath                          ]            = {
                                                                                                                     kNoisyIrNodeType_Tidentifier,
                                                                                                                     kNoisyIrNodeTypeMax
-                                                                                               }
+                                                                                               },
+                                               [kNoisyIrNodeType_Tpow                           ]            = {
+                                                                                                                    kNoisyIrNodeType_Tdistance,
+                                                                                                                    kNoisyIrNodeType_Tmass,
+                                                                                                                    kNoisyIrNodeType_Ttime,
+                                                                                                                    kNoisyIrNodeType_Tmaterial,
+                                                                                                                    kNoisyIrNodeType_Tcurrent,
+                                                                                                                    kNoisyIrNodeType_Tluminosity,
+                                                                                                                    kNoisyIrNodeType_Ttemperature,
+                                                                                                                    kNoisyIrNodeType_Tinterrupt,
+                                                                                                                    kNoisyIrNodeType_Texception,
+                                                                                                                    kNoisyIrNodeType_TleftParens,
+                                                                                                                    kNoisyIrNodeType_Tm,
+                                                                                                                    kNoisyIrNodeType_Tkg,
+                                                                                                                    kNoisyIrNodeType_Ts,
+                                                                                                                    kNoisyIrNodeType_Tmole,
+                                                                                                                    kNoisyIrNodeType_TA,
+                                                                                                                    kNoisyIrNodeType_Tcd,
+                                                                                                                    kNoisyIrNodeType_TK,
+                                                                                                                    kNoisyIrNodeType_Tmeter,
+                                                                                                                    kNoisyIrNodeType_Tkilogram,
+                                                                                                                    kNoisyIrNodeType_Tsecond,
+                                                                                                                    kNoisyIrNodeType_TAmpere,
+                                                                                                                    kNoisyIrNodeType_Tcandela,
+                                                                                                                    kNoisyIrNodeType_TKelvin,
+                                                                                                                    kNoisyIrNodeType_TintegerConst,
+                                                                                                                    kNoisyIrNodeType_TrealConst,
+                                                                                                                    kNoisyIrNodeType_Tidentifier,
+                                                                                                                    kNoisyIrNodeTypeMax
+                                                                                               },
                                    };
 
 char	*gNoisyAstNodeStrings[kCommonIrNodeTypeMax]	= {

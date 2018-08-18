@@ -583,7 +583,7 @@ makeNumericConst(State *  N)
 	{
 		if (N->currentTokenLength == 1)
 		{
-			Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_Tnumber	/* type		*/,
+			Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_TnumericConst	/* type		*/,
 										NULL	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -623,7 +623,7 @@ makeNumericConst(State *  N)
 	 */
 	if (isEngineeringRealConst(N, N->currentToken))
 	{
-		Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_Tnumber /* type		*/,
+		Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_TnumericConst /* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
 									stringToEngineeringRealConst(N, N->currentToken) /* realConst	*/,
@@ -643,7 +643,7 @@ makeNumericConst(State *  N)
 	 */
 	if (isRealConst(N, N->currentToken))
 	{
-		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_Tnumber	 /* type	*/,
+		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TnumericConst	 /* type	*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
 									stringToRealConst(N, N->currentToken)	/* realConst	*/,
@@ -663,7 +663,7 @@ makeNumericConst(State *  N)
 	 */
 	if (isRadixConst(N, N->currentToken))
 	{
-		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_Tnumber	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TnumericConst	/* type		*/,
 									NULL				/* identifier	*/,
 									stringToRadixConst(N, N->currentToken)	/* integerConst	*/,
 									0				/* realConst	*/,
@@ -706,7 +706,7 @@ makeNumericConst(State *  N)
 	uint64_t 	decimalValue = strtoul(N->currentToken, &ep, 0);
 	if (*ep == '\0')
 	{
-		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_Tnumber	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TnumericConst	/* type		*/,
 									NULL				/* identifier	*/,
 									decimalValue			/* integerConst	*/,
 									0				/* realConst	*/,
@@ -807,7 +807,7 @@ checkProportionality(State * N)
 	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '<')
 	{
 		gobble(N, 2);
-		type = kNewtonIrNodeType_Tproportionality;
+		type = kNewtonIrNodeType_Tproportional;
 	}
 	else
 	{

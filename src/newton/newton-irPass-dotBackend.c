@@ -360,7 +360,11 @@ irPassDotAstPrintWalk(State *  N, IrNode *  irNode, char *  buf, int bufferLengt
 	 */
 	if (irNode->nodeColor & kNoisyIrNodeColorDotBackendColoring)
 	{
-		assert(astNodeStrings[irNode->type] != NULL);
+		if(astNodeStrings[irNode->type] == NULL)
+		{
+			fatal(N, "Unknown node type seen in noisyIrPassAstDotPrintWalk()!!\n");
+		}
+
 		n2 = irPassDotAstDotFmt(N, &buf[n0+n1], bufferLength-(n0+n1), irNode, astNodeStrings);
 		irNode->nodeColor &= ~kNoisyIrNodeColorDotBackendColoring;
 	}
@@ -613,7 +617,7 @@ isType(State *  N, IrNode *  node)
 	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassDotIsType);
 
 	/*
-	 *	This is miusing the intent of isType(). See issue #320.
+	 *	This is misusing the intent of isType(). See issue #320.
 	 */
 	switch (node->type)
 	{
@@ -621,7 +625,7 @@ isType(State *  N, IrNode *  node)
 		case kNewtonIrNodeType_Tle:
 		case kNewtonIrNodeType_Tgt:
 		case kNewtonIrNodeType_Tge:
-		case kNewtonIrNodeType_Tproportionality:
+		case kNewtonIrNodeType_Tproportional:
 		case kNewtonIrNodeType_Tequivalent:
 		case kNewtonIrNodeType_Tsemicolon:
 		case kNewtonIrNodeType_Tcolon:
@@ -639,7 +643,6 @@ isType(State *  N, IrNode *  node)
 		case kNewtonIrNodeType_Tcross:
 		case kNewtonIrNodeType_Tintegral:
 		case kNewtonIrNodeType_Tderivative:
-		case kNewtonIrNodeType_TSpanish:
 		case kNewtonIrNodeType_TEnglish:
 		case kNewtonIrNodeType_Tinvariant:
 		case kNewtonIrNodeType_Tconstant:
@@ -648,7 +651,7 @@ isType(State *  N, IrNode *  node)
 		case kNewtonIrNodeType_Tsymbol:
 		case kNewtonIrNodeType_Tname:
 		case kNewtonIrNodeType_Pinteger:
-		case kNewtonIrNodeType_Tnumber:
+		case kNewtonIrNodeType_TnumericConst:
 		case kNewtonIrNodeType_TrightBrace:
 		case kNewtonIrNodeType_TleftBrace:
 		case kNewtonIrNodeType_TrightParen:

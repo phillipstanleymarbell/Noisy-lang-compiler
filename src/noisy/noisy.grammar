@@ -15,7 +15,7 @@ reservedIdentifiers		::=	"A" | "K" | "acceleration" | "adt" | "alpha" | "Ampere"
 				"distortions" | "exists" | "false" | "fixed" | "float128" "float16" |
 				"float32" | "float4" | "float64" | "float8" | "forall" | "fourier" |
 				"function" | "given" | "head" | "highpass" | "relativehumidity" |
-				"in" | "int128" | "int16" | "int32" | "int4" | "interrupt" | "exception" |
+				"in" | "include" | "int128" | "int16" | "int32" | "int4" | "interrupt" | "exception" |
 				"int64" | "int8" | "iterate" | "Kelvin" | "kg" | "kilogram" | "latency" |
 				"length" | "list" | "load" | "lowpass" | "luminosity" | "m" | "magneticflux" |
 				"mass" | "match" | "matchseq" | "material" | "measurement" | "meter" | "module" | "mole" |
@@ -186,7 +186,7 @@ predTerm		::=	predFactor {highPrecedenceBinaryBoolOp predFactor}
 				| predArithExpr arith2BoolOp ["@" (intParamOrConst | realParamOrConst)] predArithExpr
 				| quantifiedBoolTerm | setCmpTerm | varTuple "in" ["@" (intParamOrConst | realParamOrConst)] setExpr
 				| unaryBoolOp predFactor .
-predExpr		::=	predTerm {lowPrecedenceBinaryBoolOp predTerm} .
+predExpr		::=	predTerm {(lowPrecedenceBinaryBoolOp | cmpOp) predTerm} .
 varIntro		::=	identifier "in" (setExpr | typeExpr) .
 varIntroList		::=	varIntro {"," varIntro} .
 varTuple		::=	"(" identifier {"," identifier} ")" .

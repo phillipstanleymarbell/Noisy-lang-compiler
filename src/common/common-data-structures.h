@@ -437,7 +437,6 @@ typedef enum
 	kNewtonIrNodeType_TMin,
 	kNewtonIrNodeType_Tinclude,
 	kNewtonIrNodeType_TEnglish,
-	kNewtonIrNodeType_TSpanish,
 	kNewtonIrNodeType_TatSign,
 	kNewtonIrNodeType_Tcolon,
 	kNewtonIrNodeType_Tcomma,
@@ -446,6 +445,7 @@ typedef enum
 	kNewtonIrNodeType_Tderivation,
 	kNewtonIrNodeType_Tderivative,
 	kNewtonIrNodeType_Tdiv,
+	kNewtonIrNodeType_Tdimensionless,
 	kNewtonIrNodeType_Tdot,
 	kNewtonIrNodeType_Tequals,
 	kNewtonIrNodeType_Tequivalent,
@@ -465,9 +465,9 @@ typedef enum
 	kNewtonIrNodeType_Tname,
 	kNewtonIrNodeType_Tnil,
 	kNewtonIrNodeType_Tnone,
-	kNewtonIrNodeType_Tnumber,
+	kNewtonIrNodeType_TnumericConst,
 	kNewtonIrNodeType_Tplus,
-	kNewtonIrNodeType_Tproportionality,
+	kNewtonIrNodeType_Tproportional,
 	kNewtonIrNodeType_TrealConst,	
 	kNewtonIrNodeType_TrightBrace,
 	kNewtonIrNodeType_TrightParen,
@@ -671,7 +671,7 @@ typedef struct Invariant	Invariant;
 
 struct Dimension
 {
-	char *			identifier;
+	char *			name;
 	char *			abbreviation;
 	double			exponent;		//	Default value is 1 if exists
 	Scope *			scope;
