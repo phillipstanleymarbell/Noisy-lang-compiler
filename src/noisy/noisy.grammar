@@ -133,7 +133,7 @@ sequenceStatement	::=	"sequence" (orderingHead | setHead) scopedStatementList .
 parallelStatement	::=	"parallel" setHead scopedStatementList .
 setHead			=	"(" identifier "in" expression ")" .
 orderingHead		=	"(" assignmentStatement ";" expression ";" assignmentStatement ")" .
-guardedStatementList	=	{(expression | chanEventExpr) "=>" (statementList | scopedStatementList)} .
+guardedStatementList	=	{(expression | chanEventExpr) "=>" scopedStatementList} .
 guardedExpressionList	=	{expression "=>" expression} .
 
 /*

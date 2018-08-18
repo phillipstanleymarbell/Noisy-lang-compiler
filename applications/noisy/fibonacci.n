@@ -12,19 +12,19 @@ Fibonacci : function (input: valueType) -> (output: valueType) =
 	#
 	matchseq
 	{
-		(input == 0) =>
+		input == 0	=>
 		{
-			#return (output:0);
+			return (output:0);
 		}
 
-		(input == 1) =>
+		input == 1	=>
 		{
-			#return (output:1);
+			return (output:1);
 		}
 
-		true =>
+		true		=>
 		{
-			#return output:(Fibonacci(input - 1) + Fibonacci(input - 2));
+			return (output:(Fibonacci(input: input - 1) + Fibonacci(input: input - 2)));
 		}
 	};
 }
@@ -43,5 +43,5 @@ init : function	(arguments: list of string) -> (results: list of string) =
 	#	The list of string aguments is the program name
 	#	followed by its arguments as strings.
 	#
-	return (results:(string Fibonacci(int16 (head tail arguments)))::nil);
+	#return (results: (string Fibonacci(input: int16 (head tail arguments)))::nil);
 }

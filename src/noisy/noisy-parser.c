@@ -3735,6 +3735,8 @@ noisyParseReturnSignature(State *  N, Scope *  currentScope)
 		addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
 	}
 
+	noisyParseTerminal(N, kNoisyIrNodeType_TrightParens);
+
 	if (!inFollow(N, kNoisyIrNodeType_PreturnSignature, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
 		noisyParserSyntaxError(N, kNoisyIrNodeType_PreturnSignature, kNoisyIrNodeTypeMax, gNoisyFollows);
@@ -4174,7 +4176,7 @@ noisyParseOrderingHead(State *  N, Scope *  currentScope)
  *	kNoisyIrNodeType_PguardedStatementList
  *
  *	Grammar production:
- *		guardedStatementList	=	{(expression | chanEventExpr) "=>" (statementList | scopedStatementList)} .
+ *		guardedStatementList	=	{(expression | chanEventExpr) "=>" scopedStatementList} .
  *
  *	Generated AST subtree:
  *
@@ -4198,14 +4200,7 @@ noisyParseGuardedStatementList(State *  N, Scope *  currentScope)
 	{
 		addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
 		noisyParseTerminal(N, kNoisyIrNodeType_Timplies);
-		if (peekCheck(N, 1, kNoisyIrNodeType_TleftBrace))
-		{
-			addLeafWithChainingSeq(N, n, noisyParseScopedStatementList(N, currentScope));
-		}
-		else
-		{
-			addLeafWithChainingSeq(N, n, noisyParseStatementList(N, currentScope));
-		}
+		addLeafWithChainingSeq(N, n, noisyParseScopedStatementList(N, currentScope));
 	}
 
 	if (!inFollow(N, kNoisyIrNodeType_PguardedStatementList, gNoisyFollows, kNoisyIrNodeTypeMax))
