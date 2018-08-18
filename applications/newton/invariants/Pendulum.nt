@@ -48,45 +48,22 @@
 #		T : Period of the simple pendulum
 #
 
-time : signal =
+include "NewtonBaseSignals.nt"
+
+#
+#	Dimensional Matrix:
+#
+#
+#		l  g  m  T
+#
+#	L	1  1  0  0
+#	M	0  0  1  0
+#	T	0 -2  0  1
+#
+#	z = null(A,'r')
+#
+
+pendulum : invariant(L: distance, period: time) =
 {
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
-}
-
-length : signal(n: 0 to 2) =
-{
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
-}
-
-
-mass : signal = 
-{
-	name = "kilogram" English;
-	symbol = "kg";	
-	derivation = none;
-
-}
-
-Pi : constant = 3.14159;
-g : constant = 9.8 * m * s ** -2;
-
-#
-#		Dimensional Matrix:
-#
-#
-#		l  g  m  T  
-#	 L  1  1  0  0  
-#	 M  0  0  1  0  
-#	 T  0 -2  0  1  
-#
-#		z = null(A,'r')
-#
-
-pendulum : invariant(L: length@0, period: time) =
-{
-	period  ** 2 ~ (4 * Pi * Pi * L / g)
+	period  ** 2 ~ (4 * kNewtonUnitfree_pi * kNewtonUnitfree_pi * L / kNewtonUnithave_AccelerationDueToGravity)
 }

@@ -186,7 +186,7 @@ predTerm		::=	predFactor {highPrecedenceBinaryBoolOp predFactor}
 				| predArithExpr arith2BoolOp ["@" (intParamOrConst | realParamOrConst)] predArithExpr
 				| quantifiedBoolTerm | setCmpTerm | varTuple "in" ["@" (intParamOrConst | realParamOrConst)] setExpr
 				| unaryBoolOp predFactor .
-predExpr		::=	predTerm {lowPrecedenceBinaryBoolOp predTerm} .
+predExpr		::=	predTerm {(lowPrecedenceBinaryBoolOp | cmpOp) predTerm} .
 varIntro		::=	identifier "in" (setExpr | typeExpr) .
 varIntroList		::=	varIntro {"," varIntro} .
 varTuple		::=	"(" identifier {"," identifier} ")" .

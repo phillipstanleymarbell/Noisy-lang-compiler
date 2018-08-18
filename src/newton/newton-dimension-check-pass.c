@@ -358,7 +358,7 @@ newtonDimensionCheckQuantityFactor(
 
 	if (newtonIsDimensionless(factor->physics))
 	{
-		if (newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) == NULL)
+		if (newtonDimensionTableDimensionForName(N, N->newtonIrTopScope, factor->tokenString) == NULL)
 		{
 			sprintf(factorDetailMessage,
 					" (%s : %f) ",
@@ -692,7 +692,7 @@ newtonDimensionCheckNumericFactor(
 	assert(newtonIsDimensionless(factor->physics));
 	assert(factor->type == kNewtonIrNodeType_TnumericConst);
 
-	if (newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) == NULL)
+	if (newtonDimensionTableDimensionForName(N, N->newtonIrTopScope, factor->tokenString) == NULL)
 	{
 		sprintf(factorDetailMessage,
 				" (%s : %f) ",

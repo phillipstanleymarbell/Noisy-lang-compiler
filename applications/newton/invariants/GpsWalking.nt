@@ -38,39 +38,17 @@
 #	Description: Invariants inspired by the GPS-walking example from the Uncertain<T> paper.
 #
 
-time : signal = {
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
-}
+include "NewtonBaseSignals.nt"
 
-distance: signal(i: 0 to 5) =  {
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
-}
-
-speed : signal(i: 0 to 5) = {
-	derivation = distance@i / time;
-}
-
-acceleration : signal(i: 0 to 5) = {
-	derivation = speed / time;
-}
-
-mass : signal = {
-	name = "kilogram" English;
-	symbol = "kg";
-	derivation = none;
-}
-
-SamplingTime: constant = 5 * 10 ** -5 * s;
+SamplingTime: constant = (5E-5) * s;
 
 GPSAndAccelerometerMatch : invariant (
 	ds: distance@3,
 	v: speed
 ) = {
-	# double rectangular integration estimation
+	#
+	#	Double rectangular integration estimation
+	#
 	ds > v * SamplingTime - 1 * m,
 	ds < v * SamplingTime + 1 * m
 }

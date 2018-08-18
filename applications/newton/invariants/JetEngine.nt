@@ -34,60 +34,20 @@
 #	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #	POSSIBILITY OF SUCH DAMAGE.
 #
-#
 #	Description: Invariants for an instrumented jet engine.
 #
 
-time : signal = {
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
+include "NewtonBaseSignals.nt"
+
+massFlowRate: signal =
+{
+	derivation	= mass / time;
 }
 
-mass : signal = {
-	name = "kilogram" English;
-	symbol = "kg";
-	derivation = none;
-}
-
-mass_flow_rate: signal = {
-	derivation = mass / time;
-}
-
-distance : signal = {
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
-}
-
-area : signal = {
-	derivation = distance ** 2;
-}
-
-speed : signal = {
-	derivation = distance / time;
-}
-
-acceleration : signal = {
-	derivation = speed / time;
-}
-
-force : signal = {
-	name = "Newton" English;
-	symbol = "N" ;
-	derivation = mass * acceleration;
-}
-
-pressure: signal = {
-	name = "Pascal" English;
-	symbol = "Pa";
-	derivation = force / area;
-}
-
-SamplingTime: constant = 5 * 10 ** -3 * s;
+SamplingTime: constant = (5E-3) * s;
 
 MooreGreitzerJetEngineModel: invariant(
-	x: mass_flow_rate,
+	x: massFlowRate,
 	y: pressure
 ) = 
 {

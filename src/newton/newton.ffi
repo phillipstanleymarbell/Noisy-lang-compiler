@@ -749,6 +749,8 @@ token	kNewtonIrNodeType_Tderivative:			followset = {
 									}
 token	kNewtonIrNodeType_Tdiv:				followset = {
 									}
+token	kNewtonIrNodeType_Tdimensionless:		followset = {
+									}
 token	kNewtonIrNodeType_Tdot:				followset = {
 									}
 token	kNewtonIrNodeType_Tequals:			followset = {

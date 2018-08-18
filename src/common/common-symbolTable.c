@@ -49,7 +49,7 @@
 #include "noisy-timeStamps.h"
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
-#include "noisy-symbolTable.h"
+#include "common-symbolTable.h"
 
 
 /*
@@ -57,9 +57,9 @@
  */
 
 Scope *
-noisySymbolTableAllocScope(State *  N)
+commonSymbolTableAllocScope(State *  N)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAllocScope);
+//	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAllocScope);
 
 	Scope *	newScope;
 
@@ -74,9 +74,9 @@ noisySymbolTableAllocScope(State *  N)
 
 
 Symbol *
-noisySymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  token)
+commonSymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  token)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAddOrLookupSymbolForToken);
+//	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAddOrLookupSymbolForToken);
 
 	Symbol *	newSymbol;
 
@@ -93,7 +93,7 @@ noisySymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  t
 	/*
 	 *	NOTE:	An extant definition might not exist.
 	 */
-	newSymbol->definition	= noisySymbolTableSymbolForIdentifier(N, scope, token->identifier);
+	newSymbol->definition	= commonSymbolTableSymbolForIdentifier(N, scope, token->identifier);
 
 	/*
 	 *	NOTE:	Caller sets (1) intconst/etc. fields, (2) type, based on context.
@@ -118,9 +118,9 @@ noisySymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  t
 
 
 Symbol *
-noisySymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  identifier)
+commonSymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  identifier)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableSymbolForIdentifier);
+//	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableSymbolForIdentifier);
 
 	/*
 	 *	Recursion falls out when we reach root which has nil parent,
@@ -162,16 +162,16 @@ noisySymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  id
 		sym = sym->next;
 	}
 
-	return noisySymbolTableSymbolForIdentifier(N, scope->parent, identifier);
+	return commonSymbolTableSymbolForIdentifier(N, scope->parent, identifier);
 }
 
 
 Scope *
-noisySymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
+commonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableOpenScope);
+//	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableOpenScope);
 
-	Scope *	newScope = noisySymbolTableAllocScope(N);
+	Scope *	newScope = commonSymbolTableAllocScope(N);
 
 	newScope->parent = scope;
 	newScope->begin = subTree->sourceInfo;
@@ -182,9 +182,9 @@ noisySymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 
 
 void
-noisySymbolTableCloseScope(State *  N, Scope *  scope, IrNode *  subTree)
+commonSymbolTableCloseScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableCloseScope);
+//	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableCloseScope);
 
 	scope->end = subTree->sourceInfo;
 }

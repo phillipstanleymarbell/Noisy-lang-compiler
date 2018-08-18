@@ -10,4 +10,4 @@ then
 	exit 1
 fi
 
-./noisy-`uname | tr '[:upper:]' '[:lower:]'`-EN --optimize 0 --dot $3 $1 | dot -T$2 -O ; open noname.gv.$2
+./newton-`uname | tr '[:upper:]' '[:lower:]'`-EN --optimize 0 --dot $3 $1 | dot -T$2 -O ; open noname.gv.$2

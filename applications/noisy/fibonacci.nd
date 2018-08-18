@@ -10,12 +10,12 @@
 Fibonacci : module (indexType: type, valueType: type)
 {
 	fibonacci : function (index: indexType) -> (result: valueType);
-	fibonacci : probdef (index: indexType) -> (result: valueType);
+	#fibonacci : probdef (index: indexType) -> (result: valueType);
 
 	init : function	(arguments: list of string) -> (results: list of string);
 }
 
 fibonacci : probdef (index: valueType) -> (result: valueType) =>
 {
-	output == (((((1 + (5 ** (1/2)))/2) ** index) / (5 ** (1/2))) + (1/2)) - ((((((1. + (5 ** (1/2)))/2) ** index) / (5 ** (1/2))) + (1/2)) % 1)
+	# result == (((((1 + (5 pow (1/2)))/2) pow index) / (5 pow (1/2))) + (1/2)) - ((((((1. + (5 pow (1/2)))/2) pow index) / (5 pow (1/2))) + (1/2)) % 1)
 }

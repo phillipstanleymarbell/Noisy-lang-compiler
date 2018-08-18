@@ -37,53 +37,8 @@
 #
 #	Description: Invariants for a weather balloon. See http://home.anadolu.edu.tr/~mcavcar/common/ISAweb.pdf
 #
-time : signal = {
-	name = "time" English;
-	symbol = "s";
-	derivation = none;
-}
 
-distance: signal = {
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
-}
-
-mass : signal = {
-	name = "kilogram" English;
-	symbol = "kg";
-	derivation = none;
-}
-
-temperature : signal = {
-	name = "Kelvin" English;
-	symbol = "K";
-	derivation = none;
-}
-
-area : signal = {
-	derivation = distance ** 2;
-}
-
-speed : signal = {
-	derivation = distance / time;
-}
-
-acceleration : signal = {
-	derivation = speed / time;
-}
-
-force : signal =  {
-	name = "Newton" English;
-	symbol = "N" ;
-	derivation = mass * acceleration;
-}
-
-pressure: signal =  {
-	name = "Pascal" English;
-	symbol = "Pa" ;
-	derivation = force / area;
-}
+include "NewtonBaseSignals.nt"
 
 groundpressure: constant = 101325 * Pa;
 groundtemp: constant = 288.15 * K;

@@ -35,7 +35,7 @@
 #	POSSIBILITY OF SUCH DAMAGE.
 #
 #
-#	Description:	Mechanical properties of Titanium 6-4, used for 3D printing into a beam
+#	Description:	Mechanical properties of Titanium 6-4
 #
 #	Source of data:
 #
@@ -47,48 +47,8 @@
 #		}
 #
 
-time : signal =
-{
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
-}
+include "NewtonBaseSignals.nt"
 
-distance : signal =
-{
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
-}
-
-mass : signal =
-{
-	name = "kilogram" English;
-	symbol = "kg";
-	derivation = none;
-}
-
-speed : signal =
-{
-	name = "MegaSpeed" English;
-	symbol = "MegS";
-	derivation = distance / time;
-}
-
-acceleration : signal =
-{
-	name = "MegaAcceleration" English;
-	symbol = "MegA";
-	derivation = speed / time;
-}
-
-force : signal = 
-{
-	name = "Newton" English;
-	symbol = "N" ;
-	derivation = mass * acceleration;
-}
-
-poisson : constant = 0.342;
-rho : constant = 4430 * kilogram * meter ** -3;
-E : constant = 114.8e11 * Newton / meter ** -2;
+kNewtonUnithave_Titanium64_PoissonRatio		: constant = 0.342;
+kNewtonUnithave_Titanium64_Density		: constant = 4430 * kilogram * meter ** -3;
+kNewtonUnithave_Titanium64_YoungsModulus	: constant = 114.8e11 * Newton / meter ** -2;

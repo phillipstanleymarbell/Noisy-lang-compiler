@@ -208,7 +208,7 @@ newtonCheckCompareOp(
 			}
             break;
 
-        case kNewtonIrNodeType_Tproportionality:
+        case kNewtonIrNodeType_Tproportional:
             /* 
              *  TODO figure out how to check proportionality 
              */
@@ -702,7 +702,7 @@ checkQuantityFactor(
     char factorDetailMessage[1024];
     if (factor->type == kNewtonIrNodeType_Tidentifier && factor->physics)
     {
-        if (newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, factor->tokenString) == NULL)
+        if (newtonDimensionTableDimensionForName(N, N->newtonIrTopScope, factor->tokenString) == NULL)
         {
     	    sprintf(factorDetailMessage,
     		    " (%s : %f) ",

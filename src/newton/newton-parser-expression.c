@@ -513,7 +513,7 @@ newtonParseCompareOp(State * N, Scope * currentScope)
          type == kNewtonIrNodeType_Tle ||
          type == kNewtonIrNodeType_Tge ||
          type == kNewtonIrNodeType_Tgt ||
-         type == kNewtonIrNodeType_Tproportionality ||
+         type == kNewtonIrNodeType_Tproportional ||
          type == kNewtonIrNodeType_Tequivalent
        )
     {

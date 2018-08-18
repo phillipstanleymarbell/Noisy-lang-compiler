@@ -59,6 +59,7 @@
 #include "newton-parser-expression.h"
 #include "common-lexers-helpers.h"
 #include "newton-lexer.h"
+#include "common-symbolTable.h"
 #include "newton-symbolTable.h"
 #include "common-firstAndFollow.h"
 #include "newton-parser.h"
@@ -86,15 +87,6 @@ newtonParse(State *  N, Scope *  currentScope)
 	return newtonParseFile(N, currentScope);
 }
 
-
-/*
- *	kNoisyIrNodeType_PnewtonFile
- *
- *	Generated AST subtree:
- *
- *		node.left	= kNoisyIrNodeType_PdimensionTypeNameScope
- *		node.right	= Xseq of more scopes
- */
 IrNode *
 newtonParseFile(State *  N, Scope *  currentScope)
 {
@@ -105,6 +97,11 @@ newtonParseFile(State *  N, Scope *  currentScope)
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
+
+	/*
+	 *	Before we start parsing, set begin source line of toplevel scope.
+	 */
+	currentScope->begin = lexPeek(N, 1)->sourceInfo;
 
 	addLeaf(N, node, newtonParseStatementList(N, currentScope));
 
@@ -230,30 +227,48 @@ newtonParseInvariant(State * N, Scope * currentScope)
 	Invariant *	invariant	= (Invariant *) calloc(1, sizeof(Invariant));
 	IrNode *	invariantName	= newtonParseIdentifier(N, currentScope);
 
+	/*
+	 *	Also add it to the AST
+	 */
 	addLeaf(N, node, invariantName);
 	invariant->identifier = invariantName->tokenString;
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
-	newtonParseTerminal(N, kNewtonIrNodeType_Tinvariant, currentScope);
-	invariant->parameterList = newtonParseParameterTuple(N, currentScope);
-	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 
-	IrNode *	scopeBegin	= newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, currentScope);
-	Scope *		newScope	= newtonSymbolTableOpenScope(N, currentScope, scopeBegin);
+	/*
+	 *	The new scope begins at the `invariant` (and includes the parameter list)
+	 */
+	IrNode *	scopeBegin	= newtonParseTerminal(N, kNewtonIrNodeType_Tinvariant, currentScope);
+	Scope *		newScope	= commonSymbolTableOpenScope(N, currentScope, scopeBegin);
+
+	invariant->parameterList = newtonParseParameterTuple(N, newScope);
 	newScope->invariantParameterList = invariant->parameterList;
 
-	addLeafWithChainingSeq(N, node, newtonParseConstraint(N, newScope));
-	while (peekCheck(N, 1, kNewtonIrNodeType_Tcomma))
+	/*
+	 *	Also add it to the AST
+	 */
+	addLeafWithChainingSeq(N, node, invariant->parameterList);
+
+	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, newScope);
+	newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, newScope);
+
+	if (inFirst(N, kNewtonIrNodeType_Pconstraint, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, newScope);
-		addLeafWithChainingSeq(N, node, newtonParseConstraint(N, newScope));
+		IrNode *	firstConstraint = newtonParseConstraint(N, newScope);
+		addLeafWithChainingSeq(N, node, firstConstraint);
+
+		while (peekCheck(N, 1, kNewtonIrNodeType_Tcomma))
+		{
+			newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, newScope);
+			addLeafWithChainingSeq(N, node, newtonParseConstraint(N, newScope));
+		}
+
+		invariant->constraints		= firstConstraint;
+		invariant->id			= newtonGetInvariantIdByParameters(N, invariant->parameterList, 1);
 	}
 
-	invariant->constraints		= node->irRightChild;
-	invariant->id			= newtonGetInvariantIdByParameters(N, invariant->parameterList, 1);
 	IrNode *	scopeEnd	= newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, newScope);
-
-	newtonSymbolTableCloseScope(N, newScope, scopeEnd);
+	commonSymbolTableCloseScope(N, newScope, scopeEnd);
 	newtonAddInvariant(N, invariant);
 
 	/*
@@ -442,13 +457,6 @@ newtonParseConstant(State * N, Scope * currentScope)
 
 		node->value = constantExpression->value;
 
-		//assert(node->value != 0); // TODO remove later
-		if (node->value == 0)
-		{
-			newtonParserSyntaxError(N, kNewtonIrNodeType_PquantityExpression, kNewtonIrNodeTypeMax, gNewtonFirsts);
-			newtonParserErrorRecovery(N, kNewtonIrNodeType_PquantityExpression);	
-		}
-
 		newtonPhysicsAddExponents(N, constantPhysics, constantExpression->physics);
 
 		/*
@@ -457,7 +465,8 @@ newtonParseConstant(State * N, Scope * currentScope)
 		 */
 		if (constantPhysics->isVector)
 		{
-			assert(constantExpression->physics->isVector);
+			newtonParserSyntaxError(N, kNewtonIrNodeType_PquantityExpression, kNewtonIrNodeTypeMax, gNewtonFirsts);
+			newtonParserErrorRecovery(N, kNewtonIrNodeType_PquantityExpression);	
 		}
 	}
 	else
@@ -535,7 +544,11 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 	{
 		unitAbbreviation = newtonParseSymbol(N, currentScope);
 		addLeafWithChainingSeq(N, node, unitAbbreviation);
-		newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->stringConst; /* e.g., m, Pa*/
+
+		/*
+		 *	e.g., m, Pa
+		 */
+		newPhysics->dimensionAliasAbbreviation = unitAbbreviation->token->identifier;
 	}
 
 	/*
@@ -555,7 +568,7 @@ newtonParseBaseSignal(State * N, Scope * currentScope)
 		newtonPhysicsIncrementExponent(
 			N,
 			newPhysics,
-			newtonDimensionTableDimensionForIdentifier(N, N->newtonIrTopScope, unitName->token->stringConst)
+			newtonDimensionTableDimensionForName(N, N->newtonIrTopScope, unitName->token->stringConst)
 			);
 	}
 
@@ -610,8 +623,7 @@ newtonParseName(State * N, Scope * currentScope)
 
 	addLeafWithChainingSeq(N, node, baseSignalName);
 
-	if (	lexPeek(N, 1)->type == kNewtonIrNodeType_TEnglish || 
-		lexPeek(N, 1)->type == kNewtonIrNodeType_TSpanish)
+	if (	lexPeek(N, 1)->type == kNewtonIrNodeType_TEnglish)
 	{
 		addLeafWithChainingSeq(N, node, newtonParseTerminal(N, lexPeek(N, 1)->type, currentScope));
 	}
@@ -648,7 +660,7 @@ newtonParseSymbol(State * N, Scope * currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_Tsymbol, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 
-	IrNode *	baseSignalAbbreviation = newtonParseIdentifierDefinitionTerminal(N, currentScope);
+	IrNode *	baseSignalAbbreviation = newtonParseIdentifierDefinitionTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
 	node->token = baseSignalAbbreviation->token;
 
 	addLeaf(N, node, baseSignalAbbreviation);
@@ -683,6 +695,10 @@ newtonParseDerivation(State * N, Scope * currentScope)
 	if (lexPeek(N, 1)->type == kNewtonIrNodeType_Tnone)
 	{
 		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tnone, currentScope));
+	}
+	else if (lexPeek(N, 1)->type == kNewtonIrNodeType_Tdimensionless)
+	{
+		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tdimensionless, currentScope));
 	}
 	else
 	{
@@ -745,15 +761,6 @@ newtonParseTerminal(State *  N, IrNodeType expectedType, Scope * currentScope)
 	return n;
 }
 
-
-/*
- *	kNewtonIrNodeType_PidentifierOrNil
- *
- *	Generated AST subtree:
- *
- *		node.left	= kNewtonIrNodeType_Tidentifier
- *		node.right	= Xseq of kNewtonIrNodeType_PfieldSelect
- */
 IrNode *
 newtonParseIdentifier(State *  N, Scope *  currentScope)
 {
@@ -905,7 +912,7 @@ newtonParseFindParameterByTokenString(State *N, IrNode * root, char* tokenString
 	return targetNode;
 }
 
-Physics* 
+Physics *
 newtonParseGetPhysicsByBoundIdentifier(State * N, IrNode * root, char* boundVariableIdentifier)
 {
 	/*
@@ -1036,13 +1043,17 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 		physicsSearchResult = newtonParseGetPhysicsByBoundIdentifier(N, scope->invariantParameterList, t->identifier);
 	}
 
-	//assert(physicsSearchResult != NULL);
 	if (physicsSearchResult == NULL)
 	{
 		/*
 		 *	Identifier use before definition.
 		 */
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeType_Tidentifier, gNewtonFirsts);
+		char *	details;
+
+		asprintf(&details, "%s: \"%s\"\n", Eundeclared, t->identifier);
+		newtonParserSemanticError(N, kNewtonIrNodeType_Tidentifier, details);
+		free(details);
+
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
 	}
 
@@ -1061,13 +1072,25 @@ void newtonParseResetPhysicsWithCorrectSubindex(
 {
 	Physics *   physicsSearchResult = newtonPhysicsTablePhysicsForIdentifierAndSubindex(N, scope, identifier, subindex);
 
-	assert(physicsSearchResult != NULL);
+	if (physicsSearchResult == NULL)
+	{
+		char *	details;
+
+		asprintf(&details, "%s: \"%s\"@%d\n", Eundeclared, identifier, subindex);
+		newtonParserSemanticError(N, kNewtonIrNodeType_Tidentifier, details);
+		free(details);
+
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
+	}
 
 	/* 
 	 *  defensive copying to keep the Physics list in State immutable 
 	 */
 	node->physics = deepCopyPhysicsNode(physicsSearchResult);
-	assert(node->physics->dimensions != NULL);
+	if (node->physics->dimensions == NULL)
+	{
+		fatal(N, Esanity);
+	}
 }
 
 IrNode *
@@ -1121,6 +1144,16 @@ newtonParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sc
 	n->token = t;
 	n->tokenString = t->identifier;
 
+	/*
+	 *	NOTE: commonSymbolTableAddOrLookupSymbolForToken(N, scope, t) adds token 't' to scope 'scope'
+	 */
+	Symbol *	sym = commonSymbolTableAddOrLookupSymbolForToken(N, scope, t);
+	if (sym->definition != NULL)
+	{
+		errorMultiDefinition(N, sym);
+	}
+	n->symbol = sym;
+
 	return n;
 }
 
@@ -1149,52 +1182,7 @@ int
 newtonGetPhysicsId(State * N, Physics * physics)
 {
 	return primeNumbers[N->primeNumbersIndex++];
-    // /*
-    //  * Prime number id's are assigned to Dimension struct's, and
-    //  * Physics struct's construct its own id as a multiple of all of 
-    //  * its numerator Dimension's and denominator Dimension's.
-    //  * However, if Physics is a constant and does not have any Dimension's
-    //  * we just assign the next prime number from our prime numbers array.
-    //  */
-    // if (newtonIsDimensionless(physics))
-    // {
-    //     return primeNumbers[N->primeNumbersIndex++];
-    // }
-
-    // /*
-    //  * Important: Assumes a determinate order of Physics struct's in the newtonIrTopScope->firstDimension
-    //  * This is how Java does hash functions of Double List.
-    //  * Taken from https://docs.oracle.com/javase/7/docs/api/java/util/List.html#hashCode()
-    //  * There will be a collision, but hopefully the probability of collision is low.
-    //  */
-    // int id = 0;
-    // int base = 31;
-    // int offset = 1;
-
-    // Dimension * current = physics->numeratorDimensions;
-    // while (current != NULL)
-    // {
-    //     assert(current->exponent == (int) current->exponent);
-    //     id += pow(base, offset) * getHashCode(pow(current->primeNumber, current->exponent));
-    //     current = current->next;
-    // }
-
-    // return id;
 }
-
-/*
- * Taken from
- * http://stackoverflow.com/questions/31327789/how-do-the-gethashcode-methods-work-for-the-value-types-in-c
- */
-// int getHashCode(double number) {
-//     double d = number;
-// 	if (d == 0) {
-// 	    // Ensure that 0 and -0 have the same hash code
-// 	    return 0;
-//     }
-// 	long value = *(long*)(&d);
-// 	return ((int)value) ^ ((int)(value >> 32));
-// }
 
 
 

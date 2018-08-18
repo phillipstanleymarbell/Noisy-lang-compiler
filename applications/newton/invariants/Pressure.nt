@@ -38,95 +38,30 @@
 #	Description: Invariants for a system instrumented with pressure sensors.
 #
 
-time : signal =
-{
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
-}
-
-mass : signal =
-{
-	name = "kilogram" English;
-	symbol = "kg";
-	derivation = none;
-}
-
-distance : signal =
-{
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
-}
-
-temperature : signal =
-{
-	name = "Kelvin" English;
-	symbol = "K";
-	derivation = none;
-}
-
-amount : signal =
-{
-	name = "mole" English;
-	symbol = "mol";
-	derivation = none;
-}
-
-area : signal =
-{
-	name = "square meter" English;
-	symbol = "m^2";
-	derivation = distance ** 2;
-}
+include "NewtonBaseSignals.nt"
 
 volume : signal =
 {
-	name = "cube meter" English;
-	symbol = "m^3";
+	name = "Volume" English;
+
+	#
+	#	In this case, it is not meaningful to specify a "symbol" alias
+	#
+
 	derivation = distance ** 3;
 }
-
-speed : signal =
-{
-	name = "MegaSpeed" English;
-	symbol = "MegS";
-	derivation = distance / time;
-}
-
-acceleration : signal =
-{
-	name = "MegaAcceleration" English;
-	symbol = "MegA";
-	derivation = speed / time;
-}
-
-force : signal = 
-{
-	name = "Newton" English;
-	symbol = "N" ;
-	derivation = mass * acceleration;
-}
-
-pressure: signal = 
-{
-	name = "Pascal" English;
-	symbol = "Pa" ;
-	derivation = force / area;
-}
-
 
 BoylesLaw: invariant(P: pressure, V: volume) = 
 {
 	P * V ~ 3.5 * Pa * m ** 3
 }
 
-GayLussacLaw: invariant(P: pressure, T: temperature) = 
+GayLussacLaw: invariant(P: pressure, t: temperature) = 
 {
-	P * T ~ 5 * Pa * K
+	P * t ~ 5 * Pa * K
 }
 
-AvogadroLaw: invariant(V: volume, n: amount) = 
+AvogadroLaw: invariant(V: volume, n: material) = 
 {
 	V / n ~ 5 * m ** 3 / mol
 }

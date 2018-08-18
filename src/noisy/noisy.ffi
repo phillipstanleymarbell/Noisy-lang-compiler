@@ -783,7 +783,7 @@ production	kNoisyIrNodeType_PpredTerm:			firstset = {
 										firstset(kNoisyIrNodeType_PunaryBoolOp),
 									}
 
---//		predExpr		::=	predTerm {lowPrecedenceBinaryBoolOp predTerm} .
+--//		predExpr		::=	predTerm {(lowPrecedenceBinaryBoolOp | cmpOp) predTerm} .
 production	kNoisyIrNodeType_PpredExpr:			firstset = {
 										firstset(kNoisyIrNodeType_PpredTerm),
 									}
@@ -1656,10 +1656,11 @@ production	kNoisyIrNodeType_PpredFactor:			followset = {
 --//						| unaryBoolOp predFactor .
 production	kNoisyIrNodeType_PpredTerm:			followset = {
 										firstset(kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp),
+										firstset(kNoisyIrNodeType_PcmpOp),
 										followset(kNoisyIrNodeType_PpredExpr),
 									}
 
---//		predExpr		::=	predTerm {lowPrecedenceBinaryBoolOp predTerm} .
+--//		predExpr		::=	predTerm {(lowPrecedenceBinaryBoolOp | cmpOp) predTerm} .
 production	kNoisyIrNodeType_PpredExpr:			followset = {
 										kNoisyIrNodeType_Tcomma,
 										kNoisyIrNodeType_TrightParens,
@@ -2628,6 +2629,8 @@ token	kNoisyIrNodeType_Ttrue:					followset = {
 									}
 
 token	kNoisyIrNodeType_Ttype:					followset = {
+										kNoisyIrNodeType_Tcomma,
+										kNoisyIrNodeType_TrightParens,
 										firstset(kNoisyIrNodeType_PtypeExpr),
 										kNoisyIrNodeType_TleftBrace,
 										followset(kNoisyIrNodeType_PtypeParameterList),

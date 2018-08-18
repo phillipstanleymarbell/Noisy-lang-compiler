@@ -807,7 +807,7 @@ checkProportionality(State * N)
 	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '<')
 	{
 		gobble(N, 2);
-		type = kNewtonIrNodeType_Tproportionality;
+		type = kNewtonIrNodeType_Tproportional;
 	}
 	else
 	{
