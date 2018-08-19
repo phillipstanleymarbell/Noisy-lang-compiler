@@ -96,11 +96,11 @@ IrNode *	noisyParseHighPrecedenceArith2ArithOp(State *  N, Scope *  currentScope
 IrNode *	noisyParseHighPrecedenceBinaryBoolOp(State *  N);
 IrNode *	noisyParseHighPrecedenceBinaryOp(State *  N);
 IrNode *	noisyParseHighPrecedenceBoolSetOp(State *  N, Scope *  currentScope);
-IrNode *	noisyParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Scope *  scope);
+IrNode *	noisyParseIdentifierDefinitionTerminal(State *  N, Scope *  scope);
 IrNode *	noisyParseIdentifierList(State *  N, Scope *  currentScope);
 IrNode *	noisyParseIdentifierOrNil(State *  N, Scope *  currentScope, bool isDefinition);
 IrNode *	noisyParseIdentifierOrNilList(State *  N, Scope *  currentScope, bool isDefinition);
-IrNode *	noisyParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  scope);
+IrNode *	noisyParseIdentifierUsageTerminal(State *  N, Scope *  scope);
 IrNode *	noisyParseIdxInitList(State *  N, Scope *  scope);
 IrNode *	noisyParseInitList(State *  N, Scope *  scope);
 IrNode *	noisyParseIntParamOrConst(State *  N, Scope *  currentScope);
@@ -202,3 +202,4 @@ IrNode *	noisyParseVarIntroList(State *  N, Scope *  currentScope);
 IrNode *	noisyParseVarTuple(State *  N, Scope *  currentScope);
 IrNode *	noisyParseVectorTypeDecl(State *  N, Scope *  currentScope);
 IrNode *	noisyParseWriteTypeSignature(State *  N, Scope *  scope);
+IrNode *	noisyParseIdentifierTerminalIgnoreSymtab(State *  N);

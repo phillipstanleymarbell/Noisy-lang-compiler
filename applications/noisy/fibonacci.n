@@ -1,6 +1,6 @@
 include "fibonacci.nd"
 
-Fibonacci : function (input: valueType) -> (output: valueType) =
+fibonacci : function (index: indexType) -> (output: valueType) =
 {
 	#
 	#	Because a function can be invoked by the function or
@@ -12,19 +12,19 @@ Fibonacci : function (input: valueType) -> (output: valueType) =
 	#
 	matchseq
 	{
-		input == 0	=>
+		index == 0	=>
 		{
 			return (output:0);
 		}
 
-		input == 1	=>
+		index == 1	=>
 		{
 			return (output:1);
 		}
 
 		true		=>
 		{
-			return (output:(Fibonacci(input: input - 1) + Fibonacci(input: input - 2)));
+			return (output:(fibonacci(index: index - 1) + fibonacci(index: index - 2)));
 		}
 	};
 }
@@ -43,5 +43,5 @@ init : function	(arguments: list of string) -> (results: list of string) =
 	#	The list of string aguments is the program name
 	#	followed by its arguments as strings.
 	#
-	#return (results: (string Fibonacci(input: int16 (head tail arguments)))::nil);
+	#return (results: (string fib->fibonacci(index: int16 (head tail arguments)))::nil);
 }

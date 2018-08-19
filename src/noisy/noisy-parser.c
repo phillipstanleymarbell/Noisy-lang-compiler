@@ -185,7 +185,7 @@ noisyParseModuleDecl(State *  N, Scope *  scope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	IrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+	IrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, scope);
 	addLeaf(N, n, identifier);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tmodule);
@@ -284,7 +284,7 @@ noisyParseModuleTypeNameDecl(State *  N, Scope *  scope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	IrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+	IrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, scope);
 	addLeaf(N, n, identifier);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 
@@ -567,7 +567,7 @@ noisyParseValfnSignature(State *  N, Scope *  scope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, scope));
+	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, scope));
 
 	if (!inFollow(N, kNoisyIrNodeType_PvalfnSignature, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -955,7 +955,7 @@ noisyParseIdentifierList(State *  N, Scope *  currentScope)
 	/*
 	 *	The typeTree's get filled in in our caller
 	 */
-	addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+	addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
 	
 	/*
 	 *	Could also have done
@@ -964,7 +964,7 @@ noisyParseIdentifierList(State *  N, Scope *  currentScope)
 	while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 	{
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
-		addLeafWithChainingSeq(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeafWithChainingSeq(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
 	}
 
 	if (!inFollow(N, kNoisyIrNodeType_PidentifierList, gNoisyFollows, kNoisyIrNodeTypeMax))
@@ -1194,7 +1194,7 @@ noisyParseTypeName(State *  N, Scope *  scope)
 	 *	This is a use, not a def, so doesn't go into symtab (noisyParseIdentifierDefinitionTerminal);
 	 *	instead, noisyParseIdentifierUsageTerminal looks up its symbol in symtab.
 	 */
-	id1 = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+	id1 = noisyParseIdentifierUsageTerminal(N, scope);
 	if (id1->symbol == NULL)
 	{
 		noisyParserSyntaxError(N, kNoisyIrNodeType_Tidentifier, kNoisyIrNodeTypeMax, gNoisyFirsts);
@@ -1218,7 +1218,7 @@ noisyParseTypeName(State *  N, Scope *  scope)
 		 *	module embedded in module, so we at most have "a->b"
 		 */
 		noisyParseTerminal(N, kNoisyIrNodeType_Tarrow);
-		id2 = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, moduleName2scope(N, id1->symbol->identifier));
+		id2 = noisyParseIdentifierUsageTerminal(N, moduleName2scope(N, id1->symbol->identifier));
 		if (id2->symbol == NULL)
 		{
 			char *	details;
@@ -1367,7 +1367,7 @@ noisyParseSignalDesignation(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
 	}
 
 	if (!inFollow(N, kNoisyIrNodeType_PsignalDesignation, gNoisyFollows, kNoisyIrNodeTypeMax))
@@ -1639,7 +1639,7 @@ noisyParseUnitsArithFactor(State *  N, Scope *  currentScope)
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PnumericConst, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
@@ -3064,14 +3064,14 @@ noisyParseTypeParameterList(State *  N, Scope *  currentScope)
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 		noisyParseTerminal(N, kNoisyIrNodeType_Ttype);
 
 		while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 		{
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
-			addLeafWithChainingSeq(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+			addLeafWithChainingSeq(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 			noisyParseTerminal(N, kNoisyIrNodeType_Ttype);
 		}
@@ -3121,11 +3121,11 @@ noisyParseFunctionDefn(State *  N, Scope *  scope)
 	 */
 	if (commonSymbolTableSymbolForIdentifier(N, scope, lexPeek(N, 1)->identifier) != NULL)
 	{
-		identifier = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+		identifier = noisyParseIdentifierUsageTerminal(N, scope);
 	}
 	else
 	{
-		identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+		identifier = noisyParseIdentifierDefinitionTerminal(N, scope);
 	}
 
 	addLeaf(N, n, identifier);
@@ -3200,11 +3200,11 @@ noisyParseProblemDefn(State *  N, Scope *  scope)
 	 */
 	if (commonSymbolTableSymbolForIdentifier(N, scope, lexPeek(N, 1)->identifier) != NULL)
 	{
-		identifier = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+		identifier = noisyParseIdentifierUsageTerminal(N, scope);
 	}
 	else
 	{
-		identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+		identifier = noisyParseIdentifierDefinitionTerminal(N, scope);
 	}
 
 	addLeaf(N, n, identifier);
@@ -3277,11 +3277,11 @@ noisyParsePredicateFnDefn(State *  N, Scope *  scope)
 	 */
 	if (commonSymbolTableSymbolForIdentifier(N, scope, lexPeek(N, 1)->identifier) != NULL)
 	{
-		identifier = noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+		identifier = noisyParseIdentifierUsageTerminal(N, scope);
 	}
 	else
 	{
-		identifier = noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, scope);
+		identifier = noisyParseIdentifierDefinitionTerminal(N, scope);
 	}
 
 	addLeaf(N, n, identifier);
@@ -3349,14 +3349,14 @@ noisyParseSignature(State *  N, Scope *  currentScope)
 	noisyParseTerminal(N, kNoisyIrNodeType_TleftParens);
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 		addLeafWithChainingSeq(N, n, noisyParseTypeExpr(N, currentScope));
 
 		while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 		{
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
-			addLeafWithChainingSeq(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+			addLeafWithChainingSeq(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 			addLeafWithChainingSeq(N, n, noisyParseTypeExpr(N, currentScope));
 		}
@@ -3723,14 +3723,14 @@ noisyParseReturnSignature(State *  N, Scope *  currentScope)
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_TleftParens);
-	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 	addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
 
 	while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 	{
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
-		addLeafWithChainingSeq(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeafWithChainingSeq(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 		addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
 	}
@@ -4113,7 +4113,7 @@ noisyParseSetHead(State *  N, Scope *  currentScope)
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_TleftParens);
-	addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+	addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
 	noisyParseTerminal(N, kNoisyIrNodeType_Tin);
 	addLeaf(N, n, noisyParseExpression(N, currentScope));
 	noisyParseTerminal(N, kNoisyIrNodeType_TrightParens);
@@ -4348,7 +4348,7 @@ noisyParseQuantizeExpression(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	noisyParseTerminal(N, kNoisyIrNodeType_Tquantize);
 	addLeaf(N, n, noisyParseExpression(N, currentScope));
 
@@ -4387,7 +4387,7 @@ noisyParseSampleExpression(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	noisyParseTerminal(N, kNoisyIrNodeType_Tsample);
 	addLeaf(N, n, noisyParseExpression(N, currentScope));
 
@@ -4721,7 +4721,7 @@ noisyParseChanEventExpression(State *  N, Scope *  currentScope)
 	}
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tof);
-	addLeafWithChainingSeq(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+	addLeafWithChainingSeq(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	addLeafWithChainingSeq(N, n, noisyParseCmpOp(N));
 	addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
 
@@ -4762,11 +4762,11 @@ noisyParseLoadExpr(State *  N, Scope *  currentScope)
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tload);
 
-	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tarrow))
 	{
 		noisyParseTerminal(N, kNoisyIrNodeType_Tarrow);
-		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	}
 
 	if (inFirst(N, kNoisyIrNodeType_PtupleType, gNoisyFirsts, kNoisyIrNodeTypeMax) && !peekCheck(N, 2, kNoisyIrNodeType_Tpath))
@@ -4883,11 +4883,11 @@ noisyParseQualifiedIdentifier(State *  N, Scope *  currentScope, bool isDefiniti
 
 	if (isDefinition)
 	{
-		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
 	}
 	else
 	{
-		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	}
 
 	while (inFirst(N, kNoisyIrNodeType_PfieldSelect, gNoisyFirsts, kNoisyIrNodeTypeMax))
@@ -5109,19 +5109,29 @@ noisyParseNamegenInvokeShorthand(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+	/*
+	 *	TODO: for now, we do not check the argument names below
+	 *	(by calling noisyParseIdentifierTerminalIgnoreSymtab() <-- which we use only here).
+	 *	This is OK since languages like C don't add that contraint.
+	 *	In future, we will need to, e.g., hold on to the symbol
+	 *	for the function name since we will use that scope to find
+	 *	the function argument names.
+	 */
+
+
+	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	noisyParseTerminal(N, kNoisyIrNodeType_TleftParens);
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		addLeafWithChainingSeq(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeafWithChainingSeq(N, n, noisyParseIdentifierTerminalIgnoreSymtab(N));
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 		addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
 
 		while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 		{
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
-			addLeafWithChainingSeq(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+			addLeafWithChainingSeq(N, n, noisyParseIdentifierTerminalIgnoreSymtab(N));
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 			addLeafWithChainingSeq(N, n, noisyParseExpression(N, currentScope));
 		}
@@ -5219,7 +5229,7 @@ noisyParseFieldSelect(State *  N, Scope *  currentScope)
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tdot))
 	{
 		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_Tdot));
-		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TleftBracket))
 	{
@@ -6065,7 +6075,7 @@ noisyParsePredFactor(State *  N, Scope *  currentScope)
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TleftParens))
 	{
@@ -6285,7 +6295,7 @@ noisyParseVarIntro(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+	addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
 	if (inFirst(N, kNoisyIrNodeType_PsetExpr, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		addLeaf(N, n, noisyParseSetExpr(N, currentScope));
@@ -6373,11 +6383,11 @@ noisyParseVarTuple(State *  N, Scope *  currentScope)
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_TleftParens);
-	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+	addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 	{
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
-		addLeafWithChainingSeq(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeafWithChainingSeq(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	}
 	noisyParseTerminal(N, kNoisyIrNodeType_TrightParens);
 
@@ -6475,7 +6485,7 @@ noisyParsePredArithFactor(State *  N, Scope *  currentScope)
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_TleftParens))
 	{
@@ -7106,7 +7116,7 @@ noisyParseIntParamOrConst(State *  N, Scope *  currentScope)
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	}
 	else
 	{
@@ -7155,7 +7165,7 @@ noisyParseRealParamOrConst(State *  N, Scope *  currentScope)
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	}
 	else
 	{
@@ -7204,7 +7214,7 @@ noisyParseStringParamOrConst(State *  N, Scope *  currentScope)
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, kNoisyIrNodeType_Tidentifier, currentScope));
+		addLeaf(N, n, noisyParseIdentifierUsageTerminal(N, currentScope));
 	}
 	else
 	{
@@ -7677,21 +7687,60 @@ noisyParseTerminal(State *  N, IrNodeType expectedType)
 }
 
 /*
- *	Remove an identifier _usage_ terminal, performing symtab lookup
+ *	Remove an identifier terminal, ignoring symtab lookup/addition.
+ *	We currently _only_ use this for the function argument names.
+ *	There is an outstanding TODO at the usage point to change this.
  */
 IrNode *
-noisyParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  scope)
+noisyParseIdentifierTerminalIgnoreSymtab(State *  N)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierUsageTerminal);
+//	TimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierTerminalIgnoreSymtab);
 
-	if (!peekCheck(N, 1, expectedType))
+	if (!peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType, gNoisyFirsts);
+		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, kNoisyIrNodeType_Tidentifier, gNoisyFirsts);
 
 		/*
 		 *	In this case, we know the specific expected type/token.
 		 */
-		noisyParserErrorRecovery(N, expectedType);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Tidentifier);
+	}
+
+	Token *	t = lexGet(N, gNoisyTokenDescriptions);
+	IrNode *	n = genIrNode(N,	t->type,
+						NULL /* left child */,
+						NULL /* right child */,
+						t->sourceInfo /* source info */);
+
+	n->tokenString = t->identifier;
+
+	if (!inFollow(N, kNoisyIrNodeType_Tidentifier, gNoisyFollows, kNoisyIrNodeTypeMax))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeType_Tidentifier, kNoisyIrNodeTypeMax, gNoisyFollows);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Tidentifier);
+	}
+
+	return n;
+}
+
+
+
+/*
+ *	Remove an identifier _usage_ terminal, performing symtab lookup
+ */
+IrNode *
+noisyParseIdentifierUsageTerminal(State *  N, Scope *  scope)
+{
+	TimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierUsageTerminal);
+
+	if (!peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
+	{
+		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, kNoisyIrNodeType_Tidentifier, gNoisyFirsts);
+
+		/*
+		 *	In this case, we know the specific expected type/token.
+		 */
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Tidentifier);
 	}
 
 	Token *	t = lexGet(N, gNoisyTokenDescriptions);
@@ -7727,18 +7776,18 @@ noisyParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  
  *	Remove an identifier _definition_ terminal, performing symtab insertion
  */
 IrNode *
-noisyParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Scope *  scope)
+noisyParseIdentifierDefinitionTerminal(State *  N, Scope *  scope)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseIdentifierDefinitionTerminal);
 
-	if (!peekCheck(N, 1, expectedType))
+	if (!peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, expectedType, gNoisyFirsts);
+		noisyParserSyntaxError(N, kNoisyIrNodeTypeMax, kNoisyIrNodeType_Tidentifier, gNoisyFirsts);
 
 		/*
 		 *	In this case, we know the specific expected type/token.
 		 */
-		noisyParserErrorRecovery(N, expectedType);
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Tidentifier);
 	}
 
 	Token *	t = lexGet(N, gNoisyTokenDescriptions);
