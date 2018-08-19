@@ -7672,6 +7672,8 @@ noisyParseTerminal(State *  N, IrNodeType expectedType)
 						NULL /* right child */,
 						t->sourceInfo /* source info */);
 
+	n->token = t;
+
 	/*
 	 *	Checking the FOLLOW() set of terminals will catch
 	 *	errors such as "iterate" that is followed by anything
