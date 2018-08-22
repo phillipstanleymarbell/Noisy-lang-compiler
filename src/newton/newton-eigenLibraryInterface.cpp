@@ -1,5 +1,7 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell
+	Authored 2018. Vlad Mihai Mandric.
+
+	Based on skeleton implementation of Eigen interface by Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -37,12 +39,131 @@
 
 #include "newton-eigenLibraryInterface.h"
 
-#include <Eigen/Core>
+#include <Eigen/Eigen>
 #include <iostream>
 using namespace std;
 using namespace Eigen;
 
 extern "C"
 {
-	//	Function definitions will go here...
+	void
+	rref(MatrixXf & m, int N, int M, VectorXi & indices)
+	{
+		int i = 0, j = 0, r = 0;
+		
+		while (i < N && j < M)
+		{
+			/*
+			 *	Step 1
+			 */
+			int p = 1;
+			int k = j;
+
+			while (k < N)
+			{
+				if (m(i, k) == 0)
+				{
+					do
+					{
+						m.row(i).swap(m.row(i+p));
+						p++;
+					} while(m(i, k) == 0);
+				}
+
+				if (m(i, k) == 0)
+				{
+					indices(r) = k;
+					r++;
+					k++;
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			/*
+			 *	Step 2
+			 */
+			m.array().row(i) /= m(i, j);
+
+			/*
+			 *	Step 3
+			 */
+			for (int q = 0; q < N; q++)
+			{
+				if (q != i)
+				{
+					m.array().row(q) -= m.array().row(i) * m(q, j) / m(i, j); 
+				}
+			}
+			
+			/*
+			 *	Step 4
+			 */
+			i++;
+			j++;
+		}
+
+		return;
+	}
+
+	void
+	kernelPiGroups(MatrixXf m, int rank, int x[], int N, int M)
+	{
+		for (int i = 1; i <= rank; i++)
+		{
+			if(x[i] > i)
+			{
+				m.col(i-1).swap(m.col(x[i]-1));
+			}
+		}
+
+		VectorXi indices(M - rank);
+		rref(m, N, M, indices);
+		
+		MatrixXf nonPivot(N, M - rank);
+		for (int i = 0; i < M - rank; i++)
+		{
+			nonPivot.col(i) = m.col(indices(i)); 
+		}
+		nonPivot.array() = nonPivot.array() * -1;
+
+		MatrixXf ker(M, M - rank);
+		MatrixXf I = MatrixXf::Identity(M - rank, M - rank);
+		
+		int r = 0, p = 0;
+		for (int i = 0; i < N; i++)
+		{
+			if (i == indices(r))
+			{
+				ker.row(i) = nonPivot.row(i);
+				r++;
+			}
+			else
+			{
+				ker.row(i) = I.row(p);
+				p++; 
+			}
+		}
+
+		return;
+	}
+	
+	void
+	constructPiGroups(int k, int N, int M, MatrixXf m, int x[], int rank)
+	{
+		if (k == rank + 1)
+		{
+			kernelPiGroups(m, rank, x, M, N);
+		}
+		else
+		{
+			for (int i = x[k-1] + 1; i <= M -rank + k; i++)
+			{
+				x[k] = i;
+				constructPiGroups(k+1, M, N, m, x, rank);
+			}
+		}
+	}
 } /* extern "C" */

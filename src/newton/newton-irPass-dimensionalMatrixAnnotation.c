@@ -1,5 +1,5 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell. To be extended by Vlad-Mihai Mandric... (Vlad: please clean up this comment and add your name to the authors list when you get here --- Phillip)
+	Authored 2018. Phillip Stanley-Marbell, Vlad-Mihai Mandric
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -42,6 +41,7 @@
 #include <setjmp.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <time.h>
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
@@ -49,62 +49,63 @@
 #include "flexerror.h"
 #include "flex.h"
 #include "common-errors.h"
+#include "version.h"
 #include "newton-timeStamps.h"
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
-#include "newton-symbolTable.h"
+#include "noisy-parser.h"
+#include "noisy-lexer.h"
 #include "common-irPass-helpers.h"
-#include "common-astTransform.h"
-#include "newton-irPass-dotBackend.h"
-#include "newton-irPass-dimensionMatrixBackend.h"
 #include "newton-types.h"
-#include "newton.h"
 
-/*
- *	This is a template for Vlad to build on. See https://github.com/phillipstanleymarbell/Noisy-lang-compiler/pull/301#issuecomment-409131120
- */
+#ifdef NoisyOsLinux
+#	include <time.h>
+#endif
 
 extern char *	gNewtonAstNodeStrings[];
 
-static void
-irPassDimensionMatrixProcessInvariantList(State *  N)
+void
+irPassDimensionalMatrixAnnotation(State *  N)
 {
 	Invariant *	invariant = N->invariantList;
 
 	while (invariant)
 	{
-		fprintf(stderr, "invariant: [%s]\n", invariant->identifier);
-		
 		IrNode *	parameter = invariant->parameterList;
+		Dimension *	dimension = parameter->irLeftChild->physics->dimensions;
+
+		invariant->matrixRows = 0;
+		if (parameter->irLeftChild && parameter->irLeftChild->physics)
+		{
+			while (dimension)
+			{
+				invariant->matrixRows++;
+				dimension = dimension->next;
+			}
+		}
+
+		invariant->matrixCols = 0;
 		while (parameter)
 		{
-			if (parameter->irLeftChild && parameter->irLeftChild->physics)
-			{
-				fprintf(stderr, "\tParameter: [%s]\n", parameter->irLeftChild->physics->identifier);
-				fprintf(stderr, "\tDimensions:\n");
-
-				Dimension *	dimension = parameter->irLeftChild->physics->dimensions;
-				while (dimension)
-				{
-					fprintf(stderr, "\t\t%s^%1.f:\n", dimension->abbreviation, dimension->exponent);
-					dimension = dimension->next;
-				}
-
-				fprintf(stderr, "\n");
-			}
+			invariant->matrixCols++;
 			parameter = parameter->irRightChild;
 		}
+		
+		invariant->matrix = calloc(invariant->matrixRows * invariant->matrixCols, sizeof(float));
+
+		parameter = invariant->parameterList;
+		for (int i = 0; i < invariant->matrixCols; i++)
+		{		
+			dimension = parameter->irLeftChild->physics->dimensions;
+			for (int j = 0; j < invariant->matrixRows; j++)
+			{
+				*(invariant->matrix + i + j * invariant->matrixCols) = (float)dimension->exponent;
+				dimension = dimension->next;
+			}
+			
+			parameter = parameter->irRightChild;			
+		}
+		
 		invariant = invariant->next;
 	}
-
-	return;
-}
-
-
-void
-irPassDimensionMatrixBackend(State *  N)
-{
-	irPassDimensionMatrixProcessInvariantList(N);
-
-	return;
 }

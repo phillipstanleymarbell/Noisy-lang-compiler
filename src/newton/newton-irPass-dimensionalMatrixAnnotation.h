@@ -35,4 +35,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void	irPassDimensionMatrixBackend(State *  N);
+void	irPassDimensionalMatrixAnnotation(State *  N);
