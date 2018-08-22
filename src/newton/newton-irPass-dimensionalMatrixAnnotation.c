@@ -64,49 +64,46 @@
 
 extern char *	gNewtonAstNodeStrings[];
 
-void irPassDimensionalMatrixAnnotation(State *  N)
+void
+irPassDimensionalMatrixAnnotation(State *  N)
 {
-	printf("\n\n\n");
 	Invariant *	invariant = N->invariantList;
 
-	while(invariant)
+	while (invariant)
 	{
-		fprintf(stderr, "\nInvariant: [%s]\n", invariant->identifier);
-	
-		IrNode *	parameter1 = invariant->parameterList;
-		IrNode *	parameter2 = invariant->parameterList;
-		Dimension *	dimension1 = parameter1->irLeftChild->physics->dimensions;
+		IrNode *	parameter = invariant->parameterList;
+		Dimension *	dimension = parameter->irLeftChild->physics->dimensions;
 
 		invariant->matrixRows = 0;
-		if (parameter1->irLeftChild && parameter1->irLeftChild->physics)
+		if (parameter->irLeftChild && parameter->irLeftChild->physics)
 		{
-			while (dimension1){
+			while (dimension)
+			{
 				invariant->matrixRows++;
-				dimension1 = dimension1->next;
+				dimension = dimension->next;
 			}
 		}
 
 		invariant->matrixCols = 0;
-		while (parameter1)
+		while (parameter)
 		{
 			invariant->matrixCols++;
-			parameter1 = parameter1->irRightChild;
+			parameter = parameter->irRightChild;
 		}
 		
 		invariant->matrix = calloc(invariant->matrixRows * invariant->matrixCols, sizeof(float));
 
-		printf("\nThe dimensional matrix is \n\n");
-		for(int i = 0; i < invariant->matrixCols; i++){		
-			printf("    %s        ", parameter2->irLeftChild->physics->identifier);
-			
-			Dimension *	dimension2 = parameter2->irLeftChild->physics->dimensions;
-			for(int j = 0; j < invariant->matrixRows; j++)
+		parameter = invariant->parameterList;
+		for (int i = 0; i < invariant->matrixCols; i++)
+		{		
+			dimension = parameter->irLeftChild->physics->dimensions;
+			for (int j = 0; j < invariant->matrixRows; j++)
 			{
-				*(invariant->matrix + i + j * invariant->matrixCols) = (float)dimension2->exponent;
-				dimension2 = dimension2->next;
+				*(invariant->matrix + i + j * invariant->matrixCols) = (float)dimension->exponent;
+				dimension = dimension->next;
 			}
 			
-			parameter2 = parameter2->irRightChild;			
+			parameter = parameter->irRightChild;			
 		}
 		
 		invariant = invariant->next;
