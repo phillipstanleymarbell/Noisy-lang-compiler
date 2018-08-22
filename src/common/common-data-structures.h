@@ -689,6 +689,9 @@ struct Invariant
 	IrNode *		parameterList;		//	This is just bunch of IrNode's in Xseq
 	unsigned long long int	id;
 	IrNode *		constraints;
+	float * 		matrix;
+	int 			matrixRows;
+	int 			matrixCols;
 	
 	Invariant *		next;
 };

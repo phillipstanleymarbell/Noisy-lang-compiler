@@ -44,7 +44,50 @@ using namespace Eigen;
 
 extern "C"
 {
-	void kernelPiGroups(MatrixXf m, int rank, int x[]){
+	void rref(MatrixXf & m, int N, int M, VectorXi & indices){
+		int i = 0, j = 0, r = 0;
+		
+		while(i < N && j < M){
+			//Step 1
+			int p = 1;
+			int k = j;
+			while (k < N){
+				if(m(i, k) == 0){
+					do{
+						m.row(i).swap(m.row(i+p));
+						p++;
+					}
+					while(m(i, k) == 0);
+				}
+
+				if(m(i, k) == 0){
+					indices(r) = k;
+					r++;
+					k++;
+				}
+				else{
+					break;
+				}
+			}
+			//Step 2
+			m.array().row(i) /= m(i, j);
+
+			//Step 3
+			for(int q = 0; q < N; q++){
+				if(q != i){
+					m.array().row(q) -= m.array().row(i) * m(q, j) / m(i, j); 
+				}
+			}
+			
+			//Step 4
+			i++;
+			j++;
+		}
+
+		return;
+	}
+
+	void kernelPiGroups(MatrixXf m, int rank, int x[], int N, int M){
 		cout << endl << endl << endl;
 		cout << "The column basis is" << endl;
 		for(int i = 1; i <= rank; i++){
@@ -57,16 +100,42 @@ extern "C"
 		cout << "Dimensional Matrix" << endl;
 		cout << m << endl << endl;
 
-		MatrixXf ker = m.fullPivLu().kernel();
+		VectorXi indices(M - rank);
+		rref(m, N, M, indices);
+		cout << "The RREF form of the matrix is " << endl;
+		cout << m << endl << endl;
+		
+		MatrixXf nonPivot(N, M - rank);
+		for(int i = 0; i < M - rank; i++){
+			nonPivot.col(i) = m.col(indices(i)); 
+		}
+		cout << nonPivot << endl;
+		nonPivot.array() = nonPivot.array() * -1;
+
+		MatrixXf ker(M, M - rank);
+		MatrixXf I = MatrixXf::Identity(M - rank, M - rank);
+		
+		int r = 0, p = 0;
+		for(int i = 0; i < N; i++){
+			if(i == indices(r)){
+				ker.row(i) = nonPivot.row(i);
+				r++;
+			}
+			else{
+				ker.row(i) = I.row(p);
+				p++; 
+			}
+		}
+
 		cout << "The Kernel is" << endl;
 		cout << ker << endl << endl;
 		cout << "m * ker = " << endl << m * ker << endl;
 
 		return;
 	}
-	void constructPiGroups(int k, int M, int N, MatrixXf m, int x[], int rank){
+	void constructPiGroups(int k, int N, int M, MatrixXf m, int x[], int rank){
 		if(k == rank + 1){
-			kernelPiGroups(m, rank, x);
+			kernelPiGroups(m, rank, x, M, N);
 		}
 		else{
 			for(int i = x[k-1] + 1; i <= M -rank + k; i++){
@@ -80,13 +149,18 @@ extern "C"
 		Map<MatrixXf> tmp (m, M, N);
 		MatrixXf mat = tmp.transpose();
 
+		MatrixXf n(3, 5);
+		n << -2, -3, -1, 1, 1,
+			 -2, 0, -1, 0, -1,
+			 1, 1, 1, 0, 0;
+
 		int rank = mat.fullPivLu().rank();
 		cout << "The rank of the matrix is " << rank << endl;
 		
 		int x[rank+1];
 		x[0] = 0;
 		int k = 1;
-		constructPiGroups(k, M, N, mat, x, rank);
+		constructPiGroups(k, N, M, mat, x, rank);
 	
 		return;
 	}

@@ -64,58 +64,51 @@
 
 extern char *	gNewtonAstNodeStrings[];
 
-void getPiGroups(float *m, int N, int M);
-
-void irPassDimensionMatrixBackend(State *  N)
+void irPassDimensionalMatrixAnnotation(State *  N)
 {
+	printf("\n\n\n");
 	Invariant *	invariant = N->invariantList;
 
-	while (invariant)
+	while(invariant)
 	{
-		fprintf(stderr, "invariant: [%s]\n", invariant->identifier);
+		fprintf(stderr, "\nInvariant: [%s]\n", invariant->identifier);
 	
 		IrNode *	parameter1 = invariant->parameterList;
 		IrNode *	parameter2 = invariant->parameterList;
 		Dimension *	dimension1 = parameter1->irLeftChild->physics->dimensions;
 
-		int N = 0;
+		invariant->matrixRows = 0;
 		if (parameter1->irLeftChild && parameter1->irLeftChild->physics)
 		{
 			while (dimension1){
-				N++;
+				invariant->matrixRows++;
 				dimension1 = dimension1->next;
 			}
 		}
 
-		int M = 0;
+		invariant->matrixCols = 0;
 		while (parameter1)
 		{
-			M++;
+			invariant->matrixCols++;
 			parameter1 = parameter1->irRightChild;
 		}
 		
-		float *m;
-		m = calloc(N * M, sizeof(float));
+		invariant->matrix = calloc(invariant->matrixRows * invariant->matrixCols, sizeof(float));
 
 		printf("\nThe dimensional matrix is \n\n");
-		for(int i = 0; i < M; i++){		
+		for(int i = 0; i < invariant->matrixCols; i++){		
 			printf("    %s        ", parameter2->irLeftChild->physics->identifier);
-
+			
 			Dimension *	dimension2 = parameter2->irLeftChild->physics->dimensions;
-			for(int j = 0; j < N; j++)
+			for(int j = 0; j < invariant->matrixRows; j++)
 			{
-				printf("{%.1f}", dimension2->exponent);
-				*(m + i + j * M) = (float)dimension2->exponent;
+				*(invariant->matrix + i + j * invariant->matrixCols) = (float)dimension2->exponent;
 				dimension2 = dimension2->next;
-				printf("%.1f   ", *(m + i + j * M));
 			}
-			printf("\n");
+			
 			parameter2 = parameter2->irRightChild;			
 		}
-
-		getPiGroups(m, N, M);
 		
 		invariant = invariant->next;
-		printf("\n\n");
 	}
 }

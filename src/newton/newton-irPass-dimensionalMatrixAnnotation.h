@@ -35,5 +35,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void	irPassDimensionMatrixBackend(State *  N);
-void 	getPiGroups(float *m, int N, int M);
+void	irPassDimensionalMatrixAnnotation(State *  N);
