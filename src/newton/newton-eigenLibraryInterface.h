@@ -40,7 +40,11 @@ extern "C"
 {
 #	endif /* __cplusplus */
 
-	//	Function prototypes will go here...
+//void getPiGroups(float *m, int N, int M);
+//int factorial(int N);
+//void generateAllPiGroups(MatrixXf mat, int N, int M,int rank, int x[], int k, MatrixXf (&ker)[]);
+//void computePiGroup(MatrixXf m, int N, int M, int rank, int x[], MatrixXf (&ker)[], int element);
+//void computeRREF(MatrixXf & m, int N, int M, int (&indices)[]);
 
 #	ifdef __cplusplus
 } /* extern "C" */

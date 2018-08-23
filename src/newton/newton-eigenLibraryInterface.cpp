@@ -37,7 +37,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "newton-eigenLibraryInterface.h"
+//#include "newton-eigenLibraryInterface.h"
 
 #include <Eigen/Eigen>
 #include <iostream>
@@ -46,8 +46,20 @@ using namespace Eigen;
 
 extern "C"
 {
+	int
+	factorial(int N)
+	{
+		int product = 1;
+		for(int i = 2; i <= N; i++)
+		{
+			product *= i;
+		}
+		
+		return product;
+	}
+
 	void
-	rref(MatrixXf & m, int N, int M, VectorXi & indices)
+	computeRREF(MatrixXf & m, int N, int M, int indices[]) //	Computes the row reduced echelon form(RREF)
 	{
 		int i = 0, j = 0, r = 0;
 		
@@ -72,7 +84,7 @@ extern "C"
 
 				if (m(i, k) == 0)
 				{
-					indices(r) = k;
+					indices[r] = k;
 					r++;
 					k++;
 				}
@@ -109,7 +121,7 @@ extern "C"
 	}
 
 	void
-	kernelPiGroups(MatrixXf m, int rank, int x[], int N, int M)
+	computePiGroup(MatrixXf m, int N, int M, int rank, int x[], MatrixXf ker[], int element)
 	{
 		for (int i = 1; i <= rank; i++)
 		{
@@ -119,51 +131,75 @@ extern "C"
 			}
 		}
 
-		VectorXi indices(M - rank);
-		rref(m, N, M, indices);
+		int indices[M - rank];
+		computeRREF(m, N, M, indices);
 		
-		MatrixXf nonPivot(N, M - rank);
+		MatrixXf nonPivot(rank, M - rank);
 		for (int i = 0; i < M - rank; i++)
 		{
-			nonPivot.col(i) = m.col(indices(i)); 
+			nonPivot.col(i) = m.block(0, indices[i], rank, 1); 
 		}
 		nonPivot.array() = nonPivot.array() * -1;
 
-		MatrixXf ker(M, M - rank);
 		MatrixXf I = MatrixXf::Identity(M - rank, M - rank);
 		
 		int r = 0, p = 0;
-		for (int i = 0; i < N; i++)
+		for (int i = 0; i < M; i++)
 		{
-			if (i == indices(r))
+			if (i == indices[r])
 			{
-				ker.row(i) = nonPivot.row(i);
+				ker[element].row(i) = I.row(r);
 				r++;
 			}
 			else
 			{
-				ker.row(i) = I.row(p);
+				ker[element].row(i) = nonPivot.row(p);
 				p++; 
 			}
 		}
 
 		return;
 	}
-	
+
 	void
-	constructPiGroups(int k, int N, int M, MatrixXf m, int x[], int rank)
+	generateAllPiGroups(MatrixXf mat, int N, int M,int rank, int x[], int k, MatrixXf ker[])
 	{
+		int element = 0;
 		if (k == rank + 1)
 		{
-			kernelPiGroups(m, rank, x, M, N);
+			computePiGroup(mat, N, M, rank, x, ker, element);
+			element ++;
 		}
 		else
 		{
 			for (int i = x[k-1] + 1; i <= M -rank + k; i++)
 			{
 				x[k] = i;
-				constructPiGroups(k+1, M, N, m, x, rank);
+				generateAllPiGroups(mat, N, M, rank, x, k + 1, ker);
 			}
 		}
+	}
+
+	void 
+	getPiGroups(float *m, int N, int M)									// N = #rows	M = #columns
+	{
+		Map<MatrixXf> tmp (m, M, N);
+		MatrixXf mat = tmp.transpose();
+		
+		int rank = mat.fullPivLu().rank();
+		cout << "The rank of the matrix is " << rank << endl;
+		
+		int x[rank+1];
+		x[0] = 0;
+		int k = 1;
+
+		int numberCircuitSets = factorial(M) / (factorial(k) * factorial(M - rank));
+		MatrixXf ker[numberCircuitSets];
+
+		generateAllPiGroups(mat, N, M, rank, x, k, ker);
+
+		cout << endl << endl << ker[0] << endl << endl << ker[1] << endl;
+	
+		return;
 	}
 } /* extern "C" */
