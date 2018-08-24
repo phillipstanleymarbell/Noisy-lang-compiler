@@ -57,6 +57,7 @@
 #include "noisy-lexer.h"
 #include "common-irPass-helpers.h"
 #include "newton-types.h"
+#include "newton-symbolTable.h"
 
 #ifdef NoisyOsLinux
 #	include <time.h>
@@ -70,31 +71,21 @@ irPassDimensionalMatrixAnnotation(State *  N)
 	Invariant *	invariant = N->invariantList;
 
 	while (invariant)
-	{
-		printf("[%s]\n", invariant->identifier);
-		
+	{		
 		IrNode *	parameter = invariant->parameterList;
 		Dimension *	dimension = parameter->irLeftChild->physics->dimensions;
 
 		invariant->matrixRows = 0;
-		if (parameter->irLeftChild && parameter->irLeftChild->physics)
-		{
-			while (dimension)
-			{
-				invariant->matrixRows++;
-				dimension = dimension->next;
-				printf("%s\n", dimension->name);
-			}
-			printf("[%d]\n", invariant->matrixRows);
-		}
-
-		
-
 		invariant->matrixCols = 0;
-		while (parameter)
+
+		for (;parameter;parameter = parameter->irRightChild)
 		{
 			invariant->matrixCols++;
-			parameter = parameter->irRightChild;
+		}
+		
+		for (;dimension;dimension = dimension->next)
+		{
+			invariant->matrixRows++;
 		}
 		
 		invariant->matrix = calloc(invariant->matrixRows * invariant->matrixCols, sizeof(float));
