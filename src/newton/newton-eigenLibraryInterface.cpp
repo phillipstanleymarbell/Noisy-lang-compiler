@@ -68,18 +68,16 @@ extern "C"
 			/*
 			 *	Step 1
 			 */
-			int p = 1;
 			int k = j;
-
+			int p = 1;
 			while (k < N)
 			{
-				if (m(i, k) == 0)
-				{
-					do
-					{
-						m.row(i).swap(m.row(i+p));
-						p++;
-					} while(m(i, k) == 0);
+				while(m(i, k) == 0){
+					m.row(i).swap(m.row(i + p));
+					p++;
+					if (i + p == M){
+
+					}
 				}
 
 				if (m(i, k) == 0)
@@ -184,8 +182,9 @@ extern "C"
 	getPiGroups(float *m, int N, int M)									// N = #rows	M = #columns
 	{
 		Map<MatrixXf> tmp (m, M, N);
+		cout << endl << endl << tmp << endl;
 		MatrixXf mat = tmp.transpose();
-		
+		cout << endl << mat << endl;
 		int rank = mat.fullPivLu().rank();
 		cout << "The rank of the matrix is " << rank << endl;
 		

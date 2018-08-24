@@ -71,6 +71,8 @@ irPassDimensionalMatrixAnnotation(State *  N)
 
 	while (invariant)
 	{
+		printf("[%s]\n", invariant->identifier);
+		
 		IrNode *	parameter = invariant->parameterList;
 		Dimension *	dimension = parameter->irLeftChild->physics->dimensions;
 
@@ -81,8 +83,12 @@ irPassDimensionalMatrixAnnotation(State *  N)
 			{
 				invariant->matrixRows++;
 				dimension = dimension->next;
+				printf("%s\n", dimension->name);
 			}
+			printf("[%d]\n", invariant->matrixRows);
 		}
+
+		
 
 		invariant->matrixCols = 0;
 		while (parameter)
