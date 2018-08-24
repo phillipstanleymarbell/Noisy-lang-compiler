@@ -66,7 +66,7 @@
 extern char *	gNewtonAstNodeStrings[];
 
 void
-getPiGroups(float * m, int N, int M);
+getPiGroups(float * m, int N, int M, float *kernelMat);
 
 void
 irPassDimensionalMatrixPiGroups(State *  N)
@@ -75,7 +75,7 @@ irPassDimensionalMatrixPiGroups(State *  N)
 
 	while (invariant)
 	{
-		getPiGroups(invariant->matrix, invariant->matrixRows, invariant->matrixCols);
+		getPiGroups(invariant->matrix, invariant->matrixRows, invariant->matrixCols, invariant->nullSpace);
 
 		invariant = invariant->next;
 	}

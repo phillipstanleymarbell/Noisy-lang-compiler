@@ -47,17 +47,24 @@ using namespace Eigen;
 extern "C"
 {
 	int
-	factorial(int N)
+	factorialHelper(int n, int N)
 	{
-		int product = 1;
-		for(int i = 2; i <= N; i++)
+		if (n)
 		{
-			product *= i;
+			return factorialHelper(n-1, N*n);
 		}
-		
-		return product;
+		else
+		{
+			return N;
+		}
 	}
 
+	int
+	factorial(int i)
+	{
+		return factorialHelper(i,1);
+	}
+	
 	void
 	computeRREF(MatrixXf & m, int N, int M, int indices[]) //	Computes the row reduced echelon form(RREF)
 	{
@@ -68,27 +75,24 @@ extern "C"
 			/*
 			 *	Step 1
 			 */
-			int k = j;
-			int p = 1;
-			while (k < N)
+			
+			while (m(i, j) == 0)
 			{
-				while(m(i, k) == 0){
-					m.row(i).swap(m.row(i + p));
-					p++;
-					if (i + p == M){
+				bool swapped = false;
+				for (int p = i + 1; i + p < N; p++)
+				{
 
+					if (m(p, j))
+					{
+						m.row(i).swap(m.row(p));
+						swapped = true;
+						break;
 					}
 				}
 
-				if (m(i, k) == 0)
+				if (!swapped)
 				{
-					indices[r] = k;
-					r++;
-					k++;
-				}
-				else
-				{
-					break;
+					j++;
 				}
 			}
 
@@ -135,9 +139,10 @@ extern "C"
 		MatrixXf nonPivot(rank, M - rank);
 		for (int i = 0; i < M - rank; i++)
 		{
-			nonPivot.col(i) = m.block(0, indices[i], rank, 1); 
+			int a = indices[i];
+			nonPivot.block(0, i, rank, 1) = m.block(0, a, rank, 1);      // builds the matrix out of the non-pivot columns
 		}
-		nonPivot.array() = nonPivot.array() * -1;
+		nonPivot.array() = nonPivot.array() * -1;                   // multiply by -1 the matrix
 
 		MatrixXf I = MatrixXf::Identity(M - rank, M - rank);
 		
@@ -147,7 +152,7 @@ extern "C"
 			if (i == indices[r])
 			{
 				ker[element].row(i) = I.row(r);
-				r++;
+				r++;                                                // append the identity matrix to the non-pivot matrix
 			}
 			else
 			{
@@ -160,8 +165,8 @@ extern "C"
 	}
 
 	void
-	generateAllPiGroups(MatrixXf mat, int N, int M,int rank, int x[], int k, MatrixXf ker[])
-	{
+	generateAllPiGroups(MatrixXf mat, int N, int M, int rank, int x[], int k, MatrixXf ker[])     //generate in lexigographic order
+	{																							 //all the possible combinations of columns
 		int element = 0;
 		if (k == rank + 1)
 		{
@@ -178,7 +183,7 @@ extern "C"
 		}
 	}
 
-	void 
+	void
 	getPiGroups(float *m, int N, int M)									// N = #rows	M = #columns
 	{
 		Map<MatrixXf> tmp (m, M, N);
@@ -192,13 +197,11 @@ extern "C"
 		x[0] = 0;
 		int k = 1;
 
-		int numberCircuitSets = factorial(M) / (factorial(k) * factorial(M - rank));
+		int numberCircuitSets = factorial(M) / (factorial(rank) * factorial(M - rank));
 		MatrixXf ker[numberCircuitSets];
 
 		generateAllPiGroups(mat, N, M, rank, x, k, ker);
 
-		cout << endl << endl << ker[0] << endl << endl << ker[1] << endl;
-	
 		return;
 	}
 } /* extern "C" */

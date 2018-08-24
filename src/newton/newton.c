@@ -98,7 +98,7 @@ processNewtonFile(State *  N, char *  filename)
 	if (N->irPasses & kNoisyIrDimensionMatrixPass)
 	{
 		irPassDimensionalMatrixAnnotation(N);
-		irPassDimensionalMatrixPiGroups(N);
+		//irPassDimensionalMatrixPiGroups(N);
 	}
 
 	/*
