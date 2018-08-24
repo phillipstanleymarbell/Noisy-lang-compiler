@@ -692,6 +692,7 @@ struct Invariant
 	float * 		matrix;			//	Dimensional matrix
 	int 			matrixRows;		//	Dimensional matrix #rows		
 	int 			matrixCols;		//	Dimensional matrix #columns 
+	float *			nullSpace;
 	
 	Invariant *		next;
 };

@@ -92,6 +92,8 @@ extern "C"
 
 				if (!swapped)
 				{
+					indices[r] = j;
+					r++;
 					j++;
 				}
 			}
