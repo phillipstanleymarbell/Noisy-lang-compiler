@@ -1,5 +1,6 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell, Vlad-Mihai Mandric
+	Authored 2018. Phillip Stanley-Marbell.
+
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
