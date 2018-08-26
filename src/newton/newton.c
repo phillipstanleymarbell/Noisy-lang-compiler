@@ -53,6 +53,7 @@
 #include "newton-timeStamps.h"
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
+#include "common-symbolTable.h"
 
 #include "newton-parser.h"
 #include "newton-lexer.h"
@@ -60,7 +61,9 @@
 #include "newton.h"
 #include "newton-irPass-dotBackend.h"
 #include "newton-irPass-smtBackend.h"
-#include "newton-irPass-dimensionMatrixBackend.h"
+#include "newton-irPass-dimensionalMatrixAnnotation.h"
+#include "newton-irPass-dimensionalMatrixPiGroups.h"
+#include "newton-irPass-dimensionalMatrixPrinter.h"
 #include "newton-dimension-pass.h"
 
 extern char *	gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
@@ -80,7 +83,7 @@ processNewtonFile(State *  N, char *  filename)
 	/*
 	 *	Create a top-level scope, then parse.
 	 */
-	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
+	N->newtonIrTopScope = commonSymbolTableAllocScope(N);
 
 	State *	N_dim = processNewtonFileDimensionPass(filename);
 	N->newtonIrTopScope->firstDimension = N_dim->newtonIrTopScope->firstDimension;
@@ -95,7 +98,9 @@ processNewtonFile(State *  N, char *  filename)
 	 */
 	if (N->irPasses & kNoisyIrDimensionMatrixPass)
 	{
-		irPassDimensionMatrixBackend(N);
+		irPassDimensionalMatrixAnnotation(N);
+		irPassDimensionalMatrixPrinter(N);
+		//irPassDimensionalMatrixPiGroups(N);
 	}
 
 	/*
@@ -121,7 +126,7 @@ processNewtonFileDimensionPass(char * filename)
 	State *		N = init(kNoisyModeDefault);
 	newtonLexInit(N, filename);
 
-	N->newtonIrTopScope = newtonSymbolTableAllocScope(N);
+	N->newtonIrTopScope = commonSymbolTableAllocScope(N);
 	newtonDimensionPassParse(N, N->newtonIrTopScope);
 
 	return N;

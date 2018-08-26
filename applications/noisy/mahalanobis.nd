@@ -1,12 +1,23 @@
-Mahalanobis : progtype (indexType: type, valueType: type)
+#
+#	The module definition gives its signature for other
+#	modules (e.g., the runtime system) that want to execute
+#	it.
+#
+#	The module definition need not export the function init
+#	if it is not intended to by loaded by the "conventional loader"
+#	(e.g., the OS shell).
+#
+Mahalanobis : module (indexType: type, valueType: type)
 {
 	#
 	#	x:	multivariate vector
 	#	mu:	vector of means
 	#	S:	covariance matrix
 	#
-	distance	: namegen (N: indexType, x: array [N] of valueType, mu: array [N] of valueType, S: array [N] of valueType) -> (d: valueType);
+	distance	: function (N: indexType, x: array [N] of valueType, mu: array [N] of valueType, S: array [N] of valueType) -> (d: valueType);
 	distance	: probdef (N: indexType, x: array [N] of valueType, mu: array [N] of valueType, S: array [N] of valueType) -> (d: valueType);
+
+	init		: function (args: list of string) -> (results: list of string);
 }
 
 
@@ -34,4 +45,8 @@ distance: probdef (N: indexType, x: array [N] of valueType, mu: array [N] of val
 			=> d ** 2 == sum m (T[m] * (x[n] - mu[n]))
 		)
 	)
+}
+
+init : function	(arguments: list of string) -> (results: list of string) =
+{
 }

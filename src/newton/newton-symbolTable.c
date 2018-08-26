@@ -89,7 +89,8 @@ copyDimensionNode(Dimension *  list)
 {
 	Dimension *	temp = (Dimension *) calloc(1, sizeof(Dimension));
 
-	temp->identifier	= list->identifier;
+	temp->name		= list->name;
+	temp->abbreviation	= list->abbreviation;
 	temp->scope		= list->scope;
 	temp->sourceInfo	= list->sourceInfo;
 	temp->primeNumber	= list->primeNumber;
@@ -311,7 +312,8 @@ newtonPhysicsSubtractExponents(State *  N, Physics *  left, Physics *  right)
 }
 
 
-void newtonPhysicsMultiplyExponents(State *  N, Physics *  source, double multiplier)
+void
+newtonPhysicsMultiplyExponents(State *  N, Physics *  source, double multiplier)
 {
 	Dimension *	current = source->dimensions;
 	assert(current != NULL);
@@ -337,8 +339,8 @@ newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  na
 		fatal(N, Emalloc);
 	}
 
-	newDimension->abbreviation	= abbrevToken->stringConst;
-	newDimension->identifier	= nameToken->stringConst;
+	newDimension->abbreviation	= abbrevToken->identifier;
+	newDimension->name		= nameToken->stringConst;
 	newDimension->sourceInfo	= nameToken->sourceInfo;
 	newDimension->scope		= scope;
 	newDimension->primeNumber	= primeNumbers[N->primeNumbersIndex++];
@@ -449,7 +451,7 @@ areTwoPhysicsEquivalent(State * N, Physics * left, Physics * right)
 }
 
 Dimension *
-newtonDimensionTableDimensionForIdentifier(State *  N, Scope *  scope, const char *  identifier)
+newtonDimensionTableDimensionForName(State *  N, Scope *  scope, const char *  name)
 {
 	if (scope == NULL)
 	{
@@ -459,14 +461,14 @@ newtonDimensionTableDimensionForIdentifier(State *  N, Scope *  scope, const cha
 	Dimension *	curDimension = scope->firstDimension;
 	while (curDimension != NULL)
 	{
-		if (!strcmp(curDimension->identifier, identifier))
+		if (!strcmp(curDimension->name, name))
 		{
 			return curDimension;
 		}
 		curDimension = curDimension->next;
 	}
 
-	return newtonDimensionTableDimensionForIdentifier(N, scope->parent, identifier);
+	return newtonDimensionTableDimensionForName(N, scope->parent, name);
 }
 
 Physics *

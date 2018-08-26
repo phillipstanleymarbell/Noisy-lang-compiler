@@ -49,21 +49,17 @@
 #include "noisy-timeStamps.h"
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
-#include "noisy-symbolTable.h"
+#include "common-symbolTable.h"
 
 
 /*
- *	TODO: need to tag scopes corresponding to progtypes with a name, so
- *	that when we want to lookup a progtype-qualified-name in symtab, we
- *	can use the "a" of "a->b" to lookup, and get the type structure of
- *	"b".  See, e.g., comments at P_TYPENAME in noisy-irPass-cBackend.
+ *	See issue #295.
  */
 
-
 Scope *
-noisySymbolTableAllocScope(State *  N)
+commonSymbolTableAllocScope(State *  N)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAllocScope);
+//	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAllocScope);
 
 	Scope *	newScope;
 
@@ -78,9 +74,9 @@ noisySymbolTableAllocScope(State *  N)
 
 
 Symbol *
-noisySymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  token)
+commonSymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  token)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAddOrLookupSymbolForToken);
+//	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableAddOrLookupSymbolForToken);
 
 	Symbol *	newSymbol;
 
@@ -97,7 +93,7 @@ noisySymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  t
 	/*
 	 *	NOTE:	An extant definition might not exist.
 	 */
-	newSymbol->definition	= noisySymbolTableSymbolForIdentifier(N, scope, token->identifier);
+	newSymbol->definition	= commonSymbolTableSymbolForIdentifier(N, scope, token->identifier);
 
 	/*
 	 *	NOTE:	Caller sets (1) intconst/etc. fields, (2) type, based on context.
@@ -122,41 +118,60 @@ noisySymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  t
 
 
 Symbol *
-noisySymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  identifier)
+commonSymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  identifier)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableSymbolForIdentifier);
+//	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableSymbolForIdentifier);
 
 	/*
-	 *	Recursion falls out when we reach root which has nil parent
+	 *	Recursion falls out when we reach root which has nil parent,
+	 *	and this is the point at which we check the module scopes:
 	 */
 	if (scope == NULL)
 	{
+		Scope *	moduleScope = N->moduleScopes;
+
+		while (moduleScope != NULL)
+		{
+			Symbol *	moduleSym = moduleScope->firstSymbol;
+
+			while (moduleSym != NULL)
+			{
+				if (!strcmp(moduleSym->identifier, identifier))
+				{
+					return moduleSym;
+				}
+				moduleSym = moduleSym->next;
+			}
+
+			moduleScope = moduleScope->next;
+		}
+
 		return NULL;
 	}
 
 	/*
 	 *	Search current and parent (not siblings or children)
 	 */
-	Symbol *	p = scope->firstSymbol;
-	while (p != NULL)
+	Symbol *	sym = scope->firstSymbol;
+	while (sym != NULL)
 	{
-		if (!strcmp(p->identifier, identifier))
+		if (!strcmp(sym->identifier, identifier))
 		{
-			return p;
+			return sym;
 		}
-		p = p->next;
+		sym = sym->next;
 	}
 
-	return noisySymbolTableSymbolForIdentifier(N, scope->parent, identifier);
+	return commonSymbolTableSymbolForIdentifier(N, scope->parent, identifier);
 }
 
 
 Scope *
-noisySymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
+commonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableOpenScope);
+//	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableOpenScope);
 
-	Scope *	newScope = noisySymbolTableAllocScope(N);
+	Scope *	newScope = commonSymbolTableAllocScope(N);
 
 	newScope->parent = scope;
 	newScope->begin = subTree->sourceInfo;
@@ -167,9 +182,9 @@ noisySymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 
 
 void
-noisySymbolTableCloseScope(State *  N, Scope *  scope, IrNode *  subTree)
+commonSymbolTableCloseScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableCloseScope);
+//	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableCloseScope);
 
 	scope->end = subTree->sourceInfo;
 }

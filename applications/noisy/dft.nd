@@ -1,18 +1,22 @@
 #
-#	For kMathPi, cos, and sin (we need both the namegen prototype as well as the probdef prototype)
+#	For kMathPi, cos, and sin (we need both the function prototype as well as the probdef prototype)
 #
 include "math.nd"
 
 #
+#	The module definition gives its signature for other
+#	modules (e.g., the runtime system) that want to execute
+#	it.
 #
+#	The module definition need not export the function init
+#	if it is not intended to by loaded by the "conventional loader"
+#	(e.g., the OS shell).
 #
-DFT : progtype (sampleType: type, indexType: type)
+Dft : module (sampleType: type, indexType: type)
 {
-	dft	: namegen (N: indexType, x: array [N] of complex sampleType) -> (X: array [N] of complex sampleType);
+	dft	: function (N: indexType, x: array [N] of complex sampleType) -> (X: array [N] of complex sampleType);
 	dft	: probdef (N: indexType, x: array [N] of complex sampleType) -> (X: array [N] of complex sampleType);
 }
-
-
 
 #
 #	The probdef is transliterated from dft.cpd
@@ -27,7 +31,7 @@ dft	: probdef (N: indexType, x: array [N] of complex sampleType) -> (X: array [N
 {
 	#
 	#	The outer 'given (X...)' is not needed since N, x, and X are already
-	#	bound to the read / write types of the namegen
+	#	bound to the read / write types of the function
 	#
 	given (X in array [N] of complex sampleTyp)
 	(
@@ -40,12 +44,11 @@ dft	: probdef (N: indexType, x: array [N] of complex sampleType) -> (X: array [N
 					k < N - 1								&&
 					n >= 0									&&
 					n < N - 1								&&
-					(real expRes[k][n])		== cos(-2 * kMathPi * n * k / N)	&&
-					(imaginary expRes[k][n])	== sin(-2 * kMathPi * n * k / N)
+					(real expRes[k][n]) == cos(-2 * kMathPi * n * k / N)			&&
+					(imaginary expRes[k][n]) == sin(-2 * kMathPi * n * k / N)
 				) =>
-				(real X[k])		== sum n in indexType from 0 to N - 1 of (real		x[n]*expRes[k][n]))
-				&&
-				(imaginary X[k])	== sum n in indexType from 0 to N - 1 of (imaginary	x[n]*expRes[k][n]))
+				(real X[k]) == sum n in indexType from 0 to N - 1 of (real		x[n]*expRes[k][n]))	&&
+				(imaginary X[k]) == sum n in indexType from 0 to N - 1 of (imaginary	x[n]*expRes[k][n]))
 			)
 		)
 	)

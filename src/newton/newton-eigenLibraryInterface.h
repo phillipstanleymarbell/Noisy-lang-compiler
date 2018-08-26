@@ -40,7 +40,7 @@ extern "C"
 {
 #	endif /* __cplusplus */
 
-	//	Function prototypes will go here...
+double **	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount);
 
 #	ifdef __cplusplus
 } /* extern "C" */

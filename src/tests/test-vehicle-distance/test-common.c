@@ -86,7 +86,7 @@ char * test_testNthIrNodeOfTypes()
                                              kNewtonIrNodeType_PquantityTerm,
                                              gNewtonFirsts,
                                              termIndex
-                                             )->type == kNewtonIrNodeType_Tnumber
+                                             )->type == kNewtonIrNodeType_TnumericConst
 			  );
 
    termIndex = 1;

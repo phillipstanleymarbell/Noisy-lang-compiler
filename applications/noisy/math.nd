@@ -1,11 +1,11 @@
 #
 #	The `Math` progtype implements math routines.
 #
-Math : progtype (valueType: type)
+Math : module (valueType: type)
 {
-	cos	: namegen (arg: valueType) -> (result: ValueType);
-	sin	: namegen (arg: valueType) -> (result: ValueType);
+	cos	: function (arg: valueType) -> (result: ValueType);
+	sin	: function (arg: valueType) -> (result: ValueType);
 
-	min	: namegen (a: valueType, b: valueType) -> (result: ValueType);
-	max	: namegen (a: valueType, b: valueType) -> (result: ValueType);
+	min	: function (a: valueType, b: valueType) -> (result: ValueType);
+	max	: function (a: valueType, b: valueType) -> (result: ValueType);
 }

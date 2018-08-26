@@ -1,5 +1,7 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell
+	Authored 2018. Vlad Mihai Mandric.
+
+	Based on skeleton implementation of Eigen interface by Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -35,14 +37,196 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "newton-eigenLibraryInterface.h"
-
-#include <Eigen/Core>
+#include <Eigen/Eigen>
 #include <iostream>
 using namespace std;
 using namespace Eigen;
 
 extern "C"
 {
-	//	Function definitions will go here...
+	static int
+	factorialHelper(int n, int N)
+	{
+		if (n)
+		{
+			return factorialHelper(n-1, N*n);
+		}
+		else
+		{
+			return N;
+		}
+	}
+
+	static int
+	factorial(int i)
+	{
+		return factorialHelper(i,1);
+	}
+
+	/*
+	 *	Computes the row reduced echelon form (RREF)
+	 */
+	static void
+	computeRREF(MatrixXd & m, int rowCount, int columnCount, int indices[])
+	{
+		int i = 0, j = 0, r = 0;
+		
+		while (i < rowCount && j < columnCount)
+		{
+			/*
+			 *	Step 1
+			 */
+			while (m(i, j) == 0)
+			{
+				bool swapped = false;
+				for (int p = i + 1; i + p < rowCount; p++)
+				{
+
+					if (m(p, j))
+					{
+						m.row(i).swap(m.row(p));
+						swapped = true;
+						break;
+					}
+				}
+
+				if (!swapped)
+				{
+					indices[r] = j;
+					r++;
+					j++;
+				}
+			}
+
+			/*
+			 *	Step 2
+			 */
+			m.array().row(i) /= m(i, j);
+
+			/*
+			 *	Step 3
+			 */
+			for (int q = 0; q < rowCount; q++)
+			{
+				if (q != i)
+				{
+					m.array().row(q) -= m.array().row(i) * m(q, j) / m(i, j); 
+				}
+			}
+
+			/*
+			 *	Step 4
+			 */
+			i++;
+			j++;
+		}
+
+		return;
+	}
+
+	static void
+	computePiGroup(MatrixXd m, int rowCount, int columnCount, int rank, int x[], MatrixXd kernels[], int element)
+	{
+		assert(columnCount - rank != 0);
+		int	indices[columnCount - rank];
+
+		for (int i = 1; i <= rank; i++)
+		{
+			if(x[i] > i)
+			{
+				m.col(i-1).swap(m.col(x[i]-1));
+			}
+		}
+
+		computeRREF(m, rowCount, columnCount, indices);
+		
+		MatrixXd nonPivot(rank, columnCount - rank);
+		for (int i = 0; i < columnCount - rank; i++)
+		{
+			/*
+			 *	Builds the matrix out of the non-pivot columns
+			 */
+			nonPivot.block(0, i, rank, 1) = m.block(0, indices[i], rank, 1);
+		}
+
+		/*
+		 *	Multiply the matrix by -1
+		 */
+		nonPivot.array() = nonPivot.array() * -1;
+
+		MatrixXd I = MatrixXd::Identity(columnCount - rank, columnCount - rank);
+		
+		int r = 0, p = 0;
+		for (int i = 0; i < columnCount; i++)
+		{
+			if (i == indices[r])
+			{
+				kernels[element].row(i) = I.row(r);
+
+				/*
+				 *	Append the identity matrix to the non-pivot matrix
+				 */
+				r++;
+			}
+			else
+			{
+				kernels[element].row(i) = nonPivot.row(p);
+				p++; 
+			}
+		}
+
+		return;
+	}
+
+	static void
+	generateAllPiGroups(MatrixXd dimensionalMatrix, int rowCount, int columnCount, int rank, int x[], int k, MatrixXd kernels[])
+	{	
+		/*
+		 *	Generate all the possible combinations of columns in lexicographic order
+		 */
+		int	element = 0;
+
+		if (k == rank + 1)
+		{
+			computePiGroup(dimensionalMatrix, rowCount, columnCount, rank, x, kernels, element);
+			element++;
+		}
+		else
+		{
+			for (int i = x[k-1] + 1; i <= columnCount - rank + k; i++)
+			{
+				x[k] = i;
+				generateAllPiGroups(dimensionalMatrix, rowCount, columnCount, rank, x, k + 1, kernels);
+			}
+		}
+	}
+
+	/*
+	 *	N = #rows, M = #columns
+	 */
+	double **
+	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount)
+	{
+		Map<MatrixXd>	eigenInterfaceDimensionalMatrix (dimensionalMatrix, columnCount, rowCount);
+		MatrixXd	eigenInterfaceTransposedDimensionalMatrix = eigenInterfaceDimensionalMatrix.transpose();
+		int		rank = eigenInterfaceTransposedDimensionalMatrix.fullPivLu().rank();
+		int 		numberOfCircuitSets = factorial(columnCount) / (factorial(rank) * factorial(columnCount - rank));
+		MatrixXd	eigenInterfaceKernels[numberOfCircuitSets];
+		double **	cInterfaceKernels;
+		int		x[rank+1];
+		int		k = 1;
+
+		x[0] = 0;
+		generateAllPiGroups(eigenInterfaceTransposedDimensionalMatrix, rowCount, columnCount, rank, x, k, eigenInterfaceKernels);
+
+		cInterfaceKernels = (double **)calloc(numberOfCircuitSets*rowCount, sizeof(double *));
+		assert(cInterfaceKernels != NULL);
+
+		for (int i = 0; i < numberOfCircuitSets; i++)
+		{
+			cInterfaceKernels[i] = eigenInterfaceKernels[i].data();
+		}
+
+		return cInterfaceKernels;
+	}
 } /* extern "C" */

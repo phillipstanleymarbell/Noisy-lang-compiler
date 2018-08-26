@@ -1,34 +1,47 @@
 include "fibonacci.nd"
 
-fibonacci : namegen (input: valueType) -> (output: valueType) =
+fibonacci : function (index: indexType) -> (output: valueType) =
 {
-	v := <-fib;
-
+	#
+	#	Because a function can be invoked by the function or
+	#	channel interface, a function implementation that
+	#	accesses the argument and return values in the normal
+	#	functional style, if first 'load'ed at runtime, will
+	#	use a separate runtime implementation that handles
+	#	reading from the channel etc.
+	#
 	matchseq
 	{
-		(v == 0) =>
+		index == 0	=>
 		{
-			fibonacci <-= 0;
+			return (output:0);
 		}
 
-		(v == 1) =>
+		index == 1	=>
 		{
-			fibonacci <-= 1;
+			return (output:1);
 		}
 
-		true =>
+		true		=>
 		{
-			#
-			#	The '.' selector can be applied to a progtype to yield its constituent namegens and progtypes
-			#
-			#	Applying 'typeof' to an idintifier yields a type expression. In the line below,
-			#	we get both the read and write types of the namegen Fibonacci.fibonacci
-			#	Applying 'string' to a progtype yields the path to its implementation.
-			#
-			c1, c2		:=	name2chan (typeof Fibonacci.fibonacci) (string Fibonacci);
-			c1		<-=	(v - 1);
-			c2		<-=	(v - 2);
-			r		<-=	<-c1 + <-c2;
+			return (output:(fibonacci(index: index - 1) + fibonacci(index: index - 2)));
 		}
 	};
+}
+
+init : function	(arguments: list of string) -> (results: list of string) =
+{
+	#
+	#	Load an instance of the Fibonacci module with
+	#	type parameter int16. The `load` operator thus
+	#	provides a means for runtime specialization of
+	#	modules.
+	#
+	fib := load Fibonacci(int16) (path Fibonacci);
+
+	#
+	#	The list of string aguments is the program name
+	#	followed by its arguments as strings.
+	#
+	#return (results: (string fib->fibonacci(index: int16 (head tail arguments)))::nil);
 }

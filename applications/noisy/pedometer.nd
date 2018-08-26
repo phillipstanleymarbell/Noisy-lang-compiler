@@ -1,0 +1,104 @@
+#
+#	The function `computeStepsSamples` takes a timeseries of samples and computes
+#	the number of steps.
+#
+#
+#	The function `computeStepsMeasurement` takes a unsampled measurement and computes
+#	the number of steps.
+#
+#	The function `start` reads from the appropriate sensor and sends the 
+#	samples to computeSteps. The implementation of `start` in pedometer.n
+#	is a basic one which works from a single 1-axis sensor. In practice,
+#	start would continuously monitor three axes of a 3-axis accelerometer
+#	to determine which one has the maximum peak-to-peak deviation for each
+#	time window and would send the samples from that axis to computeSteps.
+#
+pedometer : module(lengthType: type, sampleType: type, countType: type)
+{
+	computeStepsSamples	: function (inputSamples: sampleType and timeseries) -> (count: countType);
+	computeStepsMeasurement	: function (analogMeasurement: sampleType and measurement) -> (count: countType);
+	sampler			: function (analogMeasurement: sampleType and measurement, rate: countType) -> (sampleTimes: list of countType);
+	start			: function (windowSampleCount: lengthType) -> (stepsChannel: chan of countType);
+
+	computeStepsSamples	: probdef (inputSamples: sampleType and timeseries) -> (count: countType);
+	computeStepsMeasurement	: probdef (analogMeasurement: sampleType and measurement) -> (count: countType);
+	sampleTimes		: probdef (analogMeasurement: sampleType and measurement, rate: countType) -> (sampleTimes: list of countType);
+	start			: probdef (windowSampleCount: lengthType) -> (stepsChannel: chan of countType);
+
+	init			: function (arguments: list of string) -> (results: list of string);
+}
+
+#
+#	Problem definition (probdef) for the computeSteps function.
+#
+computeStepsSamples : probdef (inputSamples: sampleType and timeseries) -> (count: countType) =>
+{
+	#
+	#	The `timebase` operator applied to a time series yields
+	#	a list of timestamps (in seconds).  `given` is similar to
+	#	`assume` and `have` in the De Moura's "Lean" verifier
+	#	rather than, say, a `let` binding of a function. A `given`
+	#	binds one or more variables, introduced in its "head" in
+	#	its scope.
+	#
+	given (windowTime == (head (sort (timebase inputSamples))) - (head (reverse (sort (timebase inputSamples)))))
+	{
+		(count < (length inputSamples))
+
+		&&
+
+		#
+		#	The `fourier` operator applied to a time series
+		#	returns a list of pairs the freuencies in seconds of the
+		#	component sinusoids and their amplitudes, ordered by decreasing amplitude
+		#
+		exists (cutoff in int8)
+		{
+			head (head (fourier (lowpass inputSamples cutoff))) == (count / windowTime)
+		}
+	}
+}
+
+#
+#	A `signal` (like the variable `analogMeasurement`) is a window of time of a continuous-time signal
+#
+computeStepsMeasurement : probdef (analogMeasurement: sampleType and measurement) -> (count: countType) =>
+{
+	#
+	#	The `timebase` operator applied to a time series yields
+	#	a list of timestamps (in seconds). `given` is similar to
+	#	`assume` and `have` in the De Moura's "Lean" verifier
+	#	rather than, say, a `let` binding of a function. A `given`
+	#	binds one or more variables, introduced in its "head" in
+	#	its scope.
+	#
+	given (windowTime == (head (sort (timebase analogMeasurement))) - (head (reverse (sort (timebase analogMeasurement)))))
+	{
+		#
+		#	The `fourier` operator applied to a time series
+		#	returns a list of pairs of the freuencies in seconds of the
+		#	component sinusoids and their amplitudes, ordered by decreasing amplitude
+		#
+		exists (cutoff in int8)
+		{
+			head (head (fourier (lowpass analogMeasurement cutoff))) == (count / windowTime)
+		}
+	}
+}
+
+#
+#	Problem definition (probdef) for the sampler function
+#
+sampleTimes : probdef (analogMeasurement: sampleType and measurement, rate: countType) -> (sampleTimes: list of countType) =>
+{
+	#
+	#	Specify tolerable sample rate deviation and tolerable jitter deviation
+	#
+}
+
+#
+#	Problem definition (probdef) for the start function
+#
+start : probdef (windowSampleCount: lengthType) -> (stepsChannel: chan of countType) =>
+{
+}

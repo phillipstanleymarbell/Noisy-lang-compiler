@@ -1,4 +1,13 @@
 #
+#	The module definition gives its signature for other
+#	modules (e.g., the runtime system) that want to execute
+#	it.
+#
+#	The module definition need not export the function init
+#	if it is not intended to by loaded by the "conventional loader"
+#	(e.g., the OS shell).
+#
+#
 #	This formulation is similar in style to the SlowConvexHull algorithm
 #	given on page 3 of de Berg, van Kreveld, Overmars & Schwartzkopf.
 #	
@@ -10,87 +19,85 @@
 #	
 #	denotes whether r is on left or right of line pq.
 #
-ConvexHull : progtype (coordinateType: type)
+#	The module type parameter `coordType` is the type used for sub-coordinate values.
+#
+ConvexHull : module (coordType: type)
 {
-	convexHull		: namegen	(inputPoints: list of (coordinateType, coordinateType)) -> (convexHull: list of (coordinateType, coordinateType));
-	convexHull		: probdef	(inputPoints: list of (coordinateType, coordinateType)) -> (convexHull: list of (coordinateType, coordinateType));
+	convexHull		: function (inputPoints: list of (coordType, coordType)) -> (convexHull: list of (coordType, coordType));
+	convexHull		: probdef (inputPoints: list of (coordType, coordType)) -> (convexHull: list of (coordType, coordType));
 
-	pqDiffer		: predicate	(qx:coordinateType, qy:coordinateType) @ (px:coordinateType, py:coordinateType);
+	pqDiffer		: predicate (qx:coordType, qy:coordType, px:coordType, py:coordType);
 
-	nonNegativeDeterminant	: predicate	(qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType);
-	qOnUpperRight		: predicate	(qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType);
-	qOnUpperLeft		: predicate	(qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType);
-	qOnLowerLeft		: predicate	(qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType);
-	qOnLowerRight		: predicate	(qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType);
-	qOnRight		: predicate	(qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType);
-	qAbove			: predicate	(qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType);
-	qOnLeft			: predicate	(qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType);
-	qBelow			: predicate	(qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType);
+	nonNegativeDeterminant	: predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType);
+	qOnUpperRight		: predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType);
+	qOnUpperLeft		: predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType);
+	qOnLowerLeft		: predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType);
+	qOnLowerRight		: predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType);
+	qOnRight		: predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType);
+	qAbove			: predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType);
+	qOnLeft			: predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType);
+	qBelow			: predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType);
 }
-
-
 
 #
 #	Several predicate functions for the eventual problem definition
 #
-pqDiffer : predicate (qx:coordinateType, qy:coordinateType) @ (px:coordinateType, py:coordinateType) =
+pqDiffer : predicate (qx:coordType, qy:coordType, px:coordType, py:coordType) =
 {
 	!((qy == py) & (qx == px))
 }
 
-nonNegativeDeterminant : predicate (qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType) =>
+nonNegativeDeterminant : predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType) =>
 {
 	((qx*ry - qy*rx) - px*(ry - qy) + py*(rx - qx)) >= 0
 }
 
-qOnUpperRight : predicate (qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType) =>
+qOnUpperRight : predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType) =>
 {
 	((qy > py) & (qx < px) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
 }
 
-qOnUpperLeft : predicate (qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType) =>
+qOnUpperLeft : predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType) =>
 {
 	((qy > py) & (qx > px) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
 }
 
-qOnLowerLeft : predicate (qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType) =>
+qOnLowerLeft : predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType) =>
 {
 	((qy < py) & (qx < px) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
 }
 
-qOnLowerRight : predicate (qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType) =>
+qOnLowerRight : predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType) =>
 {
 	((qy < py) & (qx > px) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
 }
 
-qOnRight : predicate (qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType) =>
+qOnRight : predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType) =>
 {
 	((qy == py) & (qx > px) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
 }
 
-qAbove : predicate (qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType) =>
+qAbove : predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType) =>
 {
 	((qx == px) & (qy > py) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
 }
 
-qOnLeft : predicate (qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType) =>
+qOnLeft : predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType) =>
 {
 	((qy == py) & (qx < px) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
 }
 
-qBelow : predicate (qx:coordinateType, qy:coordinateType, rx:coordinateType, ry:coordinateType) @ (px:coordinateType, py:coordinateType) =>
+qBelow : predicate (qx:coordType, qy:coordType, rx:coordType, ry:coordType, px:coordType, py:coordType) =>
 {
 	((qx == px) & (qy < py) & nonNegativeDeterminant(qx, qy, rx, ry)@(px, py))
 }
 
-
-
 #
 #	Problem definition. This is a Boolean predicate that should
 #	evaluate to 'True' when applied to any output value of the
-#	namegen.
+#	function.
 #
-convexHull : probdef (inputPoints: list of (coordinateType, coordinateType)) -> (convexHull: list of (coordinateType, coordinateType)) =>
+convexHull : probdef (inputPoints: list of (coordType, coordType)) -> (convexHull: list of (coordType, coordType)) =>
 {
 	#
 	#	Given a point (px, py) on the list convexHull, there
@@ -106,16 +113,16 @@ convexHull : probdef (inputPoints: list of (coordinateType, coordinateType)) -> 
 		(
 			forall ((rx, ry) in inputPoints)
 			(
-				pqDiffer(qx, qy) @ (px, py) &
+				pqDiffer(qx, qy, px, py) &
 				(
-					  qOnUpperRight	(qx, qy, rx, ry) @ (px, py)
-					| qOnUpperLeft	(qx, qy, rx, ry) @ (px, py)
-					| qOnLowerLeft	(qx, qy, rx, ry) @ (px, py)
-					| qOnLowerRight	(qx, qy, rx, ry) @ (px, py)
-					| qOnRight	(qx, qy, rx, ry) @ (px, py)
-					| qAbove	(qx, qy, rx, ry) @ (px, py)
-					| qOnLeft	(qx, qy, rx, ry) @ (px, py)
-					| qBelow	(qx, qy, rx, ry) @ (px, py)
+					  qOnUpperRight	(qx, qy, rx, ry, px, py)
+					| qOnUpperLeft	(qx, qy, rx, ry, px, py)
+					| qOnLowerLeft	(qx, qy, rx, ry, px, py)
+					| qOnLowerRight	(qx, qy, rx, ry, px, py)
+					| qOnRight	(qx, qy, rx, ry, px, py)
+					| qAbove	(qx, qy, rx, ry, px, py)
+					| qOnLeft	(qx, qy, rx, ry, px, py)
+					| qBelow	(qx, qy, rx, ry, px, py)
 				)
 			)
 		)

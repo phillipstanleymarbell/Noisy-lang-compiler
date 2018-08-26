@@ -1,9 +1,9 @@
 #
 #	The `System` progtype implements the standard library.
 #
-System : progtype
+System : module ()
 {
-	print	: namegen (args: list of string) -> (utf8Bytes: int64);
+	print	: function (args: list of string) -> (utf8Bytes: int64);
 	print	: probdef (args: list of string) -> (utf8Bytes: int64);
 }
 

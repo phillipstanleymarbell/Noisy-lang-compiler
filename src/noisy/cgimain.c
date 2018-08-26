@@ -501,7 +501,7 @@ main(void)
 
 
 	/*
-	 *	TODO: move logo URL into a constant definition
+	 *	See issue #292
 	 */
 	printf("<link rel=\"mask-icon\" href=\"../tmp/noisy-pinned-tab-logo.svg\" color=\"orange\">");
 
@@ -644,7 +644,7 @@ main(void)
 		/*
 		 *	Create a top-level scope, then parse.
 		 */
-		noisyCgiState->noisyIrTopScope = noisySymbolTableAllocScope(noisyCgiState);
+		noisyCgiState->noisyIrTopScope = commonSymbolTableAllocScope(noisyCgiState);
 		noisyCgiState->noisyIrRoot = noisyParse(noisyCgiState, noisyCgiState->noisyIrTopScope);
 		runPasses(noisyCgiState);
 
@@ -705,7 +705,7 @@ main(void)
 	else
 	{
 		/*
-		 *	TODO: we could intelligently set (and use) the jumpParameter...
+		 *	See issue #291
 		 */
 
 		/*	Return again after longjmp	*/
@@ -831,13 +831,6 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	}
 
 
-
-
-
-
-
-
-
 	printf("<table cellpadding=0; border=0; style=\"width:100%%;\">\n");
 	printf("<tr>\n");
 
@@ -923,8 +916,9 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	/*
 	 *	Have ACE autosize the height, with an upper limit at maxLines
 	 */
-	printf("	editor.setOptions({maxLines: 20});\n");
+	printf("	editor.setOptions({maxLines: 60});\n");
 	printf("	editor.setOptions({minLines: 10});\n");
+
 	/*
 	 *	Copy the ACE editor contents back to textarea for form submission.
 	 */

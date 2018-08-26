@@ -37,6 +37,7 @@
 #
 #	Description: Base signals used in most Newton descriptions.
 #
+
 include "NewtonBaseSignals.nt"
 
 #
@@ -51,18 +52,16 @@ kTMP006BTemperatureErasureToken: const = 16rFEFE;
 #
 #	Standard Deviation is not available in data sheet.
 #
-kTMP006BTemperatureStdev: const = ;
+kTMP006BTemperatureStdev: const = unknown;
 
-TMP006B: sensor (
-			Temp: temperature
-		)
+TMP006B: sensor (tmp006Temperature: temperature)
 {
 	#
 	#	The full range of the sensor
 	#
 	#	Range of Temperature can be found in document 7.1 on page 5.
 	#
-	range Temperature == [218.15*K .. 398.15*K],
+	range tmp006Temperature == [218.15*K .. 398.15*K],
 
 	#
 	#	The operation sequence needed to get a sample
@@ -73,14 +72,14 @@ TMP006B: sensor (
 	#
 	#	The temperature register has 14 bits which means that there should be 2 register addresses.
 	#
-	interface Temperature == "i2c" (address: "16r40")
+	interface tmp006Temperature == i2c (address: 16r40)
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#	
 		#	Get Temp data...
 		#
-		Temperature = read 16r01;
+		tmp006Temperature = read 16r01;
 	},
 
 	#
@@ -88,12 +87,12 @@ TMP006B: sensor (
 	#
 	#	Unsure about the function that describes the relationship between the following variables, so leave them as they are.
 	#
-	uncertainty Temperature == Gaussian(Temperature, kTMP006BTemperatureStdev)*g,
+	uncertainty tmp006Temperature == Gaussian(Temperature, kTMP006BTemperatureStdev)*K,
 
 	#
 	#	When this token is returned by the sensor, it denotes invalid sensed value / erasure in communication with sensor.
 	#
-	erasuretoken Temperature == kTMP006BTemperatureErasureToken,
+	erasuretoken tmp006Temperature == kTMP006BTemperatureErasureToken,
 
 	#
 	#	Precision settings list for the sensor. This is a list of (precision, cost) pairs.
@@ -104,8 +103,8 @@ TMP006B: sensor (
 	#
 	#	Could not find the relevant information in data sheet so I left the cost as 0.
 	#
-	precision Temperature == {
-					(14*bits, nil),
+	precision tmp006Temperature == {
+					(14*bits, unknown),
 				},
 
 	#
@@ -115,7 +114,7 @@ TMP006B: sensor (
 	#
 	#	Criteria for accuracy of Temperature Sensor can be found in Equation 12 of document 9.2.1.2.2 on page 23.
 	#
-	accuracy Temperature == {
-					(nil, nil),
+	accuracy tmp006Temperature == {
+					(unknown, unknown),
 				}
 }

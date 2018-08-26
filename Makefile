@@ -30,7 +30,7 @@ TESTDIRS =\
 	src/tests/test-sensor-life\
 	src/tests/test-tire-pressure\
 
-all:
+all: README.sloccount
 	@set -e; for dir in $(DIRS); do \
 	(cd $$dir; \
 		$(MAKE) SYSNAME=Noisy SYSNAMELOWER=noisy\
@@ -48,6 +48,9 @@ runtime:
 		(python analyze_runtime.py) \
 	); \
 	done; \
+
+README.sloccount:
+	sloccount src > README.sloccount
 
 clean:
 	@set -e; for dir in $(DIRS); do \

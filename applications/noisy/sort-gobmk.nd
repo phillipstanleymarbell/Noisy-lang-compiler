@@ -1,4 +1,13 @@
-GoBmkSort : progtype
+#
+#	The module definition gives its signature for other
+#	modules (e.g., the runtime system) that want to execute
+#	it.
+#
+#	The module definition need not export the function init
+#	if it is not intended to by loaded by the "conventional loader"
+#	(e.g., the OS shell).
+#
+GoBmkSort : module ()
 {
 	tMoves : adt
 	{
@@ -6,14 +15,14 @@ GoBmkSort : progtype
 		pos : int32;
 	};
 
-	sort	: namegen (N: int32, in: array [N] of tMoves) -> (out: array [N] of tMoves);
+	sort	: function (N: int32, in: array [N] of tMoves) -> (out: array [N] of tMoves);
 	sort	: probdef (N: int32, in: array [N] of tMoves) -> (out: array [N] of tMoves);
 }
 
 
 
 #
-#	The probdef is transliterated from sort-gobmk.cp
+#	The probdef is transliterated from sort-gobmk.cpd
 #
 #	See R. Jongerius and P. Stanley-Marbell
 #	"Language Definition for a Notation of Computational Problems",
@@ -26,7 +35,7 @@ sort : probdef (N: int32, in: array [N] of tMoves) -> (out: array [N] of tMoves)
 {
 	#
 	#	The outer 'given (out...' is not needed since N, in, and out
-	#	are already bound to the read / write types of the namegen
+	#	are already bound to the read / write types of the function
 	#
 	given (out in array [N] of tMoves)
 	(

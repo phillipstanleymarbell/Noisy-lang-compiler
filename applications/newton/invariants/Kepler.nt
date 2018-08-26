@@ -50,42 +50,23 @@
 #		G : Gravitational constant
 #
 
-time : signal =
-{
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
-}
-
-distance : signal(i: 0 to 2) =
-{
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
-}
-
-mass : signal =
-{
-	name = "kilogram" English;
-	symbol = "kg";
-	derivation = none;
-}
+include "NewtonBaseSignals.nt"
 
 G : constant = 6.674 * m ** 3 * kg ** -1 * s ** -2;
 
 #
-#		Dimensional Matrix:
+#	Dimensional Matrix:
 #
 #
-#		G  M  r  T  m
-#	 L  3  0  1  0  0
-#	 M -1  1  0  0  1
-#	 T -2  0  0  1  0
+#	     G  M  r  T  m
+#	 L   3  0  1  0  0
+#	 M  -1  1  0  0  1
+#	 T  -2  0  0  1  0
 #
 #		z = null(A,'r')
 #
 
 Kepler : invariant(r: distance@0, period: time) =
 {
-	(period ** 2) ~ (r ** 3 / (G * kilogram))
+	(period ** 2) ~ (r ** 3 / (kNewtonUnithave_GravitationalConstant * kilogram))
 }

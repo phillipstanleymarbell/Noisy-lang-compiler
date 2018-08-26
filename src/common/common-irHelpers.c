@@ -1,5 +1,5 @@
 /*
-    Authored 2015, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim.
+    Authored 2015-2018, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim.
 
 	All rights reserved.
 
@@ -53,6 +53,27 @@
 #include "common-lexers-helpers.h"
 
 
+/*
+ *	This implements a very shallow copy: all the constituent pointers
+ *	are still the original references. The only thing new are the
+ *	child pointers, which get reset.
+ */
+IrNode *
+shallowCopyIrNode(State *  N, IrNode *  original)
+{
+	IrNode *	clone = calloc(1, sizeof(IrNode));
+	if (clone == NULL)
+	{
+		fatal(N, Emalloc);
+	}
+
+	memcpy(clone, original, sizeof(IrNode));
+	clone->irLeftChild = NULL;
+	clone->irRightChild = NULL;
+
+	return clone;
+}
+
 
 IrNode *
 genIrNode(State *  N, IrNodeType type, IrNode *  irLeftChild, IrNode *  irRightChild, SourceInfo *  sourceInfo)
@@ -101,81 +122,97 @@ errorUseBeforeDefinition(State *  N, const char *  identifier)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParserErrorUseBeforeDefinition);
 
-	flexprint(N->Fe, N->Fm, N->Fperr, "Saw identifier \"%s\" in use before definition\n", identifier);
+	flexprint(N->Fe, N->Fm, N->Fperr, Eusedef, identifier);
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
 }
 
 void
 errorMultiDefinition(State *  N, Symbol *  symbol)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParserErrorMultiDefinition);
+
+	flexprint(N->Fe, N->Fm, N->Fperr, Emultidef, symbol->identifier, symbol->sourceInfo->fileName, symbol->sourceInfo->lineNumber, symbol->sourceInfo->columnNumber);
+	flexprint(N->Fe, N->Fm, N->Fperr, " ");
+	flexprint(N->Fe, N->Fm, N->Fperr, Epreviousdef, symbol->definition->sourceInfo->fileName, symbol->definition->sourceInfo->lineNumber, symbol->definition->sourceInfo->columnNumber);
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n");
 }
 
 IrNode*
 findNthIrNodeOfTypes(State * N, IrNode * root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int nth)
 {
-  int ith = nth; // copy so we do not modify the caller's count variable
-  return findNthIrNodeOfTypesHelper(N, root, productionOrToken, firsts, &ith);
+	int ith = nth; // copy so we do not modify the caller's count variable
+	return findNthIrNodeOfTypesHelper(N, root, productionOrToken, firsts, &ith);
 }
 
 IrNode*
 findNthIrNodeOfTypesHelper(State * N, IrNode * root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int *nth)
 {
-    assert(root != NULL);
+	assert(root != NULL);
 	for (int i = 0; i < kNoisyIrNodeTypeMax && firsts[productionOrToken][i] != kNoisyIrNodeTypeMax; i++)
 	{
 		if (firsts[productionOrToken][i] == root->type)
 		{
-            if(*nth == 0)
-                return root;
-            *nth = *nth - 1;
-            break;
+			if(*nth == 0)
+			{
+				return root;
+			}
+			*nth = *nth - 1;
+
+			break;
 		}
 	}
 
-    IrNode * nthNode;
-    if (root->irLeftChild != NULL &&\
-      (nthNode = findNthIrNodeOfTypesHelper(N, root->irLeftChild, productionOrToken, firsts, nth)) != NULL)
-    {
-      return nthNode;
-    }
+	IrNode * nthNode;
+	if (root->irLeftChild != NULL &&\
+		(nthNode = findNthIrNodeOfTypesHelper(N, root->irLeftChild, productionOrToken, firsts, nth)) != NULL)
+	{
+		return nthNode;
+	}
 
-    if (root->irRightChild != NULL &&\
-      (nthNode = findNthIrNodeOfTypesHelper(N, root->irRightChild, productionOrToken, firsts, nth)) != NULL)
-    {
-      return nthNode;
-    }
+	if (root->irRightChild != NULL &&\
+		(nthNode = findNthIrNodeOfTypesHelper(N, root->irRightChild, productionOrToken, firsts, nth)) != NULL)
+	{
+		return nthNode;
+	}
 
-    return NULL;
+	return NULL;
 }
 
 IrNode*
 findNthIrNodeOfType(State * N, IrNode * root, IrNodeType expectedType, int nth)
 {
-  int ith = nth;
-  return findNthIrNodeOfTypeHelper(N, root, expectedType, &ith);
+	int ith = nth;
+	return findNthIrNodeOfTypeHelper(N, root, expectedType, &ith);
 }
 
 
 IrNode*
 findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int* nth)
 {
-  if (root->type == expectedType)
-    {
-      if(*nth == 0)
-        return root;
-      *nth = *nth - 1;
-    }
+	if (root->type == expectedType)
+	{
+		if(*nth == 0)
+		{
+			return root;
+		}
+		*nth = *nth - 1;
+	}
 
-  IrNode * nthNode;
-  if (root->irLeftChild != NULL &&\
-      (nthNode = findNthIrNodeOfTypeHelper(N, root->irLeftChild, expectedType, nth)) != NULL)
-    return nthNode;
+	IrNode * nthNode;
+	if (root->irLeftChild != NULL &&\
+		(nthNode = findNthIrNodeOfTypeHelper(N, root->irLeftChild, expectedType, nth)) != NULL)
+	{
+		return nthNode;
+	}
 
-  if (root->irRightChild != NULL &&\
-      (nthNode = findNthIrNodeOfTypeHelper(N, root->irRightChild, expectedType, nth)) != NULL)
-    return nthNode;
+	if (root->irRightChild != NULL &&\
+		(nthNode = findNthIrNodeOfTypeHelper(N, root->irRightChild, expectedType, nth)) != NULL)
+	{
+		return nthNode;
+	}
 
-  return NULL;
+	return NULL;
 }
 
 IrNode *
@@ -220,6 +257,11 @@ addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode)
 
 	IrNode *	node = depthFirstWalk(N, parent);
 
+	if (node == NULL)
+	{
+		fatal(N, Esanity);
+	}
+
 	if (node->irLeftChild == NULL)
 	{
 		node->irLeftChild = newNode;
@@ -237,12 +279,12 @@ addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode)
 bool
 peekCheck(State *  N, int lookAhead, IrNodeType expectedType)
 {
-    TimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserPeekCheck);
 
-    if (lexPeek(N, lookAhead) == NULL)
-    {
-        return false;
-    }
+	if (lexPeek(N, lookAhead) == NULL)
+	{
+		return false;
+	}
 
-    return (lexPeek(N, lookAhead)->type == expectedType);
+	return (lexPeek(N, lookAhead)->type == expectedType);
 }

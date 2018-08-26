@@ -42,17 +42,10 @@ include "NewtonBaseSignals.nt"
 #
 #	Description: Additional signals used in this particular newton description.
 #
-
-power : signal =
-{
-	name = "Watts" English;
-	symbol = "W";
-	derivation = work / time;
-
 irradianceResponsivity : signal =
 {
 	name = "counts per micro watts per square centimetres" English;
-	symbol = "c";
+	symbol = c;
 	derivation = (10 ** 10) / (power * area);
 }
 
@@ -74,23 +67,22 @@ kAS7262Lambda650RErasureToken: const = 16rFEFE;
 #
 #	Standard Deviation is not available in data sheet.
 #
-kAS7262TemperatureStdev: const = ;
-kAS7262Lambda450VStdev: const = ;
-kAS7262Lambda500BStdev: const = ;
-kAS7262Lambda550GStdev: const = ;
-kAS7262Lambda570YStdev: const = ;
-kAS7262Lambda600OStdev: const = ;
-kAS7262Lambda650RStdev: const = ;
-
+kAS7262TemperatureStdev: const = unknown;
+kAS7262Lambda450VStdev: const = unknown;
+kAS7262Lambda500BStdev: const = unknown;
+kAS7262Lambda550GStdev: const = unknown;
+kAS7262Lambda570YStdev: const = unknown;
+kAS7262Lambda600OStdev: const = unknown;
+kAS7262Lambda650RStdev: const = unknown;
 
 AS7262: device (
-			Temp: temperature
-			Lambda450V: irradianceResponsivity@0,
-			Lambda500B: irradianceResponsivity@1,
-			Lambda550G: irradianceResponsivity@2,
-			Lambda570Y: irradianceResponsivity@3,
-			Lambda600O: irradianceResponsivity@4,
-			Lambda650R: irradianceResponsivity@5
+			as7262Temp: temperature
+			as7262Lambda450V: irradianceResponsivity@0,
+			as7262Lambda500B: irradianceResponsivity@1,
+			as7262Lambda550G: irradianceResponsivity@2,
+			as7262Lambda570Y: irradianceResponsivity@3,
+			as7262Lambda600O: irradianceResponsivity@4,
+			as7262Lambda650R: irradianceResponsivity@5
 		)
 {
 
@@ -99,17 +91,17 @@ AS7262: device (
 	#
 	#	Range of Temperature can be found in Figure 6 of Electrical Characteristics on page 6.
 	#
-	range Temperature == [233.15*K .. 358.15*K],
+	range as7262Temperature == [233.15*K .. 358.15*K],
 	
 	#
 	#	Range of irradiance can be found in Figure 12 of Optical Characteristics on page 11.
 	#
-	range Lambda450V == [0*c .. 45*c],
-	range Lambda500B == [0*c .. 45*c],
-	range Lambda550G == [0*c .. 45*c],
-	range Lambda570Y == [0*c .. 45*c],
-	range Lambda600O == [0*c .. 45*c],
-	range Lambda650R == [0*c .. 45*c],
+	range as7262Lambda450V == [0*c .. 45*c],
+	range as7262Lambda500B == [0*c .. 45*c],
+	range as7262Lambda550G == [0*c .. 45*c],
+	range as7262Lambda570Y == [0*c .. 45*c],
+	range as7262Lambda600O == [0*c .. 45*c],
+	range as7262Lambda650R == [0*c .. 45*c],
 
 	#
 	#	The operation sequence needed to get a sample
@@ -118,30 +110,30 @@ AS7262: device (
 	#
 	#	Register address of temperature sensor can be found in Figure 20 of I2C Virtual Register Set on page 22.
 	#
-	interface Temperature == "i2c" (address: "16r49")
+	interface as7262Temperature == "i2c" (address: "16r49")
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
 		#	Get Temp data...
 		#
-		Temperature = read 16r06;
+		as7262Temperature = read 16r06;
 	},
 	
-	interface Temperature == "spi" ()
+	interface as7262Temperature == "spi" ()
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
 		#	Get Temp data...
 		#
-		Temperature = read 16r06;
+		as7262Temperature = read 16r06;
 	},
 	
 	#
 	#	Register address of channel data can be found in Figure 20 of I2C Virtual Register Set on page 22.
 	#
-	interface Lambda450V@16*bits == "i2c" (address: "16r49")
+	interface as7262Lambda450V@16*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -150,10 +142,10 @@ AS7262: device (
 		#
 		V_High = read 16r08;
 		V_Low = read 16r09;
-		Lambda450V@16*bits = (V_High << 8) | (V_Low);
+		as7262Lambda450V@16*bits = (V_High << 8) | (V_Low);
 	},
 
-	interface Lambda450V@16*bits == "spi" ()
+	interface as7262Lambda450V@16*bits == spi ()
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -162,10 +154,10 @@ AS7262: device (
 		#
 		V_High = read 16r08;
 		V_Low = read 16r09;
-		Lambda450V@16*bits = (V_High << 8) | (V_Low);
+		as7262Lambda450V@16*bits = (V_High << 8) | (V_Low);
 	},
 
-	interface Lambda450V@32*bits == "i2c" (address: "16r49")
+	interface as7262Lambda450V@32*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -176,10 +168,10 @@ AS7262: device (
 		V_Cal_Xhigh = read 16r15;
 		V_Cal_Low = read 16r16;
 		V_Cal_Xlow = read 16r17;
-		Lambda450V@32*bits = (V_Cal_High << 24) |(V_Cal_Xhigh << 16) |(V_Cal_Low << 8) | (V_Cal_Xlow);
+		as7262Lambda450V@32*bits = (V_Cal_High << 24) |(V_Cal_Xhigh << 16) |(V_Cal_Low << 8) | (V_Cal_Xlow);
 	},
 
-	interface Lambda450V@32*bits == "spi" ()
+	interface as7262Lambda450V@32*bits == spi ()
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -190,10 +182,10 @@ AS7262: device (
 		V_Cal_Xhigh = read 16r15;
 		V_Cal_Low = read 16r16;
 		V_Cal_Xlow = read 16r17;
-		Lambda450V@32*bits = (V_Cal_High << 24) |(V_Cal_Xhigh << 16) |(V_Cal_Low << 8) | (V_Cal_Xlow);
+		as7262Lambda450V@32*bits = (V_Cal_High << 24) |(V_Cal_Xhigh << 16) |(V_Cal_Low << 8) | (V_Cal_Xlow);
 	},
 	
-	interface Lambda500B@16*bits == "i2c" (address: "16r49")
+	interface as7262Lambda500B@16*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -202,10 +194,10 @@ AS7262: device (
 		#
 		B_High = read 16r0A;
 		B_Low = read 16r0B;
-		Lambda500B@16*bits = (B_High << 8) | (B_Low);
+		as7262Lambda500B@16*bits = (B_High << 8) | (B_Low);
 	},
 
-	interface Lambda500B@16*bits == "spi" ()
+	interface as7262Lambda500B@16*bits == spi ()
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -214,10 +206,10 @@ AS7262: device (
 		#
 		B_High = read 16r0A;
 		B_Low = read 16r0B;
-		Lambda500B@16*bits = (B_High << 8) | (B_Low);
+		as7262Lambda500B@16*bits = (B_High << 8) | (B_Low);
 	},
 
-	interface Lambda500B@32*bits == "i2c" (address: "16r49")
+	interface as7262Lambda500B@32*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -228,10 +220,10 @@ AS7262: device (
 		B_Cal_Xhigh = read 16r19;
 		B_Cal_Low = read 16r1A;
 		B_Cal_Xlow = read 16r1B;
-		Lambda500B@32*bits = (B_Cal_High << 24) |(B_Cal_Xhigh << 16) |(B_Cal_Low << 8) | (B_Cal_Xlow);
+		as7262Lambda500B@32*bits = (B_Cal_High << 24) |(B_Cal_Xhigh << 16) |(B_Cal_Low << 8) | (B_Cal_Xlow);
 	},
 
-	interface Lambda500B@32*bits == "spi" ()
+	interface as7262Lambda500B@32*bits == spi ()
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -242,10 +234,10 @@ AS7262: device (
 		B_Cal_Xhigh = read 16r19;
 		B_Cal_Low = read 16r1A;
 		B_Cal_Xlow = read 16r1B;
-		Lambda500B@32*bits = (B_Cal_High << 24) |(B_Cal_Xhigh << 16) |(B_Cal_Low << 8) | (B_Cal_Xlow);
+		as7262Lambda500B@32*bits = (B_Cal_High << 24) |(B_Cal_Xhigh << 16) |(B_Cal_Low << 8) | (B_Cal_Xlow);
 	},
 
-	interface Lambda550G@16*bits == "i2c" (address: "16r49")
+	interface as7262Lambda550G@16*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -254,10 +246,10 @@ AS7262: device (
 		#
 		G_High = read 16r0C;
 		G_Low = read 16r0D;
-		Lambda550G@16*bits = (G_High << 8) | (G_Low);
+		as7262Lambda550G@16*bits = (G_High << 8) | (G_Low);
 	},
 	
-	interface Lambda550G@16*bits == "spi" ()
+	interface as7262Lambda550G@16*bits == spi ()
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -266,10 +258,10 @@ AS7262: device (
 		#
 		G_High = read 16r0C;
 		G_Low = read 16r0D;
-		Lambda550G@16*bits = (G_High << 8) | (G_Low);
+		as7262Lambda550G@16*bits = (G_High << 8) | (G_Low);
 	},
 	
-	interface Lambda550G@32*bits == "i2c" (address: "16r49")
+	interface as7262Lambda550G@32*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -280,10 +272,10 @@ AS7262: device (
 		G_Cal_Xhigh = read 16r1D;
 		G_Cal_Low = read 16r1E;
 		G_Cal_Xlow = read 16r1F;
-		Lambda550G@32*bits = (G_Cal_High << 24) |(G_Cal_Xhigh << 16) |(G_Cal_Low << 8) | (G_Cal_Xlow);
+		as7262Lambda550G@32*bits = (G_Cal_High << 24) |(G_Cal_Xhigh << 16) |(G_Cal_Low << 8) | (G_Cal_Xlow);
 	},
 
-	interface Lambda550G@32*bits == "spi" ()
+	interface as7262Lambda550G@32*bits == spi ()
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -294,10 +286,10 @@ AS7262: device (
 		G_Cal_Xhigh = read 16r1D;
 		G_Cal_Low = read 16r1E;
 		G_Cal_Xlow = read 16r1F;
-		Lambda550G@32*bits = (G_Cal_High << 24) |(G_Cal_Xhigh << 16) |(G_Cal_Low << 8) | (G_Cal_Xlow);
+		as7262Lambda550G@32*bits = (G_Cal_High << 24) |(G_Cal_Xhigh << 16) |(G_Cal_Low << 8) | (G_Cal_Xlow);
 	},
 
-	interface Lambda570Y@16*bits == "i2c" (address: "16r49")
+	interface as7262Lambda570Y@16*bits == i2c (address: 16r49)
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -306,10 +298,10 @@ AS7262: device (
 		#
 		Y_High = read 16r0E;
 		Y_Low = read 16r0F;
-		Lambda570Y@16*bits = (Y_High << 8) | (Y_Low);
+		as7262Lambda570Y@16*bits = (Y_High << 8) | (Y_Low);
 	},
 	
-	interface Lambda570Y@16*bits == "spi" ()
+	interface as7262Lambda570Y@16*bits == spi ()
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -318,10 +310,10 @@ AS7262: device (
 		#
 		Y_High = read 16r0E;
 		Y_Low = read 16r0F;
-		Lambda570Y@16*bits = (Y_High << 8) | (Y_Low);
+		as7262Lambda570Y@16*bits = (Y_High << 8) | (Y_Low);
 	},
 	
-	interface Lambda570Y@32*bits == "i2c" (address: "16r49")
+	interface as7262Lambda570Y@32*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -332,10 +324,10 @@ AS7262: device (
 		Y_Cal_Xhigh = read 16r21;
 		Y_Cal_Low = read 16r22;
 		Y_Cal_Xlow = read 16r23;
-		Lambda570Y@32*bits = (Y_Cal_High << 24) |(Y_Cal_Xhigh << 16) |(Y_Cal_Low << 8) | (Y_Cal_Xlow);
+		as7262Lambda570Y@32*bits = (Y_Cal_High << 24) |(Y_Cal_Xhigh << 16) |(Y_Cal_Low << 8) | (Y_Cal_Xlow);
 	},
 
-	interface Lambda570Y@32*bits == "spi" ()
+	interface as7262Lambda570Y@32*bits == spi ()
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -346,10 +338,10 @@ AS7262: device (
 		Y_Cal_Xhigh = read 16r21;
 		Y_Cal_Low = read 16r22;
 		Y_Cal_Xlow = read 16r23;
-		Lambda570Y@32*bits = (Y_Cal_High << 24) |(Y_Cal_Xhigh << 16) |(Y_Cal_Low << 8) | (Y_Cal_Xlow);
+		as7262Lambda570Y@32*bits = (Y_Cal_High << 24) |(Y_Cal_Xhigh << 16) |(Y_Cal_Low << 8) | (Y_Cal_Xlow);
 	},
 
-	interface Lambda600O@16*bits == "i2c" (address: "16r49")
+	interface as7262Lambda600O@16*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -358,10 +350,10 @@ AS7262: device (
 		#
 		O_High = read 16r10;
 		O_Low = read 16r11;
-		Lambda600O@16*bits = (O_High << 8) | (O_Low);
+		as7262Lambda600O@16*bits = (O_High << 8) | (O_Low);
 	},
 	
-	interface Lambda600O@16*bits == "spi" ()
+	interface as7262Lambda600O@16*bits == spi ()
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -370,10 +362,10 @@ AS7262: device (
 		#
 		O_High = read 16r10;
 		O_Low = read 16r11;
-		Lambda600O@16*bits = (O_High << 8) | (O_Low);
+		as7262Lambda600O@16*bits = (O_High << 8) | (O_Low);
 	},
 
-	interface Lambda600O@32*bits == "i2c" (address: "16r49")
+	interface as7262Lambda600O@32*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -384,10 +376,10 @@ AS7262: device (
 		O_Cal_Xhigh = read 16r25;
 		O_Cal_Low = read 16r26;
 		O_Cal_Xlow = read 16r27;
-		Lambda600O@32*bits = (O_Cal_High << 24) |(O_Cal_Xhigh << 16) |(O_Cal_Low << 8) | (O_Cal_Xlow);
+		as7262Lambda600O@32*bits = (O_Cal_High << 24) |(O_Cal_Xhigh << 16) |(O_Cal_Low << 8) | (O_Cal_Xlow);
 	},
 
-	interface Lambda600O@32*bits == "spi" ()
+	interface as7262Lambda600O@32*bits == spi ()
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -398,10 +390,10 @@ AS7262: device (
 		O_Cal_Xhigh = read 16r25;
 		O_Cal_Low = read 16r26;
 		O_Cal_Xlow = read 16r27;
-		Lambda600O@32*bits = (O_Cal_High << 24) |(O_Cal_Xhigh << 16) |(O_Cal_Low << 8) | (O_Cal_Xlow);
+		as7262Lambda600O@32*bits = (O_Cal_High << 24) |(O_Cal_Xhigh << 16) |(O_Cal_Low << 8) | (O_Cal_Xlow);
 	},
 
-	interface Lambda650R@16*bits == "i2c" (address: "16r49")
+	interface as7262Lambda650R@16*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -410,10 +402,10 @@ AS7262: device (
 		#
 		R_High = read 16r12;
 		R_Low = read 16r13;
-		Lambda650R@16*bits = (R_High << 8) | (R_Low);
+		as7262Lambda650R@16*bits = (R_High << 8) | (R_Low);
 	},
 	
-	interface Lambda650R@16*bits == "spi" ()
+	interface as7262Lambda650R@16*bits == spi ()
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -422,10 +414,10 @@ AS7262: device (
 		#
 		R_High = read 16r12;
 		R_Low = read 16r13;
-		Lambda650R@16*bits = (R_High << 8) | (R_Low);
+		as7262Lambda650R@16*bits = (R_High << 8) | (R_Low);
 	},
 
-	interface Lambda650R@32*bits == "i2c" (address: "16r49")
+	interface as7262Lambda650R@32*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -436,10 +428,10 @@ AS7262: device (
 		R_Cal_Xhigh = read 16r29;
 		R_Cal_Low = read 16r2A;
 		R_Cal_Xlow = read 16r2B;
-		Lambda650R@32*bits = (R_Cal_High << 24) |(R_Cal_Xhigh << 16) |(R_Cal_Low << 8) | (R_Cal_Xlow);
+		as7262Lambda650R@32*bits = (R_Cal_High << 24) |(R_Cal_Xhigh << 16) |(R_Cal_Low << 8) | (R_Cal_Xlow);
 	},
 
-	interface Lambda600O@32*bits == "spi" ()
+	interface as7262Lambda600O@32*bits == spi ()
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -450,7 +442,7 @@ AS7262: device (
 		R_Cal_Xhigh = read 16r29;
 		R_Cal_Low = read 16r2A;
 		R_Cal_Xlow = read 16r2B;
-		Lambda650R@32*bits = (R_Cal_High << 24) |(R_Cal_Xhigh << 16) |(R_Cal_Low << 8) | (R_Cal_Xlow);
+		as7262Lambda650R@32*bits = (R_Cal_High << 24) |(R_Cal_Xhigh << 16) |(R_Cal_Low << 8) | (R_Cal_Xlow);
 	},
 
 	#
@@ -458,24 +450,24 @@ AS7262: device (
 	#
 	#	Unsure about the function that describes the relationship between the following variables, so leave them as they are.
 	#
-	uncertainty Temperature == Gaussian(Temperature, kAS7262TemperatureStdev)*g,
-	uncertainty Lambda450V == Gaussian(Lambda450V, kAS7262Lambda450VStdev)*g,
-	uncertainty Lambda500B == Gaussian(Lambda500B, kAS7262Lambda500BStdev)*g,
-	uncertainty Lambda550G == Gaussian(Lambda450V, kAS7262Lambda550GStdev)*g,
-	uncertainty Lambda570Y == Gaussian(Lambda570Y, kAS7262Lambda570YStdev)*g,
-	uncertainty Lambda600O == Gaussian(Lambda600O, kAS7262Lambda600OStdev)*g,
-	uncertainty Lambda650R == Gaussian(Lambda650R, kAS7262Lambda650RStdev)*g,
-	
+	uncertainty as7262Temperature == Gaussian(as7262Temperature, kAS7262TemperatureStdev)*g,
+  uncertainty as7262Lambda450V == Gaussian(as7262Lambda450V, kAS7262Lambda450VStdev)*g,
+	uncertainty as7262Lambda500B == Gaussian(as7262Lambda500B, kAS7262Lambda500BStdev)*g,
+	uncertainty as7262Lambda550G == Gaussian(as7262Lambda450V, kAS7262Lambda550GStdev)*g,
+	uncertainty as7262Lambda570Y == Gaussian(as7262Lambda570Y, kAS7262Lambda570YStdev)*g,
+	uncertainty as7262Lambda600O == Gaussian(as7262Lambda600O, kAS7262Lambda600OStdev)*g,
+	uncertainty as7262Lambda650R == Gaussian(as7262Lambda650R, kAS7262Lambda650RStdev)*g,
+
 	#
 	#	When this token is returned by the device, it denotes invalid sensed value / erasure in communication with device.
 	#
-	erasuretoken Temperature == kAS7262TemperatureErasureToken,
-	erasuretoken Lambda450V == kAS7262Lambda450VErasureToken,
-	erasuretoken Lambda500B == kAS7262Lambda500BErasureToken,
-	erasuretoken Lambda550G == kAS7262Lambda550GErasureToken,
-	erasuretoken Lambda570Y == kAS7262Lambda570YErasureToken,
-	erasuretoken Lambda600O == kAS7262Lambda600OErasureToken,
-	erasuretoken Lambda650R == kAS7262Lambda650RErasureToken,
+	erasuretoken as7262Temperature == kAS7262TemperatureErasureToken,
+  erasuretoken as7262Lambda450V == kAS7262Lambda450VErasureToken,
+	erasuretoken as7262Lambda500B == kAS7262Lambda500BErasureToken,
+	erasuretoken as7262Lambda550G == kAS7262Lambda550GErasureToken,
+	erasuretoken as7262Lambda570Y == kAS7262Lambda570YErasureToken,
+	erasuretoken as7262Lambda600O == kAS7262Lambda600OErasureToken,
+	erasuretoken as7262Lambda650R == kAS7262Lambda650RErasureToken,
 
 	#
 	#	Precision settings list for the device. This is a list of (precision, cost) pairs.
@@ -486,38 +478,38 @@ AS7262: device (
 	#
 	#	Could not find the relevant information in data sheet so I left the cost as 0.
 	#
-	precision Temperature == {
-					(8*bits, nil),
+	precision as7262Temperature == {
+					(8*bits, unknown),
 				},
 
-	precision Lambda450V == {
-					(16*bits, nil),
-					(32*bits, nil),
+	precision as7262Lambda450V == {
+					(16*bits, unknown),
+					(32*bits, unknown),
 				},
 
-	precision Lambda500B == {
-					(16*bits, nil),
-					(32*bits, nil),
+	precision as7262Lambda500B == {
+					(16*bits, unknown),
+					(32*bits, unknown),
 				},
 
-	precision Lambda550G == {
-					(16*bits, nil),
-					(32*bits, nil),
+	precision as7262Lambda550G == {
+					(16*bits, unknown),
+					(32*bits, unknown),
 				},
 
-	precision Lambda570Y == {
-					(16*bits, nil),
-					(32*bits, nil),
+	precision as7262Lambda570Y == {
+					(16*bits, unknown),
+					(32*bits, unknown),
 				},
 
-	precision Lambda600O == {
-					(16*bits, nil),
-					(32*bits, nil),
+	precision as7262Lambda600O == {
+					(16*bits, unknown),
+					(32*bits, unknown),
 				},
 
-	precision Lambda650R == {
-					(16*bits, nil),
-					(32*bits, nil),
+	precision as7262Lambda650R == {
+					(16*bits, unknown),
+					(32*bits, unknown),
 				},
 
 	#
@@ -525,31 +517,31 @@ AS7262: device (
 	#
 	#	Accuracy values of device cannot be found.
 	#
-	accuracy Temperature == {
-					(nil, nil),
+	accuracy as7262Temperature == {
+					(unknown, unknown),
 				},
 
-	accuracy Lambda450V == {
-					(nil, nil),
+	accuracy as7262Lambda450V == {
+					(unknown, unknown),
 				},
 
-	accuracy Lambda500B == {
-					(nil, nil),
+	accuracy as7262Lambda500B == {
+					(unknown, unknown),
 				},
 
-	accuracy Lambda550G == {
-					(nil, nil),
+	accuracy as7262Lambda550G == {
+					(unknown, unknown),
 				},
 
-	accuracy Lambda570Y == {
-					(nil, nil),
+	accuracy as7262Lambda570Y == {
+					(unknown, unknown),
 				},
 
-	accuracy Lambda600O == {
-					(nil, nil),
+	accuracy as7262Lambda600O == {
+					(unknown, unknown),
 				},
 
-	accuracy Lambda650R == {
-					(nil, nil),
+	accuracy as7262Lambda650R == {
+					(unknown, unknown),
 				}
 }

@@ -35,7 +35,7 @@
 #	POSSIBILITY OF SUCH DAMAGE.
 #
 #
-#	Description:	Mechanical properties of Steel 17-4, used for 3D printing into a beam
+#	Description:	Mechanical properties of Steel 17-4
 #
 #	Source of data:
 #
@@ -47,48 +47,8 @@
 #			}
 #
 
-time : signal =
-{
-	name = "second" English;
-	symbol = "s";
-	derivation = none;
-}
+include "NewtonBaseSignals.nt"
 
-distance : signal =
-{
-	name = "meter" English;
-	symbol = "m";
-	derivation = none;
-}
-
-mass : signal =
-{
-	name = "kilogram" English;
-	symbol = "kg";
-	derivation = none;
-}
-
-speed : signal =
-{
-	name = "MegaSpeed" English;
-	symbol = "MegS";
-	derivation = distance / time;
-}
-
-acceleration : signal =
-{
-	name = "MegaAcceleration" English;
-	symbol = "MegA";
-	derivation = speed / time;
-}
-
-force : signal = 
-{
-	name = "Newton" English;
-	symbol = "N" ;
-	derivation = mass * acceleration;
-}
-
-poisson : constant = 0.272;
-rho : constant = 7780 * kilogram * meter ** -3;
-E : constant = 197e11 * Newton / meter ** -2;
+kNewtonUnitless_Steel174_PoissonRatio	: constant = 0.272;
+kNewtonUnithave_Steel174_Density	: constant = 7780 * kilogram * meter ** -3;
+kNewtonUnithave_Steel174_YoungsModulus	: constant = 197e11 * Newton / meter ** -2;

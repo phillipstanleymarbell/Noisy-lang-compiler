@@ -1,44 +1,82 @@
 #include "system.nd"
 
-HelloWorld : progtype
+System : module ()
 {
-	init	: namegen (args: list of string) -> (results: list of string);
+	sysprint	: function (arguments: list of string) -> (results: int64);
 }
 
-init =
+#
+#	The module definition gives its signature for other
+#	modules (e.g., the runtime system) that want to execute
+#	it.
+#
+#	The module definition need not export the function init
+#	if it is not intended to by loaded by the "conventional loader"
+#	(e.g., the OS shell).
+#
+HelloWorld : module ()
 {
+	init	: function (arguments: list of string) -> (results: list of string);
+}
+
+init : function	(arguments: list of string) -> (results: list of string) =
+{
+	utf8BytesPrinted : int64;
+
 	#
-	#	The first argument to the `name2chan` operator is the
-	#	type of the channel that will be created. The recommended
-	#	way to specify this in the case of a namegen implementation
-	#	which is being loaded, is to use the `typeof` operator to
-	#	get the type specified in the namegen's progtype.
+	#	The `load` operator is used to dynamically load the implementation
+	#	of a whole module or a single module function at runtime.
+	#	Because modules take parameters such as type parameters,
+	#	code can in priciple be specialized at load time.
 	#
-	#	In this case, `typeof System.print` is the type expression
+	#	The first argument to the `load` operator is the
+	#	type of the channel that will be created. 
+	#	In this case, type of System.print is the type expression
 	#	`list of string`.
 	#
-	print := name2chan (typeof System->print) (string System->print);
+	print := load System->print (path System);	#	load System->print (path System->print);
 
+	#
+	#	Functions in Noisy are shorthand for channels. We can
+	#	call the `print` function in the System module using
+	#	C-style function notation, in which case the semantics
+	#	are that the statement completes when the call and return
+	#	have both completed.
+	#
+	utf8BytesPrinted = print();	#	print("Hello World!"::nil);
+
+	#
+	#	We can also treat the `print` function as a channel, in
+	#	which case we can separate the delivery of its arguments
+	#	from the reception of the results. This creates a new
+	#	process/thread that remains alive as long as the channel
+	#	is not nil. Using this syntax for invoking a function
+	#	therefore always spawns a new thread of execution.
 	#
 	#	Send a value with type `list of string` down the channel.
 	#
 	print <-= "Hello World!"::nil;
 
 	#
-	#	The read type of the channel, as defined in system.nd
+	#	The read type of the print channel, as defined in system.nd
 	#	is int64. The semantics are that the read gives the
 	#	number of UTF-8 bytes of the last formatting. We can
 	#	therefore read this `print` channel to get the equivalent
-	#	of the "return value" of the last print.
+	#	of the "return value" of the last print. The read blocks
+	#	until the printing completes, though the print implementation
+	#	could in principle spawn another thread and return (i.e., send
+	#	a value down its return channel) before it has actually completed
+	#	printing.
 	#
-	utf8BytesPrinted := <- print;
+	utf8BytesPrinted = <- print;
 
 	#
-	#	As long as the `print` channel is valid (i.e., in scope 
-	#	and not nil), the runtime system will keep it around.
-	#	We can force the print co-routine's demise by setting the
-	#	channel to nil. (Going out of scope at the namegen's end
-	#	achieves the same, so this is not really necessary.)
+	#	As long as the `print` channel is valid (i.e., in scope
+	#	and not nil), the runtime system will keep the instance of
+	#	the print routine around. We can force the print routine's
+	#	termination by setting the channel to nil. (Going out of scope
+	#	at the function's end achieves the same, so this is not
+	#	really necessary.)
 	#
 	print = nil;
 }

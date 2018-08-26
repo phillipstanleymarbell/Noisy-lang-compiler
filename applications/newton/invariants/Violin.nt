@@ -48,66 +48,11 @@
 #		f : fundamental frequency of the (shortened) string
 #
 
-time : signal =
-{
-	name       = "second" English;
-	symbol     = "s";
-	derivation =  none;
-}
-
-distance : signal(i: 0 to 1) =
-{
-	name       = "meter" English;
-	symbol     = "m";
-	derivation = none;
-}
-
-mass : signal =
-{
-	name       = "kilogram" English;
-	symbol     = "kg";
-	derivation = none;
-}
-
-speed : signal(i: 0 to 1) =
-{
-	derivation = distance@i / time;
-}
-
-acceleration : signal(i: 0 to 1) =
-{
-	derivation = speed@i / time;
-}
-
-frequency : signal =
-{
-	derivation = 1 / time;
-}
-
-force : signal =
-{
-	name       = "Newton" English;
-	symbol     = "N";
-	derivation = mass * acceleration;
-}
-
-area : signal =
-{
-	name       = "Square meter" English;
-	symbol     = "m^2";
-	derivation = distance ** 2;
-}
-
-pressure : signal =
-{
-	name       = "Pascal" English;
-	symbol     = "Pa";
-	derivation = force / area;
-}
+include "NewtonBaseSignals.nt"
 
 mu : constant = 0.000078 * kg / m;
 
-OscillatingString: invariant(T: force, L: distance, f: frequency) =
+OscillatingString: invariant(t: force, L: distance, f: frequency) =
 {
-	f ** 2 ~ (T / mu) / (4 * L ** 2)
+	f ** 2 ~ (t / mu) / (4 * L ** 2)
 }

@@ -1,6 +1,6 @@
-sqrt : progtype
+sqrt : module ()
 {
-	init	: namegen (argument: integer) -> (result: integer);
+	init	: function (argument: integer) -> (result: integer);
 }
 
 

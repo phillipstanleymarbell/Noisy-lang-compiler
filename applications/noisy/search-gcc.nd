@@ -1,6 +1,16 @@
-gccSearch : progtype
+#
+#	The module definition gives its signature for other
+#	modules (e.g., the runtime system) that want to execute
+#	it.
+#
+#	The module definition need not export the function init
+#	if it is not intended to by loaded by the "conventional loader"
+#	(e.g., the OS shell).
+#
+gccSearch : module ()
 {
-	init	: namegen (N: int32, elementBits: array [N] of int32) -> (found: bool);
+	search	: function (N: int32, elementBits: array [N] of int32) -> (found: bool);
+	search	: probdef (N: int32, elementBits: array [N] of int32) -> (found: bool);
 }
 
 
@@ -14,23 +24,14 @@ gccSearch : progtype
 #	
 #	Search function in GCC, checks for 0 entries in an array.
 #
-init : probdef (N: int32, elementBits: array [N] of int32) -> (found: bool) =>
+search : probdef (N: int32, elementBits: array [N] of int32) -> (found: bool) =>
 {
 	#
 	#	The outer 'given (found in bool)' is not needed since N, elementBits, and found
-	#	are already bound to the read / write types of the namegen
+	#	are already bound to the read / write types of the function
 	#
 	given (found in bool)
 	(
 		found == exists (n in int32) (elementBits[n] == 0)
 	)
-}
-
-
-
-#
-#	Algorithm implementation
-#
-init : namegen (N: int32, elementBits: array [N] of int32) -> (found: bool) =
-{
 }

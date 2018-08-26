@@ -1,5 +1,5 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2018. Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -35,26 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-typedef enum
-{
-	kNoisySymbolTypeTypeError,
-	kNoisySymbolTypeProgtype,
-	kNoisySymbolTypeConstantDeclaration,
-	kNoisySymbolTypeTypeDeclaration,
-	kNoisySymbolTypeNamegenDeclaration,
-	kNoisySymbolTypeVariableDeclaration,
-	kNoisySymbolTypeNamegenDefinition,
-	kNoisySymbolTypeUse,
+void	irPassDimensionalMatrixPiGroups(State *  N);
 
-	/*
-	 *	Code depends on this bringing up the rear.
-	 */
-	kNoisySymbolTypeMax,
-} NoisySymbolType;
-
-
-Scope *	noisySymbolTableAllocScope(State *  N);
-Symbol *	noisySymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  token);
-Symbol *	noisySymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  identifier);
-Scope *	noisySymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subtree);
-void		noisySymbolTableCloseScope(State *  N, Scope *  scope, IrNode *  subtree);

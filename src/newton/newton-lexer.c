@@ -134,6 +134,7 @@ newtonLex(State *  N, char *  fileName)
 	N->filePointer = fopen(fileName, "r");
 	if (N->filePointer == NULL)
 	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "Could not open file \"%s\".\n", fileName);
 		fatal(N, Eopen);
 	}
 
@@ -362,7 +363,7 @@ static void
 checkDoubleQuote(State *  N, bool callFinishTokenFlag)
 {
 	/*
-	 *	TODO/BUG: we do not handle escaped dquotes in a strconst
+	 *	TODO/BUG: we do not handle escaped double quotes in a strconst
 	 */
 	Token *	newToken;
 
@@ -582,7 +583,7 @@ makeNumericConst(State *  N)
 	{
 		if (N->currentTokenLength == 1)
 		{
-			Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_Tnumber	/* type		*/,
+			Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_TnumericConst	/* type		*/,
 										NULL	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -610,7 +611,6 @@ makeNumericConst(State *  N)
 			 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
 			 */
 			done(N, newToken);
-			fatal(N, "something gone wrong with newton lexer decimals\n");
 
 			return;
 		}
@@ -623,7 +623,7 @@ makeNumericConst(State *  N)
 	 */
 	if (isEngineeringRealConst(N, N->currentToken))
 	{
-		Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_Tnumber /* type		*/,
+		Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_TnumericConst /* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
 									stringToEngineeringRealConst(N, N->currentToken) /* realConst	*/,
@@ -643,7 +643,7 @@ makeNumericConst(State *  N)
 	 */
 	if (isRealConst(N, N->currentToken))
 	{
-		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_Tnumber	 /* type	*/,
+		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TnumericConst	 /* type	*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
 									stringToRealConst(N, N->currentToken)	/* realConst	*/,
@@ -663,7 +663,7 @@ makeNumericConst(State *  N)
 	 */
 	if (isRadixConst(N, N->currentToken))
 	{
-		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_Tnumber	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TnumericConst	/* type		*/,
 									NULL				/* identifier	*/,
 									stringToRadixConst(N, N->currentToken)	/* integerConst	*/,
 									0				/* realConst	*/,
@@ -706,7 +706,7 @@ makeNumericConst(State *  N)
 	uint64_t 	decimalValue = strtoul(N->currentToken, &ep, 0);
 	if (*ep == '\0')
 	{
-		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_Tnumber	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TnumericConst	/* type		*/,
 									NULL				/* identifier	*/,
 									decimalValue			/* integerConst	*/,
 									0				/* realConst	*/,
@@ -807,7 +807,7 @@ checkProportionality(State * N)
 	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '<')
 	{
 		gobble(N, 2);
-		type = kNewtonIrNodeType_Tproportionality;
+		type = kNewtonIrNodeType_Tproportional;
 	}
 	else
 	{

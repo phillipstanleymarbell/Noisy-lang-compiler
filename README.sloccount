@@ -1,0 +1,81 @@
+Creating filelist for common
+Creating filelist for include
+Creating filelist for javascript
+Creating filelist for newton
+Creating filelist for noisy
+Creating filelist for tests
+Categorizing files.
+Finding a working MD5 command....
+Found a working MD5 command.
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-activity-classifier/invariant-timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-activity-classifier/timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-airplane-pressure/invariant-timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-airplane-pressure/timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-airplane-pressure/timing_invariants.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-dropped-ball/invariant-timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-dropped-ball/timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-dropped-ball/timing_invariants.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-gps-walking/invariant-timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-gps-walking/timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-gps-walking/timing_invariants.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-jet-engine/invariant-timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-jet-engine/timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-jet-engine/timing_invariants.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-motor-wheel-chair/invariant-timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-motor-wheel-chair/timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-motor-wheel-chair/timing_invariants.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-reactor-rod/invariant-timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-reactor-rod/timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-reactor-rod/timing_invariants.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-sensor-life/invariant-timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-sensor-life/timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-sensor-life/timing_invariants.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-step-counter/invariant-timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-step-counter/timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-step-counter/timing_invariants.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-tire-pressure/invariant-timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-tire-pressure/timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-tire-pressure/timing_invariants.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-vehicle-distance/timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-weather-balloon/invariant-timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-weather-balloon/timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/test-weather-balloon/timing_invariants.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/tests-default/invariant-timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/tests-default/timing.d has unknown start: #!/usr/sbin/dtrace -s
+WARNING! File /Volumes/doos/Noisy-lang-compiler-github-clone/src/tests/tests-default/timing_invariants.d has unknown start: #!/usr/sbin/dtrace -s
+Warning: in tests, number of duplicates=101
+Computing results.
+
+
+SLOC	Directory	SLOC-by-Language (Sorted)
+23059   noisy           ansic=23053,sh=6
+6465    newton          ansic=6444,cpp=15,sh=6
+6355    tests           ansic=6324,python=31
+2346    common          ansic=2346
+17      include         ansic=17
+0       javascript      (none)
+
+
+Totals grouped by language (dominant language first):
+ansic:        38184 (99.85%)
+python:          31 (0.08%)
+cpp:             15 (0.04%)
+sh:              12 (0.03%)
+
+
+
+
+Total Physical Source Lines of Code (SLOC)                = 38,242
+Development Effort Estimate, Person-Years (Person-Months) = 9.18 (110.12)
+ (Basic COCOMO model, Person-Months = 2.4 * (KSLOC**1.05))
+Schedule Estimate, Years (Months)                         = 1.24 (14.92)
+ (Basic COCOMO model, Months = 2.5 * (person-months**0.38))
+Estimated Average Number of Developers (Effort/Schedule)  = 7.38
+Total Estimated Cost to Develop                           = $ 1,239,679
+ (average salary = $56,286/year, overhead = 2.40).
+SLOCCount, Copyright (C) 2001-2004 David A. Wheeler
+SLOCCount is Open Source Software/Free Software, licensed under the GNU GPL.
+SLOCCount comes with ABSOLUTELY NO WARRANTY, and you are welcome to
+redistribute it under certain conditions as specified by the GNU GPL license;
+see the documentation for details.
+Please credit this data as "generated using David A. Wheeler's 'SLOCCount'."

@@ -37,16 +37,17 @@
 #
 #	Description: Base signals used in most Newton descriptions.
 #
+
 include "NewtonBaseSignals.nt"
 
 #
 #	Description: Additional signal used in this particular newton description.
 #
-noise : signal =
+accelerationNoise : signal =
 {
-	name = "micro g per square root of Hertz" English;
-	symbol = "n";
-	derivation = (10 ** -6) * acceleration / (frequency ** 0.5);
+	name		= "micro g per square root of Hertz" English;
+	symbol		= n;
+	derivation	= (1E-6) * acceleration / (frequency ** 0.5);
 }
 
 #
@@ -63,14 +64,14 @@ kMMA8451QzAccelerationErasureToken: const = 16rFEFE;
 #
 #	Standard Deviation is not available in data sheet.
 #
-kMMA8451QxAccelerationStdev: const = ;
-kMMA8451QyAccelerationStdev: const = ;
-kMMA8451QzAccelerationStdev: const = ;
+kMMA8451QxAccelerationStdev: const = nil;
+kMMA8451QyAccelerationStdev: const = nil;
+kMMA8451QzAccelerationStdev: const = nil;
 
 MMA8451Q: sensor (
-			xAccel: acceleration@0,
-			yAccel: acceleration@1,
-			zAccel: acceleration@2
+			mma8451xAcceleration: acceleration@0,
+			mma8451yAcceleration: acceleration@1,
+			mma8451zAcceleration: acceleration@2
 		)
 
 {
@@ -79,9 +80,9 @@ MMA8451Q: sensor (
 	#
 	#	Range of Acceleration can be found in Table 75 of document 6.9 on page 47.
 	#
-	range xAcceleration == [-8*mj .. 8*mj],
-	range yAcceleration == [-8*mj .. 8*mj],
-	range zAcceleration == [-8*mj .. 8*mj],
+	range mma8451xAcceleration == [-8*mj .. 8*mj],
+	range mma8451yAcceleration == [-8*mj .. 8*mj],
+	range mma8451zAcceleration == [-8*mj .. 8*mj],
 
 	#
 	#	The operation sequence needed to get a sample
@@ -90,17 +91,17 @@ MMA8451Q: sensor (
 	#
 	#	Register address of Accelerometer can be found in Table 12 of document 6 on page 19.
 	#
-	interface xAcceleration@8*bits == "i2c" (address: "16r1C")
+	interface mma8451xAcceleration@8*bits == i2c (address: 16r1C)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
 		#	Get xAccel data...
 		#
-		xAcceleration@8*bits = read 16r01;
+		mma8451xAcceleration@8*bits = read 16r01;
 	},
 
-	interface xAcceleration@14*bits == "i2c" (address: "16r1C")
+	interface mma8451xAcceleration@14*bits == i2c (address: 16r1C)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -109,20 +110,20 @@ MMA8451Q: sensor (
 		#
 		OUT_X_MSB = read 16r01;
 		OUT_X_LSB = read 16r02;
-		xAcceleration@14*bits = (OUT_X_MSB << 6) | (OUT_X_LSB >> 2);
+		mma8451xAcceleration@14*bits = (OUT_X_MSB << 6) | (OUT_X_LSB >> 2);
 	},
 	
-	interface yAcceleration@8*bits == "i2c" (address: "16r1C")
+	interface mma8451yAcceleration@8*bits == i2c (address: 16r1C)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
 		#	Get yAccel data...
 		#
-		yAcceleration@8*bits = read 16r03;
+		mma8451yAcceleration@8*bits = read 16r03;
 	},
 	
-	interface yAcceleration@14*bits == "i2c" (address: "16r1C")
+	interface mma8451yAcceleration@14*bits == i2c (address: 16r1C)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -131,20 +132,20 @@ MMA8451Q: sensor (
 		#
 		OUT_Y_MSB = read 16r03;
 		OUT_Y_LSB = read 16r04;
-		yAcceleration@14*bits = (OUT_Y_MSB << 6) | (OUT_Y_LSB >> 2);
+		mma8451yAcceleration@14*bits = (OUT_Y_MSB << 6) | (OUT_Y_LSB >> 2);
 	},
 	
-	interface zAcceleration@8*bits == "i2c" (address: "16r1C")
+	interface mma8451zAcceleration@8*bits == i2c (address: 16r1C)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
 		#
 		#	Get zAccel data...
 		#
-		zAcceleration@8*bits = read 16r05;
+		mma8451zAcceleration@8*bits = read 16r05;
 	},
 
-	interface zAcceleration@14*bits == "i2c" (address: "16r1C")
+	interface mma8451zAcceleration@14*bits == i2c (address: 16r1C)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -153,7 +154,7 @@ MMA8451Q: sensor (
 		#
 		OUT_Z_MSB = read 16r05;
 		OUT_Z_LSB = read 16r06;
-		zAcceleration@14*bits = (OUT_Z_MSB << 6) | (OUT_Z_LSB >> 2);
+		mma8451zAcceleration@14*bits = (OUT_Z_MSB << 6) | (OUT_Z_LSB >> 2);
 	},
 
 	#
@@ -161,16 +162,16 @@ MMA8451Q: sensor (
 	#
 	#	Unsure about the function that describes the relationship between the following variables, so leave them as they are.
 	#
-	uncertainty xAcceleration == Gaussian(xAcceleration, kMMA8451QxAccelerationStdev)*g,
-	uncertainty yAcceleration == Gaussian(yAcceleration, kMMA8451QyAccelerationStdev)*g,
-	uncertainty zAcceleration == Gaussian(zAcceleration, kMMA8451QzAccelerationStdev)*g,
+	uncertainty mma8451xAcceleration == Gaussian(mma8451xAcceleration, kMMA8451QxAccelerationStdev)*g,
+	uncertainty mma8451yAcceleration == Gaussian(mma8451yAcceleration, kMMA8451QyAccelerationStdev)*g,
+	uncertainty mma8451zAcceleration == Gaussian(mma8451zAcceleration, kMMA8451QzAccelerationStdev)*g,
 
 	#
 	#	When this token is returned by the sensor, it denotes invalid sensed value / erasure in communication with sensor.
 	#
-	erasuretoken xAcceleration == kMMA8451QxAccelerationErasureToken,
-	erasuretoken yAcceleration == kMMA8451QyAccelerationErasureToken,
-	erasuretoken zAcceleration == kMMA8451QzAccelerationErasureToken,
+	erasuretoken mma8451xAcceleration == kMMA8451QxAccelerationErasureToken,
+	erasuretoken mma8451yAcceleration == kMMA8451QyAccelerationErasureToken,
+	erasuretoken mma8451zAcceleration == kMMA8451QzAccelerationErasureToken,
 
 	#
 	#	Precision settings list for the sensor. This is a list of (precision, cost) pairs.
@@ -179,17 +180,17 @@ MMA8451Q: sensor (
 	#
 	#	Could not find the relevant information in data sheet so I left the cost as 0.
 	#
-	precision xAcceleration == {
+	precision mma8451xAcceleration == {
 					(8*bits, nil),
 					(14*bits, nil),
 				},
 
-	precision yAcceleration == {
+	precision mma8451yAcceleration == {
 					(8*bits, nil),
 					(14*bits, nil),
 				},
 
-	precision zAcceleration == {
+	precision mma8451zAcceleration == {
 					(8*bits, nil),
 					(14*bits, nil),
 				},
@@ -203,17 +204,17 @@ MMA8451Q: sensor (
 	#
 	#	Noise values of Accelerometer can be found in features on page 1 and Table 2 of document 2.1 on page 6.
 	#
-	accuracy xAcceleration == {
+	accuracy mma8451xAcceleration == {
 					(99*n, nil),
 					(126*n, nil),
 				},
 
-	accuracy yAcceleration == {
+	accuracy mma8451yAcceleration == {
 					(99*n, nil),
 					(126*n, nil),
 				},
 
-	accuracy zAcceleration == {
+	accuracy mma8451zAcceleration == {
 					(99*n, nil),
 					(126*n, nil),
 				}

@@ -57,11 +57,11 @@
 
 
 Scope *
-progtypeName2scope(State *  N, const char *  identifier)
+moduleName2scope(State *  N, const char *  identifier)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParserProgtypeName2scope);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserModuleName2scope);
 
-//	FlexListItem *	tmp = N->progtypeScopes->hd;
+//	FlexListItem *	tmp = N->moduleScopes->hd;
 
 	/*
 	 *	Each item is a tuple of (identifier, scope).
@@ -85,57 +85,54 @@ progtypeName2scope(State *  N, const char *  identifier)
 
 
 void
-addToProgtypeScopes(State *  N, char *  identifier, Scope *  progtypeScope)
+addToModuleScopes(State *  N, char *  identifier, Scope *  moduleScope)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddToProgtypeScopes);
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddToModuleScopes);
 
-	progtypeScope->identifier = identifier;
+	moduleScope->identifier = identifier;
 
-	if (N->progtypeScopes == NULL)
+	if (N->moduleScopes == NULL)
 	{
-		N->progtypeScopes = progtypeScope;
+		N->moduleScopes = moduleScope;
 
 		return;
 	}
 
-	Scope *	p = N->progtypeScopes;
+	Scope *	p = N->moduleScopes;
 	while (p->next != NULL)
 	{
 		p = p->next;
 	}
-	p->next = progtypeScope;;
+	p->next = moduleScope;;
 
 	return;
 }
 
 
 
-/*
- *	kNoisyIrNodeType_PidentifierList
- *
- *	AST subtree:
- *
- *		node		= kNoisyIrNodeType_Tidentifier
- *		node.left	= kNoisyIrNodeType_Tidentifier
- *		node.right	= Xseq of kNoisyIrNodeType_Tidentifier
- */
 void
 assignTypes(State *  N, IrNode *  node, IrNode *  typeExpression)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParserAssignTypes);
 
 	/*
-	 *	TODO: The typeExpr might be, say, an identifier that is an
-	 *	alias for a type. We should check for this case and get the
+	 *	See issue #297: The typeExpr might be, say, an identifier that is
+	 *	an alias for a type. We should check for this case and get the
 	 *	identifier's sym->typeTree. Also, do sanity checks to validate
 	 *	the typeTree, e.g., make sure it is always made up of basic
 	 *	types and also that it's not NULL.
 	 */
 
-	if (node->type != kNoisyIrNodeType_Tidentifier)
+	if (	node->type != kNoisyIrNodeType_Tidentifier &&
+		node->type != kNoisyIrNodeType_PidentifierList &&
+		node->type != kNoisyIrNodeType_PidentifierOrNilList &&
+		node->type != kNoisyIrNodeType_PqualifiedIdentifier
+		)
 	{
 		fatal(N, EassignTypeSanity);
 	}
+//XXX FIXME XXX
+return;
 
 	/*
 	 *	Walk subtree identifierList, set each node->symbol.typeExpr = typeExpr

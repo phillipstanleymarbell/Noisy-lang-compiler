@@ -40,7 +40,7 @@
 
 temperature: signal(i: 0 to 17) = {
 	name = "Celsius" English;
-	symbol = "C";
+	symbol = C;
 	derivation = none;
 }
 

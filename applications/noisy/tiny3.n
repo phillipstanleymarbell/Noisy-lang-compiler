@@ -1,7 +1,7 @@
-tiny3 : progtype
+tiny3 : module ()
 {
-	init	: namegen (list of string):(list of string);
-	first	: namegen (int):(int);
-	second	: namegen (int):(int);
-	third	: namegen (int):(int);
+	init		: function (arguments: list of string)	-> (results: list of string);
+	firstFun	: function (someArgument: int16)	-> (result: int16);
+	secondFun	: function (anArgument: int16)		-> (aResult: int16);
+	thirdFun	: function (arg: int16)			-> (someResult: int16);
 }

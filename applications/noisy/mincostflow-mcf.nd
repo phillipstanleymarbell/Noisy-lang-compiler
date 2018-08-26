@@ -1,4 +1,4 @@
-MinCostFlowMCF : progtype (indexType: type, valueType: type)
+MinCostFlowMCF : module (indexType: type, valueType: type)
 {
 	MCFarc : adt
 	{
@@ -25,8 +25,10 @@ MinCostFlowMCF : progtype (indexType: type, valueType: type)
 		arcs	: array [M] of MCFarc	# Input arcs
 	}
 
-	solve	: namegen (network : MCFnetwork) -> (feasible: bool, flow: array [network.M] of valueType, optCost: valueType);
+	solve	: function (network : MCFnetwork) -> (feasible: bool, flow: array [network.M] of valueType, optCost: valueType);
 	solve	: probdef (network : MCFnetwork) -> (feasible: bool, flow: array [network.M] of valueType, optCost: valueType);
+
+	init	: function (arguments: list of string) -> (results: list of string);
 }
 
 #
@@ -71,4 +73,8 @@ solve	: probdef (network : MCFnetwork) -> (feasible: bool, flow: array [network.
 			sum for (k from 0 to network.M - 1) of (network.arcs[k].cost * flow[k])
 		)
 	)
+}
+
+init : function	(arguments: list of string) -> (results: list of string) =
+{
 }

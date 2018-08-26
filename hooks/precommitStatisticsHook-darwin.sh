@@ -19,14 +19,15 @@ cd $libflexDirectory && make clean all &
 
 #wait $!
 make clean
-make -j
+make #-j
 make README.sloccount
 
-cat version.c >> $trackingDirectory/$statsFile
-echo '\n./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s' >> $trackingDirectory/$statsFile
-./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s >> $trackingDirectory/$statsFile
-echo '\n./newton/newton-linux-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt' >> $trackingDirectory/$statsFile
-./newton/newton-linux-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt >> $trackingDirectory/$statsFile
+cat src/noisy/version.c >> $trackingDirectory/$statsFile
+cat src/newton/version.c >> $trackingDirectory/$statsFile
+echo '\n./src/noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s' >> $trackingDirectory/$statsFile
+./src/noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s >> $trackingDirectory/$statsFile
+echo '\n./src/newton/newton-darwin-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt' >> $trackingDirectory/$statsFile
+./src/newton/newton-darwin-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt >> $trackingDirectory/$statsFile
 rm tmp.smt2
 
 echo '\nsudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s"' >> $trackingDirectory/$statsFile

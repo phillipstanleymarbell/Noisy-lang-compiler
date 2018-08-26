@@ -54,18 +54,16 @@
 #include "common-data-structures.h"
 #include "noisy-parser.h"
 #include "noisy-lexer.h"
-#include "noisy-symbolTable.h"
+#include "common-symbolTable.h"
 #include "common-irPass-helpers.h"
 #include "noisy-irPass-dotBackend.h"
 #include "noisy-irPass-protobufBackend.h"
 
-//extern const char	gNoisyEol[];
-//extern const char	gNoisyWhitespace[];
-//extern const char	gNoisyStickies[];
-
 static void		usage(State *  N);
 static void		processFile(State *  N, char *  filename);
 static void		version(State *  N);
+
+
 
 int
 main(int argc, char *argv[])
@@ -143,7 +141,10 @@ main(int argc, char *argv[])
 			{
 				N->irBackends |= kNoisyIrBackendDot;
 				
-				//TODO: rather than accepting the raw enum value as integer, accept string and compare to table of options
+				/*
+				 *	See issue #293.
+				 */
+
 				uint64_t tmpInt = strtoul(optarg, &ep, 0);
 				if (*ep == '\0')
 				{
@@ -212,10 +213,8 @@ main(int argc, char *argv[])
 
 			case 'O':
 			{
-				//TODO: define a structured way for which passes depend on which
-
 				/*
-				 *	Implies the following (basic) passes:
+				 *	Implies one or more passes (see issue #294)
 				 */
 				//N->irPasses |= xxx;
 				//N->irPasses |= yyy;
@@ -238,7 +237,7 @@ main(int argc, char *argv[])
 			case '?':
 			{
 				/*
-				 *    getopt_long() should have already printed an error message.
+				 *	getopt_long() should have already printed an error message.
 				 */
 				usage(N);
 				consolePrintBuffers(N);
@@ -267,7 +266,9 @@ main(int argc, char *argv[])
 			}
 			else
 			{
-				//TODO: we could intelligently use the incoming jumpParameter
+				/*
+				 *	See issue #291
+				 */
 
 				/*	Return again after longjmp	*/
 			}
@@ -301,7 +302,7 @@ processFile(State *  N, char *  fileName)
 	/*
 	 *	Create a top-level scope, then parse.
 	 */
-	N->noisyIrTopScope = noisySymbolTableAllocScope(N);
+	N->noisyIrTopScope = commonSymbolTableAllocScope(N);
 	N->noisyIrRoot = noisyParse(N, N->noisyIrTopScope);
 
 

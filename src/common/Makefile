@@ -31,6 +31,7 @@ PROTOC		= protoc-c
 SOURCES		=\
 		common-utils.c\
 		primenumbers.c\
+		common-symbolTable.c\
 		common-lexers-helpers.c\
 		common-firstAndFollow.c\
 		common-irPass-helpers.c\
@@ -42,13 +43,14 @@ SOURCES		=\
 
 #
 #	Clang seems to be unable to do LTO unless we have all the objects
-#	not tucked into a library, so we don't just simply link main against
+#	_not_ tucked into a library, so we don't just simply link main against
 #	-l$(LIBCOMMON)-$(OSTYPE)-$(COMMON_L10N)
 #
 OBJS		=\
 		primenumbers.$(OBJECTEXTENSION)\
 		common-utils.$(OBJECTEXTENSION)\
 		common-firstAndFollow.$(OBJECTEXTENSION)\
+		common-symbolTable.$(OBJECTEXTENSION)\
 		common-lexers-helpers.$(OBJECTEXTENSION)\
 		common-errors$(COMMON_L10N).$(OBJECTEXTENSION)\
 		common-timeStamps.$(OBJECTEXTENSION)\
@@ -61,6 +63,7 @@ LIBCOMMONOBJS =\
 		primenumbers.$(OBJECTEXTENSION)\
 		common-utils.$(OBJECTEXTENSION)\
 		common-firstAndFollow.$(OBJECTEXTENSION)\
+		common-symbolTable.$(OBJECTEXTENSION)\
 		common-lexers-helpers.$(OBJECTEXTENSION)\
 		common-errors$(COMMON_L10N).$(OBJECTEXTENSION)\
 		common-timeStamps.$(OBJECTEXTENSION)\
@@ -71,6 +74,7 @@ LIBCOMMONOBJS =\
 
 HEADERS		=\
 		$(LIBFLEXPATH)/flex.h\
+		common-symbolTable.h\
 		common-lexers-helpers.h\
 		common-firstAndFollow.h\
 		common-errors.h\

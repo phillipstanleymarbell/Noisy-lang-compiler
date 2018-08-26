@@ -5,14 +5,14 @@
 distance : signal =
 {
         name = "meter" English;
-        symbol = "m";
+        symbol = m;
         derivation = none;
 }
 
 mass : signal =
 {
         name = "kilogram" English;
-        symbol = "kg";
+        symbol = kg;
         derivation = none;
 }
 

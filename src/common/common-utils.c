@@ -345,7 +345,7 @@ consolePrintBuffers(State *  N)
 		}
 	}
 
-if (N && N->Fpsmt2 && strlen(N->Fpsmt2->circbuf))
+	if (N && N->Fpsmt2 && strlen(N->Fpsmt2->circbuf))
 	{
 		fprintf(stdout, "\nSMT2 Backend output:\n---------------------\n%s", N->Fpsmt2->circbuf);
 		if (N->mode & kNoisyModeCGI)
@@ -649,7 +649,7 @@ fatal(State *  N, const char *  msg)
 
 	/*
 	 *	Dump the IR to Fperr. Because we might be trying to dump 
-	 *	a badly-fromed IR, noisyIrDotBackend() will have to be
+	 *	a badly-formed IR, noisyIrDotBackend() will have to be
 	 *	very cautious.
 	 */
 	if (N != NULL)

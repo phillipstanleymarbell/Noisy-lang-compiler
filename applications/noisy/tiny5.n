@@ -1,50 +1,50 @@
-tiny5 : progtype
+tiny5 : module ()
 {
 	Pixel : adt
 	{
-		r : byte;
-		g : byte;
-		b : byte;
-		a : byte;
+		r : nat8;
+		g : nat8;
+		b : nat8;
+		a : nat8;
 	};
 
-	complex	: type (int, int);
-	rational: type (int, int);
+	newComplex	: type (int64, int64);
+	newRational	: type (int64, int64);
 
-	init	: namegen (list of string):(list of string);
-	first	: namegen ((int, int), byte, int):(int);
-	second	: namegen (int, string):(int, (int, int));
-	third	: namegen (real):(int, real, (int, string, (int, byte)), string);
+	init		: function (arguments: list of string) -> (results: list of string);
+	firstFun	: function (argumentA: (int64, int64), argumentB: nat8, argumentC: int64) -> (result: int64);
+	secondFun	: function (argumentA: int64, argumentB: string) -> (resultA: int64, resultB: (int64, int64));
+	thirdFun	: function (argument: float64) -> (resultA: int64, resultB: float64, resultC: (int64, string, (int64, nat8)), resultD: string);
 }
 
-init =
+init : function (arguments: list of string) -> (results: list of string) =
 {
 }
 
-first =
+firstFun : function (argumentA: (int64, int64), argumentB: nat8, argumentC: int64) -> (result: int64) =
 {
 }
 
-second =
+secondFun : function (argumentA: int64, argumentB: string) -> (resultA: int64, resultB: (int64, int64)) =
 {
 }
 
-third =
+thirdFun : function (argument: float64) -> (resultA: int64, resultB: float64, resultC: (int64, string, (int64, nat8)), resultD: string) =
 {
 }
 
-localfunc1 : (int, int):(int) =
+localfunc1 : function (argumentA: int64, argumentB: int64) -> (result: int64) =
 {
 }
 
-localfunc2 : (real, int, byte, string):(int) =
+localfunc2 : function (argumentA: float64, argumentB: int64, argumentC: nat8, argumentD: string) -> (result: int64) =
 {
 }
 
-localfunc3 : (int, int):(int, (int, int)) =
+localfunc3 : function (argumentA: int64, argumentB: int64) -> (resultA: int64, resultB: (int64, int64)) =
 {
 }
 
-localfunc4 : (int, int):((int, int)) =
+localfunc4 : function (argumentA: int64, argumentB: int64) -> (result: (int64, int64)) =
 {
 }

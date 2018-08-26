@@ -1,5 +1,5 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2015-2018. Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -35,7 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void			noisyLexInit(State *  N, char *  fileName);
-void		makeNumericConst(State *  N);
-bool		isOperatorOrSeparator(State *  N, char c);
-void		finishToken(State *  N);
+void	noisyLexInit(State *  N, char *  fileName);
+void	makeNumericConst(State *  N);
+bool	isOperatorOrSeparator(State *  N, char c);
+void	finishToken(State *  N);

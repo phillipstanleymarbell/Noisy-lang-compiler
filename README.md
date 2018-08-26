@@ -11,6 +11,10 @@ To update all submodules:
 	git pull --recurse-submodules
 	git submodule update --remote --recursive
 
+If you forgot to clone with `--recursive` and end up with empty submodule directories, you can remedy this with
+
+	git submodule update --init
+
 Building the Noisy compiler and debug tools depends on the following repositories which are already included as submodules:
 
 	Libflex:		git@github.com:phillipstanleymarbell/libflex.git
@@ -18,11 +22,11 @@ Building the Noisy compiler and debug tools depends on the following repositorie
 	Eigen:			git@github.com:eigenteam/eigen-git-mirror.git	
 	Wirth tools:		git@github.com:phillipstanleymarbell/Wirth-tools.git
 
-The build also depends on the C protobuf compiler and on Graphviz. On Mac OS X, the easiest way to
-install these is to use macports (macports.org) to install the packages `protobuf-c`
-`protobuf-cpp`, and `graphviz-devel`.
+The build also depends on the C protobuf compiler, `sloccount`, and on Graphviz. On Mac OS X, the easiest way to
+install these is to use macports (macports.org) to install the packages `protobuf-c`,
+`protobuf-cpp`, `sloccount`, and `graphviz-devel`.
 
-After cloning the above two repositories, 
+Once you have the above repositories, 
 (1) Create a file `config.local` in the root of the Noisy tree and edit it to contain 
 
 	LIBFLEXPATH     = full-path-to-libflex-repository-clone 
@@ -32,23 +36,29 @@ After cloning the above two repositories,
 
 For example,
 
-	LIBFLEXPATH=/home/me/code/libflex-git-clone
-	CONFIGPATH=/home/me/code/libflex-git-clone
+	LIBFLEXPATH=/home/me/Noisy-lang-compiler/submodules/libflex
+	CONFIGPATH=/home/me/Noisy-lang-compiler/submodules/libflex
+	OSTYPE		= linux
+	MACHTYPE	= x86_64
 
 (2) Edit `precommitStatisticsHook-<your os type>.sh` to set
 
 	dtraceDirectory=full-path-to-DTrace-repository-clone
 	libflexDirectory=full-path-to-libflex-repository-clone
 
-For the following steps, valid options for OSTYPE are currently `linux` for Gnu/Linux and `darwin` for macOS.
+For the following steps, valid options for OSTYPE are currently `linux` 
+for Gnu/Linux and `darwin` for macOS.
 
-(3) Build Libflex by going to the directory you cloned for Libflex and running `make`.
-The makefiles assume the environment variables `OSTYPE` and `MACHTYPE` are set. If that
-is not the case, you will need to explicitly do:
+(3) Build Libflex by going to the directory you cloned for Libflex and 
+running `make`. The Makefile assumes the environment variables `OSTYPE`
+and `MACHTYPE` are set. If that is not the case, you will need to 
+explicitly do:
 
 	make OSTYPE=darwin MACHTYPE=x86_64
 
-(4) Build the noisy compiler by running `make`. The makefiles assume the environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the case, you will need to explicitly do:
+(4) Build the noisy compiler by running `make`. The makefile assumes the 
+environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the 
+case, you will need to explicitly do:
 
 	make OSTYPE=darwin MACHTYPE=x86_64
 
@@ -79,14 +89,15 @@ with the flags `-h` or `--help` to see the usage:
 To compile a Noisy program and display statistics on internal
 routine calls:
 
-	% ./noisy-darwin-EN --optimize 0 --statistics Examples/helloWorld.n
+	% ./src/noisy/noisy-darwin-EN --optimize 0 --statistics applications/noisy/helloWorld.n
 
 To compile a Noisy program and emit its IR into `dot`, and render
 the generated `dot` code through `dot`:
 
-	% ./noisy-darwin-EN --optimize 0 --dot 0 Examples/helloWorld.n | dot -Tpdf -O ; open noname.gv.pdf
+	% ./src/noisy/noisy-darwin-EN --optimize 0 --dot 0 applications/noisy/helloWorld.n | dot -Tpdf -O ; open noname.gv.pdf
 
-The `dot` detail levels are bit masks: `1<<0`: no text, `1<<1`: no nil nodes
+The `dot` detail levels are bit masks: `1<<0` (i.e., 1): no text,
+`1<<1` (i.e., 2): no nil nodes
 
 Rendering of the IR can be simplified by using one of the helper
 scripts described below.
@@ -96,14 +107,15 @@ scripts described below.
 The Noisy helper scripts: `noisyIr2dot.sh`
 ------------------------------------------
 The scripts `noisyIr2dot.sh` generates renderings of the Noisy AST
-and symbol table. It takes two arguments: a Noisy source file and
-a rendering format (e.g., "pdf" or "png").  It is a simple wrapper
-to the noisy compiler, which it invokes with a useful default set 
-of flags.
+and symbol table. It takes two arguments: a Noisy source file,
+a rendering format (e.g., "pdf" or "png"), and a `dot` detail level
+(see the section above in README.md) for the Noisy dot backend (e.g., 
+'0').  It is a simple wrapper to the noisy compiler, which it invokes
+with a useful default set of flags.
 
-Example:
+For example, from the `noisy` build directory:
 
-	% ./noisyIr2dot.sh Examples/helloWorld.n pdf
+	% ./noisyIr2dot.sh ../../applications/noisy/helloWorld.n pdf 0
 
 
 Implementation and the Wirth tools
@@ -115,9 +127,9 @@ so the process is a bit messy:
 
 First, run `ffi2code` on noisy.ffi to generate all the header definitions in a single file.
 Ignore any debugging statements that appear on `stderr` and focus only on the output
-directed via `stdout` to the output file as in the following example:
+directed via `stdout` to the output file as in the following example. From the `noisy` build directory:
 
-	 ../Wirth-tools-github-clone/ffi2code-darwin-EN noisy.ffi > noisy-ff-debug.txt
+	 ../../submodules/Wirth-tools/ffi2code-darwin-EN noisy.ffi > noisy-ff-debug.txt
 
 Next, manually copy the part of the result to the appropriate header files:
 
@@ -125,7 +137,7 @@ Next, manually copy the part of the result to the appropriate header files:
 
 2.	The rest of the generated code goes into `noisy-ffi2code-autoGeneratedSets.c`. See the comments therein for more.
 
-For an explanation of the `T_XXX` tokens in various files related to
+For an explanation of the `T_XXX` tokens in older files related to
 `ffi2code`, see `https://github.com/phillipstanleymarbell/Wirth-tools/blob/master/EXAMPLES/bug.0.ffi`
 
 Development
@@ -142,9 +154,9 @@ The hooks can be enabled for mercurial by adding the following to
 	pretxncommit    = ./precommitStatisticsHook-<your-os-type>.sh
 	commit          = ./postcommitStatisticsHook.sh
 
-The generated statistics are stored in the `Statistics/` subdirectory,
+The generated statistics are stored in the `analysis/statistics/` subdirectory,
 and can be analyzed using the Mathematica notebook that resides at
-`Mathematica/AnalyzeStatistics.nb`.
+`analysis/mathematica/AnalyzeStatistics.nb`.
 
 
 CGI on Mac OS X
@@ -194,11 +206,6 @@ Git clone `https://github.com/ajaxorg/ace-builds.git` and copy the `src-noconfli
 
 Details on command line parameters:
 -----------------------------------
-Compiler pass bitmaps:
-
-	TODO
-
-
 Compiler backend bitmaps:
 
 	typedef enum
