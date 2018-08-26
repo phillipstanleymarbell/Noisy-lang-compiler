@@ -451,7 +451,7 @@ AS7262: device (
 	#	Unsure about the function that describes the relationship between the following variables, so leave them as they are.
 	#
 	uncertainty as7262Temperature == Gaussian(as7262Temperature, kAS7262TemperatureStdev)*g,
-  uncertainty as7262Lambda450V == Gaussian(as7262Lambda450V, kAS7262Lambda450VStdev)*g,
+  	uncertainty as7262Lambda450V == Gaussian(as7262Lambda450V, kAS7262Lambda450VStdev)*g,
 	uncertainty as7262Lambda500B == Gaussian(as7262Lambda500B, kAS7262Lambda500BStdev)*g,
 	uncertainty as7262Lambda550G == Gaussian(as7262Lambda450V, kAS7262Lambda550GStdev)*g,
 	uncertainty as7262Lambda570Y == Gaussian(as7262Lambda570Y, kAS7262Lambda570YStdev)*g,
@@ -462,7 +462,7 @@ AS7262: device (
 	#	When this token is returned by the device, it denotes invalid sensed value / erasure in communication with device.
 	#
 	erasuretoken as7262Temperature == kAS7262TemperatureErasureToken,
-  erasuretoken as7262Lambda450V == kAS7262Lambda450VErasureToken,
+  	erasuretoken as7262Lambda450V == kAS7262Lambda450VErasureToken,
 	erasuretoken as7262Lambda500B == kAS7262Lambda500BErasureToken,
 	erasuretoken as7262Lambda550G == kAS7262Lambda550GErasureToken,
 	erasuretoken as7262Lambda570Y == kAS7262Lambda570YErasureToken,
