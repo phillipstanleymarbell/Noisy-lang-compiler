@@ -40,11 +40,7 @@ extern "C"
 {
 #	endif /* __cplusplus */
 
-//void getPiGroups(float *m, int N, int M);
-//int factorial(int N);
-//void generateAllPiGroups(MatrixXf mat, int N, int M,int rank, int x[], int k, MatrixXf (&ker)[]);
-//void computePiGroup(MatrixXf m, int N, int M, int rank, int x[], MatrixXf (&ker)[], int element);
-//void computeRREF(MatrixXf & m, int N, int M, int (&indices)[]);
+double **	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount);
 
 #	ifdef __cplusplus
 } /* extern "C" */

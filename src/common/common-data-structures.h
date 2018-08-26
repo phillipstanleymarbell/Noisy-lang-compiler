@@ -683,31 +683,33 @@ struct Dimension
 
 struct Invariant
 {
-	char *			identifier;		//	Name of the physics quantity. of type kNoisyConfigType_Tidentifier
+	char *			identifier;			//	Name of the physics quantity. of type kNoisyConfigType_Tidentifier
 	Scope *			scope;
 	SourceInfo *		sourceInfo;
-	IrNode *		parameterList;		//	This is just bunch of IrNode's in Xseq
-	unsigned long long int	id;
+	IrNode *		parameterList;			//	This is just bunch of IrNode's in Xseq
+	uint64_t		id;
 	IrNode *		constraints;
-	float * 		matrix;			//	Dimensional matrix
-	int 			matrixRows;		//	Dimensional matrix #rows		
-	int 			matrixCols;		//	Dimensional matrix #columns 
-	float *			nullSpace;
+	double * 		dimensionalMatrix;		//	Dimensional matrix
+	int 			dimensionalMatrixRowCount;	//	Number of dimensional matrix rows		
+	int 			dimensionalMatrixColumnCount;	//	Number of dimensional matrix columns 
+	char **			dimensionalMatrixRowLabels;	//	Labels of dimensional matrix rows		
+	char **			dimensionalMatrixColumnLabels;	//	Labels of dimensional matrix columns 
+	double **		nullSpace;
 	
 	Invariant *		next;
 };
 
 struct Physics
 {
-	char *			identifier;		//	Name of the physics quantity. of type kNoisyConfigType_Tidentifier
-	unsigned long long int	id;
-	int			subindex;		//	Index for further identification. e.g.) acceleration along x, y, z axes
+	char *			identifier;			//	Name of the physics quantity. of type kNoisyConfigType_Tidentifier
+	uint64_t		id;
+	int			subindex;			//	Index for further identification. e.g.) acceleration along x, y, z axes
 	Scope *			scope;
 	SourceInfo *		sourceInfo;
 	bool			isVector;
-	Physics *		vectorCounterpart;	//	Non-NULL if a scalar AND counterpart defined in vectorScalarPairScope
-	Physics *		scalarCounterpart;	//	Non-NULl if a vector AND counterpart defined in vectorScalarPairScope
-	double			value;			//	For constants like Pi or gravitational acceleration
+	Physics *		vectorCounterpart;		//	Non-NULL if a scalar AND counterpart defined in vectorScalarPairScope
+	Physics *		scalarCounterpart;		//	Non-NULl if a vector AND counterpart defined in vectorScalarPairScope
+	double			value;				//	For constants like Pi or gravitational acceleration
 	bool			isConstant;
 	Dimension *		dimensions;
 	char *			dimensionAlias;

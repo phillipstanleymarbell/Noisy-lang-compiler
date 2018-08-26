@@ -37,8 +37,6 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-//#include "newton-eigenLibraryInterface.h"
-
 #include <Eigen/Eigen>
 #include <iostream>
 using namespace std;
@@ -46,7 +44,7 @@ using namespace Eigen;
 
 extern "C"
 {
-	int
+	static int
 	factorialHelper(int n, int N)
 	{
 		if (n)
@@ -59,27 +57,29 @@ extern "C"
 		}
 	}
 
-	int
+	static int
 	factorial(int i)
 	{
 		return factorialHelper(i,1);
 	}
-	
-	void
-	computeRREF(MatrixXf & m, int N, int M, int indices[]) //	Computes the row reduced echelon form(RREF)
+
+	/*
+	 *	Computes the row reduced echelon form (RREF)
+	 */
+	static void
+	computeRREF(MatrixXd & m, int rowCount, int columnCount, int indices[])
 	{
 		int i = 0, j = 0, r = 0;
 		
-		while (i < N && j < M)
+		while (i < rowCount && j < columnCount)
 		{
 			/*
 			 *	Step 1
 			 */
-			
 			while (m(i, j) == 0)
 			{
 				bool swapped = false;
-				for (int p = i + 1; i + p < N; p++)
+				for (int p = i + 1; i + p < rowCount; p++)
 				{
 
 					if (m(p, j))
@@ -106,14 +106,14 @@ extern "C"
 			/*
 			 *	Step 3
 			 */
-			for (int q = 0; q < N; q++)
+			for (int q = 0; q < rowCount; q++)
 			{
 				if (q != i)
 				{
 					m.array().row(q) -= m.array().row(i) * m(q, j) / m(i, j); 
 				}
 			}
-			
+
 			/*
 			 *	Step 4
 			 */
@@ -124,9 +124,12 @@ extern "C"
 		return;
 	}
 
-	void
-	computePiGroup(MatrixXf m, int N, int M, int rank, int x[], MatrixXf ker[], int element)
+	static void
+	computePiGroup(MatrixXd m, int rowCount, int columnCount, int rank, int x[], MatrixXd kernels[], int element)
 	{
+		assert(columnCount - rank != 0);
+		int	indices[columnCount - rank];
+
 		for (int i = 1; i <= rank; i++)
 		{
 			if(x[i] > i)
@@ -135,30 +138,39 @@ extern "C"
 			}
 		}
 
-		int indices[M - rank];
-		computeRREF(m, N, M, indices);
+		computeRREF(m, rowCount, columnCount, indices);
 		
-		MatrixXf nonPivot(rank, M - rank);
-		for (int i = 0; i < M - rank; i++)
+		MatrixXd nonPivot(rank, columnCount - rank);
+		for (int i = 0; i < columnCount - rank; i++)
 		{
-			int a = indices[i];
-			nonPivot.block(0, i, rank, 1) = m.block(0, a, rank, 1);      // builds the matrix out of the non-pivot columns
+			/*
+			 *	Builds the matrix out of the non-pivot columns
+			 */
+			nonPivot.block(0, i, rank, 1) = m.block(0, indices[i], rank, 1);
 		}
-		nonPivot.array() = nonPivot.array() * -1;                   // multiply by -1 the matrix
 
-		MatrixXf I = MatrixXf::Identity(M - rank, M - rank);
+		/*
+		 *	Multiply the matrix by -1
+		 */
+		nonPivot.array() = nonPivot.array() * -1;
+
+		MatrixXd I = MatrixXd::Identity(columnCount - rank, columnCount - rank);
 		
 		int r = 0, p = 0;
-		for (int i = 0; i < M; i++)
+		for (int i = 0; i < columnCount; i++)
 		{
 			if (i == indices[r])
 			{
-				ker[element].row(i) = I.row(r);
-				r++;                                                // append the identity matrix to the non-pivot matrix
+				kernels[element].row(i) = I.row(r);
+
+				/*
+				 *	Append the identity matrix to the non-pivot matrix
+				 */
+				r++;
 			}
 			else
 			{
-				ker[element].row(i) = nonPivot.row(p);
+				kernels[element].row(i) = nonPivot.row(p);
 				p++; 
 			}
 		}
@@ -166,44 +178,55 @@ extern "C"
 		return;
 	}
 
-	void
-	generateAllPiGroups(MatrixXf mat, int N, int M, int rank, int x[], int k, MatrixXf ker[])     //generate in lexigographic order
-	{																							 //all the possible combinations of columns
-		int element = 0;
+	static void
+	generateAllPiGroups(MatrixXd dimensionalMatrix, int rowCount, int columnCount, int rank, int x[], int k, MatrixXd kernels[])
+	{	
+		/*
+		 *	Generate all the possible combinations of columns in lexicographic order
+		 */
+		int	element = 0;
+
 		if (k == rank + 1)
 		{
-			computePiGroup(mat, N, M, rank, x, ker, element);
-			element ++;
+			computePiGroup(dimensionalMatrix, rowCount, columnCount, rank, x, kernels, element);
+			element++;
 		}
 		else
 		{
-			for (int i = x[k-1] + 1; i <= M -rank + k; i++)
+			for (int i = x[k-1] + 1; i <= columnCount - rank + k; i++)
 			{
 				x[k] = i;
-				generateAllPiGroups(mat, N, M, rank, x, k + 1, ker);
+				generateAllPiGroups(dimensionalMatrix, rowCount, columnCount, rank, x, k + 1, kernels);
 			}
 		}
 	}
 
-	void
-	getPiGroups(float *m, int N, int M)									// N = #rows	M = #columns
+	/*
+	 *	N = #rows, M = #columns
+	 */
+	double **
+	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount)
 	{
-		Map<MatrixXf> tmp (m, M, N);
-		cout << endl << endl << tmp << endl;
-		MatrixXf mat = tmp.transpose();
-		cout << endl << mat << endl;
-		int rank = mat.fullPivLu().rank();
-		cout << "The rank of the matrix is " << rank << endl;
-		
-		int x[rank+1];
+		Map<MatrixXd>	eigenInterfaceDimensionalMatrix (dimensionalMatrix, columnCount, rowCount);
+		MatrixXd	eigenInterfaceTransposedDimensionalMatrix = eigenInterfaceDimensionalMatrix.transpose();
+		int		rank = eigenInterfaceTransposedDimensionalMatrix.fullPivLu().rank();
+		int 		numberOfCircuitSets = factorial(columnCount) / (factorial(rank) * factorial(columnCount - rank));
+		MatrixXd	eigenInterfaceKernels[numberOfCircuitSets];
+		double **	cInterfaceKernels;
+		int		x[rank+1];
+		int		k = 1;
+
 		x[0] = 0;
-		int k = 1;
+		generateAllPiGroups(eigenInterfaceTransposedDimensionalMatrix, rowCount, columnCount, rank, x, k, eigenInterfaceKernels);
 
-		int numberCircuitSets = factorial(M) / (factorial(rank) * factorial(M - rank));
-		MatrixXf ker[numberCircuitSets];
+		cInterfaceKernels = (double **)calloc(numberOfCircuitSets*rowCount, sizeof(double *));
+		assert(cInterfaceKernels != NULL);
 
-		generateAllPiGroups(mat, N, M, rank, x, k, ker);
+		for (int i = 0; i < numberOfCircuitSets; i++)
+		{
+			cInterfaceKernels[i] = eigenInterfaceKernels[i].data();
+		}
 
-		return;
+		return cInterfaceKernels;
 	}
 } /* extern "C" */
