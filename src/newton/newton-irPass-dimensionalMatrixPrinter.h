@@ -1,5 +1,5 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell
+	Authored 2018. Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -35,13 +35,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifdef __cplusplus
-extern "C"
-{
-#	endif /* __cplusplus */
-
-double **	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount);
-
-#	ifdef __cplusplus
-} /* extern "C" */
-#	endif /* __cplusplus */
+void	irPassDimensionalMatrixPrinter(State *  N);

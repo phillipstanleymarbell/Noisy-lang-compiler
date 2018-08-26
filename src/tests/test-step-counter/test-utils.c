@@ -188,7 +188,7 @@ setupNthIrNodeType(State* noisy)
 {
 	IrNode * numberNode = makeIrNodeSetValue(
 		noisy,
-		kNewtonIrNodeType_Tnumber,
+		kNewtonIrNodeType_TnumericConst,
 		NULL,
 		5.0
 		);

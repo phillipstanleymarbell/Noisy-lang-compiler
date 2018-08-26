@@ -24,3 +24,5 @@
 10.	Avoid `#define` if possible.
 
 11.	All `if` statement followed by curly braces, even if body is a single statement.
+
+12.	The pattern `\t\n` (tab followed by newline) should never occur in a source file.

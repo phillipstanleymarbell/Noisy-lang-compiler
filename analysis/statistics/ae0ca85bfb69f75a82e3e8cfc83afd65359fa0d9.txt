@@ -1,0 +1,7 @@
+
+changeset: 523:ae0ca85bfb69f75a82e3e8cfc83afd65359fa0d9
+char kNewtonVersion[] = "0.2-alpha- () (build 08-23-2018-16:30-bastiboy31@bastiboy31-Inspiron-7566-Linux-4.15.0-32-generic-x86_64)";
+
+./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s
+
+./src/newton/newton-linux-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt

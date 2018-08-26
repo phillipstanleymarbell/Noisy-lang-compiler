@@ -33,6 +33,7 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -57,12 +58,8 @@
 #include "noisy-lexer.h"
 #include "common-irPass-helpers.h"
 #include "newton-types.h"
+#include "newton-symbolTable.h"
 
-#ifdef NoisyOsLinux
-#	include <time.h>
-#endif
-
-extern char *	gNewtonAstNodeStrings[];
 
 void
 irPassDimensionalMatrixAnnotation(State *  N)
@@ -71,41 +68,160 @@ irPassDimensionalMatrixAnnotation(State *  N)
 
 	while (invariant)
 	{
+		int		parameterCount = 0, dimensionCount = 0;
 		IrNode *	parameter = invariant->parameterList;
 		Dimension *	dimension = parameter->irLeftChild->physics->dimensions;
 
-		invariant->matrixRows = 0;
-		if (parameter->irLeftChild && parameter->irLeftChild->physics)
+		printf("Invariant: [%s]\n", invariant->identifier);
+
+		/*
+		 *	First, count the number of parameters and dimensions
+		 */
+		for ( ; parameter ; parameter = parameter->irRightChild)
 		{
-			while (dimension)
+			parameterCount++;
+		}
+
+		for ( ; dimension ; dimension = dimension->next)
+		{
+			dimensionCount++;
+		}
+
+		if (parameterCount == 0 || dimensionCount == 0)
+		{
+			fatal(N, Esanity);
+		}
+
+		/*
+		 *	Next, allocate a temporary matrix to hold the full list
+		 *	of parameter and dimension values.
+		 *
+		 *	We have a list of parameters, each of which has a list of
+		 *	_all_ the dimensions defined in a Newton description,
+		 *	including those that the parameter in question does not use.
+		 *
+		 *	We construct the temporary matrix with a row for each parameter,
+		 *	and a column for each of the (possibly unused) dimensions.
+		 *	Later, below, we determine which dimensions we actually use
+		 *	and recreate the _true_ dimensional matrix which has
+		 *	parameters in columns and dimensions in rows.
+		 */
+		double **	tmpMatrix = (double **)calloc(parameterCount, sizeof(double *));
+		if (!tmpMatrix)
+		{
+			fatal(N, Emalloc);
+		}
+
+		for (int i = 0; i < parameterCount; i++)
+		{
+			tmpMatrix[i] = (double *)calloc(dimensionCount, sizeof(double));
+			if (!tmpMatrix[i])
 			{
-				invariant->matrixRows++;
-				dimension = dimension->next;
+				fatal(N, Emalloc);
 			}
 		}
 
-		invariant->matrixCols = 0;
-		while (parameter)
+		invariant->dimensionalMatrixColumnLabels = (char **) calloc(parameterCount, sizeof(char *));
+		if (!invariant->dimensionalMatrixColumnLabels)
 		{
-			invariant->matrixCols++;
-			parameter = parameter->irRightChild;
+			fatal(N, Emalloc);
 		}
-		
-		invariant->matrix = calloc(invariant->matrixRows * invariant->matrixCols, sizeof(float));
+
+		/*
+		 *	Build the temporary matrix and populate the array usedDimensions[]
+		 *	with the indices of dimensions used by _any_ of the parameters:
+		 */
+		bool	usedDimensions[dimensionCount];
+		bzero(usedDimensions, sizeof(usedDimensions));
 
 		parameter = invariant->parameterList;
-		for (int i = 0; i < invariant->matrixCols; i++)
-		{		
+		for (int i = 0; i < parameterCount; i++)
+		{
+			printf("%4s\t", parameter->irLeftChild->physics->identifier);
+
 			dimension = parameter->irLeftChild->physics->dimensions;
-			for (int j = 0; j < invariant->matrixRows; j++)
+			invariant->dimensionalMatrixColumnLabels[i] = parameter->irLeftChild->physics->identifier;
+			for (int j = 0; j < dimensionCount; j++)
 			{
-				*(invariant->matrix + i + j * invariant->matrixCols) = (float)dimension->exponent;
+				tmpMatrix[i][j] = dimension->exponent;
+				if (tmpMatrix[i][j])
+				{
+					usedDimensions[j] |= 1;
+				}
+
 				dimension = dimension->next;
+				printf("%4.0f ", tmpMatrix[i][j]);
 			}
-			
-			parameter = parameter->irRightChild;			
+			printf("\n");
+			parameter = parameter->irRightChild;
 		}
-		
+		printf("\n\n");
+
+		/*
+		 *	We already know the dimensional matrix column count, since
+		 *	that is the parameter count. We determine the row count
+		 *	from inspecting usedDimensions[].
+		 */
+		invariant->dimensionalMatrixColumnCount = parameterCount;
+		for (int i = 0; i < dimensionCount; i++)
+		{
+			if (usedDimensions[i])
+			{
+				invariant->dimensionalMatrixRowCount++;
+			}
+		}
+
+		invariant->dimensionalMatrixRowLabels = (char **) calloc(invariant->dimensionalMatrixRowCount, sizeof(char *));
+		if (!invariant->dimensionalMatrixRowLabels)
+		{
+			fatal(N, Emalloc);
+		}
+
+		/*
+		 *	Next, use usedDimensions[] to determine how many rows
+		 *	we need in the dimensional matrix. At the same time,
+		 *	we also collect the dimension string names:
+		 */
+		parameter = invariant->parameterList;
+		dimension = parameter->irLeftChild->physics->dimensions;
+		int	copiedRowLabelCount = 0;
+		for (int i = 0; i < dimensionCount; i++)
+		{
+			if (usedDimensions[i])
+			{
+				invariant->dimensionalMatrixRowLabels[copiedRowLabelCount++] = dimension->name;
+			}
+			dimension = dimension->next;
+		}
+
+		/*
+		 *	Now, finally, allocate the dimensional matrix:
+		 */
+		invariant->dimensionalMatrix = (double *)calloc(invariant->dimensionalMatrixRowCount*invariant->dimensionalMatrixColumnCount, sizeof(double));
+		if (!invariant->dimensionalMatrix)
+		{
+			fatal(N, Emalloc);
+		}
+
+		/*
+		 *	Copy over the temporary matrix in the correct form
+		 *	(rows are dimensions, columns are parameters).
+		 */
+		int	copiedDimensionCount;
+		for (int i = 0; i < parameterCount; i++)
+		{
+			copiedDimensionCount = 0;
+			for (int j = 0; j < dimensionCount; j++)
+			{
+				if (usedDimensions[j])
+				{
+					invariant->dimensionalMatrix[invariant->dimensionalMatrixColumnCount*(copiedDimensionCount++) + i] = tmpMatrix[i][j];
+				}
+			}
+		}
+
+		free(tmpMatrix);
+
 		invariant = invariant->next;
 	}
 }
