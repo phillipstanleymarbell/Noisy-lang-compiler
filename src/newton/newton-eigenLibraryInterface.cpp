@@ -44,12 +44,12 @@ using namespace Eigen;
 
 extern "C"
 {
-	static int
-	factorialHelper(int n, int N)
+	static long
+	factorialHelper(long n, long N)
 	{
 		if (n)
 		{
-			return factorialHelper(n-1, N*n);
+			return factorialHelper(n-1L, N*n);
 		}
 		else
 		{
@@ -57,10 +57,40 @@ extern "C"
 		}
 	}
 
-	static int
-	factorial(int i)
+	static long
+	factorial(long i)
 	{
-		return factorialHelper(i,1);
+		return factorialHelper(i,1L);
+	}
+
+	static long
+	choose(long n, long r)
+	{
+		if(r <= n)
+		{
+			/*
+			 * minimize the size of intermediate results to avoid potential overflow
+			 * and use long to be on the safe side. perms is nPr
+			 */
+			if(r <= (n - r))
+			{
+				long perms = 1L;
+				for(long i = n - r + 1L; i <= n; i++)
+				{
+					perms *= i;
+				}
+				long rFact = factorial(r);
+				return perms / rFact;
+			}
+			else
+			{
+				return choose(n, n - r);
+			}
+		}
+		else
+		{
+			return choose(n,r);
+		}
 	}
 
 	/*
@@ -96,12 +126,17 @@ extern "C"
 					r++;
 					j++;
 				}
+
+				if(j == columnCount)
+				{
+					return;
+				}
 			}
 
 			/*
 			 *	Step 2
 			 */
-			m.array().row(i) /= m(i, j);
+			m.row(i) /= m(i, j);
 
 			/*
 			 *	Step 3
@@ -110,7 +145,7 @@ extern "C"
 			{
 				if (q != i)
 				{
-					m.array().row(q) -= m.array().row(i) * m(q, j) / m(i, j); 
+					m.row(q) -= m.row(i) * m(q, j) / m(i, j); 
 				}
 			}
 
@@ -138,6 +173,8 @@ extern "C"
 			}
 		}
 
+		cout << m << endl << endl;
+
 		computeRREF(m, rowCount, columnCount, indices);
 		
 		MatrixXd nonPivot(rank, columnCount - rank);
@@ -152,14 +189,15 @@ extern "C"
 		/*
 		 *	Multiply the matrix by -1
 		 */
-		nonPivot.array() = nonPivot.array() * -1;
+		nonPivot *= -1;
 
+		kernels[element].resize(columnCount, columnCount - rank);
 		MatrixXd I = MatrixXd::Identity(columnCount - rank, columnCount - rank);
 		
 		int r = 0, p = 0;
 		for (int i = 0; i < columnCount; i++)
 		{
-			if (i == indices[r])
+			if (r < columnCount - rank && i == indices[r])
 			{
 				kernels[element].row(i) = I.row(r);
 
@@ -178,13 +216,14 @@ extern "C"
 		return;
 	}
 
+	static int element = 0;
+
 	static void
 	generateAllPiGroups(MatrixXd dimensionalMatrix, int rowCount, int columnCount, int rank, int x[], int k, MatrixXd kernels[])
 	{	
 		/*
 		 *	Generate all the possible combinations of columns in lexicographic order
 		 */
-		int	element = 0;
 
 		if (k == rank + 1)
 		{
@@ -210,7 +249,7 @@ extern "C"
 		Map<MatrixXd>	eigenInterfaceDimensionalMatrix (dimensionalMatrix, columnCount, rowCount);
 		MatrixXd	eigenInterfaceTransposedDimensionalMatrix = eigenInterfaceDimensionalMatrix.transpose();
 		int		rank = eigenInterfaceTransposedDimensionalMatrix.fullPivLu().rank();
-		int 		numberOfCircuitSets = factorial(columnCount) / (factorial(rank) * factorial(columnCount - rank));
+		int 		numberOfCircuitSets = choose(columnCount,rank);
 		MatrixXd	eigenInterfaceKernels[numberOfCircuitSets];
 		double **	cInterfaceKernels;
 		int		x[rank+1];
@@ -224,6 +263,7 @@ extern "C"
 
 		for (int i = 0; i < numberOfCircuitSets; i++)
 		{
+			cout << eigenInterfaceKernels[i] << endl << endl;
 			cInterfaceKernels[i] = eigenInterfaceKernels[i].data();
 		}
 
