@@ -45,9 +45,7 @@ include "NewtonBaseSignals.nt"
 #	1 is the static pressure sensor for pitot tube
 #
 airplanePressures: signal(i: 0 to 1) = {
-	name = "Pascal" English;
-	symbol = xPa;
-	derivation = force / area;
+	derivation = pressure;
 }
 
 AltimeterPitotPressuresShouldMatch: invariant(

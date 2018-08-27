@@ -71,6 +71,8 @@ extern const char	Emultidef[];
 extern const char	Epreviousdef[];
 extern const char	EunhandledNodeTypeInAstNodeStringsArray[];
 extern const char	EbaseDimensionNameOrAbbreviation[];
+extern const char	EnoValidDimensions[];
+
 /*
  *	These are mostly passed in eSemantics()
  */

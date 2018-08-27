@@ -40,37 +40,14 @@
 
 include "NewtonBaseSignals.nt"
 
-multiAxisDistance : signal(i: 0 to 5) =
-{
-	name		= "meters" English;
-	symbol		= xm;
-	derivation	= none;
-}
-
-multiAxisSpeed : signal(i: 0 to 5) =
-{
-	name		= "jiffies" English;
-	symbol		= xjf;
-	derivation	= multiAxisDistance@i / time;
-}
-
 multiAxisAcceleration : signal(i: 0 to 5) =
 {
-	name		= "metajiffies" English;
-	symbol		= xmjf;
-	derivation	= multiAxisSpeed@i / time;
-}
-
-multiAxisAngularDisplacement : signal(i: 0 to 2) =
-{
-	name		= "radians" English;
-	symbol		= xrad;
-	derivation	= none;
+	derivation	= acceleration@i;
 }
 
 multiAxisAngularVelocity : signal(i: 0 to 2) =
 {
-	derivation = multiAxisAngularDisplacement@i / time;
+	derivation = angularVelocity@i;
 }
 
 TimeBetweenSensors	: constant = (5E-6) * s;
@@ -87,8 +64,8 @@ accelerationAndGyro : invariant(
 	#
 	#	Rectangular integration estimation
 	#
-	((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) / (row ** 2 + pitch ** 2 + yaw ** 2) < (2 * m / radians) ** 2,
-	(row ** 2 + pitch ** 2 + yaw ** 2) / ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) > (0.1 * radians / m) ** 2
+	((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) / (row ** 2 + pitch ** 2 + yaw ** 2) < (2 * m / radian) ** 2,
+	(row ** 2 + pitch ** 2 + yaw ** 2) / ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) > (0.1 * radian / m) ** 2
 }
 
 redundantAccelerometers : invariant(

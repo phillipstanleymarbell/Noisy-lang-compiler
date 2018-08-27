@@ -88,7 +88,16 @@ processNewtonFile(State *  N, char *  filename)
 	State *	N_dim = processNewtonFileDimensionPass(filename);
 	N->newtonIrTopScope->firstDimension = N_dim->newtonIrTopScope->firstDimension;
 
-	assert(N->newtonIrTopScope->firstDimension != NULL);
+	if (N->newtonIrTopScope->firstDimension == NULL)
+	{
+			char *	details;
+
+			asprintf(&details, "%s\n", EnoValidDimensions);
+			newtonParserSemanticError(N, kNewtonIrNodeType_PnewtonFile, details);
+			free(details);
+
+			newtonParserErrorRecovery(N, kNewtonIrNodeType_PnewtonFile);
+	}
 
 	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
 

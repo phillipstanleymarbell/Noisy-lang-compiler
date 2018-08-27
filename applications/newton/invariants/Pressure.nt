@@ -48,7 +48,7 @@ volume : signal =
 	#	In this case, it is not meaningful to specify a "symbol" alias
 	#
 
-	derivation = distance ** 3;
+	derivation = distance * distance * distance;
 }
 
 BoylesLaw: invariant(P: pressure, V: volume) = 
