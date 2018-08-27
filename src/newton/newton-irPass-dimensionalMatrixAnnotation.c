@@ -72,7 +72,7 @@ irPassDimensionalMatrixAnnotation(State *  N)
 		IrNode *	parameter = invariant->parameterList;
 		Dimension *	dimension = parameter->irLeftChild->physics->dimensions;
 
-		printf("Invariant: [%s]\n", invariant->identifier);
+//		fprintf(stderr, "Invariant: [%s]\n", invariant->identifier);
 
 		/*
 		 *	First, count the number of parameters and dimensions
@@ -137,7 +137,7 @@ irPassDimensionalMatrixAnnotation(State *  N)
 		parameter = invariant->parameterList;
 		for (int i = 0; i < parameterCount; i++)
 		{
-			printf("%4s\t", parameter->irLeftChild->physics->identifier);
+//			fprintf(stderr, "%4s\t", parameter->irLeftChild->physics->identifier);
 
 			dimension = parameter->irLeftChild->physics->dimensions;
 			invariant->dimensionalMatrixColumnLabels[i] = parameter->irLeftChild->physics->identifier;
@@ -150,9 +150,9 @@ irPassDimensionalMatrixAnnotation(State *  N)
 				}
 
 				dimension = dimension->next;
-				printf("%4.0f ", tmpMatrix[i][j]);
+//				fprintf(stderr, "%4.0f ", tmpMatrix[i][j]);
 			}
-			printf("\n");
+//			fprintf(stderr, "\n");
 			parameter = parameter->irRightChild;
 		}
 		printf("\n\n");
