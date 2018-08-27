@@ -1,0 +1,5 @@
+
+changeset: 536:5b2d063cf9a950ba45d7c6e818487d919c5a27f6
+char kNewtonVersion[] = "0.2-alpha-536 (5b2d063cf9a950ba45d7c6e818487d919c5a27f6) (build 08-27-2018-13:28-james@entomology-Linux-4.18.3-arch1-1-ARCH-x86_64)";
+\n./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s
+\n./src/newton/newton-linux-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt

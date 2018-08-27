@@ -100,7 +100,7 @@ extern "C"
 	computeRREF(MatrixXd & m, int rowCount, int columnCount, int indices[])
 	{
 		int i = 0, j = 0, r = 0;
-		
+
 		while (i < rowCount && j < columnCount)
 		{
 			/*
@@ -109,9 +109,8 @@ extern "C"
 			while (m(i, j) == 0)
 			{
 				bool swapped = false;
-				for (int p = i + 1; i + p < rowCount; p++)
+				for (int p = i + 1; p < rowCount; p++)
 				{
-
 					if (m(p, j))
 					{
 						m.row(i).swap(m.row(p));
@@ -156,6 +155,11 @@ extern "C"
 			j++;
 		}
 
+		if(indices[r] < 0)
+		{
+			indices[r] = j;
+		}
+
 		return;
 	}
 
@@ -165,6 +169,11 @@ extern "C"
 		assert(columnCount - rank != 0);
 		int	indices[columnCount - rank];
 
+		for(int i = 0; i < columnCount - rank; i++)
+		{
+			indices[i] = -1;
+		}
+
 		for (int i = 1; i <= rank; i++)
 		{
 			if(x[i] > i)
@@ -173,19 +182,19 @@ extern "C"
 			}
 		}
 
-		cout << m << endl << endl;
-
 		computeRREF(m, rowCount, columnCount, indices);
 		
 		MatrixXd nonPivot(rank, columnCount - rank);
+		
 		for (int i = 0; i < columnCount - rank; i++)
 		{
 			/*
 			 *	Builds the matrix out of the non-pivot columns
 			 */
-			nonPivot.block(0, i, rank, 1) = m.block(0, indices[i], rank, 1);
+			nonPivot.col(i) = m.col(indices[i]);
+			//nonPivot.block(0, i, rank, 1) = m.block(0, indices[i], rank, 1);
 		}
-
+		
 		/*
 		 *	Multiply the matrix by -1
 		 */
