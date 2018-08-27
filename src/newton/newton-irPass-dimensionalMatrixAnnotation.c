@@ -155,7 +155,7 @@ irPassDimensionalMatrixAnnotation(State *  N)
 //			fprintf(stderr, "\n");
 			parameter = parameter->irRightChild;
 		}
-		printf("\n\n");
+//		fprintf(stderr, "\n\n");
 
 		/*
 		 *	We already know the dimensional matrix column count, since

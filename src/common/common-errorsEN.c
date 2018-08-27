@@ -71,6 +71,7 @@ const char	Emultidef[]				= "Multiple definition of \"%s\" in \"%s\", at line %d
 const char	Epreviousdef[]				= "Previous definition in \"%s\", at line %d, column %d.";
 const char	EunhandledNodeTypeInAstNodeStringsArray[]= "Unhandled node type in gNoisyAstNodeStrings[] array";
 const char	EbaseDimensionNameOrAbbreviation[]	= "Base dimension missing name or abbreviation definition";
+const char	EnoValidDimensions[]			= "No valid dimensions found during dimensions pass";
 
 
 

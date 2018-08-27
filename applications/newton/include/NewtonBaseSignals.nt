@@ -155,14 +155,14 @@ area : signal =
 {
 	name		= "squares" English;
 	symbol		= sq;
-	derivation	= distance ** 2;
+	derivation	= distance * distance;
 }
 
 angularDisplacement : signal =
 {
 	name		= "radian" English;
 	symbol		= rad;
-	derivation	= none;
+	derivation	= distance / distance;
 }
 
 angularVelocity : signal =
