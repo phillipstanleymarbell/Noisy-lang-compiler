@@ -72,6 +72,8 @@ extern const char	Epreviousdef[];
 extern const char	EunhandledNodeTypeInAstNodeStringsArray[];
 extern const char	EbaseDimensionNameOrAbbreviation[];
 extern const char	EnoValidDimensions[];
+extern const char	EsubindexEndMustBeNaturalnumber[];
+extern const char	EraisingPhysicsQuantityToNonIntegerExponent[];
 
 /*
  *	These are mostly passed in eSemantics()

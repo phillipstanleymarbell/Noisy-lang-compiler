@@ -155,7 +155,7 @@ area : signal =
 {
 	name		= "squares" English;
 	symbol		= sq;
-	derivation	= distance * distance;
+	derivation	= distance**2;
 }
 
 angularDisplacement : signal =
