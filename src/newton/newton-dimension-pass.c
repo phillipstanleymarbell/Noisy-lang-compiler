@@ -273,7 +273,8 @@ newtonDimensionPassParseName(State * N, Scope * currentScope)
 	}
 	else
 	{
-		fatal(N, "newton-dimension-pass.c:newtonDimensionPassParseName no language setting\n");
+		newtonParserSyntaxError(N, kNewtonIrNodeType_Pname, kNewtonIrNodeTypeMax, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pname);
 	}
 
 	return node;

@@ -50,7 +50,6 @@ SOURCES		=\
 		newton-lexer.c\
 		newton-api.c\
 		newton-parser.c\
-		newton-parser-expression.c\
 		newton-dimension-pass.c\
 		newton-dimension-check-pass.c\
 		newton-irPass-dotBackend.c\
@@ -83,7 +82,6 @@ OBJS		=\
 		newton-api.$(OBJECTEXTENSION)\
 		newton-lexer.$(OBJECTEXTENSION)\
 		newton-parser.$(OBJECTEXTENSION)\
-		newton-parser-expression.$(OBJECTEXTENSION)\
 		newton-dimension-pass.$(OBJECTEXTENSION)\
 		newton-dimension-check-pass.$(OBJECTEXTENSION)\
 		newton-types.$(OBJECTEXTENSION)\
@@ -109,7 +107,6 @@ CGIOBJS		=\
 		newton-api.$(OBJECTEXTENSION)\
 		newton-lexer.$(OBJECTEXTENSION)\
 		newton-parser.$(OBJECTEXTENSION)\
-		newton-parser-expression.$(OBJECTEXTENSION)\
 		newton-dimension-pass.$(OBJECTEXTENSION)\
 		newton-dimension-check-pass.$(OBJECTEXTENSION)\
 		newton-types.$(OBJECTEXTENSION)\
@@ -134,7 +131,6 @@ LIBNEWTONOBJS =\
 		newton-api.$(OBJECTEXTENSION)\
 		newton-lexer.$(OBJECTEXTENSION)\
 		newton-parser.$(OBJECTEXTENSION)\
-		newton-parser-expression.$(OBJECTEXTENSION)\
 		newton-dimension-pass.$(OBJECTEXTENSION)\
 		newton-dimension-check-pass.$(OBJECTEXTENSION)\
 		newton-typeSignatures.$(OBJECTEXTENSION)\
@@ -159,7 +155,6 @@ HEADERS		=\
 		newton-parser.h\
 		newton-types.h\
 		newton-timeStamps.h\
-		newton-parser-expression.h\
 		newton-irPass-dotBackend.h\
 		newton-irPass-smtBackend.h\
 		newton-irPass-dimensionalMatrixAnnotation.h\

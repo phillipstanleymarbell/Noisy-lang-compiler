@@ -72,8 +72,8 @@ const char	Epreviousdef[]				= "Previous definition in \"%s\", at line %d, colum
 const char	EunhandledNodeTypeInAstNodeStringsArray[]= "Unhandled node type in gNoisyAstNodeStrings[] array";
 const char	EbaseDimensionNameOrAbbreviation[]	= "Base dimension missing name or abbreviation definition";
 const char	EnoValidDimensions[]			= "No valid dimensions found during dimensions pass";
-
-
+const char	EsubindexEndMustBeNaturalnumber[]	= "Subindex must be a natural number";
+const char	EraisingPhysicsQuantityToNonIntegerExponent[] = "Raising a dimension to a non integer value not permitted";
 
 /*
  *	These are mostly passed in eSemantics()

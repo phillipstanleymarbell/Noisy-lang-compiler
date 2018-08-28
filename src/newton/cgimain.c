@@ -69,7 +69,7 @@
 
 #include "newton-parser.h"
 #include "newton-lexer.h"
-#include "newton-symbolTable.h"
+#include "common-symbolTable.h"
 #include "newton.h"
 #include "newton-irPass-dotBackend.h"
 #include "newton-irPass-smtBackend.h"
@@ -596,7 +596,7 @@ main(void)
 	logFd = mkstemp(logFileStub);
 #else
 	snprintf(logFileStub, kNoisyMaxFilenameLength, "%sinput-%s-%s.newton", kNewtonBasePath, getenv("REMOTE_ADDR"), kNewtonCgiInputLogStub);
-	logFd = mkstemps(logFileStub, strlen(kNoisyCgiInputLogExtension));
+	logFd = mkstemps(logFileStub, strlen(kNewtonCgiInputLogExtension));
 #endif
 
 	if (logFd == -1)
@@ -653,11 +653,11 @@ main(void)
 		/*
 		 *	Create a top-level scope, then parse.
 		 */
-		newtonCgiState->newtonIrTopScope = newtonSymbolTableAllocScope(newtonCgiState);
+		newtonCgiState->newtonIrTopScope = commonSymbolTableAllocScope(newtonCgiState);
 		
 
 		newtonLexInit(newtonCgiDimensionsState, inputFilePath);
-		newtonCgiDimensionsState->newtonIrTopScope = newtonSymbolTableAllocScope(newtonCgiDimensionsState);
+		newtonCgiDimensionsState->newtonIrTopScope = commonSymbolTableAllocScope(newtonCgiDimensionsState);
 		newtonDimensionPassParse(newtonCgiDimensionsState, newtonCgiDimensionsState->newtonIrTopScope);
 
 		newtonCgiState->newtonIrTopScope->firstDimension = newtonCgiDimensionsState->newtonIrTopScope->firstDimension;

@@ -673,7 +673,7 @@ struct Dimension
 {
 	char *			name;
 	char *			abbreviation;
-	double			exponent;		//	Default value is 1 if exists
+	double			exponent;			//	Default value is 1 if exists
 	Scope *			scope;
 	SourceInfo *		sourceInfo;
 	int			primeNumber;
@@ -734,7 +734,7 @@ struct IrNode
 	 */
 	char *			tokenString;
 	Token *			token;
-	SourceInfo *	sourceInfo;
+	SourceInfo *		sourceInfo;
 	IrNode *		irParent;
 	IrNode *		irLeftChild;
 	IrNode *		irRightChild;
@@ -758,11 +758,6 @@ struct IrNode
 	 *	A parameter tuple of length n has ordering from zero to n - 1
 	 */
 	int			parameterNumber;
-
-	/*
-	 * When doing an API check of the invariant tree given a parameter tree,
-	 * the method looks up all instances of
-	 */
 
 	/*
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
@@ -1000,23 +995,6 @@ typedef struct
 	 *	Global index of which prime numbers we have used for the dimension id's
 	 */
 	int		primeNumbersIndex;
-
-	/*
-	 *	When parsing invariant constraints, need to number the factors that correspond to the parameters passed in.
-	 *	This is so that finding matching Parameter doesn't depend either the identifier passed, or the physics type.
-	 *	That is a good idea because now we don't need to implicitly fill in the left identifier child of the parameter node.
-	 */
-	int currentParameterNumber;
-
-	/*
-	 *	This is a group (linked list) of linked list of physics nodes
-	 */
-	IntegralList * vectorIntegralLists;
-
-	/*
-	 *	This is a group (linked list) of linked list of physics nodes
-	 */
-	IntegralList * scalarIntegralLists;
 	Invariant * invariantList;
 } State;
 
