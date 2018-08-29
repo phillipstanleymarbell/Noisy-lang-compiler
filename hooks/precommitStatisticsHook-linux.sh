@@ -22,10 +22,12 @@ make README.sloccount
 
 cat src/noisy/version.c >> $trackingDirectory/$statsFile
 cat src/newton/version.c >> $trackingDirectory/$statsFile
+cp applications/newton/include/NewtonBaseSignals.nt .
 echo '\n./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s' >> $trackingDirectory/$statsFile
 ./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s >> $trackingDirectory/$statsFile
 echo '\n./src/newton/newton-linux-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt' >> $trackingDirectory/$statsFile
 ./src/newton/newton-linux-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt >> $trackingDirectory/$statsFile
 rm tmp.smt2
+rm NewtonBaseSignals.nt
 
 cp $trackingDirectory/$statsFile $trackingDirectory/latest.txt

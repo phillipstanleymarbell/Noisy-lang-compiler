@@ -56,7 +56,6 @@
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
 #include "common-irHelpers.h"
-#include "newton-parser-expression.h"
 #include "common-lexers-helpers.h"
 #include "newton-lexer.h"
 #include "newton-symbolTable.h"

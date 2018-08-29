@@ -1,3 +1,0 @@
-sudo dtrace -s timing.d -c /Users/jonathanlim/Documents/Compiler/Noisy_philip/tests/test-step-counter/test-darwin-EN
-
-
