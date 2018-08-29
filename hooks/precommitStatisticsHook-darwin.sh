@@ -24,11 +24,13 @@ make README.sloccount
 
 cat src/noisy/version.c >> $trackingDirectory/$statsFile
 cat src/newton/version.c >> $trackingDirectory/$statsFile
+cp applications/newton/include/NewtonBaseSignals.nt .
 echo '\n./src/noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s' >> $trackingDirectory/$statsFile
 ./src/noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s >> $trackingDirectory/$statsFile
 echo '\n./src/newton/newton-darwin-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt' >> $trackingDirectory/$statsFile
 ./src/newton/newton-darwin-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt >> $trackingDirectory/$statsFile
 rm tmp.smt2
+rm NewtonBaseSignals.nt
 
 echo '\nsudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s"' >> $trackingDirectory/$statsFile
 sudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s" noisy/noisy-darwin-EN >> $trackingDirectory/$statsFile
