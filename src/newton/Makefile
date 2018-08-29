@@ -170,6 +170,7 @@ HEADERS		=\
 all: installhooks version.c lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile target examples
 
 installhooks:
+	ln -fs ../../applications/newton/include/NewtonBaseSignals.nt .
 	cp $(TREEROOT)/hooks/$(PRECOMMITHOOK) $(TREEROOT)/.git/hooks/pre-commit
 	cp $(TREEROOT)/hooks/commitMessageHook.sh $(TREEROOT)/.git/hooks/commit-msg
 	cp $(TREEROOT)/hooks/postcommitStatisticsHook.sh $(TREEROOT)/.git/hooks/post-commit
