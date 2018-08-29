@@ -54,7 +54,6 @@
 #include "newton-data-structures.h"
 #include "common-irHelpers.h"
 #include "noisy-parser.h"
-#include "newton-parser-expression.h"
 #include "newton-parser.h"
 #include "common-lexers-helpers.h"
 #include "newton-lexer.h"
