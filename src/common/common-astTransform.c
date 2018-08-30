@@ -116,8 +116,20 @@ IrNode *  expandMinus(State *  N, IrNode *  rootNode)
      * 
      * NB: the number is stored in the right child since it is more-or-less 0-1
      */
+
+    IrNode *  operand;
+
+    if (R(rootNode)->type == kNoisyIrNodeType_Xseq)
+    {
+        operand = L(R(rootNode));
+    }
+    else
+    {
+        operand = R(rootNode);
+    }
+
     IrNode *  expandedTree = genIrNode(N, kNewtonIrNodeType_Tminus, NULL, \
-                                       commonTreeTransform(N, L(R(rootNode))),\
+                                       commonTreeTransform(N, operand),\
                                        L(rootNode)->sourceInfo);
 
     irPassHelperColorIr(N, expandedTree, kNoisyIrNodeColorTreeTransformedColoring, true, false);
