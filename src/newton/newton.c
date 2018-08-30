@@ -35,6 +35,11 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+/*
+ *	For asprintf()
+ */
+#define _GNU_SOURCE
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

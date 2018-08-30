@@ -45,6 +45,7 @@
 #include <getopt.h>
 #include <setjmp.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -688,7 +689,7 @@ checkQuantityFactor(
         {
 		    sprintf(
 				report->dimensionErrorMessage,
-				"newton-check-pass.c:checkQuantityFactor: did not find a parameter with physics id %llu", factor->physics->id);
+				"newton-check-pass.c:checkQuantityFactor: did not find a parameter with physics id %" PRIu64, factor->physics->id);
 
 		    fatal(N, "newton-check-pass.c:checkQuantity: matchingParameter is null\n");
 		    return NULL;
