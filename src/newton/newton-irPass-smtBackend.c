@@ -392,7 +392,7 @@ irPassDeclareParameters(State *  N, Invariant *  input)
 void
 irPassSmtProcessInvariant(State *  N, Invariant *  input)
 {
-	IrNode *	current = input->constraints;
+	IrNode *	current = input->constraints->irParent;
 
 	irPassDeclareParameters(N, input);
 
