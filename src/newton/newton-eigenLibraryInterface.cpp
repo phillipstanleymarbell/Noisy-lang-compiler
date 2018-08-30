@@ -47,7 +47,7 @@ extern "C"
 	static int gKernelNumber = 0;
 
 	/*
-	 *      A tail recursive implementation of n!
+	 *	A tail recursive implementation of n!
 	 */
 	static long
 	factorial(long n, long N = 1)
@@ -127,7 +127,7 @@ extern "C"
 		if (matrix(currentRow, currentColumn) == 0)
 		{
 			/*
-			 *      Now search the matrix for a row with non-zero entry in this column
+			 *	Now search the matrix for a row with non-zero entry in this column
 			 */
 			for (int compareRow = currentRow + 1; compareRow < rowCount; compareRow++)
 			{
@@ -165,7 +165,7 @@ extern "C"
 		if (currentRow >= rowCount)
 		{
 			/*
-			 *      The last columns may not have been checked for swaps and should be non-pivots
+			 *	The last columns may not have been checked for swaps and should be non-pivots
 			 */
 			int columnNumber = columnCount - 1;
 			int nonPivotIndex = columnCount - matrixRank - 1;
@@ -235,9 +235,9 @@ extern "C"
 		{
 			assert(nonPivotIndices[i] != -1);
 		}
-		
+
 		MatrixXd nonPivotMatrix(rank, columnCount - rank);
-		
+
 		for (int i = 0; i < columnCount - rank; i++)
 		{
 			/*
