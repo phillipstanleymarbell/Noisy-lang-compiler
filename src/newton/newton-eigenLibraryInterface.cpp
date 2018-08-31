@@ -1,5 +1,5 @@
 /*
-	Authored 2018. Vlad Mihai Mandric & James Rhodes
+	Authored 2018. Vlad Mihai Mandric & James Rhodes & Youchao Wang
 
 	Based on skeleton implementation of Eigen interface by Phillip Stanley-Marbell.
 
@@ -112,7 +112,7 @@ extern "C"
 
 		if (currentColumn >= columnCount)
 		{
-			return currentColumn;
+			return currentColumn; /* what are these??? */
 		}
 
 		int nonPivotPosition = 0;
@@ -189,7 +189,7 @@ extern "C"
 		}
 
 		/*
-		 *	Divide the current row through by the current entry
+		 *	Divide the current row through by the current entry to make pivot entry = 1
 		 */
 		matrix.row(currentRow) /= matrix(currentRow, currentColumn);
 
@@ -214,20 +214,25 @@ extern "C"
 	static void
 	computePiGroup(MatrixXd matrix, int rowCount, int columnCount, int rank, int x[], MatrixXd kernels[], int kernelNumber)
 	{
+		// nonPivot should be called free
 		int	nonPivotIndices[columnCount - rank];
 
 		for (int i = 0; i < columnCount - rank; i++)
 		{
-			nonPivotIndices[i] = -1;
+			nonPivotIndices[i] = -1; 
 		}
 
-		for (int i = 1; i <= rank; i++)
+		/* Swapping all the possible permutations */
+		for (int i = 0; i < rank; i++)
 		{
-			if (x[i] > i)
+			cout << x[i] <<endl;
+			for(int j = x[i]; j > i; j--)
 			{
-				matrix.col(i-1).swap(matrix.col(x[i]-1));
+				matrix.col(j - 1).swap(matrix.col(j));
 			}
 		}
+		cout << matrix << endl << endl;
+		
 
 		computeRREF(matrix, nonPivotIndices, rank);
 
@@ -236,12 +241,14 @@ extern "C"
 			assert(nonPivotIndices[i] != -1);
 		}
 		
-		MatrixXd nonPivotMatrix(rank, columnCount - rank);
+		printf("reconstruction ended up being here\n");
+		MatrixXd nonPivotMatrix(matrix.rows(), columnCount - rank);
+		//MatrixXd nonPivotMatrix(rank, columnCount - rank); //DOUBLE CHECK 
 		
 		for (int i = 0; i < columnCount - rank; i++)
 		{
 			/*
-			 *	Builds the matrix out of the non-pivot columns
+			 *	Builds non-pivot columns matrix for kernel calculation (checked)
 			 */
 			nonPivotMatrix.col(i) = matrix.col(nonPivotIndices[i]);
 		}
@@ -251,7 +258,7 @@ extern "C"
 		 */
 		nonPivotMatrix *= -1;
 
-		kernels[kernelNumber].resize(columnCount, columnCount - rank);
+		MatrixXd kernel(columnCount, columnCount - rank);
 		int kernelRows = columnCount;
 		MatrixXd identityMatrix = MatrixXd::Identity(columnCount - rank, columnCount - rank);
 		
@@ -264,35 +271,69 @@ extern "C"
 				/*
 				 *	Append the identity matrix to the non-pivot matrix
 				 */
-				kernels[kernelNumber].row(kernelRow) = identityMatrix.row(identityRow);
+				kernel.row(kernelRow) = identityMatrix.row(identityRow);
 				identityRow++;
 			}
 			else
 			{
-				kernels[kernelNumber].row(kernelRow) = nonPivotMatrix.row(nonPivotRow);
+				kernel.row(kernelRow) = nonPivotMatrix.row(nonPivotRow);
 				nonPivotRow++;
 			}
 		}
+
+		kernels[kernelNumber] = kernel;
 	}
 
 	static void
-	generateAllPiGroups(MatrixXd dimensionalMatrix, int rowCount, int columnCount, int rank, int x[], int k, MatrixXd kernels[])
-	{	
+	generateAllPiGroups(MatrixXd dimensionalMatrix, int rowCount, int columnCount, int rank, int columns[], MatrixXd kernels[], int columnIndex = 0, int currentColumn = 0)
+	{
 		/*
-		 *	Generate all the possible combinations of columns in lexicographic order
+		 *	Create a copy of the columns array for this iteration with an extra space for the next column number
 		 */
-
-		if (k == rank + 1)
+		int newColumns[columnIndex + 1];
+		for(int i = 0; i < columnIndex; i++)
 		{
-			computePiGroup(dimensionalMatrix, rowCount, columnCount, rank, x, kernels, gKernelNumber);
-			gKernelNumber++;
+			newColumns[i] = columns[i];
+		}
+		newColumns[columnIndex] = currentColumn;
+
+		if(columnIndex != rank - 1)
+		{
+			/*
+			 *	We can now pick columns from the matrix
+			 *	At this point we have two options:
+			 *		1. Pick the current column and recurse, appending that to the list of columns to swap
+			 *		2. Ignore the current column and recurse, leaving the list of columns untouched 
+			 *	The algorithm considers both, and calls computePiGroup when it has the right number of columns
+			 *	It will sometimes fail to pick enough columns, these will never call computePiGroup and can be ignored
+			 */
+
+			/*for(int i = currentColumn + 1; i < columnCount; i++)
+			{
+				generateAllPiGroups(dimensionalMatrix, rowCount, columnCount, rank, newColumns, kernels, columnIndex + 1, i);
+			}*/
+
+			if(currentColumn + 1 < columnCount)
+			{
+				generateAllPiGroups(dimensionalMatrix, rowCount, columnCount, rank, newColumns, kernels, columnIndex + 1, currentColumn + 1);
+				generateAllPiGroups(dimensionalMatrix, rowCount, columnCount, rank, columns, kernels, columnIndex, currentColumn + 1);
+			}
 		}
 		else
-		{
-			for (int i = x[k-1] + 1; i <= columnCount - rank + k; i++)
+		{			
+			/*cout << columnCount << ": ";
+			for(int i = 0; i < rank; i++)
 			{
-				x[k] = i;
-				generateAllPiGroups(dimensionalMatrix, rowCount, columnCount, rank, x, k + 1, kernels);
+				cout << newColumns[i] << ", ";
+			}
+			cout << endl;
+			*/
+
+			computePiGroup(dimensionalMatrix, rowCount, columnCount, rank, newColumns, kernels, gKernelNumber);
+			gKernelNumber++;
+			if(currentColumn + 1 < columnCount)
+			{
+				generateAllPiGroups(dimensionalMatrix, rowCount, columnCount, rank, columns, kernels, columnIndex, currentColumn + 1);
 			}
 		}
 	}
@@ -300,6 +341,7 @@ extern "C"
 	double **
 	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount)
 	{
+		gKernelNumber = 0;
 		Map<MatrixXd>	eigenInterfaceDimensionalMatrix (dimensionalMatrix, columnCount, rowCount);
 		MatrixXd	eigenInterfaceTransposedDimensionalMatrix = eigenInterfaceDimensionalMatrix.transpose();
 		int		rank = eigenInterfaceTransposedDimensionalMatrix.fullPivLu().rank();
@@ -312,11 +354,10 @@ extern "C"
 		int 		numberOfCircuitSets = choose(columnCount,rank);
 		MatrixXd	eigenInterfaceKernels[numberOfCircuitSets];
 		double **	cInterfaceKernels;
-		int		x[rank+1];
-		int		k = 1;
+		int		x[1];
 
 		x[0] = 0;
-		generateAllPiGroups(eigenInterfaceTransposedDimensionalMatrix, rowCount, columnCount, rank, x, k, eigenInterfaceKernels);
+		generateAllPiGroups(eigenInterfaceTransposedDimensionalMatrix, rowCount, columnCount, rank, x, eigenInterfaceKernels);
 
 		cInterfaceKernels = (double **)calloc(numberOfCircuitSets*rowCount, sizeof(double *));
 		assert(cInterfaceKernels != NULL);
