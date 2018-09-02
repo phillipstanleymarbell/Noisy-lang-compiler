@@ -40,7 +40,7 @@ extern "C"
 {
 #	endif /* __cplusplus */
 
-double **	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount);
+double **	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels);
 
 #	ifdef __cplusplus
 } /* extern "C" */
