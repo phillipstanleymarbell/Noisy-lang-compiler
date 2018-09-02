@@ -561,7 +561,8 @@ typedef enum
 typedef enum
 {
 	kNoisyIrDimensionMatrixPass			= (1 << 0),
-	
+	kNoisyIrPiGroupsPass				= (1 << 1),
+
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -696,7 +697,9 @@ struct Invariant
 	char **			dimensionalMatrixRowLabels;	//	Labels of dimensional matrix rows		
 	char **			dimensionalMatrixColumnLabels;	//	Labels of dimensional matrix columns 
 	double **		nullSpace;
-	
+	int			kernelColumnCount;
+	int			numberOfUniqueKernels;
+
 	Invariant *		next;
 };
 

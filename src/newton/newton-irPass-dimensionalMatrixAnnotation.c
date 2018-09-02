@@ -157,18 +157,25 @@ irPassDimensionalMatrixAnnotation(State *  N)
 		}
 //		fprintf(stderr, "\n\n");
 
+
 		/*
 		 *	We already know the dimensional matrix column count, since
 		 *	that is the parameter count. We determine the row count
 		 *	from inspecting usedDimensions[].
 		 */
 		invariant->dimensionalMatrixColumnCount = parameterCount;
+		invariant->dimensionalMatrixRowCount = 0;
 		for (int i = 0; i < dimensionCount; i++)
 		{
 			if (usedDimensions[i])
 			{
 				invariant->dimensionalMatrixRowCount++;
 			}
+		}
+
+		if (invariant->dimensionalMatrixRowCount == 0)
+		{
+			fatal(N, Esanity);
 		}
 
 		invariant->dimensionalMatrixRowLabels = (char **) calloc(invariant->dimensionalMatrixRowCount, sizeof(char *));

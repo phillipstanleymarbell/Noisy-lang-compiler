@@ -68,7 +68,14 @@ irPassDimensionalMatrixPiGroups(State *  N)
 
 	while (invariant)
 	{
-		invariant->nullSpace = newtonEigenLibraryInterfaceGetPiGroups(invariant->dimensionalMatrix, invariant->dimensionalMatrixRowCount, invariant->dimensionalMatrixColumnCount);
+		invariant->kernelColumnCount		= 0;
+		invariant->numberOfUniqueKernels	= 0;
+
+		invariant->nullSpace = newtonEigenLibraryInterfaceGetPiGroups(	invariant->dimensionalMatrix,
+										invariant->dimensionalMatrixRowCount,
+										invariant->dimensionalMatrixColumnCount,
+										&invariant->kernelColumnCount,
+										&invariant->numberOfUniqueKernels);
 
 		invariant = invariant->next;
 	}

@@ -94,10 +94,11 @@ main(int argc, char *argv[])
 			{"trace",		no_argument,		0,	't'},
 			{"statistics",		no_argument,		0,	's'},
 			{"optimize",		required_argument,	0,	'O'},
+			{"pigroups",		no_argument,		0,	'p'},
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:S:b:stO:", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:p", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -229,6 +230,15 @@ main(int argc, char *argv[])
 					consolePrintBuffers(N);
 					exit(EXIT_FAILURE);
 				}
+
+				break;
+			}
+
+			case 'p':
+			{
+				N->irPasses |= kNoisyIrDimensionMatrixPass;
+				N->irPasses |= kNoisyIrPiGroupsPass;
+				timestampsInit(N);
 
 				break;
 			}

@@ -1,5 +1,5 @@
 /*
-	Authored 2018. Vlad Mihai Mandric & James Rhodes
+	Authored 2018, Vlad Mihai Mandric, James Rhodes, Phillip Stanley-Marbell.
 
 	Based on skeleton implementation of Eigen interface by Phillip Stanley-Marbell.
 
@@ -44,8 +44,6 @@ using namespace Eigen;
 
 extern "C"
 {
-	static int gKernelNumber = 0;
-
 	/*
 	 *	A tail recursive implementation of n!
 	 */
@@ -101,11 +99,11 @@ extern "C"
 	}
 
 	/*
-	 *	This is used by computeRREF to make a swap if necessary and returns the column
-	 *	of the matrix at which it terminated
+	 *	This is used by transformMatrixToRREF to make a swap if necessary
+	 *	and returns the column of the matrix at which it terminated
 	 */
 	static int
-	makeRREFSwapIfNecessary(MatrixXd & matrix, int nonPivotIndices[], int matrixRank, int currentRow, int currentColumn)
+	makeRREFSwapIfNecessary(MatrixXd &  matrix, int nonPivotColumnIndices[], int matrixRank, int currentRow, int currentColumn)
 	{
 		int rowCount = matrix.rows();
 		int columnCount = matrix.cols();
@@ -116,11 +114,11 @@ extern "C"
 		}
 
 		int nonPivotPosition = 0;
-		while (nonPivotIndices[nonPivotPosition] != -1 && nonPivotPosition < columnCount - matrixRank - 1)
+		while (nonPivotColumnIndices[nonPivotPosition] != -1 && nonPivotPosition < columnCount - matrixRank - 1)
 		{
 			nonPivotPosition++;
 		}
-		
+
 		/*
 		 *	Only attempt to swap if current position is non-zero
 		 */
@@ -144,8 +142,8 @@ extern "C"
 			/*
 			 *	At this point we have not made a swap, try again with the next column
 			 */
-			nonPivotIndices[nonPivotPosition] = currentColumn;
-			return makeRREFSwapIfNecessary(matrix, nonPivotIndices, matrixRank, currentRow, currentColumn+1);
+			nonPivotColumnIndices[nonPivotPosition] = currentColumn;
+			return makeRREFSwapIfNecessary(matrix, nonPivotColumnIndices, matrixRank, currentRow, currentColumn+1);
 		}
 		else
 		{
@@ -154,10 +152,10 @@ extern "C"
 	}
 
 	/*
-	 *	Computes the row reduced echelon form (RREF)
+	 *	Transforms matrix to the row reduced echelon form (RREF)
 	 */
 	static void
-	computeRREF(MatrixXd & matrix, int nonPivotIndices[], int matrixRank, int currentRow = 0, int currentColumn = 0)
+	transformMatrixToRREF(MatrixXd &  matrix, int nonPivotColumnIndices[], int matrixRank, int currentRow = 0, int currentColumn = 0)
 	{
 		int rowCount = matrix.rows();
 		int columnCount = matrix.cols();
@@ -165,13 +163,14 @@ extern "C"
 		if (currentRow >= rowCount)
 		{
 			/*
-			 *	The last columns may not have been checked for swaps and should be non-pivots
+			 *	The last columns may not have been checked for swaps
+			 *	and should be non-pivots.
 			 */
 			int columnNumber = columnCount - 1;
 			int nonPivotIndex = columnCount - matrixRank - 1;
-			while (nonPivotIndices[nonPivotIndex] == -1)
+			while (nonPivotColumnIndices[nonPivotIndex] == -1)
 			{
-				nonPivotIndices[nonPivotIndex] = columnNumber;
+				nonPivotColumnIndices[nonPivotIndex] = columnNumber;
 				columnNumber--;
 				nonPivotIndex--;
 			}
@@ -182,7 +181,7 @@ extern "C"
 		/*
 		 *	Make the current entry non-zero
 		 */
-		currentColumn = makeRREFSwapIfNecessary(matrix, nonPivotIndices, matrixRank, currentRow, currentColumn);
+		currentColumn = makeRREFSwapIfNecessary(matrix, nonPivotColumnIndices, matrixRank, currentRow, currentColumn);
 		if (currentColumn >= columnCount)
 		{
 			return;
@@ -194,8 +193,9 @@ extern "C"
 		matrix.row(currentRow) /= matrix(currentRow, currentColumn);
 
 		/*
-		 *	Make all other entries in current column zero by subtracting multiples of the current row
-		 *	(which has a value of 1 at the current position)
+		 *	Make all other entries in current column zero by subtracting
+		 *	multiples of the current row (which has a value of 1 at the
+		 *	current position).
 		 */
 		for (int q = 0; q < rowCount; q++)
 		{
@@ -208,124 +208,271 @@ extern "C"
 		/*
 		 *	Repeat the algorithm, starting at the next position
 		 */
-		return computeRREF(matrix, nonPivotIndices, matrixRank, currentRow + 1, currentColumn + 1);
+		return transformMatrixToRREF(matrix, nonPivotColumnIndices, matrixRank, currentRow + 1, currentColumn + 1);
 	}
 
 	static void
-	computePiGroup(MatrixXd matrix, int rowCount, int columnCount, int rank, int x[], MatrixXd kernels[], int kernelNumber)
+	computePiGroup(MatrixXd matrix, int rowCount, int columnCount, int rank, int nonPivotColumnIndices[], MatrixXd &  kernel)
 	{
-		int	nonPivotIndices[columnCount - rank];
-
-		for (int i = 0; i < columnCount - rank; i++)
-		{
-			nonPivotIndices[i] = -1;
-		}
-
-		for (int i = 1; i <= rank; i++)
-		{
-			if (x[i] > i)
-			{
-				matrix.col(i-1).swap(matrix.col(x[i]-1));
-			}
-		}
-
-		computeRREF(matrix, nonPivotIndices, rank);
-
-		for (int i = 0; i < columnCount - rank; i++)
-		{
-			assert(nonPivotIndices[i] != -1);
-		}
-
-		MatrixXd nonPivotMatrix(rank, columnCount - rank);
+		MatrixXd nonPivotMatrix(matrix.rows(), columnCount - rank);
 
 		for (int i = 0; i < columnCount - rank; i++)
 		{
 			/*
 			 *	Builds the matrix out of the non-pivot columns
 			 */
-			nonPivotMatrix.col(i) = matrix.col(nonPivotIndices[i]);
+			nonPivotMatrix.col(i) = matrix.col(nonPivotColumnIndices[i]);
 		}
-		
+
 		/*
 		 *	Multiply the matrix by -1
 		 */
 		nonPivotMatrix *= -1;
 
-		kernels[kernelNumber].resize(columnCount, columnCount - rank);
-		int kernelRows = columnCount;
-		MatrixXd identityMatrix = MatrixXd::Identity(columnCount - rank, columnCount - rank);
-		
-		int identityRow = 0, nonPivotRow = 0;
-		int identitySize = columnCount - rank;
-		for (int kernelRow = 0; kernelRow < kernelRows; kernelRow++)
+		int		kernelRowCount	= columnCount;
+		int		identitySize	= columnCount - rank;
+		MatrixXd	identityMatrix	= MatrixXd::Identity(identitySize, identitySize);
+
+		/*
+		 *	The final kernel will have as many rows as there are columns
+		 *	in the original matrix:
+		 */
+		kernel.resize(kernelRowCount, columnCount - rank);
+
+		/*
+		 *	Place the identity matrix in the _rows_ corresponding to the
+		 *	nonpivot _columns_ in the original matrix. All other rows get
+		 *	the rows from the non-pivot part of the RREF matrix
+		 */
+		int	nextNonPivotColumnIndex = 0;
+		int	nextIdentityMatrixRowToCopy = 0;
+		for (int i = 0; i < kernelRowCount; i++)
 		{
-			if (identityRow < identitySize && kernelRow == nonPivotIndices[identityRow])
+			if ((nextNonPivotColumnIndex < (columnCount - rank)) && (i == nonPivotColumnIndices[nextNonPivotColumnIndex]))
 			{
-				/*
-				 *	Append the identity matrix to the non-pivot matrix
-				 */
-				kernels[kernelNumber].row(kernelRow) = identityMatrix.row(identityRow);
-				identityRow++;
+				kernel.row(i) = identityMatrix.row(nextNonPivotColumnIndex++);
 			}
 			else
 			{
-				kernels[kernelNumber].row(kernelRow) = nonPivotMatrix.row(nonPivotRow);
-				nonPivotRow++;
+				kernel.row(i) = nonPivotMatrix.row(nextIdentityMatrixRowToCopy++);
+			}
+		}
+	}
+
+
+
+	/*
+	 *	For a dimensional matrix with n parameters (n columns) and rank r,
+	 *	(i.e., equivalently, with r pivot columns ==> r linearly-independent
+	 *	columns) there are choose(n, r) ways in which we can rearrange the
+	 *	columns of the dimensional matrix to yield a unique Pi group (see
+	 *	Harald Hanche-Olsen, 2004 and E. Buckingham, 1914).
+	 *
+	 *	For each of these orderings of the r pivot columns, we generate 
+	 *	all the possible n-bit words which have r '1's and we place the 
+	 *	r pivot column indices at those positions.
+	 *
+	 *	If we also wanted to account not just for placement of the pivot
+	 *	columns, but also for their permutations relative to each other,
+	 *	we could use Heap's algorithm (B. R. Heap, "Permutations by 
+	 *	interchanges". The Computer Journal. 6 (3): 293–4) to find all the
+	 *	r! permutations of the r pivot column indices. 
+	 *
+	 *	Limitations:
+	 *	(1)	We assume inputMatrix has less than 64 columns as we use a
+	 *		uint64_t for the pivot position bitmap.
+	 */
+
+	static int
+	onesCount(uint64_t word)
+	{
+		int	count = 0;
+		for (int i = 0; i < sizeof(word)*8; i++)
+		{
+			count += (word >> i) & 0x1;
+		}
+
+		return count;
+	}
+
+	static uint64_t
+	getKthNbitWordWithRankBitsSet(int n, int kth, int rank)
+	{
+		assert(n <= 64);
+
+		int		which = 0;
+		uint64_t	max = (1ULL << n) - 1ULL;
+		for (int i = 0; i < max; i++)
+		{
+			if (onesCount(i) == rank)
+			{
+				if (which == kth)
+				{
+					return i;
+				}
+
+				which++;
+			}
+		}
+
+		return which;
+	}
+
+	static void
+	permuteWithBitMask(MatrixXd &  permutableMatrix, uint64_t permuteMask, int pivotColumnIndices[])
+	{
+		assert (permutableMatrix.cols() <= 64);
+
+		int	nextPivot = 0;
+		for (int i = 0; i < permutableMatrix.cols(); i++)
+		{
+			if ((permuteMask >> (permutableMatrix.cols() - 1 - i)) & 0x1)
+			{
+				permutableMatrix.col(i).swap(permutableMatrix.col(pivotColumnIndices[nextPivot++]));
 			}
 		}
 	}
 
 	static void
-	generateAllPiGroups(MatrixXd dimensionalMatrix, int rowCount, int columnCount, int rank, int x[], int k, MatrixXd kernels[])
-	{	
-		/*
-		 *	Generate all the possible combinations of columns in lexicographic order
-		 */
-
-		if (k == rank + 1)
+	resetWithNegativeOnes(int array[], int arrayLength)
+	{
+		for (int i = 0; i < arrayLength; i++)
 		{
-			computePiGroup(dimensionalMatrix, rowCount, columnCount, rank, x, kernels, gKernelNumber);
-			gKernelNumber++;
+			array[i] = -1;
 		}
-		else
+	}
+
+	static void
+	sanityCheckForNoNegativeOnes(int array[], int arrayLength)
+	{
+		for (int i = 0; i < arrayLength; i++)
 		{
-			for (int i = x[k-1] + 1; i <= columnCount - rank + k; i++)
-			{
-				x[k] = i;
-				generateAllPiGroups(dimensionalMatrix, rowCount, columnCount, rank, x, k + 1, kernels);
-			}
+			assert(array[i] != -1);
 		}
 	}
 
 	double **
-	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount)
+	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels)
 	{
-		Map<MatrixXd>	eigenInterfaceDimensionalMatrix (dimensionalMatrix, columnCount, rowCount);
-		MatrixXd	eigenInterfaceTransposedDimensionalMatrix = eigenInterfaceDimensionalMatrix.transpose();
-		int		rank = eigenInterfaceTransposedDimensionalMatrix.fullPivLu().rank();
+		Map<MatrixXd>	tmp (dimensionalMatrix, columnCount, rowCount);
+		MatrixXd	eigenInterfaceDimensionalMatrix = tmp.transpose();
+		int		rank = eigenInterfaceDimensionalMatrix.fullPivLu().rank();
 
 		if (columnCount - rank == 0)
 		{
 			return NULL;
 		}
 
-		int 		numberOfCircuitSets = choose(columnCount,rank);
+		assert(rank > 0);
+
+		int		nonPivotColumnIndices[columnCount - rank];
+		int		pivotColumnIndices[rank];
+		int		numberOfPivots = 0;
+		int		numberOfCircuitSets = choose(columnCount, rank);
 		MatrixXd	eigenInterfaceKernels[numberOfCircuitSets];
 		double **	cInterfaceKernels;
-		int		x[rank+1];
-		int		k = 1;
 
-		x[0] = 0;
-		generateAllPiGroups(eigenInterfaceTransposedDimensionalMatrix, rowCount, columnCount, rank, x, k, eigenInterfaceKernels);
+		/*
+		 *	Initialize the non-pivot column indices array. It will get
+		 *	populated by transformMatrixToRREF()
+		 */
+		resetWithNegativeOnes(nonPivotColumnIndices, columnCount - rank);
+		
+		/*
+		 *	Transform eigenInterfaceDimensionalMatrix in-place into its RREF:
+		 */
+		transformMatrixToRREF(eigenInterfaceDimensionalMatrix, nonPivotColumnIndices, rank);
 
-		cInterfaceKernels = (double **)calloc(numberOfCircuitSets*rowCount, sizeof(double *));
+		/*
+		 *	Sanity check: Make sure transformMatrixToRREF() set the total
+		 *	of columnCount - rank non-pivot indices
+		 */
+		sanityCheckForNoNegativeOnes(nonPivotColumnIndices, columnCount - rank);
+
+		/*
+		 *	Construct an array of the pivot indices from the non-pivot indices:
+		 */
+		for (int i = 0; i < columnCount; i++)
+		{
+			bool	indexIsNonPivot = false;
+			for (int j = 0; j < columnCount - rank; j++)
+			{
+				if (nonPivotColumnIndices[j] == i)
+				{
+					indexIsNonPivot = true;
+				}
+			}
+			if (!indexIsNonPivot)
+			{
+				pivotColumnIndices[numberOfPivots++] = i;
+			}
+		}
+
+		/*
+		 *	Sanity check: Number of pivots should equal rank.
+		 */
+		assert(numberOfPivots == rank);
+
+		/*
+		 *	Allocate the C-array which we will send back to the Newton core.
+		 */
+		cInterfaceKernels = (double **)calloc(numberOfCircuitSets, sizeof(double *));
 		assert(cInterfaceKernels != NULL);
 
+		/*
+		 *	Now that we know which indices are the pivots, we start again,
+		 *	(1) permuting the pivot columns of the original matrix
+		 *	(2) computing the RREF, (3) computing the null space.
+		 */
 		for (int i = 0; i < numberOfCircuitSets; i++)
 		{
-			cout << eigenInterfaceKernels[i] << endl << endl;
-			cInterfaceKernels[i] = eigenInterfaceKernels[i].data();
+			MatrixXd	permutableMatrix = tmp.transpose();
+			uint64_t	permuteMask = getKthNbitWordWithRankBitsSet(columnCount /* n */, i /* kth */, rank);
+
+			permuteWithBitMask(permutableMatrix, permuteMask, pivotColumnIndices);
+
+			/*
+			 *	Initialize the non-pivot column indices array. It will get
+			 *	populated by transformMatrixToRREF()
+			 */
+			resetWithNegativeOnes(nonPivotColumnIndices, columnCount - rank);
+
+			/*
+			 *	Transform the matrix in-place to row-reduced echelon form (RREF)
+			 */
+			transformMatrixToRREF(permutableMatrix, nonPivotColumnIndices, rank);
+
+			/*
+			 *	Sanity check: Make sure transformMatrixToRREF() set the total
+			 *	of columnCount - rank non-pivot indices.
+			 */
+			sanityCheckForNoNegativeOnes(nonPivotColumnIndices, columnCount - rank);
+
+			computePiGroup(permutableMatrix, rowCount, columnCount, rank, nonPivotColumnIndices, eigenInterfaceKernels[i]);
+
+			bool	isDuplicateKernel = false;
+			for (int j = 0; j < i; j++)
+			{
+				/*
+				 *	If the new kernel does not duplicate an existing one, then bump the kernel count
+				 */
+				if (eigenInterfaceKernels[j] == eigenInterfaceKernels[i])
+				{
+					isDuplicateKernel = true;
+				}
+			}
+
+			if (!isDuplicateKernel)
+			{
+				cInterfaceKernels[*numberOfUniqueKernels] = eigenInterfaceKernels[i].data();
+				*numberOfUniqueKernels += 1;
+
+// TODO: This print statement should be removed once we have a separate pass to print out the kernels, like we do for printing out the dimensional matrix. See issue #354
+cout << "Kernel " << i << " is a new unique kernel:" << endl << eigenInterfaceKernels[i] << endl << endl;
+			}
 		}
+// TODO: This print statement should be removed once we have a separate pass to print out the kernels, like we do for printing out the dimensional matrix. See issue #354
+cout << "Number of unique kernels is " << *numberOfUniqueKernels << endl << endl;
 
 		return cInterfaceKernels;
 	}
