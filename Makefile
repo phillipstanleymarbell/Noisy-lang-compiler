@@ -4,6 +4,7 @@ DIRS =\
 	src/noisy\
 
 all: README.sloccount
+	cp config.local submodules/libflex; \
 	@set -e; for dir in $(DIRS); do \
 	(cd $$dir; \
 		$(MAKE) SYSNAME=Noisy SYSNAMELOWER=noisy\
