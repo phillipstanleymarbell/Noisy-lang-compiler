@@ -3,13 +3,15 @@ DIRS =\
 	src/newton\
 	src/noisy\
 
-all: README.sloccount
-	cp config.local submodules/libflex; \
+all: README.sloccount pre
 	@set -e; for dir in $(DIRS); do \
 	(cd $$dir; \
 		$(MAKE) SYSNAME=Noisy SYSNAMELOWER=noisy\
 	); \
 	done
+
+pre:
+	cp config.local submodules/libflex
 
 README.sloccount:
 	sloccount src > README.sloccount
