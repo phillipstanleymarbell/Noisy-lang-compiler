@@ -39,6 +39,7 @@
 
 #include <Eigen/Eigen>
 #include <iostream>
+#include <stdint.h>
 using namespace std;
 using namespace Eigen;
 
@@ -287,7 +288,7 @@ extern "C"
 	onesCount(uint64_t word)
 	{
 		int	count = 0;
-		for (int i = 0; i < sizeof(word)*8; i++)
+		for (size_t i = 0; i < sizeof(word)*8; i++)
 		{
 			count += (word >> i) & 0x1;
 		}
@@ -302,7 +303,7 @@ extern "C"
 
 		int		which = 0;
 		uint64_t	max = (1ULL << n) - 1ULL;
-		for (int i = 0; i < max; i++)
+		for (uint64_t i = 0; i < max; i++)
 		{
 			if (onesCount(i) == rank)
 			{
@@ -369,7 +370,7 @@ extern "C"
 		int		pivotColumnIndices[rank];
 		int		numberOfPivots = 0;
 		int		numberOfCircuitSets = choose(columnCount, rank);
-		MatrixXd	eigenInterfaceKernels[numberOfCircuitSets];
+		MatrixXd	*eigenInterfaceKernels = new MatrixXd[numberOfCircuitSets];
 		double **	cInterfaceKernels;
 
 		/*
