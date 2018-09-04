@@ -73,16 +73,15 @@
 #include "newton.h"
 #include "newton-irPass-dotBackend.h"
 #include "newton-irPass-smtBackend.h"
+#include "newton-irPass-dimensionalMatrixAnnotation.h"
+#include "newton-irPass-dimensionalMatrixPiGroups.h"
+#include "newton-irPass-dimensionalMatrixPrinter.h"
 #include "newton-dimension-pass.h"
 
 extern char *			gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
 
-static const char		kNewtonCgiInputLogStub[]		= "XXXXXXXXXX";
-
-#ifdef __linux__
-#else
-static const char		kNewtonCgiInputLogExtension[]	= ".newton";
-#endif
+static const char		kNewtonCgiInputLogStub[]	= "XXXXXXXXXX";
+static const char		kNewtonCgiInputLogExtension[]	= ".nt";
 
 static char **			getCgiVars(void);
 static void			htmlPrint(char *  s);
@@ -568,6 +567,7 @@ main(void)
 			{
 				cgiOparameter = tmpUlong;
 				newtonCgiState->irPasses = cgiOparameter;
+				newtonCgiState->verbosityLevel = 2;
 			}
 			else
 			{
@@ -586,21 +586,11 @@ main(void)
 	 *	Log the input to a file; mkstemps() require the stub to be
 	 *	writeable.
 	 */
-
-
-	/*
-	 *	Linux does not have mkstemps()
-	 */
-#ifdef __linux__
-	snprintf(logFileStub, kNoisyMaxFilenameLength, "%sinput-%s-%s", kNewtonBasePath, getenv("REMOTE_ADDR"), kNewtonCgiInputLogStub);
-	logFd = mkstemp(logFileStub);
-#else
-	snprintf(logFileStub, kNoisyMaxFilenameLength, "%sinput-%s-%s.newton", kNewtonBasePath, getenv("REMOTE_ADDR"), kNewtonCgiInputLogStub);
+	snprintf(logFileStub, kNoisyMaxFilenameLength, "%sinput-%s-%s.nt", kNewtonBasePath, getenv("REMOTE_ADDR"), kNewtonCgiInputLogStub);
 	logFd = mkstemps(logFileStub, strlen(kNewtonCgiInputLogExtension));
-#endif
-
 	if (logFd == -1)
 	{
+		fprintf(stdout, "mkstemps() failed for stub [%s]\n", logFileStub);
 		fatal(newtonCgiState, Emkstemps);
 	}
 	else
@@ -678,6 +668,16 @@ main(void)
 		if (newtonCgiState->irBackends & kNewtonIrBackendSmt)
 		{
 			irPassSmtBackend(newtonCgiState);
+		}
+
+		/*
+	 	 *	Pi groups pass (implies Dimensional matrix pass)
+	 	 */
+		if (newtonCgiState->irPasses & kNoisyIrPiGroupsPass)
+		{
+			irPassDimensionalMatrixAnnotation(newtonCgiState);
+			irPassDimensionalMatrixPiGroups(newtonCgiState);
+			irPassDimensionalMatrixPrinter(newtonCgiState);
 		}
 
 		/*
@@ -769,7 +769,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 
 	printf("Newton version %s.\n", kNewtonVersion);
 	printf("<br>");
-	printf("Authored 2017-2018 by Jonathan Lim and Phillip Stanley-Marbell. SMT-2 backend and additional contributions by Zhengyang Gu.\n");
+	printf("Authored 2017-2018 by Jonathan Lim and Phillip Stanley-Marbell. Additional contributors, 2018 onwards. See CONTRIBUTORS.md.\n");
 	printf("<br>");
 	
 #if defined (_OPENMP)
@@ -899,17 +899,6 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 //	printf("  organization={IEEE}\n");
 //	printf("}\n");
 //	printf("</pre>\n");
-	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23+++++++Physical+invariant+for+a+violin%%0D%%0A%%23%%0D%%0A%%23+++++++Necessary+variables%%0D%%0A%%23%%0D%%0A%%23+++++++T+%%3A+tension+of+the+string%%0D%%0A%%23%%0D%%0A%%23+++++++L+%%3A+length+of+string+between+finger+and+bridge%%0D%%0A%%23%%0D%%0A%%23+++++++%%26%%23956%%3B+%%3A+mass+per+unit+length+of+the+string%%0D%%0A%%23%%0D%%0A%%23+++++++f+%%3A+fundamental+frequency+of+the+%%28shortened%%29+string%%0D%%0A%%23%%0D%%0A%%0D%%0Atime+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22second%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22s%%22%%3B%%0D%%0A++++++++derivation+%%3D++none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Adistance+%%3A+signal%%28i%%3A+0+to+1%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22meter%%22+English%%3B%%0D%%0A++++++++symbol+++++%%3D+%%22m%%22%%3B%%0D%%0A++++++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Amass+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22kilogram%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22kg%%22%%3B%%0D%%0A++++++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aspeed+%%3A+signal%%28i%%3A+0+to+1%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++++derivation+%%3D+distance%%40i+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aacceleration+%%3A+signal%%28i%%3A+0+to+1%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++++derivation+%%3D+speed%%40i+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Afrequency+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++derivation+%%3D+1+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aforce+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22Newton%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22N%%22%%3B%%0D%%0A++++++++derivation+%%3D+mass+*+acceleration%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aarea+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22Square+meter%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22m%%5E2%%22%%3B%%0D%%0A++++++++derivation+%%3D+distance+**+2%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Apressure+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++++name+++++++%%3D+%%22Pascal%%22+English%%0D%%0A++++++++symbol+++++%%3D+%%22Pa%%22%%3B%%0D%%0A++++++++derivation+%%3D+force+%%2F+area%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Amu+%%3A+constant+%%3D+0.000078+*+kg+%%2F+m%%3B%%0D%%0A%%0D%%0AOscillatingString%%3A+invariant%%28T%%3A+force%%2C+L%%3A+distance%%2C+f%%3A+frequency%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++++f+**+2+%%7E+%%28T+%%2F+mu%%29+%%2F+%%284+*+L+**+2%%29%%0D%%0A%%7D%%0D%%0A&w=980&s=0&o=0&t=0&b=Compile\">[Violin Example]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
-	printf("&nbsp;&nbsp;\n");
-	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23+++Simple+Pendulum%%0D%%0A%%23%%0D%%0A%%0D%%0Atime%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22second%%22+English%%0D%%0A++++symbol+%%3D+%%22s%%22%%3B%%0D%%0A++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Alength%%3A+signal%%28n%%3A+0+to+2%%29+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22meter%%22+English%%0D%%0A++++symbol+%%3D+%%22m%%22%%3B%%0D%%0A++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Amass%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22kilogram%%22+English%%0D%%0A%%09symbol+%%3D+%%22kg%%22%%3B%%09%%0D%%0A++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0APi++%%3A+constant+%%3D+3.14%%3B%%0D%%0Ag+++%%3A+constant+%%3D+9.8*m*s**-2%%3B%%0D%%0A%%0D%%0Apendulum%%3A+invariant%%28L%%3A+length%%400%%2C+period%%3A+time%%29+%%3D+%%0D%%0A%%7B%%0D%%0A++++period**2++%%7E++4*%%28Pi**2%%29*L%%2Fg+%%0D%%0A%%7D&w=980&s=0&o=0&t=0&b=Compile\">[Pendulum Example]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
-	printf("&nbsp;&nbsp;\n");
-	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23%%09Dropped+Ball%%0D%%0A%%23%%0D%%0Atime+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09name+%%3D+%%22second%%22+English%%0D%%0A%%09symbol+%%3D+%%22s%%22%%3B%%0D%%0A%%09derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Amass+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09name+%%3D+%%22kilogram%%22+English%%0D%%0A%%09symbol+%%3D+%%22kg%%22%%3B%%0D%%0A%%09derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Adistance+%%3A+signal%%28i%%3A+0+to+2%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%09name+%%3D+%%22meter%%22+English%%0D%%0A%%09symbol+%%3D+%%22m%%22%%3B%%0D%%0A%%09derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aspeed+%%3A+signal%%28i%%3A+0+to+2%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+distance+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aacceleration+%%3A+signal%%28i%%3A+0+to+2%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+speed+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aforce+%%3A+signal%%28i%%3A+0+to+2%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%09name+%%3D+%%22Newton%%22+English%%0D%%0A%%09symbol+%%3D+%%22N%%22+%%3B%%0D%%0A%%09derivation+%%3D+mass+*+acceleration%%40i%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aenergy%%3A+signal%%28i%%3A+0+to+2%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%09name+%%3D+%%22Joule%%22+English%%0D%%0A%%09symbol+%%3D+%%22J%%22%%3B%%0D%%0A%%09derivation+%%3D+force%%40i+*+distance%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Ag%%09%%09++++++++%%3A+constant+%%3D+9.8+*+m+*+s+**+-2%%3B%%0D%%0ASamplingTime%%09%%3A+constant+%%3D+5+*+10+**+-3+*+s%%3B%%0D%%0AinitialHeight%%09%%3A+constant+%%3D+10+*+m%%3B%%0D%%0AmyMass%%09%%09++++%%3A+constant+%%3D+1+*+kg%%3B%%0D%%0A%%0D%%0AmechanicalEnergyDecreasing%%3A+invariant+%%28%%0D%%0A%%09%%09%%09%%09%%09h%%3A+distance%%402%%2C%%0D%%0A%%09%%09%%09%%09%%09x%%3A+acceleration%%400%%2C%%0D%%0A%%09%%09%%09%%09%%09y%%3A+acceleration%%401%%2C%%0D%%0A%%09%%09%%09%%09%%09z%%3A+acceleration%%402%%0D%%0A%%09%%09%%09%%09%%09%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%09myMass+*+g+*+initialHeight+%%2F+SamplingTime+%%3E%%3D+myMass+*+g+*+h+%%2F+SamplingTime+%%2B+0.5+*+myMass+*+%%28x+**+2+%%2B+y+**+2+%%2B+z+**+2%%29+*+s+-+10+*+J+%%2F+SamplingTime%%0D%%0A%%7D&w=980&s=0&o=0&t=0&b=Compile\">[Dropped Ball Example]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
-	printf("&nbsp;&nbsp;\n");
-	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23+++Airplane+Pressure%%0D%%0A%%23%%0D%%0Atime+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22second%%22+English%%0D%%0A++++symbol+%%3D+%%22s%%22%%3B%%0D%%0A++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Amass+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22kilogram%%22+English%%0D%%0A++++symbol+%%3D+%%22kg%%22%%3B%%0D%%0A++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Adistance+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22meter%%22+English%%0D%%0A++++symbol+%%3D+%%22m%%22%%3B%%0D%%0A++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aarea+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++derivation+%%3D+distance+**+2%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aspeed+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++derivation+%%3D+distance+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aacceleration+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++derivation+%%3D+speed+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aforce+%%3A+signal+%%3D++%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22Newton%%22+English%%0D%%0A++++symbol+%%3D+%%22N%%22+%%3B%%0D%%0A++++derivation+%%3D+mass+*+acceleration%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0A%%23+++0+is+the+static+pressure+sensor+for+altimeter%%0D%%0A%%23+++1+is+the+static+pressure+sensor+for+pitot+tube%%0D%%0Apressure%%3A+signal%%28i%%3A+0+to+1%%29+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22Pascal%%22+English%%0D%%0A++++symbol+%%3D+%%22Pa%%22+%%3B%%0D%%0A++++derivation+%%3D+force+%%2F+area%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0AAltimeterPitotPressuresShouldMatch%%3A+invariant%%28%%0D%%0A++++altimeter_pressure%%3A+pressure%%400%%2C+%%0D%%0A++++pitot_pressure%%3A+pressure%%401%%0D%%0A%%29+%%3D+%%7B%%0D%%0A++++altimeter_pressure+%%3E+pitot_pressure+-+10+*+Pa%%2C%%0D%%0A++++altimeter_pressure+%%3C+pitot_pressure+%%2B+10+*+Pa%%0D%%0A%%7D&w=980&s=0&o=0&t=0&b=Compile\">[Airplane Pressure Example]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
-	printf("&nbsp;&nbsp;\n");
-	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23+++Weather+Balloon%%0D%%0A%%23%%0D%%0A%%23+++Based+on+information+from+http%%3A%%2F%%2Fhome.anadolu.edu.tr%%2F%%7Emcavcar%%2Fcommon%%2FISAweb.pdf%%0D%%0A%%23%%0D%%0Atime+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22time%%22+English%%0D%%0A++++symbol+%%3D+%%22s%%22%%3B%%0D%%0A++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Adistance%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22meter%%22+English%%0D%%0A++++symbol+%%3D+%%22m%%22%%3B%%0D%%0A++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Amass+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22kilogram%%22+English%%0D%%0A++++symbol+%%3D+%%22kg%%22%%3B%%0D%%0A++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Atemperature+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22Kelvin%%22+English%%0D%%0A++++symbol+%%3D+%%22K%%22%%3B%%0D%%0A++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aarea+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++derivation+%%3D+distance+**+2%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aspeed+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++derivation+%%3D+distance+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aacceleration+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++derivation+%%3D+speed+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aforce+%%3A+signal+%%3D++%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22Newton%%22+English%%0D%%0A++++symbol+%%3D+%%22N%%22+%%3B%%0D%%0A++++derivation+%%3D+mass+*+acceleration%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Apressure%%3A+signal+%%3D++%%0D%%0A%%7B%%0D%%0A++++name+%%3D+%%22Pascal%%22+English%%0D%%0A++++symbol+%%3D+%%22Pa%%22+%%3B%%0D%%0A++++derivation+%%3D+force+%%2F+area%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Agroundpressure%%3A+constant+%%3D+101325+*+Pa%%3B%%0D%%0Agroundtemp%%3A+constant+%%3D+288.15+*+K%%3B%%0D%%0A%%0D%%0AaltitudeAndPressureTroposphere%%3A+invariant%%28%%0D%%0A++++altitude%%3A+distance%%2C+%%0D%%0A++++airpressure%%3A+pressure%%0D%%0A%%29+%%3D+%%0D%%0A%%7B%%0D%%0A++++airpressure+%%3E+groundpressure+*+%%281+-+0.0065+*+%%28altitude+*+K%%29+%%2F+%%28groundtemp+*+m%%29%%29+**+5.2561+-+200+*+Pa%%2C%%0D%%0A++++airpressure+%%3C+groundpressure+*+%%281+-+0.0065+*+%%28altitude+*+K%%29+%%2F+%%28groundtemp+*+m%%29%%29+**+5.2561+%%2B+200+*+Pa%%0D%%0A%%7D%%0D%%0A%%0D%%0AaltitudeAndTemperatureTroposphere%%3A+invariant%%28%%0D%%0A++++altitude%%3A+distance%%2C+%%0D%%0A++++airtemp%%3A+temperature%%0D%%0A%%29+%%3D+%%0D%%0A%%7B%%0D%%0A++++airtemp+%%3E+groundtemp+-+6.5+*+K+*+altitude+%%2F+%%281000+*+m%%29+-+8+*+K%%2C%%0D%%0A++++airtemp+%%3C+groundtemp+-+6.5+*+K+*+altitude+%%2F+%%281000+*+m%%29+%%2B+8+*+K%%0D%%0A%%7D&w=980&s=0&o=0&t=0&b=Compile\">[Weather Balloon Example]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
-	printf("&nbsp;&nbsp;\n");
-		printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23%%09Particle+%%28point-like%%29+moving+in+a+uniform+magnetic+field%%0D%%0A%%23%%0D%%0A%%0D%%0Atime+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++++name+%%3D+%%22second%%22+English%%0D%%0A++++++symbol+%%3D+%%22s%%22%%3B%%0D%%0A++++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Adistance+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++++name+%%3D+%%22meter%%22+English%%0D%%0A++++++symbol+%%3D+%%22m%%22%%3B%%0D%%0A++++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aweight+%%3A+signal+%%3D+%%0D%%0A%%7B%%0D%%0A++++++name+%%3D+%%22kilogram%%22+English%%0D%%0A++++++symbol+%%3D+%%22kg%%22%%3B%%0D%%0A++++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Amagnetic_field_intensity+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++name+%%3D+%%22tesla%%22+English%%0D%%0A++++++symbol+%%3D+%%22B%%22%%3B%%0D%%0A++++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Acharge+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A++++++name+%%3D+%%22Coulomb%%22+English%%0D%%0A++++++symbol+%%3D+%%22C%%22%%3B%%0D%%0A++++++derivation+%%3D+none%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aspeed+%%3A+signal%%28n%%3A0+to+2%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++derivation+%%3D+distance%%40n+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0Aacceleration+%%3A+signal%%28n%%3A0+to+2%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++derivation+%%3D+speed%%40n+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0A%%23%%0D%%0A%%23%%09Initial+velocities+can+be+adjusted+for+each+experiment%%0D%%0A%%23%%0D%%0Av_0+%%3A+constant+%%3D+1+*+m+*+s+**+-1%%3B%%0D%%0Av_1+%%3A+constant+%%3D+1+*+m+*+s+**+-1%%3B%%0D%%0Av_2+%%3A+constant+%%3D+1+*+m+*+s+**+-1%%3B%%0D%%0A%%0D%%0A%%23%%0D%%0A%%23%%09Initial+particle+position+is+assumed+to+be+%%280%%3B+0%%3B+0%%29+-+easiness+of+dealing+with+the+equations%%0D%%0A%%23%%0D%%0Ax_0+%%3A+constant+%%3D+10+*+m%%3B%%0D%%0Ax_1+%%3A+constant+%%3D+10+*+m%%3B%%0D%%0Ax_2+%%3A+constant+%%3D+10+*+m%%3B%%0D%%0A%%0D%%0A%%23%%0D%%0A%%23%%09Magnetic+field+is+uniform+%%3D+%%280%%3B+0%%3B+B%%29+-+w.l.o.g.+we+can+take+B+oriented+along+z+dierction+%%28i.e.+indice+%%272%%27+in+our+notation%%29%%0D%%0A%%23%%0D%%0Amfi+%%3A+constant+%%3D+1+*+B%%3B%%0D%%0A%%0D%%0A%%23%%0D%%0A%%23%%09Particle+weight%%0D%%0A%%23%%0D%%0Amass+%%3A+constant+%%3D+1+*+kg%%3B%%0D%%0A%%0D%%0A%%23%%0D%%0A%%23%%09Particle+charge%%0D%%0A%%23%%0D%%0Aq+%%3A+constant+%%3D+1+*+C%%3B%%0D%%0A%%0D%%0A%%23%%0D%%0A%%23%%09Error+tolerances%%0D%%0A%%23%%0D%%0Aa_e+%%3A+constant+%%3D+0.001+*+m+*+s+**+-2%%3B%%0D%%0Av_e+%%3A+constant+%%3D+0.001+*+m+*+s+**+-1%%3B%%0D%%0A%%0D%%0Aperiod+%%3A+invariant%%28T%%3A+time%%29+%%3D%%0D%%0A%%7B%%0D%%0A++++++T+%%7E+m+*+%%28q+*+mfi%%29+**+-1%%0D%%0A%%7D%%0D%%0A%%0D%%0A%%0D%%0AZdirectionAcceleration+%%3A+invariant%%28a%%3A+acceleration%%402%%2C+v%%3A+speed%%402%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%09%%23%%0D%%0A%%09%%23%%09acceleration+%%3D+0%%0D%%0A%%09%%23%%0D%%0A%%09a+%%3E+-+a_e%%2C%%0D%%0A%%09a+%%3C+a_e%%2C%%0D%%0A%%0D%%0A%%09%%23%%0D%%0A%%09%%23%%09velocity+on+z+%%3D+constant%%0D%%0A%%09%%23%%0D%%0A%%09v+%%3E+v_2+-+v_e%%2C%%0D%%0A%%09v+%%3C+v_2+%%2B+v_e%%0D%%0A%%7D%%0D%%0A%%0D%%0A%%0D%%0A%%23+++++++++Dimensional+Matrix%%0D%%0A%%23%%0D%%0A%%23+++++++++T+++B+++Q+++M+++V%%0D%%0A%%23++++s++++1++-1+++0+++0++-1%%0D%%0A%%23++++m++++0+++0+++0+++0+++1+++++-%%3E+therefore+5-4%%3D1+invariant+given+by+dimensional+analysis%%0D%%0A%%23+++kg++++0+++1+++0+++1+++0%%0D%%0A%%23++++C++++0++-1+++1+++0+++0%%0D%%0A%%23%%0D%%0A%%23++++1+Tesla+%%3D+kg+%%2F+%%28C+*+s%%29++-%%3E++not+a+fundamental+unit+in+the+above+example%%0D%%0A&w=980&s=0&o=0&t=0&b=Compile\">[Cyclotron Example]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
 	printf("</td>\n");
 
 	printf("<td valign=top; align=right>\n");
