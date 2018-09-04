@@ -1,5 +1,5 @@
 #
-#	Authored 2018, Phillip Stanley-Marbell.
+#	Authored 2018, Phillip Stanley-Marbell, Youchao Wang.
 #
 #	All rights reserved.
 #
@@ -37,12 +37,29 @@
 #
 #	Description: Base signals used in most Newton descriptions.
 #
+#
+#	Sector 1 The signals below are `derivation = none` or ` dimensionless`.
+#
 
-time : signal =
+bits : signal =
 {
-	name		= "second" English;
-	symbol		= s;
+	name		= "bits" English;
+	symbol		= b;
+	derivation	= dimensionless;
+}
+
+charge : signal =
+{
+	name		= "Coulomb" English;
+	symbol		= C;
 	derivation	= none;
+}
+
+concentration : signal =
+{
+	name		= "concentration" English;
+	symbol		= ppm;
+	derivation	= dimensionless;
 }
 
 distance : signal =
@@ -66,6 +83,13 @@ material : signal =
 	derivation	= none;
 }
 
+relativeHumidity : signal =
+{
+	name		= "Relative Humidity" English;
+	symbol		= RH;
+	derivation	= dimensionless;
+}
+
 temperature : signal =
 {
 	name		= "Kelvin" English;
@@ -73,11 +97,36 @@ temperature : signal =
 	derivation	= none;
 }
 
-charge : signal =
+time : signal =
 {
-	name		= "Coulomb" English;
-	symbol		= C;
+	name		= "second" English;
+	symbol		= s;
 	derivation	= none;
+}
+
+#
+#	Sector 2 The signals below are dependent upon signals in Sector 1.
+#
+
+angle : signal =
+{
+	name		= "degree" English;
+	symbol		= deg;
+	derivation	= distance / distance;
+}
+
+angularDisplacement : signal =
+{
+	name		= "radian" English;
+	symbol		= rad;
+	derivation	= distance / distance;
+}
+
+area : signal =
+{
+	name		= "squares" English;
+	symbol		= sq;
+	derivation	= distance ** 2;
 }
 
 current : signal = 
@@ -87,11 +136,18 @@ current : signal =
 	derivation	= charge / time;
 }
 
-angle : signal =
+frequency : signal =
 {
-	name		= "degree" English;
-	symbol		= deg;
-	derivation	= distance / distance;
+	name		= "Hertz" English;
+	symbol		= Hz;
+	derivation	= 1 / time;
+}
+
+magneticFluxDensity : signal =
+{
+	name		= "Tesla" English;
+	symbol		= T;
+	derivation	= mass / (charge * time);
 }
 
 speed : signal =
@@ -101,6 +157,18 @@ speed : signal =
 	derivation	= distance / time;
 }
 
+volume : signal =
+{
+	name		= "cubes" English;
+	symbol		= cubic;
+	derivation	= distance ** 3;
+}
+
+#
+#	Sector 3 Here are the rest of the signals.
+#	KEEP IN MIND THE SIGNALS NEED TO BE DECLARED BEFORE USING.
+#
+
 acceleration : signal =
 {
 	name		= "metajiffies" English;
@@ -108,12 +176,25 @@ acceleration : signal =
 	derivation	= speed / time;
 }
 
+angularRate : signal =
+{
+	name		= "anglejiffies" English;
+	symbol		= ajf;
+	derivation	= angle / time;
+}
 
 force : signal =
 {
 	name		= "Newton" English;
 	symbol		= N;
 	derivation	= mass * acceleration;
+}
+
+pressure : signal =
+{
+	name		= "Pascal" English;
+	symbol		= Pa;
+	derivation	= force / area;
 }
 
 work : signal = 
@@ -130,86 +211,22 @@ power : signal =
 	derivation	= work / time;
 }
 
-magneticFluxDensity : signal =
-{
-	name		= "Tesla" English;
-	symbol		= T;
-	derivation	= mass / (charge * time);
-}
-
-angularRate : signal =
-{
-	name		= "anglejiffies" English;
-	symbol		= ajf;
-	derivation	= angle / time;
-}
-
-frequency : signal =
-{
-	name		= "Hertz" English;
-	symbol		= Hz;
-	derivation	= 1 / time;
-}
-
-area : signal =
-{
-	name		= "squares" English;
-	symbol		= sq;
-	derivation	= distance**2;
-}
-
-angularDisplacement : signal =
-{
-	name		= "radian" English;
-	symbol		= rad;
-	derivation	= distance / distance;
-}
-
-angularVelocity : signal =
-{
-	name		= "radians per second" English;
-	symbol		= rps;
-	derivation	= angularDisplacement / time;
-}
-
-pressure : signal =
-{
-	name		= "Pascal" English;
-	symbol		= Pa;
-	derivation	= force / area;
-}
-
-bits : signal =
-{
-	name		= "bits" English;
-	symbol		= b;
-	derivation	= dimensionless;
-}
-
-concentration : signal =
-{
-	name		= "concentration" English;
-	symbol		= ppm;
-	derivation	= dimensionless;
-}
-
-relativeHumidity : signal =
-{
-	name		= "Relative Humidity" English;
-	symbol		= RH;
-	derivation	= dimensionless;
-}
+#
+#	Sector 4 Constants.
+#
 
 kNewtonUnitfree_pi				: constant = 3.1415926535897932384626433832795;
 
 #
 #	The data below are from Mathematica Version 9's PhysicalConstants community-created package.
 #
-kNewtonUnithave_SpeedOfLight			: constant = 299792458 * meter * (second ** -1);
+
 kNewtonUnithave_AccelerationDueToGravity	: constant = (196133 / 20000) * meter * (second ** -2);
-kNewtonUnithave_GravitationalConstant		: constant = ((6.67428E-11) * meter ** 3) * (kilogram ** -1) * (second ** -2);
 kNewtonUnithave_AvogadroConstant		: constant = (6.02214E23) * mole;
 kNewtonUnithave_BoltzmannConstant		: constant = (1.38065E-23) * Joule / Kelvin;
-kNewtonUnithave_ElectronCharge			: constant = (1.60218E-19) * Coulomb;
-kNewtonUnithave_SpeedOfSound			: constant = 340.292 * meter * (second ** -1);
 kNewtonUnithave_EarthMass			: constant = (5.9742E24) * kilogram;
+kNewtonUnithave_ElectronCharge			: constant = (1.60218E-19) * Coulomb;
+kNewtonUnithave_GravitationalConstant		: constant = ((6.67428E-11) * meter ** 3) * (kilogram ** -1) * (second ** -2);
+kNewtonUnithave_SpeedOfLight			: constant = 299792458 * meter * (second ** -1);
+kNewtonUnithave_SpeedOfSound			: constant = 340.292 * meter * (second ** -1);
+
