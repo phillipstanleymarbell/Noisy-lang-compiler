@@ -28,3 +28,5 @@
 12.	All `if` statement followed by curly braces, even if body is a single statement.
 
 13.	The pattern `\t\n` (tab followed by newline) should never occur in a source file.
+
+14.	Except for temporary debugging statements, all print statements should use `flexprint` from the `libflex` library (https://github.com/phillipstanleymarbell/libflex). This allows us to buffer print statements and makes the web interface/demos and other deployments possible. Errors go into the buffer `Fperr` and informational output (almost everything that is not an error) goes into `Fpinfo`. We sometimes have additional dedicated buffers to isolate certain outputs.
