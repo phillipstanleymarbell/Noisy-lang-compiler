@@ -443,6 +443,7 @@ extern "C"
 			permuteWithBitMask(permutableMatrix, permuteMask, pivotColumnIndices);
 
 
+
 			/*
 			 *	TODO: NOTE: For the computed kernels to be usable, we also need to
 			 *	store information on what the permutationMask and pivotColumnIndices
@@ -475,14 +476,27 @@ extern "C"
 				continue;
 			}
 
+
+
+			/*
+			 *	TODO: NOTE: We need to use the information on the permutationMask
+			 *	and pivotColumnIndices to know what the column ordering was at the
+			 *	time of kernel computation, in order to correctly determine duplicates.
+			 *	We currently do not yet do that. We label all as non-duplicate.
+			 */
+
 			bool	isDuplicateKernel = false;
 			for (int j = 0; j < i; j++)
 			{
+				/*
 				if (eigenInterfaceKernels[j] == eigenInterfaceKernels[i])
 				{
 					isDuplicateKernel = true;
 				}
+				*/
 			}
+
+
 
 			/*
 			 *	If the new kernel does not duplicate an existing one, then bump the kernel count
@@ -522,7 +536,7 @@ extern "C"
 				}
 
 				/*
-				 *	Rather than looping, we could use something like
+				 *	TODO: Rather than looping, we could use something like
 				 *
 				 *		Map<RowMajorOrderMatrixXd>(&cInterfaceKernels[*numberOfUniqueKernels][0][0],
 				 *					eigenInterfaceKernels[i].rows(),
