@@ -77,6 +77,39 @@ irPassDimensionalMatrixPiGroups(State *  N)
 										&invariant->kernelColumnCount,
 										&invariant->numberOfUniqueKernels);
 
+		/*
+		 *	TODO: this should be done in the dimensionalMatrixKernelPrinter pass.
+		 *	This is here temporarily until issue #354 is completed.
+		 */
+		if (invariant->numberOfUniqueKernels == 0)
+		{
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(No kernel for invariant \"%s\")\n", invariant->identifier);
+		}
+		else
+		{
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "\tInvariant \"%s\" has %d unique kernels, each with %d column(s)...\n\n",
+							invariant->identifier, invariant->numberOfUniqueKernels, invariant->kernelColumnCount);
+			for (int i = 0; i < invariant->numberOfUniqueKernels; i++)
+			{
+				/*
+				 *	The number of rows of the kernel equals number of columns of the dimensional matrix.
+				 */
+				for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
+				{
+					flexprint(N->Fe, N->Fm, N->Fpinfo, "\t");
+					for (int col = 0; col < invariant->kernelColumnCount; col++)
+					{
+						flexprint(N->Fe, N->Fm, N->Fpinfo, "%4g",//"%4.1f%s",
+								invariant->nullSpace[i][row][col],
+								(col == invariant->kernelColumnCount - 1 ? "" : " "));
+					}
+					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
+				}
+				flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
+			}
+		}
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
+
 		invariant = invariant->next;
 	}
 }

@@ -696,7 +696,7 @@ struct Invariant
 	int 			dimensionalMatrixColumnCount;	//	Number of dimensional matrix columns 
 	char **			dimensionalMatrixRowLabels;	//	Labels of dimensional matrix rows		
 	char **			dimensionalMatrixColumnLabels;	//	Labels of dimensional matrix columns 
-	double **		nullSpace;
+	double ***		nullSpace;
 	int			kernelColumnCount;
 	int			numberOfUniqueKernels;
 

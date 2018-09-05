@@ -44,6 +44,15 @@
 using namespace std;
 using namespace Eigen;
 
+/*
+ *	We keep the matrices perpetually in row-major order. We could
+ *	in principle leave them in the default column-major order and
+ *	only specify row-major order in the final Map<> back to the C
+ *	array.
+ */
+typedef Matrix<double, Dynamic, Dynamic, RowMajor> RowMajorOrderMatrixXd;
+typedef Matrix<double, Dynamic, Dynamic, ColMajor> ColMajorOrderMatrixXd;
+
 extern "C"
 {
 	/*
@@ -105,18 +114,18 @@ extern "C"
 	 *	and returns the column of the matrix at which it terminated
 	 */
 	static int
-	makeRREFSwapIfNecessary(MatrixXd &  matrix, int nonPivotColumnIndices[], int matrixRank, int currentRow, int currentColumn)
+	makeRREFSwapIfNecessary(ColMajorOrderMatrixXd &  matrix, int nonPivotColumnIndices[], int matrixRank, int currentRow, int currentColumn)
 	{
-		int rowCount = matrix.rows();
-		int columnCount = matrix.cols();
+		int	rowCount = matrix.rows();
+		int	columnCount = matrix.cols();
 
 		if (currentColumn >= columnCount)
 		{
 			return currentColumn;
 		}
 
-		int nonPivotPosition = 0;
-		while (nonPivotColumnIndices[nonPivotPosition] != -1 && nonPivotPosition < columnCount - matrixRank - 1)
+		int	nonPivotPosition = 0;
+		while ((nonPivotColumnIndices[nonPivotPosition] != -1) && (nonPivotPosition < (columnCount - matrixRank - 1)))
 		{
 			nonPivotPosition++;
 		}
@@ -157,7 +166,7 @@ extern "C"
 	 *	Transforms matrix to the row reduced echelon form (RREF)
 	 */
 	static void
-	transformMatrixToRREF(MatrixXd &  matrix, int nonPivotColumnIndices[], int matrixRank, int currentRow = 0, int currentColumn = 0)
+	transformMatrixToRREF(ColMajorOrderMatrixXd &  matrix, int nonPivotColumnIndices[], int matrixRank, int currentRow = 0, int currentColumn = 0)
 	{
 		int rowCount = matrix.rows();
 		int columnCount = matrix.cols();
@@ -214,9 +223,9 @@ extern "C"
 	}
 
 	static void
-	computePiGroup(MatrixXd matrix, int rowCount, int columnCount, int rank, int nonPivotColumnIndices[], MatrixXd &  kernel)
+	computePiGroup(ColMajorOrderMatrixXd matrix, int rowCount, int columnCount, int rank, int nonPivotColumnIndices[], ColMajorOrderMatrixXd &  kernel)
 	{
-		MatrixXd nonPivotMatrix(matrix.rows(), columnCount - rank);
+		ColMajorOrderMatrixXd	nonPivotMatrix(matrix.rows(), columnCount - rank);
 
 		for (int i = 0; i < columnCount - rank; i++)
 		{
@@ -231,9 +240,9 @@ extern "C"
 		 */
 		nonPivotMatrix *= -1;
 
-		int		kernelRowCount	= columnCount;
-		int		identitySize	= columnCount - rank;
-		MatrixXd	identityMatrix	= MatrixXd::Identity(identitySize, identitySize);
+		int			kernelRowCount	= columnCount;
+		int			identitySize	= columnCount - rank;
+		ColMajorOrderMatrixXd	identityMatrix	= ColMajorOrderMatrixXd::Identity(identitySize, identitySize);
 
 		/*
 		 *	The final kernel will have as many rows as there are columns
@@ -321,7 +330,7 @@ extern "C"
 	}
 
 	static void
-	permuteWithBitMask(MatrixXd &  permutableMatrix, uint64_t permuteMask, int pivotColumnIndices[])
+	permuteWithBitMask(ColMajorOrderMatrixXd &  permutableMatrix, uint64_t permuteMask, int pivotColumnIndices[])
 	{
 		assert (permutableMatrix.cols() <= 64);
 
@@ -353,12 +362,12 @@ extern "C"
 		}
 	}
 
-	double **
+	double ***
 	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels)
 	{
-		Map<MatrixXd>	tmp (dimensionalMatrix, columnCount, rowCount);
-		MatrixXd	eigenInterfaceDimensionalMatrix = tmp.transpose();
-		int		rank = eigenInterfaceDimensionalMatrix.fullPivLu().rank();
+		Map<ColMajorOrderMatrixXd>	tmp (dimensionalMatrix, columnCount, rowCount);
+		ColMajorOrderMatrixXd		eigenInterfaceDimensionalMatrix = tmp.transpose();
+		int				rank = eigenInterfaceDimensionalMatrix.fullPivLu().rank();
 
 		if (columnCount - rank == 0)
 		{
@@ -367,12 +376,12 @@ extern "C"
 
 		assert(rank > 0);
 
-		int		nonPivotColumnIndices[columnCount - rank];
-		int		pivotColumnIndices[rank];
-		int		numberOfPivots = 0;
-		int		numberOfCircuitSets = choose(columnCount, rank);
-		MatrixXd	*eigenInterfaceKernels = new MatrixXd[numberOfCircuitSets];
-		double **	cInterfaceKernels;
+		int			nonPivotColumnIndices[columnCount - rank];
+		int			pivotColumnIndices[rank];
+		int			numberOfPivots = 0;
+		int			numberOfCircuitSets = choose(columnCount, rank);
+		ColMajorOrderMatrixXd	*eigenInterfaceKernels = new ColMajorOrderMatrixXd[numberOfCircuitSets];
+		double ***		cInterfaceKernels;
 
 		/*
 		 *	Initialize the non-pivot column indices array. It will get
@@ -418,7 +427,7 @@ extern "C"
 		/*
 		 *	Allocate the C-array which we will send back to the Newton core.
 		 */
-		cInterfaceKernels = (double **)calloc(numberOfCircuitSets, sizeof(double *));
+		cInterfaceKernels = (double ***)calloc(numberOfCircuitSets, sizeof(double **));
 		assert(cInterfaceKernels != NULL);
 
 		/*
@@ -428,8 +437,8 @@ extern "C"
 		 */
 		for (int i = 0; i < numberOfCircuitSets; i++)
 		{
-			MatrixXd	permutableMatrix = tmp.transpose();
-			uint64_t	permuteMask = getKthNbitWordWithRankBitsSet(columnCount /* n */, i /* kth */, rank);
+			ColMajorOrderMatrixXd	permutableMatrix = tmp.transpose();
+			uint64_t		permuteMask = getKthNbitWordWithRankBitsSet(columnCount /* n */, i /* kth */, rank);
 
 			permuteWithBitMask(permutableMatrix, permuteMask, pivotColumnIndices);
 
@@ -460,6 +469,11 @@ extern "C"
 			sanityCheckForNoNegativeOnes(nonPivotColumnIndices, columnCount - rank);
 
 			computePiGroup(permutableMatrix, rowCount, columnCount, rank, nonPivotColumnIndices, eigenInterfaceKernels[i]);
+
+			if (eigenInterfaceKernels[i].rows() == 0 || eigenInterfaceKernels[i].cols() == 0)
+			{
+				continue;
+			}
 
 			bool	isDuplicateKernel = false;
 			for (int j = 0; j < i; j++)
@@ -493,18 +507,40 @@ extern "C"
 						}
 					}
 				}
-					
+
 				eigenInterfaceKernels[i] *= (1.0 / minCoefficient);
 
-				cInterfaceKernels[*numberOfUniqueKernels] = eigenInterfaceKernels[i].data();
-				*numberOfUniqueKernels += 1;
+				/*
+				 *	The Matrix is previously in column-major order which is Eigen's preferred
+				 *	form for efficiency. Here, we convert it to row-major during the Map<>.
+				 */
+				cInterfaceKernels[*numberOfUniqueKernels] = (double **)calloc(nRows, sizeof(double*));
+				assert(cInterfaceKernels[*numberOfUniqueKernels] != NULL);
+				for (int row = 0; row < nRows; row++)
+				{
+					cInterfaceKernels[*numberOfUniqueKernels][row] = (double *)calloc(nCols, sizeof(double));
+				}
 
-// TODO: This print statement should be removed once we have a separate pass to print out the kernels, like we do for printing out the dimensional matrix. See issue #354
-cout << "Kernel " << i << " is a new unique kernel:" << endl << eigenInterfaceKernels[i] << endl << endl;
+				/*
+				 *	Rather than looping, we could use something like
+				 *
+				 *		Map<RowMajorOrderMatrixXd>(&cInterfaceKernels[*numberOfUniqueKernels][0][0],
+				 *					eigenInterfaceKernels[i].rows(),
+				 *					eigenInterfaceKernels[i].cols()) = eigenInterfaceKernels[i];
+				 */
+				for (int row = 0; row < nRows; row++)
+				{
+					for (int col = 0; col < nCols; col++)
+					{
+						cInterfaceKernels[*numberOfUniqueKernels][row][col] = eigenInterfaceKernels[i](row, col);
+					}
+				}
+
+				*numberOfUniqueKernels += 1;
 			}
 		}
-// TODO: This print statement should be removed once we have a separate pass to print out the kernels, like we do for printing out the dimensional matrix. See issue #354
-cout << "Number of unique kernels is " << *numberOfUniqueKernels << endl << endl;
+
+		*kernelColumnCount = columnCount - rank;
 
 		return cInterfaceKernels;
 	}
