@@ -96,14 +96,14 @@ angle : signal =
 
 speed : signal =
 {
-	name		= "jiffies" English;
+	name		= "jiffy" English;
 	symbol		= jf;
 	derivation	= distance / time;
 }
 
 acceleration : signal =
 {
-	name		= "metajiffies" English;
+	name		= "metajiffy" English;
 	symbol		= mjf;
 	derivation	= speed / time;
 }
@@ -125,7 +125,7 @@ work : signal =
 
 power : signal = 
 {
-	name		= "Watts" English;
+	name		= "Watt" English;
 	symbol		= W;
 	derivation	= work / time;
 }
@@ -139,7 +139,7 @@ magneticFluxDensity : signal =
 
 angularRate : signal =
 {
-	name		= "anglejiffies" English;
+	name		= "anglejiffy" English;
 	symbol		= ajf;
 	derivation	= angle / time;
 }
@@ -153,9 +153,23 @@ frequency : signal =
 
 area : signal =
 {
-	name		= "squares" English;
+	name		= "square" English;
 	symbol		= sq;
 	derivation	= distance**2;
+}
+
+density : signal =
+{
+	name		= "rho" English;
+	symbol		= rho;
+	derivation	= mass/(distance**3);
+}
+
+volume : signal =
+{
+	name		= "vol" English;
+	symbol		= vol;
+	derivation	= distance**3;
 }
 
 angularDisplacement : signal =
@@ -167,7 +181,7 @@ angularDisplacement : signal =
 
 angularVelocity : signal =
 {
-	name		= "radians per second" English;
+	name		= "radian per second" English;
 	symbol		= rps;
 	derivation	= angularDisplacement / time;
 }
@@ -181,7 +195,7 @@ pressure : signal =
 
 bits : signal =
 {
-	name		= "bits" English;
+	name		= "bit" English;
 	symbol		= b;
 	derivation	= dimensionless;
 }
