@@ -40,6 +40,7 @@
 #include <Eigen/Eigen>
 #include <iostream>
 #include <stdint.h>
+#include <float.h>
 using namespace std;
 using namespace Eigen;
 
@@ -432,6 +433,15 @@ extern "C"
 
 			permuteWithBitMask(permutableMatrix, permuteMask, pivotColumnIndices);
 
+
+			/*
+			 *	TODO: NOTE: For the computed kernels to be usable, we also need to
+			 *	store information on what the permutationMask and pivotColumnIndices
+			 *	was. We currently do not yet do that.
+			 */
+
+
+
 			/*
 			 *	Initialize the non-pivot column indices array. It will get
 			 *	populated by transformMatrixToRREF()
@@ -454,17 +464,38 @@ extern "C"
 			bool	isDuplicateKernel = false;
 			for (int j = 0; j < i; j++)
 			{
-				/*
-				 *	If the new kernel does not duplicate an existing one, then bump the kernel count
-				 */
 				if (eigenInterfaceKernels[j] == eigenInterfaceKernels[i])
 				{
 					isDuplicateKernel = true;
 				}
 			}
 
+			/*
+			 *	If the new kernel does not duplicate an existing one, then bump the kernel count
+			 */
 			if (!isDuplicateKernel)
 			{
+				/*
+				 *	Make the matrix non-fractional by multiplying by reciprocal
+				 *	of smallest coefficient. Could do even better by multiplying
+				 *	by LCM.
+				 */
+				double	minCoefficient	= DBL_MAX;
+				int	nRows		= eigenInterfaceKernels[i].rows();
+				int	nCols		= eigenInterfaceKernels[i].cols();
+				for (int row = 0; row < nRows; row++)
+				{
+					for (int col = 0; col < nCols; col++)
+					{
+						if (abs(eigenInterfaceKernels[i](row, col)) > 0)
+						{
+							minCoefficient = min(abs(eigenInterfaceKernels[i](row, col)), minCoefficient);
+						}
+					}
+				}
+					
+				eigenInterfaceKernels[i] *= (1.0 / minCoefficient);
+
 				cInterfaceKernels[*numberOfUniqueKernels] = eigenInterfaceKernels[i].data();
 				*numberOfUniqueKernels += 1;
 
