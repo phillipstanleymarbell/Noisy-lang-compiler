@@ -1,5 +1,6 @@
 /*
 	Authored 2017. Jonathan Lim
+	Updated 2018. Phillip Stanley-Marbell, Youchao Wang
 
 	All rights reserved.
 
@@ -69,6 +70,7 @@
 #include "newton-irPass-dimensionalMatrixAnnotation.h"
 #include "newton-irPass-dimensionalMatrixPiGroups.h"
 #include "newton-irPass-dimensionalMatrixPrinter.h"
+#include "newton-irPass-dimensionalMatrixKernelPrinter.h"
 #include "newton-dimension-pass.h"
 
 extern char *	gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
@@ -95,13 +97,13 @@ processNewtonFile(State *  N, char *  filename)
 
 	if (N->newtonIrTopScope->firstDimension == NULL)
 	{
-			char *	details;
+		char *	details;
 
-			asprintf(&details, "%s\n", EnoValidDimensions);
-			newtonParserSemanticError(N, kNewtonIrNodeType_PnewtonFile, details);
-			free(details);
+		asprintf(&details, "%s\n", EnoValidDimensions);
+		newtonParserSemanticError(N, kNewtonIrNodeType_PnewtonFile, details);
+		free(details);
 
-			newtonParserErrorRecovery(N, kNewtonIrNodeType_PnewtonFile);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnewtonFile);
 	}
 
 	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
@@ -127,7 +129,16 @@ processNewtonFile(State *  N, char *  filename)
 	{
 		irPassDimensionalMatrixAnnotation(N);
 		irPassDimensionalMatrixPiGroups(N);
+		irPassDimensionalMatrixKernelPrinter(N);
 	}
+
+	/*
+	 *	Dimensional matrix kernel pass   /////////////////////////////////////
+	 */
+	//if (N->irPasses & kNoisyIrDimensionMatrixKernelPass)
+	//{
+		
+	//}
 
 	/*
 	 *	Dot backend.
