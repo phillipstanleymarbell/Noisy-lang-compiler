@@ -102,22 +102,34 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 					}
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 				}
-				flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 
-				for (int j = 0; j < invariant->dimensionalMatrixColumnCount; j++)
-				{
-					flexprint(N->Fe, N->Fm, N->Fpinfo, " %d ", invariant->permutedIndexArray[countKernel][j]);
-				}
-				flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
-				
-			
+				/*
+				 *	PermutedIndexArray consists of the indices to show how exactly the matrix is permuted.
+				 *	It stores all the permutation results for all the different kernels.
+				 */
 				flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\tThe ordering of parameters are as follows\n", countKernel);
 				flexprint(N->Fe, N->Fm, N->Fpinfo, "\t");
+				
 				for (int i = 0; i < invariant->dimensionalMatrixColumnCount; i++)
 				{
-					flexprint(N->Fe, N->Fm, N->Fpinfo, " %s ", invariant->dimensionalMatrixColumnLabels[i]);
+					//flexprint(N->Fe, N->Fm, N->Fpinfo, " %s ", invariant->dimensionalMatrixColumnLabels[invariant->permutedIndexArray[countKernel][i]]);
+					flexprint(N->Fe, N->Fm, N->Fpinfo, " #%c%c ", 'A'+(invariant->permutedIndexArray[countKernel][i]/10), '0'+invariant->permutedIndexArray[countKernel][i]%10);
 				}
 				flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
+
+				for (int col = 0; col < invariant->kernelColumnCount; col++)
+				{
+					flexprint(N->Fe, N->Fm, N->Fpinfo, "\t");
+					for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
+					{
+						flexprint(N->Fe, N->Fm, N->Fpinfo, "%4g",//"%4.1f%s",
+								invariant->nullSpace[countKernel][row][col],
+								(col == invariant->kernelColumnCount - 1 ? "  " : "   "));
+					}
+					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
+				}
+				flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n");
+
 			}
 		}
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");

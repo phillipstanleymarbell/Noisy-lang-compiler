@@ -1,5 +1,5 @@
 /*
-	Authored 2018, Vlad Mihai Mandric, James Rhodes, Phillip Stanley-Marbell.
+	Authored 2018, Vlad Mihai Mandric, James Rhodes, Phillip Stanley-Marbell, Youchao Wang.
 
 	Based on skeleton implementation of Eigen interface by Phillip Stanley-Marbell.
 
@@ -331,13 +331,18 @@ extern "C"
 
 	static int * permuteWithBitMask(ColMajorOrderMatrixXd &  permutableMatrix, uint64_t permuteMask, int pivotColumnIndices[])
 	{
+		/* 
+		 *	This function has been modified to return indexOfParameters, which stores the permutation pattern.
+		 */	
 		assert (permutableMatrix.cols() <= 64);
 
 		int	nextPivot = 0;
 		int	temp = 0;
 		int	indexAssignValues = 0;
 		int	indexTemp = 0;
-		static int	indexOfParameters[100]; //this is using a magical number, should consider another way of setting up this array
+		static int	indexOfParameters[100]; /* 
+							 * 	TODO: This is using a magical number, should consider another way of setting up this array 
+							 */
 		
 		for (int k = 0; k < permutableMatrix.cols(); k++)
 		{
@@ -350,7 +355,6 @@ extern "C"
 			{
 				temp = nextPivot;
 				permutableMatrix.col(i).swap(permutableMatrix.col(pivotColumnIndices[nextPivot]));
-				cout << "checking which cloumns have been swapped  " << i << "  swapped with  " << pivotColumnIndices[temp] << endl;
 				
 				/*
 				 *	For the computed kernels to be usable, we also need to
@@ -360,18 +364,9 @@ extern "C"
 				indexTemp = indexOfParameters[i];
 				indexOfParameters[i] = indexOfParameters[nextPivot];
 				indexOfParameters[nextPivot++] = indexTemp;
-
-				/*
-				 *	TODO Pass this indexOfParameters to the irPass
-				 */
 			}
 		}
-		//for (int j = 0; j < permutableMatrix.cols(); j++)
-		//{
-		//	cout << " " << indexOfParameters[j] << " " << endl;
-		//}
-		cout << "end of one permutation" << endl << endl;
-		return indexOfParameters;    ////////
+		return indexOfParameters;
 	}
 
 	static void
@@ -392,10 +387,17 @@ extern "C"
 		}
 	}
 
-///////////////*********************************************///////////////////////////
 
 	int ** newtonEigenLibraryInterfacePermutedArrays(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount)
 	{
+
+		/*
+		 *	Currently this function is, for most of the parts, identical to newtonEigenLibraryInterfaceGetPiGroups()
+		 *	This function returns the permutated index of each kernel to irPass for further operations to be carried out.
+		 *	TODO: try to modify this function so that it is not re-doing 
+		 *	most of the operations carried out in newtonEigenLibraryInterfaceGetPiGroups().
+		 */
+
 		Map<ColMajorOrderMatrixXd>	tmp (dimensionalMatrix, columnCount, rowCount);
 		ColMajorOrderMatrixXd		eigenInterfaceDimensionalMatrix = tmp.transpose();
 		int				rank = eigenInterfaceDimensionalMatrix.fullPivLu().rank();
@@ -455,12 +457,6 @@ extern "C"
 		assert(numberOfPivots == rank);
 
 		/*
-		 *	Allocate the C-array which we will send back to the Newton core.
-		 */
-		cInterfacePermutedArray = (int **)calloc(numberOfCircuitSets, sizeof(int *));
-		assert(cInterfacePermutedArray != NULL);
-
-		/*
 		 *	Now that we know which indices are the pivots, we start again,
 		 *	(1) permuting the pivot columns of the original matrix
 		 *	(2) computing the RREF, (3) computing the null space.
@@ -474,8 +470,6 @@ extern "C"
 		{
 			ColMajorOrderMatrixXd	permutableMatrix = tmp.transpose();
 			uint64_t		permuteMask = getKthNbitWordWithRankBitsSet(columnCount /* n */, i /* kth */, rank);
-
-			//*parameterIndices = permuteWithBitMask(permutableMatrix, permuteMask, pivotColumnIndices);
 
 			int *  permutedIndex = permuteWithBitMask(permutableMatrix, permuteMask, pivotColumnIndices);
 
@@ -502,16 +496,11 @@ extern "C"
 			 *	of columnCount - rank non-pivot indices.
 			 */
 			sanityCheckForNoNegativeOnes(nonPivotColumnIndices, columnCount - rank);
-
 		}
 
 		return cInterfacePermutedArray;
 	}
 
-
-
-
-///////////////*********************************************///////////////////////////
 
 	double ***
 	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels, int **  permutedIndexArray)
@@ -529,12 +518,10 @@ extern "C"
 
 		int			nonPivotColumnIndices[columnCount - rank];
 		int			pivotColumnIndices[rank];
-		//int			parameterIndices[columnCount];  //////////////
 		int			numberOfPivots = 0;
 		int			numberOfCircuitSets = choose(columnCount, rank);
 		ColMajorOrderMatrixXd	*eigenInterfaceKernels = new ColMajorOrderMatrixXd[numberOfCircuitSets];
 		double ***		cInterfaceKernels;
-		//int **			cInterfacePermutedArray;
 
 		/*
 		 *	Initialize the non-pivot column indices array. It will get
@@ -590,9 +577,6 @@ extern "C"
 		 */
 
 		
-		//cInterfacePermutedArray = (int **)calloc(numberOfCircuitSets, sizeof(int *));
-		//assert(cInterfacePermutedArray != NULL);
-
 		for (int i = 0; i < numberOfCircuitSets; i++)
 		{
 			ColMajorOrderMatrixXd	permutableMatrix = tmp.transpose();
@@ -600,22 +584,6 @@ extern "C"
 
 			int *  permutedIndex = permuteWithBitMask(permutableMatrix, permuteMask, pivotColumnIndices);
 
-			//for (int permutation = 0; permutation < permutableMatrix.cols(); permutation++)
-			//{
-			
-			//cInterfacePermutedArray[i] = (int *)calloc(columnCount, sizeof(int));
-			//assert(cInterfacePermutedArray[i] != NULL);
-				//cInterfacePermutedArray[i][permutation] =  permutedIndex[permutation];
-			//}
-			//cInterfacePermutedArray[i] = (int *)calloc(permutableMatrix.cols(), sizeof(int));
-			//assert(cInterfacePermutedArray[i] != NULL);
-
-			//**permutedIndexArray = *permutedIndex;
-			//for (int m = 0; m < columnCount; m++)
-			//{
-			//	cInterfacePermutedArray[i][m] = permutedIndex[m];
-			//}
-			//*permutedIndexArray = permutedIndex;
 			/*
 			 *	The permutedIndex array provides the reordered indices for later use (determine duplicates)
 			 *	TODO: Need to link these reordered indices
@@ -658,8 +626,6 @@ extern "C"
 				continue;
 			}
 
-
-
 			/*
 			 *	TODO: NOTE: We need to use the information on the permutationMask
 			 *	and pivotColumnIndices to know what the column ordering was at the
@@ -677,8 +643,6 @@ extern "C"
 				}
 				*/
 			}
-
-
 
 			/*
 			 *	If the new kernel does not duplicate an existing one, then bump the kernel count
