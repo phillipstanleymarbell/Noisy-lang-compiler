@@ -584,7 +584,8 @@ extern "C"
 		}
 
 		*kernelColumnCount = columnCount - rank;
-
+		free(indexOfParameters);
+		
 		return cInterfaceKernels;
 	}
 } /* extern "C" */
