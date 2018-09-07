@@ -699,7 +699,7 @@ struct Invariant
 	double ***		nullSpace;
 	int			kernelColumnCount;
 	int			numberOfUniqueKernels;
-
+	int *			permutedIndexArrayPointer;
 	Invariant *		next;
 };
 

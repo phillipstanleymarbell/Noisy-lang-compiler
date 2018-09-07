@@ -1,5 +1,5 @@
 /*
-	Authored 2018, Vlad Mihai Mandric, James Rhodes, Phillip Stanley-Marbell.
+	Authored 2018, Vlad Mihai Mandric, James Rhodes, Phillip Stanley-Marbell, Youchao Wang.
 
 	Based on skeleton implementation of Eigen interface by Phillip Stanley-Marbell.
 
@@ -329,17 +329,37 @@ extern "C"
 		return which;
 	}
 
-	static void
-	permuteWithBitMask(ColMajorOrderMatrixXd &  permutableMatrix, uint64_t permuteMask, int pivotColumnIndices[])
+	/* 
+	 *	This function has been modified to store indexOfParameters (which stores the permutation pattern) for later use.
+	 */	
+	static void 
+	permuteWithBitMask(ColMajorOrderMatrixXd &  permutableMatrix, uint64_t permuteMask, int pivotColumnIndices[], int *  indexOfParameters)
 	{
 		assert (permutableMatrix.cols() <= 64);
 
 		int	nextPivot = 0;
+		int	indexAssignValues = 0;
+		int	indexTemp = 0;
+
+		for (int k = 0; k < permutableMatrix.cols(); k++)
+		{
+			indexOfParameters[k] = indexAssignValues++;
+		}
+		
 		for (int i = 0; i < permutableMatrix.cols(); i++)
 		{
 			if ((permuteMask >> (permutableMatrix.cols() - 1 - i)) & 0x1)
 			{
-				permutableMatrix.col(i).swap(permutableMatrix.col(pivotColumnIndices[nextPivot++]));
+				permutableMatrix.col(i).swap(permutableMatrix.col(pivotColumnIndices[nextPivot]));
+				
+				/*
+				 *	For the computed kernels to be usable, we also need to
+				 *	store information on what the permutationMask and pivotColumnIndices was.
+				 */
+				
+				indexTemp = indexOfParameters[i];
+				indexOfParameters[i] = indexOfParameters[nextPivot];
+				indexOfParameters[nextPivot++] = indexTemp;
 			}
 		}
 	}
@@ -362,8 +382,9 @@ extern "C"
 		}
 	}
 
+
 	double ***
-	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels)
+	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels, int **  permutedIndexArrayPointer)
 	{
 		Map<ColMajorOrderMatrixXd>	tmp (dimensionalMatrix, columnCount, rowCount);
 		ColMajorOrderMatrixXd		eigenInterfaceDimensionalMatrix = tmp.transpose();
@@ -382,6 +403,11 @@ extern "C"
 		int			numberOfCircuitSets = choose(columnCount, rank);
 		ColMajorOrderMatrixXd	*eigenInterfaceKernels = new ColMajorOrderMatrixXd[numberOfCircuitSets];
 		double ***		cInterfaceKernels;
+		int * 			indexOfParameters = (int *)calloc(columnCount, sizeof(int));
+		int *			permutedIndexArray = (int *)calloc(numberOfCircuitSets*columnCount, sizeof(int));
+		
+		assert(indexOfParameters != NULL);
+		assert(permutedIndexArray != NULL);
 
 		/*
 		 *	Initialize the non-pivot column indices array. It will get
@@ -429,6 +455,11 @@ extern "C"
 		 */
 		cInterfaceKernels = (double ***)calloc(numberOfCircuitSets, sizeof(double **));
 		assert(cInterfaceKernels != NULL);
+		
+		/*
+		 *	Allocate the pointer which we will send back to the Newton core.
+		 */
+		*permutedIndexArrayPointer = permutedIndexArray;
 
 		/*
 		 *	Now that we know which indices are the pivots, we start again,
@@ -440,18 +471,18 @@ extern "C"
 			ColMajorOrderMatrixXd	permutableMatrix = tmp.transpose();
 			uint64_t		permuteMask = getKthNbitWordWithRankBitsSet(columnCount /* n */, i /* kth */, rank);
 
-			permuteWithBitMask(permutableMatrix, permuteMask, pivotColumnIndices);
-
-
+			permuteWithBitMask(permutableMatrix, permuteMask, pivotColumnIndices, indexOfParameters);
 
 			/*
-			 *	TODO: NOTE: For the computed kernels to be usable, we also need to
-			 *	store information on what the permutationMask and pivotColumnIndices
-			 *	was. We currently do not yet do that.
+			 *	The permutedIndex array provides the reordered indices for later use (determine duplicates)
+			 *	TODO: Need to link these reordered indices
 			 */
 
-
-
+			for (int m = 0; m < columnCount; m++)
+			{
+				permutedIndexArray[i * columnCount + m] = indexOfParameters[m];
+			}
+			
 			/*
 			 *	Initialize the non-pivot column indices array. It will get
 			 *	populated by transformMatrixToRREF()
@@ -476,8 +507,6 @@ extern "C"
 				continue;
 			}
 
-
-
 			/*
 			 *	TODO: NOTE: We need to use the information on the permutationMask
 			 *	and pivotColumnIndices to know what the column ordering was at the
@@ -495,8 +524,6 @@ extern "C"
 				}
 				*/
 			}
-
-
 
 			/*
 			 *	If the new kernel does not duplicate an existing one, then bump the kernel count
@@ -530,6 +557,8 @@ extern "C"
 				 */
 				cInterfaceKernels[*numberOfUniqueKernels] = (double **)calloc(nRows, sizeof(double*));
 				assert(cInterfaceKernels[*numberOfUniqueKernels] != NULL);
+
+
 				for (int row = 0; row < nRows; row++)
 				{
 					cInterfaceKernels[*numberOfUniqueKernels][row] = (double *)calloc(nCols, sizeof(double));
@@ -555,7 +584,8 @@ extern "C"
 		}
 
 		*kernelColumnCount = columnCount - rank;
-
+		free(indexOfParameters);
+		
 		return cInterfaceKernels;
 	}
 } /* extern "C" */

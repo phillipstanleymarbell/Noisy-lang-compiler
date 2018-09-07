@@ -1,5 +1,6 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell, Vlad-Mihai Mandric
+	Authored 2018. Youchao Wang.
+
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -34,50 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <errno.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <setjmp.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <time.h>
-#include <string.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include "flextypes.h"
-#include "flexerror.h"
-#include "flex.h"
-#include "common-errors.h"
-#include "version.h"
-#include "newton-timeStamps.h"
-#include "common-timeStamps.h"
-#include "common-data-structures.h"
-#include "noisy-parser.h"
-#include "noisy-lexer.h"
-#include "common-irPass-helpers.h"
-#include "newton-types.h"
-#include "newton-eigenLibraryInterface.h"
+void irPassDimensionalMatrixKernelPrinter(State *  N);
 
-
-void
-irPassDimensionalMatrixPiGroups(State *  N)
-{
-	Invariant *	invariant = N->invariantList;
-
-	while (invariant)
-	{
-		invariant->kernelColumnCount		= 0;
-		invariant->numberOfUniqueKernels	= 0;
-
-		invariant->nullSpace = newtonEigenLibraryInterfaceGetPiGroups(	invariant->dimensionalMatrix,
-										invariant->dimensionalMatrixRowCount,
-										invariant->dimensionalMatrixColumnCount,
-										&invariant->kernelColumnCount,
-										&invariant->numberOfUniqueKernels,
-										&invariant->permutedIndexArrayPointer ); 
-
-		invariant = invariant->next;
-	}
-}
