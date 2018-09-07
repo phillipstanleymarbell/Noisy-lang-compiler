@@ -70,7 +70,7 @@ irPassDimensionalMatrixPiGroups(State *  N)
 	{
 		invariant->kernelColumnCount		= 0;
 		invariant->numberOfUniqueKernels	= 0;
-		
+
 		invariant->nullSpace = newtonEigenLibraryInterfaceGetPiGroups(	invariant->dimensionalMatrix,
 										invariant->dimensionalMatrixRowCount,
 										invariant->dimensionalMatrixColumnCount,
