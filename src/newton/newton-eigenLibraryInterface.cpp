@@ -335,7 +335,6 @@ extern "C"
 	static void 
 	permuteWithBitMask(ColMajorOrderMatrixXd &  permutableMatrix, uint64_t permuteMask, int pivotColumnIndices[], int *  indexOfParameters)
 	{
-
 		assert (permutableMatrix.cols() <= 64);
 
 		int	nextPivot = 0;
