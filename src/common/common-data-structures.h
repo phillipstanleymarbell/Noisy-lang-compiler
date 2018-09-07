@@ -698,8 +698,8 @@ struct Invariant
 	char **			dimensionalMatrixColumnLabels;	//	Labels of dimensional matrix columns 
 	double ***		nullSpace;
 	int			kernelColumnCount;
-	int			numberOfUniqueKernels;	
-	int *			permutedIndexArrayPointer;	
+	int			numberOfUniqueKernels;
+	int *			permutedIndexArrayPointer;
 	Invariant *		next;
 };
 

@@ -329,11 +329,13 @@ extern "C"
 		return which;
 	}
 
-	static void permuteWithBitMask(ColMajorOrderMatrixXd &  permutableMatrix, uint64_t permuteMask, int pivotColumnIndices[], int *  indexOfParameters)
+	/* 
+	 *	This function has been modified to store indexOfParameters (which stores the permutation pattern) for later use.
+	 */	
+	static void 
+	permuteWithBitMask(ColMajorOrderMatrixXd &  permutableMatrix, uint64_t permuteMask, int pivotColumnIndices[], int *  indexOfParameters)
 	{
-		/* 
-		 *	This function has been modified to return indexOfParameters, which stores the permutation pattern.
-		 */	
+
 		assert (permutableMatrix.cols() <= 64);
 
 		int	nextPivot = 0;
@@ -397,7 +399,7 @@ extern "C"
 		assert(rank > 0);
 
 		int			nonPivotColumnIndices[columnCount - rank];
-		int			pivotColumnIndices[rank];			
+		int			pivotColumnIndices[rank];
 		int			numberOfPivots = 0;
 		int			numberOfCircuitSets = choose(columnCount, rank);
 		ColMajorOrderMatrixXd	*eigenInterfaceKernels = new ColMajorOrderMatrixXd[numberOfCircuitSets];
@@ -454,13 +456,17 @@ extern "C"
 		 */
 		cInterfaceKernels = (double ***)calloc(numberOfCircuitSets, sizeof(double **));
 		assert(cInterfaceKernels != NULL);
+		
+		/*
+		 *	Allocate the pointer which we will send back to the Newton core.
+		 */
+		*permutedIndexArrayPointer = permutedIndexArray;
 
 		/*
 		 *	Now that we know which indices are the pivots, we start again,
 		 *	(1) permuting the pivot columns of the original matrix
 		 *	(2) computing the RREF, (3) computing the null space.
 		 */
-		
 		for (int i = 0; i < numberOfCircuitSets; i++)
 		{
 			ColMajorOrderMatrixXd	permutableMatrix = tmp.transpose();
@@ -477,8 +483,6 @@ extern "C"
 			{
 				permutedIndexArray[i * columnCount + m] = indexOfParameters[m];
 			}
-
-			*permutedIndexArrayPointer = permutedIndexArray;
 			
 			/*
 			 *	Initialize the non-pivot column indices array. It will get

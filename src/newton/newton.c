@@ -133,14 +133,6 @@ processNewtonFile(State *  N, char *  filename)
 	}
 
 	/*
-	 *	Dimensional matrix kernel pass   /////////////////////////////////////
-	 */
-	//if (N->irPasses & kNoisyIrDimensionMatrixKernelPass)
-	//{
-		
-	//}
-
-	/*
 	 *	Dot backend.
 	 */
 	if (N->irBackends & kNoisyIrBackendDot)
