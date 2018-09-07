@@ -65,7 +65,6 @@ void
 irPassDimensionalMatrixKernelPrinter(State *  N)
 {
 	Invariant *	invariant = N->invariantList;
-	
 
 	while (invariant)
 	{
