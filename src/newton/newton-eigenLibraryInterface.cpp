@@ -549,7 +549,7 @@ extern "C"
 					}
 				}
 
-				eigenInterfaceKernels[i] *= (1.0 / minCoefficient);	
+				eigenInterfaceKernels[i] *= (1.0 / minCoefficient);
 
 				/*
 				 *	The Matrix is previously in column-major order which is Eigen's preferred
