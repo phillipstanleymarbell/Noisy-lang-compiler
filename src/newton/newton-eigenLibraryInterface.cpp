@@ -329,7 +329,7 @@ extern "C"
 		return which;
 	}
 
-	static int * permuteWithBitMask(ColMajorOrderMatrixXd &  permutableMatrix, uint64_t permuteMask, int pivotColumnIndices[])
+	static void permuteWithBitMask(ColMajorOrderMatrixXd &  permutableMatrix, uint64_t permuteMask, int pivotColumnIndices[], int *  indexOfParameters)
 	{
 		/* 
 		 *	This function has been modified to return indexOfParameters, which stores the permutation pattern.
@@ -337,13 +337,9 @@ extern "C"
 		assert (permutableMatrix.cols() <= 64);
 
 		int	nextPivot = 0;
-		int	temp = 0;
 		int	indexAssignValues = 0;
 		int	indexTemp = 0;
-		static int	indexOfParameters[100]; /* 
-							 * 	TODO: This is using a magical number, should consider another way of setting up this array 
-							 */
-		
+
 		for (int k = 0; k < permutableMatrix.cols(); k++)
 		{
 			indexOfParameters[k] = indexAssignValues++;
@@ -353,7 +349,6 @@ extern "C"
 		{
 			if ((permuteMask >> (permutableMatrix.cols() - 1 - i)) & 0x1)
 			{
-				temp = nextPivot;
 				permutableMatrix.col(i).swap(permutableMatrix.col(pivotColumnIndices[nextPivot]));
 				
 				/*
@@ -366,7 +361,6 @@ extern "C"
 				indexOfParameters[nextPivot++] = indexTemp;
 			}
 		}
-		return indexOfParameters;
 	}
 
 	static void
@@ -388,122 +382,8 @@ extern "C"
 	}
 
 
-	int ** newtonEigenLibraryInterfacePermutedArrays(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount)
-	{
-
-		/*
-		 *	Currently this function is, for most of the parts, identical to newtonEigenLibraryInterfaceGetPiGroups()
-		 *	This function returns the permutated index of each kernel to irPass for further operations to be carried out.
-		 *	TODO: try to modify this function so that it is not re-doing 
-		 *	most of the operations carried out in newtonEigenLibraryInterfaceGetPiGroups().
-		 */
-
-		Map<ColMajorOrderMatrixXd>	tmp (dimensionalMatrix, columnCount, rowCount);
-		ColMajorOrderMatrixXd		eigenInterfaceDimensionalMatrix = tmp.transpose();
-		int				rank = eigenInterfaceDimensionalMatrix.fullPivLu().rank();
-
-		if (columnCount - rank == 0)
-		{
-			return NULL;
-		}
-
-		assert(rank > 0);
-
-		int			nonPivotColumnIndices[columnCount - rank];
-		int			pivotColumnIndices[rank];
-		int			numberOfPivots = 0;
-		int			numberOfCircuitSets = choose(columnCount, rank);
-		int **			cInterfacePermutedArray;
-
-		/*
-		 *	Initialize the non-pivot column indices array. It will get
-		 *	populated by transformMatrixToRREF()
-		 */
-		resetWithNegativeOnes(nonPivotColumnIndices, columnCount - rank);
-		
-		/*
-		 *	Transform eigenInterfaceDimensionalMatrix in-place into its RREF:
-		 */
-		transformMatrixToRREF(eigenInterfaceDimensionalMatrix, nonPivotColumnIndices, rank);
-
-		/*
-		 *	Sanity check: Make sure transformMatrixToRREF() set the total
-		 *	of columnCount - rank non-pivot indices
-		 */
-		sanityCheckForNoNegativeOnes(nonPivotColumnIndices, columnCount - rank);
-
-		/*
-		 *	Construct an array of the pivot indices from the non-pivot indices:
-		 */
-		for (int i = 0; i < columnCount; i++)
-		{
-			bool	indexIsNonPivot = false;
-			for (int j = 0; j < columnCount - rank; j++)
-			{
-				if (nonPivotColumnIndices[j] == i)
-				{
-					indexIsNonPivot = true;
-				}
-			}
-			if (!indexIsNonPivot)
-			{
-				pivotColumnIndices[numberOfPivots++] = i;
-			}
-		}
-
-		/*
-		 *	Sanity check: Number of pivots should equal rank.
-		 */
-		assert(numberOfPivots == rank);
-
-		/*
-		 *	Now that we know which indices are the pivots, we start again,
-		 *	(1) permuting the pivot columns of the original matrix
-		 *	(2) computing the RREF, (3) computing the null space.
-		 */
-
-		cInterfacePermutedArray = (int **)calloc(numberOfCircuitSets, sizeof(int *));
-		assert(cInterfacePermutedArray != NULL);
-
-
-		for (int i = 0; i < numberOfCircuitSets; i++)
-		{
-			ColMajorOrderMatrixXd	permutableMatrix = tmp.transpose();
-			uint64_t		permuteMask = getKthNbitWordWithRankBitsSet(columnCount /* n */, i /* kth */, rank);
-
-			int *  permutedIndex = permuteWithBitMask(permutableMatrix, permuteMask, pivotColumnIndices);
-
-			cInterfacePermutedArray[i] = (int *)calloc(columnCount, sizeof(int));
-			assert(cInterfacePermutedArray[i] != NULL);
-
-			for (int m = 0; m < columnCount; m++)
-			{
-				cInterfacePermutedArray[i][m] = permutedIndex[m];
-			}
-			/*
-			 *	Initialize the non-pivot column indices array. It will get
-			 *	populated by transformMatrixToRREF()
-			 */
-			resetWithNegativeOnes(nonPivotColumnIndices, columnCount - rank);
-
-			/*
-			 *	Transform the matrix in-place to row-reduced echelon form (RREF)
-			 */
-			transformMatrixToRREF(permutableMatrix, nonPivotColumnIndices, rank);
-
-			/*
-			 *	Sanity check: Make sure transformMatrixToRREF() set the total
-			 *	of columnCount - rank non-pivot indices.
-			 */
-			sanityCheckForNoNegativeOnes(nonPivotColumnIndices, columnCount - rank);
-		}
-
-		return cInterfacePermutedArray;
-	}
-
-
 	double ***
-	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels, int **  permutedIndexArray)
+	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels, int **  permutedIndexArrayPointer)
 	{
 		Map<ColMajorOrderMatrixXd>	tmp (dimensionalMatrix, columnCount, rowCount);
 		ColMajorOrderMatrixXd		eigenInterfaceDimensionalMatrix = tmp.transpose();
@@ -517,11 +397,16 @@ extern "C"
 		assert(rank > 0);
 
 		int			nonPivotColumnIndices[columnCount - rank];
-		int			pivotColumnIndices[rank];
+		int			pivotColumnIndices[rank];			
 		int			numberOfPivots = 0;
 		int			numberOfCircuitSets = choose(columnCount, rank);
 		ColMajorOrderMatrixXd	*eigenInterfaceKernels = new ColMajorOrderMatrixXd[numberOfCircuitSets];
 		double ***		cInterfaceKernels;
+		int * 			indexOfParameters = (int *)calloc(columnCount, sizeof(int));
+		int *			permutedIndexArray = (int *)calloc(numberOfCircuitSets*columnCount, sizeof(int));
+		
+		assert(indexOfParameters != NULL);
+		assert(permutedIndexArray != NULL);
 
 		/*
 		 *	Initialize the non-pivot column indices array. It will get
@@ -575,33 +460,26 @@ extern "C"
 		 *	(1) permuting the pivot columns of the original matrix
 		 *	(2) computing the RREF, (3) computing the null space.
 		 */
-
 		
 		for (int i = 0; i < numberOfCircuitSets; i++)
 		{
 			ColMajorOrderMatrixXd	permutableMatrix = tmp.transpose();
 			uint64_t		permuteMask = getKthNbitWordWithRankBitsSet(columnCount /* n */, i /* kth */, rank);
 
-			int *  permutedIndex = permuteWithBitMask(permutableMatrix, permuteMask, pivotColumnIndices);
+			permuteWithBitMask(permutableMatrix, permuteMask, pivotColumnIndices, indexOfParameters);
 
 			/*
 			 *	The permutedIndex array provides the reordered indices for later use (determine duplicates)
 			 *	TODO: Need to link these reordered indices
 			 */
 
-			for (int j = 0; j < permutableMatrix.cols(); j++)
+			for (int m = 0; m < columnCount; m++)
 			{
-				cout << " " << permutedIndex[j] << " " << endl;
+				permutedIndexArray[i * columnCount + m] = indexOfParameters[m];
 			}
 
-			/*
-			 *	TODO: NOTE: For the computed kernels to be usable, we also need to
-			 *	store information on what the permutationMask and pivotColumnIndices
-			 *	was. We currently do not yet do that.
-			 */
-
+			*permutedIndexArrayPointer = permutedIndexArray;
 			
-
 			/*
 			 *	Initialize the non-pivot column indices array. It will get
 			 *	populated by transformMatrixToRREF()
@@ -668,17 +546,7 @@ extern "C"
 					}
 				}
 
-				/* 
-				 *	This is just a temporary fix for issue #361
-				 */
-				if(minCoefficient > 1e-15)
-				{
-					eigenInterfaceKernels[i] *= (1.0 / minCoefficient);
-				}
-				else
-				{
-
-				}
+				eigenInterfaceKernels[i] *= (1.0 / minCoefficient);	
 
 				/*
 				 *	The Matrix is previously in column-major order which is Eigen's preferred

@@ -40,9 +40,9 @@ extern "C"
 {
 #	endif /* __cplusplus */
 
-double ***	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels, int **  permutedIndexArray);
+double ***	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels, int **  permutedIndexArrayPointer);
 
-int **		newtonEigenLibraryInterfacePermutedArrays(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels);
+//int **		newtonEigenLibraryInterfacePermutedArrays(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels);
 
 #	ifdef __cplusplus
 } /* extern "C" */

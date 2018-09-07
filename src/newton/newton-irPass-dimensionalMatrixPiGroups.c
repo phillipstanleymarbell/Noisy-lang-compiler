@@ -76,14 +76,7 @@ irPassDimensionalMatrixPiGroups(State *  N)
 										invariant->dimensionalMatrixColumnCount,
 										&invariant->kernelColumnCount,
 										&invariant->numberOfUniqueKernels,
-										invariant->permutedIndexArray);
-										
-		invariant->permutedIndexArray = newtonEigenLibraryInterfacePermutedArrays (	invariant->dimensionalMatrix,
-												invariant->dimensionalMatrixRowCount,
-												invariant->dimensionalMatrixColumnCount,
-												&invariant->kernelColumnCount,
-												&invariant->numberOfUniqueKernels);
-
+										&invariant->permutedIndexArrayPointer ); 
 
 		invariant = invariant->next;
 	}
