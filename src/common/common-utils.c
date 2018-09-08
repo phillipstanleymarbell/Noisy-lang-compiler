@@ -200,17 +200,33 @@ init(NoisyMode mode)
 	}
 
 	/*
+	 *	Used to hold MathJax-formatted output
+	 */
+	N->Fpmathjax = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
+	if (N->Fpmathjax == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+	
+	//TODO: need to figure out right buffer size dynamically. 
+	N->Fpmathjax->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
+	if (N->Fpmathjax->circbuf == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	/*
 	 *	Used to hold SMT2 backend output
 	 */
 	N->Fpsmt2 = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
-	if (N->Fpinfo == NULL)
+	if (N->Fpsmt2 == NULL)
 	{
 		fatal(NULL, Emalloc);
 	}
 
 	//TODO: need to figure out right buffer size dynamically. 
 	N->Fpsmt2->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
-	if (N->Fpinfo->circbuf == NULL)
+	if (N->Fpsmt2->circbuf == NULL)
 	{
 		fatal(NULL, Emalloc);
 	}

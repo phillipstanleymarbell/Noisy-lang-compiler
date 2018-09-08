@@ -1,4 +1,8 @@
-1.	Code indented with tabs, not spaces.
+1.	Code indented with tabs, not spaces. If you use `vim`, set your `.vimrc` as follows so you can see where you have stray spaces:
+````
+set list
+set listchars=tab:>-
+````
 
 2.	Variable names in `camelCase`.
 

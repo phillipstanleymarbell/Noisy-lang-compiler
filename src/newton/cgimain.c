@@ -76,6 +76,7 @@
 #include "newton-irPass-dimensionalMatrixAnnotation.h"
 #include "newton-irPass-dimensionalMatrixPiGroups.h"
 #include "newton-irPass-dimensionalMatrixPrinter.h"
+#include "newton-irPass-dimensionalMatrixKernelPrinter.h"
 #include "newton-dimension-pass.h"
 
 extern char *			gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
@@ -384,6 +385,13 @@ main(void)
 	printf("<link rel=\"stylesheet\" type=\"text/css\" href=\"http://fonts.googleapis.com/css?family=Source+Code+Pro:400,300\">\n");
 
 	/*
+	 *	MathJax
+	 */
+	printf("        <script type=\"text/javascript\" async\n");
+	printf("          src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML\">\n");
+	printf("        </script>\n");
+
+	/*
 	 *	Javascript for ACE editor hookup. Needs both ACE code editor plugin and jquery-git to work.
 	 *
 	 *	See	https://groups.google.com/forum/#!topic/ace-discuss/dDMVH_RbsAk
@@ -678,6 +686,7 @@ main(void)
 			irPassDimensionalMatrixAnnotation(newtonCgiState);
 			irPassDimensionalMatrixPiGroups(newtonCgiState);
 			irPassDimensionalMatrixPrinter(newtonCgiState);
+			irPassDimensionalMatrixKernelPrinter(newtonCgiState);
 		}
 
 		/*
@@ -828,6 +837,14 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 		printf("&nbsp;&nbsp;Error Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
 		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td><pre>", fmtWidth);
 		printf("<span style=\"background-color:whitesmoke; display:none;\" id='newtonerrs'>%s</span></pre></td></tr></table>", newtonCgiDimensionsState->Fperr->circbuf);
+	}
+
+	if (strlen(newtonCgiState->Fpmathjax->circbuf) != 0)
+	{
+		printf("<div width=\"%d\" style=\"background-color:EEEE11; padding:3px;\" onclick=\"JavaScript:toggle('newtonmathjax')\">", fmtWidth);
+		printf("&nbsp;&nbsp;MathJax-formatted Content&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td>", fmtWidth);
+		printf("<span style=\"background-color:whitesmoke; display:none;\" id='newtonmathjax'>%s</span></td></tr></table>", newtonCgiState->Fpmathjax->circbuf);
 	}
 
 	if (strlen(newtonCgiState->Fpsmt2->circbuf) != 0)
