@@ -358,8 +358,8 @@ extern "C"
 				 */
 				
 				indexTemp = indexOfParameters[i];
-				indexOfParameters[i] = indexOfParameters[nextPivot];
-				indexOfParameters[nextPivot++] = indexTemp;
+				indexOfParameters[i] = indexOfParameters[pivotColumnIndices[nextPivot]];
+				indexOfParameters[pivotColumnIndices[nextPivot++]] = indexTemp;
 			}
 		}
 	}
