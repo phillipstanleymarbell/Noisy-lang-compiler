@@ -68,6 +68,11 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 
 	while (invariant)
 	{
+		/*
+		 *	We construct a temporary array to re-locate the positions of the permuted parameters
+		 */
+		int *		tmpPosition = (int *)calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "The corresponding kernels:\n\n");
 
 		if (invariant->numberOfUniqueKernels == 0)
@@ -118,6 +123,11 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 				/*
 				 *	Prints out the a table of the symbolic expressions implied by the Pi groups derived from the kernels.	
 				 */
+				for (int j = 0; j < invariant->dimensionalMatrixColumnCount; j++)
+				{
+					tmpPosition[invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + j]] = j;
+				}
+
 				flexprint(N->Fe, N->Fm, N->Fpinfo, "\tThere are in total %d Pi-groups\n", invariant->kernelColumnCount);
 				for (int col = 0; col < invariant->kernelColumnCount; col++)
 				{
@@ -126,7 +136,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 					for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
 					{
 						flexprint(N->Fe, N->Fm, N->Fpinfo, "#%c%c", 'A'+(row/10), '0'+ (row%10) );
-						flexprint(N->Fe, N->Fm, N->Fpinfo, "^(%2g)  ", invariant->nullSpace[countKernel][invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + row]][col]);
+						flexprint(N->Fe, N->Fm, N->Fpinfo, "^(%2g)  ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
 					}
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 				}
@@ -135,6 +145,8 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 			}
 		}
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
+
+		free(tmpPosition);
 
 		invariant = invariant->next;
 	}
