@@ -136,7 +136,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 							flexprint(N->Fe, N->Fm, N->Fpmathjax, ",");
 						}
 					}
-					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\right)}} \\qquad&\textcolor{DeepSkyBlue}{\\dashrightarrow}\\qquad");
+					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\right)}} \\qquad&\\textcolor{DeepSkyBlue}{\\dashrightarrow}\\qquad");
 
 					for (int col = 0; col < invariant->kernelColumnCount; col++)
 					{
