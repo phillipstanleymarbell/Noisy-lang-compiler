@@ -116,7 +116,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 					flexprint(N->Fe, N->Fm, N->Fpinfo, " %c%c ", 'A'+(invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + i]/10), 
 											'0'+invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + i]%10);
 				}
-				flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n");
+				flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 
 				/*
 				 *	Prints out the a table of the symbolic expressions implied by the Pi groups derived from the kernels.	
@@ -126,12 +126,11 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 					tmpPosition[invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + j]] = j;
 				}
 
-				flexprint(N->Fe, N->Fm, N->Fpinfo, "\tThere are a total of %d Pi groups\n", invariant->kernelColumnCount);
 				for (int col = 0; col < invariant->kernelColumnCount; col++)
 				{
 					if (N->mode & kNoisyModeCGI)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpmathjax, "\tKernel %d, Pi group %d is\n", countKernel, col);
+						flexprint(N->Fe, N->Fm, N->Fpmathjax, "\tPi group %d, Pi %d is\n", countKernel, col);
 						flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$");
 						for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
 						{
@@ -141,7 +140,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
 								if (invariant->nullSpace[countKernel][tmpPosition[row]][col] > 1)
 								{
-									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^%g  ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
+									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^{%g}  ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
 								}
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, ")");
 							}
@@ -157,7 +156,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
 								if (invariant->nullSpace[countKernel][tmpPosition[row]][col] < -1)
 								{
-									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^%g  ", 0 - invariant->nullSpace[countKernel][tmpPosition[row]][col]);
+									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^{%g}  ", 0 - invariant->nullSpace[countKernel][tmpPosition[row]][col]);
 								}
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, ")");
 							}
@@ -166,7 +165,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 					}
 					else
 					{
-						flexprint(N->Fe, N->Fm, N->Fpinfo, "\tKernel %d, Pi group %d is\n", countKernel, col);
+						flexprint(N->Fe, N->Fm, N->Fpinfo, "\tPi group %d, Pi %d is\n", countKernel, col);
 						flexprint(N->Fe, N->Fm, N->Fpinfo, "\t");
 
 						for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
@@ -174,12 +173,11 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 							flexprint(N->Fe, N->Fm, N->Fpinfo, "%c%c", 'A'+(row/10), '0'+ (row%10) );
 							flexprint(N->Fe, N->Fm, N->Fpinfo, "^(%2g)  ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
 						}
+
+						flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 					}
-
-					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 				}
-				flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n");
-
+				flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 			}
 		}
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
