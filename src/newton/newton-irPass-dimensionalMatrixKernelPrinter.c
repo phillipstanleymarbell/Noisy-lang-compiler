@@ -119,7 +119,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 				 */
 				if (N->mode & kNoisyModeCGI)
 				{
-					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\t\\qquad\\qquad\\mathbf{\\Pi\\text{ group }%d, \\text{ with column order }", countKernel);
+					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\t\\qquad\\qquad\\textcolor{DarkSlateGray}{\\mathbf{\\Pi\\text{ group }%d, \\text{ with column order }", countKernel);
 
 					/*
 					 *	PermutedIndexArray consists of the indices to show how exactly the matrix is permuted.
@@ -136,11 +136,11 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 							flexprint(N->Fe, N->Fm, N->Fpmathjax, ",");
 						}
 					}
-					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\right)} \\qquad&\\longrightarrow\\qquad");
+					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\right)}} \\qquad&\textcolor{DeepSkyBlue}{\\dashrightarrow}\\qquad");
 
 					for (int col = 0; col < invariant->kernelColumnCount; col++)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\textcolor{#228B22}{\\dfrac{");
+						flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\textcolor{DarkGreen}{\\dfrac{");
 						for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
 						{
 							if (invariant->nullSpace[countKernel][tmpPosition[row]][col] > 0)
