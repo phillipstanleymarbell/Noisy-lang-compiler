@@ -114,6 +114,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 				if (N->mode & kNoisyModeCGI)
 				{
 					flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$");
+					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\begin{aligned}\n");
 					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\t\\Pi\\text{ group }%d, \\text{ with column order }", countKernel);
 
 					/*
@@ -124,32 +125,29 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 					flexprint(N->Fe, N->Fm, N->Fpmathjax, " \\left(");
 					for (int i = 0; i < invariant->dimensionalMatrixColumnCount; i++)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpmathjax, "%c%c", 'A'+(invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + i]/10), 
+						flexprint(N->Fe, N->Fm, N->Fpmathjax, "%c%c", 'P'+(invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + i]/10), 
 											'0'+invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + i]%10);
 						if (i < invariant->dimensionalMatrixColumnCount -1)
 						{
 							flexprint(N->Fe, N->Fm, N->Fpmathjax, ",");
 						}
 					}
-					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\right) \\mapsto");
+					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\right) &\\longrightarrow");
 
 					for (int col = 0; col < invariant->kernelColumnCount; col++)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\dfrac{");
+						flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\textcolor{#228B22}{\\dfrac{");
 						for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
 						{
 							if (invariant->nullSpace[countKernel][tmpPosition[row]][col] > 0)
 							{
+								flexprint(N->Fe, N->Fm, N->Fpmathjax, "(");
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
 								if (invariant->nullSpace[countKernel][tmpPosition[row]][col] > 1)
 								{
-									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^{%g}  ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
-
-									if (row < invariant->dimensionalMatrixColumnCount - 1)
-									{
-										flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\cdot ");
-									}
+									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^{%g}", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
 								}
+								flexprint(N->Fe, N->Fm, N->Fpmathjax, ")");
 							}
 						}
 						flexprint(N->Fe, N->Fm, N->Fpmathjax, "}");
@@ -159,25 +157,26 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 						{
 							if (invariant->nullSpace[countKernel][tmpPosition[row]][col] < 0)
 							{
+								flexprint(N->Fe, N->Fm, N->Fpmathjax, "(");
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
 								if (invariant->nullSpace[countKernel][tmpPosition[row]][col] < -1)
 								{
-									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^{%g}  ", 0 - invariant->nullSpace[countKernel][tmpPosition[row]][col]);
-
-									if (row < invariant->dimensionalMatrixColumnCount - 1)
-									{
-										flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\cdot ");
-									}
+									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^{%g}", 0 - invariant->nullSpace[countKernel][tmpPosition[row]][col]);
 								}
+								flexprint(N->Fe, N->Fm, N->Fpmathjax, ")");
 							}
 						}
-						flexprint(N->Fe, N->Fm, N->Fpmathjax, "}");
+						/*
+						 *	Close \dfrac and \textcolor
+						 */
+						flexprint(N->Fe, N->Fm, N->Fpmathjax, "}}");
 
 						if (col < invariant->kernelColumnCount - 1)
 						{
-							flexprint(N->Fe, N->Fm, N->Fpmathjax, ",\\qquad");
+							flexprint(N->Fe, N->Fm, N->Fpmathjax, ",\\quad");
 						}
 					}
+					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\end{aligned}\n");
 					flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$");
 				}
 				else
@@ -189,7 +188,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\t\tThe ordering of parameters is:\t", countKernel);
 					for (int i = 0; i < invariant->dimensionalMatrixColumnCount; i++)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpinfo, "%c%c ", 'A'+(invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + i]/10), 
+						flexprint(N->Fe, N->Fm, N->Fpinfo, "%c%c ", 'P'+(invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + i]/10), 
 												'0'+invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + i]%10);
 					}
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n");
@@ -199,7 +198,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 						flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\t\tPi group %d, Pi %d is:\t", countKernel, col);
 						for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
 						{
-							flexprint(N->Fe, N->Fm, N->Fpinfo, "%c%c", 'A'+(row/10), '0'+ (row%10) );
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "%c%c", 'P'+(row/10), '0'+ (row%10) );
 							flexprint(N->Fe, N->Fm, N->Fpinfo, "^(%2g)  ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
 						}
 						flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n");
