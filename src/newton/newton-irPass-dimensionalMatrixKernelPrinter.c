@@ -101,6 +101,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 					}
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 				}
+				flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 
 				for (int j = 0; j < invariant->dimensionalMatrixColumnCount; j++)
 				{
@@ -113,7 +114,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 				if (N->mode & kNoisyModeCGI)
 				{
 					flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$");
-					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\t\\Pi\\mathrm{ group }%d, \\mbox{ column order }", countKernel);
+					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\t\\Pi\\text{ group }%d, \\text{ with column order }", countKernel);
 
 					/*
 					 *	PermutedIndexArray consists of the indices to show how exactly the matrix is permuted.
@@ -130,53 +131,51 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 							flexprint(N->Fe, N->Fm, N->Fpmathjax, ",");
 						}
 					}
-					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\right) \\rightarrow");
+					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\right) \\mapsto");
 
 					for (int col = 0; col < invariant->kernelColumnCount; col++)
 					{
+						flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\dfrac{");
 						for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
 						{
 							if (invariant->nullSpace[countKernel][tmpPosition[row]][col] > 0)
 							{
-								flexprint(N->Fe, N->Fm, N->Fpmathjax, "");
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
 								if (invariant->nullSpace[countKernel][tmpPosition[row]][col] > 1)
 								{
 									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^{%g}  ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
-								}
-								flexprint(N->Fe, N->Fm, N->Fpmathjax, "");
-							}
 
-							if (row < invariant->dimensionalMatrixColumnCount - 1)
-							{
-								flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\cdot");
+									if (row < invariant->dimensionalMatrixColumnCount - 1)
+									{
+										flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\cdot ");
+									}
+								}
 							}
 						}
-
-						flexprint(N->Fe, N->Fm, N->Fpmathjax, " \\over ");
-
+						flexprint(N->Fe, N->Fm, N->Fpmathjax, "}");
+						
+						flexprint(N->Fe, N->Fm, N->Fpmathjax, "{");
 						for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
 						{
 							if (invariant->nullSpace[countKernel][tmpPosition[row]][col] < 0)
 							{
-								flexprint(N->Fe, N->Fm, N->Fpmathjax, "(");
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
 								if (invariant->nullSpace[countKernel][tmpPosition[row]][col] < -1)
 								{
 									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^{%g}  ", 0 - invariant->nullSpace[countKernel][tmpPosition[row]][col]);
-								}
-								flexprint(N->Fe, N->Fm, N->Fpmathjax, ")");
-							}
 
-							if (row < invariant->dimensionalMatrixColumnCount - 1)
-							{
-								flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\cdot");
+									if (row < invariant->dimensionalMatrixColumnCount - 1)
+									{
+										flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\cdot ");
+									}
+								}
 							}
 						}
+						flexprint(N->Fe, N->Fm, N->Fpmathjax, "}");
 
 						if (col < invariant->kernelColumnCount - 1)
 						{
-							flexprint(N->Fe, N->Fm, N->Fpmathjax, ",\\quad");
+							flexprint(N->Fe, N->Fm, N->Fpmathjax, ",\\qquad");
 						}
 					}
 					flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$");

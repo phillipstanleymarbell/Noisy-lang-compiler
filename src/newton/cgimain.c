@@ -378,6 +378,10 @@ main(void)
 	 */
 	printf("Content-type: text/html\n\n");
 
+	/*
+	 *	KaTeX requires the use of the HTML5 doctype. Without it, KaTeX may not render properly
+	 */
+	printf("<!DOCTYPE html>\n");
 	printf("<html>\n");
 	printf("<head>\n");
 	printf("<title>Newton version %s</title>\n", kNewtonVersion);
@@ -387,10 +391,29 @@ main(void)
 	/*
 	 *	MathJax
 	 */
-	printf("        <script type=\"text/javascript\" async\n");
-	printf("          src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML\">\n");
-	printf("        </script>\n");
+	//printf("        <script type=\"text/javascript\" async\n");
+	//printf("          src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML\">\n");
+	//printf("        </script>\n");
 
+	/*
+	 *	KaTeX with autorender (see https://katex.org/docs/autorender.html).
+	 *
+	 *	We purposefully _remove_ "pre" from the list of ignoreTags so we can
+	 *	have $$...$$ inside <pre></pre> (we currently don't use this feature
+	 *	since we group all the LaTeX output into a separate buffer for now).
+	 */
+	printf("<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.css\" integrity=\"sha384-D+9gmBxUQogRLqvARvNLmA9hS2x//eK1FhVb9PiU86gmcrBrJAQT8okdJ4LMp2uv\" crossorigin=\"anonymous\">\n");
+	printf("<script defer src=\"https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.js\" integrity=\"sha384-483A6DwYfKeDa0Q52fJmxFXkcPCFfnXMoXblOkJ4JcA8zATN6Tm78UNL72AKk+0O\" crossorigin=\"anonymous\"></script>\n");
+	printf("<script defer src=\"https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/contrib/auto-render.min.js\" integrity=\"sha384-yACMu8JWxKzSp/C1YV86pzGiQ/l1YUfE8oPuahJQxzehAjEt2GiQuy/BIvl9KyeF\" crossorigin=\"anonymous\"></script>\n");
+	printf("<script>\n");
+	printf("    document.addEventListener(\"DOMContentLoaded\", function() {\n");
+	printf("        renderMathInElement(document.body, {\n");
+	printf("            ignoredTags: [\"script\", \"noscript\", \"style\", \"textarea\", \"code\"]\n");
+	printf("        });\n");
+	printf("    });\n");
+	printf("</script>\n");
+	
+	
 	/*
 	 *	Javascript for ACE editor hookup. Needs both ACE code editor plugin and jquery-git to work.
 	 *
@@ -842,7 +865,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	if (strlen(newtonCgiState->Fpmathjax->circbuf) != 0)
 	{
 		printf("<div width=\"%d\" style=\"background-color:EEEE11; padding:3px;\" onclick=\"JavaScript:toggle('newtonmathjax')\">", fmtWidth);
-		printf("&nbsp;&nbsp;MathJax-formatted Content&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+		printf("&nbsp;&nbsp;(La/Ka)TeX-rendered Content&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
 		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td>", fmtWidth);
 		printf("<span style=\"background-color:whitesmoke; display:none;\" id='newtonmathjax'>%s</span></td></tr></table>", newtonCgiState->Fpmathjax->circbuf);
 	}
