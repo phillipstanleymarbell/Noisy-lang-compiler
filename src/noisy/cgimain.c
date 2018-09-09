@@ -770,7 +770,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("%s", noisyCodeBuffer);
 	printf("</textarea>\n");
 
-	printf("<div style=\"background-color:#EEEEEE; color:444444; padding:3px;\">\n");
+	printf("<div style=\"background-color:#EEEEEE; color:#444444; padding:3px;\">\n");
 	printf("&nbsp;&nbsp;(Noisy/%" PRIu64 
 					":&nbsp;&nbsp;Operation completed in %.6f&thinsp;seconds S+U time; &nbsp; Mem = %"
 					PRIu64 "&thinsp;KB, &nbsp; &#916; Mem = %" PRIu64 "&thinsp;KB).\n",
@@ -802,7 +802,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 
 	if (strlen(noisyCgiState->Fperr->circbuf) != 0)
 	{
-		printf("<div width=\"%d\" style=\"background-color:FFDB58; padding:3px;\" onclick=\"JavaScript:toggle('noisyerrs')\">", fmtWidth);
+		printf("<div width=\"%d\" style=\"background-color:#FFDB58; padding:3px;\" onclick=\"JavaScript:toggle('noisyerrs')\">", fmtWidth);
 		printf("&nbsp;&nbsp;Error Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
 		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td><pre>", fmtWidth);
 		printf("<span style=\"background-color:whitesmoke; display:none;\" id='noisyerrs'>%s</span></pre></td></tr></table>", noisyCgiState->Fperr->circbuf);

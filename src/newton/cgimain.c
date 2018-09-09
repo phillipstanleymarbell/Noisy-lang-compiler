@@ -848,7 +848,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 
 	if (strlen(newtonCgiState->Fperr->circbuf) != 0)
 	{
-		printf("<div width=\"%d\" style=\"background-color:FFDB58; padding:3px;\" onclick=\"JavaScript:toggle('newtonerrs')\">", fmtWidth);
+		printf("<div width=\"%d\" style=\"background-color:#FFDB58; padding:3px;\" onclick=\"JavaScript:toggle('newtonerrs')\">", fmtWidth);
 		printf("&nbsp;&nbsp;Error Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
 		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td><pre>", fmtWidth);
 		printf("<span style=\"background-color:whitesmoke; display:none;\" id='newtonerrs'>%s</span></pre></td></tr></table>", newtonCgiState->Fperr->circbuf);
@@ -856,7 +856,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 
 	if (strlen(newtonCgiDimensionsState->Fperr->circbuf) != 0)
 	{
-		printf("<div width=\"%d\" style=\"background-color:FFDB58; padding:3px;\" onclick=\"JavaScript:toggle('newtonerrs')\">", fmtWidth);
+		printf("<div width=\"%d\" style=\"background-color:#FFDB58; padding:3px;\" onclick=\"JavaScript:toggle('newtonerrs')\">", fmtWidth);
 		printf("&nbsp;&nbsp;Error Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
 		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td><pre>", fmtWidth);
 		printf("<span style=\"background-color:whitesmoke; display:none;\" id='newtonerrs'>%s</span></pre></td></tr></table>", newtonCgiDimensionsState->Fperr->circbuf);
@@ -864,7 +864,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 
 	if (strlen(newtonCgiState->Fpmathjax->circbuf) != 0)
 	{
-		printf("<div width=\"%d\" style=\"background-color:EEEE11; padding:3px;\" onclick=\"JavaScript:toggle('newtonmathjax')\">", fmtWidth);
+		printf("<div width=\"%d\" style=\"background-color:#EEEE11; padding:3px;\" onclick=\"JavaScript:toggle('newtonmathjax')\">", fmtWidth);
 		printf("&nbsp;&nbsp;Equation Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
 		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td>", fmtWidth);
 		printf("<span style=\"background-color:whitesmoke; display:none;\" id='newtonmathjax'>%s</span></td></tr></table>", newtonCgiState->Fpmathjax->circbuf);
@@ -872,7 +872,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 
 	if (strlen(newtonCgiState->Fpsmt2->circbuf) != 0)
 	{
-		printf("<div width=\"%d\" style=\"background-color:00EEEE; padding:3px;\" onclick=\"JavaScript:toggle('newtonsmt2')\">", fmtWidth);
+		printf("<div width=\"%d\" style=\"background-color:#00EEEE; padding:3px;\" onclick=\"JavaScript:toggle('newtonsmt2')\">", fmtWidth);
 		printf("&nbsp;&nbsp;SMT2 Backend Report&nbsp;&nbsp;&nbsp;<b>(Click here to show/hide.)</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
 		printf("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div><table width=\"%d\" border=\"0\"><tr><td><pre>", fmtWidth);
 		printf("<span style=\"background-color:whitesmoke; display:none;\" id='newtonsmt2'>%s</span></pre></td></tr></table>", newtonCgiState->Fpsmt2->circbuf);
