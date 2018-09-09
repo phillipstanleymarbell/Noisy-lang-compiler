@@ -81,7 +81,13 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 		{
 			flexprint(N->Fe, N->Fm, N->Fpinfo, "Invariant \"%s\" has %d unique kernels, each with %d column(s)...\n\n",
 							invariant->identifier, invariant->numberOfUniqueKernels, invariant->kernelColumnCount);
-			
+
+			if (N->mode & kNoisyModeCGI)
+			{
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\n\n$$");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\begin{aligned}\n");
+			}
+
 			for (int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
 			{
 
@@ -113,9 +119,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 				 */
 				if (N->mode & kNoisyModeCGI)
 				{
-					flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$");
-					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\begin{aligned}\n");
-					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\t\\Pi\\text{ group }%d, \\text{ with column order }", countKernel);
+					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\t\\qquad\\qquad\\mathbf{\\Pi\\text{ group }%d, \\text{ with column order }", countKernel);
 
 					/*
 					 *	PermutedIndexArray consists of the indices to show how exactly the matrix is permuted.
@@ -132,7 +136,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 							flexprint(N->Fe, N->Fm, N->Fpmathjax, ",");
 						}
 					}
-					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\right) &\\longrightarrow");
+					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\right)} \\qquad&\\longrightarrow\\qquad");
 
 					for (int col = 0; col < invariant->kernelColumnCount; col++)
 					{
@@ -175,9 +179,13 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 						{
 							flexprint(N->Fe, N->Fm, N->Fpmathjax, ",\\quad");
 						}
+						else
+						{
+							flexprint(N->Fe, N->Fm, N->Fpmathjax, ",\\\\");
+						}
 					}
 					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\end{aligned}\n");
-					flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$");
+					flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$\n\n");
 				}
 				else
 				{
@@ -206,6 +214,13 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 				}
 			}
+
+			if (N->mode & kNoisyModeCGI)
+			{
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\end{aligned}\n");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$");
+			}
+
 			flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 		}
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
