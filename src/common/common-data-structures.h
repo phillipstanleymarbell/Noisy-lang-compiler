@@ -696,10 +696,14 @@ struct Invariant
 	int 			dimensionalMatrixColumnCount;	//	Number of dimensional matrix columns 
 	char **			dimensionalMatrixRowLabels;	//	Labels of dimensional matrix rows		
 	char **			dimensionalMatrixColumnLabels;	//	Labels of dimensional matrix columns 
+	double *		dimensionalMatrixWithPiGroups;
+	int			dimensionalMatrixWithPiGroupsColumnCount;
+	char **			dimensionalMatrixWithPiGroupsColumnLabels;
 	double ***		nullSpace;
 	int			kernelColumnCount;
-	int			numberOfUniqueKernels;	
-	int *			permutedIndexArrayPointer;	
+	int			numberOfUniqueKernels;
+	int *			permutedIndexArrayPointer;
+	int **			uniquePiGroup;
 	Invariant *		next;
 };
 
@@ -936,6 +940,7 @@ typedef struct
 	FlexPrintBuf *		Fperr;
 	FlexPrintBuf *		Fpinfo;
 	FlexPrintBuf *		Fpsmt2;
+	FlexPrintBuf *		Fpmathjax;
 
 	/*
 	 *	The output file of the last render. TODO: Not very happy
