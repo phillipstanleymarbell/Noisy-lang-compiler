@@ -84,7 +84,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 
 			if (N->mode & kNoisyModeCGI)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\n\n$$");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\n\n$$\n");
 				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\begin{aligned}\n");
 			}
 
@@ -181,11 +181,9 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 						}
 						else
 						{
-							flexprint(N->Fe, N->Fm, N->Fpmathjax, ",\\\\");
+							flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\\\");
 						}
 					}
-					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\end{aligned}\n");
-					flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$\n\n");
 				}
 				else
 				{
@@ -217,8 +215,8 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 
 			if (N->mode & kNoisyModeCGI)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\end{aligned}\n");
-				flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\n\\end{aligned}\n");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$\n");
 			}
 
 			flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
