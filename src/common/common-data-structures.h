@@ -696,10 +696,8 @@ struct Invariant
 	int 			dimensionalMatrixColumnCount;	//	Number of dimensional matrix columns 
 	char **			dimensionalMatrixRowLabels;	//	Labels of dimensional matrix rows		
 	char **			dimensionalMatrixColumnLabels;	//	Labels of dimensional matrix columns 
-	double *		dimensionalMatrixWithPiGroups;
-	int			dimensionalMatrixWithPiGroupsColumnCount;
-	char **			dimensionalMatrixWithPiGroupsColumnLabels;
 	double ***		nullSpace;
+	double ***		reorderNullSpace;
 	int			kernelColumnCount;
 	int			numberOfUniqueKernels;
 	int *			permutedIndexArrayPointer;
@@ -782,7 +780,7 @@ struct SourceInfo
 	 */
 	char **			genealogy;
 	
-	char *			fileName;
+	char *			fileName;// use this 
 	uint64_t		lineNumber;
 	uint64_t		columnNumber;
 	uint64_t		length;
