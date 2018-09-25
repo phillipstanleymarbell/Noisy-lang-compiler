@@ -1,5 +1,5 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell, Youchao Wang.
+	Authored 2018. Youchao Wang.
 
 	All rights reserved.
 
@@ -47,6 +47,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <math.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -66,15 +67,37 @@
 #include "newton-symbolTable.h"
 
 IrNode *
-searchNull(IrNode *  root) //checked, correct
+searchNull(IrNode *  root)
 {
-	static int	debugCount = 0; //used for debug purpose
-	if (root->irRightChild == NULL) //if root, then its the nil node
+	/*
+	 *	Walk through the tree to find the rightChild which is NULL
+	 *	Return the parent of this NULL rightChild.
+	 *	Function identical to depthFirstWalk(), except this doesn't
+	 *	check irLeftChild.
+	 */
+	if (root->irRightChild == NULL)
 	{
 		return root;
 	}
-		debugCount++;
-		return searchNull(root->irRightChild); //recursive search until Null
+
+	return searchNull(root->irRightChild);
+}
+
+char *
+searchParameterListTokenString(IrNode *  root, char *  invariantLabel)
+{
+	/*
+	 *	Walk through the parameterTuple sub-tree.
+	 *	When the label string matches the one stored in rightChild of a Pparameter sub-tree
+	 *	we return the leftChild of this Pparameter, otherwise continue searching.
+	 *	By convention the left child is the name, and the right child is the name of the Physics.
+	 */
+	if (strcmp(invariantLabel, root->irLeftChild->irRightChild->tokenString) == 0)
+	{
+		return root->irLeftChild->irLeftChild->tokenString;
+	}
+
+	return searchParameterListTokenString(root->irRightChild, invariantLabel);
 }
 
 bool
@@ -82,16 +105,21 @@ isPiGroupConstant(Invariant *  invariant, IrNode *  parameter, Physics *  physic
 {
 	bool		areRightHandPiGroupsConstant = false;
 	/*
-	 *	check all the parameters to see if they are definded as constant 
+	 *	Check all the parameters to see if they are definded as constant 
 	 *	this is currently incorrect, since it should be that all pi groups on the right hand side are constant
+	 *	Currently this is function is not used.
 	 */
 	for ( ; parameter ; parameter = parameter->irRightChild)
 	{
-		if (physic->isConstant == false)// once there is a parameter not defined as constant, we break the loop.
+		/*
+		 *	Once there is a parameter not defined as constant, we break the loop.
+		 *	Otherwise return true to indicate that all the pi-groups are constant.
+		 */
+		if (physic->isConstant == false)
 		{
 			break;
 		}
-		areRightHandPiGroupsConstant = true;//otherwise set as true
+		areRightHandPiGroupsConstant = true;
 	}
 
 	return areRightHandPiGroupsConstant;
@@ -100,6 +128,11 @@ isPiGroupConstant(Invariant *  invariant, IrNode *  parameter, Physics *  physic
 void
 addLeafWithChainingSeqNoLex(State *  N, IrNode *  parent, IrNode *  newNode, SourceInfo *  srcInfo)
 {
+	/*
+	 *	TODO: This function should ideally be left in common-irHelpers.c
+	 *	since there already exists a function addLeafWithChainingSeqNoLexer() in common-irHelpers.h
+	 *	(currently only declared in .h but not defined in .c)
+	 */
 	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
 
 	IrNode *	node = depthFirstWalk(N, parent);
@@ -122,136 +155,40 @@ addLeafWithChainingSeqNoLex(State *  N, IrNode *  parent, IrNode *  newNode, Sou
 						srcInfo /* source info */);
 }
 
-IrNode *
-genIrNodeLeftExpression(State *  N, IrNode *  node, Invariant *  invariant, SourceInfo *  genSrcInfo)
+void
+genIrNodeLoopInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *  genSrcInfo, int ** rowIn, int kernel, int j)
 {
-	IrNode *	newNode;
-	newNode = genIrNode(N, kNoisyIrNodeType_Xseq,
-				NULL,
-				NULL,
-				genSrcInfo);
-	addLeaf(N, node, newNode); // lldb node = 0x000000010c217a70; newNode = 0x000000010c217e20; node->irRightChild = 0x000000010c217e20
-
-	IrNode *	newNodeConstraint;
-	newNodeConstraint = genIrNode(N, kNewtonIrNodeType_Pconstraint,
-				NULL,
-				NULL,
-				genSrcInfo);
-	addLeaf(N, newNode, newNodeConstraint);
-
-	IrNode *	newNodeQExpression;
-	newNodeQExpression = genIrNode(N, kNewtonIrNodeType_PquantityExpression,
-					NULL,
-					NULL,
-					genSrcInfo);
-	//newNodeQExpression->physics = 
-	addLeaf(N, newNodeConstraint, newNodeQExpression);
-
-	IrNode *	newNodeQTerm;
-	newNodeQTerm = genIrNode(N, kNewtonIrNodeType_PquantityTerm,
-				NULL,
-				NULL,
-				genSrcInfo);
-	//newNodeQTerm->physics =
-	//newNodeQTerm->value = 
-	addLeaf(N, newNodeQExpression, newNodeQTerm);
-	//newNodeQExpression->value = newNodeQTerm->value;
-	//newNodeQExpression->physics = newNodeQTerm->physics;
-
-	IrNode *	newNodeQFactor;
-	newNodeQFactor = genIrNode(N, kNewtonIrNodeType_PquantityFactor,
-				NULL,
-				NULL,
-				genSrcInfo);
-	addLeaf(N, newNodeQTerm, newNodeQFactor);
-
-	IrNode *	newNodeIdentifier;
-	newNodeIdentifier = genIrNode(N, kNewtonIrNodeType_Tidentifier,
-				NULL,
-				NULL,
-				genSrcInfo);
-////////// this is to save the tokenString, need a recursive walk/////////////////
-	char *			tokenString;
-	tokenString = (char *)calloc(8, sizeof(char));
-	newNodeIdentifier->tokenString = tokenString;
-	addLeaf(N, newNodeQFactor, newNodeIdentifier);
-//////////////////////////////////////////////////////////////////////////////////
-	IrNode *	newNodeHighPreOp;
-	newNodeHighPreOp = genIrNode(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp,
-				NULL,
-				NULL,
-				genSrcInfo);
-	addLeaf(N, newNodeQFactor, newNodeHighPreOp);
-
-	IrNode *	newNodeExponent;
-	newNodeExponent = genIrNode(N, kNewtonIrNodeType_Texponent,
-				NULL,
-				NULL,
-				genSrcInfo);
-	addLeaf(N, newNodeHighPreOp, newNodeExponent);
-//////////////////////////////////////////////////////////////////////////////////
-	IrNode *	newNodeQExpressionExponent;
-	newNodeQExpressionExponent = genIrNode(N, kNewtonIrNodeType_PquantityExpression,
-				NULL,
-				NULL,
-				genSrcInfo);
-	addLeafWithChainingSeqNoLex(N, newNodeHighPreOp, newNodeQExpressionExponent, genSrcInfo);
-
-	IrNode *	newNodeQTermExponent;
-	newNodeQTermExponent = genIrNode(N, kNewtonIrNodeType_PquantityTerm,
-				NULL,
-				NULL,
-				genSrcInfo);
-	addLeaf(N, newNodeQExpressionExponent, newNodeQTermExponent);
-
-	IrNode *	newNodeExponentConst;
-	newNodeExponentConst = genIrNode(N, kNewtonIrNodeType_TnumericConst,
-				NULL,
-				NULL,
-				genSrcInfo);
-	addLeaf(N, newNodeQTermExponent, newNodeExponentConst);
-
-	return newNodeConstraint;
-}
-
-IrNode *
-genIrNodeLoopInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *  genSrcInfo)
-{
-	IrNode *	newNodeMul;
-	newNodeMul = genIrNode(N, kNoisyIrNodeType_Xseq,
-				NULL,
-				NULL,
-				genSrcInfo);
-	addLeafWithChainingSeqNoLex(N, newNodeQTerm, newNodeMul, genSrcInfo);
-
+	/*
+	 *	TODO: This function should ideally be compressed for a better 'hygiene'
+	 *	since most of the time it is doing some genIrNode() loops
+	 */
 	IrNode *	newNodeMulExpression;
 	newNodeMulExpression = genIrNode(N, kNewtonIrNodeType_Tmul,
 				NULL,
 				NULL,
 				genSrcInfo);
-	addLeaf(N, newNodeMul, newNodeMulExpression);
-//////////////////////////////////////////////////////////////////////////////////
-	IrNode *	newNodeMulQFactor;
-	newNodeMulQFactor = genIrNode(N, kNoisyIrNodeType_Xseq,
-					NULL,
-					NULL,
-					genSrcInfo);
-	addLeafWithChainingSeqNoLex(N, newNodeQTerm, newNodeMulQFactor, genSrcInfo);
+
+	Token *		tokenExpression = (Token *) calloc(1, sizeof(Token));
+	tokenExpression->type = kNewtonIrNodeType_Tmul;
+	newNodeMulExpression->token = tokenExpression;
+	addLeafWithChainingSeqNoLex(N, newNodeQTerm, newNodeMulExpression, genSrcInfo);
 
 	IrNode *	newNodeQFactor;
 	newNodeQFactor = genIrNode(N, kNewtonIrNodeType_PquantityFactor,
 				NULL,
 				NULL,
 				genSrcInfo);
-	addLeaf(N, newNodeQTerm, newNodeQFactor);
+	addLeafWithChainingSeqNoLex(N, newNodeQTerm, newNodeQFactor, genSrcInfo);
 
 	IrNode *	newNodeIdentifier;
 	newNodeIdentifier = genIrNode(N, kNewtonIrNodeType_Tidentifier,
 				NULL,
 				NULL,
 				genSrcInfo);
+	newNodeIdentifier->tokenString = searchParameterListTokenString(N->invariantList->parameterList,
+									N->invariantList->dimensionalMatrixColumnLabels[rowIn[kernel][j]]);
 	addLeaf(N, newNodeQFactor, newNodeIdentifier);
-//////////////////////////////////////////////////////////////////////////////////
+
 	IrNode *	newNodeHighPreOp;
 	newNodeHighPreOp = genIrNode(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp,
 				NULL,
@@ -264,8 +201,13 @@ genIrNodeLoopInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo * 
 				NULL,
 				NULL,
 				genSrcInfo);
+
+	Token *		tokenExponent = (Token *) calloc(1, sizeof(Token));
+	tokenExponent->type = kNewtonIrNodeType_Texponent;
+	newNodeExponent->token = tokenExponent;
+	
 	addLeaf(N, newNodeHighPreOp, newNodeExponent);
-//////////////////////////////////////////////////////////////////////////////////
+
 	IrNode *	newNodeQExpressionExponent;
 	newNodeQExpressionExponent = genIrNode(N, kNewtonIrNodeType_PquantityExpression,
 				NULL,
@@ -285,41 +227,53 @@ genIrNodeLoopInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo * 
 				NULL,
 				NULL,
 				genSrcInfo);
+
+	Token *		tokenExponentConst = (Token *) calloc(1, sizeof(Token));
+	tokenExponentConst->realConst = 1.1;
+	tokenExponentConst->type = kNewtonIrNodeType_TnumericConst;
+	newNodeExponentConst->token = tokenExponentConst;
+
 	addLeaf(N, newNodeQTermExponent, newNodeExponentConst);
 
-	return newNodeMul;
 }
 
 
 IrNode *
-genIrNodeRightExpression(State *  N, IrNode *  node, Invariant *  invariant, SourceInfo *  genSrcInfo, int countLoop)
+genExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoop, /*int countPiGroups,*/ bool isLeft, int **  row, int ** rowIn, int kernel)
 {
+	/*
+	 *	TODO: This function should ideally be compressed for a better 'hygiene'
+	 *	since most of the time it is doing some genIrNode() loops
+	 */
+	static int	i = 0;
+	IrNode *	newNodeConstraint;
+	newNodeConstraint = genIrNode(N, kNewtonIrNodeType_Pconstraint,
+				NULL,
+				NULL,
+				genSrcInfo);
+	
 	IrNode *	newNode;
-	newNode = genIrNode(N, kNoisyIrNodeType_Xseq,
+	newNode = genIrNode(N, kNewtonIrNodeType_PquantityExpression,
 				NULL,
 				NULL,
 				genSrcInfo);
-	addLeafWithChainingSeqNoLex(N, node, newNode, genSrcInfo);
+	if(isLeft == true)
+	{
+		addLeafWithChainingSeqNoLex(N, node, newNodeConstraint, genSrcInfo);
+		addLeafWithChainingSeqNoLex(N, newNodeConstraint, newNode, genSrcInfo);
+	}
+	else
+	{
+		addLeafWithChainingSeqNoLex(N, node, newNode, genSrcInfo);
+	}
 
-	IrNode *	newNodeQExpression;
-	newNodeQExpression = genIrNode(N, kNewtonIrNodeType_PquantityExpression,
-				NULL,
-				NULL,
-				genSrcInfo);
-	//newNodeQExpression->physics = 
-	addLeaf(N, newNode, newNodeQExpression);
-
-	//IrNode *	newNodeRight;
-	// clear the mind before sorting this logic out
 	IrNode *	newNodeQTerm;
 	newNodeQTerm = genIrNode(N, kNewtonIrNodeType_PquantityTerm,
 				NULL,
 				NULL,
 				genSrcInfo);
-	//newNodeQTerm->physics =
-	//newNodeQTerm->value = 
-	addLeaf(N, newNodeQExpression, newNodeQTerm);
-//////////////////////////////////////////////////////////////////////////////////
+	addLeaf(N, newNode, newNodeQTerm);
+
 	IrNode *	newNodeQFactor;
 	newNodeQFactor = genIrNode(N, kNewtonIrNodeType_PquantityFactor,
 				NULL,
@@ -332,8 +286,19 @@ genIrNodeRightExpression(State *  N, IrNode *  node, Invariant *  invariant, Sou
 				NULL,
 				NULL,
 				genSrcInfo);
+	if(isLeft == true)
+	{
+		newNodeIdentifier->tokenString = searchParameterListTokenString(N->invariantList->parameterList, 
+										N->invariantList->dimensionalMatrixColumnLabels[row[kernel][i]]);
+	}
+	else
+	{
+		newNodeIdentifier->tokenString = searchParameterListTokenString(N->invariantList->parameterList, 
+										N->invariantList->dimensionalMatrixColumnLabels[rowIn[kernel][i]]);
+	}
+
 	addLeaf(N, newNodeQFactor, newNodeIdentifier);
-//////////////////////////////////////////////////////////////////////////////////
+
 	IrNode *	newNodeHighPreOp;
 	newNodeHighPreOp = genIrNode(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp,
 				NULL,
@@ -346,8 +311,13 @@ genIrNodeRightExpression(State *  N, IrNode *  node, Invariant *  invariant, Sou
 				NULL,
 				NULL,
 				genSrcInfo);
+
+	Token *		tokenExponent = (Token *) calloc(1, sizeof(Token));
+	tokenExponent->type = kNewtonIrNodeType_Texponent;
+	newNodeExponent->token = tokenExponent;
+
 	addLeaf(N, newNodeHighPreOp, newNodeExponent);
-//////////////////////////////////////////////////////////////////////////////////
+
 	IrNode *	newNodeQExpressionExponent;
 	newNodeQExpressionExponent = genIrNode(N, kNewtonIrNodeType_PquantityExpression,
 				NULL,
@@ -367,24 +337,44 @@ genIrNodeRightExpression(State *  N, IrNode *  node, Invariant *  invariant, Sou
 				NULL,
 				NULL,
 				genSrcInfo);
-	addLeaf(N, newNodeQTermExponent, newNodeExponentConst);
-//////////////////////////////////////////////////////////////////////////////////
 
-	for(;countLoop;countLoop--)
+	Token *		tokenExponentConst = (Token *) calloc(1, sizeof(Token));
+	tokenExponentConst->realConst = 1.1;
+	tokenExponentConst->type = kNewtonIrNodeType_TnumericConst;
+	newNodeExponentConst->token = tokenExponentConst;
+
+	addLeaf(N, newNodeQTermExponent, newNodeExponentConst);
+
+	//if (countPiGroups != 0)
+	//{
+	//	countLoop += countPiGroups;
+	//}
+	countLoop -= 1;
+
+	int	j = 1;
+	for (;countLoop && isLeft == false /*|| countPiGroups != 0)*/;countLoop--)
 	{
-		//need to move this into a new function.
-		addLeaf(N, newNodeQTerm, genIrNodeLoopInRightExpression(N, newNodeQTerm, genSrcInfo));
+		genIrNodeLoopInRightExpression(N, searchNull(newNodeQTerm), genSrcInfo, rowIn, kernel, j);
+		j += 1;
 	}
 
-	return newNodeQExpression;
+	return newNodeConstraint;
 }
 
 void
-genIrNodeInvariantExpression(State *  N, IrNode *  node, Invariant *  invariant, SourceInfo *  genSrcInfo, int countLoop)
+generateInvariantExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoop, int **  row, int **  col, int ** rowIn, int ** colIn, int kernel) //int countPiGroups)
 {
+	/*
+	 *	After identifying the dependent variable, we assign the corresponding pi consisting the parameter in question
+	 *	to the proportionality equation.
+	 *	On the left hand side there is the dependent variable Q_1
+	 */
 	IrNode *	nodeConstraint;
-	nodeConstraint = genIrNodeLeftExpression(N, node, invariant, genSrcInfo);
+	nodeConstraint = genExpression(N, node, genSrcInfo, 0, /*countPiGroups,*/ true, row, rowIn, kernel);
 
+	/*
+	 *	The expression symbol 'o<'
+	 */
 	IrNode *	nodeProportional;
 	nodeProportional = genIrNode(N, kNewtonIrNodeType_Tproportional,
 					NULL,
@@ -392,8 +382,11 @@ genIrNodeInvariantExpression(State *  N, IrNode *  node, Invariant *  invariant,
 					genSrcInfo);
 	addLeafWithChainingSeqNoLex(N, nodeConstraint, nodeProportional, genSrcInfo);
 
+	/*
+	 *	On the right hand side there is the remaining invariants within this pi group, Q_2 ... Q_n
+	 */
 	IrNode *	nodeConstraintRight;
-	nodeConstraintRight = genIrNodeRightExpression(N, nodeConstraint, invariant, genSrcInfo, countLoop);
+	nodeConstraintRight = genExpression(N, nodeConstraint, genSrcInfo, countLoop, /*countPiGroups,*/ false, row, rowIn, kernel);
 }
 
 void
@@ -402,33 +395,34 @@ irPassDimensionalMatrixConvertToList(State *  N)
 	Invariant *	invariant = N->invariantList;
 	//IrNode *	parameter = invariant->parameterList;
 	//Physics *	physic = parameter->irLeftChild->physics;
+	IrNode *	node;
 
+	/*
+	 *	We currently use the sourceInfo to indicate the generated constraints without any 
+	 *	interaction with the lexer. line, column and length are temporary values, ideally should be more meaningful.
+	 */
 	SourceInfo *	genSrcInfo = (SourceInfo *)calloc(1, sizeof(SourceInfo));
 	genSrcInfo->fileName = (char *)calloc(sizeof("GeneratedByDA"),sizeof(char));
 	genSrcInfo->lineNumber = 1;
 	genSrcInfo->columnNumber = 1;
 	genSrcInfo->length = 1;
 
+	//bool		arePiGroupsConstant = isPiGroupConstant(invariant, parameter, physic);
+
 	while (invariant)
 	{
 		/*
-		 *	In Newton, proportionality is expressed as "o<" (currently as "@<")
+		 *	In Newton, proportionality is expressed as "o<" (currently as "@<", see issue #374)
 		 *	Currently we are still using temporary arrays to store the re-ordered null space
-		 *	i.e. re-ordered kernels
-		 *	When newton-irPass-dimensionalMatrixPiGroupCanonicalization is complete, issue #371
-		 *	we should be using the canonicalized kernels instead.
+		 *	i.e. the re-ordered kernels
+		 *	When newton-irPass-dimensionalMatrixPiGroupCanonicalization is complete (see issue #371)
+		 *	we should be able to use the canonicalized kernels instead.
 		 *	We currently do not do this.
-		 *	Additionally the current method applied only checks pi groups within each kernel,
+		 *	Additionally, the current method applied only checks pi groups within each kernel,
 		 *	as we form the relationship in the traditional way. Each kernel corresponds to one
-		 *	function which describes the relationship between different pi's
+		 *	function which describes the relationship between different pi's.
 		 *	Alternatively, we form the unoion of pi groups based on Jonsson's (2014) basis
 		 *	and circuit basis.
-		 */
-		
-		/*
-		 *	Assign a set of fake sourceInfo, without any interaction with the lexer.
-		 *	line, column and length are temporary values, ideally should be more meaningful.
-		 *	Currently using an allocated SourceInfo struct to purposefully store these values.
 		 */
 
 		int ***		tmpPosition = (int ***)calloc(invariant->numberOfUniqueKernels, sizeof(int **));
@@ -438,7 +432,6 @@ irPassDimensionalMatrixConvertToList(State *  N)
 		{	
 			tmpPosition[countKernel] = (int **)calloc(invariant->kernelColumnCount, sizeof(int *));
 			invariant->reorderNullSpace[countKernel] = (double **)calloc(invariant->kernelColumnCount, sizeof(double *));
-
 			/*
 			 *	Construct the new re-ordered null space
 			 *	using the permutedIndexArrayPointer
@@ -460,18 +453,20 @@ irPassDimensionalMatrixConvertToList(State *  N)
 													[tmpPosition[countKernel][countColumn][countRow]][countColumn];
 				}
 			}
-		}//checked, working
+		}
 		/*
 		 *	End of the reordered kernel construction
 		 *	Begin to set up the constraints
 		 */
+		int **		locateDependentInvariantColumn;
+		int **		locateDependentInvariantRow;
+		int **		locateIndependentInvariantColumn;
+		int **		locateIndependentInvariantRow;
 
-	//	IrNode *	constraint = invariant->constraints;
-		int **		dependentVariableColumn;
-		int **		dependentVariableRow;
-
-		dependentVariableColumn = (int **) calloc(invariant->numberOfUniqueKernels, sizeof(int *));
-		dependentVariableRow = (int **) calloc(invariant->numberOfUniqueKernels, sizeof(int *));
+		locateDependentInvariantRow = (int **) calloc(invariant->numberOfUniqueKernels, sizeof(int *));
+		locateDependentInvariantColumn = (int **) calloc(invariant->numberOfUniqueKernels, sizeof(int *));
+		locateIndependentInvariantRow = (int **) calloc(invariant->numberOfUniqueKernels, sizeof(int *));
+		locateIndependentInvariantColumn = (int **) calloc(invariant->numberOfUniqueKernels, sizeof(int *));
 
 		for (int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
 		{
@@ -479,125 +474,185 @@ irPassDimensionalMatrixConvertToList(State *  N)
 			 *	Note that a new null space reordered lexicographically and which rules out
 			 *	all the duplicate pi groups should be available once the irPass in issue #372
 			 *	is complete. We currently do not have it ready.
-			 *	Within each kernel, we find the invariant(s) which occur only once, 
-			 *	and set this as the dependent variable(s). By pulral form, we want to express 
-			 *	these variables on the left hand side of separate propotionality equations.
-			 *	It is important that we identify which of those invariants described by Newton
+			 *	Within each kernel, we find the invariant(s) which occurs only once,
+			 *	and set this as the dependent variable(s). When we find more than one dependent variables,
+			 *	we want to express these variables in separate propotionality equations (left hand side).
+			 *	It is also important that we identify which of those invariants described by Newton
 			 *	are constants at the first instance, by checking the 'constant' keyword.
 			 */
-			dependentVariableColumn[countKernel] = (int *) calloc(invariant->kernelColumnCount, sizeof(int));
-			dependentVariableRow[countKernel] = (int *) calloc(invariant->kernelColumnCount, sizeof(int));
+			locateDependentInvariantRow[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+			locateDependentInvariantColumn[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
 
 			int	zerosCount = 0;
 			int	onesCount = 0;
 			int	whichColumn = 0;
 			int	countDependentInvariant = 0;
+			int	countIndependentInvariant = 0;
 			int	countAddRightExpression = 0;
+		//	int	countRemainingPiGroups = 0;
 
+		//	/*
+		//	 *	Case one: where all the pi groups which should be on the right hand side are constants (fixed values)
+		//	 *	Case two: we do not know if they are constant at compile, therefore need to setup boolean flags
+		//	 */
+		//	if (arePiGroupsConstant == false)
+		//	{
+				/*
+				 *	Currently if we find one of the parameters to be not constant
+				 *	then, we assume that execpt the one with the dependent variable
+				 *	the remaining pi groups are not constant.
+				 */
+		//		countRemainingPiGroups = invariant->kernelColumnCount - 1;
+		//	}
+
+			/*
+			 *	There will be two cases for the operation, the operations for kernels with one column
+			 *	and kernels with multiple columns will be slightly different.
+			 *	(1) For kernels with one column, all the invariants with exponent not equal to zero could
+			 *	be regarded as dependent invariants. Therefore on the LHS of the expression, there is 
+			 *	one invariant, and on the RHS, there is (total number of invariants - 1) number of invariants.
+			 *	(2) For kernels with multiple columns, we first do a thorough search and determine which
+			 *	invariant(s) occurs only once among all the columns. We then pick the column containing
+			 *	the dependent invariant, and count the rest of the invariants with exponents not equal to
+			 *	zero as independent invariants, and store the location information in another array.
+			 *	We repeat the above for the remaining dependent invariants.
+			 */
 			if (invariant->kernelColumnCount == 1)
 			{
 				for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 				{
-					if (invariant->reorderNullSpace[countKernel][0][countRow] != 0)
+					if (fabs(invariant->reorderNullSpace[countKernel][0][countRow]) != 0)
 					{
-						//onesCount += 1;
-						dependentVariableRow[countKernel][countDependentInvariant] = countRow;
-						dependentVariableColumn[countKernel][countDependentInvariant++] = 0;
-						countAddRightExpression = countDependentInvariant;
+						locateDependentInvariantRow[countKernel][countDependentInvariant] = countRow;
+						locateDependentInvariantColumn[countKernel][countDependentInvariant] = 0;
+						countAddRightExpression = countDependentInvariant++;
 					}
 				}
-				IrNode *	node; //back to X_Seq //////////////IMPORTANT, this currently only creates one subtree in one kernel. Within one kernel there may be
-				//countDependentInvariant number of proportional equations to be expressed. 
-				//Also there will be numberOfUniqueKernels number of kernels to be looped through.
+
+				locateIndependentInvariantRow[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+				locateIndependentInvariantColumn[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+
+				locateIndependentInvariantRow = locateDependentInvariantRow;
+				locateIndependentInvariantColumn = locateDependentInvariantColumn;
+
+			//	countAddRightExpression += countRemainingPiGroups;
 				/*
 				 *	We walk through the tree to find the NULL in the right child, recursively
+				 *	invariant->parameterList->irParent points to the X_Seq whose right child would be constraints
+				 *	such avoids the need to locate invariant->constraints (which points to the first constraint)
+				 *	since there may not be any human written constraints available at compile time.
 				 */
-				node = searchNull(invariant->constraints->irParent);//checked, this is correct
+				node = searchNull(invariant->parameterList->irParent);
 
-				genIrNodeInvariantExpression(N, node, invariant, genSrcInfo, countAddRightExpression);
+				generateInvariantExpression(N,	node /* node with null irRightChild */,
+								genSrcInfo /* 'fake' source information */,
+								countAddRightExpression /* number of invariants on right hand side */,
+								locateDependentInvariantRow,
+								locateDependentInvariantColumn,
+								locateIndependentInvariantRow,
+								locateIndependentInvariantColumn,
+								countKernel /* The current kernel */);
+								//countRemainingPiGroups);
 			}
 			else if (invariant->kernelColumnCount != 0)
 			{
+				locateIndependentInvariantRow[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+				locateIndependentInvariantColumn[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+
 				for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 				{
 					for (int countColumn = 0; countColumn < invariant->kernelColumnCount; countColumn++)
 					{
-						if (invariant->reorderNullSpace[countKernel][countColumn][countRow] == 0)
+						if (fabs(invariant->reorderNullSpace[countKernel][countColumn][countRow]) == 0)
 						{
 							zerosCount += 1;
 						}
 						else
 						{
 							onesCount += 1;
-							whichColumn = countColumn;//only useful when onesCount == 1
+							whichColumn = countColumn;
 						}
 					}
-
-					if (onesCount == 1 && zerosCount != 0)//meeting the criteria that it occurs only once
+					/*
+					 *	Meeting the criteria that it occurs only once
+					 */
+					if (onesCount == 1 && zerosCount != 0)
 					{
-						dependentVariableRow[countKernel][countDependentInvariant] = countRow; //referring to the parameter in invariantList
-						dependentVariableColumn[countKernel][countDependentInvariant++] = whichColumn;//countDependentInvariant will determine the number of new constraints added
+						/*
+						 *	Referring to the parameter in invariantList
+						 */
+						locateDependentInvariantRow[countKernel][countDependentInvariant] = countRow;
+						/*
+						 *	CountDependentInvariant will determine the number of new constraints added
+						 */
+						locateDependentInvariantColumn[countKernel][countDependentInvariant++] = whichColumn;
+					}
+				}
+				
+				for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
+				{
+					for (int countColumn = 0; countColumn < invariant->kernelColumnCount; countColumn++)
+					{
+						for (int i = 0; i < countDependentInvariant; i++)
+						{
+							if (fabs(invariant->reorderNullSpace[countKernel][countColumn][countRow]) != 0
+								&& countRow != locateDependentInvariantRow[countKernel][i])
+							{
+								locateIndependentInvariantRow[countKernel][countIndependentInvariant] = countRow;
+								locateIndependentInvariantColumn[countKernel][countIndependentInvariant] = countColumn;
+								countIndependentInvariant += 1;
+							}
+						}
 					}
 				}
 				/*
-				 *	The below checks the number of invariants with exponents not equal to 1 within each column
+				 *	The below checks the number of invariants with exponents not equal to 0 within each column
 				 *	Also, for each column in the kernel, there should be one proportional constraint added to the list
 				 */
 				for (int countColumn = 0; countColumn < invariant->kernelColumnCount; countColumn++)
 				{
 					for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 					{
-						if (invariant->reorderNullSpace[countKernel][countColumn][countRow] != 0)
+						if (fabs(invariant->reorderNullSpace[countKernel][countColumn][countRow]) != 0)
 						{
 							countAddRightExpression += 1;
 						}
 					}
-					countAddRightExpression -= 1;//since this is right expression, we take away the one which is the left expression
+					/*
+					 *	Since this is right expression, we take away the one which is the left expression
+					 */
+					countAddRightExpression -= 1;
+
 					for (; countDependentInvariant; countDependentInvariant--)
 					{
-						IrNode *	node; //back to X_Seq //////////////IMPORTANT, this currently only creates one subtree in one kernel. Within one kernel there may be
-							//countDependentInvariant number of proportional equations to be expressed. 
-							//Also there will be numberOfUniqueKernels number of kernels to be looped through.
 						/*
 						 *	We walk through the tree to find the NULL in the right child, recursively
 						 */
-						node = searchNull(invariant->constraints->irParent);//checked, this is correct
+						node = searchNull(invariant->parameterList->irParent);
 
-						genIrNodeInvariantExpression(N, node, invariant, genSrcInfo, countAddRightExpression);
+						generateInvariantExpression(N,	node /* node with null irRightChild */,
+										genSrcInfo /* 'fake' source information */,
+										countAddRightExpression /* number of invariants on right hand side */,
+										locateDependentInvariantRow,
+										locateDependentInvariantColumn,
+										locateIndependentInvariantRow,
+										locateIndependentInvariantColumn,
+										countKernel /* The current kernel */);
+										//countRemainingPiGroups);
 					}
-					countAddRightExpression = 0;//reset value
+					countAddRightExpression = 0;
 				}
-				countDependentInvariant = 0;//reset value
+				countDependentInvariant = 0;
 			}
-			// this, should, be correct?
-
-		} // checked working
-
-		/*
-		 *	check each of the pi's
-		 */
-
-		/*
-		 *	After identifying the dependent variable, we assign the corresponding pi consisting the parameter in question
-		 *	to the proportionality equation
-		 *	On the left hand side there is the dependent variable Q_1
-		 *	On the right hand side there is the remaining invariants within this pi group
-		 */
-
-		/*
-		 *	There will be two cases for the operation
-		 *	Case one: where all the pi groups which should be on the right hand side are constants (fixed values)
-		 *	Case two: we do not know if they are constant at compile, therefore need to setup boolean flags
-		 */
-
-		/*
-		 *	Finally we are done
-		 */
+		}
 
 		invariant = invariant->next;
-
+		/*
+		 *	Use free() to avoid potential memory leakage
+		 */
 		free(tmpPosition);
-		free(dependentVariableColumn);
-		free(dependentVariableRow);
+		free(locateDependentInvariantColumn);
+		free(locateDependentInvariantRow);
 	}
+	free(genSrcInfo);
 }
