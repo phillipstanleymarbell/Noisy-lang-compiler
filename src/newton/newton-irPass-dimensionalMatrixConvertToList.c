@@ -156,7 +156,9 @@ addLeafWithChainingSeqNoLex(State *  N, IrNode *  parent, IrNode *  newNode, Sou
 }
 
 void
-genIrNodeLoopInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *  genSrcInfo, int ** rowIn, int kernel, int j)
+genIrNodeLoopInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *  genSrcInfo,
+				int **  row, int **  col, int ***  rowInvariant, int ***  colInvariant,
+				int kernel, int whichInvariant, int whichIndependentInvariant)
 {
 	/*
 	 *	TODO: This function should ideally be compressed for a better 'hygiene'
@@ -186,7 +188,7 @@ genIrNodeLoopInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo * 
 				NULL,
 				genSrcInfo);
 	newNodeIdentifier->tokenString = searchParameterListTokenString(N->invariantList->parameterList,
-									N->invariantList->dimensionalMatrixColumnLabels[rowIn[kernel][j]]);
+						N->invariantList->dimensionalMatrixColumnLabels[rowInvariant[kernel][whichInvariant][whichIndependentInvariant]]);
 	addLeaf(N, newNodeQFactor, newNodeIdentifier);
 
 	IrNode *	newNodeHighPreOp;
@@ -227,9 +229,10 @@ genIrNodeLoopInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo * 
 				NULL,
 				NULL,
 				genSrcInfo);
-
+	newNodeExponentConst->value = 0 - N->invariantList->reorderNullSpace[kernel]
+									[colInvariant[kernel][whichInvariant][whichIndependentInvariant]]
+									[rowInvariant[kernel][whichInvariant][whichIndependentInvariant]];
 	Token *		tokenExponentConst = (Token *) calloc(1, sizeof(Token));
-	tokenExponentConst->realConst = 1.1;
 	tokenExponentConst->type = kNewtonIrNodeType_TnumericConst;
 	newNodeExponentConst->token = tokenExponentConst;
 
@@ -239,13 +242,13 @@ genIrNodeLoopInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo * 
 
 
 IrNode *
-genExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoop, /*int countPiGroups,*/ bool isLeft, int **  row, int ** rowIn, int kernel)
+genExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoop, /*int countPiGroups,*/
+		bool isLeft, int **  row, int **  col, int ***  rowInvariant, int ***  colInvariant, int kernel, int whichInvariant)
 {
 	/*
 	 *	TODO: This function should ideally be compressed for a better 'hygiene'
 	 *	since most of the time it is doing some genIrNode() loops
 	 */
-	static int	i = 0;
 	IrNode *	newNodeConstraint;
 	newNodeConstraint = genIrNode(N, kNewtonIrNodeType_Pconstraint,
 				NULL,
@@ -289,12 +292,12 @@ genExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoo
 	if(isLeft == true)
 	{
 		newNodeIdentifier->tokenString = searchParameterListTokenString(N->invariantList->parameterList, 
-										N->invariantList->dimensionalMatrixColumnLabels[row[kernel][i]]);
+							N->invariantList->dimensionalMatrixColumnLabels[row[kernel][whichInvariant]]);
 	}
 	else
 	{
 		newNodeIdentifier->tokenString = searchParameterListTokenString(N->invariantList->parameterList, 
-										N->invariantList->dimensionalMatrixColumnLabels[rowIn[kernel][i]]);
+							N->invariantList->dimensionalMatrixColumnLabels[rowInvariant[kernel][whichInvariant][0]]);
 	}
 
 	addLeaf(N, newNodeQFactor, newNodeIdentifier);
@@ -311,7 +314,6 @@ genExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoo
 				NULL,
 				NULL,
 				genSrcInfo);
-
 	Token *		tokenExponent = (Token *) calloc(1, sizeof(Token));
 	tokenExponent->type = kNewtonIrNodeType_Texponent;
 	newNodeExponent->token = tokenExponent;
@@ -337,9 +339,20 @@ genExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoo
 				NULL,
 				NULL,
 				genSrcInfo);
+	if(isLeft == true)
+	{
+		newNodeExponentConst->value = N->invariantList->reorderNullSpace[kernel]
+										[col[kernel][whichInvariant]]
+										[row[kernel][whichInvariant]];
+	}
+	else
+	{
+		newNodeExponentConst->value = 0 - N->invariantList->reorderNullSpace[kernel]
+										[colInvariant[kernel][whichInvariant][0]]
+										[rowInvariant[kernel][whichInvariant][0]];
+	}
 
 	Token *		tokenExponentConst = (Token *) calloc(1, sizeof(Token));
-	tokenExponentConst->realConst = 1.1;
 	tokenExponentConst->type = kNewtonIrNodeType_TnumericConst;
 	newNodeExponentConst->token = tokenExponentConst;
 
@@ -351,18 +364,23 @@ genExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoo
 	//}
 	countLoop -= 1;
 
-	int	j = 1;
+	int	whichIndependentInvariant = 1;
 	for (;countLoop && isLeft == false /*|| countPiGroups != 0)*/;countLoop--)
 	{
-		genIrNodeLoopInRightExpression(N, searchNull(newNodeQTerm), genSrcInfo, rowIn, kernel, j);
-		j += 1;
+		genIrNodeLoopInRightExpression(N, searchNull(newNodeQTerm), genSrcInfo,
+						row, col,
+						rowInvariant, colInvariant,
+						kernel,
+						whichInvariant, whichIndependentInvariant);
+		whichIndependentInvariant += 1;
 	}
 
 	return newNodeConstraint;
 }
 
 void
-generateInvariantExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoop, int **  row, int **  col, int ** rowIn, int ** colIn, int kernel) //int countPiGroups)
+generateInvariantExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoop,
+				int **  row, int **  col, int *** rowIndependent, int *** colIndependent, int kernel, int whichInvariant) //int countPiGroups)
 {
 	/*
 	 *	After identifying the dependent variable, we assign the corresponding pi consisting the parameter in question
@@ -370,7 +388,13 @@ generateInvariantExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo
 	 *	On the left hand side there is the dependent variable Q_1
 	 */
 	IrNode *	nodeConstraint;
-	nodeConstraint = genExpression(N, node, genSrcInfo, 0, /*countPiGroups,*/ true, row, rowIn, kernel);
+	nodeConstraint = genExpression(N, node,
+					genSrcInfo, 0, /*countPiGroups,*/
+					true,
+					row, col,
+					rowIndependent, colIndependent,
+					kernel,
+					whichInvariant);
 
 	/*
 	 *	The expression symbol 'o<'
@@ -386,7 +410,13 @@ generateInvariantExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo
 	 *	On the right hand side there is the remaining invariants within this pi group, Q_2 ... Q_n
 	 */
 	IrNode *	nodeConstraintRight;
-	nodeConstraintRight = genExpression(N, nodeConstraint, genSrcInfo, countLoop, /*countPiGroups,*/ false, row, rowIn, kernel);
+	nodeConstraintRight = genExpression(N, nodeConstraint,
+						genSrcInfo, countLoop, /*countPiGroups,*/
+						false,
+						row, col,
+						rowIndependent, colIndependent,
+						kernel,
+						whichInvariant);
 }
 
 void
@@ -402,10 +432,11 @@ irPassDimensionalMatrixConvertToList(State *  N)
 	 *	interaction with the lexer. line, column and length are temporary values, ideally should be more meaningful.
 	 */
 	SourceInfo *	genSrcInfo = (SourceInfo *)calloc(1, sizeof(SourceInfo));
-	genSrcInfo->fileName = (char *)calloc(sizeof("GeneratedByDA"),sizeof(char));
-	genSrcInfo->lineNumber = 1;
-	genSrcInfo->columnNumber = 1;
-	genSrcInfo->length = 1;
+	genSrcInfo->fileName = (char *)calloc(sizeof("GeneratedByDA") + 1,sizeof(char));
+	genSrcInfo->fileName = "GeneratedByDA";
+	genSrcInfo->lineNumber = -1;
+	genSrcInfo->columnNumber = -1;
+	genSrcInfo->length = 0;
 
 	//bool		arePiGroupsConstant = isPiGroupConstant(invariant, parameter, physic);
 
@@ -460,13 +491,13 @@ irPassDimensionalMatrixConvertToList(State *  N)
 		 */
 		int **		locateDependentInvariantColumn;
 		int **		locateDependentInvariantRow;
-		int **		locateIndependentInvariantColumn;
-		int **		locateIndependentInvariantRow;
+		int ***		locateIndependentInvariantColumn;
+		int ***		locateIndependentInvariantRow;
 
 		locateDependentInvariantRow = (int **) calloc(invariant->numberOfUniqueKernels, sizeof(int *));
 		locateDependentInvariantColumn = (int **) calloc(invariant->numberOfUniqueKernels, sizeof(int *));
-		locateIndependentInvariantRow = (int **) calloc(invariant->numberOfUniqueKernels, sizeof(int *));
-		locateIndependentInvariantColumn = (int **) calloc(invariant->numberOfUniqueKernels, sizeof(int *));
+		locateIndependentInvariantRow = (int ***) calloc(invariant->numberOfUniqueKernels, sizeof(int **));
+		locateIndependentInvariantColumn = (int ***) calloc(invariant->numberOfUniqueKernels, sizeof(int **));
 
 		for (int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
 		{
@@ -487,7 +518,6 @@ irPassDimensionalMatrixConvertToList(State *  N)
 			int	onesCount = 0;
 			int	whichColumn = 0;
 			int	countDependentInvariant = 0;
-			int	countIndependentInvariant = 0;
 			int	countAddRightExpression = 0;
 		//	int	countRemainingPiGroups = 0;
 
@@ -528,12 +558,25 @@ irPassDimensionalMatrixConvertToList(State *  N)
 						countAddRightExpression = countDependentInvariant++;
 					}
 				}
+				locateIndependentInvariantRow[countKernel] = (int **) calloc(countDependentInvariant, sizeof(int *));
+				locateIndependentInvariantColumn[countKernel] = (int **) calloc(countDependentInvariant, sizeof(int *));
 
-				locateIndependentInvariantRow[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
-				locateIndependentInvariantColumn[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+				for (int i = 0; i < countDependentInvariant; i++)
+				{
+					locateIndependentInvariantRow[countKernel][i] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+					locateIndependentInvariantColumn[countKernel][i] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
 
-				locateIndependentInvariantRow = locateDependentInvariantRow;
-				locateIndependentInvariantColumn = locateDependentInvariantColumn;
+					for (int countRow = 0, countIndependentInvariant = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
+					{
+						if (fabs(invariant->reorderNullSpace[countKernel][0][countRow]) != 0
+							&& locateDependentInvariantRow[countKernel][i] != countRow)
+						{
+							locateIndependentInvariantRow[countKernel][i][countIndependentInvariant] = countRow;
+							locateIndependentInvariantColumn[countKernel][i][countIndependentInvariant++] = 0;
+
+						}
+					}
+				}
 
 			//	countAddRightExpression += countRemainingPiGroups;
 				/*
@@ -542,23 +585,25 @@ irPassDimensionalMatrixConvertToList(State *  N)
 				 *	such avoids the need to locate invariant->constraints (which points to the first constraint)
 				 *	since there may not be any human written constraints available at compile time.
 				 */
-				node = searchNull(invariant->parameterList->irParent);
+				for (int j = 0; j < countDependentInvariant; j++)
+				{
+					node = searchNull(invariant->parameterList->irParent); // we need a for loop here!!!
 
-				generateInvariantExpression(N,	node /* node with null irRightChild */,
-								genSrcInfo /* 'fake' source information */,
-								countAddRightExpression /* number of invariants on right hand side */,
-								locateDependentInvariantRow,
-								locateDependentInvariantColumn,
-								locateIndependentInvariantRow,
-								locateIndependentInvariantColumn,
-								countKernel /* The current kernel */);
-								//countRemainingPiGroups);
+					generateInvariantExpression(N,	node /* node with null irRightChild */,
+									genSrcInfo /* 'fake' source information */,
+									countAddRightExpression /* number of invariants on right hand side */,
+									locateDependentInvariantRow,
+									locateDependentInvariantColumn,
+									locateIndependentInvariantRow,
+									locateIndependentInvariantColumn,
+									countKernel /* The current kernel */,
+									j /* corresponding to the related dependent invariant */);
+									//countRemainingPiGroups);
+				}
+
 			}
 			else if (invariant->kernelColumnCount != 0)
 			{
-				locateIndependentInvariantRow[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
-				locateIndependentInvariantColumn[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
-
 				for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 				{
 					for (int countColumn = 0; countColumn < invariant->kernelColumnCount; countColumn++)
@@ -588,22 +633,27 @@ irPassDimensionalMatrixConvertToList(State *  N)
 						locateDependentInvariantColumn[countKernel][countDependentInvariant++] = whichColumn;
 					}
 				}
-				
-				for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
+				locateIndependentInvariantRow[countKernel] = (int **) calloc(countDependentInvariant, sizeof(int *));
+				locateIndependentInvariantColumn[countKernel] = (int **) calloc(countDependentInvariant, sizeof(int *));
+
+				for (int countColumn = 0; countColumn < invariant->kernelColumnCount; countColumn++)
 				{
-					for (int countColumn = 0; countColumn < invariant->kernelColumnCount; countColumn++)
+					for (int i = 0, countIndependentInvariant = 0; i < countDependentInvariant; i++)
 					{
-						for (int i = 0; i < countDependentInvariant; i++)
+						locateIndependentInvariantRow[countKernel][i] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+						locateIndependentInvariantColumn[countKernel][i] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+
+						for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 						{
 							if (fabs(invariant->reorderNullSpace[countKernel][countColumn][countRow]) != 0
-								&& countRow != locateDependentInvariantRow[countKernel][i])
+								&& locateDependentInvariantRow[countKernel][i] != countRow)
 							{
-								locateIndependentInvariantRow[countKernel][countIndependentInvariant] = countRow;
-								locateIndependentInvariantColumn[countKernel][countIndependentInvariant] = countColumn;
-								countIndependentInvariant += 1;
+								locateIndependentInvariantRow[countKernel][i][countIndependentInvariant] = countRow;
+								locateIndependentInvariantColumn[countKernel][i][countIndependentInvariant++] = countColumn;
 							}
 						}
 					}
+
 				}
 				/*
 				 *	The below checks the number of invariants with exponents not equal to 0 within each column
@@ -623,7 +673,7 @@ irPassDimensionalMatrixConvertToList(State *  N)
 					 */
 					countAddRightExpression -= 1;
 
-					for (; countDependentInvariant; countDependentInvariant--)
+					for (int j = 0; j < countDependentInvariant; j++)
 					{
 						/*
 						 *	We walk through the tree to find the NULL in the right child, recursively
@@ -637,15 +687,19 @@ irPassDimensionalMatrixConvertToList(State *  N)
 										locateDependentInvariantColumn,
 										locateIndependentInvariantRow,
 										locateIndependentInvariantColumn,
-										countKernel /* The current kernel */);
+										countKernel /* The current kernel */,
+										j /* corresponding to the related dependent invariant */);
 										//countRemainingPiGroups);
 					}
 					countAddRightExpression = 0;
 				}
-				countDependentInvariant = 0;
 			}
 		}
-
+		/*
+		 *	Relocate invariant->constraints to point to the first constraint in the invariant list in AST
+		 */
+		invariant->constraints = invariant->parameterList->irParent->irRightChild->irLeftChild;
+		
 		invariant = invariant->next;
 		/*
 		 *	Use free() to avoid potential memory leakage
@@ -653,6 +707,9 @@ irPassDimensionalMatrixConvertToList(State *  N)
 		free(tmpPosition);
 		free(locateDependentInvariantColumn);
 		free(locateDependentInvariantRow);
+		free(locateIndependentInvariantColumn);
+		free(locateIndependentInvariantRow);
+
 	}
 	free(genSrcInfo);
 }
