@@ -66,72 +66,13 @@
 #include "newton-types.h"
 #include "newton-symbolTable.h"
 
-IrNode *
-searchNull(IrNode *  root)
-{
-	/*
-	 *	Walk through the tree to find the rightChild which is NULL
-	 *	Return the parent of this NULL rightChild.
-	 *	Function identical to depthFirstWalk(), except this doesn't
-	 *	check irLeftChild.
-	 */
-	if (root->irRightChild == NULL)
-	{
-		return root;
-	}
-
-	return searchNull(root->irRightChild);
-}
-
-char *
-searchParameterListTokenString(IrNode *  root, char *  invariantLabel)
-{
-	/*
-	 *	Walk through the parameterTuple sub-tree.
-	 *	When the label string matches the one stored in rightChild of a Pparameter sub-tree
-	 *	we return the leftChild of this Pparameter, otherwise continue searching.
-	 *	By convention the left child is the name, and the right child is the name of the Physics.
-	 */
-	if (strcmp(invariantLabel, root->irLeftChild->irRightChild->tokenString) == 0)
-	{
-		return root->irLeftChild->irLeftChild->tokenString;
-	}
-
-	return searchParameterListTokenString(root->irRightChild, invariantLabel);
-}
-
-bool
-isPiGroupConstant(Invariant *  invariant, IrNode *  parameter, Physics *  physic)
-{
-	bool		areRightHandPiGroupsConstant = false;
-	/*
-	 *	Check all the parameters to see if they are definded as constant 
-	 *	this is currently incorrect, since it should be that all pi groups on the right hand side are constant
-	 *	Currently this is function is not used.
-	 */
-	for ( ; parameter ; parameter = parameter->irRightChild)
-	{
-		/*
-		 *	Once there is a parameter not defined as constant, we break the loop.
-		 *	Otherwise return true to indicate that all the pi-groups are constant.
-		 */
-		if (physic->isConstant == false)
-		{
-			break;
-		}
-		areRightHandPiGroupsConstant = true;
-	}
-
-	return areRightHandPiGroupsConstant;
-}
-
 void
 addLeafWithChainingSeqNoLex(State *  N, IrNode *  parent, IrNode *  newNode, SourceInfo *  srcInfo)
 {
 	/*
 	 *	TODO: This function should ideally be left in common-irHelpers.c
-	 *	since there already exists a function addLeafWithChainingSeqNoLexer() in common-irHelpers.h
-	 *	(currently only declared in .h but not defined in .c)
+	 *	since there already exists a function addLeafWithChainingSeqNoLexer()
+	 *	in common-irHelpers.h (currently only declared in .h but not defined in .c)
 	 */
 	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
 
@@ -155,10 +96,69 @@ addLeafWithChainingSeqNoLex(State *  N, IrNode *  parent, IrNode *  newNode, Sou
 						srcInfo /* source info */);
 }
 
+IrNode *
+irPassSearchNull(IrNode *  root)
+{
+	/*
+	 *	Walk through the tree to find the rightChild which is NULL
+	 *	Return the parent of this NULL rightChild.
+	 *	Function identical to depthFirstWalk(), except this doesn't
+	 *	check irLeftChild.
+	 */
+	if (root->irRightChild == NULL)
+	{
+		return root;
+	}
+
+	return irPassSearchNull(root->irRightChild);
+}
+
+char *
+irPassSearchParameterListTokenString(IrNode *  root, char *  parameterLabel)
+{
+	/*
+	 *	Walk through the parameterTuple sub-tree.
+	 *	When the label string matches the one stored in rightChild of a Pparameter
+	 *	sub-tree we return the leftChild of this Pparameter, otherwise continue searching.
+	 *	By convention the left child is the name, and the right child is the name of the Physics.
+	 */
+	if (strcmp(parameterLabel, root->irLeftChild->irRightChild->tokenString) == 0)
+	{
+		return root->irLeftChild->irLeftChild->tokenString;
+	}
+
+	return irPassSearchParameterListTokenString(root->irRightChild, parameterLabel);
+}
+
+bool
+irPassIsPiGroupConstant(Invariant *  invariant, IrNode *  parameter, Physics *  physic)
+{
+	bool		areRightHandPiGroupsConstant = false;
+	/*
+	 *	Check all the parameters to see if they are definded as constant 
+	 *	this is currently incorrect, since it should be that all pi groups 
+	 *	on the right hand side are constant. Currently this is function is not used.
+	 */
+	for ( ; parameter ; parameter = parameter->irRightChild)
+	{
+		/*
+		 *	Once there is a parameter not defined as constant, we break the loop.
+		 *	Otherwise return true to indicate that all the pi-groups are constant.
+		 */
+		if (physic->isConstant == false)
+		{
+			break;
+		}
+		areRightHandPiGroupsConstant = true;
+	}
+
+	return areRightHandPiGroupsConstant;
+}
+
 void
-genIrNodeLoopInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *  genSrcInfo,
-				int **  row, int **  col, int ***  rowInvariant, int ***  colInvariant,
-				int kernel, int whichInvariant, int whichIndependentInvariant)
+irPassGenLoopsInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *  genSrcInfo,
+				int **  row, int **  col, int ***  rowIndependent, int ***  colIndependent,
+				int kernel, int whichParameter, int whichIndependentParameter)
 {
 	/*
 	 *	TODO: This function should ideally be compressed for a better 'hygiene'
@@ -187,8 +187,8 @@ genIrNodeLoopInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo * 
 				NULL,
 				NULL,
 				genSrcInfo);
-	newNodeIdentifier->tokenString = searchParameterListTokenString(N->invariantList->parameterList,
-						N->invariantList->dimensionalMatrixColumnLabels[rowInvariant[kernel][whichInvariant][whichIndependentInvariant]]);
+	newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N->invariantList->parameterList,
+						N->invariantList->dimensionalMatrixColumnLabels[rowIndependent[kernel][whichParameter][whichIndependentParameter]]);
 	addLeaf(N, newNodeQFactor, newNodeIdentifier);
 
 	IrNode *	newNodeHighPreOp;
@@ -230,8 +230,8 @@ genIrNodeLoopInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo * 
 				NULL,
 				genSrcInfo);
 	newNodeExponentConst->value = 0 - N->invariantList->reorderNullSpace[kernel]
-									[colInvariant[kernel][whichInvariant][whichIndependentInvariant]]
-									[rowInvariant[kernel][whichInvariant][whichIndependentInvariant]];
+									[colIndependent[kernel][whichParameter][whichIndependentParameter]]
+									[rowIndependent[kernel][whichParameter][whichIndependentParameter]];
 	Token *		tokenExponentConst = (Token *) calloc(1, sizeof(Token));
 	tokenExponentConst->type = kNewtonIrNodeType_TnumericConst;
 	newNodeExponentConst->token = tokenExponentConst;
@@ -242,8 +242,8 @@ genIrNodeLoopInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo * 
 
 
 IrNode *
-genExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoop, /*int countPiGroups,*/
-		bool isLeft, int **  row, int **  col, int ***  rowInvariant, int ***  colInvariant, int kernel, int whichInvariant)
+irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoop, bool isLeft,
+			int **  row, int **  col, int ***  rowIndependent, int ***  colIndependent, int kernel, int whichParameter)
 {
 	/*
 	 *	TODO: This function should ideally be compressed for a better 'hygiene'
@@ -291,13 +291,13 @@ genExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoo
 				genSrcInfo);
 	if(isLeft == true)
 	{
-		newNodeIdentifier->tokenString = searchParameterListTokenString(N->invariantList->parameterList, 
-							N->invariantList->dimensionalMatrixColumnLabels[row[kernel][whichInvariant]]);
+		newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N->invariantList->parameterList, 
+							N->invariantList->dimensionalMatrixColumnLabels[row[kernel][whichParameter]]);
 	}
 	else
 	{
-		newNodeIdentifier->tokenString = searchParameterListTokenString(N->invariantList->parameterList, 
-							N->invariantList->dimensionalMatrixColumnLabels[rowInvariant[kernel][whichInvariant][0]]);
+		newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N->invariantList->parameterList, 
+							N->invariantList->dimensionalMatrixColumnLabels[rowIndependent[kernel][whichParameter][0]]);
 	}
 
 	addLeaf(N, newNodeQFactor, newNodeIdentifier);
@@ -342,14 +342,14 @@ genExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoo
 	if(isLeft == true)
 	{
 		newNodeExponentConst->value = N->invariantList->reorderNullSpace[kernel]
-										[col[kernel][whichInvariant]]
-										[row[kernel][whichInvariant]];
+										[col[kernel][whichParameter]]
+										[row[kernel][whichParameter]];
 	}
 	else
 	{
 		newNodeExponentConst->value = 0 - N->invariantList->reorderNullSpace[kernel]
-										[colInvariant[kernel][whichInvariant][0]]
-										[rowInvariant[kernel][whichInvariant][0]];
+										[colIndependent[kernel][whichParameter][0]]
+										[rowIndependent[kernel][whichParameter][0]];
 	}
 
 	Token *		tokenExponentConst = (Token *) calloc(1, sizeof(Token));
@@ -358,29 +358,25 @@ genExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoo
 
 	addLeaf(N, newNodeQTermExponent, newNodeExponentConst);
 
-	//if (countPiGroups != 0)
-	//{
-	//	countLoop += countPiGroups;
-	//}
 	countLoop -= 1;
 
-	int	whichIndependentInvariant = 1;
-	for (;countLoop && isLeft == false /*|| countPiGroups != 0)*/;countLoop--)
+	int	whichIndependentParameter = 1;
+	for (;countLoop && isLeft == false; countLoop--)
 	{
-		genIrNodeLoopInRightExpression(N, searchNull(newNodeQTerm), genSrcInfo,
+		irPassGenLoopsInRightExpression(N, irPassSearchNull(newNodeQTerm), genSrcInfo,
 						row, col,
-						rowInvariant, colInvariant,
+						rowIndependent, colIndependent,
 						kernel,
-						whichInvariant, whichIndependentInvariant);
-		whichIndependentInvariant += 1;
+						whichParameter, whichIndependentParameter);
+		whichIndependentParameter += 1;
 	}
 
 	return newNodeConstraint;
 }
 
 void
-generateInvariantExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoop,
-				int **  row, int **  col, int *** rowIndependent, int *** colIndependent, int kernel, int whichInvariant) //int countPiGroups)
+irPassGenInvariantPiGroupsExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoop,
+				int **  row, int **  col, int *** rowIndependent, int *** colIndependent, int kernel, int whichParameter)
 {
 	/*
 	 *	After identifying the dependent variable, we assign the corresponding pi consisting the parameter in question
@@ -388,13 +384,13 @@ generateInvariantExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo
 	 *	On the left hand side there is the dependent variable Q_1
 	 */
 	IrNode *	nodeConstraint;
-	nodeConstraint = genExpression(N, node,
-					genSrcInfo, 0, /*countPiGroups,*/
+	nodeConstraint = irPassGenExpression(N, node,
+					genSrcInfo, 0,
 					true,
 					row, col,
 					rowIndependent, colIndependent,
 					kernel,
-					whichInvariant);
+					whichParameter);
 
 	/*
 	 *	The expression symbol 'o<'
@@ -407,24 +403,22 @@ generateInvariantExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo
 	addLeafWithChainingSeqNoLex(N, nodeConstraint, nodeProportional, genSrcInfo);
 
 	/*
-	 *	On the right hand side there is the remaining invariants within this pi group, Q_2 ... Q_n
+	 *	On the right hand side there is the remaining parameters within this pi group, Q_2 ... Q_n
 	 */
 	IrNode *	nodeConstraintRight;
-	nodeConstraintRight = genExpression(N, nodeConstraint,
-						genSrcInfo, countLoop, /*countPiGroups,*/
+	nodeConstraintRight = irPassGenExpression(N, nodeConstraint,
+						genSrcInfo, countLoop,
 						false,
 						row, col,
 						rowIndependent, colIndependent,
 						kernel,
-						whichInvariant);
+						whichParameter);
 }
 
 void
 irPassDimensionalMatrixConvertToList(State *  N)
 {
 	Invariant *	invariant = N->invariantList;
-	//IrNode *	parameter = invariant->parameterList;
-	//Physics *	physic = parameter->irLeftChild->physics;
 	IrNode *	node;
 
 	/*
@@ -438,15 +432,13 @@ irPassDimensionalMatrixConvertToList(State *  N)
 	genSrcInfo->columnNumber = -1;
 	genSrcInfo->length = 0;
 
-	//bool		arePiGroupsConstant = isPiGroupConstant(invariant, parameter, physic);
-
 	while (invariant)
 	{
 		/*
 		 *	In Newton, proportionality is expressed as "o<" (currently as "@<", see issue #374)
 		 *	Currently we are still using temporary arrays to store the re-ordered null space
 		 *	i.e. the re-ordered kernels
-		 *	When newton-irPass-dimensionalMatrixPiGroupCanonicalization is complete (see issue #371)
+		 *	When newton-irPass-dimensionalMatrixPiGroupCanonicalization is complete (see issue #372)
 		 *	we should be able to use the canonicalized kernels instead.
 		 *	We currently do not do this.
 		 *	Additionally, the current method applied only checks pi groups within each kernel,
@@ -519,21 +511,6 @@ irPassDimensionalMatrixConvertToList(State *  N)
 			int	whichColumn = 0;
 			int	countDependentInvariant = 0;
 			int	countAddRightExpression = 0;
-		//	int	countRemainingPiGroups = 0;
-
-		//	/*
-		//	 *	Case one: where all the pi groups which should be on the right hand side are constants (fixed values)
-		//	 *	Case two: we do not know if they are constant at compile, therefore need to setup boolean flags
-		//	 */
-		//	if (arePiGroupsConstant == false)
-		//	{
-				/*
-				 *	Currently if we find one of the parameters to be not constant
-				 *	then, we assume that execpt the one with the dependent variable
-				 *	the remaining pi groups are not constant.
-				 */
-		//		countRemainingPiGroups = invariant->kernelColumnCount - 1;
-		//	}
 
 			/*
 			 *	There will be two cases for the operation, the operations for kernels with one column
@@ -578,7 +555,6 @@ irPassDimensionalMatrixConvertToList(State *  N)
 					}
 				}
 
-			//	countAddRightExpression += countRemainingPiGroups;
 				/*
 				 *	We walk through the tree to find the NULL in the right child, recursively
 				 *	invariant->parameterList->irParent points to the X_Seq whose right child would be constraints
@@ -587,9 +563,9 @@ irPassDimensionalMatrixConvertToList(State *  N)
 				 */
 				for (int j = 0; j < countDependentInvariant; j++)
 				{
-					node = searchNull(invariant->parameterList->irParent); // we need a for loop here!!!
+					node = irPassSearchNull(invariant->parameterList->irParent);
 
-					generateInvariantExpression(N,	node /* node with null irRightChild */,
+					irPassGenInvariantPiGroupsExpression(N,	node /* node with null irRightChild */,
 									genSrcInfo /* 'fake' source information */,
 									countAddRightExpression /* number of invariants on right hand side */,
 									locateDependentInvariantRow,
@@ -598,7 +574,6 @@ irPassDimensionalMatrixConvertToList(State *  N)
 									locateIndependentInvariantColumn,
 									countKernel /* The current kernel */,
 									j /* corresponding to the related dependent invariant */);
-									//countRemainingPiGroups);
 				}
 
 			}
@@ -678,9 +653,9 @@ irPassDimensionalMatrixConvertToList(State *  N)
 						/*
 						 *	We walk through the tree to find the NULL in the right child, recursively
 						 */
-						node = searchNull(invariant->parameterList->irParent);
+						node = irPassSearchNull(invariant->parameterList->irParent);
 
-						generateInvariantExpression(N,	node /* node with null irRightChild */,
+						irPassGenInvariantPiGroupsExpression(N,	node /* node with null irRightChild */,
 										genSrcInfo /* 'fake' source information */,
 										countAddRightExpression /* number of invariants on right hand side */,
 										locateDependentInvariantRow,
@@ -689,7 +664,6 @@ irPassDimensionalMatrixConvertToList(State *  N)
 										locateIndependentInvariantColumn,
 										countKernel /* The current kernel */,
 										j /* corresponding to the related dependent invariant */);
-										//countRemainingPiGroups);
 					}
 					countAddRightExpression = 0;
 				}
@@ -701,9 +675,7 @@ irPassDimensionalMatrixConvertToList(State *  N)
 		invariant->constraints = invariant->parameterList->irParent->irRightChild->irLeftChild;
 		
 		invariant = invariant->next;
-		/*
-		 *	Use free() to avoid potential memory leakage
-		 */
+
 		free(tmpPosition);
 		free(locateDependentInvariantColumn);
 		free(locateDependentInvariantRow);
