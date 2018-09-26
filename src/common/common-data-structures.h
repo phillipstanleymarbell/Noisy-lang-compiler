@@ -780,7 +780,7 @@ struct SourceInfo
 	 */
 	char **			genealogy;
 	
-	char *			fileName;// use this 
+	char *			fileName; 
 	uint64_t		lineNumber;
 	uint64_t		columnNumber;
 	uint64_t		length;
