@@ -66,61 +66,15 @@
 #include "newton-types.h"
 #include "newton-symbolTable.h"
 
-void
-addLeafWithChainingSeqNoLex(State *  N, IrNode *  parent, IrNode *  newNode, SourceInfo *  srcInfo)
-{
-	/*
-	 *	TODO: This function should ideally be left in common-irHelpers.c
-	 *	since there already exists a function addLeafWithChainingSeqNoLexer()
-	 *	in common-irHelpers.h (currently only declared in .h but not defined in .c)
-	 */
-	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
-
-	IrNode *	node = depthFirstWalk(N, parent);
-
-	if (node == NULL)
-	{
-		fatal(N, Esanity);
-	}
-
-	if (node->irLeftChild == NULL)
-	{
-		node->irLeftChild = newNode;
-
-		return;
-	}
-
-	node->irRightChild = genIrNode(N,	kNoisyIrNodeType_Xseq,
-						newNode /* left child */,
-						NULL /* right child */,
-						srcInfo /* source info */);
-}
-
-IrNode *
-irPassSearchNull(IrNode *  root)
-{
-	/*
-	 *	Walk through the tree to find the rightChild which is NULL
-	 *	Return the parent of this NULL rightChild.
-	 *	Function identical to depthFirstWalk(), except this doesn't
-	 *	check irLeftChild.
-	 */
-	if (root->irRightChild == NULL)
-	{
-		return root;
-	}
-
-	return irPassSearchNull(root->irRightChild);
-}
-
 char *
 irPassSearchParameterListTokenString(IrNode *  root, char *  parameterLabel)
 {
 	/*
 	 *	Walk through the parameterTuple sub-tree.
 	 *	When the label string matches the one stored in rightChild of a Pparameter
-	 *	sub-tree we return the leftChild of this Pparameter, otherwise continue searching.
-	 *	By convention the left child is the name, and the right child is the name of the Physics.
+	 *	sub-tree we return the leftChild of this Pparameter, otherwise continue
+	 *	searching. By convention the left child is the name, and the right child
+	 *	is the name of the Physics.
 	 */
 	if (strcmp(parameterLabel, root->irLeftChild->irRightChild->tokenString) == 0)
 	{
@@ -128,31 +82,6 @@ irPassSearchParameterListTokenString(IrNode *  root, char *  parameterLabel)
 	}
 
 	return irPassSearchParameterListTokenString(root->irRightChild, parameterLabel);
-}
-
-bool
-irPassIsPiGroupConstant(Invariant *  invariant, IrNode *  parameter, Physics *  physic)
-{
-	bool		areRightHandPiGroupsConstant = false;
-	/*
-	 *	Check all the parameters to see if they are definded as constant 
-	 *	this is currently incorrect, since it should be that all pi groups 
-	 *	on the right hand side are constant. Currently this is function is not used.
-	 */
-	for ( ; parameter ; parameter = parameter->irRightChild)
-	{
-		/*
-		 *	Once there is a parameter not defined as constant, we break the loop.
-		 *	Otherwise return true to indicate that all the pi-groups are constant.
-		 */
-		if (physic->isConstant == false)
-		{
-			break;
-		}
-		areRightHandPiGroupsConstant = true;
-	}
-
-	return areRightHandPiGroupsConstant;
 }
 
 void
@@ -363,7 +292,7 @@ irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int co
 	int	whichIndependentParameter = 1;
 	for (;countLoop && isLeft == false; countLoop--)
 	{
-		irPassGenLoopsInRightExpression(N, irPassSearchNull(newNodeQTerm), genSrcInfo,
+		irPassGenLoopsInRightExpression(N, depthFirstWalkNoLeftChild(N, newNodeQTerm), genSrcInfo,
 						row, col,
 						rowIndependent, colIndependent,
 						kernel,
@@ -379,9 +308,9 @@ irPassGenInvariantPiGroupsExpression(State *  N, IrNode *  node, SourceInfo *  g
 				int **  row, int **  col, int *** rowIndependent, int *** colIndependent, int kernel, int whichParameter)
 {
 	/*
-	 *	After identifying the dependent variable, we assign the corresponding pi consisting the parameter in question
-	 *	to the proportionality equation.
-	 *	On the left hand side there is the dependent variable Q_1
+	 *	After identifying the dependent variable, we assign the corresponding
+	 *	pi consisting the parameter in question to the proportionality equation.
+	 *	On the left hand side there is the dependent variable Q_1.
 	 */
 	IrNode *	nodeConstraint;
 	nodeConstraint = irPassGenExpression(N, node,
@@ -403,16 +332,16 @@ irPassGenInvariantPiGroupsExpression(State *  N, IrNode *  node, SourceInfo *  g
 	addLeafWithChainingSeqNoLex(N, nodeConstraint, nodeProportional, genSrcInfo);
 
 	/*
-	 *	On the right hand side there is the remaining parameters within this pi group, Q_2 ... Q_n
+	 *	On the right hand side the remaining parameters within
+	 *	this pi group, Q_2 ... Q_n
 	 */
-	IrNode *	nodeConstraintRight;
-	nodeConstraintRight = irPassGenExpression(N, nodeConstraint,
-						genSrcInfo, countLoop,
-						false,
-						row, col,
-						rowIndependent, colIndependent,
-						kernel,
-						whichParameter);
+	irPassGenExpression(N, nodeConstraint,
+				genSrcInfo, countLoop,
+				false,
+				row, col,
+				rowIndependent, colIndependent,
+				kernel,
+				whichParameter);
 }
 
 void
@@ -422,8 +351,9 @@ irPassDimensionalMatrixConvertToList(State *  N)
 	IrNode *	node;
 
 	/*
-	 *	We currently use the sourceInfo to indicate the generated constraints without any 
-	 *	interaction with the lexer. line, column and length are temporary values, ideally should be more meaningful.
+	 *	We currently use the sourceInfo to indicate the generated constraints 
+	 *	without any interaction with the lexer. line, column and length are
+	 *	temporary values, ideally should be more meaningful.
 	 */
 	SourceInfo *	genSrcInfo = (SourceInfo *)calloc(1, sizeof(SourceInfo));
 	genSrcInfo->fileName = (char *)calloc(sizeof("GeneratedByDA") + 1,sizeof(char));
@@ -435,17 +365,15 @@ irPassDimensionalMatrixConvertToList(State *  N)
 	while (invariant)
 	{
 		/*
-		 *	In Newton, proportionality is expressed as "o<" (currently as "@<", see issue #374)
-		 *	Currently we are still using temporary arrays to store the re-ordered null space
-		 *	i.e. the re-ordered kernels
-		 *	When newton-irPass-dimensionalMatrixPiGroupCanonicalization is complete (see issue #372)
-		 *	we should be able to use the canonicalized kernels instead.
-		 *	We currently do not do this.
-		 *	Additionally, the current method applied only checks pi groups within each kernel,
-		 *	as we form the relationship in the traditional way. Each kernel corresponds to one
-		 *	function which describes the relationship between different pi's.
-		 *	Alternatively, we form the unoion of pi groups based on Jonsson's (2014) basis
-		 *	and circuit basis.
+		 *	Proportionality is expressed as "o<" (currently as "@<", see #374)
+		 *	When newton-irPass-dimensionalMatrixPiGroupCanonicalization is complete
+		 *	(see #372) we should be able to use the canonicalized kernels instead.
+		 *
+		 *	The current method applied only checks pi groups within each kernel,
+		 *	as we form the relationship in the traditional way. Each kernel corresponds
+		 *	to one function which describes the relationship between different pi's.
+		 *	Alternatively, we form the unoion of pi groups based on Jonsson's (2014)
+		 *	basis and circuit basis.
 		 */
 
 		int ***		tmpPosition = (int ***)calloc(invariant->numberOfUniqueKernels, sizeof(int **));
@@ -479,6 +407,7 @@ irPassDimensionalMatrixConvertToList(State *  N)
 		}
 		/*
 		 *	End of the reordered kernel construction
+		 *
 		 *	Begin to set up the constraints
 		 */
 		int **		locateDependentInvariantColumn;
@@ -494,14 +423,18 @@ irPassDimensionalMatrixConvertToList(State *  N)
 		for (int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
 		{
 			/*
-			 *	Note that a new null space reordered lexicographically and which rules out
-			 *	all the duplicate pi groups should be available once the irPass in issue #372
-			 *	is complete. We currently do not have it ready.
+			 *	Note that a new null space reordered lexicographically and which rules
+			 *	out all the duplicate pi groups should be available once the irPass in
+			 *	#372 is complete. We currently do not have it ready.
+			 *
 			 *	Within each kernel, we find the invariant(s) which occurs only once,
-			 *	and set this as the dependent variable(s). When we find more than one dependent variables,
-			 *	we want to express these variables in separate propotionality equations (left hand side).
-			 *	It is also important that we identify which of those invariants described by Newton
-			 *	are constants at the first instance, by checking the 'constant' keyword.
+			 *	and set this as the dependent variable(s). When we find more than one
+			 *	dependent variables, we express these variables in separate propotionality
+			 *	equations (left hand side).
+			 *	
+			 *	It is also important that we identify which of those invariants described
+			 *	by Newton are constants at the first instance, by checking the 'constant'
+			 *	keyword, we currently do not do this.
 			 */
 			locateDependentInvariantRow[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
 			locateDependentInvariantColumn[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
@@ -513,16 +446,15 @@ irPassDimensionalMatrixConvertToList(State *  N)
 			int	countAddRightExpression = 0;
 
 			/*
-			 *	There will be two cases for the operation, the operations for kernels with one column
-			 *	and kernels with multiple columns will be slightly different.
-			 *	(1) For kernels with one column, all the invariants with exponent not equal to zero could
-			 *	be regarded as dependent invariants. Therefore on the LHS of the expression, there is 
-			 *	one invariant, and on the RHS, there is (total number of invariants - 1) number of invariants.
-			 *	(2) For kernels with multiple columns, we first do a thorough search and determine which
-			 *	invariant(s) occurs only once among all the columns. We then pick the column containing
-			 *	the dependent invariant, and count the rest of the invariants with exponents not equal to
-			 *	zero as independent invariants, and store the location information in another array.
-			 *	We repeat the above for the remaining dependent invariants.
+			 *	There will be two cases for the operation, the operations for kernels 
+			 *	with one column and kernels with multiple columns will be slightly
+			 *	different.
+			 *
+			 *	(1) Kernels with one column. All the invariants with exponent not equal
+			 *	to zero could be regarded as dependent invariants. 
+			 *	
+			 *	(2) Kernels with multiple columns. We first do a thorough search and
+			 *	determine whichi nvariant(s) occurs only once among all the columns.
 			 */
 			if (invariant->kernelColumnCount == 1)
 			{
@@ -557,13 +489,14 @@ irPassDimensionalMatrixConvertToList(State *  N)
 
 				/*
 				 *	We walk through the tree to find the NULL in the right child, recursively
-				 *	invariant->parameterList->irParent points to the X_Seq whose right child would be constraints
-				 *	such avoids the need to locate invariant->constraints (which points to the first constraint)
-				 *	since there may not be any human written constraints available at compile time.
+				 *	invariant->parameterList->irParent points to the X_Seq whose right child
+				 *	would be constraints such avoids the need to locate invariant->constraints
+				 *	(which points to the first constraint) since there may not be any human
+				 *	written constraints available at compile time.
 				 */
 				for (int j = 0; j < countDependentInvariant; j++)
 				{
-					node = irPassSearchNull(invariant->parameterList->irParent);
+					node = depthFirstWalkNoLeftChild(N, invariant->parameterList->irParent);
 
 					irPassGenInvariantPiGroupsExpression(N,	node /* node with null irRightChild */,
 									genSrcInfo /* 'fake' source information */,
@@ -631,8 +564,7 @@ irPassDimensionalMatrixConvertToList(State *  N)
 
 				}
 				/*
-				 *	The below checks the number of invariants with exponents not equal to 0 within each column
-				 *	Also, for each column in the kernel, there should be one proportional constraint added to the list
+				 *	Check the number of invariants with exponents not equal to 0 within each column
 				 */
 				for (int countColumn = 0; countColumn < invariant->kernelColumnCount; countColumn++)
 				{
@@ -653,7 +585,7 @@ irPassDimensionalMatrixConvertToList(State *  N)
 						/*
 						 *	We walk through the tree to find the NULL in the right child, recursively
 						 */
-						node = irPassSearchNull(invariant->parameterList->irParent);
+						node = depthFirstWalkNoLeftChild(N, invariant->parameterList->irParent);
 
 						irPassGenInvariantPiGroupsExpression(N,	node /* node with null irRightChild */,
 										genSrcInfo /* 'fake' source information */,
@@ -670,7 +602,8 @@ irPassDimensionalMatrixConvertToList(State *  N)
 			}
 		}
 		/*
-		 *	Relocate invariant->constraints to point to the first constraint in the invariant list in AST
+		 *	Relocate invariant->constraints to point to the first constraint in the
+		 *	invariant list in AST.
 		 */
 		invariant->constraints = invariant->parameterList->irParent->irRightChild->irLeftChild;
 		
