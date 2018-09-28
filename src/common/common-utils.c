@@ -254,12 +254,7 @@ init(NoisyMode mode)
 	{
 		fatal(NULL, Emalloc);
 	}
-/*
- *	Both 'gcl_create_dispatch_queue' and 'gcl_get_device_id_with_dispatch_queue'
- *	are deprecated: first deprecated in macOS 10.14.
- *	The following block is commented out after discussion with Phillip.
- */
-/*
+
 #ifdef NoisyOsMacOSX
 	dispatch_queue_t queue = gcl_create_dispatch_queue(CL_DEVICE_TYPE_GPU, NULL);
 	if (queue == NULL)
@@ -272,7 +267,6 @@ init(NoisyMode mode)
 	clGetDeviceInfo(gpu, CL_DEVICE_NAME, 128, name, NULL);
 //	flexprint(N->Fe, N->Fm, N->Fpinfo, "OpenCL enabled on device %s\n", name);
 #endif
-*/
 
 	return N;
 }
