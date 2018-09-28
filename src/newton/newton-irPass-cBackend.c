@@ -84,15 +84,6 @@ irPassCIsExpectedTypePresentInRightChild(IrNode *  parentNode, IrNodeType expect
 }
 
 bool
-irPassCIsLastParameter(IrNode *  parentNode)
-{
-	bool	isLastParameter = false;
-
-
-	return isLastParameter;
-}
-
-bool
 irPassCIsConstraintHumanWritten(IrNode *  parentNode)
 {
 	char *	checkString = NULL;
@@ -111,8 +102,7 @@ irPassCIsConstraintHumanWritten(IrNode *  parentNode)
 }
 
 /*
- *	This function maps a node to a token string for C. Returned
- *	string from this function can/should be 'free'ed if not useful anymore.
+ *	This function maps a node to a token string for C.
  *	Adapted from smtBackEnd, author Zhengyang Gu.
  */
 char *
@@ -295,7 +285,7 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
  *	Generate format:
  *	{
  *		double calculatedValue = 0.0;
- 		calculatedValue = parameter1 ^ exponent1 * parameter2 ^ exponent2 ... ;
+ 		calculatedValue = pow(parameter1 , exponent1) * parameter2 ... ;
  *		return calculatedValue;
  *	}
  */
@@ -428,7 +418,6 @@ irPassCProcessInvariantList(State *  N)
 		invariant = invariant->next;
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tEnd of the generated .c file\n */\n");
-
 }
 
 void
@@ -451,5 +440,4 @@ irPassCBackend(State *  N)
 		fprintf(cFile, "%s", N->Fpc->circbuf);
 		fclose(cFile);
 	}
-
 }
