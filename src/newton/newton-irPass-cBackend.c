@@ -223,26 +223,24 @@ irPassCSearchAndPrintNodeType(State *  N, IrNode *  root, IrNodeType expectedTyp
 }
 
 int
-irPassCCountRemainingParameters(State *  N, IrNode *  root, int count)
+irPassCCountRemainingParameters(State *  N, IrNode *  root, int depth)
 {
-	//static int	count = 0;
-
 	if (root == NULL)
 	{
-		return count;
+		return depth;
 	}
 
 	if (root->irRightChild == NULL && root->irLeftChild == NULL
 		&& root->type == kNewtonIrNodeType_Tidentifier)
 	{
-		count += 1;
-		return count;
+		depth += 1;
+		return depth;
 	}
 
-	count = irPassCCountRemainingParameters(N, root->irLeftChild, count);
-	count = irPassCCountRemainingParameters(N, root->irRightChild, count);
+	depth = irPassCCountRemainingParameters(N, root->irLeftChild, depth);
+	depth = irPassCCountRemainingParameters(N, root->irRightChild, depth);
 
-	return count;
+	return depth;
 }
 
 void
@@ -386,10 +384,18 @@ irPassCProcessInvariantList(State *  N)
 	 */
 	if (N->invariantList == NULL)
 	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tPlease specify a valid file\n */\n");
 		return;
 	}
 
 	Invariant *	invariant = N->invariantList;
+
+	if (invariant->constraints == NULL)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tNo constraints created\n */\n");
+		return;
+	}
+
 	IrNode *	constraintXSeq = invariant->constraints->irParent;
 
 	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tGenerated .c file from Newton\n */\n");
