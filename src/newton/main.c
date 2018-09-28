@@ -95,10 +95,11 @@ main(int argc, char *argv[])
 			{"statistics",		no_argument,		0,	's'},
 			{"optimize",		required_argument,	0,	'O'},
 			{"pigroups",		no_argument,		0,	'p'},
+			{"codegen",		required_argument,	0,	'g'},
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:S:b:stO:p", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:pg:", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -243,6 +244,14 @@ main(int argc, char *argv[])
 				break;
 			}
 
+			case 'g':
+			{
+				N->irBackends |= kNewtonIrBackendC;
+				N->outputCFilePath = optarg;
+
+				break;
+			}
+
 			case '?':
 			{
 				/*
@@ -317,6 +326,8 @@ usage(State *  N)
 						"                | (--smt <path to output file>, -S <path to output file>)\n"
 						"                | (--bytecode <output file name>, -b <output file name>)\n"
 						"                | (--optimize <level>, -O <level>)                   \n"
+						"                | (--pigroups, -p)                                   \n"
+						"                | (--gcc <path to output file>, -g <path to output file>)\n"
 						"                | (--trace, -t)                                      \n"
 						"                | (--statistics, -s) ]                               \n"
 						"                                                                     \n"

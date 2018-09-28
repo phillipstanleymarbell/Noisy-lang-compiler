@@ -224,9 +224,24 @@ init(NoisyMode mode)
 		fatal(NULL, Emalloc);
 	}
 
+	/*
+	 *	Used to hold C backend output
+	 */
+	N->Fpc = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
+	if (N->Fpc == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
 	//TODO: need to figure out right buffer size dynamically. 
 	N->Fpsmt2->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
 	if (N->Fpsmt2->circbuf == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	N->Fpc->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
+	if (N->Fpc->circbuf == NULL)
 	{
 		fatal(NULL, Emalloc);
 	}
@@ -370,6 +385,15 @@ consolePrintBuffers(State *  N)
 	if (N && N->Fpsmt2 && strlen(N->Fpsmt2->circbuf))
 	{
 		fprintf(stdout, "\nSMT2 Backend output:\n---------------------\n%s", N->Fpsmt2->circbuf);
+		if (N->mode & kNoisyModeCGI)
+		{
+			fflush(stdout);
+		}
+	}
+
+	if (N && N->Fpc && strlen(N->Fpc->circbuf))
+	{
+		fprintf(stdout, "\nC Backend output:\n---------------------\n%s", N->Fpc->circbuf);
 		if (N->mode & kNoisyModeCGI)
 		{
 			fflush(stdout);

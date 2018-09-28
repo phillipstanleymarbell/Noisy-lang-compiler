@@ -89,6 +89,7 @@ OBJS		=\
 		newton-types.$(OBJECTEXTENSION)\
 		newton-timeStamps.$(OBJECTEXTENSION)\
 		newton-typeSignatures.$(OBJECTEXTENSION)\
+		newton-irPass-cBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
@@ -116,6 +117,7 @@ CGIOBJS		=\
 		newton-types.$(OBJECTEXTENSION)\
 		newton-timeStamps.$(OBJECTEXTENSION)\
 		newton-typeSignatures.$(OBJECTEXTENSION)\
+		newton-irPass-cBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
@@ -142,6 +144,7 @@ LIBNEWTONOBJS =\
 		newton-typeSignatures.$(OBJECTEXTENSION)\
 		newton-types.$(OBJECTEXTENSION)\
 		newton-timeStamps.$(OBJECTEXTENSION)\
+		newton-irPass-cBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
@@ -163,6 +166,7 @@ HEADERS		=\
 		newton-parser.h\
 		newton-types.h\
 		newton-timeStamps.h\
+		newton-irPass-cBackend.h\
 		newton-irPass-dotBackend.h\
 		newton-irPass-smtBackend.h\
 		newton-irPass-dimensionalMatrixAnnotation.h\

@@ -65,6 +65,7 @@
 #include "newton-lexer.h"
 #include "newton-symbolTable.h"
 #include "newton.h"
+#include "newton-irPass-cBackend.h"
 #include "newton-irPass-dotBackend.h"
 #include "newton-irPass-smtBackend.h"
 #include "newton-irPass-dimensionalMatrixAnnotation.h"
@@ -148,6 +149,14 @@ processNewtonFile(State *  N, char *  filename)
 	if (N->irBackends & kNewtonIrBackendSmt)
 	{
 		irPassSmtBackend(N);
+	}
+
+	/*
+	 *	C backend
+	 */
+	if (N->irBackends & kNewtonIrBackendC)
+	{
+		irPassCBackend(N);
 	}
 }
 
