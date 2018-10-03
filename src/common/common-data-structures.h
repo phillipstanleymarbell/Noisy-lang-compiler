@@ -576,7 +576,7 @@ typedef enum
 	kNoisyIrBackendDot				= (1 << 0),
 	kNoisyIrBackendProtobuf				= (1 << 1),
 	kNewtonIrBackendSmt				= (1 << 2),
-
+	kNewtonIrBackendC				= (1 << 3),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -697,11 +697,9 @@ struct Invariant
 	char **			dimensionalMatrixRowLabels;	//	Labels of dimensional matrix rows		
 	char **			dimensionalMatrixColumnLabels;	//	Labels of dimensional matrix columns 
 	double ***		nullSpace;
-	double ***		reorderNullSpace;
 	int			kernelColumnCount;
 	int			numberOfUniqueKernels;
 	int *			permutedIndexArrayPointer;
-	int **			uniquePiGroup;
 	Invariant *		next;
 };
 
@@ -938,6 +936,7 @@ typedef struct
 	FlexPrintBuf *		Fperr;
 	FlexPrintBuf *		Fpinfo;
 	FlexPrintBuf *		Fpsmt2;
+	FlexPrintBuf *		Fpc;
 	FlexPrintBuf *		Fpmathjax;
 
 	/*
@@ -986,6 +985,7 @@ typedef struct
 	 */
 	char *			outputFilePath;
 	char *			outputSmtFilePath;
+	char *			outputCFilePath;
 
 	NoisyMode		mode;
 	uint64_t		verbosityLevel;

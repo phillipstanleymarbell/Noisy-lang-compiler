@@ -224,9 +224,24 @@ init(NoisyMode mode)
 		fatal(NULL, Emalloc);
 	}
 
+	/*
+	 *	Used to hold C backend output
+	 */
+	N->Fpc = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
+	if (N->Fpc == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
 	//TODO: need to figure out right buffer size dynamically. 
 	N->Fpsmt2->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
 	if (N->Fpsmt2->circbuf == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	N->Fpc->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
+	if (N->Fpc->circbuf == NULL)
 	{
 		fatal(NULL, Emalloc);
 	}
@@ -239,12 +254,7 @@ init(NoisyMode mode)
 	{
 		fatal(NULL, Emalloc);
 	}
-/*
- *	Both 'gcl_create_dispatch_queue' and 'gcl_get_device_id_with_dispatch_queue'
- *	are deprecated: first deprecated in macOS 10.14.
- *	The following block is commented out after discussion with Phillip.
- */
-/*
+
 #ifdef NoisyOsMacOSX
 	dispatch_queue_t queue = gcl_create_dispatch_queue(CL_DEVICE_TYPE_GPU, NULL);
 	if (queue == NULL)
@@ -257,7 +267,6 @@ init(NoisyMode mode)
 	clGetDeviceInfo(gpu, CL_DEVICE_NAME, 128, name, NULL);
 //	flexprint(N->Fe, N->Fm, N->Fpinfo, "OpenCL enabled on device %s\n", name);
 #endif
-*/
 
 	return N;
 }
@@ -370,6 +379,15 @@ consolePrintBuffers(State *  N)
 	if (N && N->Fpsmt2 && strlen(N->Fpsmt2->circbuf))
 	{
 		fprintf(stdout, "\nSMT2 Backend output:\n---------------------\n%s", N->Fpsmt2->circbuf);
+		if (N->mode & kNoisyModeCGI)
+		{
+			fflush(stdout);
+		}
+	}
+
+	if (N && N->Fpc && strlen(N->Fpc->circbuf))
+	{
+		fprintf(stdout, "\nC Backend output:\n---------------------\n%s", N->Fpc->circbuf);
 		if (N->mode & kNoisyModeCGI)
 		{
 			fflush(stdout);

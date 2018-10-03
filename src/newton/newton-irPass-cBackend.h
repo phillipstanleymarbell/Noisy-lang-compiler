@@ -35,4 +35,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void	irPassDimensionalMatrixConvertToList(State *  N);
+void	irPassCBackend(State *  N);

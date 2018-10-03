@@ -65,13 +65,13 @@
 #include "newton-lexer.h"
 #include "newton-symbolTable.h"
 #include "newton.h"
+#include "newton-irPass-cBackend.h"
 #include "newton-irPass-dotBackend.h"
 #include "newton-irPass-smtBackend.h"
 #include "newton-irPass-dimensionalMatrixAnnotation.h"
 #include "newton-irPass-dimensionalMatrixPiGroups.h"
 #include "newton-irPass-dimensionalMatrixPrinter.h"
 #include "newton-irPass-dimensionalMatrixKernelPrinter.h"
-#include "newton-irPass-dimensionalMatrixConvertToList.h"
 #include "newton-dimension-pass.h"
 
 extern char *	gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
@@ -131,7 +131,6 @@ processNewtonFile(State *  N, char *  filename)
 		irPassDimensionalMatrixAnnotation(N);
 		irPassDimensionalMatrixPiGroups(N);
 		irPassDimensionalMatrixKernelPrinter(N);
-		irPassDimensionalMatrixConvertToList(N);
 	}
 
 	/*
@@ -148,6 +147,14 @@ processNewtonFile(State *  N, char *  filename)
 	if (N->irBackends & kNewtonIrBackendSmt)
 	{
 		irPassSmtBackend(N);
+	}
+
+	/*
+	 *	C backend
+	 */
+	if (N->irBackends & kNewtonIrBackendC)
+	{
+		irPassCBackend(N);
 	}
 }
 
