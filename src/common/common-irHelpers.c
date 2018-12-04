@@ -228,6 +228,23 @@ depthFirstWalk(State *  N, IrNode *  node)
 	return depthFirstWalk(N, node->irRightChild);
 }
 
+IrNode *
+depthFirstWalkNoLeftChild(State *  N, IrNode *  node)
+{
+	/*
+	 *	Function identical to depthFirstWalk(), except this doesn't
+	 *	check irLeftChild.
+	 */
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserDepthFirstWalk);
+
+	if (node->irRightChild == NULL)
+	{
+		return node;
+	}
+
+	return depthFirstWalkNoLeftChild(N, node->irRightChild);
+}
+
 void
 addLeaf(State *  N, IrNode *  parent, IrNode *  newNode)
 {
@@ -273,6 +290,31 @@ addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode)
 						newNode /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
+}
+
+void
+addLeafWithChainingSeqNoLex(State *  N, IrNode *  parent, IrNode *  newNode, SourceInfo *  srcInfo)
+{
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserAddLeafWithChainingSeq);
+
+	IrNode *	node = depthFirstWalk(N, parent);
+
+	if (node == NULL)
+	{
+		fatal(N, Esanity);
+	}
+
+	if (node->irLeftChild == NULL)
+	{
+		node->irLeftChild = newNode;
+
+		return;
+	}
+
+	node->irRightChild = genIrNode(N,	kNoisyIrNodeType_Xseq,
+						newNode /* left child */,
+						NULL /* right child */,
+						srcInfo /* source info */);
 }
 
 bool

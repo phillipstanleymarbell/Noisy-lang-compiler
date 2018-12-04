@@ -72,6 +72,7 @@
 #include "newton-irPass-dimensionalMatrixPiGroups.h"
 #include "newton-irPass-dimensionalMatrixPrinter.h"
 #include "newton-irPass-dimensionalMatrixKernelPrinter.h"
+#include "newton-irPass-dimensionalMatrixConvertToList.h"
 #include "newton-dimension-pass.h"
 
 extern char *	gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
@@ -131,6 +132,7 @@ processNewtonFile(State *  N, char *  filename)
 		irPassDimensionalMatrixAnnotation(N);
 		irPassDimensionalMatrixPiGroups(N);
 		irPassDimensionalMatrixKernelPrinter(N);
+		irPassDimensionalMatrixConvertToList(N);
 	}
 
 	/*
