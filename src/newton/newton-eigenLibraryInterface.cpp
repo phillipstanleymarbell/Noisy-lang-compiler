@@ -163,7 +163,7 @@ extern "C"
 	}
 
 	/*
-	 *	Transforms matrix to the row reduced echelon form (RREF)
+	 *	Transforms matrix to the reduced row echelon form (RREF)
 	 */
 	static void
 	transformMatrixToRREF(ColMajorOrderMatrixXd &  matrix, int nonPivotColumnIndices[], int matrixRank, int currentRow = 0, int currentColumn = 0)
