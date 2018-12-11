@@ -23,7 +23,7 @@ Building the Noisy compiler and debug tools depends on the following repositorie
 	Wirth tools:		git@github.com:phillipstanleymarbell/Wirth-tools.git
 
 The build also depends on the C protobuf compiler, `sloccount`, and on Graphviz. On Mac OS X, the easiest way to
-install these is to use macports (macports.org) to install the packages `protobuf-c` and `protobuf-cpp` (on Debian, you want the package `libprotobuf-c-dev`), `sloccount`, and `graphviz-devel`.
+install these is to use macports (macports.org) to install the packages `protobuf-c` and `protobuf-cpp` (on Debian, you want the package `libprotobuf-c-dev` and on Ubuntu you also want `protobuf-c-compiler`), `sloccount`, and `graphviz-devel`.
 
 Once you have the above repositories, 
 (1) Create a file `config.local` in the root of the Noisy tree and edit it to contain 
