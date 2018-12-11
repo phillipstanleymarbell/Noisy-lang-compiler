@@ -697,9 +697,12 @@ struct Invariant
 	char **			dimensionalMatrixRowLabels;	//	Labels of dimensional matrix rows		
 	char **			dimensionalMatrixColumnLabels;	//	Labels of dimensional matrix columns 
 	double ***		nullSpace;
-	double ***		reorderNullSpace;
+	double ***		reorderNullSpace;		//	Should be removed once #372 is completed
+	double ***		canonicallyReorderedNullSpace;
+	char ***		canonicallyReorderedLabels;
 	int			kernelColumnCount;
 	int			numberOfUniqueKernels;
+	int			numberOfUniqueKernelsReplace;	//	when #372 is done, rename numberOfUniqueKernels to numberOfTotalKernels, and rename this to numberOfUniqueKernels
 	int *			permutedIndexArrayPointer;
 	int **			uniquePiGroup;
 	Invariant *		next;

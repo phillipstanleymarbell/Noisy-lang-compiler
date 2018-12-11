@@ -62,22 +62,21 @@
 
 
 void
-irPassDimensionalMatrixPiGroups(State *  N)
+irPassDimensionalMatrixPiGroupCanonicalization(State *  N)
 {
 	Invariant *	invariant = N->invariantList;
 
 	while (invariant)
 	{
-		invariant->kernelColumnCount		= 0;
-		invariant->numberOfUniqueKernels	= 0;
-
-		invariant->nullSpace = newtonEigenLibraryInterfaceGetPiGroups(	invariant->dimensionalMatrix,
-										invariant->dimensionalMatrixRowCount,
-										invariant->dimensionalMatrixColumnCount,
-										&invariant->kernelColumnCount,
-										&invariant->numberOfUniqueKernels,
-										&invariant->permutedIndexArrayPointer ); 
-
+		invariant->canonicallyReorderedNullSpace =
+					newtonEigenLibraryInterfaceCanonicallyReorderedPiGroups(invariant->nullSpace,
+												invariant->dimensionalMatrixColumnLabels,
+												invariant->dimensionalMatrixRowCount,
+												invariant->dimensionalMatrixColumnCount,
+												&invariant->kernelColumnCount,
+												&invariant->numberOfUniqueKernels,
+												&invariant->canonicallyReorderedLabels,
+												&invariant->permutedIndexArrayPointer);
 		invariant = invariant->next;
 	}
 }

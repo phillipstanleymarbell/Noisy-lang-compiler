@@ -588,4 +588,136 @@ extern "C"
 		
 		return cInterfaceKernels;
 	}
+
+	double ***
+	newtonEigenLibraryInterfaceCanonicallyReorderedPiGroups(double ***  nullSpace,
+								char **  dimensionalMatrixColumnLabels,
+								int rowCount, int columnCount,
+								int *  kernelColumnCount,
+								int *  numberOfUniqueKernels,
+								char ****  canonicallyReorderedLabels,//pointer to the three dimension array, since we need to return the values
+								int **  permutedIndexArrayPointer)
+	{
+		int countKernel	= 0;
+		int countRow	= 0;
+		int countColumn	= 0;
+
+		// 1 use permutedIndexArrayPointer ---> link this with the names dimensionalMatrixColumnLabels
+		int **		tmpPosition = (int **)calloc(*numberOfUniqueKernels, sizeof(int *));
+		*canonicallyReorderedLabels = (char ***)calloc(*numberOfUniqueKernels, sizeof(char **));
+
+		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		{
+			tmpPosition[countKernel] = (int *)calloc(columnCount, sizeof(int));
+			*canonicallyReorderedLabels[countKernel] = (char **)calloc(columnCount, sizeof(char *));
+
+			for (countRow = 0; countRow < columnCount; countRow++)
+			{
+				tmpPosition[countKernel][*permutedIndexArrayPointer[countKernel * columnCount + countRow]] = countRow;
+			}
+
+			for (countRow = 0; countRow < columnCount; countRow++)
+			{
+				*canonicallyReorderedLabels[countKernel][countRow] =
+								(char *)calloc(sizeof(dimensionalMatrixColumnLabels[tmpPosition[countKernel][countRow]]), sizeof(char));
+				*canonicallyReorderedLabels[countKernel][countRow] = 
+								dimensionalMatrixColumnLabels[tmpPosition[countKernel][countRow]];
+			}
+		}
+		//re-order the columnlabels with alphabet
+		int temp;
+		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		{
+			for (int i = 0; i < columnCount; i++)
+			{
+				tmpPosition[countKernel][i] = i;
+			}
+			for (int i = 0; i < (columnCount -1); i++)
+			{
+				for (int j = i+1; j < columnCount; j++)
+				{
+					if (strcmp(*canonicallyReorderedLabels[countKernel][i], *canonicallyReorderedLabels[countKernel][j]) > 0)
+					{
+						/*
+						 *	Update the temporary position pointer so that the labels are lexicographically ordered.
+						 */
+						temp = tmpPosition[countKernel][i];
+						tmpPosition[countKernel][i] = tmpPosition[countKernel][j];
+						tmpPosition[countKernel][j] = temp;
+					}
+				}
+			}
+		}
+
+		//In eigen, reorder the nullspace based on the index
+		//this part needs to be properly figured out
+
+		//check for zero value to decide the smallest lexicographical component to be used as the base
+		bool		firstNonZeroFound = false;
+		double		factor[*numberOfUniqueKernels][rowCount];
+		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		{
+			for (countColumn = 0; countColumn < rowCount; countColumn++)
+			{
+				for (countRow = 0; countRow < columnCount; countRow++)
+				{
+					if (matrix[countKernel][countColumn][countRow] != 0 && !firstNonZeroFound)
+					{
+						factor[countKernel][countColumn] = 1 / matrix[countKernel][countColumn][countRow];
+						matrix[countKernel][countColumn][countRow] = 1;
+						firstNonZeroFound = true;
+					}
+					if (firstNonZeroFound)
+					{
+						matrix[countKernel][countColumn][countRow] =
+								matrix[countKernel][countColumn][countRow] / factor[countKernel][countColumn];
+					}
+				}
+			}
+		}
+
+		//get rid of duplicates
+		int	kernelToBeDeprecatedCount = 0;
+		int	kernelToBeDeprecated[*numberOfUniqueKernels];
+
+		int	totalColumnCount = (*numberOfUniqueKernels) * rowCount;
+		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		{
+			for (int i = 0; i < (totalColumnCount - 1); i++)
+			{
+				for (int j = 0; j < totalColumnCount; j++)
+				{
+					if(eigenTotal.column(i) == eigenTotal.column(j))
+					{
+						*numberOfUniqueKernels--;
+						kernelToBeDeprecated[kernelToBeDeprecatedCount++] = i / columnCount;
+					}
+				}
+			}
+		}
+
+		//reform the new nullspace
+		double ***	reorderedNullSpace = (double ***)calloc(*numberOfUniqueKernels - kernelToBeDeprecatedCount, sizeof(double **));
+		
+		kernelToBeDeprecatedCount = 0;
+		int 		reorderedKernelCount = 0;
+
+		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		{
+			reorderedNullSpace[reorderedKernelCount] = nullSpace[countKernel];
+			if(countKernel == kernelToBeDeprecated[kernelToBeDeprecatedCount])
+			{
+				kernelToBeDeprecatedCount++;
+			}
+			else
+			{
+				/*
+				 *	Increase this count only when no duplicate
+				 */
+				reorderedKernelCount++;
+			}
+		}
+
+		return reorderedNullSpace;
+	}
 } /* extern "C" */

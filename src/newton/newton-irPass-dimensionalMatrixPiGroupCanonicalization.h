@@ -35,5 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void	irPassDimensionalMatrixPiGroups(State *  N);
+void	irPassDimensionalMatrixPiGroupCanonicalization(State *  N);
 
