@@ -650,7 +650,13 @@ extern "C"
 		}
 
 		//In eigen, reorder the nullspace based on the index
-		//this part needs to be properly figured out
+		//this part needs to be properly figured out, (i dont think we'll need eigen for this part though)
+		ColMajorOrderMatrixXd	*eigenInterfaceReorderKernels = new	ColMajorOrderMatrixXd[*numberOfUniqueKernels];
+
+		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		{
+			eigenInterfaceReorderKernels[countKernel](countRow, countColumn) = nullSpace[countKernel][tmpPosition[countKernel][countRow]][countColumn];
+		}
 
 		//check for zero value to decide the smallest lexicographical component to be used as the base
 		bool		firstNonZeroFound = false;
@@ -661,60 +667,74 @@ extern "C"
 			{
 				for (countRow = 0; countRow < columnCount; countRow++)
 				{
-					if (matrix[countKernel][countColumn][countRow] != 0 && !firstNonZeroFound)
+					if (eigenInterfaceReorderKernels[countKernel](countRow, countColumn) != 0 && !firstNonZeroFound)
 					{
-						factor[countKernel][countColumn] = 1 / matrix[countKernel][countColumn][countRow];
-						matrix[countKernel][countColumn][countRow] = 1;
+						factor[countKernel][countColumn] = 1 / eigenInterfaceReorderKernels[countKernel](countRow, countColumn);
+						eigenInterfaceReorderKernels[countKernel](countRow, countColumn) = 1;
 						firstNonZeroFound = true;
 					}
 					if (firstNonZeroFound)
 					{
-						matrix[countKernel][countColumn][countRow] =
-								matrix[countKernel][countColumn][countRow] / factor[countKernel][countColumn];
+						eigenInterfaceReorderKernels[countKernel](countRow, countColumn) =
+								eigenInterfaceReorderKernels[countKernel](countRow, countColumn) / factor[countKernel][countColumn];
 					}
 				}
 			}
 		}
 
-		//get rid of duplicates
-		int	kernelToBeDeprecatedCount = 0;
-		int	kernelToBeDeprecated[*numberOfUniqueKernels];
-
-		int	totalColumnCount = (*numberOfUniqueKernels) * rowCount;
-		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
-		{
-			for (int i = 0; i < (totalColumnCount - 1); i++)
-			{
-				for (int j = 0; j < totalColumnCount; j++)
-				{
-					if(eigenTotal.column(i) == eigenTotal.column(j))
-					{
-						*numberOfUniqueKernels--;
-						kernelToBeDeprecated[kernelToBeDeprecatedCount++] = i / columnCount;
-					}
-				}
-			}
-		}
-
+//		//get rid of duplicates
+//		int	kernelToBeDeprecatedCount = 0;
+//		int	kernelToBeDeprecated[*numberOfUniqueKernels];
+//
+//		int	totalColumnCount = (*numberOfUniqueKernels) * rowCount;
+//		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+//		{
+//			for (int i = 0; i < (totalColumnCount - 1); i++)
+//			{
+//				for (int j = 0; j < totalColumnCount; j++)
+//				{
+//					if(eigenTotal.column(i) == eigenTotal.column(j))
+//					{
+//						*numberOfUniqueKernels--;
+//						kernelToBeDeprecated[kernelToBeDeprecatedCount++] = i / columnCount;
+//					}
+//				}
+//			}
+//		}
+//
+//		//reform the new nullspace
+//		double ***	reorderedNullSpace = (double ***)calloc(*numberOfUniqueKernels - kernelToBeDeprecatedCount, sizeof(double **));
+//		
+//		kernelToBeDeprecatedCount = 0;
+//		int 		reorderedKernelCount = 0;
+//
+//		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+//		{
+//			reorderedNullSpace[reorderedKernelCount] = nullSpace[countKernel];
+//			if(countKernel == kernelToBeDeprecated[kernelToBeDeprecatedCount])
+//			{
+//				kernelToBeDeprecatedCount++;
+//			}
+//			else
+//			{
+//				/*
+//				 *	Increase this count only when no duplicate
+//				 */
+//				reorderedKernelCount++;
+//			}
+//		}
 		//reform the new nullspace
-		double ***	reorderedNullSpace = (double ***)calloc(*numberOfUniqueKernels - kernelToBeDeprecatedCount, sizeof(double **));
-		
-		kernelToBeDeprecatedCount = 0;
-		int 		reorderedKernelCount = 0;
-
+		double ***	reorderedNullSpace = (double ***)calloc(*numberOfUniqueKernels, sizeof(double **));
 		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
-			reorderedNullSpace[reorderedKernelCount] = nullSpace[countKernel];
-			if(countKernel == kernelToBeDeprecated[kernelToBeDeprecatedCount])
+			reorderedNullSpace[countKernel] = (double **)calloc(rowCount, sizeof(double *));
+			for (countColumn = 0; countColumn < rowCount; countColumn++)
 			{
-				kernelToBeDeprecatedCount++;
-			}
-			else
-			{
-				/*
-				 *	Increase this count only when no duplicate
-				 */
-				reorderedKernelCount++;
+				reorderedNullSpace[countKernel][countColumn] = (double *)calloc(columnCount, sizeof(double));
+				for (countRow = 0; countRow < columnCount; countRow++)
+				{
+					reorderedNullSpace[countKernel][countColumn][countRow] = eigenInterfaceReorderKernels[countKernel](countRow, countColumn);
+				}
 			}
 		}
 
