@@ -18,10 +18,13 @@ If you forgot to clone with `--recursive` and end up with empty submodule direct
 Building the Noisy compiler and debug tools depends on the following repositories which are already included as submodules:
 
 	Libflex:		git@github.com:phillipstanleymarbell/libflex.git
-	DTrace-scripts:		git@github.com:phillipstanleymarbell/DTrace-scripts.git
-	Eigen:			git@github.com:eigenteam/eigen-git-mirror.git	
 	Wirth tools:		git@github.com:phillipstanleymarbell/Wirth-tools.git
+	DTrace-scripts:		git@github.com:phillipstanleymarbell/DTrace-scripts.git
+	
+and
 
+	Eigen:			git@github.com:eigenteam/eigen-git-mirror.git	
+	
 The build also depends on the C protobuf compiler, `sloccount`, and on Graphviz. On Mac OS X, the easiest way to
 install these is to use macports (macports.org) to install the packages `protobuf-c` and `protobuf-cpp` (on Debian, you want the package `libprotobuf-c-dev` and on Ubuntu you also want `protobuf-c-compiler`), `sloccount`, and `graphviz-devel`.
 
