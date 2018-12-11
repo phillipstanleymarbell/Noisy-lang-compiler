@@ -679,50 +679,10 @@ extern "C"
 								eigenInterfaceReorderKernels[countKernel](countRow, countColumn) / factor[countKernel][countColumn];
 					}
 				}
+				firstNonZeroFound = false;
 			}
 		}
 
-//		//get rid of duplicates
-//		int	kernelToBeDeprecatedCount = 0;
-//		int	kernelToBeDeprecated[*numberOfUniqueKernels];
-//
-//		int	totalColumnCount = (*numberOfUniqueKernels) * rowCount;
-//		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
-//		{
-//			for (int i = 0; i < (totalColumnCount - 1); i++)
-//			{
-//				for (int j = 0; j < totalColumnCount; j++)
-//				{
-//					if(eigenTotal.column(i) == eigenTotal.column(j))
-//					{
-//						*numberOfUniqueKernels--;
-//						kernelToBeDeprecated[kernelToBeDeprecatedCount++] = i / columnCount;
-//					}
-//				}
-//			}
-//		}
-//
-//		//reform the new nullspace
-//		double ***	reorderedNullSpace = (double ***)calloc(*numberOfUniqueKernels - kernelToBeDeprecatedCount, sizeof(double **));
-//		
-//		kernelToBeDeprecatedCount = 0;
-//		int 		reorderedKernelCount = 0;
-//
-//		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
-//		{
-//			reorderedNullSpace[reorderedKernelCount] = nullSpace[countKernel];
-//			if(countKernel == kernelToBeDeprecated[kernelToBeDeprecatedCount])
-//			{
-//				kernelToBeDeprecatedCount++;
-//			}
-//			else
-//			{
-//				/*
-//				 *	Increase this count only when no duplicate
-//				 */
-//				reorderedKernelCount++;
-//			}
-//		}
 		//reform the new nullspace
 		double ***	reorderedNullSpace = (double ***)calloc(*numberOfUniqueKernels, sizeof(double **));
 		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
