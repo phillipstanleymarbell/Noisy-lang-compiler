@@ -1,6 +1,5 @@
 /*
 	Authored 2018, Vlad Mihai Mandric, James Rhodes, Phillip Stanley-Marbell, Youchao Wang.
-
 	Based on skeleton implementation of Eigen interface by Phillip Stanley-Marbell.
 
 	All rights reserved.
@@ -163,7 +162,7 @@ extern "C"
 	}
 
 	/*
-	 *	Transforms matrix to the reduced row echelon form (RREF)
+	 *	Transforms matrix to the row reduced echelon form (RREF)
 	 */
 	static void
 	transformMatrixToRREF(ColMajorOrderMatrixXd &  matrix, int nonPivotColumnIndices[], int matrixRank, int currentRow = 0, int currentColumn = 0)
@@ -595,38 +594,31 @@ extern "C"
 								int rowCount, int columnCount,
 								int *  kernelColumnCount,
 								int *  numberOfUniqueKernels,
-								char ****  canonicallyReorderedLabels,//pointer to the three dimension array, since we need to return the values
-								int **  permutedIndexArrayPointer)
+								char ***  canonicallyReorderedLabels,//pointer to the three dimension array, since we need to return the values
+								int *  permutedIndexArrayPointer)
 	{
-		int countKernel	= 0;
-		int countRow	= 0;
-		int countColumn	= 0;
-
 		// 1 use permutedIndexArrayPointer ---> link this with the names dimensionalMatrixColumnLabels
 		int **		tmpPosition = (int **)calloc(*numberOfUniqueKernels, sizeof(int *));
-		*canonicallyReorderedLabels = (char ***)calloc(*numberOfUniqueKernels, sizeof(char **));
-
-		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		canonicallyReorderedLabels = (char ***)calloc(*numberOfUniqueKernels, sizeof(char **));
+		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
 			tmpPosition[countKernel] = (int *)calloc(columnCount, sizeof(int));
-			*canonicallyReorderedLabels[countKernel] = (char **)calloc(columnCount, sizeof(char *));
-
-			for (countRow = 0; countRow < columnCount; countRow++)
+			canonicallyReorderedLabels[countKernel] = (char **)calloc(columnCount, sizeof(char *));
+			for (int countRow = 0; countRow < columnCount; countRow++)
 			{
-				tmpPosition[countKernel][*permutedIndexArrayPointer[countKernel * columnCount + countRow]] = countRow;
+				tmpPosition[countKernel][permutedIndexArrayPointer[countKernel * columnCount + countRow]] = countRow;
 			}
-
-			for (countRow = 0; countRow < columnCount; countRow++)
+			for (int countRow = 0; countRow < columnCount; countRow++)
 			{
-				*canonicallyReorderedLabels[countKernel][countRow] =
-								(char *)calloc(sizeof(dimensionalMatrixColumnLabels[tmpPosition[countKernel][countRow]]), sizeof(char));
-				*canonicallyReorderedLabels[countKernel][countRow] = 
+				canonicallyReorderedLabels[countKernel][countRow] =
+								(char *)calloc(strlen(dimensionalMatrixColumnLabels[tmpPosition[countKernel][countRow]]), sizeof(char));
+				canonicallyReorderedLabels[countKernel][countRow] = 
 								dimensionalMatrixColumnLabels[tmpPosition[countKernel][countRow]];
 			}
 		}
 		//re-order the columnlabels with alphabet
 		int temp;
-		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
 			for (int i = 0; i < columnCount; i++)
 			{
@@ -636,7 +628,7 @@ extern "C"
 			{
 				for (int j = i+1; j < columnCount; j++)
 				{
-					if (strcmp(*canonicallyReorderedLabels[countKernel][i], *canonicallyReorderedLabels[countKernel][j]) > 0)
+					if (strcmp(canonicallyReorderedLabels[countKernel][i], canonicallyReorderedLabels[countKernel][j]) > 0)
 					{
 						/*
 						 *	Update the temporary position pointer so that the labels are lexicographically ordered.
@@ -648,55 +640,52 @@ extern "C"
 				}
 			}
 		}
-
 		//In eigen, reorder the nullspace based on the index
 		//this part needs to be properly figured out, (i dont think we'll need eigen for this part though)
-		ColMajorOrderMatrixXd	*eigenInterfaceReorderKernels = new	ColMajorOrderMatrixXd[*numberOfUniqueKernels];
-
-		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		//ColMajorOrderMatrixXd	*eigenInterfaceReorderKernels = new ColMajorOrderMatrixXd[*numberOfUniqueKernels];
+		double ***	reorderedNullSpace = (double ***)calloc(*numberOfUniqueKernels, sizeof(double **));
+		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
-			eigenInterfaceReorderKernels[countKernel](countRow, countColumn) = nullSpace[countKernel][tmpPosition[countKernel][countRow]][countColumn];
+			reorderedNullSpace[countKernel] = (double **)calloc(rowCount, sizeof(double *));
+			for (int countColumn = 0; countColumn < rowCount; countColumn++)
+			{
+				reorderedNullSpace[countKernel][countColumn] = (double *)calloc(columnCount, sizeof(double));
+				for (int countRow = 0; countRow < columnCount; countRow++)
+				{
+					reorderedNullSpace[countKernel][countColumn][countRow] = nullSpace[countKernel][tmpPosition[countKernel][countRow]][countColumn];
+				}
+			}
 		}
-
 		//check for zero value to decide the smallest lexicographical component to be used as the base
 		bool		firstNonZeroFound = false;
-		double		factor[*numberOfUniqueKernels][rowCount];
-		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		double **	factor = (double **)calloc(*numberOfUniqueKernels,sizeof(double *));
+		//double		factor[numberOfUniqueKernelsInt][rowCount];
+		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
-			for (countColumn = 0; countColumn < rowCount; countColumn++)
+			for (int countColumn = 0; countColumn < rowCount; countColumn++)
 			{
-				for (countRow = 0; countRow < columnCount; countRow++)
+				factor[countKernel] = (double *)calloc(rowCount,sizeof(double));
+				for (int countRow = 0; countRow < columnCount; countRow++)
 				{
-					if (eigenInterfaceReorderKernels[countKernel](countRow, countColumn) != 0 && !firstNonZeroFound)
+					if (reorderedNullSpace[countKernel][countColumn][countRow] != 0 && !firstNonZeroFound)
 					{
-						factor[countKernel][countColumn] = 1 / eigenInterfaceReorderKernels[countKernel](countRow, countColumn);
-						eigenInterfaceReorderKernels[countKernel](countRow, countColumn) = 1;
+						factor[countKernel][countColumn] = 1 / reorderedNullSpace[countKernel][countColumn][countRow];
+						reorderedNullSpace[countKernel][countColumn][countRow] = 1;
 						firstNonZeroFound = true;
 					}
 					if (firstNonZeroFound)
 					{
-						eigenInterfaceReorderKernels[countKernel](countRow, countColumn) =
-								eigenInterfaceReorderKernels[countKernel](countRow, countColumn) / factor[countKernel][countColumn];
+						reorderedNullSpace[countKernel][countColumn][countRow] =
+								reorderedNullSpace[countKernel][countColumn][countRow] / factor[countKernel][countColumn];
 					}
 				}
 				firstNonZeroFound = false;
 			}
 		}
-
-		//reform the new nullspace
-		double ***	reorderedNullSpace = (double ***)calloc(*numberOfUniqueKernels, sizeof(double **));
-		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
-		{
-			reorderedNullSpace[countKernel] = (double **)calloc(rowCount, sizeof(double *));
-			for (countColumn = 0; countColumn < rowCount; countColumn++)
-			{
-				reorderedNullSpace[countKernel][countColumn] = (double *)calloc(columnCount, sizeof(double));
-				for (countRow = 0; countRow < columnCount; countRow++)
-				{
-					reorderedNullSpace[countKernel][countColumn][countRow] = eigenInterfaceReorderKernels[countKernel](countRow, countColumn);
-				}
-			}
-		}
+		//free up memory
+		free(factor);
+		free(tmpPosition);
+		free(canonicallyReorderedLabels);
 
 		return reorderedNullSpace;
 	}

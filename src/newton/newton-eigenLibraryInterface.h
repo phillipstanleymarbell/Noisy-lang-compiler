@@ -41,7 +41,13 @@ extern "C"
 #	endif /* __cplusplus */
 
 double ***	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels, int **  permutedIndexArrayPointer);
-
+double ***	newtonEigenLibraryInterfaceCanonicallyReorderedPiGroups(double ***  nullSpace,
+								char **  dimensionalMatrixColumnLabels,
+								int rowCount, int columnCount,
+								int *  kernelColumnCount,
+								int *  numberOfUniqueKernels,
+								char ***  canonicallyReorderedLabels,//pointer to the three dimension array, since we need to return the values
+								int *  permutedIndexArrayPointer);
 #	ifdef __cplusplus
 } /* extern "C" */
 #	endif /* __cplusplus */
