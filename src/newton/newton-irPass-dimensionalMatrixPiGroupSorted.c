@@ -62,7 +62,7 @@
 
 
 void
-irPassDimensionalMatrixPiGroupCanonicalization(State *  N)
+irPassDimensionalMatrixPiGroupSorted(State *  N)
 {
 	Invariant *	invariant = N->invariantList;
 
@@ -75,7 +75,6 @@ irPassDimensionalMatrixPiGroupCanonicalization(State *  N)
 												invariant->dimensionalMatrixColumnCount,
 												&invariant->kernelColumnCount,
 												&invariant->numberOfUniqueKernels,
-												&invariant->canonicallyReorderedLabels,
 												&invariant->permutedIndexArrayPointer);
 		invariant = invariant->next;
 	}
