@@ -779,8 +779,7 @@ extern "C"
 	newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(double ***  sortedCanonicallyReorderedNullSpace,
 								int rowCount, int columnCount,
 								int *  kernelColumnCount,
-								int *  numberOfUniqueKernels,
-								int **  permutedIndexArrayPointer)
+								int *  numberOfUniqueKernels)
 	{
 		int countKernel	= 0;
 		int countRow	= 0;
@@ -791,13 +790,15 @@ extern "C"
 
 		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
+			ColMajorOrderMatrixXd	temp(columnCount, rowCount);
 			for (countColumn = 0; countColumn < rowCount; countColumn++)
 			{
 				for (countRow = 0; countRow < columnCount; countRow++)
 				{
-					eigenInterfaceReorderKernels[countKernel](countRow, countColumn) = sortedCanonicallyReorderedNullSpace[countKernel][countRow][countColumn];
+					temp(countRow, countColumn) = sortedCanonicallyReorderedNullSpace[countKernel][countColumn][countRow];
 				}
 			}
+			eigenInterfaceReorderKernels[countKernel] = temp;
 		}
 
 		//get rid of duplicates
@@ -805,7 +806,6 @@ extern "C"
 		int	kernelToBeDeprecated[*numberOfUniqueKernels];
 		int	totalKernelsCount = *numberOfUniqueKernels;
 
-		int	totalColumnCount = (*numberOfUniqueKernels) * rowCount;
 		for (int i = 0; i < (totalKernelsCount - 1); i++)
 		{
 			//http://eigen.tuxfamily.org/dox-devel/classEigen_1_1DenseBase.html#af36014ec300f53a65083057ed4e89822
@@ -825,7 +825,7 @@ extern "C"
 		kernelToBeDeprecatedCount = 0;
 		int 		reorderedKernelCount = 0;
 
-		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		for (countKernel = 0; countKernel < totalKernelsCount; countKernel++)
 		{
 			if(countKernel == kernelToBeDeprecated[kernelToBeDeprecatedCount])
 			{
@@ -842,9 +842,10 @@ extern "C"
 					reorderedNullSpace[countKernel][countColumn] = (double *)calloc(columnCount, sizeof(double));
 					for (countRow = 0; countRow < columnCount; countRow++)
 					{
-						reorderedNullSpace[reorderedKernelCount++][countColumn][countRow] = eigenInterfaceReorderKernels[countKernel](countRow,countColumn);
+						reorderedNullSpace[reorderedKernelCount][countColumn][countRow] = eigenInterfaceReorderKernels[countKernel](countRow,countColumn);
 					}
 				}
+				reorderedKernelCount++;
 			}
 		}
 

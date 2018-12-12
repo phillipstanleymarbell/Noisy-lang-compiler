@@ -1,5 +1,5 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell
+	Authored 2018. Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -35,30 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifdef __cplusplus
-extern "C"
-{
-#	endif /* __cplusplus */
+void	irPassDimensionalMatrixPiGroupsWeedOutDuplicates(State *  N);
 
-double ***	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels, int **  permutedIndexArrayPointer);
-double ***	newtonEigenLibraryInterfaceCanonicallyReorderedPiGroups(double ***  nullSpace,
-								char **  dimensionalMatrixColumnLabels,
-								int rowCount, int columnCount,
-								int *  kernelColumnCount,
-								int *  numberOfUniqueKernels,
-								char ***  canonicallyReorderedLabels,//pointer to the three dimension array, since we need to return the values
-								int *  permutedIndexArrayPointer);
-double ***	newtonEigenLibraryInterfaceSortedCanonicallyReorderedPiGroups(double ***  canonicallyReorderedNullSpace,
-								char **  dimensionalMatrixColumnLabels,
-								int dimensionalMatrixRowCount, int columnCount,
-								int *  kernelColumnCount,
-								int *  numberOfUniqueKernels,
-								int **  permutedIndexArrayPointer);
-double ***	newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(double ***  sortedCanonicallyReorderedNullSpace,
-								int rowCount, int columnCount,
-								int *  kernelColumnCount,
-								int *  numberOfUniqueKernels);
-
-#	ifdef __cplusplus
-} /* extern "C" */
-#	endif /* __cplusplus */
