@@ -750,7 +750,7 @@ extern "C"
 	double ***
 	newtonEigenLibraryInterfaceSortedCanonicallyReorderedPiGroups(double ***  canonicallyReorderedNullSpace,
 								char **  dimensionalMatrixColumnLabels,
-								int rowCount, int columnCount,
+								int dimensionalMatrixRowCount, int columnCount,
 								int *  kernelColumnCount,
 								int *  numberOfUniqueKernels,
 								char ****  canonicallyReorderedLabels,//pointer to the three dimension array, since we need to return the values
@@ -765,7 +765,7 @@ extern "C"
 
 		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
-			for (countColumn = 0; countColumn < rowCount; countColumn++)
+			for (countColumn = 0; countColumn < dimensionalMatrixRowCount; countColumn++)
 			{
 				for (countRow = 0; countRow < columnCount; countRow++)
 				{
@@ -774,36 +774,48 @@ extern "C"
 			}
 		}
 
-		//check for zero value to decide the smallest lexicographical component to be used as the base
-		bool		firstNonZeroFound = false;
-		double		factor[*numberOfUniqueKernels][rowCount];
+		//check my note for more #issue #383
+		int	whichRowI[columnCount];
+		int	whichRowJ[columnCount];
+		int	iCount;
+		int	jCount;
 		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
-			for (countColumn = 0; countColumn < rowCount; countColumn++)
+			for(int i = 0; i < (dimensionalMatrixRowCount -1); i++)//dimensionalMatrixRowCount in dimensional matrix, is the same as column in nullspace.
 			{
-				for (countRow = 0; countRow < columnCount; countRow++)
+				iCount = 0;
+				for (int j = i + 1; j < dimensionalMatrixRowCount; j++)
 				{
-					if (eigenInterfaceReorderKernels[countKernel](countRow, countColumn) != 0 && !firstNonZeroFound)
+					jCount = 0;
+					for (countRow = 0; countRow < columnCount; countRow++)
 					{
-						factor[countKernel][countColumn] = 1 / eigenInterfaceReorderKernels[countKernel](countRow, countColumn);
-						eigenInterfaceReorderKernels[countKernel](countRow, countColumn) = 1;
-						firstNonZeroFound = true;
+						if (abs(eigenInterfaceReorderKernels[countKernel](countRow, i)) != 0)
+						{
+							whichRowI[iCount++] = countRow;
+						}
+						if (abs(eigenInterfaceReorderKernels[countKernel](countRow, j)) != 0)
+						{
+							whichRowJ[jCount++] = countRow;
+						}
 					}
-					if (firstNonZeroFound)
+					for (int m = 0; m < min(iCount, jCount); m++)
 					{
-						eigenInterfaceReorderKernels[countKernel](countRow, countColumn) =
-								eigenInterfaceReorderKernels[countKernel](countRow, countColumn) / factor[countKernel][countColumn];
+						if ((whichRowI[m] > whichRowJ[m]) || (whichRowI[m] == whichRowJ[m] && (jCount < iCount)))
+						{
+							eigenInterfaceReorderKernels[countKernel].col(i).swap(eigenInterfaceReorderKernels[countKernel].col(j));
+						}
 					}
 				}
 			}
 		}
 
+
 		//reform the new nullspace
 		double ***	reorderedNullSpace = (double ***)calloc(*numberOfUniqueKernels, sizeof(double **));
 		for (countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
-			reorderedNullSpace[countKernel] = (double **)calloc(rowCount, sizeof(double *));
-			for (countColumn = 0; countColumn < rowCount; countColumn++)
+			reorderedNullSpace[countKernel] = (double **)calloc(dimensionalMatrixRowCount, sizeof(double *));
+			for (countColumn = 0; countColumn < dimensionalMatrixRowCount; countColumn++)
 			{
 				reorderedNullSpace[countKernel][countColumn] = (double *)calloc(columnCount, sizeof(double));
 				for (countRow = 0; countRow < columnCount; countRow++)
