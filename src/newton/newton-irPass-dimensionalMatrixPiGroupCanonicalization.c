@@ -60,7 +60,6 @@
 #include "newton-types.h"
 #include "newton-eigenLibraryInterface.h"
 
-
 void
 irPassDimensionalMatrixPiGroupCanonicalization(State *  N)
 {
@@ -68,15 +67,13 @@ irPassDimensionalMatrixPiGroupCanonicalization(State *  N)
 
 	while (invariant)
 	{
-		invariant->canonicallyReorderedNullSpace =
-					newtonEigenLibraryInterfaceCanonicallyReorderedPiGroups(invariant->nullSpace,
+		invariant->canonicallyReorderedNullSpace = newtonEigenLibraryInterfaceCanonicallyReorderedPiGroups(invariant->nullSpace,
 												invariant->dimensionalMatrixColumnLabels,
-												invariant->dimensionalMatrixRowCount,
+												invariant->kernelColumnCount,
 												invariant->dimensionalMatrixColumnCount,
-												&invariant->kernelColumnCount,
 												&invariant->numberOfUniqueKernels,
 												&invariant->canonicallyReorderedLabels,
-												&invariant->permutedIndexArrayPointer);
+												invariant->permutedIndexArrayPointer);
 		invariant = invariant->next;
 	}
 }
