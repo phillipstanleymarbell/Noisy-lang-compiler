@@ -73,7 +73,7 @@ irPassDimensionalMatrixPiGroupCanonicalization(State *  N)
 												invariant->dimensionalMatrixColumnCount,
 												&invariant->kernelColumnCount,
 												&invariant->numberOfUniqueKernels,
-												invariant->canonicallyReorderedLabels,
+												&invariant->canonicallyReorderedLabels,
 												invariant->permutedIndexArrayPointer);
 		invariant = invariant->next;
 	}

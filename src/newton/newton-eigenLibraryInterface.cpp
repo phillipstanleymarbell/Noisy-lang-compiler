@@ -594,22 +594,24 @@ extern "C"
 								int rowCount, int columnCount,
 								int *  kernelColumnCount,
 								int *  numberOfUniqueKernels,
-								char ***  canonicallyReorderedLabels,//pointer to the three dimension array, since we need to return the values
+								char ****  canonicalLabels,//pointer to the three dimension array, since we need to return the values
 								int *  permutedIndexArrayPointer)
 	{
 		// 1 use permutedIndexArrayPointer ---> link this with the names dimensionalMatrixColumnLabels
 		int **		tmpPosition = (int **)calloc(*numberOfUniqueKernels, sizeof(int *));
-		canonicallyReorderedLabels = (char ***)calloc(*numberOfUniqueKernels, sizeof(char **));
+		char ***	canonicallyReorderedLabels = (char ***)calloc(*numberOfUniqueKernels, sizeof(char **));
+		
 		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
 			tmpPosition[countKernel] = (int *)calloc(columnCount, sizeof(int));
 			canonicallyReorderedLabels[countKernel] = (char **)calloc(columnCount, sizeof(char *));
 			for (int countRow = 0; countRow < columnCount; countRow++)
 			{
-				tmpPosition[countKernel][permutedIndexArrayPointer[countKernel * columnCount + countRow]] = countRow;
+				tmpPosition[countKernel][permutedIndexArrayPointer[countKernel * columnCount + countRow]] = countRow; // this is correct, the values stored in tmpPosition is the index
 			}
 			for (int countRow = 0; countRow < columnCount; countRow++)
 			{
+				//first apply the reordering with permuted index array, upto this point, everything seems fine
 				canonicallyReorderedLabels[countKernel][countRow] =
 								(char *)calloc(strlen(dimensionalMatrixColumnLabels[tmpPosition[countKernel][countRow]]), sizeof(char));
 				canonicallyReorderedLabels[countKernel][countRow] = 
@@ -622,7 +624,7 @@ extern "C"
 		{
 			for (int i = 0; i < columnCount; i++)
 			{
-				tmpPosition[countKernel][i] = i;
+				tmpPosition[countKernel][i] = i; //reset tmpPosition so that it could be used for the re-ordering of invariant->nullSpace
 			}
 			for (int i = 0; i < (columnCount -1); i++)
 			{
@@ -636,12 +638,17 @@ extern "C"
 						temp = tmpPosition[countKernel][i];
 						tmpPosition[countKernel][i] = tmpPosition[countKernel][j];
 						tmpPosition[countKernel][j] = temp;
+
+						char *  tempString = (char *)calloc(strlen(canonicallyReorderedLabels[countKernel][i]), sizeof(char));
+						tempString = canonicallyReorderedLabels[countKernel][i];
+						canonicallyReorderedLabels[countKernel][i] = canonicallyReorderedLabels[countKernel][j];
+						canonicallyReorderedLabels[countKernel][j] = tempString;
+						//free(tempString); //do not free it here! ordering is correct now.
 					}
 				}
 			}
 		}
-		//In eigen, reorder the nullspace based on the index
-		//this part needs to be properly figured out, (i dont think we'll need eigen for this part though)
+		// (i dont think we'll need eigen for this part though)
 		//ColMajorOrderMatrixXd	*eigenInterfaceReorderKernels = new ColMajorOrderMatrixXd[*numberOfUniqueKernels];
 		double ***	reorderedNullSpace = (double ***)calloc(*numberOfUniqueKernels, sizeof(double **));
 		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
@@ -651,11 +658,11 @@ extern "C"
 			{
 				reorderedNullSpace[countKernel][countColumn] = (double *)calloc(columnCount, sizeof(double));
 				for (int countRow = 0; countRow < columnCount; countRow++)
-				{
+				{//nullspace is [countKernel][countRow][countColumn] //reorderedNullSpace is [countKernel][countColumn][countRow]
 					reorderedNullSpace[countKernel][countColumn][countRow] = nullSpace[countKernel][tmpPosition[countKernel][countRow]][countColumn];
 				}
 			}
-		}
+		}//this is correct.
 		//check for zero value to decide the smallest lexicographical component to be used as the base
 		bool		firstNonZeroFound = false;
 		double **	factor = (double **)calloc(*numberOfUniqueKernels,sizeof(double *));
@@ -672,21 +679,22 @@ extern "C"
 						factor[countKernel][countColumn] = 1 / reorderedNullSpace[countKernel][countColumn][countRow];
 						reorderedNullSpace[countKernel][countColumn][countRow] = 1;
 						firstNonZeroFound = true;
+						continue;
 					}
 					if (firstNonZeroFound)
 					{
 						reorderedNullSpace[countKernel][countColumn][countRow] =
-								reorderedNullSpace[countKernel][countColumn][countRow] / factor[countKernel][countColumn];
+								reorderedNullSpace[countKernel][countColumn][countRow] * factor[countKernel][countColumn];
 					}
 				}
 				firstNonZeroFound = false;
 			}
-		}
+		}// this is now correct.
 		//free up memory
 		free(factor);
 		free(tmpPosition);
-		free(canonicallyReorderedLabels);
-
+		//free(canonicallyReorderedLabels);
+		*canonicalLabels = canonicallyReorderedLabels;
 		return reorderedNullSpace;
 	}
 } /* extern "C" */
