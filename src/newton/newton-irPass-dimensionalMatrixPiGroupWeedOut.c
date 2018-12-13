@@ -69,9 +69,8 @@ irPassDimensionalMatrixPiGroupsWeedOutDuplicates(State *  N)
 	while (invariant)
 	{
 		invariant->nullSpaceWithoutDuplicates = newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(invariant->sortedCanonicallyReorderedNullSpace,
-								invariant->dimensionalMatrixRowCount,
+								invariant->kernelColumnCount,
 								invariant->dimensionalMatrixColumnCount,
-								&invariant->kernelColumnCount,
 								&invariant->numberOfUniqueKernels);
 
 		invariant = invariant->next;
