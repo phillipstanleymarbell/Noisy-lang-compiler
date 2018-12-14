@@ -589,51 +589,77 @@ extern "C"
 	}
 
 	double ***
-	newtonEigenLibraryInterfaceCanonicallyReorderedPiGroups(double ***  nullSpace,
+	newtonEigenLibraryInterfaceKernelRowCanonicalization(double ***  nullSpace,
 								char **  dimensionalMatrixColumnLabels,
-								int rowCount, int columnCount,
-								int *  kernelColumnCount,
+								int kernelColumnCount,
+								int dimensionalMatrixColumnCount,
 								int *  numberOfUniqueKernels,
-								char ****  canonicalLabels,//pointer to the three dimension array, since we need to return the values
+								char ****  canonicalLabels,
 								int *  permutedIndexArrayPointer)
 	{
-		// 1 use permutedIndexArrayPointer ---> link this with the names dimensionalMatrixColumnLabels
+		/*
+		 *	This function reorders the rows of the null space kernels
+		 *	lexicographically. By rows we refer to the parameters that
+		 *	we defined as invariants in .nt files.
+		 *	Currently this function does not call libraries in Eigen,
+		 *	it is however kept here so that it could be updated with 
+		 *	ease in the future.
+		 *
+		 *	First we link the labels using permutedIndexArrayPointer
+		 *	for each permuted kernel.
+		 */
 		int **		tmpPosition = (int **)calloc(*numberOfUniqueKernels, sizeof(int *));
 		char ***	canonicallyReorderedLabels = (char ***)calloc(*numberOfUniqueKernels, sizeof(char **));
 		
 		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
-			tmpPosition[countKernel] = (int *)calloc(columnCount, sizeof(int));
-			canonicallyReorderedLabels[countKernel] = (char **)calloc(columnCount, sizeof(char *));
-			for (int countRow = 0; countRow < columnCount; countRow++)
+			tmpPosition[countKernel] = (int *)calloc(dimensionalMatrixColumnCount, sizeof(int));
+			canonicallyReorderedLabels[countKernel] = (char **)calloc(dimensionalMatrixColumnCount, sizeof(char *));
+			for (int countRow = 0; countRow < dimensionalMatrixColumnCount; countRow++)
 			{
-				tmpPosition[countKernel][permutedIndexArrayPointer[countKernel * columnCount + countRow]] = countRow; // this is correct, the values stored in tmpPosition is the index
+				/*
+				 *	Values stored in tmpPosition are the indeces for label reordering.
+				 */
+				tmpPosition[countKernel][permutedIndexArrayPointer[countKernel * dimensionalMatrixColumnCount + countRow]] = countRow;
 			}
-			for (int countRow = 0; countRow < columnCount; countRow++)
+			for (int countRow = 0; countRow < dimensionalMatrixColumnCount; countRow++)
 			{
-				//first apply the reordering with permuted index array, upto this point, everything seems fine
+				/*
+				 *	The labels are not lexicographically reordered yet.
+				 *	They are only reordered to match the permutation for
+				 *	each kernel.
+				 */
 				canonicallyReorderedLabels[countKernel][countRow] =
 								(char *)calloc(strlen(dimensionalMatrixColumnLabels[tmpPosition[countKernel][countRow]]), sizeof(char));
 				canonicallyReorderedLabels[countKernel][countRow] = 
 								dimensionalMatrixColumnLabels[tmpPosition[countKernel][countRow]];
 			}
 		}
-		//re-order the columnlabels with alphabet
+		/*
+		 *	Now sort the labels in lexicographic order (dictionary order)
+		 */
 		int temp;
 		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
-			for (int i = 0; i < columnCount; i++)
+			for (int i = 0; i < dimensionalMatrixColumnCount; i++)
 			{
-				tmpPosition[countKernel][i] = i; //reset tmpPosition so that it could be used for the re-ordering of invariant->nullSpace
+				/*
+				 *	Reset tmpPosition so that it could be used for the re-ordering
+				 *	of invariant->nullSpace.
+				 */
+				tmpPosition[countKernel][i] = i;
 			}
-			for (int i = 0; i < (columnCount -1); i++)
+			for (int i = 0; i < (dimensionalMatrixColumnCount -1); i++)
 			{
-				for (int j = i+1; j < columnCount; j++)
+				for (int j = i + 1; j < dimensionalMatrixColumnCount; j++)
 				{
 					if (strcmp(canonicallyReorderedLabels[countKernel][i], canonicallyReorderedLabels[countKernel][j]) > 0)
 					{
 						/*
-						 *	Update the temporary position pointer so that the labels are lexicographically ordered.
+						 *	Update the temporary position pointer and in the mean time
+						 *	sort the label for future debug use. The labels for all kernels
+						 *	should be lexicographically ordered after this step, so they
+						 *	should all be the same.
 						 */
 						temp = tmpPosition[countKernel][i];
 						tmpPosition[countKernel][i] = tmpPosition[countKernel][j];
@@ -643,36 +669,47 @@ extern "C"
 						tempString = canonicallyReorderedLabels[countKernel][i];
 						canonicallyReorderedLabels[countKernel][i] = canonicallyReorderedLabels[countKernel][j];
 						canonicallyReorderedLabels[countKernel][j] = tempString;
-						//free(tempString); //do not free it here! ordering is correct now.
+						/*
+						 *	NOTE: Do not attempt to do free(tempString) here, it will lead to error.
+						 */
 					}
 				}
 			}
 		}
-		// (i dont think we'll need eigen for this part though)
-		//ColMajorOrderMatrixXd	*eigenInterfaceReorderKernels = new ColMajorOrderMatrixXd[*numberOfUniqueKernels];
+		/*
+		 *	The following codes could be updated to exploit the ease
+		 *	of implementation using Eigen libraries.
+		 */
 		double ***	reorderedNullSpace = (double ***)calloc(*numberOfUniqueKernels, sizeof(double **));
 		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
-			reorderedNullSpace[countKernel] = (double **)calloc(rowCount, sizeof(double *));
-			for (int countColumn = 0; countColumn < rowCount; countColumn++)
+			reorderedNullSpace[countKernel] = (double **)calloc(kernelColumnCount, sizeof(double *));
+			for (int countColumn = 0; countColumn < kernelColumnCount; countColumn++)
 			{
-				reorderedNullSpace[countKernel][countColumn] = (double *)calloc(columnCount, sizeof(double));
-				for (int countRow = 0; countRow < columnCount; countRow++)
-				{//nullspace is [countKernel][countRow][countColumn] //reorderedNullSpace is [countKernel][countColumn][countRow]
+				reorderedNullSpace[countKernel][countColumn] = (double *)calloc(dimensionalMatrixColumnCount, sizeof(double));
+				for (int countRow = 0; countRow < dimensionalMatrixColumnCount; countRow++)
+				{
+					/*
+					 *	NOTE: invariant->nullspace is stored as [kernel][row][column], whereas
+					 *	reorderedNullSpace and all that follow are [kernel][column][row]
+					 */
 					reorderedNullSpace[countKernel][countColumn][countRow] = nullSpace[countKernel][tmpPosition[countKernel][countRow]][countColumn];
 				}
 			}
-		}//this is correct.
-		//check for zero value to decide the smallest lexicographical component to be used as the base
+		}
+		
+		/*
+		 *	Check for zero value to decide the smallest lexicographical
+		 *	component to be used as the base for each specific column.
+		 */
 		bool		firstNonZeroFound = false;
 		double **	factor = (double **)calloc(*numberOfUniqueKernels,sizeof(double *));
-		//double		factor[numberOfUniqueKernelsInt][rowCount];
 		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
-			for (int countColumn = 0; countColumn < rowCount; countColumn++)
+			for (int countColumn = 0; countColumn < kernelColumnCount; countColumn++)
 			{
-				factor[countKernel] = (double *)calloc(rowCount,sizeof(double));
-				for (int countRow = 0; countRow < columnCount; countRow++)
+				factor[countKernel] = (double *)calloc(kernelColumnCount,sizeof(double));
+				for (int countRow = 0; countRow < dimensionalMatrixColumnCount; countRow++)
 				{
 					if (reorderedNullSpace[countKernel][countColumn][countRow] != 0 && !firstNonZeroFound)
 					{
@@ -683,18 +720,24 @@ extern "C"
 					}
 					if (firstNonZeroFound)
 					{
+						/*
+						 *	This makes sure that each element within a column is
+						 *	refactorized using the factor derived from the first
+						 *	none zero row element.
+						 */
 						reorderedNullSpace[countKernel][countColumn][countRow] =
 								reorderedNullSpace[countKernel][countColumn][countRow] * factor[countKernel][countColumn];
 					}
 				}
 				firstNonZeroFound = false;
 			}
-		}// this is now correct.
-		//free up memory
+		}
+
+		*canonicalLabels = canonicallyReorderedLabels;
+
 		free(factor);
 		free(tmpPosition);
-		//free(canonicallyReorderedLabels);
-		*canonicalLabels = canonicallyReorderedLabels;
+
 		return reorderedNullSpace;
 	}
 } /* extern "C" */

@@ -698,7 +698,7 @@ struct Invariant
 	char **			dimensionalMatrixColumnLabels;	//	Labels of dimensional matrix columns 
 	double ***		nullSpace;
 	double ***		reorderNullSpace;		//	Should be removed once #372 is completed
-	double ***		canonicallyReorderedNullSpace;
+	double ***		nullSpaceRowReordered;
 	char ***		canonicallyReorderedLabels;
 	int			kernelColumnCount;
 	int			numberOfUniqueKernels;
