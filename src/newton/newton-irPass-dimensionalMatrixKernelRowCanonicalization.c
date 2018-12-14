@@ -1,5 +1,5 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell, Vlad-Mihai Mandric
+	Authored 2018. Youchao Wang.
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -60,24 +60,20 @@
 #include "newton-types.h"
 #include "newton-eigenLibraryInterface.h"
 
-
 void
-irPassDimensionalMatrixPiGroups(State *  N)
+irPassDimensionalMatrixKernelRowCanonicalization(State *  N)
 {
 	Invariant *	invariant = N->invariantList;
 
 	while (invariant)
 	{
-		invariant->kernelColumnCount		= 0;
-		invariant->numberOfUniqueKernels	= 0;
-
-		invariant->nullSpace = newtonEigenLibraryInterfaceGetPiGroups(	invariant->dimensionalMatrix,
-										invariant->dimensionalMatrixRowCount,
-										invariant->dimensionalMatrixColumnCount,
-										&invariant->kernelColumnCount,
-										&invariant->numberOfUniqueKernels,
-										&invariant->permutedIndexArrayPointer );
-
+		invariant->nullSpaceRowReordered = newtonEigenLibraryInterfaceKernelRowCanonicalization(invariant->nullSpace,
+												invariant->dimensionalMatrixColumnLabels,
+												invariant->kernelColumnCount,
+												invariant->dimensionalMatrixColumnCount,
+												&invariant->numberOfUniqueKernels,
+												&invariant->canonicallyReorderedLabels,
+												invariant->permutedIndexArrayPointer);
 		invariant = invariant->next;
 	}
 }

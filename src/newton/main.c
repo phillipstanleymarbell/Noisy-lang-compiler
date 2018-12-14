@@ -327,7 +327,7 @@ usage(State *  N)
 						"                | (--bytecode <output file name>, -b <output file name>)\n"
 						"                | (--optimize <level>, -O <level>)                   \n"
 						"                | (--pigroups, -p)                                   \n"
-						"                | (--gcc <path to output file>, -g <path to output file>)\n"
+						"                | (--codegen <path to output file>, -g <path to output file>)\n"
 						"                | (--trace, -t)                                      \n"
 						"                | (--statistics, -s) ]                               \n"
 						"                                                                     \n"

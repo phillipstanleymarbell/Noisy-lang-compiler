@@ -41,7 +41,13 @@ extern "C"
 #	endif /* __cplusplus */
 
 double ***	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels, int **  permutedIndexArrayPointer);
-
+double ***	newtonEigenLibraryInterfaceKernelRowCanonicalization(double ***  nullSpace,
+								char **  dimensionalMatrixColumnLabels,
+								int kernelColumnCount,
+								int dimensionalMatrixColumnCount,
+								int *  numberOfUniqueKernels,
+								char ****  canonicallyReorderedLabels,
+								int *  permutedIndexArrayPointer);
 #	ifdef __cplusplus
 } /* extern "C" */
 #	endif /* __cplusplus */

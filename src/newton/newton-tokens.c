@@ -90,7 +90,7 @@ const char *	gNewtonTokenDescriptions[kCommonIrNodeTypeMax] = {
 									[kNewtonIrNodeType_TrightParen]		= ")",
 									[kNewtonIrNodeType_Tsemicolon]		= ";",
 									[kNewtonIrNodeType_Tsignal]		= "signal",
-									[kNewtonIrNodeType_Tproportional]	= "@<",
+									[kNewtonIrNodeType_Tproportional]	= "o<",
 									[kNewtonIrNodeType_Tsymbol]		= "symbol",
 									[kNewtonIrNodeType_Tto]			= "to",
 									/*
