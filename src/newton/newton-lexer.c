@@ -239,7 +239,7 @@ newtonLex(State *  N, char *  fileName)
 					 *	These tokens require special handling beyond being paired with an equals,
 					 *	being part of a number, or doubled-up (e.g., ">>", etc.).
 					 */
-					case '@':
+					case 'o':
 					{
 						checkProportionality(N);
 						continue;
