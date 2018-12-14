@@ -29,8 +29,8 @@
 
 --//		numericConst			::=	integerConst | realConst .
 production kNewtonIrNodeType_PnumericConst:		firstset = {
-									firstset(kNewtonIrNodeType_PintegerConst),
-									firstset(kNewtonIrNodeType_PrealConst),
+									firstset(kNewtonIrNodeType_TintegerConst),
+									firstset(kNewtonIrNodeType_TrealConst),
 								}
 
 --//		newtonDescription		::=	ruleList .
@@ -335,11 +335,11 @@ production kNewtonIrNodeType_PparameterValueList:	firstset = {
 									kNewtonIrNodeType_TleftParen,
 								}
 
---//		distribution			::=	"Gaussian" | "exponential" | "biexponential" .
+--//		distribution			::=	"Gaussian" | "Laplacian" | "Student" .
 production kNewtonIrNodeType_Pdistribution:		firstset = {
 									kNewtonIrNodeType_TGaussian,
-									kNewtonIrNodeType_Texponential,
-									kNewtonIrNodeType_Tbiexponential,
+									kNewtonIrNodeType_TLaplacian,
+									kNewtonIrNodeType_TStudent,
 								}
 
 --//		highPrecedenceBinaryOp		::=	"*" | "/" | "%" | "**" .
@@ -392,7 +392,7 @@ production kNewtonIrNodeType_PnumericConst:		followset = {
 									kNewtonIrNodeType_Tmul,
 									kNewtonIrNodeType_TrightBracket,
 									followset(kNewtonIrNodeType_PreadRegisterCommand),
-									followset(kNewtonIrNodeType_factor),
+									followset(kNewtonIrNodeType_Pfactor),
 								}
 
 --//		newtonDescription		::=	ruleList .
@@ -472,7 +472,7 @@ production kNewtonIrNodeType_PconstraintList:		followset = {
 --//		constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
 production kNewtonIrNodeType_Pconstraint:		followset = {
 									kNewtonIrNodeType_Tcomma,
-									followset(kNewtonIrNodeType_PconsraintList),
+									followset(kNewtonIrNodeType_PconstraintList),
 								}
 
 --//		quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
@@ -480,7 +480,6 @@ production kNewtonIrNodeType_PquantityExpression:	followset = {
 									kNewtonIrNodeType_Tsemicolon,
 									firstset(kNewtonIrNodeType_PcomparisonOperator),
 									followset(kNewtonIrNodeType_Pconstraint),
-									followset(kNewtonIrNodeType_PquantityFactor),
 									kNewtonIrNodeType_TrightParen,
 								}
 
@@ -491,8 +490,8 @@ production kNewtonIrNodeType_PquantityTerm:		followset = {
 								}
 
 --//		quantityFactor			::=	quantity								|
---//							quantity [highPrecedenceOperator quantityExpression]			|
---//								timeOperator {timeOperator} quantityExpression			|
+--//							quantity [highPrecedenceOperator quantityFactor]			|
+--//								timeOperator {timeOperator} quantityFactor			|
 --//								"(" quantityExpression ")" .
 production kNewtonIrNodeType_PquantityFactor:		followset = {
 									firstset(kNewtonIrNodeType_PmidPrecedenceOperator),
@@ -700,7 +699,7 @@ production kNewtonIrNodeType_PparameterValueList:	followset = {
 									followset(kNewtonIrNodeType_PdistributionFactor)
 								}
 
---//		distribution			::=	"Gaussian" | "exponential" | "biexponential" .
+--//		distribution			::=	"Gaussian" | "Laplacian" | "Student" .
 production kNewtonIrNodeType_Pdistribution:		followset = {
 									firstset(kNewtonIrNodeType_PparameterValueList)
 								}
@@ -731,8 +730,6 @@ token	kNewtonIrNodeType_Tanalog:			followset = {
 									}
 token	kNewtonIrNodeType_TatSign:			followset = {
 									}
-token	kNewtonIrNodeType_Tbiexponential:		followset = {
-									}
 token	kNewtonIrNodeType_Tcolon:			followset = {
 									}
 token	kNewtonIrNodeType_Tcomma:			followset = {
@@ -761,9 +758,7 @@ token	kNewtonIrNodeType_Terasuretoken:		followset = {
 									}
 token	kNewtonIrNodeType_Texponent:			followset = {
 									}
-token	kNewtonIrNodeType_Texponential:			followset = {
-									}
-token	kNewtonIrNodeType_Tgaussian:			followset = {
+token	kNewtonIrNodeType_TGaussian:			followset = {
 									}
 token	kNewtonIrNodeType_Tge:				followset = {
 									}
@@ -786,6 +781,8 @@ token	kNewtonIrNodeType_TleftParen:			followset = {
 token	kNewtonIrNodeType_TleftShift:			followset = {
 									}
 token	kNewtonIrNodeType_Tlt:				followset = {
+									}
+token	kNewtonIrNodeType_TLaplacian:			followset = {
 									}
 token	kNewtonIrNodeType_Tminus:			followset = {
 									}
@@ -826,6 +823,8 @@ token	kNewtonIrNodeType_Tsignal:			followset = {
 token	kNewtonIrNodeType_Tspi:				followset = {
 									}
 token	kNewtonIrNodeType_Tsymbol:			followset = {
+									}
+token	kNewtonIrNodeType_TStudent:			followset = {
 									}
 token	kNewtonIrNodeType_Tto:				followset = {
 									}
