@@ -1,5 +1,5 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell, Vlad-Mihai Mandric
+	Authored 2018. Youchao Wang
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,7 @@ irPassDimensionalMatrixPiGroupsWeedOutDuplicates(State *  N)
 
 	while (invariant)
 	{
-		invariant->nullSpaceWithoutDuplicates = newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(invariant->sortedCanonicallyReorderedNullSpace,
+		invariant->nullSpaceWithoutDuplicates = newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(invariant->nullSpaceCanonicallyReordered,
 								invariant->kernelColumnCount,
 								invariant->dimensionalMatrixColumnCount,
 								&invariant->numberOfUniqueKernels);

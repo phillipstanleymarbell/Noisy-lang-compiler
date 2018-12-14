@@ -76,7 +76,7 @@ irPassDimensionalMatrixPiGroups(State *  N)
 										invariant->dimensionalMatrixColumnCount,
 										&invariant->kernelColumnCount,
 										&invariant->numberOfUniqueKernels,
-										&invariant->permutedIndexArrayPointer ); 
+										&invariant->permutedIndexArrayPointer );
 
 		invariant = invariant->next;
 	}

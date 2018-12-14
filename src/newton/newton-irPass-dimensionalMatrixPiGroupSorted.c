@@ -68,9 +68,9 @@ irPassDimensionalMatrixPiGroupSorted(State *  N)
 
 	while (invariant)
 	{
-		invariant->sortedCanonicallyReorderedNullSpace =
-					newtonEigenLibraryInterfaceSortedCanonicallyReorderedPiGroups(invariant->canonicallyReorderedNullSpace,
-												invariant->dimensionalMatrixColumnLabels,
+		invariant->nullSpaceCanonicallyReordered =
+					newtonEigenLibraryInterfaceSortedCanonicallyReorderedPiGroups(invariant->nullSpaceRowReordered,
+												invariant->canonicallyReorderedLabels,
 												invariant->kernelColumnCount,
 												invariant->dimensionalMatrixColumnCount,
 												&invariant->numberOfUniqueKernels,

@@ -41,22 +41,22 @@ extern "C"
 #	endif /* __cplusplus */
 
 double ***	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels, int **  permutedIndexArrayPointer);
-double ***	newtonEigenLibraryInterfaceCanonicallyReorderedPiGroups(double ***  nullSpace,
+double ***	newtonEigenLibraryInterfaceKernelRowCanonicalization(double ***  nullSpace,
 								char **  dimensionalMatrixColumnLabels,
-								int rowCount, int columnCount,
-								int *  kernelColumnCount,
+								int kernelColumnCount,
+								int dimensionalMatrixColumnCount,
 								int *  numberOfUniqueKernels,
-								char ***  canonicallyReorderedLabels,//pointer to the three dimension array, since we need to return the values
+								char ****  canonicallyReorderedLabels,
 								int *  permutedIndexArrayPointer);
-double ***	newtonEigenLibraryInterfaceSortedCanonicallyReorderedPiGroups(double ***  canonicallyReorderedNullSpace,
-								char **  dimensionalMatrixColumnLabels,
-								int dimensionalMatrixRowCount, int columnCount,
-								int *  kernelColumnCount,
+double ***	newtonEigenLibraryInterfaceSortedCanonicallyReorderedPiGroups(double ***  nullSpaceRowReordered,
+								char ***  canonicallyReorderedLabels,
+								int kernelColumnCount,
+								int dimensionalMatrixColumnCount,
 								int *  numberOfUniqueKernels,
 								int **  permutedIndexArrayPointer);
 double ***	newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(double ***  sortedCanonicallyReorderedNullSpace,
-								int rowCount, int columnCount,
-								int *  kernelColumnCount,
+								int kernelColumnCount, 
+								int dimensionalMatrixColumnCount,
 								int *  numberOfUniqueKernels);
 
 #	ifdef __cplusplus
