@@ -665,13 +665,13 @@ extern "C"
 						tmpPosition[countKernel][i] = tmpPosition[countKernel][j];
 						tmpPosition[countKernel][j] = temp;
 
-						char *  tempString = (char *)calloc(strlen(canonicallyReorderedLabels[countKernel][i]), sizeof(char));
+						char *  tempString;
+						/*
+						 *	NOTE: We are passing the string pointer, not copying the string.
+						 */
 						tempString = canonicallyReorderedLabels[countKernel][i];
 						canonicallyReorderedLabels[countKernel][i] = canonicallyReorderedLabels[countKernel][j];
 						canonicallyReorderedLabels[countKernel][j] = tempString;
-						/*
-						 *	NOTE: Do not attempt to do free(tempString) here, it will lead to error.
-						 */
 					}
 				}
 			}
