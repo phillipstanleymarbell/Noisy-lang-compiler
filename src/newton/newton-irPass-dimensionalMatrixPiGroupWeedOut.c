@@ -1,6 +1,5 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell
-
+	Authored 2018. Youchao Wang
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
@@ -35,30 +34,45 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifdef __cplusplus
-extern "C"
+#include <errno.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <setjmp.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <time.h>
+#include <string.h>
+#include <stdint.h>
+#include <inttypes.h>
+#include "flextypes.h"
+#include "flexerror.h"
+#include "flex.h"
+#include "common-errors.h"
+#include "version.h"
+#include "newton-timeStamps.h"
+#include "common-timeStamps.h"
+#include "common-data-structures.h"
+#include "noisy-parser.h"
+#include "noisy-lexer.h"
+#include "common-irPass-helpers.h"
+#include "newton-types.h"
+#include "newton-eigenLibraryInterface.h"
+
+
+void
+irPassDimensionalMatrixPiGroupsWeedOutDuplicates(State *  N)
 {
-#	endif /* __cplusplus */
+	Invariant *	invariant = N->invariantList;
 
-double ***	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels, int **  permutedIndexArrayPointer);
-double ***	newtonEigenLibraryInterfaceKernelRowCanonicalization(double ***  nullSpace,
-								char **  dimensionalMatrixColumnLabels,
-								int kernelColumnCount,
-								int dimensionalMatrixColumnCount,
-								int *  numberOfUniqueKernels,
-								char ****  canonicallyReorderedLabels,
-								int *  permutedIndexArrayPointer);
-double ***	newtonEigenLibraryInterfaceSortedCanonicallyReorderedPiGroups(double ***  nullSpaceRowReordered,
-								char ***  canonicallyReorderedLabels,
-								int kernelColumnCount,
-								int dimensionalMatrixColumnCount,
-								int *  numberOfUniqueKernels,
-								int **  permutedIndexArrayPointer);
-double ***	newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(double ***  sortedCanonicallyReorderedNullSpace,
-								int kernelColumnCount, 
-								int dimensionalMatrixColumnCount,
-								int *  numberOfUniqueKernels);
+	while (invariant)
+	{
+		invariant->nullSpaceWithoutDuplicates = newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(invariant->nullSpaceCanonicallyReordered,
+								invariant->kernelColumnCount,
+								invariant->dimensionalMatrixColumnCount,
+								&invariant->numberOfUniqueKernels);
 
-#	ifdef __cplusplus
-} /* extern "C" */
-#	endif /* __cplusplus */
+		invariant = invariant->next;
+	}
+}

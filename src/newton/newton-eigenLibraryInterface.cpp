@@ -863,4 +863,107 @@ extern "C"
 		free(whichRow);
 		return reorderedNullSpace;
 	}
+
+	double ***
+	newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(double ***  nullSpaceCanonicallyReordered,
+								int kernelColumnCount,
+								int dimensionalMatrixColumnCount,
+								int *  numberOfUniqueKernels)
+	{
+		/*
+		 *	We create the matrices in Eigen by mapping the elements
+		 *	from nullSpaceCanonicallyReordered.
+		 */
+		ColMajorOrderMatrixXd	*eigenInterfaceReorderKernels = new	ColMajorOrderMatrixXd[*numberOfUniqueKernels];
+
+		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		{
+			ColMajorOrderMatrixXd	temp(dimensionalMatrixColumnCount, kernelColumnCount);
+			for (int countColumn = 0; countColumn < kernelColumnCount; countColumn++)
+			{
+				for (int countRow = 0; countRow < dimensionalMatrixColumnCount; countRow++)
+				{
+					temp(countRow, countColumn) = nullSpaceCanonicallyReordered[countKernel][countColumn][countRow];
+				}
+			}
+			eigenInterfaceReorderKernels[countKernel] = temp;
+		}
+
+		int	kernelToBeDeprecatedCount = 0;
+		int	totalNumberOfKernelsCount = *numberOfUniqueKernels;
+		int *	kernelToBeDeprecated = (int *)calloc(totalNumberOfKernelsCount, sizeof(int));
+		bool	isSearchedPreviously = false;
+
+		for (int i = 0; i < (totalNumberOfKernelsCount - 1); i++)
+		{
+			if(i > 0 && kernelToBeDeprecatedCount > 0)
+			{
+				for (int m = 0; m < kernelToBeDeprecatedCount - 1; m++)
+				{
+					if (i == kernelToBeDeprecated[m])
+					{
+						/*
+						 *	Check if the current kernel index is the same as the kernel
+						 *	index stored in kernelToBeDeprecated.
+						 *	If the indeces match, skip this kernel and go to the next one.
+						 */
+						isSearchedPreviously = true;
+						break;
+					}
+				}
+			}
+
+			for (int j = i + 1; j < totalNumberOfKernelsCount; j++)
+			{
+				/*
+				 *	We subtract the two kernels, element-wise, to see
+				 *	if the result is a zero matrix.
+				 */
+				if ( (eigenInterfaceReorderKernels[i] - eigenInterfaceReorderKernels[j]).isZero() && !isSearchedPreviously)
+				{
+					*numberOfUniqueKernels -= 1;
+					kernelToBeDeprecated[kernelToBeDeprecatedCount++] = j;
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+
+		/*
+		 *	Reform the nullspace
+		 */
+		double ***	reorderedNullSpace = (double ***)calloc(*numberOfUniqueKernels, sizeof(double **));
+		int 		reorderedKernelCount = 0;
+		kernelToBeDeprecatedCount = 0;
+
+		for (int countKernel = 0; countKernel < totalNumberOfKernelsCount; countKernel++)
+		{
+			if(countKernel == kernelToBeDeprecated[kernelToBeDeprecatedCount])
+			{
+				kernelToBeDeprecatedCount++;
+			}
+			else
+			{
+				/*
+				 *	Increase this count only when there is no duplicate
+				 */
+				reorderedNullSpace[reorderedKernelCount] = (double **)calloc(kernelColumnCount, sizeof(double *));
+				for (int countColumn = 0; countColumn < kernelColumnCount; countColumn++)
+				{
+					reorderedNullSpace[reorderedKernelCount][countColumn] = (double *)calloc(dimensionalMatrixColumnCount, sizeof(double));
+					for (int countRow = 0; countRow < dimensionalMatrixColumnCount; countRow++)
+					{
+						reorderedNullSpace[reorderedKernelCount][countColumn][countRow] = eigenInterfaceReorderKernels[countKernel](countRow,countColumn);
+					}
+				}
+				reorderedKernelCount++;
+			}
+		}
+		
+		free(kernelToBeDeprecated);
+
+		return reorderedNullSpace;
+	}
 } /* extern "C" */

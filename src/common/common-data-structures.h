@@ -697,6 +697,7 @@ struct Invariant
 	char **			dimensionalMatrixRowLabels;	//	Labels of dimensional matrix rows		
 	char **			dimensionalMatrixColumnLabels;	//	Labels of dimensional matrix columns 
 	double ***		nullSpace;
+	double ***		nullSpaceWithoutDuplicates;
 	double ***		reorderNullSpace;		//	Should be removed once #372 is completed
 	double ***		nullSpaceRowReordered;
 	double ***		nullSpaceCanonicallyReordered;
