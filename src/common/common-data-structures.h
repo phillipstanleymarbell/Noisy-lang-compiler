@@ -699,6 +699,7 @@ struct Invariant
 	double ***		nullSpace;
 	double ***		reorderNullSpace;		//	Should be removed once #372 is completed
 	double ***		nullSpaceRowReordered;
+	double ***		nullSpaceCanonicallyReordered;
 	char ***		canonicallyReorderedLabels;
 	int			kernelColumnCount;
 	int			numberOfUniqueKernels;

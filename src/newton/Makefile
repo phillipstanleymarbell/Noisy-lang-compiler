@@ -60,6 +60,7 @@ SOURCES		=\
 		newton-irPass-dimensionalMatrixPrinter.c\
 		newton-irPass-dimensionalMatrixKernelPrinter.c\
 		newton-irPass-dimensionalMatrixConvertToList.c\
+		newton-irPass-dimensionalMatrixPiGroupSorted.c\
 		newton-irPass-dimensionalMatrixKernelRowCanonicalization.c\
 		newton-typeSignatures.c\
 		newton-check-pass.c  \
@@ -99,6 +100,7 @@ OBJS		=\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixKernelPrinter.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixConvertToList.$(OBJECTEXTENSION)\
+		newton-irPass-dimensionalMatrixPiGroupSorted.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixKernelRowCanonicalization.$(OBJECTEXTENSION)\
 		newton-check-pass.$(OBJECTEXTENSION)  \
 		newton-symbolTable.$(OBJECTEXTENSION)\
@@ -128,6 +130,7 @@ CGIOBJS		=\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixKernelPrinter.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixConvertToList.$(OBJECTEXTENSION)\
+		newton-irPass-dimensionalMatrixPiGroupSorted.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixKernelRowCanonicalization.$(OBJECTEXTENSION)\
 		newton-check-pass.$(OBJECTEXTENSION)\
 		newton-symbolTable.$(OBJECTEXTENSION)\
@@ -156,6 +159,7 @@ LIBNEWTONOBJS =\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixKernelPrinter.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixConvertToList.$(OBJECTEXTENSION)\
+		newton-irPass-dimensionalMatrixPiGroupSorted.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixKernelRowCanonicalization.$(OBJECTEXTENSION)\
 		newton-check-pass.$(OBJECTEXTENSION)\
 		newton-symbolTable.$(OBJECTEXTENSION)\
@@ -179,6 +183,7 @@ HEADERS		=\
 		newton-irPass-dimensionalMatrixPrinter.h\
 		newton-irPass-dimensionalMatrixKernelPrinter.h\
 		newton-irPass-dimensionalMatrixConvertToList.h\
+		newton-irPass-dimensionalMatrixPiGroupSorted.h\
 		newton-irPass-dimensionalMatrixKernelRowCanonicalization.h\
 		newton.h\
 		newton-check-pass.h\

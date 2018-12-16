@@ -1,5 +1,5 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell
+	Authored 2018. Youchao Wang.
 
 	All rights reserved.
 
@@ -35,25 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifdef __cplusplus
-extern "C"
-{
-#	endif /* __cplusplus */
+void	irPassDimensionalMatrixPiGroupSorted(State *  N);
 
-double ***	newtonEigenLibraryInterfaceGetPiGroups(double *  dimensionalMatrix, int rowCount, int columnCount, int *  kernelColumnCount, int *  numberOfUniqueKernels, int **  permutedIndexArrayPointer);
-double ***	newtonEigenLibraryInterfaceKernelRowCanonicalization(double ***  nullSpace,
-								char **  dimensionalMatrixColumnLabels,
-								int kernelColumnCount,
-								int dimensionalMatrixColumnCount,
-								int *  numberOfUniqueKernels,
-								char ****  canonicallyReorderedLabels,
-								int *  permutedIndexArrayPointer);
-double ***	newtonEigenLibraryInterfaceSortedCanonicallyReorderedPiGroups(double ***  nullSpaceRowReordered,
-								char ***  canonicallyReorderedLabels,
-								int kernelColumnCount,
-								int dimensionalMatrixColumnCount,
-								int *  numberOfUniqueKernels,
-								int **  permutedIndexArrayPointer);
-#	ifdef __cplusplus
-} /* extern "C" */
-#	endif /* __cplusplus */

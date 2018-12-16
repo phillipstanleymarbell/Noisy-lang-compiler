@@ -73,6 +73,7 @@
 #include "newton-irPass-dimensionalMatrixPrinter.h"
 #include "newton-irPass-dimensionalMatrixKernelPrinter.h"
 #include "newton-irPass-dimensionalMatrixConvertToList.h"
+#include "newton-irPass-dimensionalMatrixPiGroupSorted.h"
 #include "newton-irPass-dimensionalMatrixKernelRowCanonicalization.h"
 #include "newton-dimension-pass.h"
 
@@ -134,6 +135,7 @@ processNewtonFile(State *  N, char *  filename)
 		irPassDimensionalMatrixPiGroups(N);
 		irPassDimensionalMatrixKernelPrinter(N);
 		irPassDimensionalMatrixKernelRowCanonicalization(N);
+		irPassDimensionalMatrixPiGroupSorted(N);
 		//irPassDimensionalMatrixConvertToList(N);
 	}
 

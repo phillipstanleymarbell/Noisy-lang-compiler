@@ -740,4 +740,127 @@ extern "C"
 
 		return reorderedNullSpace;
 	}
+
+	double ***
+	newtonEigenLibraryInterfaceSortedCanonicallyReorderedPiGroups(double ***  nullSpaceRowReordered,
+								char ***  canonicallyReorderedLabels,
+								int kernelColumnCount, int dimensionalMatrixColumnCount,
+								int *  numberOfUniqueKernels,
+								int *  permutedIndexArrayPointer)
+	{
+		/*
+		 *	We create the matrices in Eigen by mapping the elements
+		 *	from nullSpaceRowReordered.
+		 */
+		ColMajorOrderMatrixXd	*eigenInterfaceReorderKernels = new	ColMajorOrderMatrixXd[*numberOfUniqueKernels];
+
+		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		{
+			ColMajorOrderMatrixXd	temp(dimensionalMatrixColumnCount, kernelColumnCount);
+			for (int countColumn = 0; countColumn < kernelColumnCount; countColumn++)
+			{
+				for (int countRow = 0; countRow < dimensionalMatrixColumnCount; countRow++)
+				{
+					temp(countRow, countColumn) = nullSpaceRowReordered[countKernel][countColumn][countRow];
+				}
+			}
+
+			eigenInterfaceReorderKernels[countKernel] = temp;
+		}
+
+		/*
+		 *	Compare all the columns and sort the columns (representing pi's)
+		 *	in the following lexicographic order:
+		 *	Read out pi_i, form the nonzero labels as a combined string
+		 *	and then compare the string lexicographically.
+		 */
+
+		char ***	string = (char ***)calloc(*numberOfUniqueKernels, sizeof (char **));
+		int *	whichRow = (int *)calloc(dimensionalMatrixColumnCount, sizeof(int));
+		int	stringLength;
+
+		int	nonZeroRowCount = 0;
+
+		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		{
+			string[countKernel] = (char **)calloc(kernelColumnCount, sizeof (char *));
+			for (int countColumn = 0; countColumn < kernelColumnCount; countColumn++)
+			{
+				stringLength = 0;
+				nonZeroRowCount = 0;
+				for (int countRow = 0; countRow < dimensionalMatrixColumnCount; countRow++)
+				{
+					if (eigenInterfaceReorderKernels[countKernel](countRow, countColumn) != 0)
+					{
+						/*
+						 *	Assign the row index and the length of the combined string.
+						 */
+						whichRow[nonZeroRowCount++] = countRow;
+						stringLength += (strlen(canonicallyReorderedLabels[countKernel][countRow]) + 1);
+					}
+				}
+
+				if (stringLength != 0)
+				{
+					string[countKernel][countColumn] = (char *)calloc(stringLength, sizeof(char));
+					/*
+					 *	Copy the first non-zero parameter label to 'string'.
+					 */
+					strcpy(string[countKernel][countColumn], canonicallyReorderedLabels[countKernel][whichRow[0]]);
+					for (int i = 1; i < nonZeroRowCount; i++)
+					{
+						/*
+						 *	Attach (concatenate) the following labels.
+						 */
+						strcat(string[countKernel][countColumn], canonicallyReorderedLabels[countKernel][whichRow[i]]);
+					}
+				}
+			}
+
+			/*
+			 *	Now we loop through all the columns and compare the strings
+			 *	then reorder them in lexicographic order.
+			 */
+			for (int i = 0; i < (kernelColumnCount - 1); i++)
+			{
+				for (int j = i + 1; j < kernelColumnCount; j++)
+				{
+					if (string[countKernel][i] == NULL || string[countKernel][j] == NULL)
+					{
+						continue;
+					}
+					if (strcmp(string[countKernel][i],string[countKernel][j]) > 0)
+					{
+						eigenInterfaceReorderKernels[countKernel].col(i).swap(eigenInterfaceReorderKernels[countKernel].col(j));
+
+						char *  tempString;
+						tempString = string[countKernel][i];
+						string[countKernel][i] = string[countKernel][j];
+						string[countKernel][j] = tempString;
+					}
+				}
+			}
+		}
+
+		/*
+		 *	Reform the canonically ordered nullspace
+		 */
+		double ***	reorderedNullSpace = (double ***)calloc(*numberOfUniqueKernels, sizeof(double **));
+		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		{
+			reorderedNullSpace[countKernel] = (double **)calloc(kernelColumnCount, sizeof(double *));
+			for (int countColumn = 0; countColumn < kernelColumnCount; countColumn++)
+			{
+				reorderedNullSpace[countKernel][countColumn] = (double *)calloc(dimensionalMatrixColumnCount, sizeof(double));
+				for (int countRow = 0; countRow < dimensionalMatrixColumnCount; countRow++)
+				{
+					reorderedNullSpace[countKernel][countColumn][countRow] = eigenInterfaceReorderKernels[countKernel](countRow, countColumn);
+				}
+			}
+		}
+
+		free(string);
+		free(whichRow);
+		return reorderedNullSpace;
+	}
 } /* extern "C" */
