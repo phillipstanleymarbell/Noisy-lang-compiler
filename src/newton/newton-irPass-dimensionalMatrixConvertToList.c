@@ -392,8 +392,8 @@ irPassDimensionalMatrixConvertToList(State *  N)
 		{
 			/*
 			 *	Note that a new null space reordered lexicographically and which rules
-			 *	out all the duplicate pi groups should be available once the irPass in
-			 *	#372 is complete. We currently do not have it ready.
+			 *	out all the duplicate pi groups is available as nullSpaceCanonicallyReordered.
+			 *	See issues #372, #383 and #384 for more.
 			 *
 			 *	Within each kernel, we find the invariant(s) which occurs only once,
 			 *	and set this as the dependent variable(s). When we find more than one
