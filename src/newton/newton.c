@@ -138,7 +138,7 @@ processNewtonFile(State *  N, char *  filename)
 		irPassDimensionalMatrixKernelRowCanonicalization(N);
 		irPassDimensionalMatrixPiGroupSorted(N);
 		irPassDimensionalMatrixPiGroupsWeedOutDuplicates(N);
-		//irPassDimensionalMatrixConvertToList(N);
+		irPassDimensionalMatrixConvertToList(N);
 	}
 
 	/*

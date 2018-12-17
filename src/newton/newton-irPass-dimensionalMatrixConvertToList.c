@@ -158,7 +158,7 @@ irPassGenLoopsInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *
 				NULL,
 				NULL,
 				genSrcInfo);
-	newNodeExponentConst->value = 0 - N->invariantList->reorderNullSpace[kernel]
+	newNodeExponentConst->value = 0 - N->invariantList->nullSpaceCanonicallyReordered[kernel]
 									[colIndependent[kernel][whichParameter][whichIndependentParameter]]
 									[rowIndependent[kernel][whichParameter][whichIndependentParameter]];
 	Token *		tokenExponentConst = (Token *) calloc(1, sizeof(Token));
@@ -270,13 +270,13 @@ irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int co
 				genSrcInfo);
 	if(isLeft == true)
 	{
-		newNodeExponentConst->value = N->invariantList->reorderNullSpace[kernel]
+		newNodeExponentConst->value = N->invariantList->nullSpaceCanonicallyReordered[kernel]
 										[col[kernel][whichParameter]]
 										[row[kernel][whichParameter]];
 	}
 	else
 	{
-		newNodeExponentConst->value = 0 - N->invariantList->reorderNullSpace[kernel]
+		newNodeExponentConst->value = 0 - N->invariantList->nullSpaceCanonicallyReordered[kernel]
 										[colIndependent[kernel][whichParameter][0]]
 										[rowIndependent[kernel][whichParameter][0]];
 	}
@@ -366,49 +366,17 @@ irPassDimensionalMatrixConvertToList(State *  N)
 	{
 		/*
 		 *	Proportionality is expressed as "o<" (currently as "@<", see #374)
-		 *	When newton-irPass-dimensionalMatrixPiGroupCanonicalization is complete
-		 *	(see #372) we should be able to use the canonicalized kernels instead.
+		 *	History: Before #372, #383 and #384 were completed, we used to reorder
+		 *	the null space using permutedIndexArrayPointer.
+		 *	We are now using the nullSpaceCanonicallyReordered instead.
 		 *
 		 *	The current method applied only checks pi groups within each kernel,
 		 *	as we form the relationship in the traditional way. Each kernel corresponds
 		 *	to one function which describes the relationship between different pi's.
 		 *	Alternatively, we form the unoion of pi groups based on Jonsson's (2014)
 		 *	basis and circuit basis.
-		 */
-
-		int ***		tmpPosition = (int ***)calloc(invariant->numberOfUniqueKernels, sizeof(int **));
-		invariant->reorderNullSpace = (double ***)calloc(invariant->numberOfUniqueKernels, sizeof(double **));
-
-		for (int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
-		{	
-			tmpPosition[countKernel] = (int **)calloc(invariant->kernelColumnCount, sizeof(int *));
-			invariant->reorderNullSpace[countKernel] = (double **)calloc(invariant->kernelColumnCount, sizeof(double *));
-			/*
-			 *	Construct the new re-ordered null space
-			 *	using the permutedIndexArrayPointer
-			 */
-			for (int countColumn = 0; countColumn < invariant->kernelColumnCount; countColumn++)
-			{
-				tmpPosition[countKernel][countColumn] = (int *)calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
-				invariant->reorderNullSpace[countKernel][countColumn] = (double *)calloc(invariant->dimensionalMatrixColumnCount, sizeof(double));
-				
-				for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
-				{
-					tmpPosition[countKernel][countColumn]
-						[invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + countRow]] = countRow;
-				}
-
-				for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
-				{
-					invariant->reorderNullSpace[countKernel][countColumn][countRow] = invariant->nullSpace[countKernel]
-													[tmpPosition[countKernel][countColumn][countRow]][countColumn];
-				}
-			}
-		}
-		/*
-		 *	End of the reordered kernel construction
 		 *
-		 *	Begin to set up the constraints
+		 *	Now begin to set up the constraints.
 		 */
 		int **		locateDependentInvariantColumn;
 		int **		locateDependentInvariantRow;
@@ -424,8 +392,8 @@ irPassDimensionalMatrixConvertToList(State *  N)
 		{
 			/*
 			 *	Note that a new null space reordered lexicographically and which rules
-			 *	out all the duplicate pi groups should be available once the irPass in
-			 *	#372 is complete. We currently do not have it ready.
+			 *	out all the duplicate pi groups is available as nullSpaceCanonicallyReordered.
+			 *	See issues #372, #383 and #384 for more.
 			 *
 			 *	Within each kernel, we find the invariant(s) which occurs only once,
 			 *	and set this as the dependent variable(s). When we find more than one
@@ -460,7 +428,7 @@ irPassDimensionalMatrixConvertToList(State *  N)
 			{
 				for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 				{
-					if (fabs(invariant->reorderNullSpace[countKernel][0][countRow]) != 0)
+					if (fabs(invariant->nullSpaceCanonicallyReordered[countKernel][0][countRow]) != 0)
 					{
 						locateDependentInvariantRow[countKernel][countDependentInvariant] = countRow;
 						locateDependentInvariantColumn[countKernel][countDependentInvariant] = 0;
@@ -477,7 +445,7 @@ irPassDimensionalMatrixConvertToList(State *  N)
 
 					for (int countRow = 0, countIndependentInvariant = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 					{
-						if (fabs(invariant->reorderNullSpace[countKernel][0][countRow]) != 0
+						if (fabs(invariant->nullSpaceCanonicallyReordered[countKernel][0][countRow]) != 0
 							&& locateDependentInvariantRow[countKernel][i] != countRow)
 						{
 							locateIndependentInvariantRow[countKernel][i][countIndependentInvariant] = countRow;
@@ -516,7 +484,7 @@ irPassDimensionalMatrixConvertToList(State *  N)
 				{
 					for (int countColumn = 0; countColumn < invariant->kernelColumnCount; countColumn++)
 					{
-						if (fabs(invariant->reorderNullSpace[countKernel][countColumn][countRow]) == 0)
+						if (fabs(invariant->nullSpaceCanonicallyReordered[countKernel][countColumn][countRow]) == 0)
 						{
 							zerosCount += 1;
 						}
@@ -553,7 +521,7 @@ irPassDimensionalMatrixConvertToList(State *  N)
 
 						for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 						{
-							if (fabs(invariant->reorderNullSpace[countKernel][countColumn][countRow]) != 0
+							if (fabs(invariant->nullSpaceCanonicallyReordered[countKernel][countColumn][countRow]) != 0
 								&& locateDependentInvariantRow[countKernel][i] != countRow)
 							{
 								locateIndependentInvariantRow[countKernel][i][countIndependentInvariant] = countRow;
@@ -570,7 +538,7 @@ irPassDimensionalMatrixConvertToList(State *  N)
 				{
 					for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 					{
-						if (fabs(invariant->reorderNullSpace[countKernel][countColumn][countRow]) != 0)
+						if (fabs(invariant->nullSpaceCanonicallyReordered[countKernel][countColumn][countRow]) != 0)
 						{
 							countAddRightExpression += 1;
 						}
@@ -609,7 +577,6 @@ irPassDimensionalMatrixConvertToList(State *  N)
 		
 		invariant = invariant->next;
 
-		free(tmpPosition);
 		free(locateDependentInvariantColumn);
 		free(locateDependentInvariantRow);
 		free(locateIndependentInvariantColumn);
