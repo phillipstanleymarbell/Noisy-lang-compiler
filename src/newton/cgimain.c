@@ -76,6 +76,10 @@
 #include "newton-irPass-dimensionalMatrixAnnotation.h"
 #include "newton-irPass-dimensionalMatrixPiGroups.h"
 #include "newton-irPass-dimensionalMatrixPrinter.h"
+#include "newton-irPass-dimensionalMatrixConvertToList.h"
+#include "newton-irPass-dimensionalMatrixPiGroupWeedOut.h"
+#include "newton-irPass-dimensionalMatrixPiGroupSorted.h"
+#include "newton-irPass-dimensionalMatrixKernelRowCanonicalization.h"
 #include "newton-irPass-dimensionalMatrixKernelPrinter.h"
 #include "newton-dimension-pass.h"
 
@@ -708,6 +712,10 @@ main(void)
 		{
 			irPassDimensionalMatrixAnnotation(newtonCgiState);
 			irPassDimensionalMatrixPiGroups(newtonCgiState);
+			irPassDimensionalMatrixKernelRowCanonicalization(newtonCgiState);
+			irPassDimensionalMatrixPiGroupSorted(newtonCgiState);
+			irPassDimensionalMatrixPiGroupsWeedOutDuplicates(newtonCgiState);
+			irPassDimensionalMatrixConvertToList(newtonCgiState);
 			irPassDimensionalMatrixPrinter(newtonCgiState);
 			irPassDimensionalMatrixKernelPrinter(newtonCgiState);
 		}
