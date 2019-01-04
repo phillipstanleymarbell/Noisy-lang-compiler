@@ -158,9 +158,10 @@ irPassGenLoopsInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *
 				NULL,
 				NULL,
 				genSrcInfo);
-	newNodeExponentConst->value = 0 - N->invariantList->nullSpaceCanonicallyReordered[kernel]
-									[colIndependent[kernel][whichParameter][whichIndependentParameter]]
-									[rowIndependent[kernel][whichParameter][whichIndependentParameter]];
+	newNodeExponentConst->value = -1; //- (N->invariantList->nullSpaceCanonicallyReordered[kernel]
+					//				[colIndependent[kernel][whichParameter][whichIndependentParameter]]
+					//				[rowIndependent[kernel][whichParameter][whichIndependentParameter]]);
+	printf("\n ExponentConstValue %f\n", newNodeExponentConst->value);
 	Token *		tokenExponentConst = (Token *) calloc(1, sizeof(Token));
 	tokenExponentConst->type = kNewtonIrNodeType_TnumericConst;
 	newNodeExponentConst->token = tokenExponentConst;
@@ -450,8 +451,8 @@ irPassDimensionalMatrixConvertToList(State *  N)
 						{
 							locateIndependentInvariantRow[countKernel][i][countIndependentInvariant] = countRow;
 							locateIndependentInvariantColumn[countKernel][i][countIndependentInvariant++] = 0;
-
 						}
+						countIndependentInvariant = 0; //should this be here or not?
 					}
 				}
 
@@ -525,9 +526,12 @@ irPassDimensionalMatrixConvertToList(State *  N)
 								&& locateDependentInvariantRow[countKernel][i] != countRow)
 							{
 								locateIndependentInvariantRow[countKernel][i][countIndependentInvariant] = countRow;
+								printf("\n CountRow %d\n", countRow);
 								locateIndependentInvariantColumn[countKernel][i][countIndependentInvariant++] = countColumn;
+								printf("\n CountColumn %d\n", countColumn);
 							}
 						}
+						countIndependentInvariant = 0; //should this be here or not?
 					}
 
 				}
