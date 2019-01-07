@@ -59,7 +59,34 @@ thrust: signal =
 SamplingTime: constant = (5E-3) * s;
 
 initialHeight	: constant = 10 * m;
-crazyFlieMass	: constant = 0.027 * kg;
+
+
+# Properties
+# Taken from Deimos/CrazyFlie/CrazyFlie_Modelling.ipynb on 7th Jan 2019
+# SHA: 4357f8b7738df7fb3018faa914265263f96910f3
+# Airframe
+systemMass : constant = 27 * (1/1000) * kg;
+# Motor
+motorMass	  : constant = 2.7 * (1/1000) * kg;
+motorVolume	  : constant = 0.0000006158 * vol;
+motorDensity  : constant = 4384.881085 * rho;
+# Motor Mount
+mountMass	  : constant = 0.37 * (1/1000) * kg;
+mountVolume	  : constant = 0.0000054000 * vol;
+mountDensity  : constant = 946 * rho;
+# Battery
+batteryMass    : constant = 7.1 * (1/1000) * kg;
+batteryVolume  : constant = 0.0000042000 * vol;
+batteryDensity : constant = 1690.476190 * rho;
+# Battery Holder
+holderMass    : constant = 0.4 * (1/1000) * kg;
+holderVolume  : constant = 0.0000031360 * vol;
+holderDensity : constant = 95.238095 * rho;
+# Avionics
+avionicsMass : constant = 6.420 * (1/1000) * kg;
+# Propeller
+propellerMass : constant = 0.2 * rho;
+
 
 CrazyFlieLift: invariant(
 	x: thrust
