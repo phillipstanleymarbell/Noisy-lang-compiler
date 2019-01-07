@@ -49,6 +49,5 @@
 
 include "NewtonBaseSignals.nt"
 
-kNewtonUnitless_Steel174_PoissonRatio	: constant = 0.272;
 kNewtonUnithave_Steel174_Density	    : constant = 905 * kilogram * meter ** -3;
 kNewtonUnithave_Steel174_YoungsModulus	: constant = 4.4e9 * Newton / meter ** -2;
