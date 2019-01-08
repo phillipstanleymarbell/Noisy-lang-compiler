@@ -961,7 +961,7 @@ extern "C"
 				reorderedKernelCount++;
 			}
 		}
-		
+
 		free(kernelToBeDeprecated);
 
 		return reorderedNullSpace;
