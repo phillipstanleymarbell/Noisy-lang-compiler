@@ -117,7 +117,7 @@ irPassGenLoopsInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *
 				NULL,
 				genSrcInfo);
 	newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N->invariantList->parameterList,
-						N->invariantList->dimensionalMatrixColumnLabels[rowIndependent[kernel][whichParameter][whichIndependentParameter]]);
+						N->invariantList->canonicallyReorderedLabels[kernel][rowIndependent[kernel][whichParameter][whichIndependentParameter]]);
 	addLeaf(N, newNodeQFactor, newNodeIdentifier);
 
 	IrNode *	newNodeHighPreOp;
@@ -224,13 +224,13 @@ irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int co
 	if(isLeft == true)
 	{
 		newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N->invariantList->parameterList, 
-							N->invariantList->dimensionalMatrixColumnLabels[row[kernel][whichParameter]]);
+							N->invariantList->canonicallyReorderedLabels[kernel][row[kernel][whichParameter]]);
 							/* since we now have canonically reordered labels, need to make a change here!!!!!!!!!!!!!*/
 	}
 	else
 	{
 		newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N->invariantList->parameterList, 
-							N->invariantList->dimensionalMatrixColumnLabels[rowIndependent[kernel][whichParameter][0]]);
+							N->invariantList->canonicallyReorderedLabels[kernel][rowIndependent[kernel][whichParameter][0]]);
 	}
 
 	addLeaf(N, newNodeQFactor, newNodeIdentifier);
