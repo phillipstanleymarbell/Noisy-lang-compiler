@@ -46,9 +46,8 @@ initialHeight	: constant = 10 * m;
 
 
 # Component Properties
-# Dervied from from Deimos/CrazyFlie/CrazyFlie_Modelling.ipynb on 7th Jan 2019
-# SHA: 4357f8b7738df7fb3018faa914265263f96910f3
-
+# Dervied from from Deimos/MassMinimisation/warp-revA-bom_withMaterialMarkups.xlsx on 8th Jan 2019
+# SHA: cbdf3444b4245eea8dc361d277117b327481864c
 
 # LEDs
 LED_0603_MASS	    : constant = 2 * (10E-6) * kg;
