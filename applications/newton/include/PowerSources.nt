@@ -49,6 +49,7 @@ FuelCell_HorizonMiniPEM_Power           : constant = 270 * (1/1000) * W;
 FuelCell_HorizonMiniPEM_Mass            : constant = 27.3 * (1/1000) * kg;
 
 # PV Cells
+GlovalAverageSolarIrradiance            : constant = 183.0 * W/sq;
 ThinFilmPV_MassPerUnitArea              : constant = 36.225 * (1/1000) * kg/sq;
 OrganicPV_PowerPerGramArea              : constant = 0.5607453416149067 * (1000) * W/(kg*sq);
 QuantumDotPV_PowerPerGramArea           : constant = 0.4647619047619047 * (1000) * W/(kg*sq);
