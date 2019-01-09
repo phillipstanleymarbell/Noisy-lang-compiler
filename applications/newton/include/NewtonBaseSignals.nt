@@ -214,6 +214,13 @@ relativeHumidity : signal =
 	derivation	= dimensionless;
 }
 
+current : signal = 
+{
+	name		= "Volt" English;
+	symbol		= V;
+	derivation	= Joule / charge;
+}
+
 kNewtonUnitfree_pi				: constant = 3.1415926535897932384626433832795;
 
 #
