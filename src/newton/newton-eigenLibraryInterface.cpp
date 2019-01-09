@@ -894,6 +894,14 @@ extern "C"
 		int *	kernelToBeDeprecated = (int *)calloc(totalNumberOfKernelsCount, sizeof(int));
 		bool	isSearchedPreviously = false;
 
+		for (int k = 0; k < totalNumberOfKernelsCount; k++)
+		{
+			/*
+			 *	Initiate the kernelToBeDeprecated array
+			 */
+			kernelToBeDeprecated[k] = -1;
+		}
+
 		for (int i = 0; i < (totalNumberOfKernelsCount - 1); i++)
 		{
 			if(i > 0 && kernelToBeDeprecatedCount > 0)
