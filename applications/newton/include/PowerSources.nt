@@ -43,8 +43,13 @@
 include "NewtonBaseSignals.nt"
 
 # Horizon Mini PEM Fuel Cell 
-FuelCell_HorizonMiniPEM_Voltage         : constant = 0.6 V;
-FuelCell_HorizonMiniPEM_Current         : constant = 0.45 A;
-FuelCell_HorizonMiniPEM_Power           : constant = 270 * (1/1000) W;
-FuelCell_HorizonMiniPEM_Mass            : constant = 27.3 * (1/1000) kg;
+FuelCell_HorizonMiniPEM_Voltage         : constant = 0.6 * V;
+FuelCell_HorizonMiniPEM_Current         : constant = 0.45 * A;
+FuelCell_HorizonMiniPEM_Power           : constant = 270 * (1/1000) * W;
+FuelCell_HorizonMiniPEM_Mass            : constant = 27.3 * (1/1000) * kg;
 
+# PV Cells
+ThinFilmPV_MassPerUnitArea              : constant = 36.225 * (1/1000) * kg/sq;
+OrganicPV_PowerPerGramArea              : constant = 0.5607453416149067 * (1000) * W/(kg*sq);
+QuantumDotPV_PowerPerGramArea           : constant = 0.4647619047619047 * (1000) * W/(kg*sq);
+PerovskitePV_PowerPerGramArea           : constant = 1.0154037267080744 * (1000) * W/(kg*sq);
