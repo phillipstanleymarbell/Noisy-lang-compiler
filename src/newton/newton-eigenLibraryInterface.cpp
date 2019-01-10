@@ -665,6 +665,12 @@ extern "C"
 						tempString = canonicallyReorderedLabels[countKernel][i];
 						canonicallyReorderedLabels[countKernel][i] = canonicallyReorderedLabels[countKernel][j];
 						canonicallyReorderedLabels[countKernel][j] = tempString;
+
+						int tempIndex;
+						tempIndex = permutedIndexArrayPointer[countKernel * dimensionalMatrixColumnCount + i];
+						permutedIndexArrayPointer[countKernel * dimensionalMatrixColumnCount + i]
+								= permutedIndexArrayPointer[countKernel * dimensionalMatrixColumnCount + j];
+						permutedIndexArrayPointer[countKernel * dimensionalMatrixColumnCount + j] = tempIndex;
 					}
 				}
 			}
@@ -684,7 +690,7 @@ extern "C"
 				{
 					/*
 					 *	NOTE: invariant->nullspace is stored as [kernel][row][column], whereas
-					 *	reorderedNullSpace and all that follow are [kernel][column][row]
+					 *	reorderedNullSpace and all that follows are [kernel][column][row]
 					 */
 					reorderedNullSpace[countKernel][countColumn][countRow] = nullSpace[countKernel][tmpPosition[countKernel][countRow]][countColumn];
 				}
@@ -738,8 +744,7 @@ extern "C"
 	newtonEigenLibraryInterfaceSortedCanonicallyReorderedPiGroups(double ***  nullSpaceRowReordered,
 								char ***  canonicallyReorderedLabels,
 								int kernelColumnCount, int dimensionalMatrixColumnCount,
-								int *  numberOfUniqueKernels,
-								int *  permutedIndexArrayPointer)
+								int *  numberOfUniqueKernels)
 	{
 		/*
 		 *	We create the matrices in Eigen by mapping the elements
@@ -830,6 +835,7 @@ extern "C"
 						tempString = string[countKernel][i];
 						string[countKernel][i] = string[countKernel][j];
 						string[countKernel][j] = tempString;
+
 					}
 				}
 			}
@@ -861,7 +867,8 @@ extern "C"
 	newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(double ***  nullSpaceCanonicallyReordered,
 								int kernelColumnCount,
 								int dimensionalMatrixColumnCount,
-								int *  numberOfUniqueKernels)
+								int *  numberOfUniqueKernels,
+								int *  numberOfTotalKernels)
 	{
 		/*
 		 *	We create the matrices in Eigen by mapping the elements
@@ -882,12 +889,13 @@ extern "C"
 			eigenInterfaceReorderKernels[countKernel] = temp;
 		}
 
+		*numberOfTotalKernels = *numberOfUniqueKernels;
+
 		int	kernelToBeDeprecatedCount = 0;
-		int	totalNumberOfKernelsCount = *numberOfUniqueKernels;
-		int *	kernelToBeDeprecated = (int *)calloc(totalNumberOfKernelsCount, sizeof(int));
+		int *	kernelToBeDeprecated = (int *)calloc(*numberOfTotalKernels, sizeof(int));
 		bool	isSearchedPreviously = false;
 
-		for (int k = 0; k < totalNumberOfKernelsCount; k++)
+		for (int k = 0; k < *numberOfTotalKernels; k++)
 		{
 			/*
 			 *	Initiate the kernelToBeDeprecated array
@@ -895,7 +903,7 @@ extern "C"
 			kernelToBeDeprecated[k] = -1;
 		}
 
-		for (int i = 0; i < (totalNumberOfKernelsCount - 1); i++)
+		for (int i = 0; i < (*numberOfTotalKernels - 1); i++)
 		{
 			if(i > 0 && kernelToBeDeprecatedCount > 0)
 			{
@@ -914,7 +922,7 @@ extern "C"
 				}
 			}
 
-			for (int j = i + 1; j < totalNumberOfKernelsCount; j++)
+			for (int j = i + 1; j < *numberOfTotalKernels; j++)
 			{
 				/*
 				 *	We subtract the two kernels, element-wise, to see
@@ -939,7 +947,7 @@ extern "C"
 		int 		reorderedKernelCount = 0;
 		kernelToBeDeprecatedCount = 0;
 
-		for (int countKernel = 0; countKernel < totalNumberOfKernelsCount; countKernel++)
+		for (int countKernel = 0; countKernel < *numberOfTotalKernels; countKernel++)
 		{
 			if(countKernel == kernelToBeDeprecated[kernelToBeDeprecatedCount])
 			{

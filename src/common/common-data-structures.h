@@ -704,7 +704,7 @@ struct Invariant
 	char ***		canonicallyReorderedLabels;
 	int			kernelColumnCount;
 	int			numberOfUniqueKernels;
-	int			numberOfUniqueKernelsReplace;	//	when #372 is done, rename numberOfUniqueKernels to numberOfTotalKernels, and rename this to numberOfUniqueKernels
+	int			numberOfTotalKernels;		//	when #372 is done, rename numberOfUniqueKernels to numberOfTotalKernels, and rename this to numberOfUniqueKernels
 	int *			permutedIndexArrayPointer;
 	int **			uniquePiGroup;
 	Invariant *		next;

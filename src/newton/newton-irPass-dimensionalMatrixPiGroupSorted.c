@@ -73,8 +73,7 @@ irPassDimensionalMatrixPiGroupSorted(State *  N)
 												invariant->canonicallyReorderedLabels,
 												invariant->kernelColumnCount,
 												invariant->dimensionalMatrixColumnCount,
-												&invariant->numberOfUniqueKernels,
-												&invariant->permutedIndexArrayPointer);
+												&invariant->numberOfUniqueKernels);
 		invariant = invariant->next;
 	}
 }
