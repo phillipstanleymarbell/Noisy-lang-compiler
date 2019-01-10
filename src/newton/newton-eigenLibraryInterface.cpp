@@ -613,15 +613,7 @@ extern "C"
 		
 		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
-			tmpPosition[countKernel] = (int *)calloc(dimensionalMatrixColumnCount, sizeof(int));
 			canonicallyReorderedLabels[countKernel] = (char **)calloc(dimensionalMatrixColumnCount, sizeof(char *));
-			for (int countRow = 0; countRow < dimensionalMatrixColumnCount; countRow++)
-			{
-				/*
-				 *	Values stored in tmpPosition are the indeces for label reordering.
-				 */
-				tmpPosition[countKernel][permutedIndexArrayPointer[countKernel * dimensionalMatrixColumnCount + countRow]] = countRow;
-			}
 			for (int countRow = 0; countRow < dimensionalMatrixColumnCount; countRow++)
 			{
 				/*
@@ -630,9 +622,9 @@ extern "C"
 				 *	each kernel.
 				 */
 				canonicallyReorderedLabels[countKernel][countRow] =
-								(char *)calloc(strlen(dimensionalMatrixColumnLabels[tmpPosition[countKernel][countRow]]), sizeof(char));
+								(char *)calloc(strlen(dimensionalMatrixColumnLabels[permutedIndexArrayPointer[countKernel * dimensionalMatrixColumnCount + countRow]]), sizeof(char));
 				canonicallyReorderedLabels[countKernel][countRow] = 
-								dimensionalMatrixColumnLabels[tmpPosition[countKernel][countRow]];
+								dimensionalMatrixColumnLabels[permutedIndexArrayPointer[countKernel * dimensionalMatrixColumnCount + countRow]];
 			}
 		}
 		/*
@@ -641,6 +633,7 @@ extern "C"
 		int temp;
 		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
 		{
+			tmpPosition[countKernel] = (int *)calloc(dimensionalMatrixColumnCount, sizeof(int));
 			for (int i = 0; i < dimensionalMatrixColumnCount; i++)
 			{
 				/*
