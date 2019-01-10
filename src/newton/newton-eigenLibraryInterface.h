@@ -53,7 +53,8 @@ double ***	newtonEigenLibraryInterfaceSortedCanonicallyReorderedPiGroups(double 
 								int kernelColumnCount,
 								int dimensionalMatrixColumnCount,
 								int *  numberOfUniqueKernels);
-double ***	newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(double ***  sortedCanonicallyReorderedNullSpace,
+double ***	newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(double ***  nullSpace,
+								double ***  sortedCanonicallyReorderedNullSpace,
 								int kernelColumnCount, 
 								int dimensionalMatrixColumnCount,
 								int *  numberOfUniqueKernels,

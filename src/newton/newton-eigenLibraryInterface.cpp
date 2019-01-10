@@ -864,7 +864,8 @@ extern "C"
 	}
 
 	double ***
-	newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(double ***  nullSpaceCanonicallyReordered,
+	newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(double ***  nullSpace,
+								double ***  nullSpaceCanonicallyReordered,
 								int kernelColumnCount,
 								int dimensionalMatrixColumnCount,
 								int *  numberOfUniqueKernels,
@@ -969,6 +970,37 @@ extern "C"
 				}
 				reorderedKernelCount++;
 			}
+		}
+
+		/*
+		 *	In order to reuse irPass-dimensionalMatrixKernelPrinter
+		 *	the following changes need to be made accordingly:
+		 *	Update invariant->nullSpace using nullSpaceWithoutDuplicates.
+		 *	Free the rest of the nullSpace.
+		 */
+
+		for (int countKernel = 0; countKernel < *numberOfUniqueKernels; countKernel++)
+		{
+			for (int countRow = 0; countRow < dimensionalMatrixColumnCount; countRow++)
+			{
+				for (int countColumn = 0; countColumn < kernelColumnCount; countColumn++)
+				{
+					/*
+					 *	NOTE: invariant->nullspace is stored as [kernel][row][column], whereas
+					 *	reorderedNullSpace and all that follows are [kernel][column][row]
+					 */
+					nullSpace[countKernel][countRow][countColumn] = reorderedNullSpace[countKernel][countColumn][countRow];
+				}
+			}
+		}
+
+		/*
+		 *	Free up the memory which will no longer be used
+		 *	Since the duplicates have been weeded out.
+		 */
+		for (int countKernel = *numberOfUniqueKernels; countKernel < *numberOfTotalKernels; countKernel++)
+		{
+			free(nullSpace[countKernel]);
 		}
 
 		free(kernelToBeDeprecated);

@@ -68,32 +68,12 @@ irPassDimensionalMatrixPiGroupsWeedOutDuplicates(State *  N)
 
 	while (invariant)
 	{
-		invariant->nullSpaceWithoutDuplicates = newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(invariant->nullSpaceCanonicallyReordered,
+		invariant->nullSpaceWithoutDuplicates = newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(invariant->nullSpace,
+								invariant->nullSpaceCanonicallyReordered,
 								invariant->kernelColumnCount,
 								invariant->dimensionalMatrixColumnCount,
 								&invariant->numberOfUniqueKernels,
 								&invariant->numberOfTotalKernels);
-		
-		/*
-		 *	In order to reuse irPass-dimensionalMatrixKernelPrinter
-		 *	the following changes need to be made accordingly:
-		 *	(1) Reset invariant->nullSpace
-		 */
-
-		for (int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
-		{
-			for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
-			{
-				for (int countColumn = 0; countColumn < invariant->kernelColumnCount; countColumn++)
-				{
-					/*
-					 *	NOTE: invariant->nullspace is stored as [kernel][row][column], whereas
-					 *	reorderedNullSpace and all that follows are [kernel][column][row]
-					 */
-					invariant->nullSpace[countKernel][countRow][countColumn] = invariant->nullSpaceWithoutDuplicates[countKernel][countColumn][countRow];
-				}
-			}
-		}
 
 		invariant = invariant->next;
 	}
