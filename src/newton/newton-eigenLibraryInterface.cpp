@@ -894,7 +894,7 @@ extern "C"
 
 		int	kernelToBeDeprecatedCount = 0;
 		int *	kernelToBeDeprecated = (int *)calloc(*numberOfTotalKernels, sizeof(int));
-		bool	isSearchedPreviously = false;
+		bool	isDeprecated = false;
 
 		for (int k = 0; k < *numberOfTotalKernels; k++)
 		{
@@ -906,37 +906,58 @@ extern "C"
 
 		for (int i = 0; i < (*numberOfTotalKernels - 1); i++)
 		{
-			if(i > 0 && kernelToBeDeprecatedCount > 0)
+			for (int k = 0; k < kernelToBeDeprecatedCount; k++)
 			{
-				for (int m = 0; m < kernelToBeDeprecatedCount - 1; m++)
+				if (i == kernelToBeDeprecated[k])
 				{
-					if (i == kernelToBeDeprecated[m])
-					{
-						/*
-						 *	Check if the current kernel index is the same as the kernel
-						 *	index stored in kernelToBeDeprecated.
-						 *	If the indeces match, skip this kernel and go to the next one.
-						 */
-						isSearchedPreviously = true;
-						break;
-					}
+					isDeprecated = true;
+					break;
 				}
 			}
-
-			for (int j = i + 1; j < *numberOfTotalKernels; j++)
+			if (isDeprecated)
 			{
-				/*
-				 *	We subtract the two kernels, element-wise, to see
-				 *	if the result is a zero matrix.
-				 */
-				if ( (eigenInterfaceReorderKernels[i] - eigenInterfaceReorderKernels[j]).isZero() && !isSearchedPreviously)
+				isDeprecated = false;
+				continue;
+			}
+			else
+			{
+				for (int j = i + 1; j < *numberOfTotalKernels; j++)
 				{
-					*numberOfUniqueKernels -= 1;
-					kernelToBeDeprecated[kernelToBeDeprecatedCount++] = j;
-				}
-				else
-				{
-					break;
+					/*
+					 *	We subtract the two kernels, element-wise, to see
+					 *	if the result is a zero matrix.
+					 */
+
+						//cout << "i is" << i << endl << eigenInterfaceReorderKernels[i] << endl << endl;
+						//cout << "j is" << j << endl << eigenInterfaceReorderKernels[j] << endl << endl;
+					for (int k = 0; k < kernelToBeDeprecatedCount; k++)
+					{
+						if (j == kernelToBeDeprecated[k])
+						{
+							isDeprecated = true;
+						}
+					}
+					if (isDeprecated)
+					{
+						/*
+						 *	There is no need to check the kernel that has already
+						 *	been deprecated. We skip this j-th kernel and continue
+						 *	to the next.
+						 */
+						isDeprecated = false;
+						continue;
+					}
+					else
+					{
+						if ( (eigenInterfaceReorderKernels[i] - eigenInterfaceReorderKernels[j]).isZero())
+						{
+							//cout << "i is same" << endl << eigenInterfaceReorderKernels[i] << endl << endl;
+							//cout << "j is same" << endl << eigenInterfaceReorderKernels[j] << endl << endl;
+							*numberOfUniqueKernels -= 1;
+							kernelToBeDeprecated[kernelToBeDeprecatedCount++] = j;
+						}
+					}
+
 				}
 			}
 		}

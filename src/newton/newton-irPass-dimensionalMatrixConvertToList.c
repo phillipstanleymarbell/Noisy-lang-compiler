@@ -225,7 +225,6 @@ irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int co
 	{
 		newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N->invariantList->parameterList, 
 							N->invariantList->canonicallyReorderedLabels[kernel][row[kernel][whichParameter]]);
-							/* since we now have canonically reordered labels, need to make a change here!!!!!!!!!!!!!*/
 	}
 	else
 	{
@@ -368,8 +367,9 @@ irPassDimensionalMatrixConvertToList(State *  N)
 	 *	without any interaction with the lexer. line, column and length are
 	 *	temporary values, ideally should be more meaningful.
 	 */
-	SourceInfo *	genSrcInfo = (SourceInfo *)calloc(1, sizeof(SourceInfo));
-	genSrcInfo->fileName = (char *)calloc(sizeof("GeneratedByDA") + 1,sizeof(char));
+
+	SourceInfo *	genSrcInfo = calloc(1, sizeof(SourceInfo));
+	genSrcInfo->fileName = calloc(strlen("GeneratedByDA") + 1, sizeof(char));
 	genSrcInfo->fileName = "GeneratedByDA";
 	genSrcInfo->lineNumber = -1;
 	genSrcInfo->columnNumber = -1;
@@ -600,14 +600,13 @@ irPassDimensionalMatrixConvertToList(State *  N)
 		 *	invariant list in AST.
 		 */
 		invariant->constraints = invariant->parameterList->irParent->irRightChild->irLeftChild;
-		
-		invariant = invariant->next;
 
 		free(locateDependentInvariantColumn);
 		free(locateDependentInvariantRow);
 		free(locateIndependentInvariantColumn);
 		free(locateIndependentInvariantRow);
 
+		invariant = invariant->next;
 	}
 	free(genSrcInfo);
 }
