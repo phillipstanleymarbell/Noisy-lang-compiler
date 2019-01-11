@@ -928,8 +928,6 @@ extern "C"
 					 *	if the result is a zero matrix.
 					 */
 
-						//cout << "i is" << i << endl << eigenInterfaceReorderKernels[i] << endl << endl;
-						//cout << "j is" << j << endl << eigenInterfaceReorderKernels[j] << endl << endl;
 					for (int k = 0; k < kernelToBeDeprecatedCount; k++)
 					{
 						if (j == kernelToBeDeprecated[k])
@@ -951,13 +949,28 @@ extern "C"
 					{
 						if ( (eigenInterfaceReorderKernels[i] - eigenInterfaceReorderKernels[j]).isZero())
 						{
-							//cout << "i is same" << endl << eigenInterfaceReorderKernels[i] << endl << endl;
-							//cout << "j is same" << endl << eigenInterfaceReorderKernels[j] << endl << endl;
 							*numberOfUniqueKernels -= 1;
 							kernelToBeDeprecated[kernelToBeDeprecatedCount++] = j;
 						}
 					}
 
+				}
+			}
+		}
+
+		/*
+		 *	Now arrange the kernelToBeDeprecated array in ascending order.
+		 */
+		int tempKernelIndex = -1;
+		for (int i = 0; i < kernelToBeDeprecatedCount - 1; i++)
+		{
+			for (int j = i + 1; j < kernelToBeDeprecatedCount; j ++)
+			{
+				if (kernelToBeDeprecated[i] > kernelToBeDeprecated[j])
+				{
+					tempKernelIndex = kernelToBeDeprecated[i];
+					kernelToBeDeprecated[i] = kernelToBeDeprecated[j];
+					kernelToBeDeprecated[j] = tempKernelIndex;
 				}
 			}
 		}
