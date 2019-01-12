@@ -19,13 +19,13 @@ If you forgot to clone with `--recursive` and end up with empty submodule direct
 
 	git submodule update --init
 
-Building the Noisy compiler and debug tools depends on the following repositories which are already included as submodules:
+Building the Noisy compiler and debug tools depends on the [`libflex`](https://github.com/phillipstanleymarbell/libflex), [`Wirth-tools`](https://github.com/phillipstanleymarbell/Wirth-tools), and [`DTrace-scripts`](https://github.com/phillipstanleymarbell/DTrace-scripts) repositories. These repositories are already included as submodules:
 
 	Libflex:		git@github.com:phillipstanleymarbell/libflex.git
 	Wirth tools:		git@github.com:phillipstanleymarbell/Wirth-tools.git
 	DTrace-scripts:		git@github.com:phillipstanleymarbell/DTrace-scripts.git
 	
-and
+For linear algebra, we use the Eigen library. This is also already linked to the repository as a submodule:
 
 	Eigen:			git@github.com:eigenteam/eigen-git-mirror.git	
 	
@@ -33,7 +33,8 @@ The build also depends on the C protobuf compiler, `sloccount`, and on Graphviz.
 install these is to use macports (macports.org) to install the packages `protobuf-c` and `protobuf-cpp` (on Debian, you want the package `libprotobuf-c-dev` and on Ubuntu you also want `protobuf-c-compiler`), `sloccount`, and `graphviz-devel`.
 
 Once you have the above repositories, 
-(1) Create a file `config.local` in the root of the Noisy tree and edit it to contain 
+
+1.	Create a file `config.local` in the root of the Noisy tree and edit it to contain 
 
 	LIBFLEXPATH     = full-path-to-libflex-repository-clone 
 	CONFIGPATH      = full-path-to-libflex-repository-clone
@@ -47,7 +48,7 @@ For example,
 	OSTYPE		= linux
 	MACHTYPE	= x86_64
 
-(2) Edit `precommitStatisticsHook-<your os type>.sh` to set
+2.	Edit `precommitStatisticsHook-<your os type>.sh` to set
 
 	dtraceDirectory=full-path-to-DTrace-repository-clone
 	libflexDirectory=full-path-to-libflex-repository-clone
@@ -55,14 +56,14 @@ For example,
 For the following steps, valid options for OSTYPE are currently `linux` 
 for Gnu/Linux and `darwin` for macOS.
 
-(3) Build Libflex by going to the directory you cloned for Libflex and 
+3.	Build Libflex by going to the directory you cloned for Libflex and 
 running `make`. The Makefile assumes the environment variables `OSTYPE`
 and `MACHTYPE` are set. If that is not the case, you will need to 
 explicitly do:
 
 	make OSTYPE=darwin MACHTYPE=x86_64
 
-(4) Build the noisy compiler by running `make`. The makefile assumes the 
+4.	Build the noisy compiler by running `make`. The makefile assumes the 
 environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the 
 case, you will need to explicitly do:
 
