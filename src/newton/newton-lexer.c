@@ -162,7 +162,7 @@ newtonLex(State *  N, char *  fileName)
 					 */
 					case '~':
 					{
-						checkSingle(N, kNewtonIrNodeType_Tequivalent);
+						checkSingle(N, kNewtonIrNodeType_TdimensionallyProportional);
 						continue;
 					}
 					case '=':
@@ -735,7 +735,12 @@ checkGt(State *  N)
 	 */
 	finishToken(N);
 
-	if (eqf(N))
+	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '<')
+	{
+		gobble(N, 2);
+		type = kNewtonIrNodeType_Tmutualinf;
+	}
+	else if (eqf(N))
 	{
 		gobble(N, 2);
 		type = kNewtonIrNodeType_Tge;
@@ -770,7 +775,12 @@ checkLt(State *  N)
 	 */
 	finishToken(N);
 
-	if (eqf(N))
+	if (N->lineLength >= 3 && N->lineBuffer[N->columnNumber+1] == '-' && N->lineBuffer[N->columnNumber+2] == '>')
+	{
+		gobble(N, 3);
+		type = kNewtonIrNodeType_Trelated;
+	}
+	else if (eqf(N))
 	{
 		gobble(N, 2);
 		type = kNewtonIrNodeType_Tle;
@@ -807,7 +817,7 @@ checkProportionality(State * N)
 	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '<')
 	{
 		gobble(N, 2);
-		type = kNewtonIrNodeType_Tproportional;
+		type = kNewtonIrNodeType_TdimensionAgnosticProportional;
 	}
 	else
 	{
@@ -843,7 +853,7 @@ checkMul(State *  N)
 	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '*')
 	{
 		gobble(N, 2);
-		type = kNewtonIrNodeType_Texponent;
+		type = kNewtonIrNodeType_Texponentiation;
 	}
 	else
 	{
