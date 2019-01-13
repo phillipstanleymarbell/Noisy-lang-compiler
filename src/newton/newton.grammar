@@ -2,7 +2,7 @@
  *	Lexical elements
  */
 reservedIdentifiers		::=	":" | "," | "@" | "o<" | "~" | "<" | "<=" | ">" | ">=" | "==" | "<->"
-					| "**" | "*" | "/" | "+" | "-" | "<<" | ">>" | "|"
+					| "**" | "*" | "/" | "+" | "-" | "<<" | ">>" | "|" | "++" | "--"
 					| "-" | "English" | "constant" | "invariant" | "signal"
 					| "sensor" | "name" | "symbol" | "derivation" | "none"
 					| "dot" | "cross" | "derivative" | "integral" | "interface"

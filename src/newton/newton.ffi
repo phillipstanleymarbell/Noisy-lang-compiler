@@ -934,7 +934,11 @@ token	kNewtonIrNodeType_Tbits:			followset = {
 									}
 token	kNewtonIrNodeType_Tdimensionless:		followset = {
 									}
-token	kNewtonIrNodeType_Tdotdot:			followset = {
+token	kNewtonIrNodeType_TdotDot:			followset = {
+									}
+token	kNewtonIrNodeType_TplusPlus:			followset = {
+									}
+token	kNewtonIrNodeType_TminusMinus:			followset = {
 									}
 
 
