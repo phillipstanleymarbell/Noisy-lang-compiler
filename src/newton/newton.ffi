@@ -116,9 +116,9 @@ production kNewtonIrNodeType_PquantityExpression:	firstset = {
 									firstset(kNewtonIrNodeType_PquantityTerm),
 								}
 
---//		quantityTerm			::=	[unaryMinus] quantityFactor {midPrecedenceOperator quantityFactor} .
+--//		quantityTerm			::=	[unaryOp] quantityFactor {midPrecedenceOperator quantityFactor} .
 production kNewtonIrNodeType_PquantityTerm:		firstset = {
-									firstset(kNewtonIrNodeType_PunaryMinus),
+									firstset(kNewtonIrNodeType_PunaryOp),
 									firstset(kNewtonIrNodeType_PquantityFactor),
 								}
 
@@ -126,8 +126,11 @@ production kNewtonIrNodeType_PquantityTerm:		firstset = {
 --//							quantity [highPrecedenceOperator quantityExpression]			|
 --//								timeOperator {timeOperator} quantityExpression			|
 --//								"(" quantityExpression ")" .
+--//								"{" quantityExpression {"," quantityExpression} "}" .
 production kNewtonIrNodeType_PquantityFactor:		firstset = {
 									kNewtonIrNodeType_TleftParen,
+									kNewtonIrNodeType_TleftBrace,
+									firstset(kNewtonIrNodeType_PtimeOperator),
 									firstset(kNewtonIrNodeType_Pquantity),
 								}
 
@@ -143,16 +146,17 @@ production kNewtonIrNodeType_PlowPrecedenceOperator:	firstset = {
 									kNewtonIrNodeType_Tminus,
 								}
 
---//		midPrecedenceOperator		::=	"*" | "/" | vectorOp .
+--//		midPrecedenceOperator		::=	"*" | "/" | "><" | vectorOp .
 production kNewtonIrNodeType_PmidPrecedenceOperator:	firstset = {
 									kNewtonIrNodeType_Tmul,
 									kNewtonIrNodeType_Tdiv,
+									kNewtonIrNodeType_Tmutualinf,
 									firstset(kNewtonIrNodeType_PvectorOp),
 								}
 
 --//		highPrecedenceOperator		::=	"**" .
 production kNewtonIrNodeType_PhighPrecedenceOperator:	firstset = {
-									kNewtonIrNodeType_Texponent,
+									kNewtonIrNodeType_Texponentiation,
 								}
 
 --//		vectorOp			::=	"dot" | "cross" .
@@ -169,19 +173,14 @@ production kNewtonIrNodeType_PtimeOperator:		firstset = {
 
 --//		comparisonOperator		::=	"o<" | "~" | "<" | "<=" | ">" | ">=" | "==" | "<->" .
 production kNewtonIrNodeType_PcomparisonOperator:	firstset = {
-									kNewtonIrNodeType_Tproportional,
-									kNewtonIrNodeType_Tequivalent,
+									kNewtonIrNodeType_TdimensionAgnosticProportional,
+									kNewtonIrNodeType_TdimensionallyProportional,
 									kNewtonIrNodeType_Tlt,
 									kNewtonIrNodeType_Tle,
 									kNewtonIrNodeType_Tgt,
 									kNewtonIrNodeType_Tge,
 									kNewtonIrNodeType_Tequals,
 									kNewtonIrNodeType_Trelated,
-								}
-
---//		unaryMinus			::=	"-" .
-production kNewtonIrNodeType_PunaryMinus:		firstset = {
-									kNewtonIrNodeType_Tminus,
 								}
 
 --//		languageSetting			::=	"English" .
@@ -199,9 +198,9 @@ production kNewtonIrNodeType_PunitTerm:			firstset = {
 									firstset(kNewtonIrNodeType_PunitFactor),
 								}
 
---//		unitFactor			::=	[unaryMinus] (unit [highPrecedenceOperator numericConst] | "(" unitExpression ")") .
+--//		unitFactor			::=	[unaryOp] (unit [highPrecedenceOperator numericConst]) | "(" unitExpression ")" .
 production kNewtonIrNodeType_PunitFactor:		firstset = {
-									firstset(kNewtonIrNodeType_PunaryMinus),
+									firstset(kNewtonIrNodeType_PunaryOp),
 									firstset(kNewtonIrNodeType_Punit),
 									kNewtonIrNodeType_TleftParen,
 								}
@@ -335,11 +334,47 @@ production kNewtonIrNodeType_PparameterValueList:	firstset = {
 									kNewtonIrNodeType_TleftParen,
 								}
 
---//		distribution			::=	"Gaussian" | "Laplacian" | "Student" .
+--//		distribution			::=	 "Gaussian" | "Laplacian" | "Student" | "Bernoulli" | "Binomial" 
+--//							| "Poisson" | "NegativeBinomial" | "BetaBinomial" | "Exponential"
+--//							| "Gamma" | "Multinomial" | "Beta" | "LogitNormal" | "Dirichlet"
+--//							| "Cauchy" | "LogNormal" | "Pareto" | "BetaPrime" | "StudentZ" 
+--//							| "Weibull" | "Erlang" | "Maxwell" | "FermiDirac" | "FisherZ" 
+--//							| "LogSeries" | "Gumbel" | "Rayleigh" | "Gibrat" | "PearsonIII"
+--//							| "ExtremeValue" | "F" | "Xi" | "XiSquared" .
 production kNewtonIrNodeType_Pdistribution:		firstset = {
 									kNewtonIrNodeType_TGaussian,
 									kNewtonIrNodeType_TLaplacian,
 									kNewtonIrNodeType_TStudent,
+									kNewtonIrNodeType_TBernoulli,
+									kNewtonIrNodeType_TBinomial,
+									kNewtonIrNodeType_TPoisson,
+									kNewtonIrNodeType_TNegativeBinomial,
+									kNewtonIrNodeType_TBetaBinomial,
+									kNewtonIrNodeType_TExponential,
+									kNewtonIrNodeType_TGamma,
+									kNewtonIrNodeType_TMultinomial,
+									kNewtonIrNodeType_TBeta,
+									kNewtonIrNodeType_TLogitNormal,
+									kNewtonIrNodeType_TDirichlet,
+									kNewtonIrNodeType_TCauchy,
+									kNewtonIrNodeType_TLogNormal,
+									kNewtonIrNodeType_TPareto,
+									kNewtonIrNodeType_TBetaPrime,
+									kNewtonIrNodeType_TStudentZ,
+									kNewtonIrNodeType_TWeibull,
+									kNewtonIrNodeType_TErlang,
+									kNewtonIrNodeType_TMaxwell,
+									kNewtonIrNodeType_TFermiDirac,
+									kNewtonIrNodeType_TFisherZ,
+									kNewtonIrNodeType_TLogSeries,
+									kNewtonIrNodeType_TGumbel,
+									kNewtonIrNodeType_TRayleigh,
+									kNewtonIrNodeType_TGibrat,
+									kNewtonIrNodeType_TPearsonIII,
+									kNewtonIrNodeType_TExtremeValue,
+									kNewtonIrNodeType_TF,
+									kNewtonIrNodeType_TXi,
+									kNewtonIrNodeType_TXiSquared,
 								}
 
 --//		highPrecedenceBinaryOp		::=	"*" | "/" | "%" | "**" .
@@ -347,7 +382,7 @@ production kNewtonIrNodeType_PhighPrecedenceBinaryOp:	firstset = {
 									kNewtonIrNodeType_Tmul,
 									kNewtonIrNodeType_Tdiv,
 									kNewtonIrNodeType_Tpercent,
-									kNewtonIrNodeType_Texponent,
+									kNewtonIrNodeType_Texponentiation,
 									}
 
 --//		lowPrecedenceBinaryOp		::=	"+" | "-" | ">>" | "<<" | "|" .
@@ -481,9 +516,10 @@ production kNewtonIrNodeType_PquantityExpression:	followset = {
 									firstset(kNewtonIrNodeType_PcomparisonOperator),
 									followset(kNewtonIrNodeType_Pconstraint),
 									kNewtonIrNodeType_TrightParen,
+									kNewtonIrNodeType_TrightBrace,
 								}
 
---//		quantityTerm			::=	[unaryMinus] quantityFactor {midPrecedenceOperator quantityFactor} .
+--//		quantityTerm			::=	[unaryOp] quantityFactor {midPrecedenceOperator quantityFactor} .
 production kNewtonIrNodeType_PquantityTerm:		followset = {
 									firstset(kNewtonIrNodeType_PlowPrecedenceOperator),
 									followset(kNewtonIrNodeType_PquantityExpression),
@@ -493,6 +529,7 @@ production kNewtonIrNodeType_PquantityTerm:		followset = {
 --//							quantity [highPrecedenceOperator quantityFactor]			|
 --//								timeOperator {timeOperator} quantityFactor			|
 --//								"(" quantityExpression ")" .
+--//								"{" quantityExpression {"," quantityExpression} "}" .
 production kNewtonIrNodeType_PquantityFactor:		followset = {
 									firstset(kNewtonIrNodeType_PmidPrecedenceOperator),
 									followset(kNewtonIrNodeType_PquantityTerm),
@@ -509,7 +546,7 @@ production kNewtonIrNodeType_PlowPrecedenceOperator:	followset = {
 									firstset(kNewtonIrNodeType_PquantityTerm),
 								}
 
---//		midPrecedenceOperator		::=	"*" | "/" | vectorOp .
+--//		midPrecedenceOperator		::=	"*" | "/" | "><" | vectorOp .
 production kNewtonIrNodeType_PmidPrecedenceOperator:	followset = {
 									firstset(kNewtonIrNodeType_PquantityFactor),
 									firstset(kNewtonIrNodeType_PunitFactor),
@@ -537,13 +574,6 @@ production kNewtonIrNodeType_PcomparisonOperator:	followset = {
 									firstset(kNewtonIrNodeType_PquantityExpression),
 								}
 
---//		unaryMinus			::=	"-" .
-production kNewtonIrNodeType_PunaryMinus:		followset = {
-									firstset(kNewtonIrNodeType_PquantityFactor),
-									kNewtonIrNodeType_TleftParen,
-									firstset(kNewtonIrNodeType_Punit),
-								}
-
 --//		languageSetting			::=	"English" .
 production kNewtonIrNodeType_PlanguageSetting:		followset = {
 									kNewtonIrNodeType_Tsemicolon,
@@ -565,7 +595,7 @@ production kNewtonIrNodeType_PunitTerm:			followset = {
 									followset(kNewtonIrNodeType_PunitExpression),
 								}
 
---//		unitFactor			::=	[unaryMinus] (unit [highPrecedenceOperator numericConst] | "(" unitExpression ")") .
+--//		unitFactor			::=	[unaryOp] (unit [highPrecedenceOperator numericConst]) | "(" unitExpression ")" .
 production kNewtonIrNodeType_PunitFactor:		followset = {
 									firstset(kNewtonIrNodeType_PmidPrecedenceOperator),
 									followset(kNewtonIrNodeType_PunitTerm),
@@ -699,7 +729,13 @@ production kNewtonIrNodeType_PparameterValueList:	followset = {
 									followset(kNewtonIrNodeType_PdistributionFactor)
 								}
 
---//		distribution			::=	"Gaussian" | "Laplacian" | "Student" .
+--//		distribution			::=	 "Gaussian" | "Laplacian" | "Student" | "Bernoulli" | "Binomial" 
+--//							| "Poisson" | "NegativeBinomial" | "BetaBinomial" | "Exponential"
+--//							| "Gamma" | "Multinomial" | "Beta" | "LogitNormal" | "Dirichlet"
+--//							| "Cauchy" | "LogNormal" | "Pareto" | "BetaPrime" | "StudentZ" 
+--//							| "Weibull" | "Erlang" | "Maxwell" | "FermiDirac" | "FisherZ" 
+--//							| "LogSeries" | "Gumbel" | "Rayleigh" | "Gibrat" | "PearsonIII"
+--//							| "ExtremeValue" | "F" | "Xi" | "XiSquared" .
 production kNewtonIrNodeType_Pdistribution:		followset = {
 									firstset(kNewtonIrNodeType_PparameterValueList)
 								}
@@ -752,13 +788,73 @@ token	kNewtonIrNodeType_Tdot:				followset = {
 									}
 token	kNewtonIrNodeType_Tequals:			followset = {
 									}
-token	kNewtonIrNodeType_Tequivalent:			followset = {
+token	kNewtonIrNodeType_TdimensionallyProportional:	followset = {
 									}
 token	kNewtonIrNodeType_Terasuretoken:		followset = {
 									}
-token	kNewtonIrNodeType_Texponent:			followset = {
+token	kNewtonIrNodeType_Texponentiation:		followset = {
 									}
 token	kNewtonIrNodeType_TGaussian:			followset = {
+									}
+token	kNewtonIrNodeType_TBernoulli:			followset = {
+									}
+token	kNewtonIrNodeType_TBinomial:			followset = {
+									}
+token	kNewtonIrNodeType_TPoisson:			followset = {
+									}
+token	kNewtonIrNodeType_TNegativeBinomial:		followset = {
+									}
+token	kNewtonIrNodeType_TBetaBinomial:		followset = {
+									}
+token	kNewtonIrNodeType_TExponential:			followset = {
+									}
+token	kNewtonIrNodeType_TGamma:			followset = {
+									}
+token	kNewtonIrNodeType_TMultinomial:			followset = {
+									}
+token	kNewtonIrNodeType_TBeta:			followset = {
+									}
+token	kNewtonIrNodeType_TLogitNormal:			followset = {
+									}
+token	kNewtonIrNodeType_TDirichlet:			followset = {
+									}
+token	kNewtonIrNodeType_TCauchy:			followset = {
+									}
+token	kNewtonIrNodeType_TLogNormal:			followset = {
+									}
+token	kNewtonIrNodeType_TPareto:			followset = {
+									}
+token	kNewtonIrNodeType_TBetaPrime:			followset = {
+									}
+token	kNewtonIrNodeType_TStudentZ:			followset = {
+									}
+token	kNewtonIrNodeType_TWeibull:			followset = {
+									}
+token	kNewtonIrNodeType_TErlang:			followset = {
+									}
+token	kNewtonIrNodeType_TMaxwell:			followset = {
+									}
+token	kNewtonIrNodeType_TFermiDirac:			followset = {
+									}
+token	kNewtonIrNodeType_TFisherZ:			followset = {
+									}
+token	kNewtonIrNodeType_TLogSeries:			followset = {
+									}
+token	kNewtonIrNodeType_TGumbel:			followset = {
+									}
+token	kNewtonIrNodeType_TRayleigh:			followset = {
+									}
+token	kNewtonIrNodeType_TGibrat:			followset = {
+									}
+token	kNewtonIrNodeType_TPearsonIII:			followset = {
+									}
+token	kNewtonIrNodeType_TExtremeValue:		followset = {
+									}
+token	kNewtonIrNodeType_TF:				followset = {
+									}
+token	kNewtonIrNodeType_TXi:				followset = {
+									}
+token	kNewtonIrNodeType_TXiSquared:			followset = {
 									}
 token	kNewtonIrNodeType_Tge:				followset = {
 									}
@@ -788,6 +884,8 @@ token	kNewtonIrNodeType_Tminus:			followset = {
 									}
 token	kNewtonIrNodeType_Tmul:				followset = {
 									}
+token	kNewtonIrNodeType_Tmutualinf:			followset = {
+									}
 token	kNewtonIrNodeType_Tname:			followset = {
 									}
 token	kNewtonIrNodeType_Tnil:				followset = {
@@ -798,7 +896,7 @@ token	kNewtonIrNodeType_Tplus:			followset = {
 									}
 token	kNewtonIrNodeType_Tprecision:			followset = {
 									}
-token	kNewtonIrNodeType_Tproportionality:		followset = {
+token	kNewtonIrNodeType_TdimensionAgnosticProportional:followset = {
 									}
 token	kNewtonIrNodeType_Trange:			followset = {
 									}
