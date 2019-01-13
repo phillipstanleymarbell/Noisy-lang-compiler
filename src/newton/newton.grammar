@@ -8,7 +8,13 @@ reservedIdentifiers		::=	":" | "," | "@" | "o<" | "~" | "<" | "<=" | ">" | ">=" 
 					| "dot" | "cross" | "derivative" | "integral" | "interface"
 					| "i2c" | "spi" | "analog" | "write" | "read" | "delay" | "range"
 					| "erasuretoken" | "uncertainty" | "accuracy" | "precision"
-					| "Gaussian" | "exponential" | "biexponential" | "to" | "bits"
+					| "Gaussian" | "Laplacian" | "StudentT" | "Bernoulli" | "Binomial" 
+					| "Poisson" | "NegativeBinomial" | "BetaBinomial" | "Exponential"
+					| "Gamma" | "Multinomial" | "Beta" | "LogitNormal" | "Dirichlet"
+					| "Cauchy" | "LogNormal" | "Pareto" | "BetaPrime" | "StudentZ" 
+					| "Weibull" | "Erlang" | "Maxwell" | "FermiDirac" | "FisherZ" 
+					| "LogSeries" | "Gumbel" | "Rayleigh" | "Gibrat" | "PearsonIII" | "ExtremeValue"
+					| "F" | "Xi" | "XiSquared" | "to" | "bits" | "><"
 					| "dimensionless" | "include" | "(" | ")" | "{" | "}" | ";" | ".." .
 
 zeroToNine			=	"0-9" .
@@ -49,24 +55,24 @@ constraintList			::=	[constraint] {"," constraint} .
 constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
 
 quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
-quantityTerm			::=	[unaryMinus] quantityFactor {midPrecedenceOperator quantityFactor} .
+quantityTerm			::=	[unaryOp] quantityFactor {midPrecedenceOperator quantityFactor} .
 quantityFactor			::=	quantity								|
 					quantity [highPrecedenceOperator quantityFactor]			|
 						timeOperator {timeOperator} quantityFactor			|
 						"(" quantityExpression ")" .
+						"{" quantityExpression {"," quantityExpression} "}" .
 quantity			::=	numericConst | (identifier {"@" numericConst}) .
 lowPrecedenceOperator		::=	"+" | "-" .
-midPrecedenceOperator		::=	"*" | "/" | vectorOp .
+midPrecedenceOperator		::=	"*" | "/" | "><" | vectorOp .
 highPrecedenceOperator		::=	"**" .
 vectorOp			::=	"dot" | "cross" .
 timeOperator			::=	"derivative" | "integral" .
 comparisonOperator		::=	"o<" | "~" | "<" | "<=" | ">" | ">=" | "==" | "<->" .
-unaryMinus			::=	"-" .
 languageSetting			::=	"English" .
 
 unitExpression			::=	unitTerm .
 unitTerm			::=	unitFactor {midPrecedenceOperator unitFactor} .
-unitFactor			::=	[unaryMinus] (unit [highPrecedenceOperator numericConst] | "(" unitExpression ")") .
+unitFactor			::=	[unaryOp] (unit [highPrecedenceOperator numericConst]) | "(" unitExpression ")" .
 unit				::=	identifier .
 
 sensorPropertyList		::=	sensorProperty {"," sensorProperty} .
@@ -92,7 +98,13 @@ term				::=	[unaryOp] factor ["++" | "--"] {highPrecedenceBinaryOp factor} .
 factor				::=	numericConst | "(" expression ")" | distributionFactor | identifier ["[" numericConst "]"] .
 distributionFactor		::=	distribution parameterValueList .
 parameterValueList		::=	"(" identifier ":" expression {"," identifier ":" expression} ")" .
-distribution			::=	"Gaussian" | "Laplacian" | "Student" .
+distribution			::=	"Gaussian" | "Laplacian" | "StudentT" | "Bernoulli" | "Binomial" 
+					| "Poisson" | "NegativeBinomial" | "BetaBinomial" | "Exponential"
+					| "Gamma" | "Multinomial" | "Beta" | "LogitNormal" | "Dirichlet"
+					| "Cauchy" | "LogNormal" | "Pareto" | "BetaPrime" | "StudentZ" 
+					| "Weibull" | "Erlang" | "Maxwell" | "FermiDirac" | "FisherZ" 
+					| "LogSeries" | "Gumbel" | "Rayleigh" | "Gibrat" | "PearsonIII" | "ExtremeValue"
+					| "F" | "Xi" | "XiSquared" .
 highPrecedenceBinaryOp		::=	"*" | "/" | "%" | "**" .
 lowPrecedenceBinaryOp		::=	"+" | "-" | ">>" | "<<" | "|" .
 unaryOp				::=	"-"  | "+" .
