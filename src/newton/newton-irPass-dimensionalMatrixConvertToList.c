@@ -117,7 +117,7 @@ irPassGenLoopsInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *
 				NULL,
 				genSrcInfo);
 	newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N->invariantList->parameterList,
-						N->invariantList->dimensionalMatrixColumnLabels[rowIndependent[kernel][whichParameter][whichIndependentParameter]]);
+						N->invariantList->canonicallyReorderedLabels[kernel][rowIndependent[kernel][whichParameter][whichIndependentParameter]]);
 	addLeaf(N, newNodeQFactor, newNodeIdentifier);
 
 	IrNode *	newNodeHighPreOp;
@@ -158,7 +158,7 @@ irPassGenLoopsInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *
 				NULL,
 				NULL,
 				genSrcInfo);
-	newNodeExponentConst->value = 0 - N->invariantList->nullSpaceCanonicallyReordered[kernel]
+	newNodeExponentConst->value = 0 - N->invariantList->nullSpaceWithoutDuplicates[kernel]
 									[colIndependent[kernel][whichParameter][whichIndependentParameter]]
 									[rowIndependent[kernel][whichParameter][whichIndependentParameter]];
 	Token *		tokenExponentConst = (Token *) calloc(1, sizeof(Token));
@@ -178,6 +178,9 @@ irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int co
 	 *	TODO: This function should ideally be compressed for a better 'hygiene'
 	 *	since most of the time it is doing some genIrNode() loops
 	 */
+
+	int	referenceLoopCount = countLoop;
+
 	IrNode *	newNodeConstraint;
 	newNodeConstraint = genIrNode(N, kNewtonIrNodeType_Pconstraint,
 				NULL,
@@ -221,12 +224,12 @@ irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int co
 	if(isLeft == true)
 	{
 		newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N->invariantList->parameterList, 
-							N->invariantList->dimensionalMatrixColumnLabels[row[kernel][whichParameter]]);
+							N->invariantList->canonicallyReorderedLabels[kernel][row[kernel][whichParameter]]);
 	}
 	else
 	{
 		newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N->invariantList->parameterList, 
-							N->invariantList->dimensionalMatrixColumnLabels[rowIndependent[kernel][whichParameter][0]]);
+							N->invariantList->canonicallyReorderedLabels[kernel][rowIndependent[kernel][whichParameter][0]]);
 	}
 
 	addLeaf(N, newNodeQFactor, newNodeIdentifier);
@@ -270,13 +273,13 @@ irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int co
 				genSrcInfo);
 	if(isLeft == true)
 	{
-		newNodeExponentConst->value = N->invariantList->nullSpaceCanonicallyReordered[kernel]
+		newNodeExponentConst->value = N->invariantList->nullSpaceWithoutDuplicates[kernel]
 										[col[kernel][whichParameter]]
 										[row[kernel][whichParameter]];
 	}
 	else
 	{
-		newNodeExponentConst->value = 0 - N->invariantList->nullSpaceCanonicallyReordered[kernel]
+		newNodeExponentConst->value = 0 - N->invariantList->nullSpaceWithoutDuplicates[kernel]
 										[colIndependent[kernel][whichParameter][0]]
 										[rowIndependent[kernel][whichParameter][0]];
 	}
@@ -292,6 +295,14 @@ irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int co
 	int	whichIndependentParameter = 1;
 	for (;countLoop && isLeft == false; countLoop--)
 	{
+		/*	
+		 *	First perform a sanity check
+		 */
+		if(whichIndependentParameter > referenceLoopCount)
+		{
+			break;
+		}
+
 		irPassGenLoopsInRightExpression(N, depthFirstWalkNoLeftChild(N, newNodeQTerm), genSrcInfo,
 						row, col,
 						rowIndependent, colIndependent,
@@ -355,8 +366,9 @@ irPassDimensionalMatrixConvertToList(State *  N)
 	 *	without any interaction with the lexer. line, column and length are
 	 *	temporary values, ideally should be more meaningful.
 	 */
-	SourceInfo *	genSrcInfo = (SourceInfo *)calloc(1, sizeof(SourceInfo));
-	genSrcInfo->fileName = (char *)calloc(sizeof("GeneratedByDA") + 1,sizeof(char));
+
+	SourceInfo *	genSrcInfo = calloc(1, sizeof(SourceInfo));
+	genSrcInfo->fileName = calloc(strlen("GeneratedByDA") + 1, sizeof(char));
 	genSrcInfo->fileName = "GeneratedByDA";
 	genSrcInfo->lineNumber = -1;
 	genSrcInfo->columnNumber = -1;
@@ -368,12 +380,12 @@ irPassDimensionalMatrixConvertToList(State *  N)
 		 *	Proportionality is expressed as "o<" (currently as "@<", see #374)
 		 *	History: Before #372, #383 and #384 were completed, we used to reorder
 		 *	the null space using permutedIndexArrayPointer.
-		 *	We are now using the nullSpaceCanonicallyReordered instead.
+		 *	We are now using the nullSpaceWithoutDuplicates instead.
 		 *
 		 *	The current method applied only checks pi groups within each kernel,
 		 *	as we form the relationship in the traditional way. Each kernel corresponds
 		 *	to one function which describes the relationship between different pi's.
-		 *	Alternatively, we form the unoion of pi groups based on Jonsson's (2014)
+		 *	Alternatively, we can form the unoion of pi groups based on Jonsson's (2014)
 		 *	basis and circuit basis.
 		 *
 		 *	Now begin to set up the constraints.
@@ -392,17 +404,17 @@ irPassDimensionalMatrixConvertToList(State *  N)
 		{
 			/*
 			 *	Note that a new null space reordered lexicographically and which rules
-			 *	out all the duplicate pi groups is available as nullSpaceCanonicallyReordered.
+			 *	out all the duplicate pi groups is available as nullSpaceWithoutDuplicates.
 			 *	See issues #372, #383 and #384 for more.
 			 *
-			 *	Within each kernel, we find the invariant(s) which occurs only once,
+			 *	Within each kernel, we find the parameter(s) which occurs only once,
 			 *	and set this as the dependent variable(s). When we find more than one
 			 *	dependent variables, we express these variables in separate propotionality
 			 *	equations (left hand side).
 			 *	
-			 *	It is also important that we identify which of those invariants described
-			 *	by Newton are constants at the first instance, by checking the 'constant'
-			 *	keyword, we currently do not do this.
+			 *	It is also important that we identify which of those parameters in the invariant
+			 *	list described by Newton are constants at the first instance, by checking the
+			 *	'constant' keyword, we currently do not do this.
 			 */
 			locateDependentInvariantRow[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
 			locateDependentInvariantColumn[countKernel] = (int *) calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
@@ -418,17 +430,20 @@ irPassDimensionalMatrixConvertToList(State *  N)
 			 *	with one column and kernels with multiple columns will be slightly
 			 *	different.
 			 *
-			 *	(1) Kernels with one column. All the invariants with exponent not equal
-			 *	to zero could be regarded as dependent invariants. 
+			 *	(1) Kernels with one column. All the parameters in the invariant list
+			 *	with exponent not equal to zero could be regarded as dependent parameters. 
 			 *	
-			 *	(2) Kernels with multiple columns. We first do a thorough search and
-			 *	determine whichi nvariant(s) occurs only once among all the columns.
+			 *	(2) Kernels with multiple columns. We first do a thorough search to
+			 *	determine which parameter(s) occurs only once among all the columns.
 			 */
 			if (invariant->kernelColumnCount == 1)
 			{
 				for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 				{
-					if (fabs(invariant->nullSpaceCanonicallyReordered[countKernel][0][countRow]) != 0)
+					/*
+					 *	We search through all the rows
+					 */
+					if (fabs(invariant->nullSpaceWithoutDuplicates[countKernel][0][countRow]) != 0)
 					{
 						locateDependentInvariantRow[countKernel][countDependentInvariant] = countRow;
 						locateDependentInvariantColumn[countKernel][countDependentInvariant] = 0;
@@ -445,7 +460,7 @@ irPassDimensionalMatrixConvertToList(State *  N)
 
 					for (int countRow = 0, countIndependentInvariant = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 					{
-						if (fabs(invariant->nullSpaceCanonicallyReordered[countKernel][0][countRow]) != 0
+						if (fabs(invariant->nullSpaceWithoutDuplicates[countKernel][0][countRow]) != 0
 							&& locateDependentInvariantRow[countKernel][i] != countRow)
 						{
 							locateIndependentInvariantRow[countKernel][i][countIndependentInvariant] = countRow;
@@ -478,19 +493,27 @@ irPassDimensionalMatrixConvertToList(State *  N)
 				}
 
 			}
-			else if (invariant->kernelColumnCount != 0)
+			else if (invariant->kernelColumnCount != 1)
 			{
 				for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 				{
 					for (int countColumn = 0; countColumn < invariant->kernelColumnCount; countColumn++)
 					{
-						if (fabs(invariant->nullSpaceCanonicallyReordered[countKernel][countColumn][countRow]) == 0)
+						/*
+						 *	OnesCount counts the number of occurence of the parameter
+						 *	among all the columns
+						 */
+						if (fabs(invariant->nullSpaceWithoutDuplicates[countKernel][countColumn][countRow]) == 0)
 						{
 							zerosCount += 1;
 						}
 						else
 						{
 							onesCount += 1;
+							/*
+							 *	WhichColumn is only useful when we want to locate
+							 *	the parameter which occurs only once
+							 */
 							whichColumn = countColumn;
 						}
 					}
@@ -521,13 +544,15 @@ irPassDimensionalMatrixConvertToList(State *  N)
 
 						for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 						{
-							if (fabs(invariant->nullSpaceCanonicallyReordered[countKernel][countColumn][countRow]) != 0
+							if (fabs(invariant->nullSpaceWithoutDuplicates[countKernel][countColumn][countRow]) != 0
 								&& locateDependentInvariantRow[countKernel][i] != countRow)
 							{
 								locateIndependentInvariantRow[countKernel][i][countIndependentInvariant] = countRow;
-								locateIndependentInvariantColumn[countKernel][i][countIndependentInvariant++] = countColumn;
+								locateIndependentInvariantColumn[countKernel][i][countIndependentInvariant] = countColumn;
+								countIndependentInvariant += 1;
 							}
 						}
+						countIndependentInvariant = 0;
 					}
 
 				}
@@ -538,7 +563,7 @@ irPassDimensionalMatrixConvertToList(State *  N)
 				{
 					for (int countRow = 0; countRow < invariant->dimensionalMatrixColumnCount; countRow++)
 					{
-						if (fabs(invariant->nullSpaceCanonicallyReordered[countKernel][countColumn][countRow]) != 0)
+						if (fabs(invariant->nullSpaceWithoutDuplicates[countKernel][countColumn][countRow]) != 0)
 						{
 							countAddRightExpression += 1;
 						}
@@ -574,14 +599,13 @@ irPassDimensionalMatrixConvertToList(State *  N)
 		 *	invariant list in AST.
 		 */
 		invariant->constraints = invariant->parameterList->irParent->irRightChild->irLeftChild;
-		
-		invariant = invariant->next;
 
 		free(locateDependentInvariantColumn);
 		free(locateDependentInvariantRow);
 		free(locateIndependentInvariantColumn);
 		free(locateIndependentInvariantRow);
 
+		invariant = invariant->next;
 	}
 	free(genSrcInfo);
 }

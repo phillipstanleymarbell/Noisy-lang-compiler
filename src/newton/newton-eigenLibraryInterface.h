@@ -52,12 +52,13 @@ double ***	newtonEigenLibraryInterfaceSortedCanonicallyReorderedPiGroups(double 
 								char ***  canonicallyReorderedLabels,
 								int kernelColumnCount,
 								int dimensionalMatrixColumnCount,
-								int *  numberOfUniqueKernels,
-								int **  permutedIndexArrayPointer);
-double ***	newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(double ***  sortedCanonicallyReorderedNullSpace,
+								int *  numberOfUniqueKernels);
+double ***	newtonEigenLibraryInterfaceWeedOutDuplicatePiGroups(double ***  nullSpace,
+								double ***  sortedCanonicallyReorderedNullSpace,
 								int kernelColumnCount, 
 								int dimensionalMatrixColumnCount,
-								int *  numberOfUniqueKernels);
+								int *  numberOfUniqueKernels,
+								int *  numberOfTotalKernels);
 
 #	ifdef __cplusplus
 } /* extern "C" */

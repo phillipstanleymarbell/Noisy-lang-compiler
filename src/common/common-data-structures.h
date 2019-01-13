@@ -696,17 +696,16 @@ struct Invariant
 	int 			dimensionalMatrixColumnCount;	//	Number of dimensional matrix columns 
 	char **			dimensionalMatrixRowLabels;	//	Labels of dimensional matrix rows		
 	char **			dimensionalMatrixColumnLabels;	//	Labels of dimensional matrix columns 
-	double ***		nullSpace;
-	double ***		nullSpaceWithoutDuplicates;
-	double ***		reorderNullSpace;		//	Should be removed once #372 is completed
-	double ***		nullSpaceRowReordered;
-	double ***		nullSpaceCanonicallyReordered;
-	char ***		canonicallyReorderedLabels;
+	double ***		nullSpace;			//	Initial null space and parameter used in kernel printer
+	double ***		nullSpaceWithoutDuplicates;	//	Duplicate kernels are taken out
+	double ***		nullSpaceRowReordered;		//	Reorders the rows of the kernels lexicographically
+	double ***		nullSpaceCanonicallyReordered;	//	Canonically reordered
+	char ***		canonicallyReorderedLabels;	//	Debugging use
 	int			kernelColumnCount;
-	int			numberOfUniqueKernels;
-	int			numberOfUniqueKernelsReplace;	//	when #372 is done, rename numberOfUniqueKernels to numberOfTotalKernels, and rename this to numberOfUniqueKernels
-	int *			permutedIndexArrayPointer;
-	int **			uniquePiGroup;
+	int			numberOfUniqueKernels;		//	Saves the unique kernel count
+	int			numberOfTotalKernels;		//	Saves the total kernels before canonicalisation
+	int *			permutedIndexArrayPointer;	//	Saves the permutation indeces
+
 	Invariant *		next;
 };
 
