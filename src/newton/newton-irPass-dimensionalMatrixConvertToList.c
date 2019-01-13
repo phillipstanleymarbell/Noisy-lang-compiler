@@ -309,7 +309,6 @@ irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int co
 						kernel,
 						whichParameter, whichIndependentParameter);
 		whichIndependentParameter += 1;
-
 	}
 
 	return newNodeConstraint;

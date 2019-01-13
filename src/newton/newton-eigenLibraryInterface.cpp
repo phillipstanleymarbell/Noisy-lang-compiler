@@ -557,7 +557,6 @@ extern "C"
 				cInterfaceKernels[*numberOfUniqueKernels] = (double **)calloc(nRows, sizeof(double*));
 				assert(cInterfaceKernels[*numberOfUniqueKernels] != NULL);
 
-
 				for (int row = 0; row < nRows; row++)
 				{
 					cInterfaceKernels[*numberOfUniqueKernels][row] = (double *)calloc(nCols, sizeof(double));
@@ -835,7 +834,6 @@ extern "C"
 						tempString = string[countKernel][i];
 						string[countKernel][i] = string[countKernel][j];
 						string[countKernel][j] = tempString;
-
 					}
 				}
 			}

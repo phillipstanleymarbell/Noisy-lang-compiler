@@ -50,7 +50,7 @@
 
 include "NewtonBaseSignals.nt"
 
-reDimension: signal =
+ReDimension: signal =
 {
 	name		= "Reynolds number" English;
 	symbol		= Re;
@@ -62,6 +62,6 @@ CableHydrodynamicDragForceForPiGroups: invariant(	D_param:	force,
 							rho_param:	density,
 							V_param:	speed,
 							L_param:	distance,
-							Re_param:	reDimension) =
+							Re_param:	ReDimension) =
 {
 }
