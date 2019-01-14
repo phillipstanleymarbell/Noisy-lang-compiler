@@ -66,7 +66,7 @@ static void		checkEqual(State *  N);
 static void		checkGt(State *  N);
 static void		checkLt(State *  N);
 static void		checkMul(State * N);
-static bool		checkProportionality(State * N);
+static void		checkProportionality(State * N);
 static void		checkDot(State *  N);
 static void		makeNumericConst(State *  N);
 static bool		isOperatorOrSeparator(State *  N, char c);
@@ -186,6 +186,17 @@ newtonLex(State *  N, char *  fileName)
 					case '}':
 					{
 						checkSingle(N, kNewtonIrNodeType_TrightBrace);
+						continue;
+					}
+					case '[':
+					{
+						checkSingle(N, kNewtonIrNodeType_TleftBracket);
+						continue;
+					}
+
+					case ']':
+					{
+						checkSingle(N, kNewtonIrNodeType_TrightBracket);
 						continue;
 					}
 					case '+':
@@ -849,7 +860,7 @@ checkEqual(State *  N)
 	done(N, newToken);
 }
 
-static bool 
+static void 
 checkProportionality(State * N)
 {
 	IrNodeType		type;
@@ -863,26 +874,21 @@ checkProportionality(State * N)
 	{
 		gobble(N, 2);
 		type = kNewtonIrNodeType_TdimensionallyAgnosticProportional;
-	}
-	else
-	{
-		gobble(N, 1);
-		type = kNewtonIrNodeType_TatSign;
-	}
 
-	Token *		newToken = lexAllocateToken(N,			type	/* type		*/,
+		Token *		newToken = lexAllocateToken(N,		type	/* type		*/,
 									NULL	/* identifier	*/,
 									0	/* integerConst	*/,
 									0.0	/* realConst	*/,
 									NULL	/* stringConst	*/,
 									NULL	/* sourceInfo	*/);
 
-	/*
-	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
-	 */
-	done(N, newToken);
+		/*
+		 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+		 */
+		done(N, newToken);
+	}
 
-    return true;
+	return;
 }
 
 static void
@@ -979,10 +985,13 @@ isOperatorOrSeparator(State *  N, char c)
 		case '"':
 		case '{':
 		case '}':
+		case '[':
+		case ']':
 		case '|':
 		case ',':
 		case '.':
 		case ' ':
+		case '%':
 		case '\n':
 		case '\r':
 		case '\t':
