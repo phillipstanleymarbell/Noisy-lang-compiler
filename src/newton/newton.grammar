@@ -55,24 +55,23 @@ constraintList			::=	[constraint] {"," constraint} .
 constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
 
 quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
-quantityTerm			::=	[unaryOp] quantityFactor {midPrecedenceOperator quantityFactor} .
-quantityFactor			::=	quantity								|
-					quantity [highPrecedenceOperator quantityFactor]			|
+quantityTerm			::=	[unaryOp] quantityFactor {highPrecedenceOperator quantityFactor} .
+quantityFactor			::=	quantity [exponentiationOperator quantityFactor]			|
 						timeOperator {timeOperator} quantityFactor			|
 						"(" quantityExpression ")" .
 						"{" quantityExpression {"," quantityExpression} "}" .
 quantity			::=	numericConst | (identifier {"@" numericConst}) .
 lowPrecedenceOperator		::=	"+" | "-" .
-midPrecedenceOperator		::=	"*" | "/" | "><" | vectorOp .
-highPrecedenceOperator		::=	"**" .
+highPrecedenceOperator		::=	"*" | "/" | "><" | vectorOp .
+exponentiationOperator		::=	"**" .
 vectorOp			::=	"dot" | "cross" .
 timeOperator			::=	"derivative" | "integral" .
 comparisonOperator		::=	"o<" | "~" | "<" | "<=" | ">" | ">=" | "==" | "<->" .
 languageSetting			::=	"English" .
 
 unitExpression			::=	unitTerm .
-unitTerm			::=	unitFactor {midPrecedenceOperator unitFactor} .
-unitFactor			::=	[unaryOp] (unit [highPrecedenceOperator numericConst]) | "(" unitExpression ")" .
+unitTerm			::=	unitFactor {highPrecedenceOperator unitFactor} .
+unitFactor			::=	[unaryOp] (unit [exponentiationOperator numericConst]) | "(" unitExpression ")" .
 unit				::=	identifier .
 
 sensorPropertyList		::=	sensorProperty {"," sensorProperty} .

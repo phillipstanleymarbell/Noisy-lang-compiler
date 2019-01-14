@@ -635,9 +635,8 @@ isType(State *  N, IrNode *  node)
 		case kNewtonIrNodeType_Tmul:
 		case kNewtonIrNodeType_Tplus:
 		case kNewtonIrNodeType_Tminus:
-		case kNewtonIrNodeType_Texponent:
 		case kNewtonIrNodeType_Tequals:
-		case kNewtonIrNodeType_TintConst:
+		case kNewtonIrNodeType_TintegerConst:
 		case kNewtonIrNodeType_TrealConst:	
 		case kNewtonIrNodeType_TstringConst:
 		case kNewtonIrNodeType_Tcross:
@@ -658,10 +657,10 @@ isType(State *  N, IrNode *  node)
 		case kNewtonIrNodeType_TleftParen:
 		case kNewtonIrNodeType_Tidentifier:
 		case kNewtonIrNodeType_PlanguageSetting:
-		case kNewtonIrNodeType_PcompareOp:
+		case kNewtonIrNodeType_PcomparisonOperator:
 		case kNewtonIrNodeType_PvectorOp:
 		case kNewtonIrNodeType_PhighPrecedenceBinaryOp:
-		case kNewtonIrNodeType_PmidPrecedenceBinaryOp:
+		case kNewtonIrNodeType_PhighPrecedenceOperator:
 		case kNewtonIrNodeType_PlowPrecedenceBinaryOp:
 		case kNewtonIrNodeType_PunaryOp:
 		case kNewtonIrNodeType_PtimeOp:

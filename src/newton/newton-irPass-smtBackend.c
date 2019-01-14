@@ -257,7 +257,7 @@ irPassSmtNodeToStr(State *  N, Invariant *  parentInvariant, IrNode *  node)
 			break;
 		}
 
-		case kNewtonIrNodeType_Texponent:
+		case kNewtonIrNodeType_Texponentiation:
 		{
 			output = malloc(2);
 			strcpy(output, "^");

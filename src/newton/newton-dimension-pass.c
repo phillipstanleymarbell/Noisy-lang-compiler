@@ -204,7 +204,7 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 		 */
 		while(inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
 			  inFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
-			  inFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
+			  inFirst(N, kNewtonIrNodeType_PhighPrecedenceOperator, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
 			  inFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
 			  inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
 			  inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts, kNewtonIrNodeTypeMax) ||

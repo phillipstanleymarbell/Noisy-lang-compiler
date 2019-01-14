@@ -49,9 +49,6 @@
 
 
 
-/*
- *	I just included all the nodes, they shouldn't all be here though
- */
 const char	gNewtonTypeNodeSignatures[kNewtonIrNodeTypeMax] = {
 									[	kNewtonIrNodeType_Tdimensionless	] = '0',
 									[	kNewtonIrNodeType_Tnil			] = 'a',
@@ -70,9 +67,8 @@ const char	gNewtonTypeNodeSignatures[kNewtonIrNodeTypeMax] = {
 									[	kNewtonIrNodeType_Tmul			] = 'n',
 									[	kNewtonIrNodeType_Tplus			] = 'o',
 									[	kNewtonIrNodeType_Tminus		] = 'p',
-									[	kNewtonIrNodeType_Texponent		] = 'q',
 									[	kNewtonIrNodeType_Tequals		] = 'r',
-									[	kNewtonIrNodeType_TintConst		] = 's',
+									[	kNewtonIrNodeType_TintegerConst		] = 's',
 									[	kNewtonIrNodeType_TrealConst		] = 't',
 									[	kNewtonIrNodeType_TstringConst		] = 'u',
 									[	kNewtonIrNodeType_Tcross		] = 'v',
@@ -93,10 +89,10 @@ const char	gNewtonTypeNodeSignatures[kNewtonIrNodeTypeMax] = {
 									[	kNewtonIrNodeType_TleftParen		] = 'L',
 									[	kNewtonIrNodeType_Tidentifier		] = 'M',
 									[	kNewtonIrNodeType_PlanguageSetting	] = 'N',
-									[	kNewtonIrNodeType_PcompareOp		] = 'O',
+									[	kNewtonIrNodeType_PcomparisonOperator	] = 'O',
 									[	kNewtonIrNodeType_PvectorOp		] = 'P',
 									[	kNewtonIrNodeType_PhighPrecedenceBinaryOp]= 'Q',
-									[	kNewtonIrNodeType_PmidPrecedenceBinaryOp] = 'R',
+									[	kNewtonIrNodeType_PhighPrecedenceOperator] = 'R',
 									[	kNewtonIrNodeType_PlowPrecedenceBinaryOp] = 'S',
 									[	kNewtonIrNodeType_PunaryOp		] = 'T',
 									[	kNewtonIrNodeType_PtimeOp		] = 'U',

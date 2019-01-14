@@ -107,7 +107,7 @@ newtonDimensionCheckExpressionOrStatement(
     IrNode *    compareOp = findNthIrNodeOfTypes(
         N,
         tree,
-        kNewtonIrNodeType_PcompareOp,
+        kNewtonIrNodeType_PcomparisonOperator,
         gNewtonFirsts,
         compareOrAssignOpIndex
 		);
@@ -279,7 +279,7 @@ newtonDimensionCheckQuantityTerm(State * N, IrNode * termRoot, char * errorMessa
 	IrNode *    midBinOp = findNthIrNodeOfTypes(
 		N,
 		termRoot,
-		kNewtonIrNodeType_PmidPrecedenceBinaryOp,
+		kNewtonIrNodeType_PhighPrecedenceOperator,
 		gNewtonFirsts,
 		midBinOpIndex
 		);
@@ -328,7 +328,7 @@ newtonDimensionCheckQuantityTerm(State * N, IrNode * termRoot, char * errorMessa
 		midBinOp = findNthIrNodeOfTypes(
 			N,
 			termRoot,
-			kNewtonIrNodeType_PmidPrecedenceBinaryOp,
+			kNewtonIrNodeType_PhighPrecedenceOperator,
 			gNewtonFirsts,
 			midBinOpIndex
 			);
@@ -594,7 +594,7 @@ newtonDimensionCheckNumericTerm(
 	IrNode *    midBinOp = findNthIrNodeOfTypes(
 		N,
 		termRoot,
-		kNewtonIrNodeType_PmidPrecedenceBinaryOp,
+		kNewtonIrNodeType_PhighPrecedenceOperator,
 		gNewtonFirsts,
 		midBinOpIndex
 		);
@@ -657,7 +657,7 @@ newtonDimensionCheckNumericTerm(
 		midBinOp = findNthIrNodeOfTypes(
 			N,
 			termRoot,
-			kNewtonIrNodeType_PmidPrecedenceBinaryOp,
+			kNewtonIrNodeType_PhighPrecedenceOperator,
 			gNewtonFirsts,
 			midBinOpIndex
 			);

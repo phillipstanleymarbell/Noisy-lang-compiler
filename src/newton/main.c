@@ -281,11 +281,12 @@ main(int argc, char *argv[])
 			jumpParameter = setjmp(N->jmpbuf);
 			if (!jumpParameter)
 			{
-				processNewtonFile(N, argv[optind++]);			}
+				processNewtonFile(N, argv[optind++]);
+			}
 			else
 			{
 				/*	Return again after longjmp	*/
-				flexprint(N->Fe, N->Fm, N->Fperr "Processing Newton file failed (returned again after longjmp()): Source file number (passed in jumpParameter) was %d\n", jumpParameter);
+				flexprint(N->Fe, N->Fm, N->Fperr, "Processing Newton file failed (returned again after longjmp()): Source file number (passed in jumpParameter) was %d\n", jumpParameter);
 			}
 		}
 	}

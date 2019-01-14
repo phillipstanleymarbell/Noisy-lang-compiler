@@ -298,7 +298,7 @@ newtonCheckBinOp(
 		    parent->value = left->value / right->value;
             break;
 
-        case kNewtonIrNodeType_Texponent:
+        case kNewtonIrNodeType_Texponentiation:
             /*
              *  left is base and right is exponential expression.
              *  The value of the exponential expression is always dimensionless and should
@@ -379,7 +379,7 @@ checkSingleConstraint(State * N, IrNode * constraintTreeRoot, IrNode * parameter
     IrNode* compareOp = findNthIrNodeOfTypes(
         N,
         constraintTreeRoot,
-        kNewtonIrNodeType_PcompareOp,
+        kNewtonIrNodeType_PcomparisonOperator,
         gNewtonFirsts,
         compareOpIndex
     );
@@ -570,7 +570,7 @@ checkQuantityTerm(
     IrNode * midBinOpNode = findNthIrNodeOfTypes(
         N,
         termRoot,
-        kNewtonIrNodeType_PmidPrecedenceBinaryOp,
+        kNewtonIrNodeType_PhighPrecedenceOperator,
         gNewtonFirsts,
         tracker->midBinOpIndex
     );
@@ -613,7 +613,7 @@ checkQuantityTerm(
         midBinOpNode = findNthIrNodeOfTypes(
             N,
             termRoot,
-            kNewtonIrNodeType_PmidPrecedenceBinaryOp,
+            kNewtonIrNodeType_PhighPrecedenceOperator,
             gNewtonFirsts,
             tracker->midBinOpIndex
         );
