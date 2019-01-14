@@ -173,8 +173,8 @@ production kNewtonIrNodeType_PtimeOperator:		firstset = {
 
 --//		comparisonOperator		::=	"o<" | "~" | "<" | "<=" | ">" | ">=" | "==" | "<->" .
 production kNewtonIrNodeType_PcomparisonOperator:	firstset = {
-									kNewtonIrNodeType_TdimensionAgnosticProportional,
-									kNewtonIrNodeType_TdimensionallyProportional,
+									kNewtonIrNodeType_TdimensionallyAgnosticProportional,
+									kNewtonIrNodeType_TdimensionallyMatchingProportional,
 									kNewtonIrNodeType_Tlt,
 									kNewtonIrNodeType_Tle,
 									kNewtonIrNodeType_Tgt,
@@ -788,7 +788,7 @@ token	kNewtonIrNodeType_Tdot:				followset = {
 									}
 token	kNewtonIrNodeType_Tequals:			followset = {
 									}
-token	kNewtonIrNodeType_TdimensionallyProportional:	followset = {
+token	kNewtonIrNodeType_TdimensionallyMatchingProportional:	followset = {
 									}
 token	kNewtonIrNodeType_Terasuretoken:		followset = {
 									}
@@ -896,7 +896,7 @@ token	kNewtonIrNodeType_Tplus:			followset = {
 									}
 token	kNewtonIrNodeType_Tprecision:			followset = {
 									}
-token	kNewtonIrNodeType_TdimensionAgnosticProportional:followset = {
+token	kNewtonIrNodeType_TdimensionallyAgnosticProportional:followset = {
 									}
 token	kNewtonIrNodeType_Trange:			followset = {
 									}
