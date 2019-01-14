@@ -163,7 +163,7 @@ newtonLex(State *  N, char *  fileName)
 					 */
 					case '~':
 					{
-						checkSingle(N, kNewtonIrNodeType_TdimensionallyProportional);
+						checkSingle(N, kNewtonIrNodeType_TdimensionallyMatchingProportional);
 						continue;
 					}
 					case '(':
@@ -852,7 +852,7 @@ checkProportionality(State * N)
 	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '<')
 	{
 		gobble(N, 2);
-		type = kNewtonIrNodeType_TdimensionAgnosticProportional;
+		type = kNewtonIrNodeType_TdimensionallyAgnosticProportional;
 	}
 	else
 	{
