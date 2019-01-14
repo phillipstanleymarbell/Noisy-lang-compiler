@@ -515,6 +515,7 @@ typedef enum
 	kNewtonIrNodeType_Tnil,
 	kNewtonIrNodeType_Tnone,
 	kNewtonIrNodeType_TnumericConst,
+	kNewtonIrNodeType_Tpercent,
 	kNewtonIrNodeType_Tplus,
 	kNewtonIrNodeType_TplusPlus,
 	kNewtonIrNodeType_Tprecision,
