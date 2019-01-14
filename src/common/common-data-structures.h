@@ -465,7 +465,7 @@ typedef enum
 	kNewtonIrNodeType_TPearsonIII,
 	kNewtonIrNodeType_TPoisson,
 	kNewtonIrNodeType_TRayleigh,
-	kNewtonIrNodeType_TStudent,
+	kNewtonIrNodeType_TStudentT,
 	kNewtonIrNodeType_TStudentZ,
 	kNewtonIrNodeType_TWeibull,
 	kNewtonIrNodeType_TXi,

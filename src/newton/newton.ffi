@@ -334,7 +334,7 @@ production kNewtonIrNodeType_PparameterValueList:	firstset = {
 									kNewtonIrNodeType_TleftParen,
 								}
 
---//		distribution			::=	 "Gaussian" | "Laplacian" | "Student" | "Bernoulli" | "Binomial" 
+--//		distribution			::=	 "Gaussian" | "Laplacian" | "StudentT" | "Bernoulli" | "Binomial" 
 --//							| "Poisson" | "NegativeBinomial" | "BetaBinomial" | "Exponential"
 --//							| "Gamma" | "Multinomial" | "Beta" | "LogitNormal" | "Dirichlet"
 --//							| "Cauchy" | "LogNormal" | "Pareto" | "BetaPrime" | "StudentZ" 
@@ -344,7 +344,7 @@ production kNewtonIrNodeType_PparameterValueList:	firstset = {
 production kNewtonIrNodeType_Pdistribution:		firstset = {
 									kNewtonIrNodeType_TGaussian,
 									kNewtonIrNodeType_TLaplacian,
-									kNewtonIrNodeType_TStudent,
+									kNewtonIrNodeType_TStudentT,
 									kNewtonIrNodeType_TBernoulli,
 									kNewtonIrNodeType_TBinomial,
 									kNewtonIrNodeType_TPoisson,
@@ -729,7 +729,7 @@ production kNewtonIrNodeType_PparameterValueList:	followset = {
 									followset(kNewtonIrNodeType_PdistributionFactor)
 								}
 
---//		distribution			::=	 "Gaussian" | "Laplacian" | "Student" | "Bernoulli" | "Binomial" 
+--//		distribution			::=	 "Gaussian" | "Laplacian" | "StudentT" | "Bernoulli" | "Binomial" 
 --//							| "Poisson" | "NegativeBinomial" | "BetaBinomial" | "Exponential"
 --//							| "Gamma" | "Multinomial" | "Beta" | "LogitNormal" | "Dirichlet"
 --//							| "Cauchy" | "LogNormal" | "Pareto" | "BetaPrime" | "StudentZ" 
@@ -922,7 +922,7 @@ token	kNewtonIrNodeType_Tspi:				followset = {
 									}
 token	kNewtonIrNodeType_Tsymbol:			followset = {
 									}
-token	kNewtonIrNodeType_TStudent:			followset = {
+token	kNewtonIrNodeType_TStudentT:			followset = {
 									}
 token	kNewtonIrNodeType_Tto:				followset = {
 									}
