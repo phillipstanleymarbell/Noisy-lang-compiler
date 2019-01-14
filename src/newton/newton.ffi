@@ -391,7 +391,7 @@ production kNewtonIrNodeType_PlowPrecedenceBinaryOp:	firstset = {
 									kNewtonIrNodeType_Tminus,
 									kNewtonIrNodeType_TrightShift,
 									kNewtonIrNodeType_TleftShift,
-									kNewtonIrNodeType_TarithmeticOr,
+									kNewtonIrNodeType_TbitwiseOr,
 									}
 
 --//		unaryOp				::=	"-"  | "+" .

@@ -475,6 +475,7 @@ typedef enum
 	kNewtonIrNodeType_Tassign,
 	kNewtonIrNodeType_TatSign,
 	kNewtonIrNodeType_Tbits,
+	kNewtonIrNodeType_TbitwiseOr,
 	kNewtonIrNodeType_Tcolon,
 	kNewtonIrNodeType_Tcomma,
 	kNewtonIrNodeType_Tconstant,

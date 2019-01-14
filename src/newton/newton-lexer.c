@@ -198,6 +198,11 @@ newtonLex(State *  N, char *  fileName)
 						checkSingle(N, kNewtonIrNodeType_Tminus);
 						continue;
 					}
+					case '|':
+					{
+						checkSingle(N, kNewtonIrNodeType_TbitwiseOr);
+						continue;
+					}
 					case '*':
 					{
 						checkMul(N);
