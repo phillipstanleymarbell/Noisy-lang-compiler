@@ -62,6 +62,7 @@ static void		checkComment(State *  N);
 static void		checkSingle(State *  N, IrNodeType tokenType);
 static void		checkDoubleQuote(State *  N, bool callFinishTokenFlag);
 static void		finishToken(State *  N);
+static void		checkEqual(State *  N);
 static void		checkGt(State *  N);
 static void		checkLt(State *  N);
 static void		checkMul(State * N);
@@ -165,11 +166,6 @@ newtonLex(State *  N, char *  fileName)
 						checkSingle(N, kNewtonIrNodeType_TdimensionallyProportional);
 						continue;
 					}
-					case '=':
-					{
-						checkSingle(N, kNewtonIrNodeType_Tequals);
-						continue;
-					}
 					case '(':
 					{
 						checkSingle(N, kNewtonIrNodeType_TleftParen);
@@ -239,6 +235,11 @@ newtonLex(State *  N, char *  fileName)
 					 *	These tokens require special handling beyond being paired with an equals,
 					 *	being part of a number, or doubled-up (e.g., ">>", etc.).
 					 */
+					case '=':
+					{
+						checkEqual(N);
+						continue;
+					}
 					case 'o':
 					{
 						checkProportionality(N);
@@ -789,6 +790,40 @@ checkLt(State *  N)
 	{
 		gobble(N, 1);
 		type = kNewtonIrNodeType_Tlt;
+	}
+
+	Token *		newToken = lexAllocateToken(N,			type	/* type		*/,
+									NULL	/* identifier	*/,
+									0	/* integerConst	*/,
+									0.0	/* realConst	*/,
+									NULL	/* stringConst	*/,
+									NULL	/* sourceInfo	*/);
+
+	/*
+	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+	 */
+	done(N, newToken);
+}
+
+static void
+checkEqual(State *  N)
+{
+	IrNodeType		type;
+
+	/*
+	 *	Gobble any extant chars.
+	 */
+	finishToken(N);
+
+	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '=')
+	{
+		gobble(N, 2);
+		type = kNewtonIrNodeType_Tequals;
+	}
+	else
+	{
+		gobble(N, 1);
+		type = kNewtonIrNodeType_Tassign;
 	}
 
 	Token *		newToken = lexAllocateToken(N,			type	/* type		*/,
