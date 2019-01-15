@@ -108,7 +108,6 @@ const char *	gNewtonTokenDescriptions[kCommonIrNodeTypeMax] = {
 									[kNewtonIrNodeType_TdotDot]		= "..",
 									[kNewtonIrNodeType_Tdot]		= "dot",
 									[kNewtonIrNodeType_Tequals]		= "==",
-									[kNewtonIrNodeType_Tequivalent]		= "~",
 									[kNewtonIrNodeType_TerasureToken]	= "erasureToken",
 									[kNewtonIrNodeType_Texponentiation]	= "**",
 									[kNewtonIrNodeType_Tge]			= ">=",
@@ -156,7 +155,6 @@ const char *	gNewtonTokenDescriptions[kCommonIrNodeTypeMax] = {
 									 *	Begin tokens returned by lexer that are not literal keywords
 									 */
 									[kNewtonIrNodeType_Tidentifier]		= "identifier",
-									[kNewtonIrNodeType_TnumericConst]	= "numeric constant",
 									[kNewtonIrNodeType_TintegerConst]	= "integer constant",
 									[kNewtonIrNodeType_TrealConst]		= "real-valued constant",
 									[kNewtonIrNodeType_TstringConst]	= "string constant",

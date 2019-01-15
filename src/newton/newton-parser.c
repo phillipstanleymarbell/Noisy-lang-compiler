@@ -106,7 +106,7 @@ newtonParseFile(State *  N, Scope *  currentScope)
 {
 	IrNode *	node = genIrNode(
 						N,
-						kNewtonIrNodeType_PnewtonFile,
+						kNewtonIrNodeType_PnewtonDescription,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
@@ -117,7 +117,7 @@ newtonParseFile(State *  N, Scope *  currentScope)
 	 */
 	currentScope->begin = lexPeek(N, 1)->sourceInfo;
 
-	addLeaf(N, node, newtonParseStatementList(N, currentScope));
+	addLeaf(N, node, newtonParseRuleList(N, currentScope));
 
 	if (lexPeek(N, 1)->type != kNewtonIrNodeType_Zeof)
 	{
@@ -130,11 +130,16 @@ newtonParseFile(State *  N, Scope *  currentScope)
 	 */
 	N->tokenList = N->tokenList->next;
 
-	if (!inFollow(N, kNewtonIrNodeType_PnewtonFile, gNewtonFollows, kNewtonIrNodeTypeMax))
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PnewtonDescription, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_PnewtonFile, kNewtonIrNodeTypeMax, gNewtonFollows);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnewtonFile);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PnewtonDescription, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnewtonDescription);
 	}
+	*/
 
 	return node;
 }
@@ -147,31 +152,36 @@ newtonParseFile(State *  N, Scope *  currentScope)
  *		ruleList			::=	{rule} .
  */
 IrNode *
-newtonParseStatementList(State *  N, Scope *  currentScope)
+newtonParseRuleList(State *  N, Scope *  currentScope)
 {
 	IrNode *	node = genIrNode(
 						N,
-						kNewtonIrNodeType_PstatementList,
+						kNewtonIrNodeType_PruleList,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
-	if (inFirst(N, kNewtonIrNodeType_Pstatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	if (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeaf(N, node, newtonParseStatement(N, currentScope));
+		addLeaf(N, node, newtonParseRule(N, currentScope));
 	}
 
-	while (inFirst(N, kNewtonIrNodeType_Pstatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	while (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeafWithChainingSeq(N, node, newtonParseStatement(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseRule(N, currentScope));
 	}
 
-	if (!inFollow(N, kNewtonIrNodeType_PstatementList, gNewtonFollows, kNewtonIrNodeTypeMax))
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PruleList, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_PstatementList, kNewtonIrNodeTypeMax, gNewtonFollows);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_PstatementList);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PruleList, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PruleList);
 	}
+	*/
 
 	return node;
 }
@@ -184,7 +194,7 @@ newtonParseStatementList(State *  N, Scope *  currentScope)
  *		rule				::=	constantDefinition | invariantDefinition | baseSignalDefinition | sensorDefinition .
  */
 IrNode *
-newtonParseStatement(State *  N, Scope *  currentScope)
+newtonParseRule(State *  N, Scope *  currentScope)
 {
 	IrNode *	node;
 
@@ -212,18 +222,23 @@ newtonParseStatement(State *  N, Scope *  currentScope)
 
 		default:
 		{
-			newtonParserSyntaxError(N, kNewtonIrNodeType_Pstatement, kNewtonIrNodeTypeMax, gNewtonFirsts);
-			newtonParserErrorRecovery(N, kNewtonIrNodeType_Pstatement);
+			newtonParserSyntaxError(N, kNewtonIrNodeType_Prule, kNewtonIrNodeTypeMax, gNewtonFirsts);
+			newtonParserErrorRecovery(N, kNewtonIrNodeType_Prule);
 		}
 	}
 
 	currentScope->end = lexPeek(N, 1)->sourceInfo;
 
-	if (!inFollow(N, kNewtonIrNodeType_Pstatement, gNewtonFollows, kNewtonIrNodeTypeMax))
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_Prule, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Pstatement, kNewtonIrNodeTypeMax, gNewtonFollows);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pstatement);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_Prule, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Prule);
 	}
+	*/
 
 	return node;
 }
@@ -233,12 +248,12 @@ newtonParseStatement(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		constantDefinition		::=	identifier ":" "constant" "=" numericConst [unitExpression] ";" .
+ *		constantDefinition		::=	identifier ":" "constant" "=" numericConst ["*" unitExpression] ";" .
  */
 IrNode *
 newtonParseConstant(State *  N, Scope *  currentScope)
 {
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pconstant,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PconstantDefinition,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
@@ -255,7 +270,7 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 
 	if (inFirst(N, kNewtonIrNodeType_PnumericConst, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		IrNode *	constantExpression = newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope);
+		IrNode *	constantExpression = newtonParseNumericConst(N, currentScope);
 		constantPhysics->value = constantExpression->value;
 		constantPhysics->isConstant = true;
 
@@ -269,18 +284,14 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 		 */
 		if (constantPhysics->isVector)
 		{
-			newtonParserSyntaxError(N, kNewtonIrNodeType_Pconstant, kNewtonIrNodeTypeMax, gNewtonFirsts);
-			newtonParserErrorRecovery(N, kNewtonIrNodeType_Pconstant);
+			newtonParserSyntaxError(N, kNewtonIrNodeType_PconstantDefinition, kNewtonIrNodeTypeMax, gNewtonFirsts);
+			newtonParserErrorRecovery(N, kNewtonIrNodeType_PconstantDefinition);
 		}
 	}
-	else
-	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_PnumericConst, kNewtonIrNodeTypeMax, gNewtonFirsts);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnumericConst);
-	}
 
-	if (inFirst(N, kNewtonIrNodeType_PunitExpression, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	if (peekCheck(N, 1, kNewtonIrNodeType_Tmul))
 	{
+		newtonParseTerminal(N, kNewtonIrNodeType_Tmul, currentScope);
 		addLeafWithChainingSeq(N, node, newtonParseUnitExpression(N, currentScope));
 	}
 	else
@@ -292,11 +303,16 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 
-	if (!inFollow(N, kNewtonIrNodeType_Pconstant, gNewtonFollows, kNewtonIrNodeTypeMax))
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PconstantDefinition, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Pconstant, kNewtonIrNodeTypeMax, gNewtonFollows);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pconstant);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PconstantDefinition, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PconstantDefinition);
 	}
+	*/
 
 	return node;
 }
@@ -311,7 +327,7 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseInvariant(State *  N, Scope *  currentScope)
 {
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pinvariant,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PinvariantDefinition,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
@@ -358,11 +374,16 @@ newtonParseInvariant(State *  N, Scope *  currentScope)
 	commonSymbolTableCloseScope(N, newScope, scopeEnd);
 	newtonAddInvariant(N, invariant);
 
-	if (!inFollow(N, kNewtonIrNodeType_Pinvariant, gNewtonFollows, kNewtonIrNodeTypeMax))
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PinvariantDefinition, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Pinvariant, kNewtonIrNodeTypeMax, gNewtonFollows);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pinvariant);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PinvariantDefinition, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PinvariantDefinition);
 	}
+	*/
 
 	return node;
 }
@@ -377,48 +398,43 @@ newtonParseInvariant(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseSubindexTuple(State *  N, Scope *  currentScope)
 {
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsubindexTuple,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsubdimensionTuple,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
-
-	IrNode *	subindexNode = genIrNode(N,	kNewtonIrNodeType_Psubindex,
-						NULL /* left child */,
-						NULL /* right child */,
-						lexPeek(N, 1)->sourceInfo /* source info */
-					);
 	addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
 
-	node->subindexStart = newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope)->value;
+	node->subindexStart = newtonParseNumericConst(N, currentScope)->value;
 	newtonParseTerminal(N, kNewtonIrNodeType_Tto, currentScope);
-	node->subindexEnd = newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope)->value;
+	node->subindexEnd = newtonParseNumericConst(N, currentScope)->value;
 
 	if (node->subindexEnd <= 0)
 	{
 		char *	details;
 
 		asprintf(&details, "%s\n", EsubindexEndMustBeNaturalnumber);
-		newtonParserSemanticError(N, kNewtonIrNodeType_Psubindex, details);
+		newtonParserSemanticError(N, kNewtonIrNodeType_PsubdimensionTuple, details);
 		free(details);
 
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_Psubindex);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsubdimensionTuple);
 	}
-	addLeaf(N, node, subindexNode);
-
-	node->subindexStart = subindexNode->subindexStart;
-	node->subindexEnd = subindexNode->subindexEnd;
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 
-	if (!inFollow(N, kNewtonIrNodeType_PsubindexTuple, gNewtonFollows, kNewtonIrNodeTypeMax))
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PsubdimensionTuple, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_PsubindexTuple, kNewtonIrNodeTypeMax, gNewtonFollows);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsubindexTuple);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PsubdimensionTuple, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsubdimensionTuple);
 	}
+	*/
 
 	return node;
 }
@@ -451,11 +467,16 @@ newtonParseParameterTuple(State *  N, Scope *  currentScope)
 	}
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PparameterTuple, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PparameterTuple, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PparameterTuple);
 	}
+	*/
 
 	return node;
 }
@@ -465,7 +486,7 @@ newtonParseParameterTuple(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		parameter			::=	identifier ":" identifier .
+ *		parameter			::=	identifier ":" identifier {"@" integerConst} .
  */
 IrNode *
 newtonParseParameter(State *  N, Scope *  currentScope, int parameterNumber)
@@ -493,18 +514,23 @@ newtonParseParameter(State *  N, Scope *  currentScope, int parameterNumber)
 			physicsName,
 			currentScope,
 			physicsName->token->identifier,
-			newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope)->value
+			newtonParseTerminal(N, kNewtonIrNodeType_TintegerConst, currentScope)->value
 		);
 	}
 
 	node->parameterNumber = parameterNumber;
 	node->physics = physicsName->physics;
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_Pparameter, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_Pparameter, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pparameter);
 	}
+	*/
 
 	return node;
 }
@@ -527,11 +553,16 @@ newtonParseUnitExpression(State *  N, Scope *  currentScope)
 
 	addLeaf(N, node, newtonParseUnitTerm(N, currentScope));
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PunitExpression, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PunitExpression, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PunitExpression);
 	}
+	*/
 
 	return node;
 }
@@ -560,11 +591,16 @@ newtonParseUnitTerm(State *  N, Scope *  currentScope)
 		addLeafWithChainingSeq(N, node, newtonParseUnitFactor(N, currentScope));
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PunitTerm, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PunitTerm, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PunitTerm);
 	}
+	*/
 
 	return node;
 }
@@ -636,7 +672,7 @@ newtonParseUnitFactor(State *  N, Scope *  currentScope)
 		if (inFirst(N, kNewtonIrNodeType_PexponentiationOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
 		{
 			addLeafWithChainingSeq(N, node, newtonParseExponentiationOperator(N, currentScope));
-			IrNode *	exponentValue = newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope);
+			IrNode *	exponentValue = newtonParseNumericConst(N, currentScope);
 			addLeafWithChainingSeq(N, node, exponentValue);
 			setPhysicsOfBaseNode(N, unitNode, exponentValue);
 		}
@@ -649,11 +685,16 @@ newtonParseUnitFactor(State *  N, Scope *  currentScope)
 		newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PunitFactor, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PunitFactor, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PunitFactor);
 	}
+	*/
 
 	return node;
 }
@@ -677,11 +718,16 @@ newtonParseUnit(State *  N, Scope *  currentScope)
 	node->physics = newtonInitPhysics(N, currentScope, NULL);
 	addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_Punit, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_Punit, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Punit);
 	}
+	*/
 
 	return node;
 }
@@ -696,7 +742,7 @@ newtonParseUnit(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseBaseSignal(State *  N, Scope *  currentScope)
 {
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PbaseSignal,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PbaseSignalDefinition,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
@@ -726,7 +772,7 @@ newtonParseBaseSignal(State *  N, Scope *  currentScope)
 	 *	Name syntax is optional
 	 */
 	IrNode *	unitName = NULL;
-	if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	if (inFirst(N, kNewtonIrNodeType_PnameStatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		unitName = newtonParseName(N, currentScope);
 		addLeafWithChainingSeq(N, node, unitName);
@@ -737,7 +783,7 @@ newtonParseBaseSignal(State *  N, Scope *  currentScope)
 	 *	Abbreviation syntax is also optional
 	 */
 	IrNode *	unitAbbreviation = NULL;
-	if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	if (inFirst(N, kNewtonIrNodeType_PsymbolStatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		unitAbbreviation = newtonParseSymbol(N, currentScope);
 		addLeafWithChainingSeq(N, node, unitAbbreviation);
@@ -789,11 +835,16 @@ newtonParseBaseSignal(State *  N, Scope *  currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
 	currentScope->currentSubindex = 0;
 
-	if (!inFollow(N, kNewtonIrNodeType_PbaseSignal, gNewtonFollows, kNewtonIrNodeTypeMax))
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PbaseSignalDefinition, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_PbaseSignal, kNewtonIrNodeTypeMax, gNewtonFollows);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_PbaseSignal);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PbaseSignalDefinition, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PbaseSignalDefinition);
 	}
+	*/
 
 	return node;
 }
@@ -808,7 +859,7 @@ newtonParseBaseSignal(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseName(State *  N, Scope *  currentScope)
 {
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pname,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnameStatement,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
@@ -824,11 +875,16 @@ newtonParseName(State *  N, Scope *  currentScope)
 	addLeafWithChainingSeq(N, node, newtonParseLanguageSetting(N, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 
-	if (!inFollow(N, kNewtonIrNodeType_Pname, gNewtonFollows, kNewtonIrNodeTypeMax))
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PnameStatement, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Pname, kNewtonIrNodeTypeMax, gNewtonFollows);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pname);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PnameStatement, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnameStatement);
 	}
+	*/
 
 	return node;
 }
@@ -859,11 +915,16 @@ newtonParseLanguageSetting(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PlanguageSetting);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PlanguageSetting, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PlanguageSetting, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PlanguageSetting);
 	}
+	*/
 
 	return node;
 }
@@ -878,7 +939,7 @@ newtonParseLanguageSetting(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseSymbol(State *  N, Scope *  currentScope)
 {
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Psymbol,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsymbolStatement,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
@@ -893,11 +954,16 @@ newtonParseSymbol(State *  N, Scope *  currentScope)
 	addLeaf(N, node, baseSignalAbbreviation);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 
-	if (!inFollow(N, kNewtonIrNodeType_Psymbol, gNewtonFollows, kNewtonIrNodeTypeMax))
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PsymbolStatement, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Psymbol, kNewtonIrNodeTypeMax, gNewtonFollows);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_Psymbol);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PsymbolStatement, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsymbolStatement);
 	}
+	*/
 
 	return node;
 }
@@ -912,7 +978,7 @@ newtonParseSymbol(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseDerivation(State *  N, Scope *  currentScope)
 {
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pderivation,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PderivationStatement,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
@@ -934,11 +1000,16 @@ newtonParseDerivation(State *  N, Scope *  currentScope)
 	}
 	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 
-	if (!inFollow(N, kNewtonIrNodeType_Pderivation, gNewtonFollows, kNewtonIrNodeTypeMax))
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PderivationStatement, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Pderivation, kNewtonIrNodeTypeMax, gNewtonFollows);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pderivation);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PderivationStatement, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PderivationStatement);
 	}
+	*/
 
 	return node;
 }
@@ -967,21 +1038,20 @@ newtonParseTerminal(State *  N, IrNodeType expectedType, Scope *  currentScope)
 	n->token = t;
 	n->tokenString = t->identifier;
 
-	if (t->type == kNewtonIrNodeType_TnumericConst)
+	if (t->type == kNewtonIrNodeType_TintegerConst)
 	{
-		n->value = 0.0;
-		if (t->integerConst != 0)
-		{
-			n->value = t->integerConst;
-		}
-		else if (t->realConst != 0)
-		{
-			n->value = t->realConst;
-		}
+		n->value = t->integerConst;
+	}
+
+	if (t->type == kNewtonIrNodeType_TrealConst)
+	{
+		n->value = t->realConst;
 	}
 
 	return n;
 }
+
+
 
 IrNode *
 newtonParseIdentifier(State *  N, Scope *  currentScope)
@@ -998,11 +1068,16 @@ newtonParseIdentifier(State *  N, Scope *  currentScope)
 	newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeType_Tidentifier, gNewtonFirsts);
 	newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_Tidentifier, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
 	}
+	*/
 
 	return NULL;
 }
@@ -1079,11 +1154,16 @@ newtonParseQuantityExpression(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PquantityExpression);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PquantityExpression, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PquantityExpression, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PquantityExpression);
 	}
+	*/
 
 	return expression;
 }
@@ -1209,27 +1289,19 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 		intermediate->value = 0;
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PquantityTerm, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PquantityTerm, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PquantityTerm);
 	}
+	*/
 
 	return intermediate;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1241,7 +1313,6 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
  *							"(" quantityExpression ")" 						|
  *							"{" quantityExpression {"," quantityExpression} "}" .
  */
-
 IrNode *
 newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 {
@@ -1295,9 +1366,8 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 	}
 	else if (peekCheck(N, 1, kNewtonIrNodeType_TleftParen))
 	{
-		IrNode *	subnode = newtonParseQuantityExpression(N, currentScope);
-
 		newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
+		IrNode *	subnode = newtonParseQuantityExpression(N, currentScope);
 		addLeafWithChainingSeq(N, intermediate, subnode);
 		newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 
@@ -1330,11 +1400,16 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PquantityFactor);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PquantityFactor, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PquantityFactor, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PquantityFactor);
 	}
+	*/
 
 	return intermediate;
 }
@@ -1356,7 +1431,7 @@ newtonParseQuantity(State *  N, Scope *  currentScope)
 
 	if (inFirst(N, kNewtonIrNodeType_PnumericConst, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeaf(N, intermediate, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+		addLeaf(N, intermediate, newtonParseNumericConst(N, currentScope));
 	}
 	else if (peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
 	{
@@ -1408,7 +1483,7 @@ newtonParseQuantity(State *  N, Scope *  currentScope)
 		while (peekCheck(N, 1, kNewtonIrNodeType_TatSign))
 		{
 			newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
-			addLeafWithChainingSeq(N, intermediate, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+			addLeafWithChainingSeq(N, intermediate, newtonParseNumericConst(N, currentScope));
 		}
 	}
 	else
@@ -1417,11 +1492,16 @@ newtonParseQuantity(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pquantity);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_Pquantity, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_Pquantity, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pquantity);
 	}
+	*/
 
 	return intermediate;
 }
@@ -1456,11 +1536,16 @@ newtonParseTimeOperator(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PtimeOperator);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PtimeOperator, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PtimeOperator, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PtimeOperator);
 	}
+	*/
 
 	return node;
 }
@@ -1495,11 +1580,16 @@ newtonParseVectorOp(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PvectorOp);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PvectorOp, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PvectorOp, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PvectorOp);
 	}
+	*/
 
 	return node;
 }
@@ -1530,11 +1620,16 @@ newtonParseExponentiationOperator(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PexponentiationOperator);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PexponentiationOperator, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PexponentiationOperator, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PexponentiationOperator);
 	}
+	*/
 
 	return node;
 }
@@ -1582,11 +1677,16 @@ newtonParseLowPrecedenceBinaryOp(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp);
 	}
+	*/
 
 	return node;
 }
@@ -1621,11 +1721,16 @@ newtonParseUnaryOp(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PunaryOp);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PunaryOp, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PunaryOp, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PunaryOp);
 	}
+	*/
 
 	return node;
 }
@@ -1672,11 +1777,16 @@ newtonParseCompareOp(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PcomparisonOperator);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PcomparisonOperator, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PcomparisonOperator, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PcomparisonOperator);
 	}
+	*/
 
 	/*
 	 *	Not reached.
@@ -1722,11 +1832,16 @@ newtonParseHighPrecedenceBinaryOp(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp);
 	}
+	*/
 
 	return node;
 }
@@ -1761,11 +1876,16 @@ newtonParseLowPrecedenceOperator(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PlowPrecedenceOperator);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PlowPrecedenceOperator, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PlowPrecedenceOperator, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PlowPrecedenceOperator);
 	}
+	*/
 
 	return node;
 }
@@ -1809,11 +1929,16 @@ newtonParseHighPrecedenceOperator(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp);
 	}
+	*/
 
 	return node;
 }
@@ -1850,11 +1975,16 @@ newtonParseConstraint(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pconstraint);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_Pconstraint, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_Pconstraint, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pconstraint);
 	}
+	*/
 
 	return node;
 }
@@ -1893,53 +2023,19 @@ newtonParseConstraintList(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pconstraint);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PconstraintList, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PconstraintList, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PconstraintList);
 	}
+	*/
 
 	return node;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1966,11 +2062,16 @@ newtonParseSensorDefinition(State *  N, Scope *  currentScope)
 	addLeafWithChainingSeq(N, node, newtonParseSensorPropertyList(N, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, currentScope);
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PsensorDefinition, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PsensorDefinition, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsensorDefinition);
 	}
+	*/
 
 	return node;
 }
@@ -1999,11 +2100,16 @@ newtonParseSensorPropertyList(State *  N, Scope *  currentScope)
 		addLeafWithChainingSeq(N, node, newtonParseSensorProperty(N, currentScope));
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PsensorPropertyList, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PsensorPropertyList, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsensorPropertyList);
 	}
+	*/
 
 	return node;
 }
@@ -2054,11 +2160,16 @@ newtonParseSensorProperty(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsensorProperty);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PsensorProperty, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PsensorProperty, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsensorProperty);
 	}
+	*/
 
 	return node;
 }
@@ -2086,7 +2197,7 @@ newtonParseSensorInterfaceStatement(State *  N, Scope *  currentScope)
 	if (peekCheck(N, 1, kNewtonIrNodeType_TatSign))
 	{
 		newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
-		addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseNumericConst(N, currentScope));
 		newtonParseTerminal(N, kNewtonIrNodeType_Tmul, currentScope);
 		newtonParseTerminal(N, kNewtonIrNodeType_Tbits, currentScope);
 	}
@@ -2102,11 +2213,16 @@ newtonParseSensorInterfaceStatement(State *  N, Scope *  currentScope)
 		newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PsensorInterfaceStatement, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PsensorInterfaceStatement, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsensorInterfaceStatement);
 	}
+	*/
 
 	return node;
 }
@@ -2145,11 +2261,16 @@ newtonParseSensorInterfaceType(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsensorInterfaceType);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PsensorInterfaceType, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PsensorInterfaceType, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsensorInterfaceType);
 	}
+	*/
 
 	return node;
 }
@@ -2178,11 +2299,16 @@ newtonParseSensorInterfaceCommandList(State *  N, Scope *  currentScope)
 		addLeafWithChainingSeq(N, node, newtonParseSensorInterfaceCommand(N, currentScope));
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PsensorInterfaceCommandList, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PsensorInterfaceCommandList, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsensorInterfaceCommandList);
 	}
+	*/
 
 	return node;
 }
@@ -2225,11 +2351,16 @@ newtonParseSensorInterfaceCommand(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsensorInterfaceCommand);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PsensorInterfaceCommand, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PsensorInterfaceCommand, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PsensorInterfaceCommand);
 	}
+	*/
 
 	return node;
 }
@@ -2257,17 +2388,22 @@ newtonParseReadRegisterCommand(State *  N, Scope *  currentScope)
 	if (peekCheck(N, 1, kNewtonIrNodeType_TleftBracket))
 	{
 		newtonParseTerminal(N, kNewtonIrNodeType_TleftBracket, currentScope);
-		addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseNumericConst(N, currentScope));
 		newtonParseTerminal(N, kNewtonIrNodeType_TrightBracket, currentScope);
 	}
 
-	addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+	addLeafWithChainingSeq(N, node, newtonParseNumericConst(N, currentScope));
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PreadRegisterCommand, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PreadRegisterCommand, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PreadRegisterCommand);
 	}
+	*/
 
 	return node;
 }
@@ -2289,14 +2425,19 @@ newtonParseWriteRegisterCommand(State *  N, Scope *  currentScope)
 					);
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Twrite, currentScope);
-	addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
-	addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+	addLeaf(N, node, newtonParseNumericConst(N, currentScope));
+	addLeaf(N, node, newtonParseNumericConst(N, currentScope));
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PwriteRegisterCommand, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PwriteRegisterCommand, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PwriteRegisterCommand);
 	}
+	*/
 
 	return node;
 }
@@ -2318,13 +2459,18 @@ newtonParseDelayCommand(State *  N, Scope *  currentScope)
 					);
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tdelay, currentScope);
-	addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+	addLeaf(N, node, newtonParseNumericConst(N, currentScope));
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PdelayCommand, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PdelayCommand, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PdelayCommand);
 	}
+	*/
 
 	return node;
 }
@@ -2349,11 +2495,16 @@ newtonParseArithmeticCommand(State *  N, Scope *  currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
 	addLeaf(N, node, newtonParseExpression(N, currentScope));
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_ParithmeticCommand, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_ParithmeticCommand, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_ParithmeticCommand);
 	}
+	*/
 
 	return node;
 }
@@ -2378,7 +2529,7 @@ newtonParseRangeStatement(State *  N, Scope *  currentScope)
 	addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftBracket, currentScope);
-	addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+	addLeafWithChainingSeq(N, node, newtonParseNumericConst(N, currentScope));
 
 	if (inFirst(N, kNewtonIrNodeType_PunitExpression, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
@@ -2386,7 +2537,7 @@ newtonParseRangeStatement(State *  N, Scope *  currentScope)
 	}
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
-	addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+	addLeaf(N, node, newtonParseNumericConst(N, currentScope));
 
 	if (inFirst(N, kNewtonIrNodeType_PunitExpression, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
@@ -2395,11 +2546,16 @@ newtonParseRangeStatement(State *  N, Scope *  currentScope)
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftBracket, currentScope);
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PrangeStatement, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PrangeStatement, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PrangeStatement);
 	}
+	*/
 
 	return node;
 }
@@ -2430,11 +2586,16 @@ newtonParseUncertaintyStatement(State *  N, Scope *  currentScope)
 		addLeafWithChainingSeq(N, node, newtonParseUnitExpression(N, currentScope));
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PuncertaintyStatement, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PuncertaintyStatement, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PuncertaintyStatement);
 	}
+	*/
 
 	return node;
 }
@@ -2458,18 +2619,23 @@ newtonParseErasureValueStatement(State *  N, Scope *  currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_TerasureToken, currentScope);
 	addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
-	addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+	addLeafWithChainingSeq(N, node, newtonParseNumericConst(N, currentScope));
 
 	if (inFirst(N, kNewtonIrNodeType_PunitExpression, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		addLeafWithChainingSeq(N, node, newtonParseUnitExpression(N, currentScope));
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PerasureValueStatement, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PerasureValueStatement, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PerasureValueStatement);
 	}
+	*/
 
 	return node;
 }
@@ -2495,11 +2661,16 @@ newtonParseAccuracyStatement(State *  N, Scope *  currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 	addLeaf(N, node, newtonParseNumericConstTupleList(N, currentScope));
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PaccuracyStatement, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PaccuracyStatement, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PaccuracyStatement);
 	}
+	*/
 
 	return node;
 }
@@ -2525,11 +2696,16 @@ newtonParsePrecisionStatement(State *  N, Scope *  currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 	addLeaf(N, node, newtonParseNumericConstTupleList(N, currentScope));
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PprecisionStatement, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PprecisionStatement, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PprecisionStatement);
 	}
+	*/
 
 	return node;
 }
@@ -2560,11 +2736,64 @@ newtonParseNumericConstTupleList(State *  N, Scope *  currentScope)
 	}
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PnumericConstTupleList, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PnumericConstTupleList, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnumericConstTupleList);
 	}
+	*/
+
+	return node;
+}
+
+
+
+/*
+ *	Grammar production:
+ *
+ *		numericConst			::=	integerConst | realConst .
+ */
+IrNode *
+newtonParseNumericConst(State *  N, Scope *  currentScope)
+{
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnumericConst,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */
+					);
+
+	if (peekCheck(N, 1, kNewtonIrNodeType_TintegerConst))
+	{
+		IrNode *	valueNode = newtonParseTerminal(N, kNewtonIrNodeType_TintegerConst, currentScope);
+		addLeaf(N, node, valueNode);
+		node->value = valueNode->value;
+	}
+	else if (peekCheck(N, 1, kNewtonIrNodeType_TrealConst))
+	{
+		IrNode *	valueNode = newtonParseTerminal(N, kNewtonIrNodeType_TrealConst, currentScope);
+		addLeaf(N, node, valueNode);
+		node->value = valueNode->value;
+	}
+	else
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PnumericConst, kNewtonIrNodeType_PnumericConst, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnumericConst);
+	}
+
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PnumericConst, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PnumericConst, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnumericConst);
+	}
+	*/
 
 	return node;
 }
@@ -2586,7 +2815,7 @@ newtonParseNumericConstTuple(State *  N, Scope *  currentScope)
 					);
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
-	addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+	addLeaf(N, node, newtonParseNumericConst(N, currentScope));
 
 	if (inFirst(N, kNewtonIrNodeType_PunitExpression, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
@@ -2594,14 +2823,19 @@ newtonParseNumericConstTuple(State *  N, Scope *  currentScope)
 	}
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TdotDot, currentScope);
-	addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+	addLeaf(N, node, newtonParseNumericConst(N, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PnumericConstTuple, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PnumericConstTuple, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnumericConstTuple);
 	}
+	*/
 
 	return node;
 }
@@ -2630,11 +2864,16 @@ newtonParseExpression(State *  N, Scope *  currentScope)
 		addLeafWithChainingSeq(N, node, newtonParseTerm(N, currentScope));
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_Pexpression, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_Pexpression, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pexpression);
 	}
+	*/
 
 	return node;
 }
@@ -2675,11 +2914,16 @@ newtonParseTerm(State *  N, Scope *  currentScope)
 		addLeafWithChainingSeq(N, node, newtonParseFactor(N, currentScope));
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_Pterm, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_Pterm, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pterm);
 	}
+	*/
 
 	return node;
 }
@@ -2702,7 +2946,7 @@ newtonParseFactor(State *  N, Scope *  currentScope)
 
 	if (inFirst(N, kNewtonIrNodeType_PnumericConst, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+		addLeaf(N, node, newtonParseNumericConst(N, currentScope));
 	}
 	else if (peekCheck(N, 1, kNewtonIrNodeType_TleftParen))
 	{
@@ -2721,7 +2965,7 @@ newtonParseFactor(State *  N, Scope *  currentScope)
 		if (peekCheck(N, 1, kNewtonIrNodeType_TleftBracket))
 		{
 			newtonParseTerminal(N, kNewtonIrNodeType_TleftBracket, currentScope);
-			addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope));
+			addLeaf(N, node, newtonParseNumericConst(N, currentScope));
 			newtonParseTerminal(N, kNewtonIrNodeType_TrightBracket, currentScope);
 		}
 	}
@@ -2731,11 +2975,16 @@ newtonParseFactor(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pfactor);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_Pfactor, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_Pfactor, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pfactor);
 	}
+	*/
 
 	return node;
 }
@@ -2759,11 +3008,16 @@ newtonParseDistributionFactor(State *  N, Scope *  currentScope)
 	addLeaf(N, node, newtonParseDistribution(N, currentScope));
 	addLeaf(N, node, newtonParseParameterValueList(N, currentScope));
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PdistributionFactor, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PdistributionFactor, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PdistributionFactor);
 	}
+	*/
 
 	return node;
 }
@@ -2799,11 +3053,16 @@ newtonParseParameterValueList(State *  N, Scope *  currentScope)
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_PparameterValueList, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_PparameterValueList, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PparameterValueList);
 	}
+	*/
 
 	return node;
 }
@@ -2965,11 +3224,16 @@ newtonParseDistribution(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pdistribution);
 	}
 
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
 	if (!inFollow(N, kNewtonIrNodeType_Pdistribution, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_Pdistribution, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pdistribution);
 	}
+	*/
 
 	return node;
 }

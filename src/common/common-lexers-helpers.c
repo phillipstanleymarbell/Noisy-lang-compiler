@@ -92,11 +92,11 @@ done(State *  N, Token *  newToken)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexerDone);
 
-	newToken->sourceInfo = lexAllocateSourceInfo(N,	NULL				/*   genealogy 	*/,
-								N->fileName			/*   fileName 	*/,
-								N->lineNumber			/*   lineNumber */,
-								N->columnNumber - N->currentTokenLength /* columnNumber */,
-								N->currentTokenLength		/*   length 	*/);
+	newToken->sourceInfo = lexAllocateSourceInfo(N,	NULL						/*	genealogy	*/,
+								N->fileName				/*	fileName 	*/,
+								N->lineNumber				/*	lineNumber	*/,
+								N->columnNumber - N->currentTokenLength /*	columnNumber	*/,
+								N->currentTokenLength			/*	length		*/);
 
 	bzero(N->currentToken, kNoisyMaxBufferLength);
 	N->currentTokenLength = 0;
@@ -624,7 +624,6 @@ lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexDebugPrintToken);
 
-    /* for now replacing gterminalstrings with tokendescription array because Newton doesn't use it */
 	flexprint(N->Fe, N->Fm, N->Fperr, "Token %30s: ", tokenDescriptionArray[t->type]);
 
 	switch (t->type)
@@ -693,7 +692,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 	Token *	tmp = N->tokenList;
 
 	if (N->mode & kNoisyModeCGI)
-        {
+	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\tline %5d, token %3d\t", tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
 	}
 	else
@@ -732,6 +731,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 				}
 
 				case kNoisyIrNodeType_TintegerConst:
+				case kNewtonIrNodeType_TintegerConst:
 				{
 					flexprint(N->Fe, N->Fm, N->Fperr, "'%"PRIu64"' ", tmp->integerConst);
 
@@ -741,7 +741,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 					break;
 				}
 
-				case kNewtonIrNodeType_TnumericConst:
+				case kNewtonIrNodeType_TrealConst:
 				case kNoisyIrNodeType_TrealConst:
 				{
 					flexprint(N->Fe, N->Fm, N->Fperr, "'%f' ", tmp->realConst);

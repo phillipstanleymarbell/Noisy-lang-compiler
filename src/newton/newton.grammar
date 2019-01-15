@@ -25,7 +25,6 @@ integerConst			::=	["+" | "-"] [radix] ("0" | oneToNine {zeroToNine}) | charCons
 drealConst			=	("0" | oneToNine {zeroToNine}) "." {zeroToNine} .
 erealConst			=	(drealConst | integerConst) ("e" | "E") integerConst .
 realConst			::=	["+" | "-"] (drealConst | erealConst) .
-numericConst			::=	integerConst | realConst .
 stringConst			::=	'"' {character} '"' .
 idchar				=	char-except-rsvopseptoken .
 identifier			::=	(idchar-except-zeroToNine) {idchar} .
@@ -38,7 +37,7 @@ newtonDescription		::=	ruleList .
 ruleList			::=	{rule} .
 rule				::=	constantDefinition | invariantDefinition | baseSignalDefinition | sensorDefinition .
 
-constantDefinition		::=	identifier ":" "constant" "=" numericConst [unitExpression] ";" .
+constantDefinition		::=	identifier ":" "constant" "=" numericConst ["*" unitExpression] ";" .
 invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" constraintList "}" .
 baseSignalDefinition		::=	identifier ":" "signal" [subdimensionTuple] "=" "{" [nameStatement] symbolStatement derivationStatement "}" .
 sensorDefinition		::=	identifier ":" "sensor" parameterTuple "=" "{" sensorPropertyList "}" .
@@ -49,7 +48,7 @@ derivationStatement		::=	"derivation" "=" ("none" | "dimensionless" | quantityEx
 
 subdimensionTuple		::=	"(" identifier ":" numericConst "to" numericConst ")" .
 parameterTuple			::=	"(" parameter {"," parameter} ")" .
-parameter			::=	identifier ":" identifier .
+parameter			::=	identifier ":" identifier {"@" integerConst} .
 
 constraintList			::=	[constraint] {"," constraint} .
 constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
@@ -91,6 +90,7 @@ accuracyStatement		::=	"accuracy" identifier "==" numericConstTupleList .
 precisionStatement		::=	"precision" identifier "==" numericConstTupleList .
 numericConstTupleList		::=	"{" numericConstTuple {"," numericConstTuple} "}" .
 numericConstTuple		::=	"(" numericConst [unitExpression] ".." numericConst ")" .
+numericConst			::=	integerConst | realConst .
 
 expression			::=	term {lowPrecedenceBinaryOp term} .
 term				::=	[unaryOp] factor ["++" | "--"] {highPrecedenceBinaryOp factor} .

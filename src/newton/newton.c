@@ -105,10 +105,10 @@ processNewtonFile(State *  N, char *  filename)
 		char *	details;
 
 		asprintf(&details, "%s\n", EnoValidDimensions);
-		newtonParserSemanticError(N, kNewtonIrNodeType_PnewtonFile, details);
+		newtonParserSemanticError(N, kNewtonIrNodeType_PnewtonDescription, details);
 		free(details);
 
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnewtonFile);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnewtonDescription);
 	}
 
 	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);

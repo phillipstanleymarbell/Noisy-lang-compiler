@@ -689,7 +689,7 @@ newtonDimensionCheckNumericFactor(
 		factor->physics = newtonInitPhysics(N, NULL, NULL);
 	}
 	assert(newtonIsDimensionless(factor->physics));
-	assert(factor->type == kNewtonIrNodeType_TnumericConst);
+	assert(factor->type == kNewtonIrNodeType_PnumericConst);
 
 	if (newtonDimensionTableDimensionForName(N, N->newtonIrTopScope, factor->tokenString) == NULL)
 	{

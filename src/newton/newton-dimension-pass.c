@@ -103,7 +103,7 @@ newtonDimensionPassParseFile(State *  N, Scope *  currentScope)
 void
 newtonDimensionPassParseStatementList(State *  N, Scope *  currentScope)
 {
-	while (inFirst(N, kNewtonIrNodeType_Pstatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	while (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		newtonDimensionPassParseStatement(N, currentScope);
 	}
@@ -144,9 +144,9 @@ newtonDimensionPassParseSubindex(State * N, Scope * currentScope)
 {
 	newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
-	newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope);
+	newtonParseNumericConst(N, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tto, currentScope);
-	newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope);
+	newtonParseNumericConst(N, currentScope);
 }
 
 void
@@ -170,14 +170,14 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 		newtonDimensionPassParseSubindexTuple(N, currentScope);
 	}
 
-	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
+	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, currentScope);
 
 	/*
 	 *	Name syntax is optional
 	 */
 	IrNode *	unitName = NULL;
-	if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	if (inFirst(N, kNewtonIrNodeType_PnameStatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		unitName = newtonParseName(N, currentScope);
 	}
@@ -186,13 +186,13 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 	 *	Abbreviation syntax is also optional
 	 */
 	IrNode *    unitAbbreviation = NULL;
-	if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	if (inFirst(N, kNewtonIrNodeType_PsymbolStatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		unitAbbreviation = newtonParseSymbol(N, currentScope);
 	}
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tderivation, currentScope);
-	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
+	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
 
 	/*
 	 *	These are the derived signals
@@ -255,13 +255,13 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 IrNode *
 newtonDimensionPassParseName(State * N, Scope * currentScope)
 {
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pname,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnameStatement,
 								NULL /* left child */,
 								NULL /* right child */,
 								lexPeek(N, 1)->sourceInfo /* source info */);
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tname, currentScope);
-	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
+	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
 
 	IrNode *	baseSignalName = newtonParseTerminal(N, kNewtonIrNodeType_TstringConst, currentScope);
 	node->token = baseSignalName->token;
@@ -272,8 +272,8 @@ newtonDimensionPassParseName(State * N, Scope * currentScope)
 	}
 	else
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Pname, kNewtonIrNodeTypeMax, gNewtonFirsts);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pname);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PnameStatement, kNewtonIrNodeTypeMax, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnameStatement);
 	}
 
 	return node;

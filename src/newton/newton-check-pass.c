@@ -209,7 +209,7 @@ newtonCheckCompareOp(
 			}
             break;
 
-        case kNewtonIrNodeType_Tproportional:
+        case kNewtonIrNodeType_TdimensionallyMatchingProportional:
             /* 
              *  TODO figure out how to check proportionality 
              */
