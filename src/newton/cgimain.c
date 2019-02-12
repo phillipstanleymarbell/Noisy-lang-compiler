@@ -712,12 +712,12 @@ main(void)
 		{
 			irPassDimensionalMatrixAnnotation(newtonCgiState);
 			irPassDimensionalMatrixPiGroups(newtonCgiState);
+			irPassDimensionalMatrixPrinter(newtonCgiState);
 			irPassDimensionalMatrixKernelRowCanonicalization(newtonCgiState);
 			irPassDimensionalMatrixPiGroupSorted(newtonCgiState);
 			irPassDimensionalMatrixPiGroupsWeedOutDuplicates(newtonCgiState);
-			irPassDimensionalMatrixConvertToList(newtonCgiState);
-			irPassDimensionalMatrixPrinter(newtonCgiState);
 			irPassDimensionalMatrixKernelPrinter(newtonCgiState);
+			irPassDimensionalMatrixConvertToList(newtonCgiState);
 		}
 
 		/*

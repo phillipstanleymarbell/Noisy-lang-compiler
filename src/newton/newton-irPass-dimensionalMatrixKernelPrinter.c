@@ -147,7 +147,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 							{
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "(");
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
-								if (invariant->nullSpace[countKernel][tmpPosition[row]][col] > 1)
+								if (invariant->nullSpace[countKernel][tmpPosition[row]][col] > 0 && invariant->nullSpace[countKernel][tmpPosition[row]][col] != 1)
 								{
 									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^{%g}", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
 								}
@@ -163,7 +163,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 							{
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "(");
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
-								if (invariant->nullSpace[countKernel][tmpPosition[row]][col] < -1)
+								if (invariant->nullSpace[countKernel][tmpPosition[row]][col] < 0)
 								{
 									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^{%g}", 0 - invariant->nullSpace[countKernel][tmpPosition[row]][col]);
 								}

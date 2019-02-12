@@ -1,5 +1,6 @@
 /*
     Authored 2015-2018, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim.
+    Modified 2018, Youchao Wang.
 
 	All rights reserved.
 
