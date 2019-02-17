@@ -490,14 +490,13 @@ typedef enum
 	kNewtonIrNodeType_Tdot,
 	kNewtonIrNodeType_TdotDot,
 	kNewtonIrNodeType_Tequals,
-	kNewtonIrNodeType_Tequivalent,
 	kNewtonIrNodeType_TerasureToken,
 	kNewtonIrNodeType_Texponentiation,
 	kNewtonIrNodeType_Tge,
 	kNewtonIrNodeType_Tgt,
 	kNewtonIrNodeType_Ti2c,
-	kNewtonIrNodeType_Tinclude,
 	kNewtonIrNodeType_Tidentifier,
+	kNewtonIrNodeType_Tinclude,
 	kNewtonIrNodeType_TintegerConst,
 	kNewtonIrNodeType_Tintegral,
 	kNewtonIrNodeType_Tinterface,
@@ -537,7 +536,6 @@ typedef enum
 	kNewtonIrNodeType_Tuncertainty,
 	kNewtonIrNodeType_Twrite,
 
-
 	/*
 	 *	Code depends on this bringing up the rear for Newton Tokens.
 	 */
@@ -568,8 +566,10 @@ typedef enum
 	kNewtonIrNodeType_PexponentiationOperator,
 	kNewtonIrNodeType_Pexpression,
 	kNewtonIrNodeType_Pfactor,
+	kNewtonIrNodeType_PfunctionalOperator,
 	kNewtonIrNodeType_PhighPrecedenceBinaryOp,
 	kNewtonIrNodeType_PhighPrecedenceOperator,
+	kNewtonIrNodeType_PhighPrecedenceQuantityOperator,
 	kNewtonIrNodeType_PinvariantDefinition,
 	kNewtonIrNodeType_PlanguageSetting,
 	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
@@ -579,6 +579,9 @@ typedef enum
 	kNewtonIrNodeType_PnumericConst,
 	kNewtonIrNodeType_PnumericConstTuple,
 	kNewtonIrNodeType_PnumericConstTupleList,
+	kNewtonIrNodeType_PnumericExpression,
+	kNewtonIrNodeType_PnumericFactor,
+	kNewtonIrNodeType_PnumericTerm,
 	kNewtonIrNodeType_Pparameter,
 	kNewtonIrNodeType_PparameterTuple,
 	kNewtonIrNodeType_PparameterValueList,
@@ -601,7 +604,6 @@ typedef enum
 	kNewtonIrNodeType_PsubdimensionTuple,
 	kNewtonIrNodeType_PsymbolStatement,
 	kNewtonIrNodeType_Pterm,
-	kNewtonIrNodeType_PtimeOperator,
 	kNewtonIrNodeType_PunaryOp,
 	kNewtonIrNodeType_PuncertaintyStatement,
 	kNewtonIrNodeType_Punit,
@@ -610,7 +612,6 @@ typedef enum
 	kNewtonIrNodeType_PunitTerm,
 	kNewtonIrNodeType_PvectorOp,
 	kNewtonIrNodeType_PwriteRegisterCommand,
-
 
 	/*
 	 *	Code depends on this bringing up the rear for Newton Productions.

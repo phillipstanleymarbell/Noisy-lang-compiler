@@ -209,7 +209,7 @@ newtonCheckCompareOp(
 			}
             break;
 
-        case kNewtonIrNodeType_TdimensionallyMatchingProportional:
+        case kNewtonIrNodeType_TdimensionallyAgnosticProportional:
             /* 
              *  TODO figure out how to check proportionality 
              */
@@ -217,7 +217,7 @@ newtonCheckCompareOp(
 		    report->satisfiesDimensionConstraint = true;
 			break;
 
-        case kNewtonIrNodeType_Tequivalent:
+        case kNewtonIrNodeType_TdimensionallyMatchingProportional:
             /* 
              *  TODO change == to incorporate an epsilon 
              */

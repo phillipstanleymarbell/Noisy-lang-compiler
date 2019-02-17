@@ -68,10 +68,12 @@ static void		checkLt(State *  N);
 static void		checkMul(State * N);
 static void		checkProportionality(State * N);
 static void		checkDot(State *  N);
+static void		checkPlusMinus(State *  N, IrNodeType plusOrMinusTokenType);
 static void		makeNumericConst(State *  N);
 static bool		isOperatorOrSeparator(State *  N, char c);
 static void		newtonLex(State *  N, char *  fileName);
 
+bool			gMakeNextTokenNegative = false;
 
 
 void
@@ -199,16 +201,6 @@ newtonLex(State *  N, char *  fileName)
 						checkSingle(N, kNewtonIrNodeType_TrightBracket);
 						continue;
 					}
-					case '+':
-					{
-						checkSingle(N, kNewtonIrNodeType_Tplus);
-						continue;
-					}
-					case '-':
-					{
-						checkSingle(N, kNewtonIrNodeType_Tminus);
-						continue;
-					}
 					case '|':
 					{
 						checkSingle(N, kNewtonIrNodeType_TbitwiseOr);
@@ -217,11 +209,6 @@ newtonLex(State *  N, char *  fileName)
 					case '%':
 					{
 						checkSingle(N, kNewtonIrNodeType_Tpercent);
-						continue;
-					}
-					case '*':
-					{
-						checkMul(N);
 						continue;
 					}
 					case '/':
@@ -245,7 +232,11 @@ newtonLex(State *  N, char *  fileName)
 						checkSingle(N, kNewtonIrNodeType_Tcolon);
 						continue;
 					}
-
+					case '@':
+					{
+						checkSingle(N, kNewtonIrNodeType_TatSign);
+						continue;
+					}
 					case '.':
 					{
 						checkDot(N);
@@ -256,6 +247,21 @@ newtonLex(State *  N, char *  fileName)
 					 *	These tokens require special handling beyond being paired with an equals,
 					 *	being part of a number, or doubled-up (e.g., ">>", etc.).
 					 */
+					case '+':
+					{
+						checkPlusMinus(N, kNewtonIrNodeType_Tplus);
+						continue;
+					}
+					case '-':
+					{
+						checkPlusMinus(N, kNewtonIrNodeType_Tminus);
+						continue;
+					}
+					case '*':
+					{
+						checkMul(N);
+						continue;
+					}
 					case '=':
 					{
 						checkEqual(N);
@@ -284,7 +290,7 @@ newtonLex(State *  N, char *  fileName)
 					case '#':
 					{
 						checkComment(N);
-						
+
 						/*
 						 *	Set columnNumber to lineLength so we stop chomping on this line
 						 */
@@ -561,6 +567,7 @@ finishToken(State *  N)
 	if (N->currentToken[0] >= '0' && N->currentToken[0] <= '9')
 	{
 		makeNumericConst(N);
+
 		return;
 	}
 
@@ -585,6 +592,15 @@ finishToken(State *  N)
 static void
 makeNumericConst(State *  N)
 {
+	int	sign = 1;
+
+	if (gMakeNextTokenNegative)
+	{
+		gMakeNextTokenNegative = false;
+		sign = -1;
+	}
+
+
 	if (N->currentTokenLength == 0)
 	{
 		fatal(N, EruntTokenInNumericConst);
@@ -648,7 +664,7 @@ makeNumericConst(State *  N)
 		Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_TrealConst /* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
-									stringToEngineeringRealConst(N, N->currentToken) /* realConst	*/,
+									sign * stringToEngineeringRealConst(N, N->currentToken) /* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
 
@@ -668,7 +684,7 @@ makeNumericConst(State *  N)
 		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TrealConst	 /* type	*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
-									stringToRealConst(N, N->currentToken)	/* realConst	*/,
+									sign * stringToRealConst(N, N->currentToken)	/* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
 
@@ -687,7 +703,7 @@ makeNumericConst(State *  N)
 	{
 		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TintegerConst	/* type		*/,
 									NULL				/* identifier	*/,
-									stringToRadixConst(N, N->currentToken)	/* integerConst	*/,
+									sign * stringToRadixConst(N, N->currentToken)	/* integerConst	*/,
 									0				/* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
@@ -730,7 +746,7 @@ makeNumericConst(State *  N)
 	{
 		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TintegerConst	/* type		*/,
 									NULL				/* identifier	*/,
-									decimalValue			/* integerConst	*/,
+									sign * decimalValue			/* integerConst	*/,
 									0				/* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
@@ -889,6 +905,39 @@ checkProportionality(State * N)
 	}
 
 	return;
+}
+
+static void
+checkPlusMinus(State *  N, IrNodeType plusOrMinusTokenType)
+{
+	/*
+	 *	If the next character is not a number, then simply do checkSingle.
+	 *	Otherwise, create a poistive or negative numeric constant.
+	 */
+	if (N->lineLength >= 2 && (N->lineBuffer[N->columnNumber+1] < '0' || N->lineBuffer[N->columnNumber+1] > '9'))
+	{
+		checkSingle(N, plusOrMinusTokenType);
+
+		return;
+	}
+
+	/*
+	 *	Next character is the beginning of a number. Invoke makeNumericConst()
+	 *	with a positive or negative signedness.
+	 */
+	gMakeNextTokenNegative = (plusOrMinusTokenType == kNewtonIrNodeType_Tminus ? true : false);
+
+	/*
+	 *	Next, gobble up the +/- and finish the extant token as though the +/- were
+	 *	whitespace (don't call done() to allocate a Token on the tokenstream).
+	 */
+	N->columnNumber++; finishToken(N);
+
+	/*
+	 *	We are now at the beginning of a numeric constant. The next 'sticky' we see
+	 *	will trigger gobbling. Set global flag to make the next gobbled token negative.
+	 */
+	gMakeNextTokenNegative = true;
 }
 
 static void

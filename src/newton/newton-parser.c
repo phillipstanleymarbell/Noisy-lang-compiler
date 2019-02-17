@@ -202,6 +202,12 @@ newtonParseRule(State *  N, Scope *  currentScope)
 
 	switch(lexPeek(N, 3)->type)
 	{
+		case kNewtonIrNodeType_Tsensor:
+		{
+			node = newtonParseSensorDefinition(N, currentScope);
+			break;
+		}
+
 		case kNewtonIrNodeType_Tsignal:
 		{
 			node = newtonParseBaseSignal(N, currentScope);
@@ -222,7 +228,7 @@ newtonParseRule(State *  N, Scope *  currentScope)
 
 		default:
 		{
-			newtonParserSyntaxError(N, kNewtonIrNodeType_Prule, kNewtonIrNodeTypeMax, gNewtonFirsts);
+			newtonParserSyntaxError(N, kNewtonIrNodeType_Prule, kNewtonIrNodeType_Prule, gNewtonFirsts);
 			newtonParserErrorRecovery(N, kNewtonIrNodeType_Prule);
 		}
 	}
@@ -248,7 +254,7 @@ newtonParseRule(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		constantDefinition		::=	identifier ":" "constant" "=" numericConst ["*" unitExpression] ";" .
+ *		constantDefinition		::=	identifier ":" "constant" "=" numericFactor [unitFactor] ";" .
  */
 IrNode *
 newtonParseConstant(State *  N, Scope *  currentScope)
@@ -261,16 +267,20 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 
 	IrNode *	constantIdentifier = newtonParseIdentifier(N, currentScope);
 
+	addLeaf(N, node, constantIdentifier);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tconstant, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
 
-	addLeaf(N, node, constantIdentifier);
 	Physics *	constantPhysics = newtonPhysicsTableAddPhysicsForToken(N, currentScope, constantIdentifier->token);
 
-	if (inFirst(N, kNewtonIrNodeType_PnumericConst, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	if (inFirst(N, kNewtonIrNodeType_PnumericFactor, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		IrNode *	constantExpression = newtonParseNumericConst(N, currentScope);
+		IrNode *	constantExpression = newtonParseNumericFactor(N, currentScope);
+
+		/*
+		 *	BUG/TODO (issue #404)
+		 */
 		constantPhysics->value = constantExpression->value;
 		constantPhysics->isConstant = true;
 
@@ -288,11 +298,15 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 			newtonParserErrorRecovery(N, kNewtonIrNodeType_PconstantDefinition);
 		}
 	}
-
-	if (peekCheck(N, 1, kNewtonIrNodeType_Tmul))
+	else
 	{
-		newtonParseTerminal(N, kNewtonIrNodeType_Tmul, currentScope);
-		addLeafWithChainingSeq(N, node, newtonParseUnitExpression(N, currentScope));
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PconstantDefinition, kNewtonIrNodeType_PconstantDefinition, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PconstantDefinition);
+	}
+
+	if (inFirst(N, kNewtonIrNodeType_PunitFactor, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		addLeafWithChainingSeq(N, node, newtonParseUnitFactor(N, currentScope));
 	}
 	else
 	{
@@ -393,7 +407,7 @@ newtonParseInvariant(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		subdimensionTuple		::=	"(" identifier ":" numericConst "to" numericConst ")" .
+ *		subdimensionTuple		::=	"(" identifier ":" numericExpression "to" numericExpression ")" .
  */
 IrNode *
 newtonParseSubindexTuple(State *  N, Scope *  currentScope)
@@ -408,9 +422,9 @@ newtonParseSubindexTuple(State *  N, Scope *  currentScope)
 	addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
 
-	node->subindexStart = newtonParseNumericConst(N, currentScope)->value;
+	node->subindexStart = newtonParseNumericExpression(N, currentScope)->value;
 	newtonParseTerminal(N, kNewtonIrNodeType_Tto, currentScope);
-	node->subindexEnd = newtonParseNumericConst(N, currentScope)->value;
+	node->subindexEnd = newtonParseNumericExpression(N, currentScope)->value;
 
 	if (node->subindexEnd <= 0)
 	{
@@ -570,9 +584,9 @@ newtonParseUnitExpression(State *  N, Scope *  currentScope)
 
 
 /*
- *	Grammar production: (**NOTE** Here, we are not really permitting all highPrecedenceOperator, only * and /, but for naming sake it makes it easier to think about)
+ *	Grammar production: (**NOTE** Here, we are not really permitting all highPrecedenceQuantityOperator, only * and /, but for naming sake it makes it easier to think about)
  *
- *		unitTerm			::=	unitFactor {highPrecedenceOperator unitFactor} .
+ *		unitTerm			::=	unitFactor {highPrecedenceQuantityOperator unitFactor} .
  */
 IrNode *
 newtonParseUnitTerm(State *  N, Scope *  currentScope)
@@ -585,9 +599,9 @@ newtonParseUnitTerm(State *  N, Scope *  currentScope)
 
 	addLeaf(N, node, newtonParseUnitFactor(N, currentScope));
 
-	while (inFirst(N, kNewtonIrNodeType_PhighPrecedenceOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	while (inFirst(N, kNewtonIrNodeType_PhighPrecedenceQuantityOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeafWithChainingSeq(N, node, newtonParseHighPrecedenceOperator(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseHighPrecedenceQuantityOperator(N, currentScope));
 		addLeafWithChainingSeq(N, node, newtonParseUnitFactor(N, currentScope));
 	}
 
@@ -648,7 +662,7 @@ setPhysicsOfBaseNode(State *  N, IrNode *  baseNode, IrNode *  exponent)
 /*
  *	Grammar production:
  *
- *		unitFactor			::=	[unaryOp] (unit [exponentiationOperator numericConst]) | "(" unitExpression ")" .
+ *		unitFactor			::=	(unit [exponentiationOperator numericFactor]) | "(" unitExpression ")" .
  */
 IrNode *
 newtonParseUnitFactor(State *  N, Scope *  currentScope)
@@ -659,11 +673,6 @@ newtonParseUnitFactor(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
-	if (inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
-	{
-		addLeaf(N, node, newtonParseUnaryOp(N, currentScope));
-	}
-
 	if (inFirst(N, kNewtonIrNodeType_Punit, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		IrNode *	unitNode = newtonParseUnit(N, currentScope);
@@ -672,17 +681,21 @@ newtonParseUnitFactor(State *  N, Scope *  currentScope)
 		if (inFirst(N, kNewtonIrNodeType_PexponentiationOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
 		{
 			addLeafWithChainingSeq(N, node, newtonParseExponentiationOperator(N, currentScope));
-			IrNode *	exponentValue = newtonParseNumericConst(N, currentScope);
+			IrNode *	exponentValue = newtonParseNumericFactor(N, currentScope);
 			addLeafWithChainingSeq(N, node, exponentValue);
 			setPhysicsOfBaseNode(N, unitNode, exponentValue);
 		}
-
 	}
 	else if (lexPeek(N, 1)->type == kNewtonIrNodeType_TleftParen)
 	{
 		newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
 		addLeaf(N, node, newtonParseUnitExpression(N, currentScope));
 		newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
+	}
+	else
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PunitFactor, kNewtonIrNodeType_PunitFactor, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PunitFactor);
 	}
 
 	/*
@@ -726,6 +739,153 @@ newtonParseUnit(State *  N, Scope *  currentScope)
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_Punit, kNewtonIrNodeTypeMax, gNewtonFollows);
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Punit);
+	}
+	*/
+
+	return node;
+}
+
+
+
+/*
+ *	Grammar production:
+ *
+ *		numericExpression			::=	numericTerm {lowPrecedenceOperator numericTerm} .
+ */
+IrNode *
+newtonParseNumericExpression(State *  N, Scope *  currentScope)
+{
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnumericExpression,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */
+					);
+
+	addLeaf(N, node, newtonParseNumericTerm(N, currentScope));
+
+	/*
+	 *	We have to check whether the token after the operator is a numeric const.
+	 *	If it is not, we should not eat the operator here, but rather end processing.
+	 */
+	//xxx TODO xxx
+
+	while (inFirst(N, kNewtonIrNodeType_PlowPrecedenceOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		addLeafWithChainingSeq(N, node, newtonParseLowPrecedenceOperator(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseNumericTerm(N, currentScope));
+	}
+
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PnumericExpression, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PnumericExpression, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnumericExpression);
+	}
+	*/
+
+	return node;
+}
+
+
+
+/*
+ *	Grammar production:
+ *
+ *		numericTerm			::=	numericFactor {highPrecedenceOperator numericFactor} .
+ */
+IrNode *
+newtonParseNumericTerm(State *  N, Scope *  currentScope)
+{
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnumericTerm,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */
+					);
+
+	addLeaf(N, node, newtonParseNumericFactor(N, currentScope));
+
+	/*
+	 *	We have to check whether the token after the operator is a numeric const.
+	 *	If it is not, we should not eat the operator here, but rather end processing.
+	 */
+	//xxx TODO xxx
+
+	while (inFirst(N, kNewtonIrNodeType_PhighPrecedenceQuantityOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		addLeafWithChainingSeq(N, node, newtonParseHighPrecedenceQuantityOperator(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseNumericFactor(N, currentScope));
+	}
+
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PnumericTerm, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PnumericTerm, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnumericTerm);
+	}
+	*/
+
+	return node;
+}
+
+
+
+/*
+ *	Grammar production:
+ *
+ *		numericFactor			::=	(numericConst [exponentiationOperator numericConst]) | "(" numericExpression ")" .
+ */
+IrNode *
+newtonParseNumericFactor(State *  N, Scope *  currentScope)
+{
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnumericFactor,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */
+					);
+
+	if (inFirst(N, kNewtonIrNodeType_PnumericConst, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		addLeaf(N, node, newtonParseNumericConst(N, currentScope));
+
+		/*
+		 *	We have to check whether the token after the operator is a numeric const.
+		 *	If it is not, we should not eat the operator here, but rather end processing.
+		 */
+		//xxx TODO xxx
+
+		if (inFirst(N, kNewtonIrNodeType_PexponentiationOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
+		{
+			addLeafWithChainingSeq(N, node, newtonParseExponentiationOperator(N, currentScope));
+			addLeafWithChainingSeq(N, node, newtonParseNumericConst(N, currentScope));
+		}
+
+	}
+	else if (lexPeek(N, 1)->type == kNewtonIrNodeType_TleftParen)
+	{
+		newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
+		addLeaf(N, node, newtonParseNumericExpression(N, currentScope));
+		newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
+	}
+	else
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PnumericFactor, kNewtonIrNodeType_PnumericFactor, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnumericFactor);
+	}
+
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PnumericFactor, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PnumericFactor, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnumericFactor);
 	}
 	*/
 
@@ -1173,7 +1333,7 @@ newtonParseQuantityExpression(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		quantityTerm			::=	[unaryOp] quantityFactor {highPrecedenceOperator quantityFactor} .
+ *		quantityTerm			::=	[unaryOp] quantityFactor {highPrecedenceQuantityOperator quantityFactor} .
  */
 IrNode *
 newtonParseQuantityTerm(State *  N, Scope *  currentScope)
@@ -1230,9 +1390,9 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 
 	IrNode *	rightFactor;
 
-	while (inFirst(N, kNewtonIrNodeType_PhighPrecedenceOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	while (inFirst(N, kNewtonIrNodeType_PhighPrecedenceQuantityOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		IrNode *	binOp = newtonParseHighPrecedenceOperator(N, currentScope);
+		IrNode *	binOp = newtonParseHighPrecedenceQuantityOperator(N, currentScope);
 		addLeafWithChainingSeq(N, intermediate, binOp);
 
 
@@ -1309,7 +1469,7 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
  *	Grammar production:
  *
  *		quantityFactor			::=	quantity [exponentiationOperator quantityFactor]			|
- *							timeOperator {timeOperator} quantityFactor				|
+ *							functionalOperator {functionalOperator} quantityFactor quantityFactor	|
  *							"(" quantityExpression ")" 						|
  *							"{" quantityExpression {"," quantityExpression} "}" .
  */
@@ -1340,18 +1500,19 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 		intermediate->value = subnode->value;
 		intermediate->physics = subnode->physics;
 	}
-	else if (inFirst(N, kNewtonIrNodeType_PtimeOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	else if (inFirst(N, kNewtonIrNodeType_PfunctionalOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		/*
 		 *	NOTE: At least one timeOperator, followed by zero or more.
 		 */
-		addLeafWithChainingSeq(N, intermediate, newtonParseTimeOperator(N, currentScope));
+		addLeafWithChainingSeq(N, intermediate, newtonParseFunctionalOperator(N, currentScope));
 
-		while (inFirst(N, kNewtonIrNodeType_PtimeOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
+		while (inFirst(N, kNewtonIrNodeType_PfunctionalOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
 		{
-			addLeafWithChainingSeq(N, intermediate, newtonParseTimeOperator(N, currentScope));
+			addLeafWithChainingSeq(N, intermediate, newtonParseFunctionalOperator(N, currentScope));
 		}
 
+		addLeafWithChainingSeq(N, intermediate, newtonParseQuantityFactor(N, currentScope));
 		addLeafWithChainingSeq(N, intermediate, newtonParseQuantityFactor(N, currentScope));
 
 		/*
@@ -1419,7 +1580,7 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		quantity			::=	numericConst | (identifier {"@" numericConst}) .
+ *		quantity			::=	numericConst | (identifier {"@" numericFactor}) .
  */
 IrNode *
 newtonParseQuantity(State *  N, Scope *  currentScope)
@@ -1483,7 +1644,7 @@ newtonParseQuantity(State *  N, Scope *  currentScope)
 		while (peekCheck(N, 1, kNewtonIrNodeType_TatSign))
 		{
 			newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
-			addLeafWithChainingSeq(N, intermediate, newtonParseNumericConst(N, currentScope));
+			addLeafWithChainingSeq(N, intermediate, newtonParseNumericFactor(N, currentScope));
 		}
 	}
 	else
@@ -1511,12 +1672,12 @@ newtonParseQuantity(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		timeOperator			::=	"derivative" | "integral" .
+ *		functionalOperator		::=	"derivative" | "integral" .
  */
 IrNode *
-newtonParseTimeOperator(State *  N, Scope *  currentScope)
+newtonParseFunctionalOperator(State *  N, Scope *  currentScope)
 {
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PtimeOperator,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PfunctionalOperator,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
@@ -1532,18 +1693,18 @@ newtonParseTimeOperator(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_PtimeOperator, kNewtonIrNodeType_PtimeOperator, gNewtonFirsts);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_PtimeOperator);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PfunctionalOperator, kNewtonIrNodeType_PfunctionalOperator, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PfunctionalOperator);
 	}
 
 	/*
 	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
 	 */
 	/*
-	if (!inFollow(N, kNewtonIrNodeType_PtimeOperator, gNewtonFollows, kNewtonIrNodeTypeMax))
+	if (!inFollow(N, kNewtonIrNodeType_PfunctionalOperator, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_PtimeOperator, kNewtonIrNodeTypeMax, gNewtonFollows);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_PtimeOperator);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PfunctionalOperator, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PfunctionalOperator);
 	}
 	*/
 
@@ -1895,7 +2056,7 @@ newtonParseLowPrecedenceOperator(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		highPrecedenceOperator		::=	"*" | "/" | "><" | vectorOp .
+ *		highPrecedenceOperator		::=	"*" | "/" .
  */
 IrNode *
 newtonParseHighPrecedenceOperator(State *  N, Scope *  currentScope)
@@ -1906,7 +2067,6 @@ newtonParseHighPrecedenceOperator(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
-
 	if (peekCheck(N, 1, kNewtonIrNodeType_Tmul))
 	{
 		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tmul, currentScope));
@@ -1915,13 +2075,54 @@ newtonParseHighPrecedenceOperator(State *  N, Scope *  currentScope)
 	{
 		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tdiv, currentScope));
 	}
-	else if (peekCheck(N, 1, kNewtonIrNodeType_Tmutualinf))
+	else
 	{
-		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tmutualinf, currentScope));
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PhighPrecedenceOperator, kNewtonIrNodeType_PhighPrecedenceOperator, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PhighPrecedenceOperator);
+	}
+
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PhighPrecedenceOperator, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PhighPrecedenceOperator, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PhighPrecedenceOperator);
+	}
+	*/
+
+	return node;
+}
+
+
+
+/*
+ *	Grammar production:
+ *
+ *		highPrecedenceQuantityOperator	::=	highPrecedenceOperator | vectorOp | "><" .
+ */
+IrNode *
+newtonParseHighPrecedenceQuantityOperator(State *  N, Scope *  currentScope)
+{
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PhighPrecedenceQuantityOperator,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */
+					);
+
+
+	if (inFirst(N, kNewtonIrNodeType_PhighPrecedenceOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		addLeaf(N, node, newtonParseHighPrecedenceOperator(N, currentScope));
 	}
 	else if (inFirst(N, kNewtonIrNodeType_PvectorOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		addLeaf(N, node, newtonParseVectorOp(N, currentScope));
+	}
+	else if (peekCheck(N, 1, kNewtonIrNodeType_Tmutualinf))
+	{
+		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tmutualinf, currentScope));
 	}
 	else
 	{
@@ -2179,7 +2380,7 @@ newtonParseSensorProperty(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		sensorInterfaceStatement	::=	"interface" identifier ["@" numericConst "*" "bits"] "==" sensorInterfaceType parameterTuple ["{" sensorInterfaceCommandList "}"] .
+ *		sensorInterfaceStatement	::=	"interface" identifier ["@" numericFactor "bits"] "==" sensorInterfaceType parameterTuple ["{" sensorInterfaceCommandList "}"] .
  */
 IrNode *
 newtonParseSensorInterfaceStatement(State *  N, Scope *  currentScope)
@@ -2197,7 +2398,7 @@ newtonParseSensorInterfaceStatement(State *  N, Scope *  currentScope)
 	if (peekCheck(N, 1, kNewtonIrNodeType_TatSign))
 	{
 		newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
-		addLeafWithChainingSeq(N, node, newtonParseNumericConst(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseNumericFactor(N, currentScope));
 		newtonParseTerminal(N, kNewtonIrNodeType_Tmul, currentScope);
 		newtonParseTerminal(N, kNewtonIrNodeType_Tbits, currentScope);
 	}
@@ -2370,7 +2571,7 @@ newtonParseSensorInterfaceCommand(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		readRegisterCommand		::=	identifier "=" "read" ["[" numericConst "]"] numericConst .
+ *		readRegisterCommand		::=	identifier "=" "read" ["[" numericExpression "]" ","] numericExpression .
  */
 IrNode *
 newtonParseReadRegisterCommand(State *  N, Scope *  currentScope)
@@ -2388,11 +2589,12 @@ newtonParseReadRegisterCommand(State *  N, Scope *  currentScope)
 	if (peekCheck(N, 1, kNewtonIrNodeType_TleftBracket))
 	{
 		newtonParseTerminal(N, kNewtonIrNodeType_TleftBracket, currentScope);
-		addLeafWithChainingSeq(N, node, newtonParseNumericConst(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseNumericExpression(N, currentScope));
 		newtonParseTerminal(N, kNewtonIrNodeType_TrightBracket, currentScope);
+		newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
 	}
 
-	addLeafWithChainingSeq(N, node, newtonParseNumericConst(N, currentScope));
+	addLeafWithChainingSeq(N, node, newtonParseNumericExpression(N, currentScope));
 
 	/*
 	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
@@ -2413,7 +2615,7 @@ newtonParseReadRegisterCommand(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		writeRegisterCommand		::=	"write" numericConst numericConst .
+ *		writeRegisterCommand		::=	"write" numericExpression "," numericExpression .
  */
 IrNode *
 newtonParseWriteRegisterCommand(State *  N, Scope *  currentScope)
@@ -2425,8 +2627,9 @@ newtonParseWriteRegisterCommand(State *  N, Scope *  currentScope)
 					);
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Twrite, currentScope);
-	addLeaf(N, node, newtonParseNumericConst(N, currentScope));
-	addLeaf(N, node, newtonParseNumericConst(N, currentScope));
+	addLeaf(N, node, newtonParseNumericExpression(N, currentScope));
+	newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
+	addLeaf(N, node, newtonParseNumericExpression(N, currentScope));
 
 	/*
 	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
@@ -2447,7 +2650,7 @@ newtonParseWriteRegisterCommand(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		delayCommand			::=	"delay" numericConst .
+ *		delayCommand			::=	"delay" numericExpression .
  */
 IrNode *
 newtonParseDelayCommand(State *  N, Scope *  currentScope)
@@ -2459,7 +2662,7 @@ newtonParseDelayCommand(State *  N, Scope *  currentScope)
 					);
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tdelay, currentScope);
-	addLeaf(N, node, newtonParseNumericConst(N, currentScope));
+	addLeaf(N, node, newtonParseNumericExpression(N, currentScope));
 
 	/*
 	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
@@ -2514,7 +2717,7 @@ newtonParseArithmeticCommand(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		rangeStatement			::=	"range" identifier "==" "[" numericConst [unitExpression] "," numericConst [unitExpression] "]" .
+ *		rangeStatement			::=	"range" identifier "==" "[" numericFactor [unitFactor] "," numericFactor [unitFactor] "]" .
  */
 IrNode *
 newtonParseRangeStatement(State *  N, Scope *  currentScope)
@@ -2529,19 +2732,19 @@ newtonParseRangeStatement(State *  N, Scope *  currentScope)
 	addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftBracket, currentScope);
-	addLeafWithChainingSeq(N, node, newtonParseNumericConst(N, currentScope));
+	addLeafWithChainingSeq(N, node, newtonParseNumericFactor(N, currentScope));
 
 	if (inFirst(N, kNewtonIrNodeType_PunitExpression, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeafWithChainingSeq(N, node, newtonParseUnitExpression(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseUnitFactor(N, currentScope));
 	}
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
-	addLeaf(N, node, newtonParseNumericConst(N, currentScope));
+	addLeaf(N, node, newtonParseNumericFactor(N, currentScope));
 
 	if (inFirst(N, kNewtonIrNodeType_PunitExpression, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeafWithChainingSeq(N, node, newtonParseUnitExpression(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseUnitFactor(N, currentScope));
 	}
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftBracket, currentScope);
@@ -2565,7 +2768,7 @@ newtonParseRangeStatement(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		uncertaintyStatement		::=	"uncertainty" identifier "==" expression [unitExpression] .
+ *		uncertaintyStatement		::=	"uncertainty" identifier "==" factor [unitFactor] .
  */
 IrNode *
 newtonParseUncertaintyStatement(State *  N, Scope *  currentScope)
@@ -2579,11 +2782,11 @@ newtonParseUncertaintyStatement(State *  N, Scope *  currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_Tuncertainty, currentScope);
 	addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
-	addLeafWithChainingSeq(N, node, newtonParseExpression(N, currentScope));
+	addLeafWithChainingSeq(N, node, newtonParseFactor(N, currentScope));
 
 	if (inFirst(N, kNewtonIrNodeType_PunitExpression, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeafWithChainingSeq(N, node, newtonParseUnitExpression(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseUnitFactor(N, currentScope));
 	}
 
 	/*
@@ -2605,7 +2808,7 @@ newtonParseUncertaintyStatement(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		erasureValueStatement		::=	"erasuretoken" identifier "==" numericConst [unitExpression] .
+ *		erasureValueStatement		::=	"erasuretoken" identifier "==" numericFactor [unitFactor] .
  */
 IrNode *
 newtonParseErasureValueStatement(State *  N, Scope *  currentScope)
@@ -2619,11 +2822,11 @@ newtonParseErasureValueStatement(State *  N, Scope *  currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_TerasureToken, currentScope);
 	addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
-	addLeafWithChainingSeq(N, node, newtonParseNumericConst(N, currentScope));
+	addLeafWithChainingSeq(N, node, newtonParseNumericFactor(N, currentScope));
 
 	if (inFirst(N, kNewtonIrNodeType_PunitExpression, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeafWithChainingSeq(N, node, newtonParseUnitExpression(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseUnitFactor(N, currentScope));
 	}
 
 	/*
@@ -2803,7 +3006,7 @@ newtonParseNumericConst(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		numericConstTuple		::=	"(" numericConst [unitExpression] ".." numericConst ")" .
+ *		numericConstTuple		::=	"(" numericFactor [unitFactor] "," numericFactor ")" .
  */
 IrNode *
 newtonParseNumericConstTuple(State *  N, Scope *  currentScope)
@@ -2815,15 +3018,15 @@ newtonParseNumericConstTuple(State *  N, Scope *  currentScope)
 					);
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
-	addLeaf(N, node, newtonParseNumericConst(N, currentScope));
+	addLeaf(N, node, newtonParseNumericFactor(N, currentScope));
 
 	if (inFirst(N, kNewtonIrNodeType_PunitExpression, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeafWithChainingSeq(N, node, newtonParseUnitExpression(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseUnitFactor(N, currentScope));
 	}
 
-	newtonParseTerminal(N, kNewtonIrNodeType_TdotDot, currentScope);
-	addLeaf(N, node, newtonParseNumericConst(N, currentScope));
+	newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
+	addLeaf(N, node, newtonParseNumericFactor(N, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 
 	/*
@@ -2933,7 +3136,7 @@ newtonParseTerm(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		factor				::=	numericConst | "(" expression ")" | distributionFactor | identifier ["[" numericConst "]"] .
+ *		factor				::=	numericConst | "(" expression ")" | distributionFactor | identifier ["[" numericExpression "]"] .
  */
 IrNode *
 newtonParseFactor(State *  N, Scope *  currentScope)
@@ -2965,7 +3168,7 @@ newtonParseFactor(State *  N, Scope *  currentScope)
 		if (peekCheck(N, 1, kNewtonIrNodeType_TleftBracket))
 		{
 			newtonParseTerminal(N, kNewtonIrNodeType_TleftBracket, currentScope);
-			addLeaf(N, node, newtonParseNumericConst(N, currentScope));
+			addLeaf(N, node, newtonParseNumericExpression(N, currentScope));
 			newtonParseTerminal(N, kNewtonIrNodeType_TrightBracket, currentScope);
 		}
 	}
@@ -3714,7 +3917,7 @@ newtonParserSyntaxAndSemanticPre(State *  N, IrNodeType currentlyParsingTokenOrP
 						string4,
 						kNewtonErrorTokenHtmlTagOpen);
 		lexPrintToken(N, lexPeek(N, 1), gNewtonTokenDescriptions);
-		flexprint(N->Fe, N->Fm, N->Fperr, "\"%s %s %s.<br><br>%s%s",
+		flexprint(N->Fe, N->Fm, N->Fperr, "\"%s %s `%s`.<br><br>%s%s",
 			kNewtonErrorTokenHtmlTagClose,
 			string2,
 			(
@@ -3734,7 +3937,7 @@ newtonParserSyntaxAndSemanticPre(State *  N, IrNodeType currentlyParsingTokenOrP
 						lexPeek(N, 1)->sourceInfo->columnNumber,
 						string4);
 		lexPrintToken(N, lexPeek(N, 1), gNewtonTokenDescriptions);
-		flexprint(N->Fe, N->Fm, N->Fperr, "\" %s %s.\n\n\t%s",
+		flexprint(N->Fe, N->Fm, N->Fperr, "\" %s `%s`.\n\n\t%s",
 			string2,
 			(
 				currentlyParsingTokenOrProduction > kNewtonIrNodeType_TMax	?
@@ -3744,6 +3947,8 @@ newtonParserSyntaxAndSemanticPre(State *  N, IrNodeType currentlyParsingTokenOrP
 			string3);
 	}
 }
+
+
 
 void
 newtonParserSyntaxAndSemanticPost(State *  N)
@@ -3783,7 +3988,7 @@ newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction
 	else if ((expectedProductionOrToken >= kNewtonIrNodeType_TMin) && (expectedProductionOrToken < kNewtonIrNodeType_TMax))
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, ":\n\n\t\t");
-		flexprint(N->Fe, N->Fm, N->Fperr, "%s", gNewtonTokenDescriptions[expectedProductionOrToken]);
+		flexprint(N->Fe, N->Fm, N->Fperr, "`%s`", gNewtonTokenDescriptions[expectedProductionOrToken]);
 	}
 	else
 	{
@@ -3797,6 +4002,7 @@ newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction
 }
 
 
+
 void
 newtonParserSemanticError(State *  N, IrNodeType currentlyParsingTokenOrProduction, char *  details)
 {
@@ -3804,6 +4010,7 @@ newtonParserSemanticError(State *  N, IrNodeType currentlyParsingTokenOrProducti
 	newtonParserSyntaxAndSemanticPre(N, currentlyParsingTokenOrProduction, EsemanticsA, EsemanticsB, details, EsemanticsD);
 	newtonParserSyntaxAndSemanticPost(N);
 }
+
 
 
 void

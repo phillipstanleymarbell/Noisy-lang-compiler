@@ -113,9 +113,11 @@ void
 newtonDimensionPassParseStatement(State * N, Scope * currentScope)
 {
 	/*
-	 *	Rules can be one of signal, invariant, or constant.
+	 *	Rules can be one of sensor, signal, invariant, or constant.
 	 *	Signal and invariant blocks end with a '}'. A constant
-	 *	definition on the other hand ends with a ';'.
+	 *	definition on the other hand ends with a ';'. Because we
+	 *	can have nested braces in sensor descriptions, need to discard
+	 *	tokens while tracking number of braces seen.
 	 */
 	if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tinvariant)
 	{
@@ -133,9 +135,44 @@ newtonDimensionPassParseStatement(State * N, Scope * currentScope)
 		}
 		lexGet(N, gNewtonTokenDescriptions);
 	}
-	else
+	else if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tsensor)
+	{
+		/*
+		 *	First, find the opening left brace and junk it:
+		 */
+		while (lexPeek(N, 1)->type != kNewtonIrNodeType_TleftBrace)
+		{
+			lexGet(N, gNewtonTokenDescriptions);
+		}
+		lexGet(N, gNewtonTokenDescriptions);
+
+		int	unclosedBraces = 1;
+
+		/*
+		 *	Next, while we have one or more unclosed left braces,
+		 *	junk all tokens:
+		 */
+		while (unclosedBraces > 0)
+		{
+			if (lexPeek(N, 1)->type == kNewtonIrNodeType_TrightBrace)
+			{
+				unclosedBraces--;
+			}
+			else if (lexPeek(N, 1)->type == kNewtonIrNodeType_TleftBrace)
+			{
+				unclosedBraces++;
+			}
+			lexGet(N, gNewtonTokenDescriptions);
+		}
+	}
+	else if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tsignal)
 	{
 		newtonDimensionPassParseBaseSignal(N, currentScope);
+	}
+	else
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_Prule, kNewtonIrNodeType_Prule, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Prule);
 	}
 }
 
