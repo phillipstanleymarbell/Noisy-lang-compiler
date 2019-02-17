@@ -62,6 +62,7 @@ checkTokenLength(State *  N, int  count)
 		fatal(N, EtokenTooLong);
 	}
 }
+
 char
 cur(State *  N)
 {
@@ -126,7 +127,7 @@ isDecimal(State *  N, char *  string)
 	size_t	stringLength = strlen(string);
 	for (int i = 0; i < stringLength; i++)
 	{
-		if (string[i] < '0' || string[i] > '9')
+		if ((string[i] < '0' || string[i] > '9') && !(string[i]  == '-' || string[i]  == '+'))
 		{
 			return false;
 		}

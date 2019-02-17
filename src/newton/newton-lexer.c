@@ -42,6 +42,7 @@
 #include <setjmp.h>
 #include <string.h>
 #include <stdint.h>
+#include <ctype.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -600,7 +601,6 @@ makeNumericConst(State *  N)
 		sign = -1;
 	}
 
-
 	if (N->currentTokenLength == 0)
 	{
 		fatal(N, EruntTokenInNumericConst);
@@ -911,8 +911,28 @@ static void
 checkPlusMinus(State *  N, IrNodeType plusOrMinusTokenType)
 {
 	/*
+	 *	If the previous two characters were a number and 'e' or 'E', keep eating chars until the first non-number.
+	 */
+	if ((N->lineLength > 2) && isdigit(N->lineBuffer[N->columnNumber-2]) && ((N->lineBuffer[N->columnNumber-1] == 'e') || (N->lineBuffer[N->columnNumber-1] == 'E')))
+	{
+		/*
+		 *	Consume the '+' or '-':
+		 */
+		N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
+
+		while (isdigit(N->lineBuffer[N->columnNumber]))
+		{
+			N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
+		}
+
+		N->columnNumber++; finishToken(N);
+
+		return;
+	}
+
+	/*
 	 *	If the next character is not a number, then simply do checkSingle.
-	 *	Otherwise, create a poistive or negative numeric constant.
+	 *	Otherwise, create a positive or negative numeric constant.
 	 */
 	if (N->lineLength >= 2 && (N->lineBuffer[N->columnNumber+1] < '0' || N->lineBuffer[N->columnNumber+1] > '9'))
 	{
