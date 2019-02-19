@@ -67,7 +67,7 @@ static void		checkEqual(State *  N);
 static void		checkGt(State *  N);
 static void		checkLt(State *  N);
 static void		checkMul(State * N);
-static void		checkProportionality(State * N);
+static bool		checkProportionality(State * N);
 static void		checkDot(State *  N);
 static void		checkPlusMinus(State *  N, IrNodeType plusOrMinusTokenType);
 static void		makeNumericConst(State *  N);
@@ -152,13 +152,6 @@ newtonLex(State *  N, char *  fileName)
 			{
 				switch (cur(N))
 				{
-					/*
-					 *	These tokens may be paired with an equals sign or with another char (e.g., "::"),
-					 *	but otherwise do not require additional special handling as in the case of ".".
-					 *
-					 *	We process the chars seen so far as a finished token, then handle the following chars.
-					 */
-
 					/*
 					 *	These tokens only occur alone.
 					 *
@@ -270,8 +263,19 @@ newtonLex(State *  N, char *  fileName)
 					}
 					case 'o':
 					{
-						checkProportionality(N);
-						continue;
+						/*
+						 *	'o' is the only character that is sometimes sticky (with ' ' before it and with '<' after)
+						 *	and sometimes not. If the 'o' is not followed immediately by a '<', checkProportionality()
+						 *	returns false and we want to do here what we are otherwise skipping over by doing 'continue'.
+						 */
+						if (checkProportionality(N))
+						{
+							continue;
+						}
+						else
+						{
+							break;
+						}
 					}
 					case '>':
 					{
@@ -876,18 +880,19 @@ checkEqual(State *  N)
 	done(N, newToken);
 }
 
-static void 
+static bool 
 checkProportionality(State * N)
 {
 	IrNodeType		type;
 
-	/*
-	 *	Gobble any extant chars.
-	 */
-	finishToken(N);
 
 	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '<')
 	{
+		/*
+		 *	Gobble any extant chars.
+		 */
+		finishToken(N);
+
 		gobble(N, 2);
 		type = kNewtonIrNodeType_TdimensionallyAgnosticProportional;
 
@@ -902,9 +907,11 @@ checkProportionality(State * N)
 		 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
 		 */
 		done(N, newToken);
+
+		return true;
 	}
 
-	return;
+	return false;
 }
 
 static void
@@ -1065,6 +1072,7 @@ isOperatorOrSeparator(State *  N, char c)
 		case '\r':
 		case '\t':
 		case '#':
+		case 'o':
 		{
 			return true;
 		}

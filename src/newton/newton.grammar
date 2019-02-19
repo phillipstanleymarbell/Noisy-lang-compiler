@@ -8,13 +8,13 @@ reservedIdentifiers		::=	":" | "," | "@" | "o<" | "~" | "<" | "<=" | ">" | ">=" 
 					| "dot" | "cross" | "derivative" | "integral" | "interface"
 					| "i2c" | "spi" | "analog" | "write" | "read" | "delay" | "range"
 					| "erasuretoken" | "uncertainty" | "accuracy" | "precision"
-					| "Gaussian" | "Laplacian" | "StudentT" | "Bernoulli" | "Binomial" 
-					| "Poisson" | "NegativeBinomial" | "BetaBinomial" | "Exponential"
-					| "Gamma" | "Multinomial" | "Beta" | "LogitNormal" | "Dirichlet"
-					| "Cauchy" | "LogNormal" | "Pareto" | "BetaPrime" | "StudentZ" 
-					| "Weibull" | "Erlang" | "Maxwell" | "FermiDirac" | "FisherZ" 
-					| "LogSeries" | "Gumbel" | "Rayleigh" | "Gibrat" | "PearsonIII"
-					| "ExtremeValue"| "F" | "Xi" | "XiSquared" | "to" | "bits" | "><"
+					| "GaussianDistribution" | "LaplacianDistribution" | "StudentTDistribution" | "BernoulliDistribution" | "BinomialDistribution" 
+					| "PoissonDistribution" | "NegativeBinomialDistribution" | "BetaBinomialDistribution" | "ExponentialDistribution"
+					| "GammaDistribution" | "MultinomialDistribution" | "BetaDistribution" | "LogitNormalDistribution" | "DirichletDistribution"
+					| "CauchyDistribution" | "LogNormalDistribution" | "ParetoDistribution" | "BetaPrimeDistribution" | "StudentZDistribution" 
+					| "WeibullDistribution" | "ErlangDistribution" | "MaxwellDistribution" | "FermiDiracDistribution" | "FisherZDistribution" 
+					| "LogSeriesDistribution" | "GumbelDistribution" | "RayleighDistribution" | "GibratDistribution" | "PearsonIIIDistribution"
+					| "ExtremeValueDistribution"| "FDistribution" | "XiDistribution" | "XiSquaredDistribution" | "to" | "bits" | "><"
 					| "dimensionless" | "include" | "(" | ")" | "{" | "}" | ";" | ".." .
 
 zeroToNine			=	"0-9" .
@@ -60,9 +60,15 @@ constraintList			::=	[constraint] {"," constraint} .
 constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
 quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
 quantityTerm			::=	[unaryOp] quantityFactor {highPrecedenceQuantityOperator quantityFactor} .
+
+/*
+ *	The way we have the optional [exponentiationOperator quantityFactor] both after `quantity` 
+ *	as well as after `"(" quantityExpression ")"` is a bit awkward but represents what we actually want.
+ *	It is partly a result of the exponentiation operator having even higher precedence than
+ */
 quantityFactor			::=	quantity [exponentiationOperator quantityFactor]						|
 						functionalOperator {functionalOperator} quantityFactor quantityFactor			|
-						"(" quantityExpression ")" 								|
+						"(" quantityExpression ")" [exponentiationOperator quantityFactor]			|
 						"{" quantityExpression {"," quantityExpression} "}" .
 /*
  *	The following needs to be

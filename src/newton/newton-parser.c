@@ -761,7 +761,9 @@ newtonParseNumericExpression(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
-	addLeaf(N, node, newtonParseNumericTerm(N, currentScope));
+	IrNode *	firstChildTerm = newtonParseNumericTerm(N, currentScope);
+	addLeaf(N, node, firstChildTerm);
+	node->value = firstChildTerm->value;
 
 	/*
 	 *	We have to check whether the token after the operator is a numeric const.
@@ -805,7 +807,9 @@ newtonParseNumericTerm(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
-	addLeaf(N, node, newtonParseNumericFactor(N, currentScope));
+	IrNode *	firstChildFactor = newtonParseNumericFactor(N, currentScope);
+	addLeaf(N, node, firstChildFactor);
+	node->value = firstChildFactor->value;
 
 	/*
 	 *	We have to check whether the token after the operator is a numeric const.
@@ -817,6 +821,8 @@ newtonParseNumericTerm(State *  N, Scope *  currentScope)
 	{
 		addLeafWithChainingSeq(N, node, newtonParseHighPrecedenceQuantityOperator(N, currentScope));
 		addLeafWithChainingSeq(N, node, newtonParseNumericFactor(N, currentScope));
+
+		//xxx TODO xxx: Need to update node->value with (node->value highPrecedenceQuantityOperato nextChildFactor->value)
 	}
 
 	/*
@@ -851,7 +857,9 @@ newtonParseNumericFactor(State *  N, Scope *  currentScope)
 
 	if (inFirst(N, kNewtonIrNodeType_PnumericConst, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeaf(N, node, newtonParseNumericConst(N, currentScope));
+		IrNode *	constChildNode = newtonParseNumericConst(N, currentScope);
+		addLeaf(N, node, constChildNode);
+		node->value = constChildNode->value;
 
 		/*
 		 *	We have to check whether the token after the operator is a numeric const.
@@ -1282,29 +1290,30 @@ newtonParseQuantityExpression(State *  N, Scope *  currentScope)
 
 		while (inFirst(N, kNewtonIrNodeType_PlowPrecedenceOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
 		{
-			addLeafWithChainingSeq(N, expression, newtonParseLowPrecedenceOperator(N, currentScope));
+			IrNode *	operatorProductionNode = newtonParseLowPrecedenceOperator(N, currentScope);
+			addLeafWithChainingSeq(N, expression, operatorProductionNode);
 
 			IrNode *	rightTerm = newtonParseQuantityTerm(N, currentScope);
 			addLeafWithChainingSeq(N, expression, rightTerm);
 
-			if (rightTerm->type == kNewtonIrNodeType_Tplus)
+			if (operatorProductionNode->irLeftChild->type == kNewtonIrNodeType_Tplus)
 			{
 				expression->value += rightTerm->value;
 			}
-			else if (rightTerm->type == kNewtonIrNodeType_Tminus)
+			else if (operatorProductionNode->irLeftChild->type == kNewtonIrNodeType_Tminus)
 			{
 				expression->value -= rightTerm->value;
 			}
 			else
 			{
-				newtonParserSyntaxError(N, kNewtonIrNodeType_PquantityExpression, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts);
-				newtonParserErrorRecovery(N, kNewtonIrNodeType_PquantityExpression);
+				newtonParserSyntaxError(N, kNewtonIrNodeType_PlowPrecedenceOperator, kNewtonIrNodeType_PlowPrecedenceOperator, gNewtonFirsts);
+				newtonParserErrorRecovery(N, kNewtonIrNodeType_PlowPrecedenceOperator);
 			}
 
 			if(!areTwoPhysicsEquivalent(N, leftTerm->physics, rightTerm->physics))
 			{
-				newtonParserSemanticError(N, kNewtonIrNodeType_PquantityExpression, (char *)EexpressionPhysicsMismatch);
-				newtonParserErrorRecovery(N, kNewtonIrNodeType_PquantityExpression);
+				newtonParserSemanticError(N, kNewtonIrNodeType_PlowPrecedenceOperator, (char *)EexpressionPhysicsMismatch);
+				newtonParserErrorRecovery(N, kNewtonIrNodeType_PlowPrecedenceOperator);
 			}
 		}
 	}
@@ -1470,7 +1479,7 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
  *
  *		quantityFactor			::=	quantity [exponentiationOperator quantityFactor]			|
  *							functionalOperator {functionalOperator} quantityFactor quantityFactor	|
- *							"(" quantityExpression ")" 						|
+ *							"(" quantityExpression ")" [exponentiationOperator quantityFactor]	|
  *							"{" quantityExpression {"," quantityExpression} "}" .
  */
 IrNode *
@@ -1531,6 +1540,16 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 		IrNode *	subnode = newtonParseQuantityExpression(N, currentScope);
 		addLeafWithChainingSeq(N, intermediate, subnode);
 		newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
+
+		if (inFirst(N, kNewtonIrNodeType_PexponentiationOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
+		{
+			addLeafWithChainingSeq(N, intermediate, newtonParseExponentiationOperator(N, currentScope));
+
+			IrNode *	exponentValue = newtonParseQuantityFactor(N, currentScope);
+
+			addLeafWithChainingSeq(N, intermediate, exponentValue);
+			setPhysicsOfBaseNode(N, subnode, exponentValue);
+		}
 
 		intermediate->value = subnode->value;
 		intermediate->physics = subnode->physics;
