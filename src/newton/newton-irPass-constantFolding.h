@@ -1,5 +1,5 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2019. Phillip Stanley-Marbell.
 
 	All rights reserved.
 
@@ -35,7 +35,5 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void			irPassHelperColorIr(State *  N, IrNode *  p, IrNodeColor nodeColor, bool setNotClear, bool recurseFlag);
-void			irPassHelperColorSymbolTable(State *  N, Scope *  p, IrNodeColor nodeColor, bool setNotClear, bool recurseFlag);
-uint64_t		irPassHelperIrSize(State *  N, IrNode *  p);
-uint64_t		irPassHelperSymbolTableSize(State *  N, Scope *  p);
+void	newtonIrPassConstantFolding(State *  N);
+double	newtonIrPassConstantFoldingSubtreeEvaluate(State *  N, IrNode *  node);

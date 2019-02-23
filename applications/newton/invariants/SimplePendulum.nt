@@ -44,7 +44,7 @@ SimplePendulum : invariant(L: distance@0, period: time) =
 {
 	L >= 2.2 * meter,
 	L <=  10 * meter,
-	L @< 5 * meter,
+	L o< 5 * meter,
 	period ~ (4 * kNewtonUnitfree_pi * kNewtonUnitfree_pi * L / kNewtonUnithave_AccelerationDueToGravity) ** 3,
 	period >= 3 * second,
 	period <= 9 * second

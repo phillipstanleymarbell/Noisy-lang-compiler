@@ -40,8 +40,8 @@
 
 include "NewtonBaseSignals.nt"
 
-groundpressure: constant = 101325 * Pa;
-groundtemp: constant = 288.15 * K;
+groundpressure: constant = 101325 Pa;
+groundtemp: constant = 288.15 K;
 
 altitudeAndPressureTroposphere: invariant(
 	altitude: distance, 

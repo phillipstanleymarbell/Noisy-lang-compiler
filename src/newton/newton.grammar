@@ -47,7 +47,7 @@ newtonDescription		::=	ruleList .
 ruleList			::=	{rule} .
 rule				::=	constantDefinition | invariantDefinition | baseSignalDefinition | sensorDefinition .
 constantDefinition		::=	identifier ":" "constant" "=" numericFactor [unitFactor] ";" .
-invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" constraintList "}" .
+invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" [constraintList] "}" .
 baseSignalDefinition		::=	identifier ":" "signal" [subdimensionTuple] "=" "{" [nameStatement] symbolStatement derivationStatement "}" .
 sensorDefinition		::=	identifier ":" "sensor" parameterTuple "=" "{" sensorPropertyList "}" .
 nameStatement			::=	"name" "=" stringConst languageSetting ";" .
@@ -64,11 +64,11 @@ quantityTerm			::=	[unaryOp] quantityFactor {highPrecedenceQuantityOperator quan
 /*
  *	The way we have the optional [exponentiationOperator quantityFactor] both after `quantity` 
  *	as well as after `"(" quantityExpression ")"` is a bit awkward but represents what we actually want.
- *	It is partly a result of the exponentiation operator having even higher precedence than
+ *	It is partly a result of the exponentiation operator having even higher precedence than the "highPrecedenceOperator" ('*' and '/')
  */
-quantityFactor			::=	quantity [exponentiationOperator quantityFactor]						|
+quantityFactor			::=	quantity [exponentiationOperator numericFactor]						|
 						functionalOperator {functionalOperator} quantityFactor quantityFactor			|
-						"(" quantityExpression ")" [exponentiationOperator quantityFactor]			|
+						"(" quantityExpression ")" [exponentiationOperator numericFactor]			|
 						"{" quantityExpression {"," quantityExpression} "}" .
 /*
  *	The following needs to be
@@ -81,7 +81,7 @@ quantityFactor			::=	quantity [exponentiationOperator quantityFactor]						|
  *
  *	because the latter would lead to an ambiguity in parsing quantityFactor
  */
-quantity			::=	numericConst | (identifier {"@" numericFactor}) .
+quantity			::=	numericConst | (identifier ["@" numericFactor]) .
 highPrecedenceQuantityOperator	::=	highPrecedenceOperator | vectorOp | "><" .
 lowPrecedenceOperator		::=	"+" | "-" .
 highPrecedenceOperator		::=	"*" | "/" .
@@ -97,6 +97,7 @@ unit				::=	identifier .
 numericExpression		::=	numericTerm {lowPrecedenceOperator numericTerm} .
 numericTerm			::=	numericFactor {highPrecedenceOperator numericFactor} .
 numericFactor			::=	(numericConst [exponentiationOperator numericConst]) | "(" numericExpression ")" .
+numericConst			::=	integerConst | realConst .
 sensorPropertyList		::=	sensorProperty {"," sensorProperty} .
 sensorProperty			::=	rangeStatement | uncertaintyStatement | erasureValueStatement | accuracyStatement | precisionStatement | sensorInterfaceStatement .
 sensorInterfaceStatement	::=	"interface" identifier ["@" numericFactor "bits"] "==" sensorInterfaceType parameterTuple ["{" sensorInterfaceCommandList "}"] .
@@ -114,7 +115,6 @@ accuracyStatement		::=	"accuracy" identifier "==" numericConstTupleList .
 precisionStatement		::=	"precision" identifier "==" numericConstTupleList .
 numericConstTupleList		::=	"{" numericConstTuple {"," numericConstTuple} "}" .
 numericConstTuple		::=	"(" numericFactor [unitFactor] "," numericFactor ")" .
-numericConst			::=	integerConst | realConst .
 expression			::=	term {lowPrecedenceBinaryOp term} .
 term				::=	[unaryOp] factor ["++" | "--"] {highPrecedenceBinaryOp factor} .
 factor				::=	numericConst | "(" expression ")" | distributionFactor | identifier ["[" yy numericExpression "]"] .

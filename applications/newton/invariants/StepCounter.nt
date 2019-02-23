@@ -50,7 +50,7 @@ multiAxisAngularVelocity : signal(i: 0 to 5) =
 	derivation = angularVelocity@i;
 }
 
-SamplingTime : constant = (5E-4) * s;
+SamplingTime : constant = 5E-4 s;
 
 maximumAcceleration: invariant(
 	x: multiAxisAcceleration@0, 

@@ -67,6 +67,7 @@
 #include "newton-symbolTable.h"
 #include "common-firstAndFollow.h"
 #include "newton-parser.h"
+#include "newton-irPass-constantFolding.h"
 
 
 extern unsigned long int	bigNumberOffset;
@@ -278,12 +279,8 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 	{
 		IrNode *	constantExpression = newtonParseNumericFactor(N, currentScope);
 
-		/*
-		 *	BUG/TODO (issue #404)
-		 */
 		constantPhysics->value = constantExpression->value;
 		constantPhysics->isConstant = true;
-
 		node->value = constantExpression->value;
 
 		newtonPhysicsAddExponents(N, constantPhysics, constantExpression->physics);
@@ -336,7 +333,7 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" constraintList "}" .
+ *		invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" [constraintList] "}" .
  */
 IrNode *
 newtonParseInvariant(State *  N, Scope *  currentScope)
@@ -375,14 +372,17 @@ newtonParseInvariant(State *  N, Scope *  currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, newScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, newScope);
 
-	invariant->constraints		= newtonParseConstraintList(N, newScope);
+	if (inFirst(N, kNewtonIrNodeType_Pconstraint, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		invariant->constraints		= newtonParseConstraintList(N, newScope);
 
-	/*
-	 *	Also add it to the AST
-	 */
-	addLeafWithChainingSeq(N, node, invariant->constraints);
+		/*
+		 *	Also add it to the AST
+		 */
+		addLeafWithChainingSeq(N, node, invariant->constraints);
 
-	invariant->id			= newtonGetInvariantIdByParameters(N, invariant->parameterList, 1);
+		invariant->id			= newtonGetInvariantIdByParameters(N, invariant->parameterList, 1);
+	}
 
 	IrNode *	scopeEnd	= newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, newScope);
 	commonSymbolTableCloseScope(N, newScope, scopeEnd);
@@ -631,6 +631,7 @@ setPhysicsOfBaseNode(State *  N, IrNode *  baseNode, IrNode *  exponent)
 	 */
 	baseNode->value = exponent->value;
 
+//fprintf(stderr, "\tin setPhysicsOfBaseNode(), baseNode->value = [%f],  exponent->value = [%f]\n", baseNode->value, exponent->value);
 	/*
 	 *	If the base is a Physics quantity, the exponent must be an integer
 	 */
@@ -788,6 +789,14 @@ newtonParseNumericExpression(State *  N, Scope *  currentScope)
 	}
 	*/
 
+	/*
+	 *	Preemptively call constant-folding routine on the subtree to set the
+	 *	root node ->value field, since physics annotation is currently
+	 *	(unfortunately) wired into the parse phase.
+	 */
+	node->value = newtonIrPassConstantFoldingSubtreeEvaluate(N, node);
+//fprintf(stderr, "In newtonParseNumericExpression(), newtonIrPassConstantFoldingSubtreeEvaluate() returned [%f]\n", node->value);
+
 	return node;
 }
 
@@ -821,8 +830,6 @@ newtonParseNumericTerm(State *  N, Scope *  currentScope)
 	{
 		addLeafWithChainingSeq(N, node, newtonParseHighPrecedenceQuantityOperator(N, currentScope));
 		addLeafWithChainingSeq(N, node, newtonParseNumericFactor(N, currentScope));
-
-		//xxx TODO xxx: Need to update node->value with (node->value highPrecedenceQuantityOperato nextChildFactor->value)
 	}
 
 	/*
@@ -835,6 +842,15 @@ newtonParseNumericTerm(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnumericTerm);
 	}
 	*/
+
+
+	/*
+	 *	Preemptively call constant-folding routine on the subtree to set the
+	 *	root node ->value field, since physics annotation is currently
+	 *	(unfortunately) wired into the parse phase.
+	 */
+	node->value = newtonIrPassConstantFoldingSubtreeEvaluate(N, node);
+//fprintf(stderr, "In newtonParseNumericTerm(), newtonIrPassConstantFoldingSubtreeEvaluate() returned [%f]\n", node->value);
 
 	return node;
 }
@@ -896,6 +912,14 @@ newtonParseNumericFactor(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnumericFactor);
 	}
 	*/
+
+	/*
+	 *	Preemptively call constant-folding routine on the subtree to set the
+	 *	root node ->value field, since physics annotation is currently
+	 *	(unfortunately) wired into the parse phase.
+	 */
+	node->value = newtonIrPassConstantFoldingSubtreeEvaluate(N, node);
+//fprintf(stderr, "In newtonParseNumericFactor(), newtonIrPassConstantFoldingSubtreeEvaluate() returned [%f]\n", node->value);
 
 	return node;
 }
@@ -963,7 +987,8 @@ newtonParseBaseSignal(State *  N, Scope *  currentScope)
 	}
 
 	/*
-	 *	Derivation syntax is required
+	 *	Derivation syntax is required. The `derivationExpression` is the irLeftChild of
+	 *	the node returned from newtonParseDerivation() and will be a PquantityExpression.
 	 */
 	IrNode *	derivationExpression = newtonParseDerivation(N, currentScope)->irLeftChild;
 	addLeafWithChainingSeq(N, node, derivationExpression);
@@ -971,6 +996,25 @@ newtonParseBaseSignal(State *  N, Scope *  currentScope)
 	if (derivationExpression->type != kNewtonIrNodeType_Tnone)
 	{
 		newtonPhysicsAddExponents(N, newPhysics, derivationExpression->physics);
+
+/*
+fprintf(stderr, "*1 In newtonParseBaseSignal for [%s], newPhysics dimensions exponents are:\n", basicPhysicsIdentifier->tokenString);
+Dimension *p = newPhysics->dimensions;
+while (p != NULL)
+{
+	fprintf(stderr, "\tdim name [%s], dim abbrv [%s], dim exponent [%f]\n", p->name, p->abbreviation, p->exponent);
+	p = p->next;
+}
+*/
+/*
+fprintf(stderr, "*2 In newtonParseBaseSignal for [%s], derivationExpression->physics dimensions exponents are:\n", basicPhysicsIdentifier->tokenString);
+p = derivationExpression->physics->dimensions;
+while (p != NULL)
+{
+	fprintf(stderr, "\tdim name [%s], dim abbrv [%s], dim exponent [%f]\n", p->name, p->abbreviation, p->exponent);
+	p = p->next;
+}
+*/
 	}
 	else
 	{
@@ -1279,6 +1323,8 @@ newtonParseQuantityExpression(State *  N, Scope *  currentScope)
 							NULL /* right child */,
 							lexPeek(N, 1)->sourceInfo /* source info */);
 
+//xxx re-check this. the dimensons are not getting set and parseQuantity* seems to be at fault...
+
 	expression->physics = newtonInitPhysics(N, currentScope, NULL);
 
 	if (inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts, kNewtonIrNodeTypeMax))
@@ -1293,14 +1339,19 @@ newtonParseQuantityExpression(State *  N, Scope *  currentScope)
 			IrNode *	operatorProductionNode = newtonParseLowPrecedenceOperator(N, currentScope);
 			addLeafWithChainingSeq(N, expression, operatorProductionNode);
 
+			/*
+			 *	Since the actual oeprator type node is somewhere in the left of the subtree, grab it
+			 */
+			IrNodeType	operatorType = getTypeFromOperatorSubtree(N, operatorProductionNode);
+
 			IrNode *	rightTerm = newtonParseQuantityTerm(N, currentScope);
 			addLeafWithChainingSeq(N, expression, rightTerm);
 
-			if (operatorProductionNode->irLeftChild->type == kNewtonIrNodeType_Tplus)
+			if (operatorType == kNewtonIrNodeType_Tplus)
 			{
 				expression->value += rightTerm->value;
 			}
-			else if (operatorProductionNode->irLeftChild->type == kNewtonIrNodeType_Tminus)
+			else if (operatorType == kNewtonIrNodeType_Tminus)
 			{
 				expression->value -= rightTerm->value;
 			}
@@ -1350,6 +1401,8 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 	bool		hasUnary = false;
 	bool		hasNumberInTerm = false;
 	int		numVectorsInTerm = 0;
+
+//xxx re-check this. the dimensons are not getting set and parseQuantity* seems to be at fault...
 
 	IrNode *	unaryNode;
 	IrNode *	intermediate = genIrNode(N,	kNewtonIrNodeType_PquantityTerm,
@@ -1401,9 +1454,13 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 
 	while (inFirst(N, kNewtonIrNodeType_PhighPrecedenceQuantityOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		IrNode *	binOp = newtonParseHighPrecedenceQuantityOperator(N, currentScope);
-		addLeafWithChainingSeq(N, intermediate, binOp);
+		IrNode *	operatorProductionNode = newtonParseHighPrecedenceQuantityOperator(N, currentScope);
+		addLeafWithChainingSeq(N, intermediate, operatorProductionNode);
 
+		/*
+		 *	Since the actual oeprator type node is somewhere in the left of the subtree, grab it
+		 */
+		IrNodeType	operatorType = getTypeFromOperatorSubtree(N, operatorProductionNode);
 
 		rightFactor = newtonParseQuantityFactor(N, currentScope);
 
@@ -1412,7 +1469,7 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 
 		if (hasNumberInTerm)
 		{
-			if (binOp->type == kNewtonIrNodeType_Tmul)
+			if (operatorType == kNewtonIrNodeType_Tmul)
 			{
 				intermediate->value = (
 							rightFactor->value == 0 		?
@@ -1420,7 +1477,7 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 							intermediate->value*rightFactor->value
 						);
 			}
-			else if (binOp->type == kNewtonIrNodeType_Tdiv)
+			else if (operatorType == kNewtonIrNodeType_Tdiv)
 			{
 				intermediate->value = (
 							rightFactor->value == 0			?
@@ -1443,13 +1500,17 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 			assert(numVectorsInTerm < 2);
 		}
 
-		if (!newtonIsDimensionless(rightFactor->physics) && binOp->type == kNewtonIrNodeType_Tmul)
+		if (!newtonIsDimensionless(rightFactor->physics) && (operatorType == kNewtonIrNodeType_Tmul))
 		{
 			newtonPhysicsAddExponents(N, intermediate->physics, rightFactor->physics);
 		}
-		else if (!newtonIsDimensionless(rightFactor->physics) && binOp->type == kNewtonIrNodeType_Tdiv)
+		else if (!newtonIsDimensionless(rightFactor->physics) && (operatorType == kNewtonIrNodeType_Tdiv))
 		{
 			newtonPhysicsSubtractExponents(N, intermediate->physics, rightFactor->physics);
+		}
+		else
+		{
+			fprintf(stderr, "is this option valid?!");
 		}
 	}
 
@@ -1477,9 +1538,9 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		quantityFactor			::=	quantity [exponentiationOperator quantityFactor]			|
+ *		quantityFactor			::=	quantity [exponentiationOperator numericFactor]			|
  *							functionalOperator {functionalOperator} quantityFactor quantityFactor	|
- *							"(" quantityExpression ")" [exponentiationOperator quantityFactor]	|
+ *							"(" quantityExpression ")" [exponentiationOperator numericFactor]	|
  *							"{" quantityExpression {"," quantityExpression} "}" .
  */
 IrNode *
@@ -1489,6 +1550,8 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
+
+//xxx re-check this. the dimensons are not getting set and parseQuantity* seems to be at fault...
 
 	if (inFirst(N, kNewtonIrNodeType_Pquantity, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
@@ -1500,7 +1563,7 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 		{
 			addLeafWithChainingSeq(N, intermediate, newtonParseExponentiationOperator(N, currentScope));
 
-			IrNode *	exponentValue = newtonParseQuantityFactor(N, currentScope);
+			IrNode *	exponentValue = newtonParseNumericFactor(N, currentScope);
 
 			addLeafWithChainingSeq(N, intermediate, exponentValue);
 			setPhysicsOfBaseNode(N, subnode, exponentValue);
@@ -1545,7 +1608,7 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 		{
 			addLeafWithChainingSeq(N, intermediate, newtonParseExponentiationOperator(N, currentScope));
 
-			IrNode *	exponentValue = newtonParseQuantityFactor(N, currentScope);
+			IrNode *	exponentValue = newtonParseNumericFactor(N, currentScope);
 
 			addLeafWithChainingSeq(N, intermediate, exponentValue);
 			setPhysicsOfBaseNode(N, subnode, exponentValue);
@@ -1599,7 +1662,7 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		quantity			::=	numericConst | (identifier {"@" numericFactor}) .
+ *		quantity			::=	numericConst | (identifier ["@" numericFactor]) .
  */
 IrNode *
 newtonParseQuantity(State *  N, Scope *  currentScope)
@@ -1620,7 +1683,7 @@ newtonParseQuantity(State *  N, Scope *  currentScope)
 		addLeafWithChainingSeq(N, intermediate, identifierNode);
 
 		/*
-		 *	TODO: This is odd. This is carried over from Jonathan's implementation. Check and remove in future --- PSM.
+		 *	TODO: This is odd. This is carried over from Jonathan's implementation. A deep copy from self to self makes no sense, and copying the physics->value makes no sense either. Check and remove in future --- PSM.
 		 */
 		identifierNode->physics = deepCopyPhysicsNode(identifierNode->physics);
 		identifierNode->value = identifierNode->physics->value;
@@ -1660,11 +1723,7 @@ newtonParseQuantity(State *  N, Scope *  currentScope)
 			identifierNode->parameterNumber = matchingParameter->parameterNumber;
 		}
 
-		while (peekCheck(N, 1, kNewtonIrNodeType_TatSign))
-		{
-			newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
-			addLeafWithChainingSeq(N, intermediate, newtonParseNumericFactor(N, currentScope));
-		}
+		intermediate->physics = identifierNode->physics;
 	}
 	else
 	{
@@ -2145,18 +2204,18 @@ newtonParseHighPrecedenceQuantityOperator(State *  N, Scope *  currentScope)
 	}
 	else
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PhighPrecedenceQuantityOperator, kNewtonIrNodeType_PhighPrecedenceQuantityOperator, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PhighPrecedenceQuantityOperator);
 	}
 
 	/*
 	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
 	 */
 	/*
-	if (!inFollow(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFollows, kNewtonIrNodeTypeMax))
+	if (!inFollow(N, kNewtonIrNodeType_PhighPrecedenceQuantityOperator, gNewtonFollows, kNewtonIrNodeTypeMax))
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, kNewtonIrNodeTypeMax, gNewtonFollows);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PhighPrecedenceQuantityOperator, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PhighPrecedenceQuantityOperator);
 	}
 	*/
 
@@ -3598,6 +3657,15 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 	n->physics = deepCopyPhysicsNode(physicsSearchResult);
 	assert(n->physics->dimensions != NULL);
 
+/*
+fprintf(stderr, "In identifier use of [%s], physics dimensions exponents are:\n", t->identifier);
+Dimension *p = n->physics->dimensions;
+while (p != NULL)
+{
+	fprintf(stderr, "\tdim name [%s], dim abbrv [%s], dim exponent [%f]\n", p->name, p->abbreviation, p->exponent);
+	p = p->next;
+}
+*/
 	/*
 	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
 	 */
@@ -3627,7 +3695,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 
 
 /*
- *	Routines related to Newton API. TODO: Should be moved out of newton-parser.c into a separate (API-related) source file.
+ *	Routines related to Newton API. TODO: Should be moved out of newton-parser.c into a separate (API-related) source file. I have in any case started getting rid of these from the implementation since Jonathan is no longer maintaining them---PSM.
  */
 
 

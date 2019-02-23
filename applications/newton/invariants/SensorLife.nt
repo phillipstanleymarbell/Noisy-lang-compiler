@@ -47,7 +47,7 @@ multiDimensionalTemperature: signal(i: 0 to 17) = {
 	derivation = temperature + 273*K;
 }
 
-maxTemp: constant = 120 * celcius;
+maxTemp: constant = 120 celcius;
 
 tempInRange: invariant(
 	neighborTempNW: multiDimensionalTemperature@0,

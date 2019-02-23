@@ -40,7 +40,7 @@
 
 include "NewtonBaseSignals.nt"
 
-SamplingTime: constant = (5E-5) * s;
+SamplingTime: constant = 5E-5 s;
 
 GPSAndAccelerometerMatch : invariant (
 	ds: distance@3,

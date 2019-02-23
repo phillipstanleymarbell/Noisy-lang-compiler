@@ -49,3 +49,22 @@ IrNode *	findNthIrNodeOfType(State *  N, IrNode *  root, IrNodeType expectedType
 IrNode *	findNthIrNodeOfTypes(State *  N, IrNode *  root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int nth);
 IrNode *	findNthIrNodeOfTypeHelper(State *  N, IrNode *  root, IrNodeType expectedType, int *  nth);
 IrNode *	findNthIrNodeOfTypesHelper(State *  N, IrNode *  root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int *  nth);
+IrNodeType	getTypeFromOperatorSubtree(State *  N, IrNode *  n);
+
+#define L(node)		(node)->irLeftChild
+#define R(node)		(node)->irRightChild
+#define P(node)		(node)->irParent
+
+#define LL(node)	L(L(node))
+#define LLR(node)	R(L(L(node)))
+#define LR(node)	R(L(node))
+#define LRL(node)	L(R(L(node)))
+#define LRR(node)	R(R(L(node)))
+#define LRRL(node)	L(R(R(L(node))))
+#define RL(node)	L(R(node))
+#define RR(node)	R(R(node))
+#define RRL(node)	L(R(R(node)))
+#define RLL(node)	L(L(R(node)))
+#define RLLR(node)	R(L(L(R(node))))
+#define RLLLR(node)	R(L(L(L(R(node)))))
+#define RLR(node)	R(L(R(node)))

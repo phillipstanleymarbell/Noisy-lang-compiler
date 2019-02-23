@@ -40,9 +40,9 @@
 
 include "NewtonBaseSignals.nt"
 
-SamplingTime	: constant = (5E-3) * s;
-initialHeight	: constant = 10 * m;
-ballMass	: constant = 1 * kg;
+SamplingTime	: constant = 5E-3 s;
+initialHeight	: constant = 10 m;
+ballMass	: constant = 1 kg;
 
 mechanicalEnergyDecreasing: invariant (
 	h: distance@2,

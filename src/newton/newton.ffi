@@ -50,7 +50,7 @@ production kNewtonIrNodeType_PconstantDefinition:	firstset = {
 									kNewtonIrNodeType_Tidentifier,
 								}
 
---//		invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" constraintList "}" .
+--//		invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" [constraintList] "}" .
 production kNewtonIrNodeType_PinvariantDefinition:	firstset = {
 									kNewtonIrNodeType_Tidentifier,
 								}
@@ -116,9 +116,9 @@ production kNewtonIrNodeType_PquantityTerm:		firstset = {
 									firstset(kNewtonIrNodeType_PquantityFactor),
 								}
 
---//		quantityFactor			::=	quantity [exponentiationOperator quantityExpression]					|
+--//		quantityFactor			::=	quantity [exponentiationOperator numericFactor]						|
 --//								functionalOperator {functionalOperator} quantityFactor quantityFactor		|
---//								"(" quantityExpression ")" 							|
+--//								"(" quantityExpression ")" [exponentiationOperator numericFactor]			|
 --//								"{" quantityExpression {"," quantityExpression} "}" .
 production kNewtonIrNodeType_PquantityFactor:		firstset = {
 									kNewtonIrNodeType_TleftParen,
@@ -127,7 +127,7 @@ production kNewtonIrNodeType_PquantityFactor:		firstset = {
 									firstset(kNewtonIrNodeType_Pquantity),
 								}
 
---//		quantity			::=	numericConst | (identifier {"@" numericFactor}) .
+--//		quantity			::=	numericConst | (identifier ["@" numericFactor]) .
 production kNewtonIrNodeType_Pquantity:			firstset = {
 									kNewtonIrNodeType_Tidentifier,
 									firstset(kNewtonIrNodeType_PnumericConst),
@@ -456,7 +456,7 @@ production kNewtonIrNodeType_PconstantDefinition:	followset = {
 									followset(kNewtonIrNodeType_Prule),
 								}
 
---//		invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" constraintList "}" .
+--//		invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" [constraintList] "}" .
 production kNewtonIrNodeType_PinvariantDefinition:	followset = {
 									followset(kNewtonIrNodeType_Prule),
 								}
@@ -531,16 +531,16 @@ production kNewtonIrNodeType_PquantityTerm:		followset = {
 									followset(kNewtonIrNodeType_PquantityExpression),
 								}
 
---//		quantityFactor			::=	quantity [exponentiationOperator quantityExpression]					|
+--//		quantityFactor			::=	quantity [exponentiationOperator numericFactor]						|
 --//								functionalOperator {functionalOperator} quantityFactor quantityFactor		|
---//								"(" quantityExpression ")"							|
+--//								"(" quantityExpression ")" [exponentiationOperator numericFactor]		|
 --//								"{" quantityExpression {"," quantityExpression} "}" .
 production kNewtonIrNodeType_PquantityFactor:		followset = {
 									firstset(kNewtonIrNodeType_PhighPrecedenceQuantityOperator),
 									followset(kNewtonIrNodeType_PquantityTerm),
 								}
 
---//		quantity			::=	numericConst | (identifier {"@" numericFactor}) .
+--//		quantity			::=	numericConst | (identifier ["@" numericFactor]) .
 production kNewtonIrNodeType_Pquantity:			followset = {
 									followset(kNewtonIrNodeType_PquantityFactor),
 									firstset(kNewtonIrNodeType_PexponentiationOperator),
@@ -565,8 +565,7 @@ production kNewtonIrNodeType_PhighPrecedenceOperator:	followset = {
 
 --//		exponentiationOperator		::=	"**" .
 production kNewtonIrNodeType_PexponentiationOperator:	followset = {
-									firstset(kNewtonIrNodeType_PquantityExpression),
-									firstset(kNewtonIrNodeType_PnumericConst),
+									firstset(kNewtonIrNodeType_PnumericFactor),
 								}
 
 --//		vectorOp			::=	"dot" | "cross" .

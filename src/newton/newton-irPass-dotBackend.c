@@ -56,6 +56,7 @@
 #include "noisy-parser.h"
 #include "noisy-lexer.h"
 #include "common-irPass-helpers.h"
+#include "common-irHelpers.h"
 #include "newton-types.h"
 
 #ifdef NoisyOsLinux

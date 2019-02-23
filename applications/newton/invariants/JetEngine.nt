@@ -44,7 +44,7 @@ massFlowRate: signal =
 	derivation	= mass / time;
 }
 
-SamplingTime: constant = (5E-3) * s;
+SamplingTime: constant = 5E-3 s;
 
 MooreGreitzerJetEngineModel: invariant(
 	x: massFlowRate,

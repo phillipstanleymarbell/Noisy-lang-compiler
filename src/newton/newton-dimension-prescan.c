@@ -61,7 +61,7 @@
 #include "newton-symbolTable.h"
 #include "common-firstAndFollow.h"
 #include "newton-parser.h"
-#include "newton-dimension-pass.h"
+#include "newton-dimension-prescan.h"
 
 
 extern const char *		gNewtonTokenDescriptions[];

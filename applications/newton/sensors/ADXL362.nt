@@ -65,9 +65,9 @@ kADXL362TemperatureErasureToken		: constant = 16rFEFE;
 #
 #	Standard Deviation is not available in data sheet.
 #
-kADXL362xAccelerationStdev		: constant = unknown;
-kADXL362yAccelerationStdev		: constant = unknown;
-kADXL362zAccelerationStdev		: constant = unknown;
+kADXL362xAccelerationStdev		: constant = -1;
+kADXL362yAccelerationStdev		: constant = -1;
+kADXL362zAccelerationStdev		: constant = -1;
 
 #
 #	Standard Deviation of the temperature sensor can be found in Table 1 of Specifications on page 4.
@@ -87,14 +87,14 @@ ADXL362: sensor (
 	#
 	#	Range of Acceleration can be found in Table 1 of Specifications on page 4.
 	#
-	range adxl362xAcceleration == [-8*mj .. 8*mj],
-	range adxl362yAcceleration == [-8*mj .. 8*mj],
-	range adxl362zAcceleration == [-8*mj .. 8*mj],
+	range adxl362xAcceleration == [-8*mj, 8*mj],
+	range adxl362yAcceleration == [-8*mj, 8*mj],
+	range adxl362zAcceleration == [-8*mj, 8*mj],
 
 	#
 	#	Range of Temperature can be found in Ordering Guide on page 43.
 	#
-	range adxl362Temperature == [233.15*K .. 358.15*K],
+	range adxl362Temperature == [233.15*K, 358.15*K],
 
 	#
 	#	The operation sequence needed to get a sample
@@ -209,22 +209,22 @@ ADXL362: sensor (
 	#	Could not find the relevant information in data sheet so I left the cost as 0.
 	#
 	precision adxl362xAcceleration == {
-					(8*bits, unknown),
-					(12*bits, unknown),
+					(8*bits, -1),
+					(12*bits, -1),
 				},
 
 	precision adxl362yAcceleration == {
-					(8*bits, unknown),
-					(12*bits, unknown),
+					(8*bits, -1),
+					(12*bits, -1),
 				},
 
 	precision adxl362zAcceleration == {
-					(8*bits, unknown),
-					(12*bits, unknown),
+					(8*bits, -1),
+					(12*bits, -1),
 				},
 
 	precision adxl362Temperature == {
-					(12*bits, unknown),
+					(12*bits, -1),
 				},
 
 	#
@@ -259,9 +259,9 @@ ADXL362: sensor (
 				},
 
 	accuracy adxl362zAcceleration == {
-					(920*n, unknown),
+					(920*n, -1),
 					(550*n, 3.6)
-					(350*n, unknown),
+					(350*n, -1),
 					(250*n, 26),
 				},
 
@@ -271,6 +271,6 @@ ADXL362: sensor (
 	#	Could not find the relevant information in data sheet so I left the cost as 0.
 	#
 	accuracy adxl362Temperature == {
-					(4*K, unknown),
+					(4*K, -1),
 				}
 }

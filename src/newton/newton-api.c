@@ -1,5 +1,5 @@
 /*
-	Authored 2016. Jonathan Lim. Modified 2018, Phillip Stanley-Marbell.
+	Authored 2016. Jonathan Lim.
 
 	All rights reserved.
 
@@ -62,6 +62,13 @@
 #include "newton-api.h"
 #include "newton-check-pass.h"
 #include "newton-dimension-check-pass.h"
+
+
+/*
+ *	I have long ago given up on cleaning this up and am slowly discarding all 
+ *	of JL's Newton API code. This file is only used from JL's "Newton API"
+ *	which I will no longer maintain --- PSM.
+ */
 
 
 State *

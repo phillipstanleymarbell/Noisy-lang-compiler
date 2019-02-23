@@ -1,5 +1,5 @@
 /*
-	Authored 2017. Jonathan Lim. Modified 2018, Phillip Stanley-Marbell.
+	Authored 2017. Jonathan Lim.
 
 	All rights reserved.
 
@@ -61,6 +61,11 @@
 #include "common-firstAndFollow.h"
 #include "newton-dimension-check-pass.h"
 
+/*
+ *	I have long ago given up on cleaning this up and am slowly discarding all 
+ *	of JL's Newton API code. This file is only used from JL's "Newton API"
+ *	which I will no longer maintain --- PSM.
+ */
 
 extern int		gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 extern char* gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];

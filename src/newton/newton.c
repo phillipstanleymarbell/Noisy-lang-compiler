@@ -76,7 +76,7 @@
 #include "newton-irPass-dimensionalMatrixPiGroupWeedOut.h"
 #include "newton-irPass-dimensionalMatrixPiGroupSorted.h"
 #include "newton-irPass-dimensionalMatrixKernelRowCanonicalization.h"
-#include "newton-dimension-pass.h"
+#include "newton-dimension-prescan.h"
 
 extern char *	gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
 

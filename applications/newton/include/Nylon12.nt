@@ -48,5 +48,5 @@
 
 include "NewtonBaseSignals.nt"
 
-kNewtonUnithave_Nylon12_Density		: constant = 1010 * kilogram * meter ** -3;
-kNewtonUnithave_Nylon12_YoungsModulus	: constant = 1.54e9 * Newton / meter ** -2;
+kNewtonUnithave_Nylon12_Density		: constant = 1010 (kilogram * meter ** -3);
+kNewtonUnithave_Nylon12_YoungsModulus	: constant = 1.54e9 (Newton / meter ** -2);
