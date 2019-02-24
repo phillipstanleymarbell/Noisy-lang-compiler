@@ -102,8 +102,8 @@ State *				newtonCgiDimensionsState;
 
 enum
 {
-	kNoisyCgiFormatWidth		= 580,
-	kNoisyCgiChunkCgiParse		= 1024,
+	kNewtonCgiFormatWidth		= 580,
+	kNewtonCgiChunkCgiParse		= 1024,
 };
 
 
@@ -219,7 +219,7 @@ getCgiVars(void)
 	 *	Split on "&" and ";" to extract the name-value
 	 *	pairs into pairlist.
 	 */
-	pairlist = (char **) malloc(kNoisyCgiChunkCgiParse*sizeof(char *));
+	pairlist = (char **) malloc(kNewtonCgiChunkCgiParse*sizeof(char *));
 	if (pairlist == NULL)
 	{
 		fatal(newtonCgiState, Emalloc);
@@ -231,9 +231,9 @@ getCgiVars(void)
 	{
 		pairlist[paircount++] = strdup(nvpair);
 
-		if (!(paircount % kNoisyCgiChunkCgiParse))
+		if (!(paircount % kNewtonCgiChunkCgiParse))
 		{
-			pairlist = (char **) realloc(pairlist, (paircount + kNoisyCgiChunkCgiParse)*sizeof(char *));
+			pairlist = (char **) realloc(pairlist, (paircount + kNewtonCgiChunkCgiParse)*sizeof(char *));
 		}
 
 		nvpair = strtok(NULL, "&;");
@@ -289,9 +289,9 @@ int
 main(void)
 {
 	char **			cgiVars;
-	char			logFileStub[kNoisyMaxFilenameLength+1];
+	char			logFileStub[kCommonMaxFilenameLength+1];
 	int			jumpParameter, logFd, i;
-	int			fmtWidth = kNoisyCgiFormatWidth, cgiSparameter = 0, cgiOparameter = 0, cgiTparameter = 0;
+	int			fmtWidth = kNewtonCgiFormatWidth, cgiSparameter = 0, cgiOparameter = 0, cgiTparameter = 0;
 	char			tmp;
 	char *			ep = &tmp;
 	struct rlimit		rlp;
@@ -310,12 +310,12 @@ main(void)
 	 *	at hard limit, so we set them to different but meaningful
 	 *	values.
 	 */
-	rlp.rlim_cur = kNoisyRlimitRssBytes;
-	rlp.rlim_max = kNoisyRlimitRssBytes + 1;
+	rlp.rlim_cur = kCommonRlimitRssBytes;
+	rlp.rlim_max = kCommonRlimitRssBytes + 1;
 	setrlimit(RLIMIT_RSS, &rlp);
 
-	rlp.rlim_cur = kNoisyRlimitCpuSeconds;
-	rlp.rlim_max = kNoisyRlimitCpuSeconds + 1;
+	rlp.rlim_cur = kCommonRlimitCpuSeconds;
+	rlp.rlim_max = kCommonRlimitCpuSeconds + 1;
 	setrlimit(RLIMIT_CPU, &rlp);
 
 	memset(&sa, 0, sizeof(sa));
@@ -359,9 +359,9 @@ main(void)
 	 *	programs that don't produce any output over some given timeout,
 	 *	period (yielding a "Timeout waiting for output from CGI script").
 	 */
-	itv.it_interval.tv_sec = kNoisyProgressTimerSeconds;
+	itv.it_interval.tv_sec = kCommonProgressTimerSeconds;
 	itv.it_interval.tv_usec = 0;
-	itv.it_value.tv_sec = kNoisyProgressTimerSeconds;
+	itv.it_value.tv_sec = kCommonProgressTimerSeconds;
 	itv.it_value.tv_usec = 0;
 	setitimer(ITIMER_VIRTUAL, &itv, NULL);
 
@@ -372,8 +372,8 @@ main(void)
 	sigaction(SIGVTALRM, &sa, NULL);
 
 
-	newtonCgiState = init(kNoisyModeDefault|kNoisyModeCallStatistics/* | kNoisyModeCallTracing */|kNoisyModeCGI);
-	newtonCgiDimensionsState = init(kNoisyModeDefault|kNoisyModeCallStatistics/* | kNoisyModeCallTracing */|kNoisyModeCGI);
+	newtonCgiState = init(kNewtonModeDefault|kNewtonModeCallStatistics/* | kNewtonModeCallTracing */|kNewtonModeCGI);
+	newtonCgiDimensionsState = init(kNewtonModeDefault|kNewtonModeCallStatistics/* | kNewtonModeCallTracing */|kNewtonModeCGI);
 	timestampsInit(newtonCgiState);
 
 
@@ -577,7 +577,7 @@ main(void)
 			}
 			else
 			{
-				//newtonCgiState->irBackends |= kNoisyIrBackendXXX;
+				//newtonCgiState->irBackends |= kNewtonIrBackendXXX;
 			}
 		}
 		
@@ -606,7 +606,7 @@ main(void)
 			}
 			else
 			{
-				//newtonCgiState->irPasses |= kNoisyIrPassXXX;
+				//newtonCgiState->irPasses |= kNewtonIrPassXXX;
 			}
 		}
 	}
@@ -621,7 +621,7 @@ main(void)
 	 *	Log the input to a file; mkstemps() require the stub to be
 	 *	writeable.
 	 */
-	snprintf(logFileStub, kNoisyMaxFilenameLength, "%sinput-%s-%s.nt", kNewtonBasePath, getenv("REMOTE_ADDR"), kNewtonCgiInputLogStub);
+	snprintf(logFileStub, kCommonMaxFilenameLength, "%sinput-%s-%s.nt", kNewtonBasePath, getenv("REMOTE_ADDR"), kNewtonCgiInputLogStub);
 	logFd = mkstemps(logFileStub, strlen(kNewtonCgiInputLogExtension));
 	if (logFd == -1)
 	{
@@ -705,35 +705,56 @@ main(void)
 			irPassSmtBackend(newtonCgiState);
 		}
 
-		/*
-	 	 *	Pi groups pass (implies Dimensional matrix pass)
-	 	 */
-		if (newtonCgiState->irPasses & kNoisyIrPiGroupsPass)
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixAnnotation)
 		{
 			irPassDimensionalMatrixAnnotation(newtonCgiState);
+
+			if (newtonCgiState->verbosityLevel > 0)
+			{
+				irPassDimensionalMatrixPrinter(newtonCgiState);
+			}
+		}
+
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixPiGroups)
+		{
 			irPassDimensionalMatrixPiGroups(newtonCgiState);
+		}
+
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixKernelRowCanonicalization)
+		{
 			irPassDimensionalMatrixKernelRowCanonicalization(newtonCgiState);
+		}
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixPiGroupSorted)
+		{
 			irPassDimensionalMatrixPiGroupSorted(newtonCgiState);
+		}
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates)
+		{
 			irPassDimensionalMatrixPiGroupsWeedOutDuplicates(newtonCgiState);
-			irPassDimensionalMatrixConvertToList(newtonCgiState);
-			irPassDimensionalMatrixPrinter(newtonCgiState);
+		}
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixKernelPrinter)
+		{
 			irPassDimensionalMatrixKernelPrinter(newtonCgiState);
+		}
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixConvertToList)
+		{
+			irPassDimensionalMatrixConvertToList(newtonCgiState);
 		}
 
 		/*
 		 *	Dot backend.
 		 */
-		if (newtonCgiState->irBackends & kNoisyIrBackendDot)
+		if (newtonCgiState->irBackends & kNewtonIrBackendDot)
 		{
-			printToFile(newtonCgiState, irPassDotBackend(newtonCgiState, newtonCgiState->newtonIrTopScope, newtonCgiState->newtonIrRoot, gNewtonAstNodeStrings), "tmpdot", kNoisyPostFileWriteActionRenderDot);
+			printToFile(newtonCgiState, irPassDotBackend(newtonCgiState, newtonCgiState->newtonIrTopScope, newtonCgiState->newtonIrRoot, gNewtonAstNodeStrings), "tmpdot", kCommonPostFileWriteActionRenderDot);
 		}
 
-		if (newtonCgiState->mode & kNoisyModeCallTracing)
+		if (newtonCgiState->mode & kNewtonModeCallTracing)
 		{
 			timeStampDumpTimeline(newtonCgiState);
 		}
 
-		if (newtonCgiState->mode & kNoisyModeCallStatistics)
+		if (newtonCgiState->mode & kNewtonModeCallStatistics)
 		{
 			uint64_t	irNodeCount = 0, symbolTableNodeCount;
 

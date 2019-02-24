@@ -85,7 +85,7 @@ IrNode *  binaryOpTreeTransform(State *  N, IrNode *  inputAST)
     IrNode *  rightOperand = commonTreeTransform(N, L(R(R(inputAST))));
 
     IrNode *  newLeftOperand = genIrNode(N, opType, leftOperand, rightOperand, inputAST->sourceInfo);
-    irPassHelperColorIr(N, newLeftOperand, kNoisyIrNodeColorTreeTransformedColoring, true, false);
+    irPassHelperColorIr(N, newLeftOperand, kCommonIrNodeColorTreeTransformedColoring, true, false);
 
     IrNode *  newRoot = R(R(inputAST));
     /*
@@ -132,14 +132,14 @@ IrNode *  expandMinus(State *  N, IrNode *  rootNode)
                                        commonTreeTransform(N, operand),\
                                        L(rootNode)->sourceInfo);
 
-    irPassHelperColorIr(N, expandedTree, kNoisyIrNodeColorTreeTransformedColoring, true, false);
+    irPassHelperColorIr(N, expandedTree, kCommonIrNodeColorTreeTransformedColoring, true, false);
     return genIrNode(N, rootNode->type, expandedTree, R(R(rootNode)), rootNode->sourceInfo);
 }
 
 
 IrNode *  commonTreeTransform(State *  N, IrNode *  inputAST)
 {
-    if (inputAST->nodeColor & kNoisyIrNodeColorTreeTransformedColoring)
+    if (inputAST->nodeColor & kCommonIrNodeColorTreeTransformedColoring)
     {
         return inputAST;
     }
@@ -178,7 +178,7 @@ IrNode *  commonTreeTransform(State *  N, IrNode *  inputAST)
                 return commonTreeTransform(N, L(inputAST));
             }
             else if (L(inputAST)->type == kNewtonIrNodeType_Tminus &&
-                     !(L(inputAST)->nodeColor & kNoisyIrNodeColorTreeTransformedColoring))
+                     !(L(inputAST)->nodeColor & kCommonIrNodeColorTreeTransformedColoring))
             {
                 return commonTreeTransform(N, expandMinus(N, inputAST));
             }

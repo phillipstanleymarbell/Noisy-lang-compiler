@@ -38,16 +38,16 @@
 
 typedef enum
 {
-	kNoisyVerbosityDebugLexer	=	(1 << 0),
-	kNoisyVerbosityDebugParser	=	(1 << 1),
-	kNoisyVerbosityDebugAST		=	(1 << 2),
-	kNoisyVerbosityDebugFF		=	(1 << 3),
+	kCommonVerbosityDebugLexer	=	(1 << 0),
+	kCommonVerbosityDebugParser	=	(1 << 1),
+	kCommonVerbosityDebugAST		=	(1 << 2),
+	kCommonVerbosityDebugFF		=	(1 << 3),
 	
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */	
-	kNoisyVerbosityDebugMax,
-} NoisyVerbosityType;
+	kCommonVerbosityDebugMax,
+} VerbosityType;
 
 
 
@@ -650,9 +650,24 @@ typedef enum
 
 typedef enum
 {
-	kNoisyIrDimensionMatrixPass			= (1 << 0),
-	kNoisyIrPiGroupsPass				= (1 << 1),
+	kNewtonIrPassDimensionalMatrixAnnotation		= (1 << 0),
+	kNewtonIrPassDimensionalMatrixPiGroups			= (1 << 1),
+	kNewtonIrPassDimensionalMatrixKernelRowCanonicalization	= (1 << 2),
+	kNewtonIrPassDimensionalMatrixPiGroupSorted		= (1 << 3),
+	kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates	= (1 << 4),
+	kNewtonIrPassDimensionalMatrixKernelPrinter		= (1 << 5),
+	kNewtonIrPassDimensionalMatrixConvertToList		= (1 << 6),
 
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNewtonIrPassMax,
+} NewtonIrPasses;
+
+
+
+typedef enum
+{
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -663,64 +678,78 @@ typedef enum
 
 typedef enum
 {
-	kNoisyIrBackendDot				= (1 << 0),
-	kNoisyIrBackendProtobuf				= (1 << 1),
+	kNewtonIrBackendDot				= (1 << 0),
+	kNewtonIrBackendProtobuf			= (1 << 1),
 	kNewtonIrBackendSmt				= (1 << 2),
 	kNewtonIrBackendC				= (1 << 3),
+
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNewtonIrBackendMax,
+} NewtonIrBackends;
+
+
+
+typedef enum
+{
+	kNoisyIrBackendDot				= (1 << 0),
+	kNoisyIrBackendProtobuf				= (1 << 1),
+
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
 	kNoisyIrBackendMax,
-} NoisyIrBackend;
+} NoisyIrBackends;
 
 
 
 typedef enum
 {
-	kNoisyDotDetailLevelNoText			= (1 << 0),
-	kNoisyDotDetailLevelNoNilNodes			= (1 << 1),
+	kCommonDotDetailLevelNoText			= (1 << 0),
+	kCommonDotDetailLevelNoNilNodes			= (1 << 1),
 	
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
-	kNoisyDotDetailLevelMax,
-} NoisyDotDetailLevel;
+	kCommonDotDetailLevelMax,
+} DetailLevel;
 
 
 
 typedef enum
 {
-	kNoisyIrNodeColorDotBackendColoring		= (1 << 0),
-	kNoisyIrNodeColorProtobufBackendColoring	= (1 << 1),
-	kNoisyIrNodeColorTreeTransformedColoring	= (1 << 2),
+	kCommonIrNodeColorDotBackendColoring		= (1 << 0),
+	kCommonIrNodeColorProtobufBackendColoring	= (1 << 1),
+	kCommonIrNodeColorTreeTransformedColoring	= (1 << 2),
 
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
-	kNoisyIrNodeColor,
+	kCommonIrNodeColor,
 } IrNodeColor;
 
 
 
 typedef enum
 {
-	kNoisyMaxBufferLength				= 8192,
-	kNoisyChunkBufferLength				= 8192,
-	kNoisyMaxErrorTokenCount			= 32,
-	kNoisyStreamchkWidth				= 32,
-	kNoisyMaxPrintBufferLength			= 8192,
-	kNoisyMaxTokenCharacters			= 32,
-	kNoisyMaxFilenameLength				= 128,
-	kNoisyTimestampTimelineLength			= 4000000 /* Set to, e.g., 4000000 if we want to capture very long traces for debug; set to 1 otherwise */,
-	kNoisyCgiRandomDigits				= 10,
-	kNoisyRlimitCpuSeconds				= 5*60,			/*	5 mins	*/
-	kNoisyRlimitRssBytes				= 2*1024*1024*1024UL,	/*	2GB	*/
-	kNoisyProgressTimerSeconds			= 5,
+	kCommonMaxBufferLength				= 8192,
+	kCommonChunkBufferLength			= 8192,
+	kCommonMaxErrorTokenCount			= 32,
+	kCommonStreamchkWidth				= 32,
+	kCommonMaxPrintBufferLength			= 8192,
+	kCommonMaxTokenCharacters			= 32,
+	kCommonMaxFilenameLength			= 128,
+	kCommonTimestampTimelineLength			= 4000000 /* Set to, e.g., 4000000 if we want to capture very long traces for debug; set to 1 otherwise */,
+	kCommonCgiRandomDigits				= 10,
+	kCommonRlimitCpuSeconds				= 5*60,			/*	5 mins	*/
+	kCommonRlimitRssBytes				= 2*1024*1024*1024UL,	/*	2GB	*/
+	kCommonProgressTimerSeconds			= 5,
 
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
-	kNoisyConstantMax,
+	kCommonConstantMax,
 } Constant;
 
 
@@ -742,13 +771,28 @@ typedef enum
 
 typedef enum
 {
-	kNoisyPostFileWriteActionRenderDot		= (1 << 0),
+	kNewtonModeDefault				= (0 << 0),
+	kNewtonModeCallTracing				= (1 << 0),
+	kNewtonModeCallStatistics			= (1 << 1),
+	kNewtonModeCGI					= (1 << 2),
 
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
-	kNoisyPostFileWriteActionMax,
-} NoisyPostFileWriteAction;
+	kNewtonModeMax
+} NewtonMode;
+
+
+
+typedef enum
+{
+	kCommonPostFileWriteActionRenderDot		= (1 << 0),
+
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kCommonPostFileWriteActionMax,
+} PostFileWriteAction;
 
 
 typedef struct Scope		Scope;
@@ -1112,6 +1156,6 @@ void		dealloc(State *  C);
 void		runPasses(State *  C);
 uint64_t	checkRss(State *  C);
 void		consolePrintBuffers(State *  C);
-void		printToFile(State *  C, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action);
+void		printToFile(State *  C, const char *  msg, const char *  fileName, PostFileWriteAction action);
 void		renderDotInFile(State *  C, char *  pathName, char *  randomizedFileName);
 void		checkCgiCompletion(State *  C, const char *  pathName, const char *  renderExtension);

@@ -119,7 +119,7 @@ newtonLexInit(State *  N, char *  fileName)
 									eofSourceInfo	/* sourceInfo	*/);
 	lexPut(N, eofToken);
 
-	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
+	if (N->verbosityLevel & kCommonVerbosityDebugLexer)
 	{
 		Token *	p = N->tokenList;
 		while (p != NULL)
@@ -373,7 +373,7 @@ checkSingle(State *  N, IrNodeType tokenType)
 
 	gobble(N, 1);
 
-	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
+	if (N->verbosityLevel & kCommonVerbosityDebugLexer)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "checkSingle(), tokenType = %d\n", tokenType);
 	}
@@ -429,9 +429,9 @@ checkDoubleQuote(State *  N, bool callFinishTokenFlag)
 		N->columnNumber++;
 
 		/*
-		 *	NOTE: N->currentToken is pre-allocated to be kNoisyMaxBufferLength characters long.
+		 *	NOTE: N->currentToken is pre-allocated to be kCommonMaxBufferLength characters long.
 		 */
-		while ((cur(N) != '"') && N->currentTokenLength < (kNoisyMaxBufferLength - 1) && (N->columnNumber < N->lineLength))
+		while ((cur(N) != '"') && N->currentTokenLength < (kCommonMaxBufferLength - 1) && (N->columnNumber < N->lineLength))
 		{
 			checkTokenLength(N, 1);
 			N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
@@ -472,7 +472,7 @@ checkDoubleQuote(State *  N, bool callFinishTokenFlag)
 static void
 finishToken(State *  N)
 {
-	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
+	if (N->verbosityLevel & kCommonVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 		//fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
@@ -505,7 +505,7 @@ finishToken(State *  N)
 			 *	to zero and bzero's the N->currentToken buffer), we need to do
 			 *	this manually.
 			 */
-			bzero(N->currentToken, kNoisyMaxBufferLength);
+			bzero(N->currentToken, kCommonMaxBufferLength);
 			N->currentTokenLength = 0;
 
 			char *	newFileName = strdup(N->lastToken->stringConst);

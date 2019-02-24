@@ -57,7 +57,7 @@ checkTokenLength(State *  N, int  count)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckTokenLength);
 
-	if (N->currentTokenLength+count >= kNoisyMaxBufferLength)
+	if (N->currentTokenLength+count >= kCommonMaxBufferLength)
 	{
 		fatal(N, EtokenTooLong);
 	}
@@ -79,7 +79,7 @@ gobble(State *  N, int count)
 	checkTokenLength(N, count);
 	strncpy(N->currentToken, &N->lineBuffer[N->columnNumber], count);
 
-	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
+	if (N->verbosityLevel & kCommonVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "gobble, N->currentToken = \"%s\"\n", N->currentToken);
 		//fprintf(stderr, "gobble, N->currentToken = \"%s\"\n", N->currentToken);
@@ -99,7 +99,7 @@ done(State *  N, Token *  newToken)
 								N->columnNumber - N->currentTokenLength /*	columnNumber	*/,
 								N->currentTokenLength			/*	length		*/);
 
-	bzero(N->currentToken, kNoisyMaxBufferLength);
+	bzero(N->currentToken, kCommonMaxBufferLength);
 	N->currentTokenLength = 0;
 	lexPut(N, newToken);
 }
@@ -579,7 +579,7 @@ lexGet(State *  N, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
 		fatal(N, Esanity);
 	}
 
-	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
+	if (N->verbosityLevel & kCommonVerbosityDebugLexer)
 	{
 		lexDebugPrintToken(N, t, tokenDescriptionArray);	
 	}

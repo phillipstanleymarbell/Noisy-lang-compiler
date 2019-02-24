@@ -113,11 +113,7 @@ processNewtonFile(State *  N, char *  filename)
 
 	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
 
-
-	/*
-	 *	Dimensional matrix pass
-	 */
-	if (N->irPasses & kNoisyIrDimensionMatrixPass)
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixAnnotation)
 	{
 		irPassDimensionalMatrixAnnotation(N);
 
@@ -127,17 +123,29 @@ processNewtonFile(State *  N, char *  filename)
 		}
 	}
 
-	/*
-	 *	Pi groups pass (implies Dimensional matrix pass)
-	 */
-	if (N->irPasses & kNoisyIrPiGroupsPass)
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixPiGroups)
 	{
-		irPassDimensionalMatrixAnnotation(N);
 		irPassDimensionalMatrixPiGroups(N);
+	}
+
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixKernelRowCanonicalization)
+	{
 		irPassDimensionalMatrixKernelRowCanonicalization(N);
+	}
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixPiGroupSorted)
+	{
 		irPassDimensionalMatrixPiGroupSorted(N);
+	}
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates)
+	{
 		irPassDimensionalMatrixPiGroupsWeedOutDuplicates(N);
+	}
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixKernelPrinter)
+	{
 		irPassDimensionalMatrixKernelPrinter(N);
+	}
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixConvertToList)
+	{
 		irPassDimensionalMatrixConvertToList(N);
 	}
 

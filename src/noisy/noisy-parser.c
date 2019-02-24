@@ -7949,7 +7949,7 @@ noisyParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToken)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParserErrorRecovery);
 
-	if (N->verbosityLevel & kNoisyVerbosityDebugParser)
+	if (N->verbosityLevel & kCommonVerbosityDebugParser)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "In noisyParserErrorRecovery(), about to discard tokens...\n");
 	}
@@ -7961,7 +7961,7 @@ noisyParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToken)
 		 *	Retrieve token and discard...
 		 *
 		Token *	token = lexGet(N);
-		if (N->verbosityLevel & kNoisyVerbosityDebugParser)
+		if (N->verbosityLevel & kCommonVerbosityDebugParser)
 		{
 			lexDebugPrintToken(N, token);
 		}
