@@ -94,7 +94,13 @@ main(int argc, char *argv[])
 			{"trace",		no_argument,		0,	't'},
 			{"statistics",		no_argument,		0,	's'},
 			{"optimize",		required_argument,	0,	'O'},
+			{"dmatrixannote",	no_argument,		0,	'm'},
 			{"pigroups",		no_argument,		0,	'p'},
+			{"kernelrowcanon",	no_argument,		0,	'c'},
+			{"pigroupsort",		no_argument,		0,	'r'},
+			{"pigroupdedup",	no_argument,		0,	'e'},
+			{"pikernelprinter",	no_argument,		0,	'P'},
+			{"pigrouptoast",	no_argument,		0,	'a'},
 			{"codegen",		required_argument,	0,	'g'},
 			{0,			0,			0,	0}
 		};
@@ -140,8 +146,10 @@ main(int argc, char *argv[])
 			{
 				N->irBackends |= kNoisyIrBackendDot;
 
-				//TODO: Rather than accepting the raw enum value as integer, accept string and compare to table of options
-
+				/*
+				 *	TODO: Rather than accepting the raw enum value as integer,
+				 *	accept string and compare to table of options
+				 */
 				uint64_t tmpInt = strtoul(optarg, &ep, 0);
 				if (*ep == '\0')
 				{
@@ -213,12 +221,14 @@ main(int argc, char *argv[])
 
 			case 'O':
 			{
-				//TODO: define a structured way for which passes depend on which
+				/*
+				 *	TODO: define a structured way for which passes depend on which
+				 */
 
 				/*
 				 *	Implies the following (basic) passes:
 				 */
-				N->irPasses |= kNoisyIrDimensionMatrixPass;
+				//...
 
 				uint64_t tmpInt = strtoul(optarg, &ep, 0);
 				if (*ep == '\0')
@@ -235,10 +245,68 @@ main(int argc, char *argv[])
 				break;
 			}
 
+			case 'm':
+			{
+				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
+				timestampsInit(N);
+
+				break;
+			}
+
 			case 'p':
 			{
-				N->irPasses |= kNoisyIrDimensionMatrixPass;
-				N->irPasses |= kNoisyIrPiGroupsPass;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
+				timestampsInit(N);
+
+				break;
+			}
+
+			case 'c':
+			{
+				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelRowCanonicalization;
+				timestampsInit(N);
+
+				break;
+			}
+
+			case 'r':
+			{
+				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroupSorted;
+				timestampsInit(N);
+
+				break;
+			}
+
+			case 'e':
+			{
+				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates;
+				timestampsInit(N);
+
+				break;
+			}
+
+			case 'P':
+			{
+				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelPrinter;
+				timestampsInit(N);
+
+				break;
+			}
+
+			case 'a':
+			{
+				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixConvertToList;
 				timestampsInit(N);
 
 				break;
@@ -319,17 +387,24 @@ void
 usage(State *  N)
 {
 	version(N);
-	flexprint(N->Fe, N->Fm, N->Fperr,	"Usage:    noisy [ (--help, -h)                                       \n"
-						"                | (--version, --V)                                   \n"
-						"                | (--verbose <level>, -v <level>)                    \n"
-						"                | (--dot <level>, -d <level>)                        \n"
-						"                | (--smt <path to output file>, -S <path to output file>)\n"
-						"                | (--bytecode <output file name>, -b <output file name>)\n"
-						"                | (--optimize <level>, -O <level>)                   \n"
-						"                | (--pigroups, -p)                                   \n"
+	flexprint(N->Fe, N->Fm, N->Fperr,	"Usage:    newton-<uname>-%s\n"
+						"                [ (--help, -h)                                               \n"
+						"                | (--version, --V)                                           \n"
+						"                | (--verbose <level>, -v <level>)                            \n"
+						"                | (--dot <level>, -d <level>)                                \n"
+						"                | (--smt <path to output file>, -S <path to output file>)    \n"
+						"                | (--bytecode <output file name>, -b <output file name>)     \n"
+						"                | (--optimize <level>, -O <level>)                           \n"
+						"                | (--dmatrixannote, -m)                                      \n"
+						"                | (--pigroups, -p)                                           \n"
+						"                | (--kernelrowcanon, -c)                                     \n"
+						"                | (--pigroupsort, -r)                                        \n"
+						"                | (--pigroupdedup, -e)                                       \n"
+						"                | (--pikernelprinter, -P)                                    \n"
+						"                | (--pigrouptoast, -a)                                       \n"
 						"                | (--codegen <path to output file>, -g <path to output file>)\n"
-						"                | (--trace, -t)                                      \n"
-						"                | (--statistics, -s) ]                               \n"
-						"                                                                     \n"
-						"              <filenames>\n\n");
+						"                | (--trace, -t)                                              \n"
+						"                | (--statistics, -s) ]                                       \n"
+						"                                                                             \n"
+						"              <filenames>\n\n", kNewtonL10N);
 }

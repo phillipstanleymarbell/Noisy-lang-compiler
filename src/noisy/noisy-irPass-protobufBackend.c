@@ -68,8 +68,8 @@ noisyIrPassProtobufBackend(State *  N)
 	 *	which nodes have been visited, in case when
 	 *	the graph is not a tree.
 	 */
-	irPassHelperColorIr(N, N->noisyIrRoot, kNoisyIrNodeColorProtobufBackendColoring, true/* set */, true/* recurse flag */);
-	irPassHelperColorSymbolTable(N, N->noisyIrTopScope, kNoisyIrNodeColorProtobufBackendColoring, true/* set */, true/* recurse flag */);
+	irPassHelperColorIr(N, N->noisyIrRoot, kCommonIrNodeColorProtobufBackendColoring, true/* set */, true/* recurse flag */);
+	irPassHelperColorSymbolTable(N, N->noisyIrTopScope, kCommonIrNodeColorProtobufBackendColoring, true/* set */, true/* recurse flag */);
 
 	noisyIrPassProtobufAstSerializeWalk(N, N->noisyIrRoot);
 	noisyIrPassProtobufSymbolTableSerializeWalk(N, N->noisyIrTopScope);
@@ -130,10 +130,10 @@ noisyIrPassProtobufAstSerializeWalk(State *  N, IrNode *  irNode)
 	/*
 	 *	Only process nodes once.
 	 */
-	if (irNode->nodeColor & kNoisyIrNodeColorProtobufBackendColoring)
+	if (irNode->nodeColor & kCommonIrNodeColorProtobufBackendColoring)
 	{
 		noisyIrPassProtobufAstNodeEmitter(N, irNode);
-		irNode->nodeColor &= ~kNoisyIrNodeColorProtobufBackendColoring;
+		irNode->nodeColor &= ~kCommonIrNodeColorProtobufBackendColoring;
 	}
 }
 
@@ -158,10 +158,10 @@ noisyIrPassProtobufSymbolTableSerializeWalk(State *  N, Scope *  scope)
 	/*
 	 *	Only process nodes once.
 	 */
-	if (scope->nodeColor & kNoisyIrNodeColorProtobufBackendColoring)
+	if (scope->nodeColor & kCommonIrNodeColorProtobufBackendColoring)
 	{
 		noisyIrPassProtobufSymbolTableNodeEmitter(N, scope);
-		scope->nodeColor &= ~kNoisyIrNodeColorProtobufBackendColoring;
+		scope->nodeColor &= ~kCommonIrNodeColorProtobufBackendColoring;
 	}
 
 	noisyIrPassProtobufSymbolTableSerializeWalk(N, scope->next);

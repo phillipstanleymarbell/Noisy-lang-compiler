@@ -96,12 +96,12 @@ static char	kNoisyRenderExtensionSVG[]	= ".svg";
 void
 timestampsInit(State *  N)
 {
-	N->timestamps = (TimeStamp *) calloc(kNoisyTimestampTimelineLength, sizeof(TimeStamp));
+	N->timestamps = (TimeStamp *) calloc(kCommonTimestampTimelineLength, sizeof(TimeStamp));
 	if (N->timestamps == NULL)
 	{
 		fatal(NULL, Emalloc);
 	}
-	N->timestampSlots = kNoisyTimestampTimelineLength;
+	N->timestampSlots = kCommonTimestampTimelineLength;
 
 
 	//TODO: replace this with a libflex call...
@@ -249,7 +249,7 @@ init(NoisyMode mode)
 	/*
 	 *	Used during lexing
 	 */
-	N->currentToken = calloc(kNoisyMaxBufferLength, sizeof(char));
+	N->currentToken = calloc(kCommonMaxBufferLength, sizeof(char));
 	if (N->currentToken == NULL)
 	{
 		fatal(NULL, Emalloc);
@@ -334,7 +334,7 @@ checkRss(State *  N)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyCheckRss);
 
-	char		tmp, *ep = &tmp, buf[kNoisyMaxBufferLength];
+	char		tmp, *ep = &tmp, buf[kCommonMaxBufferLength];
 	FILE *		pipe;
 	uint64_t	ret;
 	pid_t		pid = getpid();
@@ -356,7 +356,7 @@ checkRss(State *  N)
 		return 0;
 	}
 	
-	fgets(buf, kNoisyMaxBufferLength, pipe);
+	fgets(buf, kCommonMaxBufferLength, pipe);
 	ret = strtoul(buf, &ep, 0);
 
 	pclose(pipe);
@@ -418,7 +418,7 @@ consolePrintBuffers(State *  N)
 
 
 void
-printToFile(State *  N, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action)
+printToFile(State *  N, const char *  msg, const char *  fileName, PostFileWriteAction action)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyPrintToFile);
 
@@ -441,7 +441,7 @@ printToFile(State *  N, const char *  msg, const char *  fileName, NoisyPostFile
 	 */
 	if (N->mode & kNoisyModeCGI)
 	{
-		int	stubAndRandomDigitsNameLength = strlen(fileName)+kNoisyCgiRandomDigits+1;
+		int	stubAndRandomDigitsNameLength = strlen(fileName)+kCommonCgiRandomDigits+1;
 
 		randomizedFileName = (char *) calloc(stubAndRandomDigitsNameLength, sizeof(char));
 		if (randomizedFileName == NULL)
@@ -449,7 +449,7 @@ printToFile(State *  N, const char *  msg, const char *  fileName, NoisyPostFile
 			fatal(N, Emalloc);
 		}
 
-		snprintf(randomizedFileName, stubAndRandomDigitsNameLength, "%s%0*d", fileName, kNoisyCgiRandomDigits, (int)random());
+		snprintf(randomizedFileName, stubAndRandomDigitsNameLength, "%s%0*d", fileName, kCommonCgiRandomDigits, (int)random());
 	}
 	else
 	{
@@ -504,7 +504,7 @@ printToFile(State *  N, const char *  msg, const char *  fileName, NoisyPostFile
 	 *	Perform any post-write actions. For now, only post-write
 	 *	hook is to render it via graphviz/dot.
 	 */
-	if (action & kNoisyPostFileWriteActionRenderDot)
+	if (action & kCommonPostFileWriteActionRenderDot)
 	{
 		renderDotInFile(N, pathName, randomizedFileName);
 	}
@@ -627,7 +627,7 @@ checkCgiCompletion(State *  N, const char *  pathName, const char *  renderExten
 	//TODO: replace with flexopen when that is cleaned up
 	if (open(renderPathName, O_RDONLY) < 0)
 	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "%s %ds\n", EdotRenderFailed, kNoisyRlimitCpuSeconds);
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s %ds\n", EdotRenderFailed, kCommonRlimitCpuSeconds);
 		if (N->lastDotRender)
 		{
 			free(N->lastDotRender);

@@ -4054,12 +4054,12 @@ newtonParserSyntaxAndSemanticPre(State *  N, IrNodeType currentlyParsingTokenOrP
 	const char *  string1, const char *  string2, const char *  string3, const char *  string4)
 {
 	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n");
-	if (N->mode & kNoisyModeCGI)
+	if (N->mode & kNewtonModeCGI)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "<b>");
 	}
 
-	if (N->mode & kNoisyModeCGI)
+	if (N->mode & kNewtonModeCGI)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\t%s, line %d position %d, %s %s\"",
 						string1,
@@ -4104,7 +4104,7 @@ newtonParserSyntaxAndSemanticPre(State *  N, IrNodeType currentlyParsingTokenOrP
 void
 newtonParserSyntaxAndSemanticPost(State *  N)
 {
-	if (N->mode & kNoisyModeCGI)
+	if (N->mode & kNewtonModeCGI)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "%s</b>", kNewtonErrorDetailHtmlTagClose);
 	}
@@ -4169,7 +4169,7 @@ newtonParserErrorRecovery(State *  N, IrNodeType expectedProductionOrToken)
 {
 	TimeStampTraceMacro(kNewtonTimeStampKeyParserErrorRecovery);
 
-	if (N->verbosityLevel & kNoisyVerbosityDebugParser)
+	if (N->verbosityLevel & kCommonVerbosityDebugParser)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "In newtonParserErrorRecovery(), about to discard tokens...\n");
 	}
