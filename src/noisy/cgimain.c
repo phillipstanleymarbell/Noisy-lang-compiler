@@ -856,9 +856,9 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 
 	printf("<td align=center; valign=top>\n");
 //	printf("<b>Cite this as:</b>\n");
-//	printf("<div style=\"background-color:whitesmoke;\">\n");
+//	printf("<span style=\"background-color:whitesmoke;\">\n");
 //	printf("P. Stanley-Marbell, P. A. Francese, and M. Rinard. \"Encoder logic for reducing serial I/O power in sensors and sensor hubs.\"\n<i>28th IEEE Hot Chips Symposium (HotChips 28)</i>, 2016.\n");
-//	printf("</div>\n");
+//	printf("</span>\n");
 //	printf("<pre>\n");
 //	printf("@inproceedings{hotchips16encoder,\n");
 //	printf("  title={Encoder logic for reducing serial I/O power in sensors and sensor hubs},\n");
@@ -872,10 +872,8 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 //	printf("<a href=\"\">[Download Paper PDF]</a>\n");
 	printf("</td>\n");
 
-	printf("<td valign=top; align=right>\n");
-	printf("<table border=0>\n");
-	printf("<tr><td><a href=\"http://physcomp.eng.cam.ac.uk\"><img src=\"%s\" width=120 align=\"right\"></a></td></tr>\n", kPhyscomplabLogoPath);
-	printf("</table>\n");
+	printf("<td align=left; valign=top>\n");
+	printf("<a href=\"http://physcomp.eng.cam.ac.uk\"><img src=\"%s\" width=120 align=\"right\"></a>\n", kPhyscomplabLogoPath);
 	printf("</td>\n");
 
 	printf("</tr>\n");

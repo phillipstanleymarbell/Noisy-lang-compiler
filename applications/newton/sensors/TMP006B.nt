@@ -61,7 +61,7 @@ TMP006B: sensor (tmp006Temperature: temperature) =
 	#
 	#	Range of Temperature can be found in document 7.1 on page 5.
 	#
-	range tmp006Temperature = [218.15*K, 398.15*K],
+	range tmp006Temperature = [218.15 K, 398.15 K],
 
 	#
 	#	The operation sequence needed to get a sample

@@ -82,14 +82,14 @@ MAG3110: sensor (
 	#
 	#	Range of Magnetic Field Density can be found in Table 3 of document 2.1 on page 5.
 	#
-	range mag3110xMagneticFluxDensity == [-1000*uT, 1000*uT],
-	range mag3110yMagneticFluxDensity == [-1000*uT, 1000*uT],
-	range mag3110zMagneticFluxDensity == [-1000*uT, 1000*uT],
+	range mag3110xMagneticFluxDensity == [-1000E-3 T, 1000E-3 T],
+	range mag3110yMagneticFluxDensity == [-1000E-3 T, 1000E-3 T],
+	range mag3110zMagneticFluxDensity == [-1000E-3 T, 1000E-3 T],
 
 	#
 	#	Range of mag3110Temperature can be found in Table 3 of document 2.1 on page 5.
 	#
-	range mag3110Temperature == [233.15*K, 358.15*K],
+	range mag3110Temperature == [233.15 K, 358.15 K],
 
 	#
 	#	The operation sequence needed to get a sample

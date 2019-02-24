@@ -55,7 +55,7 @@ symbolStatement			::=	"symbol" "=" identifier ";" .
 derivationStatement		::=	"derivation" "=" ("none" | "dimensionless" | quantityExpression) ";" .
 subdimensionTuple		::=	"(" identifier ":" numericExpression "to" numericExpression ")" .
 parameterTuple			::=	"(" parameter {"," parameter} ")" .
-parameter			::=	identifier ":" identifier {"@" integerConst} .
+parameter			::=	identifier ":" (identifier | numericExpression) {"@" integerConst} .
 constraintList			::=	[constraint] {"," constraint} .
 constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
 quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
@@ -100,9 +100,9 @@ numericFactor			::=	(numericConst [exponentiationOperator numericConst]) | "(" n
 numericConst			::=	integerConst | realConst .
 sensorPropertyList		::=	sensorProperty {"," sensorProperty} .
 sensorProperty			::=	rangeStatement | uncertaintyStatement | erasureValueStatement | accuracyStatement | precisionStatement | sensorInterfaceStatement .
-sensorInterfaceStatement	::=	"interface" identifier ["@" numericFactor "bits"] "==" sensorInterfaceType parameterTuple ["{" sensorInterfaceCommandList "}"] .
+sensorInterfaceStatement	::=	"interface" identifier ["@" numericFactor "bits"] "==" sensorInterfaceType [parameterTuple ["{" sensorInterfaceCommandList "}"]] .
 sensorInterfaceType		::=	"i2c" | "spi" | "analog" .
-sensorInterfaceCommandList	::=	sensorInterfaceCommand {";" sensorInterfaceCommand} .
+sensorInterfaceCommandList	::=	sensorInterfaceCommand ";" {sensorInterfaceCommand ";"} .
 sensorInterfaceCommand		::=	readRegisterCommand | writeRegisterCommand | delayCommand | arithmeticCommand .
 readRegisterCommand		::=	identifier "=" "read" ["[" numericExpression "]" ","] numericExpression .
 writeRegisterCommand		::=	"write" numericExpression "," numericExpression .

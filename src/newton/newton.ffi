@@ -90,7 +90,7 @@ production kNewtonIrNodeType_PparameterTuple:		firstset = {
 									kNewtonIrNodeType_TleftParen,
 								}
 
---//		parameter			::=	identifier ":" identifier {"@" integerConst} .
+--//		parameter			::=	identifier ":" (identifier | numericExpression) {"@" integerConst} .
 production kNewtonIrNodeType_Pparameter:		firstset = {
 									kNewtonIrNodeType_Tidentifier,
 								}
@@ -239,7 +239,7 @@ production kNewtonIrNodeType_PsensorProperty:		firstset = {
 									firstset(kNewtonIrNodeType_PsensorInterfaceStatement),
 								}
 
---//		sensorInterfaceStatement	::=	"interface" identifier ["@" numericFactor "bits"] "==" sensorInterfaceType parameterTuple ["{" sensorInterfaceCommandList "}"] .
+--//		sensorInterfaceStatement	::=	"interface" identifier ["@" numericFactor "bits"] "==" sensorInterfaceType [parameterTuple ["{" sensorInterfaceCommandList "}"]] .
 production kNewtonIrNodeType_PsensorInterfaceStatement:	firstset = {
 									kNewtonIrNodeType_Tinterface,
 								}
@@ -251,7 +251,7 @@ production kNewtonIrNodeType_PsensorInterfaceType:	firstset = {
 									kNewtonIrNodeType_Tanalog,
 								}
 
---//		sensorInterfaceCommandList	::=	sensorInterfaceCommand {";" sensorInterfaceCommand} .
+--//		sensorInterfaceCommandList	::=	sensorInterfaceCommand ";" {sensorInterfaceCommand ";"} .
 production kNewtonIrNodeType_PsensorInterfaceCommandList:	firstset = {
 									firstset(kNewtonIrNodeType_PsensorInterfaceCommand),
 								}
@@ -499,7 +499,7 @@ production kNewtonIrNodeType_PparameterTuple:		followset = {
 									followset(kNewtonIrNodeType_PsensorInterfaceStatement),
 								}
 
---//		parameter			::=	identifier ":" identifier {"@" integerConst} .
+--//		parameter			::=	identifier ":" (identifier | numericExpression) {"@" integerConst} .
 production kNewtonIrNodeType_Pparameter:		followset = {
 									kNewtonIrNodeType_Tcomma,
 									kNewtonIrNodeType_TrightParen,
@@ -661,17 +661,18 @@ production kNewtonIrNodeType_PsensorProperty:		followset = {
 									followset(kNewtonIrNodeType_PsensorPropertyList),
 								}
 
---//		sensorInterfaceStatement	::=	"interface" identifier ["@" numericFactor "bits"] "==" sensorInterfaceType parameterTuple ["{" sensorInterfaceCommandList "}"] .
+--//		sensorInterfaceStatement	::=	"interface" identifier ["@" numericFactor "bits"] "==" sensorInterfaceType [parameterTuple ["{" sensorInterfaceCommandList "}"]] .
 production kNewtonIrNodeType_PsensorInterfaceStatement:	followset = {
 									followset(kNewtonIrNodeType_PsensorProperty),
 								}
 
 --//		sensorInterfaceType		::=	"i2c" | "spi" | "analog" .
 production kNewtonIrNodeType_PsensorInterfaceType:	followset = {
+									followset(kNewtonIrNodeType_PsensorInterfaceStatement),
 									firstset(kNewtonIrNodeType_PparameterTuple),
 								}
 
---//		sensorInterfaceCommandList	::=	sensorInterfaceCommand {";" sensorInterfaceCommand} .
+--//		sensorInterfaceCommandList	::=	sensorInterfaceCommand ";" {sensorInterfaceCommand ";"} .
 production kNewtonIrNodeType_PsensorInterfaceCommandList:	followset = {
 									kNewtonIrNodeType_TrightBrace,
 								}

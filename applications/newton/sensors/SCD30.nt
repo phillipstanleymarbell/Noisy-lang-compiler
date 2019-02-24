@@ -72,19 +72,19 @@ SCD30: sensor (
 	#
 	#	The units of scd30co2 is ppm.
 	#
-	range scd30co2 == [0*ppm, 40000*ppm],
+	range scd30co2 == [0 ppm, 40000 ppm],
 
 	#
 	#	Range of scd30humidity can be found in Table 2 of document 1 on page 3 of data sheet.
 	#
 	#	The units of humidity is %RH which is the measured relative humidity value.
 	#
-	range scd30humidity == [0*RH, 100*RH],
+	range scd30humidity == [0 RH, 100 RH],
 
 	#
 	#	Range of scd30temperature can be found in Table 3 of document 1 on page 3 of data sheet.
 	#
-	range scd30temperature == [233.15*K, 343.15*K],
+	range scd30temperature == [233.15 K, 343.15 K],
 
 	#
 	#	The operation sequence needed to get a sample

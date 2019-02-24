@@ -67,12 +67,12 @@ LPS25H: sensor (
 	#
 	#	Range of lps25hTemperature can be found in Table 3 of document 2.1 on page 7.
 	#
-	range lps25hTemperature == [243.15*K, 378.15*K],
+	range lps25hTemperature == [243.15 K, 378.15 K],
 	
 	#
 	#	Range of lps25hPressure can be found in features on page 1.
 	#
-	range lps25hPressure == [26000*Pa, 126000*Pa],
+	range lps25hPressure == [26000 Pa, 126000 Pa],
 
 	#
 	#	The operation sequence needed to get a sample

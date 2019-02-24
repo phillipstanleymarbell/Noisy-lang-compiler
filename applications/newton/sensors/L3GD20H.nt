@@ -82,14 +82,14 @@ L3GD20H: sensor (
 	#
 	#	Range of Angular Rate can be found in Table 3 of document 2.1 on page 10.
 	#
-	range l3gd20hxAngularRate == [-2000*aj, 2000*aj],
-	range l3gd20hyAngularRate == [-2000*aj, 2000*aj],
-	range l3gd20hzAngularRate == [-2000*aj, 2000*aj],
+	range l3gd20hxAngularRate == [-2000 aj, 2000 aj],
+	range l3gd20hyAngularRate == [-2000 aj, 2000 aj],
+	range l3gd20hzAngularRate == [-2000 aj, 2000 aj],
 
 	#
 	#	Range of Temperature can be found in Table 3 of document 2.1 on page 10.
 	#
-	range l3gd20hTemperature == [233.15*K, 358.15*K],
+	range l3gd20hTemperature == [233.15 K, 358.15 K],
 
 	#
 	#	The operation sequence needed to get a sample

@@ -919,7 +919,7 @@ struct Scope
 	/*
 	 *	Each invariant scope will have its own list of parameters
 	 */
-	IrNode *		invariantParameterList;		//	This is just bunch of IrNode's in Xseq
+	IrNode *		scopeParameterList;		//	This is just bunch of IrNode's in Xseq
 
 	/*
 	 *	For the config file, we only have one global scope that keeps track of all

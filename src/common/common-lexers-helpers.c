@@ -292,7 +292,7 @@ isHexConstWithoutLeading0x(State *  N, char *  string)
 
 	for (int i = 0; i < strlen(string); i++)
 	{
-		if (!((string[i] >= 'a' && string[i] <= 'f') || (string[i] >= 'A' && string[i] <= 'F')))
+		if (!((string[i] >= 'a' && string[i] <= 'f') || (string[i] >= 'A' && string[i] <= 'F') || (string[i] >= '0' && string[i] <= '9')))
 		{
 			return false;
 		}

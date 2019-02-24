@@ -80,9 +80,9 @@ MMA8451Q: sensor (
 	#
 	#	Range of Acceleration can be found in Table 75 of document 6.9 on page 47.
 	#
-	range mma8451xAcceleration == [-8*mj, 8*mj],
-	range mma8451yAcceleration == [-8*mj, 8*mj],
-	range mma8451zAcceleration == [-8*mj, 8*mj],
+	range mma8451xAcceleration == [-8E-3*kNewtonUnithave_AccelerationDueToGravity, 8E-3*kNewtonUnithave_AccelerationDueToGravity],
+	range mma8451yAcceleration == [-8E-3*kNewtonUnithave_AccelerationDueToGravity, 8E-3*kNewtonUnithave_AccelerationDueToGravity],
+	range mma8451zAcceleration == [-8E-3*kNewtonUnithave_AccelerationDueToGravity, 8E-3*kNewtonUnithave_AccelerationDueToGravity],
 
 	#
 	#	The operation sequence needed to get a sample

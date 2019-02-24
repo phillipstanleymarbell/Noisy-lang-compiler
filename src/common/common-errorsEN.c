@@ -69,7 +69,7 @@ const char	EexpressionPhysicsMismatch[]		= "Mismatched physics in expression";
 const char	Eusedef[]				= "Saw identifier \"%s\" in use before definition.";
 const char	Emultidef[]				= "Multiple definition of \"%s\" in \"%s\", at line %d, column %d.";
 const char	Epreviousdef[]				= "Previous definition in \"%s\", at line %d, column %d.";
-const char	EunhandledNodeTypeInAstNodeStringsArray[]= "Unhandled node type in gNoisyAstNodeStrings[] array";
+const char	EunhandledNodeTypeInAstNodeStringsArray[]= "Unhandled node type in g[Noisy/Newton]AstNodeStrings[] array";
 const char	EbaseDimensionNameOrAbbreviation[]	= "Base dimension missing name or abbreviation definition";
 const char	EnoValidDimensions[]			= "No valid dimensions found during dimensions pass";
 const char	EsubindexEndMustBeNaturalnumber[]	= "Subindex must be a natural number";
@@ -85,4 +85,4 @@ const char	Eundeclared[]				= "Variable use before declaration";
 /*
  *	HTML-format errors for CGI version
  */
-const char	WcgiAsync[] 				= "\n<span width=\"580\" style=\"background-color:FFCC00; color:#FF0000\"><br><b>&#9888;</b>&nbsp;&nbsp;&nbsp; NoisyCompiler halted the computation. Memory or CPU usage limit exceeded.<br><br>See the \"SETCPULIMIT\" and \"SETMEMLIMIT\" commands; \"help\" for more information.</span>\n";
+const char	WcgiAsync[] 				= "\n<span width=\"580\" style=\"background-color:FFCC00; color:#FF0000\"><br><b>&#9888;</b>&nbsp;&nbsp;&nbsp; Web interface to compiler halted the computation (WcgiAsync). Memory or CPU usage limit exceeded or other asynchronous error.<br><br>See the \"SETCPULIMIT\" and \"SETMEMLIMIT\" commands; \"help\" for more information.</span>\n";

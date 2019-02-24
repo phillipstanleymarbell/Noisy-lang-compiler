@@ -935,9 +935,9 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 
 	printf("<td align=left; valign=top>\n");
 	printf("<b>Cite this as:</b>\n");
-	printf("<div style=\"background-color:whitesmoke;\">\n");
+	printf("<span style=\"background-color:whitesmoke;\">\n");
 	printf("J. Lim and P. Stanley-Marbell. \"Newton: A Language for Describing Physics.\"\n<i>CoRR abs/1811.04626</i>, 2018.\n");
-	printf("</div>\n");
+	printf("</span>\n");
 	printf("<pre>\n");
 	printf("@inproceedings{journals/corr/abs-1811-04626,\n");
 	printf("  title         = {Newton: A Language for Describing Physics},\n");
@@ -962,10 +962,8 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23%%09Authored+2018%%2C+Phillip+Stanley-Marbell.%%0D%%0A%%23%%0D%%0A%%23%%09All+rights+reserved.%%0D%%0A%%23%%0D%%0A%%23%%09Redistribution+and+use+in+source+and+binary+forms%%2C+with+or+without%%0D%%0A%%23%%09modification%%2C+are+permitted+provided+that+the+following+conditions%%0D%%0A%%23%%09are+met%%3A%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+of+source+code+must+retain+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+in+binary+form+must+reproduce+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer+in+the+documentation+and%%2For+other+materials%%0D%%0A%%23%%09%%09provided+with+the+distribution.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Neither+the+name+of+the+author+nor+the+names+of+its%%0D%%0A%%23%%09%%09contributors+may+be+used+to+endorse+or+promote+products%%0D%%0A%%23%%09%%09derived+from+this+software+without+specific+prior+written%%0D%%0A%%23%%09%%09permission.%%0D%%0A%%23%%0D%%0A%%23%%09THIS+SOFTWARE+IS+PROVIDED+BY+THE+COPYRIGHT+HOLDERS+AND+CONTRIBUTORS%%0D%%0A%%23%%09%%22AS+IS%%22+AND+ANY+EXPRESS+OR+IMPLIED+WARRANTIES%%2C+INCLUDING%%2C+BUT+NOT%%0D%%0A%%23%%09LIMITED+TO%%2C+THE+IMPLIED+WARRANTIES+OF+MERCHANTABILITY+AND+FITNESS%%0D%%0A%%23%%09FOR+A+PARTICULAR+PURPOSE+ARE+DISCLAIMED.+IN+NO+EVENT+SHALL+THE%%0D%%0A%%23%%09COPYRIGHT+OWNER+OR+CONTRIBUTORS+BE+LIABLE+FOR+ANY+DIRECT%%2C+INDIRECT%%2C%%0D%%0A%%23%%09INCIDENTAL%%2C+SPECIAL%%2C+EXEMPLARY%%2C+OR+CONSEQUENTIAL+DAMAGES+%%28INCLUDING%%2C%%0D%%0A%%23%%09BUT+NOT+LIMITED+TO%%2C+PROCUREMENT+OF+SUBSTITUTE+GOODS+OR+SERVICES%%3B%%0D%%0A%%23%%09LOSS+OF+USE%%2C+DATA%%2C+OR+PROFITS%%3B+OR+BUSINESS+INTERRUPTION%%29+HOWEVER%%0D%%0A%%23%%09CAUSED+AND+ON+ANY+THEORY+OF+LIABILITY%%2C+WHETHER+IN+CONTRACT%%2C+STRICT%%0D%%0A%%23%%09LIABILITY%%2C+OR+TORT+%%28INCLUDING+NEGLIGENCE+OR+OTHERWISE%%29+ARISING+IN%%0D%%0A%%23%%09ANY+WAY+OUT+OF+THE+USE+OF+THIS+SOFTWARE%%2C+EVEN+IF+ADVISED+OF+THE%%0D%%0A%%23%%09POSSIBILITY+OF+SUCH+DAMAGE.%%0D%%0A%%23%%0D%%0A%%23%%0D%%0A%%23%%09Description%%3A%%09Empty+invariant+for+auto-generating+synthetic+invariants%%0D%%0A%%23%%09%%09%%09for+a+violin+string+with+temperature+dependence%%0D%%0A%%23%%0D%%0A%%23%%09Parameters%%0D%%0A%%23%%0D%%0A%%23%%09%%09T%%09%%3A%%0D%%0A%%23%%09%%09L%%09%%3A%%0D%%0A%%23%%09%%09%%B5%%09%%3A%%0D%%0A%%23%%09%%09f%%09%%3A%%0D%%0A%%23%%09%%09rho%%09%%3A%%0D%%0A%%23%%09%%09theta%%09%%3A%%0D%%0A%%23%%0D%%0A%%0D%%0Ainclude+%%22NewtonBaseSignals.nt%%22%%0D%%0A%%0D%%0AmuDimension+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+mass%%2Fdistance%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0ArhoDimension+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+distance%%2Ftemperature%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0AViolinForPiGroups%%3A+invariant%%28%%0D%%0A%%09%%09%%09%%09T_param%%3A%%09force%%2C%%0D%%0A%%09%%09%%09%%09L_param%%3A%%09distance%%2C%%0D%%0A%%09%%09%%09%%09mu_param%%3A%%09muDimension%%2C%%0D%%0A%%09%%09%%09%%09f_param%%3A%%09frequency%%2C%%0D%%0A%%09%%09%%09%%09rho_param%%3A%%09rhoDimension%%2C%%0D%%0A%%09%%09%%09%%09theta_param%%3A%%09temperature%%0D%%0A%%09%%09%%09%%09%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%7D&w=980&s=4&o=3&t=0&b=Compile\">[Violin with Temperature Dependence]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
 	printf("</td>\n");
 
-	printf("<td valign=top; align=right>\n");
-	printf("<table border=0>\n");
-	printf("<tr><td><a href=\"http://physcomp.eng.cam.ac.uk\"><img src=\"%s\" width=120 align=\"right\"></a></td></tr>\n", kPhyscomplabLogoPath);
-	printf("</table>\n");
+	printf("<td align=left; valign=top>\n");
+	printf("<a href=\"http://physcomp.eng.cam.ac.uk\"><img src=\"%s\" width=120 align=\"top\"></a>\n", kPhyscomplabLogoPath);
 	printf("</td>\n");
 	
 	printf("</tr>\n");

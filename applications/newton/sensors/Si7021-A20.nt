@@ -67,14 +67,14 @@ Si7021_A20_GM1: sensor (
 	#
 	#	Range of Temperature can be found in Table 15 of document 8 on page 29.
 	#
-	range Si7021temperature == [233.15*K, 358.15*K],
+	range Si7021temperature == [233.15 K, 358.15 K],
 	
 	#
 	#	Range of Humidity can be found in Table 4 of document 1 on page 7.
 	#
 	#	The units of humidity is %RH which is the measured relative humidity value.
 	#
-	range Si7021humidity == [0*RH, 100*RH],
+	range Si7021humidity == [0 RH, 100 RH],
 
 	#
 	#	The operation sequence needed to get a sample
