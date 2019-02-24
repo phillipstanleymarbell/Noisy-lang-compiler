@@ -179,7 +179,15 @@ irPassSmtNodeToStr(State *  N, Invariant *  parentInvariant, IrNode *  node)
 	char *	output = NULL;
 	switch(node->type)
 	{
-		case kNewtonIrNodeType_TnumericConst:
+		case kNewtonIrNodeType_TintegerConst:
+		{
+			int needed = snprintf(NULL, 0, "%d", (int)node->value) + 1;
+			output = malloc(needed);
+			snprintf(output, needed, "%d", (int)node->value);
+			break;
+		}
+
+		case kNewtonIrNodeType_TrealConst:
 		{
 			int needed = snprintf(NULL, 0, "%f", node->value) + 1;
 			output = malloc(needed);
@@ -193,8 +201,9 @@ irPassSmtNodeToStr(State *  N, Invariant *  parentInvariant, IrNode *  node)
 			break;
 		}
 
-		case kNewtonIrNodeType_Tequivalent:
-		case kNewtonIrNodeType_Tproportional:
+		case kNewtonIrNodeType_Tequals:
+		case kNewtonIrNodeType_TdimensionallyAgnosticProportional:
+		case kNewtonIrNodeType_TdimensionallyMatchingProportional:
 		{
 			output = malloc(2);
 			strcpy(output, "=");
@@ -257,7 +266,7 @@ irPassSmtNodeToStr(State *  N, Invariant *  parentInvariant, IrNode *  node)
 			break;
 		}
 
-		case kNewtonIrNodeType_Texponent:
+		case kNewtonIrNodeType_Texponentiation:
 		{
 			output = malloc(2);
 			strcpy(output, "^");

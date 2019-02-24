@@ -50,7 +50,7 @@
 
 include "NewtonBaseSignals.nt"
 
-mu : constant = 0.000078 * kg / m;
+mu : constant = 0.000078 (kg / m);
 
 OscillatingString: invariant(t: force, L: distance, f: frequency) =
 {

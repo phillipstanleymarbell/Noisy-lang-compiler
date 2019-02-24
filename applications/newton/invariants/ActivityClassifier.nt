@@ -50,8 +50,8 @@ multiAxisAngularVelocity : signal(i: 0 to 2) =
 	derivation = angularVelocity@i;
 }
 
-TimeBetweenSensors	: constant = (5E-6) * s;
-SamplingTime		: constant = (5E-4) * s;
+TimeBetweenSensors	: constant = 5E-6 s;
+SamplingTime		: constant = 5E-4 s;
 
 accelerationAndGyro : invariant(
 	x	: multiAxisAcceleration@0, 
@@ -64,8 +64,8 @@ accelerationAndGyro : invariant(
 	#
 	#	Rectangular integration estimation
 	#
-	((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) / (row ** 2 + pitch ** 2 + yaw ** 2) < (2 * m / radian) ** 2,
-	(row ** 2 + pitch ** 2 + yaw ** 2) / ((x * SamplingTime) ** 2 + (y * SamplingTime) ** 2 + (z * SamplingTime) ** 2) > (0.1 * radian / m) ** 2
+	((x * SamplingTime)**2 + (y * SamplingTime)**2 + (z * SamplingTime)**2) / (row**2 + pitch**2 + yaw**2) < (2 * (m / radian))**2,
+	(row**2 + pitch**2 + yaw**2) / ((x * SamplingTime)**2 + (y * SamplingTime)**2 + (z * SamplingTime)**2) > (0.1 * (radian / m))**2
 }
 
 redundantAccelerometers : invariant(

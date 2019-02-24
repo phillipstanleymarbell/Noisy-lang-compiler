@@ -61,7 +61,7 @@
 #include "newton-symbolTable.h"
 #include "common-firstAndFollow.h"
 #include "newton-parser.h"
-#include "newton-dimension-pass.h"
+#include "newton-dimension-prescan.h"
 
 
 extern const char *		gNewtonTokenDescriptions[];
@@ -103,7 +103,7 @@ newtonDimensionPassParseFile(State *  N, Scope *  currentScope)
 void
 newtonDimensionPassParseStatementList(State *  N, Scope *  currentScope)
 {
-	while (inFirst(N, kNewtonIrNodeType_Pstatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	while (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		newtonDimensionPassParseStatement(N, currentScope);
 	}
@@ -113,9 +113,11 @@ void
 newtonDimensionPassParseStatement(State * N, Scope * currentScope)
 {
 	/*
-	 *	Rules can be one of signal, invariant, or constant.
+	 *	Rules can be one of sensor, signal, invariant, or constant.
 	 *	Signal and invariant blocks end with a '}'. A constant
-	 *	definition on the other hand ends with a ';'.
+	 *	definition on the other hand ends with a ';'. Because we
+	 *	can have nested braces in sensor descriptions, need to discard
+	 *	tokens while tracking number of braces seen.
 	 */
 	if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tinvariant)
 	{
@@ -133,9 +135,44 @@ newtonDimensionPassParseStatement(State * N, Scope * currentScope)
 		}
 		lexGet(N, gNewtonTokenDescriptions);
 	}
-	else
+	else if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tsensor)
+	{
+		/*
+		 *	First, find the opening left brace and junk it:
+		 */
+		while (lexPeek(N, 1)->type != kNewtonIrNodeType_TleftBrace)
+		{
+			lexGet(N, gNewtonTokenDescriptions);
+		}
+		lexGet(N, gNewtonTokenDescriptions);
+
+		int	unclosedBraces = 1;
+
+		/*
+		 *	Next, while we have one or more unclosed left braces,
+		 *	junk all tokens:
+		 */
+		while (unclosedBraces > 0)
+		{
+			if (lexPeek(N, 1)->type == kNewtonIrNodeType_TrightBrace)
+			{
+				unclosedBraces--;
+			}
+			else if (lexPeek(N, 1)->type == kNewtonIrNodeType_TleftBrace)
+			{
+				unclosedBraces++;
+			}
+			lexGet(N, gNewtonTokenDescriptions);
+		}
+	}
+	else if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tsignal)
 	{
 		newtonDimensionPassParseBaseSignal(N, currentScope);
+	}
+	else
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_Prule, kNewtonIrNodeType_Prule, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Prule);
 	}
 }
 
@@ -144,9 +181,9 @@ newtonDimensionPassParseSubindex(State * N, Scope * currentScope)
 {
 	newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
-	newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope);
+	newtonParseNumericConst(N, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tto, currentScope);
-	newtonParseTerminal(N, kNewtonIrNodeType_TnumericConst, currentScope);
+	newtonParseNumericConst(N, currentScope);
 }
 
 void
@@ -170,14 +207,14 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 		newtonDimensionPassParseSubindexTuple(N, currentScope);
 	}
 
-	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
+	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, currentScope);
 
 	/*
 	 *	Name syntax is optional
 	 */
 	IrNode *	unitName = NULL;
-	if (inFirst(N, kNewtonIrNodeType_Pname, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	if (inFirst(N, kNewtonIrNodeType_PnameStatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		unitName = newtonParseName(N, currentScope);
 	}
@@ -186,13 +223,13 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 	 *	Abbreviation syntax is also optional
 	 */
 	IrNode *    unitAbbreviation = NULL;
-	if (inFirst(N, kNewtonIrNodeType_Psymbol, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	if (inFirst(N, kNewtonIrNodeType_PsymbolStatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		unitAbbreviation = newtonParseSymbol(N, currentScope);
 	}
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tderivation, currentScope);
-	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
+	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
 
 	/*
 	 *	These are the derived signals
@@ -204,7 +241,7 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 		 */
 		while(inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
 			  inFirst(N, kNewtonIrNodeType_PlowPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
-			  inFirst(N, kNewtonIrNodeType_PmidPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
+			  inFirst(N, kNewtonIrNodeType_PhighPrecedenceOperator, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
 			  inFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
 			  inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
 			  inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
@@ -255,13 +292,13 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 IrNode *
 newtonDimensionPassParseName(State * N, Scope * currentScope)
 {
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pname,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnameStatement,
 								NULL /* left child */,
 								NULL /* right child */,
 								lexPeek(N, 1)->sourceInfo /* source info */);
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tname, currentScope);
-	newtonParseTerminal(N, kNewtonIrNodeType_Tequals, currentScope);
+	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
 
 	IrNode *	baseSignalName = newtonParseTerminal(N, kNewtonIrNodeType_TstringConst, currentScope);
 	node->token = baseSignalName->token;
@@ -272,8 +309,8 @@ newtonDimensionPassParseName(State * N, Scope * currentScope)
 	}
 	else
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Pname, kNewtonIrNodeTypeMax, gNewtonFirsts);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_Pname);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PnameStatement, kNewtonIrNodeTypeMax, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnameStatement);
 	}
 
 	return node;

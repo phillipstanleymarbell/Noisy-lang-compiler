@@ -128,13 +128,13 @@ irPassGenLoopsInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *
 	addLeaf(N, newNodeQFactor, newNodeHighPreOp);
 
 	IrNode *	newNodeExponent;
-	newNodeExponent = genIrNode(N, kNewtonIrNodeType_Texponent,
+	newNodeExponent = genIrNode(N, kNewtonIrNodeType_Texponentiation,
 				NULL,
 				NULL,
 				genSrcInfo);
 
 	Token *		tokenExponent = (Token *) calloc(1, sizeof(Token));
-	tokenExponent->type = kNewtonIrNodeType_Texponent;
+	tokenExponent->type = kNewtonIrNodeType_Texponentiation;
 	newNodeExponent->token = tokenExponent;
 	
 	addLeaf(N, newNodeHighPreOp, newNodeExponent);
@@ -154,7 +154,7 @@ irPassGenLoopsInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *
 	addLeaf(N, newNodeQExpressionExponent, newNodeQTermExponent);
 
 	IrNode *	newNodeExponentConst;
-	newNodeExponentConst = genIrNode(N, kNewtonIrNodeType_TnumericConst,
+	newNodeExponentConst = genIrNode(N, kNewtonIrNodeType_PnumericConst,
 				NULL,
 				NULL,
 				genSrcInfo);
@@ -162,7 +162,7 @@ irPassGenLoopsInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *
 									[colIndependent[kernel][whichParameter][whichIndependentParameter]]
 									[rowIndependent[kernel][whichParameter][whichIndependentParameter]];
 	Token *		tokenExponentConst = (Token *) calloc(1, sizeof(Token));
-	tokenExponentConst->type = kNewtonIrNodeType_TnumericConst;
+	tokenExponentConst->type = kNewtonIrNodeType_PnumericConst;
 	newNodeExponentConst->token = tokenExponentConst;
 
 	addLeaf(N, newNodeQTermExponent, newNodeExponentConst);
@@ -242,12 +242,12 @@ irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int co
 	addLeaf(N, newNodeQFactor, newNodeHighPreOp);
 
 	IrNode *	newNodeExponent;
-	newNodeExponent = genIrNode(N, kNewtonIrNodeType_Texponent,
+	newNodeExponent = genIrNode(N, kNewtonIrNodeType_Texponentiation,
 				NULL,
 				NULL,
 				genSrcInfo);
 	Token *		tokenExponent = (Token *) calloc(1, sizeof(Token));
-	tokenExponent->type = kNewtonIrNodeType_Texponent;
+	tokenExponent->type = kNewtonIrNodeType_Texponentiation;
 	newNodeExponent->token = tokenExponent;
 
 	addLeaf(N, newNodeHighPreOp, newNodeExponent);
@@ -267,7 +267,7 @@ irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int co
 	addLeaf(N, newNodeQExpressionExponent, newNodeQTermExponent);
 
 	IrNode *	newNodeExponentConst;
-	newNodeExponentConst = genIrNode(N, kNewtonIrNodeType_TnumericConst,
+	newNodeExponentConst = genIrNode(N, kNewtonIrNodeType_PnumericConst,
 				NULL,
 				NULL,
 				genSrcInfo);
@@ -285,7 +285,7 @@ irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int co
 	}
 
 	Token *		tokenExponentConst = (Token *) calloc(1, sizeof(Token));
-	tokenExponentConst->type = kNewtonIrNodeType_TnumericConst;
+	tokenExponentConst->type = kNewtonIrNodeType_PnumericConst;
 	newNodeExponentConst->token = tokenExponentConst;
 
 	addLeaf(N, newNodeQTermExponent, newNodeExponentConst);
@@ -336,7 +336,7 @@ irPassGenInvariantPiGroupsExpression(State *  N, IrNode *  node, SourceInfo *  g
 	 *	The expression symbol 'o<'
 	 */
 	IrNode *	nodeProportional;
-	nodeProportional = genIrNode(N, kNewtonIrNodeType_Tproportional,
+	nodeProportional = genIrNode(N, kNewtonIrNodeType_TdimensionallyMatchingProportional,
 					NULL,
 					NULL,
 					genSrcInfo);

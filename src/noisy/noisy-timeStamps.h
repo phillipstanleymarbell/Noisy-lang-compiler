@@ -268,6 +268,7 @@ typedef enum
 	kNoisyTimeStampKeyLexerIsRadixConst,
 	kNoisyTimeStampKeyLexerIsRealConst,
 	kNoisyTimeStampKeyLexerIsEngineeringRealConst,
+	kNoisyTimeStampKeyLexerIsHexConstWithoutLeading0x,
 	kNoisyTimeStampKeyLexerStringToRadixConst,
 	kNoisyTimeStampKeyLexerStringToRealConst,
 	kNoisyTimeStampKeyLexerStringToEngineeringRealConst,

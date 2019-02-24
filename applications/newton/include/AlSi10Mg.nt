@@ -49,5 +49,5 @@
 
 include "NewtonBaseSignals.nt"
 
-kNewtonUnithave_AlSi10Mg_Density	: constant = 2670 * kilogram * meter ** -3;
-kNewtonUnithave_AlSi10Mg_YoungsModulus	: constant = 7e10 * Newton / meter ** -2;
+kNewtonUnithave_AlSi10Mg_Density	: constant = 2670 (kilogram * meter ** -3);
+kNewtonUnithave_AlSi10Mg_YoungsModulus	: constant = 7e10 (Newton / meter ** -2);

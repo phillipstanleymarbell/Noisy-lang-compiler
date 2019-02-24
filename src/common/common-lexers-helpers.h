@@ -48,6 +48,7 @@ bool		isDecimalOrRealSeparatedWithChar(State *  N, char *  string, char  charact
 bool		isRadixConst(State *  N, char *  string);
 bool		isRealConst(State *  N, char *  string);
 bool		isEngineeringRealConst(State *  N, char *  string);
+bool		isHexConstWithoutLeading0x(State *  N, char *  string);
 uint64_t	stringToRadixConst(State *  N, char *  string);
 double		stringToRealConst(State *  N, char *  string);
 double		stringToEngineeringRealConst(State *  N, char *  string);

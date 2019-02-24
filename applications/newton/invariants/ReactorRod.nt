@@ -40,9 +40,9 @@
 
 include "NewtonBaseSignals.nt"
 
-maxCoolingTime		: constant = 50000 * s;
-NewtonsLawConstant	: constant = 0.5 / s;
-targetCoolingTemperature: constant = 70 * C;
+maxCoolingTime		: constant = 50000 s;
+NewtonsLawConstant	: constant = 0.5 (s**-1);
+targetCoolingTemperature: constant = 70 C;
 
 #
 #	If we can't cool in max amount of time, something has gone wrong.

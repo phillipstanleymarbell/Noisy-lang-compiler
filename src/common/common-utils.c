@@ -259,8 +259,9 @@ init(NoisyMode mode)
   *	are deprecated: first deprecated in macOS 10.14.
   *	The following block is commented out after discussion with Phillip.
   */
-/*
+
 #ifdef NoisyOsMacOSX
+/*
 	dispatch_queue_t queue = gcl_create_dispatch_queue(CL_DEVICE_TYPE_GPU, NULL);
 	if (queue == NULL)
 	{
@@ -270,9 +271,10 @@ init(NoisyMode mode)
 	char		name[128];
 	cl_device_id	gpu = gcl_get_device_id_with_dispatch_queue(queue);
 	clGetDeviceInfo(gpu, CL_DEVICE_NAME, 128, name, NULL);
-//	flexprint(N->Fe, N->Fm, N->Fpinfo, "OpenCL enabled on device %s\n", name);
-#endif
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "OpenCL enabled on device %s\n", name);
 */
+#endif
+
 	return N;
 }
 

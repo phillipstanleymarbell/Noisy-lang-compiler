@@ -215,7 +215,7 @@ IrNode *  commonTreeTransform(State *  N, IrNode *  inputAST)
             break;
         }
         case kNewtonIrNodeType_Tidentifier:
-        case kNewtonIrNodeType_TnumericConst:
+        case kNewtonIrNodeType_PnumericConst:
         {
             return inputAST;
         }

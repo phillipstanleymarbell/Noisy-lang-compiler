@@ -1,0 +1,185 @@
+
+    Hardware Overview:
+
+      Model Name: iMac
+      Model Identifier: iMac14,2
+      Processor Name: Intel Core i7
+      Processor Speed: 3.5 GHz
+      Number of Processors: 1
+      Total Number of Cores: 4
+      L2 Cache (per Core): 256 KB
+      L3 Cache: 8 MB
+      Memory: 32 GB
+
+changeset: 574:4bf39b2930f2da304b67ca392a4ccb5286998bb7
+char kNoisyVersion[] = "0.2-alpha- () (build 09-05-2018-15:08-pip@listener-Darwin-16.7.0-x86_64)";
+char kNewtonVersion[] = "0.2-alpha- () (build 09-05-2018-15:08-pip@listener-Darwin-16.7.0-x86_64)";
+
+./src/noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s
+
+Informational Report:
+---------------------
+
+Non-zero routine residency time upper bounds and counts (5246 calls, total of 1127.3160 us):
+
+    Routine                                         Parse,         1 calls (0.0191 %), total residency = 0.038000 us (0.0034 %)
+    Routine                        ParseAnonAggregateType,         5 calls (0.0953 %), total residency = 0.187000 us (0.0166 %)
+    Routine                                 ParseAssignOp,         5 calls (0.0953 %), total residency = 0.185000 us (0.0164 %)
+    Routine                      ParseAssignmentStatement,         6 calls (0.1144 %), total residency = 0.222000 us (0.0197 %)
+    Routine                                ParseBasicType,         7 calls (0.1334 %), total residency = 0.263000 us (0.0233 %)
+    Routine                               ParseExpression,         5 calls (0.0953 %), total residency = 0.162000 us (0.0144 %)
+    Routine                                   ParseFactor,         5 calls (0.0953 %), total residency = 0.182000 us (0.0161 %)
+    Routine                             ParseFunctionDecl,         2 calls (0.0381 %), total residency = 0.094000 us (0.0083 %)
+    Routine                   ParseHighPrecedenceBinaryOp,         1 calls (0.0191 %), total residency = 0.036000 us (0.0032 %)
+    Routine             ParseIdentifierDefinitionTerminal,        12 calls (0.2287 %), total residency = 2.101000 us (0.1864 %)
+    Routine                          ParseIdentifierOrNil,         6 calls (0.1144 %), total residency = 0.230000 us (0.0204 %)
+    Routine                      ParseIdentifierOrNilList,         6 calls (0.1144 %), total residency = 0.262000 us (0.0232 %)
+    Routine                  ParseIdentifierUsageTerminal,        10 calls (0.1906 %), total residency = 0.367000 us (0.0326 %)
+    Routine                              ParseIntegerType,         2 calls (0.0381 %), total residency = 0.101000 us (0.0090 %)
+    Routine                                 ParseListType,         5 calls (0.0953 %), total residency = 2.401000 us (0.2130 %)
+    Routine                                 ParseLoadExpr,         1 calls (0.0191 %), total residency = 0.054000 us (0.0048 %)
+    Routine                               ParseModuleDecl,         2 calls (0.0381 %), total residency = 0.082000 us (0.0073 %)
+    Routine                           ParseModuleDeclBody,         2 calls (0.0381 %), total residency = 0.149000 us (0.0132 %)
+    Routine                       ParseModuleTypenameDecl,         2 calls (0.0381 %), total residency = 0.148000 us (0.0131 %)
+    Routine                        ParseNamegenDefinition,         1 calls (0.0191 %), total residency = 0.036000 us (0.0032 %)
+    Routine                   ParseNamegenInvokeShorthand,         1 calls (0.0191 %), total residency = 0.059000 us (0.0052 %)
+    Routine                                  ParseProgram,         1 calls (0.0191 %), total residency = 0.119000 us (0.0106 %)
+    Routine                        ParseReadTypeSignature,         2 calls (0.0381 %), total residency = 0.084000 us (0.0075 %)
+    Routine                      ParseScopedStatementList,         1 calls (0.0191 %), total residency = 0.052000 us (0.0046 %)
+    Routine                                ParseSignature,         6 calls (0.1144 %), total residency = 0.239000 us (0.0212 %)
+    Routine                                ParseStatement,         6 calls (0.1144 %), total residency = 0.225000 us (0.0200 %)
+    Routine                            ParseStatementList,         1 calls (0.0191 %), total residency = 0.052000 us (0.0046 %)
+    Routine                                     ParseTerm,         4 calls (0.0762 %), total residency = 0.129000 us (0.0114 %)
+    Routine                                 ParseTerminal,        85 calls (1.6203 %), total residency = 2.732000 us (0.2423 %)
+    Routine                                 ParseTypeExpr,        12 calls (0.2287 %), total residency = 0.393000 us (0.0349 %)
+    Routine                                 ParseTypeName,         1 calls (0.0191 %), total residency = 0.052000 us (0.0046 %)
+    Routine                        ParseTypeParameterList,         2 calls (0.0381 %), total residency = 0.092000 us (0.0082 %)
+    Routine                                  ParseUnaryOp,         1 calls (0.0191 %), total residency = 0.052000 us (0.0046 %)
+    Routine                       ParseWriteTypeSignature,         2 calls (0.0381 %), total residency = 0.089000 us (0.0079 %)
+    Routine                     ParsenQualifiedIdentifier,         7 calls (0.1334 %), total residency = 0.261000 us (0.0232 %)
+    Routine                               ParserPeekCheck,       317 calls (6.0427 %), total residency = 8.685000 us (0.7704 %)
+    Routine                          ParserDepthFirstWalk,       172 calls (3.2787 %), total residency = 13.202000 us (1.1711 %)
+    Routine                                 ParserAddLeaf,       113 calls (2.1540 %), total residency = 12.717000 us (1.1281 %)
+    Routine                  ParserAddLeafWithChainingSeq,        36 calls (0.6862 %), total residency = 1.046000 us (0.0928 %)
+    Routine                       ParserAddToModuleScopes,         2 calls (0.0381 %), total residency = 0.097000 us (0.0086 %)
+    Routine                             ParserAssignTypes,         3 calls (0.0572 %), total residency = 1.832000 us (0.1625 %)
+    Routine                                GenNoisyIrNode,       246 calls (4.6893 %), total residency = 50.008000 us (4.4360 %)
+    Routine                         LexAllocateSourceInfo,       108 calls (2.0587 %), total residency = 38.705000 us (3.4334 %)
+    Routine                              LexAllocateToken,       108 calls (2.0587 %), total residency = 15.823000 us (1.4036 %)
+    Routine                                        LexPut,       108 calls (2.0587 %), total residency = 6.035000 us (0.5353 %)
+    Routine                                        LexGet,       107 calls (2.0396 %), total residency = 5.406000 us (0.4795 %)
+    Routine                                       LexPeek,      1106 calls (21.0827 %), total residency = 200.279000 us (17.7660 %)
+    Routine                                       LexInit,         1 calls (0.0191 %), total residency = 529.086000 us (46.9332 %)
+    Routine                         LexerCheckTokenLength,       361 calls (6.8814 %), total residency = 16.319000 us (1.4476 %)
+    Routine                                      LexerCur,       808 calls (15.4022 %), total residency = 47.656000 us (4.2274 %)
+    Routine                                   LexerGobble,        58 calls (1.1056 %), total residency = 1.593000 us (0.1413 %)
+    Routine                                     LexerDone,       107 calls (2.0396 %), total residency = 3.200000 us (0.2839 %)
+    Routine                                      LexerEqf,        24 calls (0.4575 %), total residency = 1.056000 us (0.0937 %)
+    Routine                             LexerCheckComment,        59 calls (1.1247 %), total residency = 2.242000 us (0.1989 %)
+    Routine                                LexerCheckWeq3,        18 calls (0.3431 %), total residency = 0.601000 us (0.0533 %)
+    Routine                              LexerCheckSingle,        34 calls (0.6481 %), total residency = 1.161000 us (0.1030 %)
+    Routine                                  LexerCheckLt,         2 calls (0.0381 %), total residency = 0.163000 us (0.0145 %)
+    Routine                         LexerCheckDoubleQuote,         1 calls (0.0191 %), total residency = 0.110000 us (0.0098 %)
+    Routine                               LexerCheckMinus,         4 calls (0.0762 %), total residency = 0.122000 us (0.0108 %)
+    Routine                              LexerFinishToken,       252 calls (4.8037 %), total residency = 128.645000 us (11.4116 %)
+    Routine                    LexerIsOperatorOrSeparator,       542 calls (10.3317 %), total residency = 20.525000 us (1.8207 %)
+    Routine                                       InFirst,       106 calls (2.0206 %), total residency = 2.946000 us (0.2613 %)
+    Routine                                      InFollow,       224 calls (4.2699 %), total residency = 6.126000 us (0.5434 %)
+
+Intermediate Representation Information:
+
+    IR node count                        : 178
+    Symbol Table node count              : 3
+
+./src/newton/newton-darwin-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt
+
+SMT2 Backend output:
+---------------------
+(set-logic QF_NRA)
+(declare-fun s () Real)
+(assert  ( = s 1 ) )
+(declare-fun m () Real)
+(assert  ( = m 1 ) )
+(declare-fun kg () Real)
+(assert  ( = kg 1 ) )
+(declare-fun mol () Real)
+(assert  ( = mol 1 ) )
+(declare-fun K () Real)
+(assert  ( = K 1 ) )
+(declare-fun C () Real)
+(assert  ( = C 1 ) )
+(declare-fun A () Real)
+(assert  ( = A 1 ) )
+(declare-fun deg () Real)
+(assert  ( = deg 1 ) )
+(declare-fun jf () Real)
+(assert  ( = jf 1 ) )
+(declare-fun mjf () Real)
+(assert  ( = mjf 1 ) )
+(declare-fun N () Real)
+(assert  ( = N 1 ) )
+(declare-fun J () Real)
+(assert  ( = J 1 ) )
+(declare-fun W () Real)
+(assert  ( = W 1 ) )
+(declare-fun T () Real)
+(assert  ( = T 1 ) )
+(declare-fun ajf () Real)
+(assert  ( = ajf 1 ) )
+(declare-fun Hz () Real)
+(assert  ( = Hz 1 ) )
+(declare-fun sq () Real)
+(assert  ( = sq 1 ) )
+(declare-fun rho () Real)
+(assert  ( = rho 1 ) )
+(declare-fun vol () Real)
+(assert  ( = vol 1 ) )
+(declare-fun rad () Real)
+(assert  ( = rad 1 ) )
+(declare-fun rps () Real)
+(assert  ( = rps 1 ) )
+(declare-fun Pa () Real)
+(assert  ( = Pa 1 ) )
+(declare-fun b () Real)
+(assert  ( = b 1 ) )
+(declare-fun ppm () Real)
+(assert  ( = ppm 1 ) )
+(declare-fun RH () Real)
+(assert  ( = RH 1 ) )
+(declare-fun kNewtonUnitfree_pi () Real)
+(assert  ( = kNewtonUnitfree_pi 3.1415926535897931 ) )
+(declare-fun kNewtonUnithave_SpeedOfLight () Real)
+(assert  ( = kNewtonUnithave_SpeedOfLight 299792458 ) )
+(declare-fun kNewtonUnithave_AccelerationDueToGravity () Real)
+(assert  ( = kNewtonUnithave_AccelerationDueToGravity 0 ) )
+(declare-fun kNewtonUnithave_GravitationalConstant () Real)
+(assert  ( = kNewtonUnithave_GravitationalConstant 0 ) )
+(declare-fun kNewtonUnithave_AvogadroConstant () Real)
+(assert  ( = kNewtonUnithave_AvogadroConstant 0 ) )
+(declare-fun kNewtonUnithave_BoltzmannConstant () Real)
+(assert  ( = kNewtonUnithave_BoltzmannConstant 0 ) )
+(declare-fun kNewtonUnithave_ElectronCharge () Real)
+(assert  ( = kNewtonUnithave_ElectronCharge 0 ) )
+(declare-fun kNewtonUnithave_SpeedOfSound () Real)
+(assert  ( = kNewtonUnithave_SpeedOfSound 340.29199999999997 ) )
+(declare-fun kNewtonUnithave_EarthMass () Real)
+(assert  ( = kNewtonUnithave_EarthMass 0 ) )
+(declare-fun AccelerationRange@acceleration@0@X () Real)
+(declare-fun AccelerationRange@acceleration@0@Y () Real)
+(declare-fun AccelerationRange@acceleration@0@Z () Real)
+(assert  ( >= AccelerationRange@acceleration@0@X ( / ( * ( - 0 2.000000 ) meter ) ( ^ second 2.000000 ) ) ) )
+(assert ( not ( = 0  ( ^ second 2.000000 ) ) ) )
+(assert  ( <= AccelerationRange@acceleration@0@X ( / ( * 2.000000 meter ) ( ^ second 2.000000 ) ) ) )
+(assert ( not ( = 0  ( ^ second 2.000000 ) ) ) )
+(assert  ( >= AccelerationRange@acceleration@0@Y ( / ( * ( - 0 1.000000 ) meter ) ( ^ second 2.000000 ) ) ) )
+(assert ( not ( = 0  ( ^ second 2.000000 ) ) ) )
+(assert  ( <= AccelerationRange@acceleration@0@Y ( / ( * 1.000000 meter ) ( ^ second 2.000000 ) ) ) )
+(assert ( not ( = 0  ( ^ second 2.000000 ) ) ) )
+(assert  ( = AccelerationRange@acceleration@0@Z ( / ( * 0.000000 meter ) ( ^ second 2.000000 ) ) ) )
+(assert ( not ( = 0  ( ^ second 2.000000 ) ) ) )
+(check-sat)
+(exit)
+
+sudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s"
+
+sudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s"

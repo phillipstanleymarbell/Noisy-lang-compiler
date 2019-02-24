@@ -62,6 +62,7 @@ checkTokenLength(State *  N, int  count)
 		fatal(N, EtokenTooLong);
 	}
 }
+
 char
 cur(State *  N)
 {
@@ -92,11 +93,11 @@ done(State *  N, Token *  newToken)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexerDone);
 
-	newToken->sourceInfo = lexAllocateSourceInfo(N,	NULL				/*   genealogy 	*/,
-								N->fileName			/*   fileName 	*/,
-								N->lineNumber			/*   lineNumber */,
-								N->columnNumber - N->currentTokenLength /* columnNumber */,
-								N->currentTokenLength		/*   length 	*/);
+	newToken->sourceInfo = lexAllocateSourceInfo(N,	NULL						/*	genealogy	*/,
+								N->fileName				/*	fileName 	*/,
+								N->lineNumber				/*	lineNumber	*/,
+								N->columnNumber - N->currentTokenLength /*	columnNumber	*/,
+								N->currentTokenLength			/*	length		*/);
 
 	bzero(N->currentToken, kNoisyMaxBufferLength);
 	N->currentTokenLength = 0;
@@ -126,7 +127,7 @@ isDecimal(State *  N, char *  string)
 	size_t	stringLength = strlen(string);
 	for (int i = 0; i < stringLength; i++)
 	{
-		if (string[i] < '0' || string[i] > '9')
+		if ((string[i] < '0' || string[i] > '9') && !(string[i]  == '-' || string[i]  == '+'))
 		{
 			return false;
 		}
@@ -206,6 +207,10 @@ isDecimalSeparatedWithChar(State *  N, char *  string, char  character)
 
 	char *	left = stringAtLeft(N, string, character);
 	char *	right = stringAtRight(N, string, character);
+
+	/*
+	 *
+	 */
 	bool	result = isDecimal(N, left) && isDecimal(N, right);
 
 	/*
@@ -262,7 +267,38 @@ isRadixConst(State *  N, char *  string)
 		return false;
 	}
 
-	return isDecimalSeparatedWithChar(N, string, 'r');
+	char *	left = stringAtLeft(N, string, 'r');
+	char *	right = stringAtRight(N, string, 'r');
+
+	/*
+	 *
+	 */
+	bool	result = isDecimal(N, left) && (isDecimal(N, right) || isHexConstWithoutLeading0x(N, right));
+
+	/*
+	 *	stringAtLeft() makes a copy, which needs to be freed.
+	 *	(stringAtRight on the other hand does not need to make
+	 *	a copy, and doesn't).
+	 */
+	free(left);
+	
+	return result;
+}
+
+bool
+isHexConstWithoutLeading0x(State *  N, char *  string)
+{
+	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsHexConstWithoutLeading0x);
+
+	for (int i = 0; i < strlen(string); i++)
+	{
+		if (!((string[i] >= 'a' && string[i] <= 'f') || (string[i] >= 'A' && string[i] <= 'F') || (string[i] >= '0' && string[i] <= '9')))
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 
@@ -347,7 +383,7 @@ stringToRadixConst(State *  N, char *  string)
 		 *	Noisy supports up to base 36 (e.g., 36rZZZ), which is the most
 		 *	human friendly range. We could in principle support, e.g., base64,
 		 *	but that would lead to value strings that would unecessarily
-		 *	complicate the lexer and prser (e.g., "37r{{{").
+		 *	complicate the lexer and parser (e.g., "37r{{{").
 		 */
 		digitChar = right[rightLength - 1 - i];
 		if (digitChar >= '0' && digitChar <= '9')
@@ -624,7 +660,6 @@ lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexDebugPrintToken);
 
-    /* for now replacing gterminalstrings with tokendescription array because Newton doesn't use it */
 	flexprint(N->Fe, N->Fm, N->Fperr, "Token %30s: ", tokenDescriptionArray[t->type]);
 
 	switch (t->type)
@@ -693,7 +728,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 	Token *	tmp = N->tokenList;
 
 	if (N->mode & kNoisyModeCGI)
-        {
+	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\tline %5d, token %3d\t", tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
 	}
 	else
@@ -732,6 +767,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 				}
 
 				case kNoisyIrNodeType_TintegerConst:
+				case kNewtonIrNodeType_TintegerConst:
 				{
 					flexprint(N->Fe, N->Fm, N->Fperr, "'%"PRIu64"' ", tmp->integerConst);
 
@@ -741,7 +777,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 					break;
 				}
 
-				case kNewtonIrNodeType_TnumericConst:
+				case kNewtonIrNodeType_TrealConst:
 				case kNoisyIrNodeType_TrealConst:
 				{
 					flexprint(N->Fe, N->Fm, N->Fperr, "'%f' ", tmp->realConst);

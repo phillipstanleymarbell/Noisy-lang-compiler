@@ -40,7 +40,7 @@
 
 include "NewtonBaseSignals.nt"
 
-CoulombsLawConstant: constant = 9E9 * N * m**2 / C**2;
+CoulombsLawConstant: constant = 9E9 (N * m**2 / C**2);
 
 voltage : signal = 
 {
