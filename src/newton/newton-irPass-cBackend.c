@@ -111,7 +111,7 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 	char *	output = NULL;
 	switch(node->type)
 	{
-		case kNewtonIrNodeType_TnumericConst:
+		case kNewtonIrNodeType_PnumericConst:
 		{
 			int needed = snprintf(NULL, 0, "%f", node->value) + 1;
 			output = malloc(needed);
@@ -160,7 +160,7 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 		 *	double pow( double para, double exponent)
 		 *	This switch case prints out the ','
 		 */
-		case kNewtonIrNodeType_Texponent:
+		case kNewtonIrNodeType_Texponentiation:
 		{
 			output = malloc(4);
 			strcpy(output, ",");
@@ -267,7 +267,7 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 		/*
 		 *	Print out the right bracket of pow() function.
 		 */
-		if (isleftBracketPrinted == true && root->type == kNewtonIrNodeType_TnumericConst)
+		if (isleftBracketPrinted == true && root->type == kNewtonIrNodeType_PnumericConst)
 		{
 			
 			flexprint(N->Fe, N->Fm, N->Fpc, ")");

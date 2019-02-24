@@ -272,9 +272,6 @@ examples: $(EXAMPLES) target
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/TirePressure.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/VehicleDistance.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Violin.nt
-	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/WeatherBalloon.nt
-	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/BeamAlternative-pigroups.nt
-	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Beam-pigroups.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/CableHydrodynamicDragForce-pigroups.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/ExplosionRadius-pigroups.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/ExplosionWithoutRadius-pigroups.nt
@@ -287,6 +284,9 @@ examples: $(EXAMPLES) target
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Violin-pigroups.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/ViolinWithTemperatureDependence-pigroups.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Waves-pigroups.nt
+#	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Beam-pigroups.nt
+#	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/BeamAlternative-pigroups.nt
+#	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/WeatherBalloon.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/SelectiveLaserMelting.nt
 
 
