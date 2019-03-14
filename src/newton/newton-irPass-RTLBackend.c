@@ -1,5 +1,5 @@
 /*
-	Authored 2018. Youchao Wang.
+	Authored 2019. Vasileios Tsoutsouras.
 
 	All rights reserved.
 
@@ -65,8 +65,11 @@
 #include "newton-types.h"
 #include "newton-symbolTable.h"
 
+#define Q_PARAMETER 15
+#define N_PARAMETER 32
+
 bool
-irPassCIsExpectedTypePresentInRightChild(IrNode *  parentNode, IrNodeType expectedType)
+irPassRTLIsExpectedTypePresentInRightChild(IrNode *  parentNode, IrNodeType expectedType)
 {
 	bool	isExpectedTypePresent = false;
 
@@ -83,30 +86,12 @@ irPassCIsExpectedTypePresentInRightChild(IrNode *  parentNode, IrNodeType expect
 	return isExpectedTypePresent;
 }
 
-bool
-irPassCIsConstraintHumanWritten(IrNode *  parentNode)
-{
-	char *	checkString = NULL;
-	int	needed = snprintf(NULL, 0, "%s", parentNode->sourceInfo->fileName) + 1;
-	checkString = malloc(needed);
-	snprintf(checkString, needed, "%s", parentNode->sourceInfo->fileName);
-
-	bool	isConstraintHumanWritten = true;
-
-	if (strcmp(checkString, "GeneratedByDA") == 0)
-	{
-		isConstraintHumanWritten = false;
-	}
-
-	return isConstraintHumanWritten;
-}
-
 /*
  *	This function maps a node to a token string for C.
  *	Adapted from smtBackEnd, author Zhengyang Gu.
  */
 char *
-irPassCNodeToStr(State *  N, IrNode *  node)
+irPassRTLNodeToStr(State *  N, IrNode *  node)
 {
 	char *	output = NULL;
 	switch(node->type)
@@ -177,7 +162,7 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 }
 
 void
-irPassCSearchAndPrintNodeType(State *  N, IrNode *  root, IrNodeType expectedType, bool isLastParameter, int depthWalk)
+irPassRTLSearchAndPrintNodeType(State *  N, IrNode *  root, IrNodeType expectedType, bool isLastParameter, int depthWalk)
 {
 	if (root == NULL)
 	{
@@ -189,15 +174,15 @@ irPassCSearchAndPrintNodeType(State *  N, IrNode *  root, IrNodeType expectedTyp
 	if (root->irRightChild == NULL && root->irLeftChild == NULL
 		&& root->type == expectedType)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "double");
-		flexprint(N->Fe, N->Fm, N->Fpc, " %s", root->tokenString);
+		flexprint(N->Fe, N->Fm, N->Fprtl, "double");
+		flexprint(N->Fe, N->Fm, N->Fprtl, " %s", root->tokenString);
 		if(isLastParameter == true)
 		{
 			depth += 1;
 		}
 		if(isLastParameter == false || (isLastParameter == true && depth != depthWalk))
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+			flexprint(N->Fe, N->Fm, N->Fprtl, ", ");
 		}
 		else if (isLastParameter == true && depth == depthWalk)
 		{
@@ -206,14 +191,14 @@ irPassCSearchAndPrintNodeType(State *  N, IrNode *  root, IrNodeType expectedTyp
 		return;
 	}
 
-	irPassCSearchAndPrintNodeType(N, root->irLeftChild, expectedType, isLastParameter, depthWalk);
-	irPassCSearchAndPrintNodeType(N, root->irRightChild, expectedType, isLastParameter, depthWalk);
+	irPassRTLSearchAndPrintNodeType(N, root->irLeftChild, expectedType, isLastParameter, depthWalk);
+	irPassRTLSearchAndPrintNodeType(N, root->irRightChild, expectedType, isLastParameter, depthWalk);
 
 	return;
 }
 
 void
-irPassCSearchAndCreateArgList(State *  N, IrNode *  root, IrNodeType expectedType, char **argList, int argumentIndex)
+irPassRTLSearchAndCreateArgList(State *  N, IrNode *  root, IrNodeType expectedType, char **argList, int argumentIndex)
 {
 	if (root == NULL)
 	{
@@ -225,18 +210,18 @@ irPassCSearchAndCreateArgList(State *  N, IrNode *  root, IrNodeType expectedTyp
 	{
 		argList[argumentIndex] = (char *) malloc((strlen(root->tokenString) + 1) * sizeof(char));
 		strcpy(argList[argumentIndex], root->tokenString);
-		//flexprint(N->Fe, N->Fm, N->Fpc, "%s", root->tokenString);
+		//flexprint(N->Fe, N->Fm, N->Fprtl, "%s", root->tokenString);
 		
 		return;
 	}
 
-	irPassCSearchAndCreateArgList(N, root->irLeftChild, expectedType, argList, argumentIndex);
+	irPassRTLSearchAndCreateArgList(N, root->irLeftChild, expectedType, argList, argumentIndex);
 	
 	return;
 }
 
 int
-irPassCCountRemainingParameters(State *  N, IrNode *  root, int depth)
+irPassRTLCountRemainingParameters(State *  N, IrNode *  root, int depth)
 {
 	if (root == NULL)
 	{
@@ -250,14 +235,14 @@ irPassCCountRemainingParameters(State *  N, IrNode *  root, int depth)
 		return depth;
 	}
 
-	depth = irPassCCountRemainingParameters(N, root->irLeftChild, depth);
-	depth = irPassCCountRemainingParameters(N, root->irRightChild, depth);
+	depth = irPassRTLCountRemainingParameters(N, root->irLeftChild, depth);
+	depth = irPassRTLCountRemainingParameters(N, root->irRightChild, depth);
 
 	return depth;
 }
 
 void
-irPassCConstraintTreeWalk(State *  N, IrNode *  root)
+irPassRTLConstraintTreeWalk(State *  N, IrNode *  root)
 {
 	/*
 	 *	This branch should be reached for return.
@@ -275,33 +260,33 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 	 *	operation in C. We therefore must use
 	 *	double pow( double para, double exponent)
 	 */
-	if (irPassCIsExpectedTypePresentInRightChild(root, kNewtonIrNodeType_PhighPrecedenceBinaryOp) == true)
+	if (irPassRTLIsExpectedTypePresentInRightChild(root, kNewtonIrNodeType_PhighPrecedenceBinaryOp) == true)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "pow(");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "pow(");
 		isleftBracketPrinted = true;
 	}
 
 	if (root->irRightChild == NULL && root->irLeftChild == NULL)
 	{
 		char *		nodeTokenString = NULL;
-		nodeTokenString = irPassCNodeToStr(N, root);
+		nodeTokenString = irPassRTLNodeToStr(N, root);
 
-		flexprint(N->Fe, N->Fm, N->Fpc, " %s", nodeTokenString);
+		flexprint(N->Fe, N->Fm, N->Fprtl, " %s", nodeTokenString);
 		/*
 		 *	Print out the right bracket of pow() function.
 		 */
 		if (isleftBracketPrinted == true && root->type == kNewtonIrNodeType_TnumericConst)
 		{
 			
-			flexprint(N->Fe, N->Fm, N->Fpc, ")");
+			flexprint(N->Fe, N->Fm, N->Fprtl, ")");
 			isleftBracketPrinted = false;
 		}
 
 		return;
 	}
 
-	irPassCConstraintTreeWalk(N, root->irLeftChild);
-	irPassCConstraintTreeWalk(N, root->irRightChild);
+	irPassRTLConstraintTreeWalk(N, root->irLeftChild);
+	irPassRTLConstraintTreeWalk(N, root->irRightChild);
 }
 
 /*
@@ -313,42 +298,42 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
  *	}
  */
 void
-irPassCGenFunctionBody(State *  N, IrNode *  constraint, bool isLeft)
+irPassRTLGenFunctionBody(State *  N, IrNode *  constraint, bool isLeft)
 {
 	/*
 	 *	Declare
 	 */	
-	flexprint(N->Fe, N->Fm, N->Fpc, "{\n\tdouble calculatedValue = 0.0;\n");
+	flexprint(N->Fe, N->Fm, N->Fprtl, "{\n\tdouble calculatedValue = 0.0;\n");
 
 	/*
 	 *	Calculation
 	 */	
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tcalculatedValue =");
+	flexprint(N->Fe, N->Fm, N->Fprtl, "\tcalculatedValue =");
 
 	if (isLeft == false)
 	{
-		irPassCConstraintTreeWalk(N, constraint->irRightChild->irRightChild->irLeftChild->irLeftChild);
+		irPassRTLConstraintTreeWalk(N, constraint->irRightChild->irRightChild->irLeftChild->irLeftChild);
 	}
 	else
 	{
-		irPassCConstraintTreeWalk(N, constraint->irLeftChild->irLeftChild);
+		irPassRTLConstraintTreeWalk(N, constraint->irLeftChild->irLeftChild);
 	}
 
-	flexprint(N->Fe, N->Fm, N->Fpc, ";\n");
+	flexprint(N->Fe, N->Fm, N->Fprtl, ";\n");
 
 	/*
 	 *	Return
 	 */
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n\treturn calculatedValue;\n}\n\n");
+	flexprint(N->Fe, N->Fm, N->Fprtl, "\n\treturn calculatedValue;\n}\n\n");
 }
 
 /*
  *	Generate format: (double parameter1, double parameter 2 ...)
  */
 void
-irPassCGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft)
+irPassRTLGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft)
 {
-	flexprint(N->Fe, N->Fm, N->Fpc, "(");
+	flexprint(N->Fe, N->Fm, N->Fprtl, "(");
 
 	IrNode *	constraintsXSeq;
 
@@ -363,41 +348,34 @@ irPassCGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft)
 
 	while (constraintsXSeq->irRightChild != NULL)
 	{
-		irPassCSearchAndPrintNodeType(N, constraintsXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, false, -1);
+		irPassRTLSearchAndPrintNodeType(N, constraintsXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, false, -1);
 		constraintsXSeq = constraintsXSeq->irRightChild;
 	}
 
-	irPassCSearchAndPrintNodeType(N, constraintsXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, true,
-					irPassCCountRemainingParameters(N, constraintsXSeq->irLeftChild, 0));
-	flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
+	irPassRTLSearchAndPrintNodeType(N, constraintsXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, true,
+					irPassRTLCountRemainingParameters(N, constraintsXSeq->irLeftChild, 0));
+	flexprint(N->Fe, N->Fm, N->Fprtl, ")\n");
 }
 
 /*
  *	Generate format: double functionName
  */
 void
-irPassCGenFunctionName(State *  N, IrNode *  constraints, int countFunction)
+irPassRTLGenFunctionName(State *  N, IrNode *  constraints, int countFunction)
 {
-	if (irPassCIsConstraintHumanWritten(constraints))
-	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "double\nhumanWrittenConstraintRHS%d", countFunction);
-	}
-	else
-	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "double\n%sRHS%d",
+	flexprint(N->Fe, N->Fm, N->Fprtl, "double\n%sRHS%d",
 				constraints->irLeftChild->irLeftChild->irLeftChild->irLeftChild->tokenString, countFunction);
-	}
 }
 
 void
-irPassCProcessInvariantList(State *  N)
+irPassRTLProcessInvariantList(State *  N)
 {
 	/*
 	 *	Check if the file called is simply an include.nt
 	 */
 	if (N->invariantList == NULL)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tPlease specify a valid file\n */\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "/*\n *\tPlease specify a valid file\n */\n");
 		return;
 	}
 
@@ -405,12 +383,11 @@ irPassCProcessInvariantList(State *  N)
 
 	if (invariant->constraints == NULL)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tNo constraints created\n */\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "/*\n *\tNo constraints created\n */\n");
 		return;
 	}
 
-	IrNode *	constraintXSeq = invariant->constraints->irParent;
-
+    /* Constraints list removed */
 	IrNode *	parameterListXSeq = invariant->parameterList->irParent->irLeftChild;
 
 	char ** argumentsList;
@@ -419,75 +396,59 @@ irPassCProcessInvariantList(State *  N)
 
 	int countFunction = 0;
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tGenerated .c file from Newton\n */\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <stdlib.h>\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <stdio.h>\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <math.h>\n\n");
+    /* FIXME add checks - to CBackend as well if current assumptions are met */
+
+	flexprint(N->Fe, N->Fm, N->Fprtl, "/*\n *\tGenerated .v file from Newton\n */\n\n");
+	//flexprint(N->Fe, N->Fm, N->Fprtl, "\n#include <math.h>\n\n");
 
 	while(invariant)
 	{
-		for (countFunction = 0; constraintXSeq != NULL; countFunction++, constraintXSeq = constraintXSeq->irRightChild)
-		{
-			assert(constraintXSeq->irLeftChild->type == kNewtonIrNodeType_Pconstraint);
-			/*
-			 *	(1) For human written constraints, e.g. we end up having
-			 *	x + y + z < 5 * m / s ** 2, we create two functions, one 
-			 *	for LHS, and another for RHS.
-			 *
-			 *	(2) For machine calculated pi groups, we construct only
-			 *	one function to return the value of RHS.
-			 */
-			if (irPassCIsConstraintHumanWritten(constraintXSeq->irLeftChild))
-			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "double\nhumanWrittenConstraintLHS%d", countFunction);
-				irPassCGenFunctionArgument(N, constraintXSeq->irLeftChild, true);
-				irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, true);
-			}
-
-			irPassCGenFunctionName(N, constraintXSeq->irLeftChild, countFunction);
-			irPassCGenFunctionArgument(N, constraintXSeq->irLeftChild, false);
-			irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
-		}
-		
-		
 		argumentsList = (char **) malloc(invariant->dimensionalMatrixColumnCount * sizeof(char *));
 
 		/*
-		*	Print calculation function
+		*	Print calculation module -- FIXME more clear support of various architectures
 		*/
 		countFunction = 0;	
-		flexprint(N->Fe, N->Fm, N->Fpc, "double\n%s%d",
+		flexprint(N->Fe, N->Fm, N->Fprtl, "module %s%dSerial",
 				invariant->identifier, countFunction);
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "(");
-		
-		while (parameterListXSeq != NULL) 
+		flexprint(N->Fe, N->Fm, N->Fprtl, " #(\n//Parameterized values\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "parameter Q = %d,\n", Q_PARAMETER);
+        flexprint(N->Fe, N->Fm, N->Fprtl, "parameter N = %d", N_PARAMETER);
+        flexprint(N->Fe, N->Fm, N->Fprtl, "\n)\n(\n", N_PARAMETER);
+
+        flexprint(N->Fe, N->Fm, N->Fprtl, "input\ti_clk,");
+
+		while (parameterListXSeq != NULL) /* Create a list of function parameters */
 		{
-			irPassCSearchAndCreateArgList(N, parameterListXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, argumentsList, index);
+			irPassRTLSearchAndCreateArgList(N, parameterListXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, argumentsList, index);
 			parameterListXSeq = parameterListXSeq->irRightChild;
 			index++;
 		}
 		
 		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "double %s", argumentsList[index]);
-			if (index < invariant->dimensionalMatrixColumnCount - 1)
+			flexprint(N->Fe, N->Fm, N->Fprtl, "input\t[N-1:0] %s_sig,\n", argumentsList[index]);
+			/*
+            if (index < invariant->dimensionalMatrixColumnCount - 1)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+				flexprint(N->Fe, N->Fm, N->Fprtl, ", ");
 			}
+            */
 		}
 
-		flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
+        flexprint(N->Fe, N->Fm, N->Fprtl, "output\t[N-1:0] ratio_sig\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, ");\n");
 
 		/*
 		*	Declare
 		*/	
-		flexprint(N->Fe, N->Fm, N->Fpc, "{\n\tdouble calculatedProportion = 0.0;\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "{\n\tdouble calculatedProportion = 0.0;\n");
 
 		/*
 		*	Calculation
 		*/	
-		flexprint(N->Fe, N->Fm, N->Fpc, "\n\tcalculatedProportion = ");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\n\tcalculatedProportion = ");
 
 		/*
 		 *	We construct a temporary array to re-locate the positions of the permuted parameters
@@ -508,10 +469,10 @@ irPassCProcessInvariantList(State *  N)
 				{
 					if (invariant->nullSpace[countKernel][tmpPosition[row]][col] != 0) 
 					{
-						//flexprint(N->Fe, N->Fm, N->Fpc, "pow(%c%c, ", 'P'+(row/10), '0'+ (row%10) );
-						flexprint(N->Fe, N->Fm, N->Fpc, "pow(" );
-						flexprint(N->Fe, N->Fm, N->Fpc, "%s", argumentsList[index]);
-						flexprint(N->Fe, N->Fm, N->Fpc, ", %f) * ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
+						//flexprint(N->Fe, N->Fm, N->Fprtl, "pow(%c%c, ", 'P'+(row/10), '0'+ (row%10) );
+						flexprint(N->Fe, N->Fm, N->Fprtl, "pow(" );
+						flexprint(N->Fe, N->Fm, N->Fprtl, "%s", argumentsList[index]);
+						flexprint(N->Fe, N->Fm, N->Fprtl, ", %f) * ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
 					}
 					index++;
 				}
@@ -519,7 +480,7 @@ irPassCProcessInvariantList(State *  N)
 			/*
 			*   FIXME avoid printing 1.0 to complete the sentence;
 			*/
-			flexprint(N->Fe, N->Fm, N->Fpc, "1.0;");
+			flexprint(N->Fe, N->Fm, N->Fprtl, "1.0;");
 		}
 
 		free(tmpPosition);
@@ -527,68 +488,68 @@ irPassCProcessInvariantList(State *  N)
 		/*
 		*	Return
 		*/	
-		flexprint(N->Fe, N->Fm, N->Fpc, "\n\n\treturn calculatedProportion;");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\n\n\treturn calculatedProportion;");
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "\n}\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\n}\n");
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "\n\nint \nmain(int argc, char *argv[])\n{\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\n\nint \nmain(int argc, char *argv[])\n{\n");
 
 		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble %s", argumentsList[index]);
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\tdouble %s", argumentsList[index]);
 			if (index < invariant->dimensionalMatrixColumnCount - 1)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, ";\n");
+				flexprint(N->Fe, N->Fm, N->Fprtl, ";\n");
 			}
 		}
-		flexprint(N->Fe, N->Fm, N->Fpc, ";");
+		flexprint(N->Fe, N->Fm, N->Fprtl, ";");
 
 		/*
 		*	Declare
 		*/	
-		flexprint(N->Fe, N->Fm, N->Fpc, "\n\tdouble calculatedProportion = 0.0;\n\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\n\tdouble calculatedProportion = 0.0;\n\n");
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tif (argc < %d) {\n",invariant->dimensionalMatrixColumnCount+1);
-		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\"Usage is exec_name ");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\tif (argc < %d) {\n",invariant->dimensionalMatrixColumnCount+1);
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\tprintf(\"Usage is exec_name ");
 
 		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc,  "%s ", argumentsList[index]);
+			flexprint(N->Fe, N->Fm, N->Fprtl,  "%s ", argumentsList[index]);
 		}
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "\\n\");\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\t\treturn -1;\n\t}\n\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\\n\");\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\treturn -1;\n\t}\n\n");
 
 		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "\t%s = atof(argv[%d]);\n", argumentsList[index], index+1);
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\t%s = atof(argv[%d]);\n", argumentsList[index], index+1);
 		}
 
 		/*
 		*	Calculation
 		*/	
-		flexprint(N->Fe, N->Fm, N->Fpc, "\n\tcalculatedProportion = ");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\n\tcalculatedProportion = ");
 
 		countFunction = 0;	
-		flexprint(N->Fe, N->Fm, N->Fpc, "%s%d", invariant->identifier, countFunction);
+		flexprint(N->Fe, N->Fm, N->Fprtl, "%s%d", invariant->identifier, countFunction);
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "(");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "(");
 
 		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "%s", argumentsList[index]);
+			flexprint(N->Fe, N->Fm, N->Fprtl, "%s", argumentsList[index]);
 			if (index < invariant->dimensionalMatrixColumnCount - 1)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+				flexprint(N->Fe, N->Fm, N->Fprtl, ", ");
 			}
 		}
 
-		flexprint(N->Fe, N->Fm, N->Fpc, ");\n\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, ");\n\n");
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tprintf(\"Calculated proportion is %%f.\\n\", calculatedProportion);\n\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\tprintf(\"Calculated proportion is %%f.\\n\", calculatedProportion);\n\n");
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "\treturn 0;\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\n}\n\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\treturn 0;\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\n}\n\n");
 
 		/*
 		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
@@ -601,27 +562,27 @@ irPassCProcessInvariantList(State *  N)
 		invariant = invariant->next;
 	}
 	
-	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tEnd of the generated .c file\n */\n");
+	flexprint(N->Fe, N->Fm, N->Fprtl, "/*\n *\tEnd of the generated .v file\n */\n");
 }
 
 void
-irPassCBackend(State *  N)
+irPassRTLBackend(State *  N)
 {
-	FILE *	cFile;
+	FILE *	rtlFile;
 
-	irPassCProcessInvariantList(N);
+	irPassRTLProcessInvariantList(N);
 
-	if (N->outputCFilePath)
+	if (N->outputRTLFilePath) 
 	{
-		cFile = fopen(N->outputCFilePath, "w");
+		rtlFile = fopen(N->outputRTLFilePath, "w"); 
 
-		if (cFile == NULL)
+		if (rtlFile == NULL)
 		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\n%s: %s.\n", Eopen, N->outputCFilePath);
+			flexprint(N->Fe, N->Fm, N->Fperr, "\n%s: %s.\n", Eopen, N->outputRTLFilePath);
 			consolePrintBuffers(N);
 		}
 
-		fprintf(cFile, "%s", N->Fpc->circbuf);
-		fclose(cFile);
+		fprintf(rtlFile, "%s", N->Fprtl->circbuf);
+		fclose(rtlFile);
 	}
 }

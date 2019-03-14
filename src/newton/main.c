@@ -96,10 +96,11 @@ main(int argc, char *argv[])
 			{"optimize",		required_argument,	0,	'O'},
 			{"pigroups",		no_argument,		0,	'p'},
 			{"codegen",		required_argument,	0,	'g'},
+			{"RTLcodegen",		no_argument,		0,	'r'},
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:S:b:stO:pg:", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:pg:r:", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -252,6 +253,14 @@ main(int argc, char *argv[])
 				break;
 			}
 
+			case 'r':
+			{
+				N->irBackends |= kNewtonIrBackendRTL;
+				N->outputRTLFilePath = optarg;
+
+				break;
+			}
+
 			case '?':
 			{
 				/*
@@ -328,6 +337,7 @@ usage(State *  N)
 						"                | (--optimize <level>, -O <level>)                   \n"
 						"                | (--pigroups, -p)                                   \n"
 						"                | (--codegen <path to output file>, -g <path to output file>)\n"
+						"                | (--RTLcodegen <path to output file>, -r <path to output file>)\n"
 						"                | (--trace, -t)                                      \n"
 						"                | (--statistics, -s) ]                               \n"
 						"                                                                     \n"

@@ -577,6 +577,7 @@ typedef enum
 	kNoisyIrBackendProtobuf				= (1 << 1),
 	kNewtonIrBackendSmt				= (1 << 2),
 	kNewtonIrBackendC				= (1 << 3),
+	kNewtonIrBackendRTL				= (1 << 4),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -943,6 +944,7 @@ typedef struct
 	FlexPrintBuf *		Fpinfo;
 	FlexPrintBuf *		Fpsmt2;
 	FlexPrintBuf *		Fpc;
+	FlexPrintBuf *		Fprtl;
 	FlexPrintBuf *		Fpmathjax;
 
 	/*
@@ -992,6 +994,7 @@ typedef struct
 	char *			outputFilePath;
 	char *			outputSmtFilePath;
 	char *			outputCFilePath;
+	char *			outputRTLFilePath;
 
 	NoisyMode		mode;
 	uint64_t		verbosityLevel;
