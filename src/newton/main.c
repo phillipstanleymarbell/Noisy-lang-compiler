@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 			{"optimize",		required_argument,	0,	'O'},
 			{"pigroups",		no_argument,		0,	'p'},
 			{"codegen",		required_argument,	0,	'g'},
-			{"RTLcodegen",		no_argument,		0,	'r'},
+			{"RTLcodegen",		required_argument,		0,	'r'},
 			{0,			0,			0,	0}
 		};
 
