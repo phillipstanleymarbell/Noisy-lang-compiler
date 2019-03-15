@@ -522,8 +522,6 @@ irPassCProcessInvariantList(State *  N)
 			flexprint(N->Fe, N->Fm, N->Fpc, "1.0;");
 		}
 
-		free(tmpPosition);
-
 		/*
 		*	Return
 		*/	
@@ -590,13 +588,13 @@ irPassCProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "\treturn 0;\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\n}\n\n");
 
-		/*
+		free(tmpPosition);
+		
 		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
 		{
 			free(argumentsList[index]);
 		}
 		free(argumentsList);
-		*/
 
 		invariant = invariant->next;
 	}

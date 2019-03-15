@@ -68,10 +68,11 @@
 #define Q_PARAMETER 15
 #define N_PARAMETER 32
 
-static char multiplierVersion[32] = "qmultSerial";
+static char multiplierVersion[32] = "qmultSequential";
+static char dividerVersion[32] = "qdivSequential";
 
-static char qmultSerial[4096] = "\
-module qmultSerial#(\n\
+static char qmultSequential[4096] = "\
+module qmultSequential #(\n\
 	//Parameterized values\n\
 	parameter Q = 15,\n\
 	parameter N = 32\n\
@@ -96,23 +97,27 @@ module qmultSerial#(\n\
 							//		count to N, but computing that number of bits requires a \n\
 							//		logarithm (base 2), and I don't know how to do that in a \n\
 							//		way that will work for every possibility						 \n\
+    reg reg_working;\n\
 	reg	reg_done;				//	Computation completed flag\n\
 	reg	reg_sign;				//	The result's sign bit\n\
 	reg	reg_overflow;				//	Overflow flag\n\
 \n\
-	initial reg_done = 1'b1;		//	Initial state is to not be doing anything\n\
+    initial reg_working = 1'b0;		//	Initial state is to not be doing anything\n\
+	initial reg_done = 1'b0;		//	Initial state is to not be doing anything\n\
 	initial reg_overflow = 1'b0;		//		And there should be no woverflow present\n\
 	initial reg_sign = 1'b0;		//		And the sign should be positive\n\
 \n\
 	assign o_result_out[N-1:0] = reg_result_temp[N-1:0];\n\
+	//reg_working_result[N-2+Q:Q];	//	The multiplication results\n\
 	assign i_multiplicand_unsigned = ~i_multiplicand[N-1:0] + 1;\n\
 	assign i_multiplier_unsigned = ~i_multiplier[N-1:0] + 1;\n\
 	assign o_complete = reg_done;					//	Done flag\n\
 	assign o_overflow = reg_overflow;				//	Overflow flag\n\
 \n\
 	always @( posedge i_clk ) begin\n\
-		if( reg_done && i_start ) begin				//	This is our startup condition\n\
-			reg_done <= 1'b0;				//	We're not done			\n\
+		if( !reg_working && i_start ) begin				//	This is our startup condition\n\
+			reg_done <= 1'b0;				//	We're not done\n\
+			reg_working <= 1'b1;		//	Initial state is to not be doing anything			\n\
 			reg_count <= 0;					//	Reset the count\n\
 			reg_working_result <= 0;			//	Clear out the result register\n\
 			reg_overflow <= 1'b0;				//	Clear the overflow register\n\
@@ -130,7 +135,7 @@ module qmultSerial#(\n\
 				reg_multiplier_temp <= i_multiplier[N-1:0];		//	Left-align the divisor into its working register \n\
 \n\
 		end \n\
-		else if (!reg_done) begin\n\
+		else if (reg_working) begin\n\
 			if (reg_multiplicand_temp[reg_count] == 1'b1)				//	if the appropriate multiplicand bit is 1\n\
 				reg_working_result <= reg_working_result + reg_multiplier_temp;	//	then add the temp multiplier\n\
 \n\
@@ -140,6 +145,7 @@ module qmultSerial#(\n\
 			//stop condition\n\
 			if(reg_count == N) begin\n\
 				reg_done <= 1'b1;						//	If we're done, it's time to tell the calling process\n\
+				reg_working <= 1'b0;		//	Initial state is to not be doing anything\n\
 \n\
 				if (reg_sign == 1)\n\
 					reg_result_temp[N-1:0] <= ~reg_working_result[N-2+Q:Q] + 1;\n\
@@ -152,7 +158,112 @@ module qmultSerial#(\n\
 			end\n\
 		end\n\
 	end\n\
+    endmodule\n";
+
+static char qdivSequential[8192] = "\
+module qdivSequential #(\n\
+	//Parameterized values\n\
+	parameter Q = 15,\n\
+	parameter N = 32\n\
+	)\n\
+	(\n\
+	input 	[N-1:0] i_dividend,\n\
+	input 	[N-1:0] i_divisor,\n\
+	input 	i_start,\n\
+	input 	i_clk,\n\
+	output 	[N-1:0] o_quotient_out,\n\
+	output 	o_complete,\n\
+	output	o_overflow\n\
+	);\n\
+\n\
+	wire [N-1:0] 	reg_dividend_unsigned;	//\n\
+	wire [N-1:0] 	reg_divisor_unsigned;	//\n\
+	wire [N-1:0] 	reg_quotient_signed;	//	\n\
+\n\
+	reg [2*N+Q-3:0]	reg_working_quotient;	//	Our working copy of the quotient\n\
+	reg [N-1:0] 	reg_quotient_unsigned;	//	Final quotient\n\
+	reg [N-1:0] 	reg_quotient;		//	Final quotient\n\
+	reg [N-2+Q:0] 	reg_working_dividend;	//	Working copy of the dividend\n\
+	reg [2*N+Q-3:0]	reg_working_divisor;	// Working copy of the divisor\n\
+\n\
+	reg [N-1:0] reg_count; 		//	This is obviously a lot bigger than it needs to be, as we only need \n\
+					           //		count to N-1+Q but, computing that number of bits requires a \n\
+					           //		logarithm (base 2), and I don't know how to do that in a \n\
+					           //		way that will work for everyone\n\
+\n\
+	reg reg_working;									 \n\
+	reg reg_done;		//	Computation completed flag\n\
+	reg	reg_sign;		//	The quotient's sign bit\n\
+	reg	reg_overflow;		//	Overflow flag\n\
+\n\
+	initial reg_done = 1'b0;	//	Initial state is to not be doing anything\n\
+	initial reg_working = 1'b0;		//	Initial state is to not be doing anything\n\
+	initial reg_overflow = 1'b0;	//	And there should be no overflow present\n\
+	initial reg_sign = 1'b0;	//	And the sign should be positive\n\
+\n\
+	initial reg_working_quotient = 0;	\n\
+	initial reg_quotient = 0;				\n\
+	initial reg_working_dividend = 0;	\n\
+	initial reg_working_divisor = 0;		\n\
+ 	initial reg_count = 0;\n\
+\n\
+	assign reg_dividend_unsigned = ~i_dividend + 1;\n\
+	assign reg_divisor_unsigned = ~i_divisor + 1;\n\
+	assign o_quotient_out[N-1:0] = reg_quotient[N-1:0];	//	The division results\n\
+	assign o_complete = reg_done;\n\
+	assign o_overflow = reg_overflow;\n\
+\n\
+	always @( posedge i_clk ) begin\n\
+		if( !reg_working && i_start ) begin			//	This is our startup condition\n\
+			//  Need to check for a divide by zero right here, I think....\n\
+			reg_done <= 1'b0;			     //	We're not done\n\
+			reg_working <= 1'b1;		//				\n\
+			reg_count <= N+Q-1;			     //	Set the count\n\
+			reg_working_quotient <= 0;		//	Clear out the quotient register\n\
+			reg_working_dividend <= 0;		//	Clear out the dividend register \n\
+			reg_working_divisor <= 0;		//	Clear out the divisor register \n\
+			reg_overflow <= 1'b0;			//	Clear the overflow register\n\
+\n\
+			if (i_dividend[N-1] == 1) \n\
+				reg_working_dividend[N+Q-2:Q] <= reg_dividend_unsigned[N-2:0];		//	Left-align the dividend in its working register\n\
+			else\n\
+				reg_working_dividend[N+Q-2:Q] <= i_dividend[N-2:0];		           //	Left-align the dividend in its working register\n\
+\n\
+			if (i_divisor[N-1] == 1) \n\
+				reg_working_divisor[2*N+Q-3:N+Q-1] <= reg_divisor_unsigned[N-2:0];		//	Left-align the divisor into its working register\n\
+			else\n\
+				reg_working_divisor[2*N+Q-3:N+Q-1] <= i_divisor[N-2:0];		           //	Left-align the divisor into its working register \n\
+\n\
+			reg_sign <= i_dividend[N-1] ^ i_divisor[N-1];		//	Set the sign bit\n\
+		end \n\
+		else if(reg_working) begin\n\
+			reg_working_divisor = reg_working_divisor >> 1;	//	Right shift the divisor (that is, divide it by two - aka reduce the divisor)\n\
+			reg_count = reg_count - 1;				//	Decrement the count\n\
+\n\
+			//	If the dividend is greater than the divisor\n\
+			if(reg_working_dividend >= reg_working_divisor) begin\n\
+				reg_working_quotient[reg_count] = 1'b1;				//	Set the quotient bit\n\
+				reg_working_dividend = reg_working_dividend - reg_working_divisor;	//	and subtract the divisor from the dividend\n\
+			end\n\
+\n\
+			//stop condition\n\
+			if(reg_count == 0) begin\n\
+				reg_done = 1'b1;				                        //	If we're done, it's time to tell the calling process\n\
+				reg_working = 1'b0;		                                 //	\n\
+				reg_quotient_unsigned = reg_working_quotient[N-1:0];	//	Move in our working copy to the outside world\n\
+\n\
+				if (reg_sign == 1)\n\
+					reg_quotient = ~reg_quotient_unsigned + 1;\n\
+				else\n\
+					reg_quotient = reg_working_quotient[N-1:0];\n\
+\n\
+				if (reg_working_quotient[2*N+Q-3:N]>0)\n\
+					reg_overflow = 1'b1;\n\
+			end\n\
+		end\n\
+	end\n\
 endmodule\n";
+
 
 typedef struct multChainTag multChain;
 
@@ -160,135 +271,6 @@ struct multChainTag {
 	char *operandName;
 	multChain *next;
 }; 
-
-bool
-irPassRTLIsExpectedTypePresentInRightChild(IrNode *  parentNode, IrNodeType expectedType)
-{
-	bool	isExpectedTypePresent = false;
-
-	if (parentNode->irRightChild == NULL)
-	{
-		return isExpectedTypePresent;
-	}
-
-	if (parentNode->irRightChild->type == expectedType)
-	{
-		isExpectedTypePresent = true;
-	}
-
-	return isExpectedTypePresent;
-}
-
-/*
- *	This function maps a node to a token string for C.
- *	Adapted from smtBackEnd, author Zhengyang Gu.
- */
-char *
-irPassRTLNodeToStr(State *  N, IrNode *  node)
-{
-	char *	output = NULL;
-	switch(node->type)
-	{
-		case kNewtonIrNodeType_TnumericConst:
-		{
-			int needed = snprintf(NULL, 0, "%f", node->value) + 1;
-			output = malloc(needed);
-			snprintf(output, needed, "%f", node->value);
-			break;
-		}
-
-		case kNewtonIrNodeType_Tidentifier:
-		{
-			int needed = snprintf(NULL, 0, "%s", node->tokenString) + 1;
-			output = malloc(needed);
-			snprintf(output, needed, "%s", node->tokenString);
-			break;
-		}
-
-		case kNewtonIrNodeType_Tplus:
-		{
-			output = malloc(4);
-			strcpy(output, " + ");
-			break;
-		}
-
-		case kNewtonIrNodeType_Tminus:
-		{
-			output = malloc(4);
-			strcpy(output, " - ");
-			break;
-		}
-
-		case kNewtonIrNodeType_Tdiv:
-		{
-			output = malloc(4);
-			strcpy(output, " / ");
-			break;
-		}
-
-		case kNewtonIrNodeType_Tmul:
-		{
-			output = malloc(4);
-			strcpy(output, " * ");
-			break;
-		}
-		/*
-		 *	There is no operator for power exponents
-		 *	operation in C. We therefore must use
-		 *	double pow( double para, double exponent)
-		 *	This switch case prints out the ','
-		 */
-		case kNewtonIrNodeType_Texponent:
-		{
-			output = malloc(4);
-			strcpy(output, ",");
-			break;
-		}
-
-		default:
-		{
-			fatal(N, EtokenInSMT);
-		}
-	}
-
-	return output;
-}
-
-void
-irPassRTLSearchAndPrintNodeType(State *  N, IrNode *  root, IrNodeType expectedType, bool isLastParameter, int depthWalk)
-{
-	if (root == NULL)
-	{
-		return;
-	}
-
-	static int	depth = 0;
-
-	if (root->irRightChild == NULL && root->irLeftChild == NULL
-		&& root->type == expectedType)
-	{
-		flexprint(N->Fe, N->Fm, N->Fprtl, "double");
-		flexprint(N->Fe, N->Fm, N->Fprtl, " %s", root->tokenString);
-		if(isLastParameter == true)
-		{
-			depth += 1;
-		}
-		if(isLastParameter == false || (isLastParameter == true && depth != depthWalk))
-		{
-			flexprint(N->Fe, N->Fm, N->Fprtl, ", ");
-		}
-		else if (isLastParameter == true && depth == depthWalk)
-		{
-			depth = 0;
-		}
-		return;
-	}
-
-	irPassRTLSearchAndPrintNodeType(N, root->irLeftChild, expectedType, isLastParameter, depthWalk);
-	irPassRTLSearchAndPrintNodeType(N, root->irRightChild, expectedType, isLastParameter, depthWalk);
-
-	return;
-}
 
 void
 irPassRTLSearchAndCreateArgList(State *  N, IrNode *  root, IrNodeType expectedType, char **argList, int argumentIndex)
@@ -313,152 +295,6 @@ irPassRTLSearchAndCreateArgList(State *  N, IrNode *  root, IrNodeType expectedT
 	return;
 }
 
-int
-irPassRTLCountRemainingParameters(State *  N, IrNode *  root, int depth)
-{
-	if (root == NULL)
-	{
-		return depth;
-	}
-
-	if (root->irRightChild == NULL && root->irLeftChild == NULL
-		&& root->type == kNewtonIrNodeType_Tidentifier)
-	{
-		depth += 1;
-		return depth;
-	}
-
-	depth = irPassRTLCountRemainingParameters(N, root->irLeftChild, depth);
-	depth = irPassRTLCountRemainingParameters(N, root->irRightChild, depth);
-
-	return depth;
-}
-
-void
-irPassRTLConstraintTreeWalk(State *  N, IrNode *  root)
-{
-	/*
-	 *	This branch should be reached for return.
-	 *	It completes a preorder tree traversal.
-	 */
-	if (root == NULL)
-	{
-		return;
-	}
-
-	static bool	isleftBracketPrinted = false;
-
-	/*
-	 *	There is no operator for power exponents
-	 *	operation in C. We therefore must use
-	 *	double pow( double para, double exponent)
-	 */
-	if (irPassRTLIsExpectedTypePresentInRightChild(root, kNewtonIrNodeType_PhighPrecedenceBinaryOp) == true)
-	{
-		flexprint(N->Fe, N->Fm, N->Fprtl, "pow(");
-		isleftBracketPrinted = true;
-	}
-
-	if (root->irRightChild == NULL && root->irLeftChild == NULL)
-	{
-		char *		nodeTokenString = NULL;
-		nodeTokenString = irPassRTLNodeToStr(N, root);
-
-		flexprint(N->Fe, N->Fm, N->Fprtl, " %s", nodeTokenString);
-		/*
-		 *	Print out the right bracket of pow() function.
-		 */
-		if (isleftBracketPrinted == true && root->type == kNewtonIrNodeType_TnumericConst)
-		{
-			
-			flexprint(N->Fe, N->Fm, N->Fprtl, ")");
-			isleftBracketPrinted = false;
-		}
-
-		return;
-	}
-
-	irPassRTLConstraintTreeWalk(N, root->irLeftChild);
-	irPassRTLConstraintTreeWalk(N, root->irRightChild);
-}
-
-/*
- *	Generate format:
- *	{
- *		double calculatedValue = 0.0;
- 		calculatedValue = pow(parameter1 , exponent1) * parameter2 ... ;
- *		return calculatedValue;
- *	}
- */
-void
-irPassRTLGenFunctionBody(State *  N, IrNode *  constraint, bool isLeft)
-{
-	/*
-	 *	Declare
-	 */	
-	flexprint(N->Fe, N->Fm, N->Fprtl, "{\n\tdouble calculatedValue = 0.0;\n");
-
-	/*
-	 *	Calculation
-	 */	
-	flexprint(N->Fe, N->Fm, N->Fprtl, "\tcalculatedValue =");
-
-	if (isLeft == false)
-	{
-		irPassRTLConstraintTreeWalk(N, constraint->irRightChild->irRightChild->irLeftChild->irLeftChild);
-	}
-	else
-	{
-		irPassRTLConstraintTreeWalk(N, constraint->irLeftChild->irLeftChild);
-	}
-
-	flexprint(N->Fe, N->Fm, N->Fprtl, ";\n");
-
-	/*
-	 *	Return
-	 */
-	flexprint(N->Fe, N->Fm, N->Fprtl, "\n\treturn calculatedValue;\n}\n\n");
-}
-
-/*
- *	Generate format: (double parameter1, double parameter 2 ...)
- */
-void
-irPassRTLGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft)
-{
-	flexprint(N->Fe, N->Fm, N->Fprtl, "(");
-
-	IrNode *	constraintsXSeq;
-
-	if (isLeft == false)
-	{
-		constraintsXSeq = constraint->irRightChild->irRightChild->irLeftChild->irLeftChild;
-	}
-	else
-	{
-		constraintsXSeq = constraint->irLeftChild->irLeftChild;
-	}
-
-	while (constraintsXSeq->irRightChild != NULL)
-	{
-		irPassRTLSearchAndPrintNodeType(N, constraintsXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, false, -1);
-		constraintsXSeq = constraintsXSeq->irRightChild;
-	}
-
-	irPassRTLSearchAndPrintNodeType(N, constraintsXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, true,
-					irPassRTLCountRemainingParameters(N, constraintsXSeq->irLeftChild, 0));
-	flexprint(N->Fe, N->Fm, N->Fprtl, ")\n");
-}
-
-/*
- *	Generate format: double functionName
- */
-void
-irPassRTLGenFunctionName(State *  N, IrNode *  constraints, int countFunction)
-{
-	flexprint(N->Fe, N->Fm, N->Fprtl, "double\n%sRHS%d",
-				constraints->irLeftChild->irLeftChild->irLeftChild->irLeftChild->tokenString, countFunction);
-}
 
 /* FIXME check if mallocs and copies fail */
 void irPassRTLAddMultChain (multChain **multChainHead, char *parameterName, int power) {
@@ -526,7 +362,10 @@ irPassRTLProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fprtl, "/*\n *\tGenerated .v file from Newton\n */\n\n");
 	//flexprint(N->Fe, N->Fm, N->Fprtl, "\n#include <math.h>\n\n");
 
-	flexprint(N->Fe, N->Fm, N->Fprtl, "%s\n", qmultSerial);
+	flexprint(N->Fe, N->Fm, N->Fprtl, "%s\n", qmultSequential);
+	flexprint(N->Fe, N->Fm, N->Fprtl, "\n");
+	flexprint(N->Fe, N->Fm, N->Fprtl, "%s\n", qdivSequential);
+	flexprint(N->Fe, N->Fm, N->Fprtl, "\n");
 
 	while(invariant)
 	{
@@ -556,12 +395,6 @@ irPassRTLProcessInvariantList(State *  N)
 		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
 		{
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\tinput\t[N-1:0] %s_sig,\n", argumentsList[index]);
-			/*
-            if (index < invariant->dimensionalMatrixColumnCount - 1)
-			{
-				flexprint(N->Fe, N->Fm, N->Fprtl, ", ");
-			}
-            */
 		}
 
 		/*
@@ -574,8 +407,6 @@ irPassRTLProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\twire [N-1:0] dividend;\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\twire [N-1:0] divisor;\n\n");
 	
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_dividend;\n");
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\treg oc_divisor;\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_Pi;\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\twire of;\n\n");
 	
@@ -610,9 +441,6 @@ irPassRTLProcessInvariantList(State *  N)
 				{
 					if (invariant->nullSpace[countKernel][tmpPosition[row]][col] != 0) 
 					{
-						//flexprint(N->Fe, N->Fm, N->Fprtl, "%s", argumentsList[index]);
-						//flexprint(N->Fe, N->Fm, N->Fprtl, ", %f) * ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
-
 						if (invariant->nullSpace[countKernel][tmpPosition[row]][col] >= 0) { /* Can there be a zero? */
 							dividendMultiplications += (int) invariant->nullSpace[countKernel][tmpPosition[row]][col]; /* FIXME what happens in case of fraction? */
 							irPassRTLAddMultChain (&dividendMultChainHead, argumentsList[index], (int) invariant->nullSpace[countKernel][tmpPosition[row]][col]);
@@ -629,16 +457,18 @@ irPassRTLProcessInvariantList(State *  N)
 			dividendMultiplications--;
 			divisorMultiplications--;
 
-			flexprint(N->Fe, N->Fm, N->Fprtl, "\tinitial i_st = 1'b0;\n");
-			
 			/*
 			 *	Print declarations of intermediate dividend multiplication wires
 			 */
 			if (dividendMultiplications == 0) {
+				flexprint(N->Fe, N->Fm, N->Fprtl, "\treg oc_dividend;\n");
+				
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\tinitial oc_dividend = 1'b1;\n");
 			} else if (dividendMultiplications == 1) {
-				
-			} else if (dividendMultiplications > 1) {	
+				flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_dividend;\n");
+			} else if (dividendMultiplications > 1) {
+				flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_dividend;\n");
+
 				for (index=1; index < dividendMultiplications; index++) {
 					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire [N-1:0] mult_res_dividend_inter%d;\n",index);
 					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_dividend%d;\n",index);
@@ -650,12 +480,15 @@ irPassRTLProcessInvariantList(State *  N)
 			/*
 			 *	Print declarations of intermediate dividend multiplication wires
 			 */
-			flexprint(N->Fe, N->Fm, N->Fprtl, "\n");
-			if (dividendMultiplications == 0) {
-				flexprint(N->Fe, N->Fm, N->Fprtl, "\tinitial oc_divisor = 1'b1;\n");
-			} else if (dividendMultiplications == 1) {
+			if (divisorMultiplications == 0) {
+				flexprint(N->Fe, N->Fm, N->Fprtl, "\treg oc_divisor;\n");
 
+				flexprint(N->Fe, N->Fm, N->Fprtl, "\tinitial oc_divisor = 1'b1;\n");
+			} else if (divisorMultiplications == 1) {
+				flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_divisor;\n");
 			} else if (divisorMultiplications > 1) {
+				flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_divisor;\n");
+
 				for (index=1; index < divisorMultiplications; index++) {
 					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire [N-1:0] mult_res_divisor_inter%d;\n",index);	
 					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_divisor%d;\n",index);;
@@ -664,6 +497,8 @@ irPassRTLProcessInvariantList(State *  N)
 				/* FIXME if negative */	
 			}
 			
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\tinitial i_st = 1'b0;\n\n");
+
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* ----- Dividend ----- */\n");
 			if (dividendMultiplications == 0 ) {
 				
@@ -742,7 +577,7 @@ irPassRTLProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign i_st_ratio = oc_dividend & oc_divisor;\n\n");
 
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* ----- Division ----- */\n");
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\tqdivSec qdiv_inst (.i_dividend(dividend), .i_divisor(divisor), .i_start(i_st_ratio), .i_clk(i_clk), .o_quotient_out(division_res), .o_complete(oc_Pi), .o_overflow(of));\n\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t%s qdiv_inst (.i_dividend(dividend), .i_divisor(divisor), .i_start(i_st_ratio), .i_clk(i_clk), .o_quotient_out(division_res), .o_complete(oc_Pi), .o_overflow(of));\n\n", dividerVersion);
 	
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign ratio_sig = ratio_sig_reg;\n\n");
 	
@@ -763,65 +598,15 @@ irPassRTLProcessInvariantList(State *  N)
 
 		free(tmpPosition);
 
-		/*
-		
-		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
-		{
-			flexprint(N->Fe, N->Fm, N->Fprtl, "\tdouble %s", argumentsList[index]);
-			if (index < invariant->dimensionalMatrixColumnCount - 1)
-			{
-				flexprint(N->Fe, N->Fm, N->Fprtl, ";\n");
-			}
-		}
-		flexprint(N->Fe, N->Fm, N->Fprtl, ";");
-
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\n\tdouble calculatedProportion = 0.0;\n\n");
-
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\tif (argc < %d) {\n",invariant->dimensionalMatrixColumnCount+1);
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\tprintf(\"Usage is exec_name ");
-
-		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
-		{
-			flexprint(N->Fe, N->Fm, N->Fprtl,  "%s ", argumentsList[index]);
-		}
-
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\\n\");\n");
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\treturn -1;\n\t}\n\n");
-
-		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
-		{
-			flexprint(N->Fe, N->Fm, N->Fprtl, "\t%s = atof(argv[%d]);\n", argumentsList[index], index+1);
-		}
-
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\n\tcalculatedProportion = ");
-
-		countFunction = 0;	
-		flexprint(N->Fe, N->Fm, N->Fprtl, "%s%d", invariant->identifier, countFunction);
-
-		flexprint(N->Fe, N->Fm, N->Fprtl, "(");
-
-		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
-		{
-			flexprint(N->Fe, N->Fm, N->Fprtl, "%s", argumentsList[index]);
-			if (index < invariant->dimensionalMatrixColumnCount - 1)
-			{
-				flexprint(N->Fe, N->Fm, N->Fprtl, ", ");
-			}
-		}
-
-		*/
-
-		/*
 		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
 		{
 			free(argumentsList[index]);
 		}
 		free(argumentsList);
-		*/
 
 		invariant = invariant->next;
 	}
-	
+
 	flexprint(N->Fe, N->Fm, N->Fprtl, "\n/*\n *\tEnd of the generated .v file\n */\n");
 }
 
