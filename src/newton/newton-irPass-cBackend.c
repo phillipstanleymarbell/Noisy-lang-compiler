@@ -551,7 +551,7 @@ irPassCProcessInvariantList(State *  N)
 
 		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc,  "%s ", argumentsList[index]);
+			flexprint(N->Fe, N->Fm, N->Fpc, "%s ", argumentsList[index]);
 		}
 
 		flexprint(N->Fe, N->Fm, N->Fpc, "\\n\");\n");

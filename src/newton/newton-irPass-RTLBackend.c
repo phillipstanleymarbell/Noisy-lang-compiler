@@ -47,6 +47,8 @@
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <math.h>
+
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -272,6 +274,80 @@ struct multChainTag {
 	multChain *next;
 }; 
 
+/* Get the fraction of a power and reverse it -- FIXME check what happens with Irrational numbers */
+int
+irPassRTLGetFraction(float floatingPointNumber)
+{
+	int dec;
+	float fp, reverse;
+
+	floatingPointNumber = fabsf(floatingPointNumber);
+	dec = (int) (floorf(floatingPointNumber));
+	fp = floatingPointNumber - dec;
+
+	if (fp > 0) {
+		reverse = 1.0 / fp;
+	} else {
+		reverse = 1.0;
+	}
+	
+
+	return (int) reverse;
+}
+
+int 
+irPassRTLCalculateLCM(int* numbers, int len) {
+    int lcm = 1;
+    int divisor = 2;
+    
+	while (1) {
+        int cnt = 0;
+        int divisible = 0;
+
+        for (int i = 0; i < len; i++) {         
+			/**
+             * lcm (n1,n2,... 0)=0.For negative number we convert into
+             * positive and calculate lcm.
+             */
+            if (numbers[i] == 0) {
+                return 0;
+            } else if (numbers[i] < 0) {
+                numbers[i] = numbers[i] * (-1);
+            }
+
+            if (numbers[i] == 1) {
+                cnt++;
+            }
+            /**
+             * divide numbers by devisor if complete division i.e. without
+             * remainder then replace number with quotient; used for find
+             * next factor
+             */
+            if (numbers[i] % divisor == 0) {
+                divisible = 1;
+                numbers[i] = numbers[i] / divisor;
+            }
+        }
+        /**
+         * If divisor able to completely divide any number from array
+         * multiply with lcm and store into lcm and continue to same divisor
+         * for next factor finding. else increment divisor
+         */
+        if (divisible) {
+            lcm = lcm * divisor;
+        } else {
+            divisor++;
+        }
+        /**
+         * Check if all numbers is 1 indicate we found all factors and
+         * terminate while loop.
+         */
+        if (cnt ==len) {
+            return lcm;
+        }
+    }
+}
+
 void
 irPassRTLSearchAndCreateArgList(State *  N, IrNode *  root, IrNodeType expectedType, char **argList, int argumentIndex)
 {
@@ -297,7 +373,8 @@ irPassRTLSearchAndCreateArgList(State *  N, IrNode *  root, IrNodeType expectedT
 
 
 /* FIXME check if mallocs and copies fail */
-void irPassRTLAddMultChain (multChain **multChainHead, char *parameterName, int power) {
+void irPassRTLAddMultChain (multChain **multChainHead, char *parameterName, int power) 
+{
 	multChain *tmpChainNode=NULL;
 	int i;
 
@@ -417,14 +494,14 @@ irPassRTLProcessInvariantList(State *  N)
 		/*
 		 *	We construct a temporary array to re-locate the positions of the permuted parameters
 		 */
-		int *		tmpPosition = (int *)calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
-		int divisorMultiplications=0, dividendMultiplications=0;
+		int *tmpPosition = (int *)calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+		int *fractionValues = (int *)calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+		int divisorMultiplications=0, dividendMultiplications=0, fractionsLCM=1, integerPower;
 		multChain *dividendMultChainHead=NULL, *divisorMultChainHead=NULL; /* FIXME free variables */
 
 		/*
 		 *	Assuming that invariant->numberOfUniqueKernels is always 1 -- FIXME add check?
 		 */
-		index = 0;
 		for (int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
 		{
 			for (int j = 0; j < invariant->dimensionalMatrixColumnCount; j++)
@@ -432,8 +509,32 @@ irPassRTLProcessInvariantList(State *  N)
 				tmpPosition[invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + j]] = j;
 			}
 
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* ----- Original kernel values were ----- \n");
+
+			index = 0;
+			for (int col = 0; col < invariant->kernelColumnCount; col++)
+			{
+				for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
+				{
+					flexprint(N->Fe, N->Fm, N->Fprtl, "\t * Kernel %d: %f \n", index, invariant->nullSpace[countKernel][tmpPosition[row]][col]);
+					if (invariant->nullSpace[countKernel][tmpPosition[row]][col] != 0) 
+					{
+						fractionValues[index] = irPassRTLGetFraction(invariant->nullSpace[countKernel][tmpPosition[row]][col]);
+					} else {
+						fractionValues[index] = 1; /* Won't affect LCM calculation */
+					}
+					index++;
+				}
+			}
+			
+			fractionsLCM = irPassRTLCalculateLCM(fractionValues, invariant->dimensionalMatrixColumnCount);
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\t * fractionsLCM %d\n", fractionsLCM);
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\t*/\n\n");
+
+			index = 0;
 			/*
-			 *	One pass to determine the number of required multiplications in divisor and dividend
+			 *	One pass to determine the number of required multiplications in divisor and dividend.
+			 * 	Also create a chain of multiplications that need to be performed. Then deploy RTL based on that list.
 			 */			
 			for (int col = 0; col < invariant->kernelColumnCount; col++)
 			{
@@ -441,12 +542,14 @@ irPassRTLProcessInvariantList(State *  N)
 				{
 					if (invariant->nullSpace[countKernel][tmpPosition[row]][col] != 0) 
 					{
-						if (invariant->nullSpace[countKernel][tmpPosition[row]][col] >= 0) { /* Can there be a zero? */
-							dividendMultiplications += (int) invariant->nullSpace[countKernel][tmpPosition[row]][col]; /* FIXME what happens in case of fraction? */
-							irPassRTLAddMultChain (&dividendMultChainHead, argumentsList[index], (int) invariant->nullSpace[countKernel][tmpPosition[row]][col]);
+						integerPower = (int) (fractionsLCM * invariant->nullSpace[countKernel][tmpPosition[row]][col]);
+
+						if (integerPower >= 0) { /* Can there be a zero? */
+							dividendMultiplications += integerPower;
+							irPassRTLAddMultChain (&dividendMultChainHead, argumentsList[index], integerPower);
 						} else {
-							divisorMultiplications += (int) -invariant->nullSpace[countKernel][tmpPosition[row]][col]; /* FIXME what happens in case of fraction? */
-							irPassRTLAddMultChain (&divisorMultChainHead, argumentsList[index], (int) -invariant->nullSpace[countKernel][tmpPosition[row]][col]);
+							divisorMultiplications += -integerPower; /* FIXME what happens in case of fraction? */
+							irPassRTLAddMultChain (&divisorMultChainHead, argumentsList[index], -integerPower);
 						}
 					}
 					index++;
@@ -565,9 +668,9 @@ irPassRTLProcessInvariantList(State *  N)
 					index++;
 				}
 
-				flexprint(N->Fe, N->Fm, N->Fprtl, "\t%s mul_inst_divisor%d (.i_multiplicand(mult_res_inter%d), ",multiplierVersion, index, index-1);
+				flexprint(N->Fe, N->Fm, N->Fprtl, "\t%s mul_inst_divisor%d (.i_multiplicand(mult_res_divisor_inter%d), ",multiplierVersion, index, index-1);
 				flexprint(N->Fe, N->Fm, N->Fprtl, ".i_multiplier(%s_sig), ", divisorMultChainHead->operandName);
-				flexprint(N->Fe, N->Fm, N->Fprtl, ".i_start(oc%d), ",index-1);
+				flexprint(N->Fe, N->Fm, N->Fprtl, ".i_start(oc_divisor%d), ",index-1);
 				flexprint(N->Fe, N->Fm, N->Fprtl, ".i_clk(i_clk), .o_result_out(divisor), .o_complete(oc_divisor), .o_overflow(of));\n\n",index,index);
 			}
 			
@@ -597,6 +700,7 @@ irPassRTLProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\tendmodule\n");
 
 		free(tmpPosition);
+		free(fractionValues);
 
 		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
 		{
