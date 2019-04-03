@@ -61,13 +61,13 @@ running `make`. The Makefile assumes the environment variables `OSTYPE`
 and `MACHTYPE` are set. If that is not the case, you will need to 
 explicitly do:
 
-	make OSTYPE=darwin MACHTYPE=x86_64
+	OSTYPE=darwin MACHTYPE=x86_64 make
 
 4.	Build the noisy compiler by running `make`. The makefile assumes the 
 environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the 
 case, you will need to explicitly do:
 
-	make OSTYPE=darwin MACHTYPE=x86_64
+	OSTYPE=darwin MACHTYPE=x86_64 make
 
 
 The Noisy compiler
