@@ -286,6 +286,8 @@ main(int argc, char *argv[])
 			{
 				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelRowCanonicalization;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroupSorted;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates;
 				timestampsInit(N);
 
