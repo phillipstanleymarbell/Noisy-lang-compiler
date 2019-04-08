@@ -105,7 +105,7 @@ main(int argc, char *argv[])
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:S:b:stO:pg:", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpcrePapg:", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -286,6 +286,8 @@ main(int argc, char *argv[])
 			{
 				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelRowCanonicalization;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroupSorted;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates;
 				timestampsInit(N);
 
