@@ -1,0 +1,98 @@
+
+    Hardware Overview:
+
+      Model Name: MacBook Pro
+      Model Identifier: MacBookPro15,2
+      Processor Name: Intel Core i7
+      Processor Speed: 2.7 GHz
+      Number of Processors: 1
+      Total Number of Cores: 4
+      L2 Cache (per Core): 256 KB
+      L3 Cache: 8 MB
+      Memory: 16 GB
+
+changeset: 731:be55c9e3c2a92d8181de11170310899498b6514e
+char kNoisyVersion[] = "0.2-alpha-731 (be55c9e3c2a92d8181de11170310899498b6514e) (build 04-08-2019-21:34-pip@questions-Darwin-18.5.0-x86_64)";
+char kNewtonVersion[] = "0.3-alpha-731 (be55c9e3c2a92d8181de11170310899498b6514e) (build 04-08-2019-21:33-pip@questions-Darwin-18.5.0-x86_64)";
+
+./src/noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s
+
+Informational Report:
+---------------------
+
+Non-zero routine residency time upper bounds and counts (5246 calls, total of 1139.8190 us):
+
+    Routine                                         Parse,         1 calls (0.0191 %), total residency = 0.032000 us (0.0028 %)
+    Routine                        ParseAnonAggregateType,         5 calls (0.0953 %), total residency = 0.221000 us (0.0194 %)
+    Routine                                 ParseAssignOp,         5 calls (0.0953 %), total residency = 0.173000 us (0.0152 %)
+    Routine                      ParseAssignmentStatement,         6 calls (0.1144 %), total residency = 1.793000 us (0.1573 %)
+    Routine                                ParseBasicType,         7 calls (0.1334 %), total residency = 0.226000 us (0.0198 %)
+    Routine                               ParseExpression,         5 calls (0.0953 %), total residency = 0.168000 us (0.0147 %)
+    Routine                                   ParseFactor,         5 calls (0.0953 %), total residency = 0.214000 us (0.0188 %)
+    Routine                             ParseFunctionDecl,         2 calls (0.0381 %), total residency = 0.071000 us (0.0062 %)
+    Routine                   ParseHighPrecedenceBinaryOp,         1 calls (0.0191 %), total residency = 1.590000 us (0.1395 %)
+    Routine             ParseIdentifierDefinitionTerminal,        12 calls (0.2287 %), total residency = 1.761000 us (0.1545 %)
+    Routine                          ParseIdentifierOrNil,         6 calls (0.1144 %), total residency = 0.185000 us (0.0162 %)
+    Routine                      ParseIdentifierOrNilList,         6 calls (0.1144 %), total residency = 0.191000 us (0.0168 %)
+    Routine                  ParseIdentifierUsageTerminal,        10 calls (0.1906 %), total residency = 0.320000 us (0.0281 %)
+    Routine                              ParseIntegerType,         2 calls (0.0381 %), total residency = 0.126000 us (0.0111 %)
+    Routine                                 ParseListType,         5 calls (0.0953 %), total residency = 2.847000 us (0.2498 %)
+    Routine                                 ParseLoadExpr,         1 calls (0.0191 %), total residency = 0.038000 us (0.0033 %)
+    Routine                               ParseModuleDecl,         2 calls (0.0381 %), total residency = 0.069000 us (0.0061 %)
+    Routine                           ParseModuleDeclBody,         2 calls (0.0381 %), total residency = 0.078000 us (0.0068 %)
+    Routine                       ParseModuleTypenameDecl,         2 calls (0.0381 %), total residency = 0.072000 us (0.0063 %)
+    Routine                        ParseNamegenDefinition,         1 calls (0.0191 %), total residency = 0.084000 us (0.0074 %)
+    Routine                   ParseNamegenInvokeShorthand,         1 calls (0.0191 %), total residency = 0.036000 us (0.0032 %)
+    Routine                                  ParseProgram,         1 calls (0.0191 %), total residency = 0.109000 us (0.0096 %)
+    Routine                        ParseReadTypeSignature,         2 calls (0.0381 %), total residency = 0.124000 us (0.0109 %)
+    Routine                      ParseScopedStatementList,         1 calls (0.0191 %), total residency = 0.046000 us (0.0040 %)
+    Routine                                ParseSignature,         6 calls (0.1144 %), total residency = 0.474000 us (0.0416 %)
+    Routine                                ParseStatement,         6 calls (0.1144 %), total residency = 0.186000 us (0.0163 %)
+    Routine                            ParseStatementList,         1 calls (0.0191 %), total residency = 0.097000 us (0.0085 %)
+    Routine                                     ParseTerm,         4 calls (0.0762 %), total residency = 0.134000 us (0.0118 %)
+    Routine                                 ParseTerminal,        85 calls (1.6203 %), total residency = 2.760000 us (0.2421 %)
+    Routine                                 ParseTypeExpr,        12 calls (0.2287 %), total residency = 0.384000 us (0.0337 %)
+    Routine                                 ParseTypeName,         1 calls (0.0191 %), total residency = 0.042000 us (0.0037 %)
+    Routine                        ParseTypeParameterList,         2 calls (0.0381 %), total residency = 0.124000 us (0.0109 %)
+    Routine                                  ParseUnaryOp,         1 calls (0.0191 %), total residency = 0.088000 us (0.0077 %)
+    Routine                       ParseWriteTypeSignature,         2 calls (0.0381 %), total residency = 0.123000 us (0.0108 %)
+    Routine                     ParsenQualifiedIdentifier,         7 calls (0.1334 %), total residency = 0.217000 us (0.0190 %)
+    Routine                               ParserPeekCheck,       317 calls (6.0427 %), total residency = 9.954000 us (0.8733 %)
+    Routine                          ParserDepthFirstWalk,       172 calls (3.2787 %), total residency = 13.036000 us (1.1437 %)
+    Routine                                 ParserAddLeaf,       113 calls (2.1540 %), total residency = 12.242000 us (1.0740 %)
+    Routine                  ParserAddLeafWithChainingSeq,        36 calls (0.6862 %), total residency = 1.225000 us (0.1075 %)
+    Routine                       ParserAddToModuleScopes,         2 calls (0.0381 %), total residency = 0.091000 us (0.0080 %)
+    Routine                             ParserAssignTypes,         3 calls (0.0572 %), total residency = 0.162000 us (0.0142 %)
+    Routine                                GenNoisyIrNode,       246 calls (4.6893 %), total residency = 54.667000 us (4.7961 %)
+    Routine                         LexAllocateSourceInfo,       108 calls (2.0587 %), total residency = 31.692000 us (2.7804 %)
+    Routine                              LexAllocateToken,       108 calls (2.0587 %), total residency = 21.724000 us (1.9059 %)
+    Routine                                        LexPut,       108 calls (2.0587 %), total residency = 5.766000 us (0.5059 %)
+    Routine                                        LexGet,       107 calls (2.0396 %), total residency = 5.600000 us (0.4913 %)
+    Routine                                       LexPeek,      1106 calls (21.0827 %), total residency = 200.691000 us (17.6073 %)
+    Routine                                       LexInit,         1 calls (0.0191 %), total residency = 538.436000 us (47.2387 %)
+    Routine                         LexerCheckTokenLength,       361 calls (6.8814 %), total residency = 17.960000 us (1.5757 %)
+    Routine                                      LexerCur,       808 calls (15.4022 %), total residency = 36.255000 us (3.1808 %)
+    Routine                                   LexerGobble,        58 calls (1.1056 %), total residency = 1.863000 us (0.1634 %)
+    Routine                                     LexerDone,       107 calls (2.0396 %), total residency = 3.507000 us (0.3077 %)
+    Routine                                      LexerEqf,        24 calls (0.4575 %), total residency = 0.920000 us (0.0807 %)
+    Routine                             LexerCheckComment,        59 calls (1.1247 %), total residency = 1.986000 us (0.1742 %)
+    Routine                                LexerCheckWeq3,        18 calls (0.3431 %), total residency = 0.881000 us (0.0773 %)
+    Routine                              LexerCheckSingle,        34 calls (0.6481 %), total residency = 1.041000 us (0.0913 %)
+    Routine                                  LexerCheckLt,         2 calls (0.0381 %), total residency = 0.062000 us (0.0054 %)
+    Routine                         LexerCheckDoubleQuote,         1 calls (0.0191 %), total residency = 0.034000 us (0.0030 %)
+    Routine                               LexerCheckMinus,         4 calls (0.0762 %), total residency = 0.144000 us (0.0126 %)
+    Routine                              LexerFinishToken,       252 calls (4.8037 %), total residency = 132.122000 us (11.5915 %)
+    Routine                    LexerIsOperatorOrSeparator,       542 calls (10.3317 %), total residency = 21.944000 us (1.9252 %)
+    Routine                                       InFirst,       106 calls (2.0206 %), total residency = 3.621000 us (0.3177 %)
+    Routine                                      InFollow,       224 calls (4.2699 %), total residency = 6.990000 us (0.6133 %)
+
+Intermediate Representation Information:
+
+    IR node count                        : 178
+    Symbol Table node count              : 3
+
+./src/newton/newton-darwin-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt
+
+sudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s"
+
+sudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s"
