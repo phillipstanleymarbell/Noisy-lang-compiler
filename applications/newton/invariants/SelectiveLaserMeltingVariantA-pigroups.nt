@@ -1,0 +1,115 @@
+#
+#	Authored 2019, Douglas van Niekerk.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description:	Empty invariant for auto-generating synthetic invariants
+#			for Titanium alloy SLM.
+#
+#			Based on:
+#				"Dimensional analysis for the definition of the influence of process parameters in selective laser melting of Ti–6Al–4V alloy"
+#				Francesco Cardaropoli, Vittorio Alfieri, Fabrizia Caiazzo and Vincenzo Sergi
+#
+
+include "NewtonBaseSignals.nt"
+
+StartPowderRho : signal =
+{
+	derivation = (mass)*(distance**-3);
+}
+
+MetalViscosity : signal =
+{
+	derivation = mass*(distance**-1)*(time**-1);
+}
+
+ScanSpeed : signal =
+{
+    derivation = distance*(time**-1);
+}
+
+SurfFreeE : signal =
+{
+    derivation = distance*(time**-2);
+}
+
+HeatCapacity : signal =
+{
+    derivation = (distance**2)*(time**-2)*(temperature**-1);
+}
+
+LatentHeatFusion : signal =
+{
+    derivation = (distance**2)*(time**-2);
+}
+
+LaserSpecifEn : signal = 
+{
+    derivation = mass*(distance**-1)*(time**-2);
+}
+
+BulkDensity : signal =
+{
+    derivation = mass*(distance**-3);
+}
+
+LaserBeamDiam : signal =
+{
+    derivation = distance;
+}
+
+ThermalDiffusivity : signal =
+{
+    derivation = (distance**2)*(time**-1);
+}
+
+TemperatureDiff : signal = 
+{
+    derivation = temperature;
+}
+
+SLMTi6Al4VForPiGroups: invariant(	PowRho_param: StartPowderRho,
+					Viscosity_param: MetalViscosity,
+					Speed_param: ScanSpeed,
+					FreeE_param: SurfFreeE,
+					HCap_param: HeatCapacity,
+					HeatFus_param: LatentHeatFusion,
+					LaserSpecEn_param: LaserSpecifEn,
+					BulkDen_param: BulkDensity,
+					BeamDiam_param: LaserBeamDiam,
+					ThermDiff_param: ThermalDiffusivity,
+					TempDiff_param: TemperatureDiff) =
+{
+}

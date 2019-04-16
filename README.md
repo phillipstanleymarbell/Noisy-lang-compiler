@@ -56,14 +56,7 @@ For example,
 For the following steps, valid options for OSTYPE are currently `linux` 
 for Gnu/Linux and `darwin` for macOS.
 
-3.	Build Libflex by going to the directory you cloned for Libflex and 
-running `make`. The Makefile assumes the environment variables `OSTYPE`
-and `MACHTYPE` are set. If that is not the case, you will need to 
-explicitly do:
-
-	OSTYPE=darwin MACHTYPE=x86_64 make
-
-4.	Build the noisy compiler by running `make`. The makefile assumes the 
+3.	Build the noisy compiler by running `make`. The makefile assumes the 
 environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the 
 case, you will need to explicitly do:
 
