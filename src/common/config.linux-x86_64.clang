@@ -1,3 +1,4 @@
+CXX = clang
 AR			= /usr/bin/ar
 RANLIB			= /usr/bin/ranlib
 HOSTNAME		= localhost#`hostname`
@@ -7,4 +8,4 @@ PLATFORM_OPTFLAGS	= -O0
 PLATFORM_DBGFLAGS	+= -g  # Compiling with '-g' causes the complaint "warning: (x86_64) /tmp/lto.o unable to open object file: No such file or directory" on current clang. 
 PLATFORM_CFLAGS		+= -D$(SYSNAME)OsLinux
 CGI_BIN			= /usr/lib/cgi-bin/
-LINTFLAGS		= #--analyze
+LINTFLAGS		= --analyze
