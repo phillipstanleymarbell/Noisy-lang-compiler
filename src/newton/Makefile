@@ -232,7 +232,7 @@ cgi:lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$
 	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
 newton-eigenLibraryInterface.$(OBJECTEXTENSION): newton-eigenLibraryInterface.cpp
-	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
 version.c: $(HEADERS) Makefile
