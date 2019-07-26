@@ -61,7 +61,9 @@ running `make`. The Makefile assumes the environment variables `OSTYPE`
 and `MACHTYPE` are set. If that is not the case, you will need to 
 explicitly set them, for example on macOS:
 
+	```
 	make OSTYPE=darwin MACHTYPE=x86_64
+	```
 
 4.	Build the noisy compiler by running `make`. The makefile assumes the 
 environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the 
