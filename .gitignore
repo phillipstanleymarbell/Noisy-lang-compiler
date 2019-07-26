@@ -61,3 +61,4 @@ src/tests/*/test*-linux-EN
 .noisy-last-head
 analysis/statistics/latest.txt
 config.local
+src/newton/NewtonBaseSignals.nt
