@@ -92,8 +92,8 @@ newtonTypeMakeTypeSignature(State *  N, IrNode *  subtree)
 	char s = gNewtonTypeNodeSignatures[subtree->type];
 	if (s == 0)
 	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "%s, node type is %d (%s)\n", EcannotFindTypeSignatureForNodeType, subtree->type, gNewtonAstNodeStrings[subtree->type]);
-		fatal(N, Esanity);
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s, node type is %d. Using default type signature character '?'\n", EcannotFindTypeSignatureForNodeType, subtree->type);
+		s = '?';
 	}
 
 	leftSignature	= newtonTypeMakeTypeSignature(N, subtree->irLeftChild);
