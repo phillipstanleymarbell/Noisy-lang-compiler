@@ -40,23 +40,23 @@
 #
 #	Parameters
 #
-#		E		: Emission factor
-#		Emitter_area		: Emitter area
-#		T_E		: Emitter temperature
-#		mp_l		: Absorption length - measurement path
-#		dc_l   	: Absorption length -detection chamber
-#       T_env    	: Environmental Temperature
-#		P_atm	: Static Pressure
-#		P_signal: Measures Pressure change
-#		t       : Time elapsed
-#		N_0     : Molecular density
-#		f 		: Frequency 
-#		k 		: Exitation Probability
-#		e 		: mean energy of an absorbed photon
-#		t_d 	: Decay constant-lifetime excited state (spontaneous relaxation)
-#		t_c 	: Decay constant-collisional relaxation
-#		t_th 	: Decay constant- Thermal heat losses
-#		V 		: Volume of detection chamber
+#		E_param		: Emission factor
+#		EA_param	: Emitter area
+#		T_E_param	: Emitter temperature
+#		mp_param	: Absorption length - measurement path
+#		dc_param   	: Absorption length -detection chamber
+#               T_env_param    	: Environmental Temperature
+#		P_atm_param	: Static Pressure
+#		P_signal_param  : Measures Pressure change
+#		t_param         : Time elapsed
+#		N_0_param       : Molecular density
+#		f_param 	: Frequency 
+#		k_param 	: Exitation Probability
+#		e_param 	: mean energy of an absorbed photon
+#		t_d_param 	: Decay constant-lifetime excited state (spontaneous relaxation)
+#		t_c_param 	: Decay constant-collisional relaxation
+#		t_th_param 	: Decay constant- Thermal heat losses
+#		V_param 	: Volume of detection chamber
 
 include "NewtonBaseSignals.nt"
 
@@ -75,23 +75,23 @@ k_dim : signal =
 	derivation = 1;
 }
 
-ExplosionRadiusForPiGroups: invariant(	E:	E_dim,
-					Emitter_area:	area,
-					T_E:	temperature,
-					mp_l:	distance,
-                    dc_l: distance,
-					T_env:	temperature,
-                    P_atm: pressure,
-                    P_signal: pressure,
-                    t : time,
-                    N_0 : N_0_dim,
-                    f : frequency,
-                    k : k_dim,
-                    e : work,
-                    t_d : time,
-                    t_c : time, 
-                    t_th : time, 
-                    V : volume 
+ExplosionRadiusForPiGroups: invariant(	E_param: E_dim,
+					EA_param: area,
+					T_E_param: temperature,
+					mp_param: distance,
+                    			dc_param: distance,
+					T_env_param:	temperature,
+                    			P_atm_param: pressure,
+                    			P_signal_param: pressure,
+                    			t_param : time,
+                    			N_0_param : N_0_dim,
+                    			f_param : frequency,
+                    			k_param : k_dim,
+                    			e_param : work,
+                    			t_d_param : time,
+                    			t_c_param : time, 
+                    			t_th_param : time, 
+                    			V_param : volume 
                     ) =
 {
 }
