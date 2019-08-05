@@ -60,9 +60,11 @@
 
 include "NewtonBaseSignals.nt"
 
-E_dim : signal =
+E_dim: signal =
 {
-	derivation = 1;
+	name		= "Emission Factor" English;
+	symbol		= E;
+	derivation	= dimensionless;
 }
 
 N_0_dim : signal =
@@ -70,17 +72,19 @@ N_0_dim : signal =
 	derivation = 1/volume;
 }
 
-k_dim : signal =
+k_dim: signal =
 {
-	derivation = 1;
+	name		= "Exitation Probability" English;
+	symbol		= k;
+	derivation	= dimensionless;
 }
 
-ExplosionRadiusForPiGroups: invariant(	E_param: E_dim,
+GasPressureForPiGroups: invariant(	E_param: E_dim,
 					EA_param: area,
 					T_E_param: temperature,
 					mp_param: distance,
                     			dc_param: distance,
-					T_env_param:	temperature,
+					T_env_param: temperature,
                     			P_atm_param: pressure,
                     			P_signal_param: pressure,
                     			t_param : time,
