@@ -274,16 +274,14 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
 
 	Physics *	constantPhysics = newtonPhysicsTableAddPhysicsForToken(N, currentScope, constantIdentifier->token);
+	IrNode *	constantExpression;
 
 	if (inFirst(N, kNewtonIrNodeType_PnumericFactor, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		IrNode *	constantExpression = newtonParseNumericFactor(N, currentScope);
-
+		constantExpression = newtonParseNumericFactor(N, currentScope);
 		constantPhysics->value = constantExpression->value;
 		constantPhysics->isConstant = true;
 		node->value = constantExpression->value;
-
-		newtonPhysicsAddExponents(N, constantPhysics, constantExpression->physics);
 
 		/*
 		 *	If LHS is declared a vector in vectorScalarPairScope, then
@@ -303,7 +301,10 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 
 	if (inFirst(N, kNewtonIrNodeType_PunitFactor, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeafWithChainingSeq(N, node, newtonParseUnitFactor(N, currentScope));
+		IrNode *	unitFactorNode = newtonParseUnitFactor(N, currentScope);
+
+		addLeafWithChainingSeq(N, node, unitFactorNode);
+		newtonPhysicsAddExponents(N, constantPhysics, unitFactorNode->physics);
 	}
 	else
 	{
