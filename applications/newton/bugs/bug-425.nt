@@ -1,0 +1,16 @@
+
+distance : signal =
+{
+	name		= "meter" English;
+	symbol		= m;
+	derivation	= none;
+}
+
+foo: constant = 1 m;
+
+dist: invariant(
+    bar: distance,
+    baz: distance
+) = {
+    bar == foo + baz
+}
