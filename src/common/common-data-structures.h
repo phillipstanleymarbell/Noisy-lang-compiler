@@ -907,6 +907,11 @@ struct IrNode
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
 	 */
 	IrNodeColor		nodeColor;
+
+	/*
+	Used to keep track of whether the node was visited or not
+	 */
+	bool			isVisited;   			
 };
 
 

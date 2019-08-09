@@ -53,4 +53,5 @@ ProjectileForPiGroups: invariant(	h_param: distance,
 					m_param: mass,
 					g_param: acceleration) =
 {
+	g_param~g_param
 }

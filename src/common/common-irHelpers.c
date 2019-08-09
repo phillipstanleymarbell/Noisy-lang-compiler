@@ -215,6 +215,7 @@ findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int
 	return NULL;
 }
 
+
 IrNode *
 depthFirstWalk(State *  N, IrNode *  node)
 {
