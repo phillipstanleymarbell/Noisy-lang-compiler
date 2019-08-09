@@ -303,8 +303,11 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 	{
 		IrNode *	unitFactorNode = newtonParseUnitFactor(N, currentScope);
 
+		/*
+		 *	The actual `unit` node is in the left child of the unitFactor node
+		 */
+		newtonPhysicsAddExponents(N, constantPhysics, unitFactorNode->irLeftChild->physics);
 		addLeafWithChainingSeq(N, node, unitFactorNode);
-		newtonPhysicsAddExponents(N, constantPhysics, unitFactorNode->physics);
 	}
 	else
 	{
@@ -746,6 +749,11 @@ newtonParseUnit(State *  N, Scope *  currentScope)
 
 	node->physics = newtonInitPhysics(N, currentScope, NULL);
 	addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+
+	/*
+	 *	Propagate the physics to the unit node
+	 */
+	newtonPhysicsAddExponents(N, node->physics, node->irLeftChild->physics);
 
 	/*
 	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
