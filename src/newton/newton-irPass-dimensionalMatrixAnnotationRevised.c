@@ -75,24 +75,8 @@ irPassDimensionalMatrixAnnotation(State *  N)
 		Dimension *	dimension = parameter->irLeftChild->physics->dimensions;
 
 
-		/*
-		 *	First, count the number of parameters and dimensions
-		 */
-		for ( ; parameter ; parameter = parameter->irRightChild)
-		{
-			parameterCount++;
-		}
-
-        while(true)
-        {
-            fprintf(stderr, "%p",findNthIrNodeOfTypeHelper(N, parameterBody,kNewtonIrNodeType_Tidentifier,10))
-
-        }
-
-		for ( ; dimension ; dimension = dimension->next)
-		{
-			dimensionCount++;
-		}
+		
+        
 
 //fprintf(stderr, "In irPassDimensionalMatrixAnnotation(), parameterCount=[%d], dimensionCount=[%d]", parameterCount, dimensionCount);
 
