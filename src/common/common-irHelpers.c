@@ -214,6 +214,19 @@ findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int
 	return NULL;
 }
 
+IrNode *
+DFS(State * N, IrNode * node)
+{
+	if (node->irLeftChild==NULL && node->irRightChild==NULL && node->isVisited==false && node->type==kNewtonIrNodeType_Tidentifier)
+	{
+		node->isVisited=true;
+		return node;
+	}
+
+	DFS(N, node->irLeftChild);
+
+	DFS(N,node->irRightChild); 
+}
 
 IrNode *
 depthFirstWalk(State *  N, IrNode *  node)

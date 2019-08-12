@@ -59,6 +59,7 @@
 #include "common-irPass-helpers.h"
 #include "newton-types.h"
 #include "newton-symbolTable.h"
+#include "common-irHelpers.h"
 
 
 void
@@ -69,24 +70,33 @@ irPassDimensionalMatrixAnnotation(State *  N)
 	while (invariant)
 	{
 		int		parameterCount = 0, dimensionCount = 0;
-		IrNode *	parameter = invariant->parameterList;
+		IrNode *	parameter = invariant->constraints;
 		Dimension *	dimension = parameter->irLeftChild->physics->dimensions;
 
+		
+		
+	
+		
+		fprintf(stdout,"Test for common-ir-helper [%d]",(int)findNthIrNodeOfType(N,parameter,kNewtonIrNodeType_Tidentifier,3)->type);
+
+		
 
 		/*
 		 *	First, count the number of parameters and dimensions
 		 */
 		for ( ; parameter ; parameter = parameter->irRightChild)
 		{
+			fprintf(stdout,"Heelo[%d]",(int)parameter->type);
 			parameterCount++;
 		}
+		
 
 		for ( ; dimension ; dimension = dimension->next)
 		{
 			dimensionCount++;
 		}
 
-//fprintf(stderr, "In irPassDimensionalMatrixAnnotation(), parameterCount=[%d], dimensionCount=[%d]", parameterCount, dimensionCount);
+//ßfprintf(stdout, "In irPassDimensionalMatrixAnnotation(), parameterCount=[%d], dimensionCount=[%d]", parameterCount, dimensionCount);
 
 		if (parameterCount == 0 || dimensionCount == 0)
 		{
