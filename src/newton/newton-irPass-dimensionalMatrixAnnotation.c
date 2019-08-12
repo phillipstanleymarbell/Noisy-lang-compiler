@@ -72,15 +72,11 @@ irPassDimensionalMatrixAnnotation(State *  N)
 		int		parameterCount = 0, dimensionCount = 0;
 		IrNode *	parameter = invariant->constraints;
 		Dimension *	dimension = parameter->irLeftChild->physics->dimensions;
-
-		
-		
-	
 		
 		fprintf(stdout,"Test for common-ir-helper [%d]",(int)findNthIrNodeOfType(N,parameter,kNewtonIrNodeType_Tidentifier,3)->type);
 
+		depthFirstWalk(N,parameter,0);
 		
-
 		/*
 		 *	First, count the number of parameters and dimensions
 		 */

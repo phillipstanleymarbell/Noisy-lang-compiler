@@ -214,31 +214,22 @@ findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int
 	return NULL;
 }
 
-IrNode *
-DFS(State * N, IrNode * node)
-{
-	if (node->irLeftChild==NULL && node->irRightChild==NULL && node->isVisited==false && node->type==kNewtonIrNodeType_Tidentifier)
-	{
-		node->isVisited=true;
-		return node;
-	}
-
-	DFS(N, node->irLeftChild);
-
-	DFS(N,node->irRightChild); 
-}
-
-IrNode *
-depthFirstWalk(State *  N, IrNode *  node)
+int
+depthFirstWalk(State *  N, IrNode *  node, int Counter)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParserDepthFirstWalk);
 
-	if (node->irLeftChild == NULL || node->irRightChild == NULL)
+	if (node->irLeftChild == NULL && node->irRightChild == NULL && node->type==kNewtonIrNodeType_Tidentifier && node->isVisited==false)
 	{
-		return node;
-	}
+		node->isVisited=true;
+		Counter+=1
 
-	return depthFirstWalk(N, node->irRightChild);
+	}
+	depthFirstWalk(N, node->irRightChild);
+
+	depthFirstWalk(N, node->irLeftChild);
+
+	return Counter
 }
 
 IrNode *
