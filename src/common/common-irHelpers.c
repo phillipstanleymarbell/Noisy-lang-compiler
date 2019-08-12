@@ -186,7 +186,6 @@ findNthIrNodeOfType(State * N, IrNode * root, IrNodeType expectedType, int nth)
 	return findNthIrNodeOfTypeHelper(N, root, expectedType, &ith);
 }
 
-
 IrNode*
 findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int* nth)
 {

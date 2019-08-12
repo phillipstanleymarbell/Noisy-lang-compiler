@@ -59,6 +59,8 @@
 #include "common-irPass-helpers.h"
 #include "newton-types.h"
 #include "newton-symbolTable.h"
+#include "common-irHelpers.h"
+
 
 
 void
@@ -80,6 +82,12 @@ irPassDimensionalMatrixAnnotation(State *  N)
 		{
 			parameterCount++;
 		}
+
+        while(true)
+        {
+            fprintf(stderr, "%p",findNthIrNodeOfTypeHelper(N, parameterBody,kNewtonIrNodeType_Tidentifier,10))
+
+        }
 
 		for ( ; dimension ; dimension = dimension->next)
 		{
