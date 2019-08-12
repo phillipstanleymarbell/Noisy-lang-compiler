@@ -222,14 +222,15 @@ depthFirstWalk(State *  N, IrNode *  node, int Counter)
 	if (node->irLeftChild == NULL && node->irRightChild == NULL && node->type==kNewtonIrNodeType_Tidentifier && node->isVisited==false)
 	{
 		node->isVisited=true;
-		Counter+=1
+		Counter+=1;
 
 	}
+	
 	depthFirstWalk(N, node->irRightChild);
 
 	depthFirstWalk(N, node->irLeftChild);
 
-	return Counter
+	return Counter;
 }
 
 IrNode *
