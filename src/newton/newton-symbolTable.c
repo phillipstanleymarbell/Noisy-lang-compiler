@@ -293,6 +293,23 @@ newtonPhysicsAddExponents(State *  N, Physics *  left, Physics *  right)
 	}
 }
 
+void
+newtonPhysicsAddExponentsRecursively(State *  N, Physics *  baseNode, IrNode * treeRoot)
+{
+	if (treeRoot == NULL)
+	{
+		return;
+	} else {
+		newtonPhysicsAddExponentsRecursively(N, baseNode, treeRoot->irLeftChild);
+		newtonPhysicsAddExponentsRecursively(N, baseNode, treeRoot->irRightChild);
+	}
+
+	if ((treeRoot->physics != NULL) && (treeRoot->type == kNewtonIrNodeType_Punit)) {	
+		newtonPhysicsAddExponents(N, baseNode, treeRoot->physics);
+	} else {
+		//flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(This irLeftChild has no physics tokenString is \"%s\")\n", treeRoot->tokenString);
+	}
+}
 
 void
 newtonPhysicsSubtractExponents(State *  N, Physics *  left, Physics *  right)
