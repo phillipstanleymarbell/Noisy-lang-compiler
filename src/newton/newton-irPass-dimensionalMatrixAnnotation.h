@@ -36,3 +36,4 @@
 */
 
 void	irPassDimensionalMatrixAnnotation(State *  N);
+void    irPassDimensionalMatrixAnnotationByBody(State *  N);

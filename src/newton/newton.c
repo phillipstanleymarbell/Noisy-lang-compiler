@@ -123,6 +123,16 @@ processNewtonFile(State *  N, char *  filename)
 		}
 	}
 
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixAnnotationByBody)
+	{
+		irPassDimensionalMatrixAnnotationByBody(N);
+
+		if (N->verbosityLevel > 0)
+		{
+			irPassDimensionalMatrixPrinter(N);
+		}
+	}
+
 	if (N->irPasses & kNewtonIrPassDimensionalMatrixPiGroups)
 	{
 		irPassDimensionalMatrixPiGroups(N);

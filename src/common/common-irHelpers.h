@@ -40,6 +40,7 @@ IrNode *	shallowCopyIrNode(State *  N, IrNode *  original);
 void		errorUseBeforeDefinition(State *  N, const char *  identifier);
 void		errorMultiDefinition(State *  N, Symbol *  symbol);
 IrNode *	depthFirstWalk(State *  N, IrNode *  node);
+int 		DFS(State * N, IrNode * node);
 IrNode *	depthFirstWalkNoLeftChild(State *  N, IrNode *  node);
 void		addLeaf(State *  N, IrNode *  parent, IrNode *  newNode);
 void		addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode);
