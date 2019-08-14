@@ -303,8 +303,14 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 	{
 		IrNode *	unitFactorNode = newtonParseUnitFactor(N, currentScope);
 
+		/*
+		 *	The actual `unit` node is in the left child of the unitFactor node
+		 */
+		//newtonPhysicsAddExponents(N, constantPhysics, unitFactorNode->irLeftChild->physics);
+		newtonPhysicsAddExponentsRecursively(N, constantPhysics, unitFactorNode);
 		addLeafWithChainingSeq(N, node, unitFactorNode);
-		newtonPhysicsAddExponents(N, constantPhysics, unitFactorNode->physics);
+
+		node->irLeftChild->physics = deepCopyPhysicsNode(constantPhysics);
 	}
 	else
 	{
@@ -325,6 +331,20 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PconstantDefinition);
 	}
 	*/
+
+	/*Dimension *tmpDimensionsNode;
+
+	if (node->irLeftChild->physics != NULL) {
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(Constant identifier is %s)\n", node->irLeftChild->physics->identifier);
+		
+		for (tmpDimensionsNode = node->irLeftChild->physics->dimensions; tmpDimensionsNode != NULL; tmpDimensionsNode = tmpDimensionsNode->next) {
+			
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(Unit is %s with exponent %f)\n", 
+				tmpDimensionsNode->name, tmpDimensionsNode->exponent);
+
+		}
+	}
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");*/
 
 	return node;
 }
@@ -746,6 +766,11 @@ newtonParseUnit(State *  N, Scope *  currentScope)
 
 	node->physics = newtonInitPhysics(N, currentScope, NULL);
 	addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+
+	/*
+	 *	Propagate the physics to the unit node
+	 */
+	newtonPhysicsAddExponents(N, node->physics, node->irLeftChild->physics);
 
 	/*
 	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.

@@ -60,6 +60,7 @@
 #include "common-irPass-helpers.h"
 #include "newton-types.h"
 #include "newton-symbolTable.h"
+#include "common-irHelpers.h"
 
 void
 irPassDimensionalMatrixKernelPrinter(State *  N)
@@ -198,16 +199,33 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 												'0'+invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + i]%10);
 					}
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n");
-						
+					/*
+						Here I have initialised a new variable to count the number of Constants in a pi group
+					*/
+					int CountNumberOfConst=0;
+
 					for (int col = 0; col < invariant->kernelColumnCount; col++)
 					{
 						flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\t\tPi group %d, Pi %d is:\t", countKernel, col);
+						
 						for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
 						{
 							flexprint(N->Fe, N->Fm, N->Fpinfo, "%c%c", 'P'+(row/10), '0'+ (row%10) );
 							flexprint(N->Fe, N->Fm, N->Fpinfo, "^(%2g)  ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
+
+							if (findNthIrNodeOfType(N,invariant->constraints,kNewtonIrNodeType_Tidentifier,row%10)->physics->isConstant==true)
+							{
+								CountNumberOfConst+=1;
+							}
 						}
 						flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n");
+						flexprint(N->Fe, N->Fm, N->Fpinfo, "The number of constants in the Pi Group is = %d",CountNumberOfConst);
+
+						if(CountNumberOfConst == invariant->dimensionalMatrixColumnCount)
+						{
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "\nPi Group consists only constants",CountNumberOfConst);
+						}
+						
 					}
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 				}

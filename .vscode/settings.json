@@ -1,6 +1,7 @@
 {
     "files.associations": {
-        "common-irpass-helpers.h": "c"
+        "common-irpass-helpers.h": "c",
+        "cstdlib": "c"
     },
     "git.ignoreLimitWarning": true
 }

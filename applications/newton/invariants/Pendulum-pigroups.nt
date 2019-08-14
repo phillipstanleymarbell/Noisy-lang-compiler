@@ -53,5 +53,5 @@ PendulumForPiGroups: invariant(	l_param: distance,
 				m_param: mass,
 				T_param: time) =
 {
-	g_param~(l_param/T_param**2)
+	kNewtonUnithave_AccelerationDueToGravity~g_param
 }
