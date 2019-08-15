@@ -507,7 +507,7 @@ lexAllocateSourceInfo(	State *  N, char **  genealogy, char *  fileName,
 
 Token *
 lexAllocateToken(	State *  N, IrNodeType type, char *  identifier,
-			uint64_t integerConst, double realConst, char * stringConst,
+			int64_t integerConst, double realConst, char * stringConst,
 			SourceInfo *  sourceInfo)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexAllocateToken);
@@ -769,10 +769,10 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 				case kNoisyIrNodeType_TintegerConst:
 				case kNewtonIrNodeType_TintegerConst:
 				{
-					flexprint(N->Fe, N->Fm, N->Fperr, "'%"PRIu64"' ", tmp->integerConst);
+					flexprint(N->Fe, N->Fm, N->Fperr, "'%"PRI64"' ", tmp->integerConst);
 
 					char	dummy[64];
-					tripCharacters += sprintf(dummy, "'%"PRIu64"' ", tmp->integerConst);
+					tripCharacters += sprintf(dummy, "'%"PRI64"' ", tmp->integerConst);
 
 					break;
 				}
