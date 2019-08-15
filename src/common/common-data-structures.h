@@ -929,7 +929,7 @@ struct Token
 {
 	IrNodeType		type;
 	char *			identifier;
-	uint64_t		integerConst;
+	int64_t			integerConst;
 	double			realConst;
 	char *			stringConst;
 	SourceInfo *		sourceInfo;
