@@ -657,7 +657,8 @@ typedef enum
 	kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates	= (1 << 4),
 	kNewtonIrPassDimensionalMatrixKernelPrinter		= (1 << 5),
 	kNewtonIrPassDimensionalMatrixConvertToList		= (1 << 6),
-	kNewtonIrPassDimensionalMatrixAnnotationByBody  = (1 << 7),
+	kNewtonIrPassDimensionalMatrixAnnotationByBody          = (1 << 7),
+	kNewtonIrPassDimensionalMatrixKernelPrinterFromBody	= (1 << 8),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */

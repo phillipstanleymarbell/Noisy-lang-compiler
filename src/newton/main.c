@@ -310,7 +310,7 @@ main(int argc, char *argv[])
 			{
 				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotationByBody;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
-				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelPrinter;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelPrinterFromBody;
 				timestampsInit(N);
 
 				break;

@@ -69,30 +69,20 @@ irPassDimensionalMatrixAnnotationByBody(State *  N)
 
 	while (invariant)
 	{
-		int	 dimensionCount = 0;
-		
-		IrNode * parameterbody = invariant->constraints;
-		Dimension *	dimension = findNthIrNodeOfType(N,parameterbody,kNewtonIrNodeType_Tidentifier,0)->physics->dimensions;
-
-		int parameterCount= DFS(N,parameterbody);
-		
-		//fprintf(stderr,"Test for common-ir-helper [%d]",(int)findNthIrNodeOfType(N,parameterbody,kNewtonIrNodeType_Tidentifier,0)->type);
-
-		//fprintf(stderr,"Values from the DFS=[%d]",parameterCount);
-		
+		int		dimensionCount = 0;
+		IrNode *	parameterbody = invariant->constraints;
+		Dimension *	dimension = findNthIrNodeOfType(N, parameterbody, kNewtonIrNodeType_Tidentifier, 0)->physics->dimensions;
+		int		parameterCount = countIrNodeOfType(N, parameterbody, kNewtonIrNodeType_Tidentifier);
+	
 		/*
 		 *	First, count the number of parameters and dimensions
 		 */
-
-		Dimension * tempdimension=dimension;
+		Dimension * 	tempdimension = dimension;
 		
 		for ( ; tempdimension ; tempdimension = tempdimension->next)
 		{
 			dimensionCount++;
 		}
-
-
-//fprintf(stderr, "In irPassDimensionalMatrixAnnotation(), parameterCount=[%d], dimensionCount=[%d]", parameterCount, dimensionCount);
 
 		if (parameterCount == 0 || dimensionCount == 0)
 		{
@@ -114,6 +104,7 @@ irPassDimensionalMatrixAnnotationByBody(State *  N)
 		 *	parameters in columns and dimensions in rows.
 		 */
 		double **	tmpMatrix = (double **)calloc(parameterCount, sizeof(double *));
+
 		if (!tmpMatrix)
 		{
 			fatal(N, Emalloc);
@@ -129,6 +120,7 @@ irPassDimensionalMatrixAnnotationByBody(State *  N)
 		}
 
 		invariant->dimensionalMatrixColumnLabels = (char **) calloc(parameterCount, sizeof(char *));
+
 		if (!invariant->dimensionalMatrixColumnLabels)
 		{
 			fatal(N, Emalloc);
@@ -141,22 +133,17 @@ irPassDimensionalMatrixAnnotationByBody(State *  N)
 		bool	usedDimensions[dimensionCount];
 		bzero(usedDimensions, sizeof(usedDimensions));
 
-//fprintf(stderr, "In irPassDimensionalMatrixAnnotation():\n\n");
-
 		for (int i = 0; i < parameterCount; i++)
 		{
-			tempdimension = findNthIrNodeOfType(N,parameterbody,kNewtonIrNodeType_Tidentifier,i)->physics->dimensions;;
+			tempdimension = findNthIrNodeOfType(N,parameterbody,kNewtonIrNodeType_Tidentifier,i)->physics->dimensions;
 			invariant->dimensionalMatrixColumnLabels[i] = findNthIrNodeOfType(N,parameterbody,kNewtonIrNodeType_Tidentifier,i)->physics->identifier;
 			for (int j = 0; j < dimensionCount; j++)
 			{
-//fprintf(stderr, "\tparam %i, dim %d, dim mat col label %d = [%s], dim exponent = [%f]\n", i, j, i, invariant->dimensionalMatrixColumnLabels[i], dimension->exponent);
-
 				tmpMatrix[i][j] = tempdimension->exponent;
 				if (tmpMatrix[i][j])
 				{
 					usedDimensions[j] |= 1;
 				}
-
 				tempdimension = tempdimension->next;
 			}
 		}
@@ -192,11 +179,9 @@ irPassDimensionalMatrixAnnotationByBody(State *  N)
 		 *	we need in the dimensional matrix. At the same time,
 		 *	we also collect the dimension string names:
 		 */
-
-		
 		int	copiedRowLabelCount = 0;
 
-		tempdimension=dimension;
+		tempdimension = dimension;
 		for (int i = 0; i < dimensionCount; i++)
 		{
 			if (usedDimensions[i])
@@ -264,8 +249,6 @@ irPassDimensionalMatrixAnnotation(State *  N)
 			dimensionCount++;
 		}
 
-//fprintf(stderr, "In irPassDimensionalMatrixAnnotation(), parameterCount=[%d], dimensionCount=[%d]", parameterCount, dimensionCount);
-
 		if (parameterCount == 0 || dimensionCount == 0)
 		{
 			fatal(N, Esanity);
@@ -313,7 +296,6 @@ irPassDimensionalMatrixAnnotation(State *  N)
 		bool	usedDimensions[dimensionCount];
 		bzero(usedDimensions, sizeof(usedDimensions));
 
-//fprintf(stderr, "In irPassDimensionalMatrixAnnotation():\n\n");
 		parameter = invariant->parameterList;
 		for (int i = 0; i < parameterCount; i++)
 		{
@@ -321,8 +303,6 @@ irPassDimensionalMatrixAnnotation(State *  N)
 			invariant->dimensionalMatrixColumnLabels[i] = parameter->irLeftChild->physics->identifier;
 			for (int j = 0; j < dimensionCount; j++)
 			{
-//fprintf(stderr, "\tparam %i, dim %d, dim mat col label %d = [%s], dim exponent = [%f]\n", i, j, i, invariant->dimensionalMatrixColumnLabels[i], dimension->exponent);
-
 				tmpMatrix[i][j] = dimension->exponent;
 				if (tmpMatrix[i][j])
 				{

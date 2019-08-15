@@ -154,6 +154,10 @@ processNewtonFile(State *  N, char *  filename)
 	{
 		irPassDimensionalMatrixKernelPrinter(N);
 	}
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixKernelPrinterFromBody)
+	{
+		irPassDimensionalMatrixKernelPrinterFromBodyWithNumOfConstant(N);
+	}
 	if (N->irPasses & kNewtonIrPassDimensionalMatrixConvertToList)
 	{
 		irPassDimensionalMatrixConvertToList(N);

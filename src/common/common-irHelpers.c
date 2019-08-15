@@ -214,27 +214,29 @@ findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int
 	return NULL;
 }
 
-int DFS(State * N, IrNode * node) 
-{    
-    int Counter = 0;
+int 
+countIrNodeOfType(State *  N, IrNode *  node, IrNodeType expectedType) 
+{
+    	int counter = 0;
 
-    if (node->irLeftChild == NULL &&  node->irRightChild == NULL && node->type==kNewtonIrNodeType_Tidentifier && node->isVisited==false) {
-        Counter += 1;
-        node->isVisited = true;
-    }
-	
-	
-	if (node->irLeftChild!=NULL)
+	if (node->irLeftChild == NULL && node->irRightChild == NULL && node->type == expectedType && node->isVisited==false)
 	{
-		Counter += DFS(N, node->irLeftChild);
+		counter += 1;
+		node->isVisited = true;
+	}
+		
+		
+	if (node->irLeftChild != NULL)
+	{
+		counter += countIrNodeOfType(N, node->irLeftChild, expectedType);
 	} 	
 
-	if (node->irRightChild!=NULL)
+	if (node->irRightChild != NULL)
 	{
-		Counter += DFS(N, node->irRightChild);
+		counter += countIrNodeOfType(N, node->irRightChild, expectedType);
 	}	
-    		 	
-    return Counter;
+				
+	return counter;
 }
 
 IrNode *

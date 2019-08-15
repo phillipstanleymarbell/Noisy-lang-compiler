@@ -36,4 +36,5 @@
 */
 
 void irPassDimensionalMatrixKernelPrinter(State *  N);
+void irPassDimensionalMatrixKernelPrinterFromBodyWithNumOfConstant(State *  N);
 
