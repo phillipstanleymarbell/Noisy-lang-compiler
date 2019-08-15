@@ -53,5 +53,7 @@ PendulumForPiGroups: invariant(	l_param: distance,
 				m_param: mass,
 				T_param: time) =
 {
-	kNewtonUnithave_AccelerationDueToGravity~g_param
+	#kNewtonUnithave_AccelerationDueToGravity~g_param
+
+	kNewtonUnithave_SpeedOfLight/kNewtonUnithave_SpeedOfSound~l_param/(kNewtonUnithave_SpeedOfSound*T_param)
 }

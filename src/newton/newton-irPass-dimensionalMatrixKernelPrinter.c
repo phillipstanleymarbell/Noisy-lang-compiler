@@ -192,7 +192,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 					 *	PermutedIndexArray consists of the indices to show how exactly the matrix is permuted.
 					 *	It stores all the permutation results for all the different kernels.
 					 */
-					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\t\tThe ordering of parameters is:\t", countKernel);
+					flexprint(N->Fe, N->Fm, N->Fpinfo, "\nThe ordering of parameters is:\t", countKernel);
 					for (int i = 0; i < invariant->dimensionalMatrixColumnCount; i++)
 					{
 						flexprint(N->Fe, N->Fm, N->Fpinfo, "%c%c ", 'P'+(invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + i]/10), 
@@ -203,29 +203,37 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 						Here I have initialised a new variable to count the number of Constants in a pi group
 					*/
 					int CountNumberOfConst=0;
+					int NumberOfTerms=0;
 
 					for (int col = 0; col < invariant->kernelColumnCount; col++)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\t\tPi group %d, Pi %d is:\t", countKernel, col);
+						flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\t\t\t\nPi group %d, Pi %d is:\t", countKernel, col);
 						
 						for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
 						{
 							flexprint(N->Fe, N->Fm, N->Fpinfo, "%c%c", 'P'+(row/10), '0'+ (row%10) );
 							flexprint(N->Fe, N->Fm, N->Fpinfo, "^(%2g)  ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
 
-							if (findNthIrNodeOfType(N,invariant->constraints,kNewtonIrNodeType_Tidentifier,row%10)->physics->isConstant==true)
+							if (findNthIrNodeOfType(N,invariant->constraints,kNewtonIrNodeType_Tidentifier,row%10)->physics->isConstant==true && invariant->nullSpace[countKernel][tmpPosition[row]][col]!=0)
 							{
 								CountNumberOfConst+=1;
 							}
+
+							if (invariant->nullSpace[countKernel][tmpPosition[row]][col]!=0)
+							{
+								NumberOfTerms+=1;
+							}
+
 						}
 						flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n");
-						flexprint(N->Fe, N->Fm, N->Fpinfo, "The number of constants in the Pi Group is = %d",CountNumberOfConst);
+						flexprint(N->Fe, N->Fm, N->Fpinfo, "\tThe number of constants in the Pi Group is = %d\n",CountNumberOfConst);
 
-						if(CountNumberOfConst == invariant->dimensionalMatrixColumnCount)
+						if(CountNumberOfConst == NumberOfTerms)
 						{
-							flexprint(N->Fe, N->Fm, N->Fpinfo, "\nPi Group consists only constants",CountNumberOfConst);
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tPi Group consists only constants\n\n",CountNumberOfConst);
 						}
-						
+						CountNumberOfConst=0;
+						NumberOfTerms=0;
 					}
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 				}
