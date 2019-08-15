@@ -212,13 +212,13 @@ kNewtonUnitfree_pi				: constant = 3.1415926535897932384626433832795;
 #
 #	The data below are from Mathematica Version 9's PhysicalConstants community-created package.
 #
-kNewtonUnithave_SpeedOfLight			: constant = 299792458 (meter * (second ** -1));
-kNewtonUnithave_AccelerationDueToGravity	: constant = (196133 / 20000) (meter * (second ** -2));
-kNewtonUnithave_GravitationalConstant		: constant = 6.67428E-11 ((meter ** 3) * (kilogram ** -1) * (second ** -2));
+kNewtonUnithave_SpeedOfLight			: constant = 299792458 (meter * (second ** -1.0));
+kNewtonUnithave_AccelerationDueToGravity	: constant = (196133 / 20000) (meter * (second ** -2.0));
+kNewtonUnithave_GravitationalConstant		: constant = 6.67428E-11 ((meter ** 3) * (kilogram ** -1.0) * (second ** -2.0));
 kNewtonUnithave_AvogadroConstant		: constant = 6.02214E23 mole;
 kNewtonUnithave_BoltzmannConstant		: constant = 1.38065E-23 (Joule / Kelvin);
 kNewtonUnithave_ElectronCharge			: constant = 1.60218E-19 Coulomb;
-kNewtonUnithave_SpeedOfSound			: constant = 340.292 (meter * (second ** -1));
+kNewtonUnithave_SpeedOfSound			: constant = 340.292 (meter * (second ** -1.0));
 kNewtonUnithave_EarthMass			: constant = 5.9742E24 kilogram;
 
 #

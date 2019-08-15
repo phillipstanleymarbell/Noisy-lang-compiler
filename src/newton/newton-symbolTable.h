@@ -53,6 +53,7 @@ IntegralList *	getTailIntegralList(IntegralList *  list);
 int		countNumberTime(Dimension *  head);
 void		newtonPhysicsIncrementExponent(State *  N, Physics *  source, Dimension *  added);
 void		newtonPhysicsAddExponents(State *  N, Physics *  left, Physics *  right);
+void		newtonPhysicsAddExponentsRecursively(State *  N, Physics *  baseNode, IrNode * treeRoot);
 void		newtonPhysicsSubtractExponents(State *  N, Physics *  left, Physics *  right);
 void		newtonPhysicsMultiplyExponents(State *  N, Physics *  source, double multiplier);
 void		newtonAddInvariant(State *  N, Invariant *  invariant);
