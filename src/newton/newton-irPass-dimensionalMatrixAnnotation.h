@@ -1,5 +1,5 @@
 /*
-	Authored 2018. Phillip Stanley-Marbell.
+	Authored 2019. Phillip Stanley-Marbell. Kiseki Hirakawa
 
 	All rights reserved.
 
@@ -36,3 +36,4 @@
 */
 
 void	irPassDimensionalMatrixAnnotation(State *  N);
+void    irPassDimensionalMatrixAnnotationByBody(State *  N);
