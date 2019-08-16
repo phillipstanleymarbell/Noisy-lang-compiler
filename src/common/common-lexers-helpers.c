@@ -769,10 +769,10 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 				case kNoisyIrNodeType_TintegerConst:
 				case kNewtonIrNodeType_TintegerConst:
 				{
-					flexprint(N->Fe, N->Fm, N->Fperr, "'%"PRI64"' ", tmp->integerConst);
+					flexprint(N->Fe, N->Fm, N->Fperr, "'%"PRId64"' ", tmp->integerConst);
 
 					char	dummy[64];
-					tripCharacters += sprintf(dummy, "'%"PRI64"' ", tmp->integerConst);
+					tripCharacters += sprintf(dummy, "'%"PRId64"' ", tmp->integerConst);
 
 					break;
 				}
