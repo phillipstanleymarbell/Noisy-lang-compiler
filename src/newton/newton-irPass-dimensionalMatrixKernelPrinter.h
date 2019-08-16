@@ -1,5 +1,6 @@
 /*
 	Authored 2018. Youchao Wang.
+	Updated 2019. Kiseki Hirakawa
 
 	All rights reserved.
 
@@ -36,4 +37,5 @@
 */
 
 void irPassDimensionalMatrixKernelPrinter(State *  N);
+void irPassDimensionalMatrixKernelPrinterFromBodyWithNumOfConstant(State *  N);
 
