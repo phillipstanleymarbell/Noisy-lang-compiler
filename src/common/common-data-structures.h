@@ -1,6 +1,7 @@
 /*
-	Authored 2019. Phillip Stanley-Marbell. Kiseki Hirakawa
+	Authored 2015. Phillip Stanley-Marbell. 
 	Modified, 2016-2017, Jonathan Lim to add Newton hooks.
+	Modfied, 2019. Kiseki Hirakawa
 
 	All rights reserved.
 
