@@ -153,7 +153,7 @@ processNewtonFile(State *  N, char *  filename)
 	/*
 	 *	Dot backend.
 	 */
-	if (N->irBackends & kNoisyIrBackendDot)
+	if (N->irBackends & kNewtonIrBackendDot)
 	{
 		fprintf(stdout, "%s\n", irPassDotBackend(N, N->newtonIrTopScope, N->newtonIrRoot, gNewtonAstNodeStrings));
  	}
