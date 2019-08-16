@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 
 			case 'd':
 			{
-				N->irBackends |= kNoisyIrBackendDot;
+				N->irBackends |= kNewtonIrBackendDot;
 
 				/*
 				 *	TODO: Rather than accepting the raw enum value as integer,
