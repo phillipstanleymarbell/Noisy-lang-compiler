@@ -1,6 +1,7 @@
 /*
-	Authored 2019. Phillip Stanley-Marbell. Kiseki Hirakawa
+	Authored 2015. Phillip Stanley-Marbell. 
 	Adapted for Newton in 2017 by Jonathan Lim.
+	Updated 2019. Kiseki Hirakawa
 
 	All rights reserved.
 
