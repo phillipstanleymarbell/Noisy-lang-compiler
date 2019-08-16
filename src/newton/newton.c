@@ -1,6 +1,7 @@
 /*
 	Authored 2017. Jonathan Lim
 	Updated 2018. Phillip Stanley-Marbell, Youchao Wang
+	Updated 2019. Kiseki Hirakawa
 
 	All rights reserved.
 
@@ -66,7 +67,6 @@
 #include "newton-symbolTable.h"
 #include "newton.h"
 #include "newton-irPass-cBackend.h"
-#include "newton-irPass-RTLBackend.h"
 #include "newton-irPass-dotBackend.h"
 #include "newton-irPass-smtBackend.h"
 #include "newton-irPass-dimensionalMatrixAnnotation.h"
@@ -124,6 +124,16 @@ processNewtonFile(State *  N, char *  filename)
 		}
 	}
 
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixAnnotationByBody)
+	{
+		irPassDimensionalMatrixAnnotationByBody(N);
+
+		if (N->verbosityLevel > 0)
+		{
+			irPassDimensionalMatrixPrinter(N);
+		}
+	}
+
 	if (N->irPasses & kNewtonIrPassDimensionalMatrixPiGroups)
 	{
 		irPassDimensionalMatrixPiGroups(N);
@@ -145,6 +155,10 @@ processNewtonFile(State *  N, char *  filename)
 	{
 		irPassDimensionalMatrixKernelPrinter(N);
 	}
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixKernelPrinterFromBody)
+	{
+		irPassDimensionalMatrixKernelPrinterFromBodyWithNumOfConstant(N);
+	}
 	if (N->irPasses & kNewtonIrPassDimensionalMatrixConvertToList)
 	{
 		irPassDimensionalMatrixConvertToList(N);
@@ -153,7 +167,7 @@ processNewtonFile(State *  N, char *  filename)
 	/*
 	 *	Dot backend.
 	 */
-	if (N->irBackends & kNewtonIrBackendDot)
+	if (N->irBackends & kNoisyIrBackendDot)
 	{
 		fprintf(stdout, "%s\n", irPassDotBackend(N, N->newtonIrTopScope, N->newtonIrRoot, gNewtonAstNodeStrings));
  	}
@@ -172,14 +186,6 @@ processNewtonFile(State *  N, char *  filename)
 	if (N->irBackends & kNewtonIrBackendC)
 	{
 		irPassCBackend(N);
-	}
-
-	/*
-	 *	RTL backend
-	 */
-	if (N->irBackends & kNewtonIrBackendRTL)
-	{
-		irPassRTLBackend(N);
 	}
 }
 
