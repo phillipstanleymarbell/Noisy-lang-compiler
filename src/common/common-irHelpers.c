@@ -329,3 +329,18 @@ peekCheck(State *  N, int lookAhead, IrNodeType expectedType)
 
 	return (lexPeek(N, lookAhead)->type == expectedType);
 }
+
+IrNodeType
+getTypeFromOperatorSubtree(State *  N, IrNode *  n)
+{
+	/*
+	 *	All operators are tucked under a production, so dig through the left subtree
+	 *	to find the actual operator type:
+	 */
+	while (L(n) != NULL)
+	{
+		n = L(n);
+	}
+
+	return n->type;
+}

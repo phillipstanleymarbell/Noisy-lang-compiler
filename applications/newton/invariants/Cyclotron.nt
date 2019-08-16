@@ -43,37 +43,37 @@ include "NewtonBaseSignals.nt"
 #
 #	Initial velocities can be adjusted for each experiment
 #
-v_0 : constant = 1 * m * s ** -1;
-v_1 : constant = 1 * m * s ** -1;
-v_2 : constant = 1 * m * s ** -1;
+v_0 : constant = 1 (m * s ** -1);
+v_1 : constant = 1 (m * s ** -1);
+v_2 : constant = 1 (m * s ** -1);
 
 #
 #	Initial particle position is assumed to be (0; 0; 0) - easiness of dealing with the equations
 #
-x_0 : constant = 10 * m;
-x_1 : constant = 10 * m;
-x_2 : constant = 10 * m;
+x_0 : constant = 10 m;
+x_1 : constant = 10 m;
+x_2 : constant = 10 m;
 
 #
 #	Magnetic field is uniform = (0; 0; B) - w.l.o.g. we can take B oriented along z direction (i.e., index '2' in our notation)
 #
-mfi : constant = 1 * T;
+mfi : constant = 1 T;
 
 #
 #	Particle weight
 #
-particleMass : constant = 1 * kg;
+particleMass : constant = 1 kg;
 
 #
 #	Particle charge
 #
-particleCharge : constant = 1 * C;
+particleCharge : constant = 1 C;
 
 #
 #	Error tolerances
 #
-a_e : constant = 0.001 * m * s ** -2;
-v_e : constant = 0.001 * m * s ** -1;
+a_e : constant = 0.001 (m * s ** -2);
+v_e : constant = 0.001 (m * s ** -1);
 
 period : invariant(t: time) = {
 	t ~ particleMass * (particleCharge * mfi) ** -1

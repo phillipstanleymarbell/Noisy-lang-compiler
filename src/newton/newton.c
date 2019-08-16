@@ -77,7 +77,7 @@
 #include "newton-irPass-dimensionalMatrixPiGroupWeedOut.h"
 #include "newton-irPass-dimensionalMatrixPiGroupSorted.h"
 #include "newton-irPass-dimensionalMatrixKernelRowCanonicalization.h"
-#include "newton-dimension-pass.h"
+#include "newton-dimension-prescan.h"
 
 extern char *	gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
 
@@ -106,19 +106,15 @@ processNewtonFile(State *  N, char *  filename)
 		char *	details;
 
 		asprintf(&details, "%s\n", EnoValidDimensions);
-		newtonParserSemanticError(N, kNewtonIrNodeType_PnewtonFile, details);
+		newtonParserSemanticError(N, kNewtonIrNodeType_PnewtonDescription, details);
 		free(details);
 
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnewtonFile);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnewtonDescription);
 	}
 
 	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
 
-
-	/*
-	 *	Dimensional matrix pass
-	 */
-	if (N->irPasses & kNoisyIrDimensionMatrixPass)
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixAnnotation)
 	{
 		irPassDimensionalMatrixAnnotation(N);
 
@@ -128,17 +124,29 @@ processNewtonFile(State *  N, char *  filename)
 		}
 	}
 
-	/*
-	 *	Pi groups pass (implies Dimensional matrix pass)
-	 */
-	if (N->irPasses & kNoisyIrPiGroupsPass)
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixPiGroups)
 	{
-		irPassDimensionalMatrixAnnotation(N);
 		irPassDimensionalMatrixPiGroups(N);
+	}
+
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixKernelRowCanonicalization)
+	{
 		irPassDimensionalMatrixKernelRowCanonicalization(N);
+	}
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixPiGroupSorted)
+	{
 		irPassDimensionalMatrixPiGroupSorted(N);
+	}
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates)
+	{
 		irPassDimensionalMatrixPiGroupsWeedOutDuplicates(N);
+	}
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixKernelPrinter)
+	{
 		irPassDimensionalMatrixKernelPrinter(N);
+	}
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixConvertToList)
+	{
 		irPassDimensionalMatrixConvertToList(N);
 	}
 

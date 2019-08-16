@@ -50,5 +50,5 @@
 include "NewtonBaseSignals.nt"
 
 kNewtonUnithave_Titanium64_PoissonRatio		: constant = 0.342;
-kNewtonUnithave_Titanium64_Density		: constant = 4430 * kilogram * meter ** -3;
-kNewtonUnithave_Titanium64_YoungsModulus	: constant = 114.8e11 * Newton / meter ** -2;
+kNewtonUnithave_Titanium64_Density		: constant = 4430 (kilogram * meter ** -3);
+kNewtonUnithave_Titanium64_YoungsModulus	: constant = 114.8e11 (Newton / meter ** -2);

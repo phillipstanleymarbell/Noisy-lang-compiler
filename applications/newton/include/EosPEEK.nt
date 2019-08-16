@@ -49,5 +49,5 @@
 
 include "NewtonBaseSignals.nt"
 
-kNewtonUnithave_EosPEEK_Density		: constant = 1310 * kilogram * meter ** -3;
-kNewtonUnithave_EosPEEK_YoungsModulus	: constant = 4.4e9 * Newton / meter ** -2;
+kNewtonUnithave_EosPEEK_Density		: constant = 1310 (kilogram * meter ** -3);
+kNewtonUnithave_EosPEEK_YoungsModulus	: constant = 4.4e9 (Newton / meter ** -2);

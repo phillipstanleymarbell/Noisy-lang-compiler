@@ -1,3 +1,4 @@
+CXX = clang
 AR			= /usr/bin/ar
 RANLIB			= /usr/bin/ranlib
 HOSTNAME		= localhost#`hostname`

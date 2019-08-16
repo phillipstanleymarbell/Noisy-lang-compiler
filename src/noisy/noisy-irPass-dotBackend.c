@@ -57,6 +57,7 @@
 #include "common-data-structures.h"
 #include "noisy-parser.h"
 #include "noisy-lexer.h"
+#include "common-irHelpers.h"
 #include "common-irPass-helpers.h"
 #include "noisy-types.h"
 
@@ -134,7 +135,7 @@ noisyIrPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irN
 		typeString = "X_SEQ";
 	}
 
-	src = (char *) calloc(kNoisyMaxPrintBufferLength, sizeof(char));
+	src = (char *) calloc(kCommonMaxPrintBufferLength, sizeof(char));
 	if (src == NULL)
 	{
 		fatal(N, Emalloc);
@@ -142,10 +143,10 @@ noisyIrPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irN
 
 	if (irNode->type != kNoisyIrNodeType_Xseq)
 	{
-		snprintf(src, kNoisyMaxPrintBufferLength, "| source:%"PRIu64",%"PRIu64"", irNode->sourceInfo->lineNumber, irNode->sourceInfo->columnNumber);
+		snprintf(src, kCommonMaxPrintBufferLength, "| source:%"PRIu64",%"PRIu64"", irNode->sourceInfo->lineNumber, irNode->sourceInfo->columnNumber);
 	}
 
-	if (N->dotDetailLevel & kNoisyDotDetailLevelNoText)
+	if (N->dotDetailLevel & kCommonDotDetailLevelNoText)
 	{
 		n += snprintf(&buf[n], bufferLength,
 			"\tP" FLEX_PTRFMTH " [%sfontsize=8,fontname=\"LucidaSans-Typewriter\",height=0.8,"
@@ -164,47 +165,47 @@ noisyIrPassDotAstDotFmt(State *  N, char *  buf, int bufferLength, IrNode *  irN
 
 	bufferLength = max(bufferLength - n, 0);
 
-	if (!(N->dotDetailLevel & kNoisyDotDetailLevelNoNilNodes) && (L(irNode) == NULL))
+	if (!(N->dotDetailLevel & kCommonDotDetailLevelNoNilNodes) && (L(irNode) == NULL))
 	{
 		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH "_leftnil [%s];\n",
 			(FlexAddr)irNode, nilFormatString);
 		bufferLength = max(bufferLength - n, 0);
 	}
-	if (!(N->dotDetailLevel & kNoisyDotDetailLevelNoNilNodes) && (R(irNode) == NULL))
+	if (!(N->dotDetailLevel & kCommonDotDetailLevelNoNilNodes) && (R(irNode) == NULL))
 	{
 		n += snprintf(&buf[n], bufferLength, "\tP" FLEX_PTRFMTH "_rightnil [%s];\n",
 			(FlexAddr)irNode, nilFormatString);
 		bufferLength = max(bufferLength - n, 0);
 	}
 
-	l = (char *)calloc(kNoisyMaxPrintBufferLength, sizeof(char));
+	l = (char *)calloc(kCommonMaxPrintBufferLength, sizeof(char));
 	if (l == NULL)
 	{
 		fatal(N, Emalloc);
 	}
 
-	r = (char *)calloc(kNoisyMaxPrintBufferLength, sizeof(char));
+	r = (char *)calloc(kCommonMaxPrintBufferLength, sizeof(char));
 	if (r == NULL)
 	{
 		fatal(N, Emalloc);
 	}
 
-	if (!(N->dotDetailLevel & kNoisyDotDetailLevelNoNilNodes) && (L(irNode) == NULL))
+	if (!(N->dotDetailLevel & kCommonDotDetailLevelNoNilNodes) && (L(irNode) == NULL))
 	{
-		snprintf(l, kNoisyMaxPrintBufferLength, "P" FLEX_PTRFMTH "_leftnil", (FlexAddr)irNode);
+		snprintf(l, kCommonMaxPrintBufferLength, "P" FLEX_PTRFMTH "_leftnil", (FlexAddr)irNode);
 	}
 	else if (L(irNode) != NULL)
 	{
-		snprintf(l, kNoisyMaxPrintBufferLength, "P" FLEX_PTRFMTH "", (FlexAddr)L(irNode));
+		snprintf(l, kCommonMaxPrintBufferLength, "P" FLEX_PTRFMTH "", (FlexAddr)L(irNode));
 	}
 
-	if (!(N->dotDetailLevel & kNoisyDotDetailLevelNoNilNodes) && (R(irNode) == NULL))
+	if (!(N->dotDetailLevel & kCommonDotDetailLevelNoNilNodes) && (R(irNode) == NULL))
 	{
-		snprintf(r, kNoisyMaxPrintBufferLength, "P" FLEX_PTRFMTH "_rightnil", (FlexAddr)irNode);
+		snprintf(r, kCommonMaxPrintBufferLength, "P" FLEX_PTRFMTH "_rightnil", (FlexAddr)irNode);
 	}
 	else if (R(irNode) != NULL)
 	{
-		snprintf(r, kNoisyMaxPrintBufferLength, "P" FLEX_PTRFMTH, (FlexAddr)R(irNode));
+		snprintf(r, kCommonMaxPrintBufferLength, "P" FLEX_PTRFMTH, (FlexAddr)R(irNode));
 	}
 
 	if (strlen(l))
@@ -356,10 +357,10 @@ noisyIrPassDotAstPrintWalk(State *  N, IrNode *  irNode, char *  buf, int buffer
 	/*
 	 *	Only process nodes once.
 	 */
-	if (irNode->nodeColor & kNoisyIrNodeColorDotBackendColoring)
+	if (irNode->nodeColor & kCommonIrNodeColorDotBackendColoring)
 	{
 		n2 = noisyIrPassDotAstDotFmt(N, &buf[n0+n1], bufferLength-(n0+n1), irNode);
-		irNode->nodeColor &= ~kNoisyIrNodeColorDotBackendColoring;
+		irNode->nodeColor &= ~kCommonIrNodeColorDotBackendColoring;
 	}
 
 	return (n0+n1+n2);
@@ -388,10 +389,10 @@ noisyIrPassDotSymbolTablePrintWalk(State *  N, Scope *  scope, char *  buf, int 
 	/*
 	 *	Only process nodes once.
 	 */
-	if (scope->nodeColor & kNoisyIrNodeColorDotBackendColoring)
+	if (scope->nodeColor & kCommonIrNodeColorDotBackendColoring)
 	{
 		n1 = noisyIrPassDotSymbolTableDotFmt(N, &buf[n0], (bufferLength-n0), scope);
-		scope->nodeColor &= ~kNoisyIrNodeColorDotBackendColoring;
+		scope->nodeColor &= ~kCommonIrNodeColorDotBackendColoring;
 	}
 
 	n2 += noisyIrPassDotSymbolTablePrintWalk(N, scope->next, &buf[n0+n1], (bufferLength-(n0+n1)));
@@ -424,7 +425,7 @@ noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot
 	 */
 	irAndSymbolTableSize += irPassHelperIrSize(N, noisyIrRoot);
 	irAndSymbolTableSize += irPassHelperSymbolTableSize(N, noisyIrTopScope);
-	bufferLength = irAndSymbolTableSize*kNoisyChunkBufferLength;
+	bufferLength = irAndSymbolTableSize*kCommonChunkBufferLength;
 
 	/*
 	 *	This buffer is deallocated by our caller
@@ -485,8 +486,8 @@ noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot
 	 *	which nodes have been visited, in case when
 	 *	the graph is not a tree.
 	 */
-	irPassHelperColorIr(N, noisyIrRoot, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
-	irPassHelperColorSymbolTable(N, noisyIrTopScope, kNoisyIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
+	irPassHelperColorIr(N, noisyIrRoot, kCommonIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
+	irPassHelperColorSymbolTable(N, noisyIrTopScope, kCommonIrNodeColorDotBackendColoring, true/* set */, true/* recurse flag */);
 
 	n += noisyIrPassDotAstPrintWalk(N, noisyIrRoot, &buf[n], bufferLength);
 	bufferLength = max(bufferLength - n, 0);
@@ -504,8 +505,8 @@ noisyIrPassDotBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot
 	 *	colors of nodes above anyway. If/when we decide to get rid of
 	 *	this, be sure to document the associated gain. See #324.
 	 */
-	irPassHelperColorIr(N, noisyIrRoot, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
-	irPassHelperColorSymbolTable(N, noisyIrTopScope, ~kNoisyIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
+	irPassHelperColorIr(N, noisyIrRoot, ~kCommonIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
+	irPassHelperColorSymbolTable(N, noisyIrTopScope, ~kCommonIrNodeColorDotBackendColoring, false/* clear */, true/* recurse flag */);
 #endif
 
 	return buf;
@@ -611,9 +612,9 @@ scope2id(State *  N, Scope *  scope)
 		return "???";
 	}
 
-	char *	buf, tmp[kNoisyMaxBufferLength];
+	char *	buf, tmp[kCommonMaxBufferLength];
 
-	int length = snprintf(tmp, kNoisyMaxBufferLength, "%"PRIu64"_%"PRIu64"_%"PRIu64"_%"PRIu64"",
+	int length = snprintf(tmp, kCommonMaxBufferLength, "%"PRIu64"_%"PRIu64"_%"PRIu64"_%"PRIu64"",
 			scope->begin->lineNumber, scope->begin->columnNumber,
 			scope->end->lineNumber, scope->end->columnNumber);
 
@@ -641,9 +642,9 @@ scope2id2(State *  N, Scope *  scope)
 		return "???";
 	}
 
-	char *	buf, tmp[kNoisyMaxBufferLength];
+	char *	buf, tmp[kCommonMaxBufferLength];
 
-	int length = snprintf(tmp, kNoisyMaxBufferLength, "%s:%"PRIu64",%"PRIu64" \\nto\\n %s:%"PRIu64",%"PRIu64"",
+	int length = snprintf(tmp, kCommonMaxBufferLength, "%s:%"PRIu64",%"PRIu64" \\nto\\n %s:%"PRIu64",%"PRIu64"",
 		scope->begin->fileName, scope->begin->lineNumber, 
 		scope->begin->columnNumber,  scope->begin->fileName,
 		scope->end->lineNumber, scope->end->columnNumber);
@@ -673,9 +674,9 @@ symbol2id(State *  N, Symbol *  symbol)
 		return "???";
 	}
 
-	char *	buf, tmp[kNoisyMaxBufferLength];
+	char *	buf, tmp[kCommonMaxBufferLength];
 
-	int length = snprintf(tmp, kNoisyMaxBufferLength, "%"PRIu64"_%"PRIu64"",
+	int length = snprintf(tmp, kCommonMaxBufferLength, "%"PRIu64"_%"PRIu64"",
 		symbol->sourceInfo->lineNumber, symbol->sourceInfo->columnNumber);
 
 	buf = (char *)malloc(length);

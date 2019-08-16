@@ -38,16 +38,16 @@
 
 typedef enum
 {
-	kNoisyVerbosityDebugLexer	=	(1 << 0),
-	kNoisyVerbosityDebugParser	=	(1 << 1),
-	kNoisyVerbosityDebugAST		=	(1 << 2),
-	kNoisyVerbosityDebugFF		=	(1 << 3),
+	kCommonVerbosityDebugLexer	=	(1 << 0),
+	kCommonVerbosityDebugParser	=	(1 << 1),
+	kCommonVerbosityDebugAST		=	(1 << 2),
+	kCommonVerbosityDebugFF		=	(1 << 3),
 	
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */	
-	kNoisyVerbosityDebugMax,
-} NoisyVerbosityType;
+	kCommonVerbosityDebugMax,
+} VerbosityType;
 
 
 
@@ -436,47 +436,105 @@ typedef enum
 	 *	Newton tokens
 	 */
 	kNewtonIrNodeType_TMin,
-	kNewtonIrNodeType_Tinclude,
+	kNewtonIrNodeType_TBernoulli,
+	kNewtonIrNodeType_TBeta,
+	kNewtonIrNodeType_TBetaBinomial,
+	kNewtonIrNodeType_TBetaPrime,
+	kNewtonIrNodeType_TBinomial,
+	kNewtonIrNodeType_TCauchy,
+	kNewtonIrNodeType_TDirichlet,
 	kNewtonIrNodeType_TEnglish,
+	kNewtonIrNodeType_TErlang,
+	kNewtonIrNodeType_TExponential,
+	kNewtonIrNodeType_TExtremeValue,
+	kNewtonIrNodeType_TF,
+	kNewtonIrNodeType_TFermiDirac,
+	kNewtonIrNodeType_TFisherZ,
+	kNewtonIrNodeType_TGamma,
+	kNewtonIrNodeType_TGaussian,
+	kNewtonIrNodeType_TGibrat,
+	kNewtonIrNodeType_TGumbel,
+	kNewtonIrNodeType_TLaplacian,
+	kNewtonIrNodeType_TLogNormal,
+	kNewtonIrNodeType_TLogSeries,
+	kNewtonIrNodeType_TLogitNormal,
+	kNewtonIrNodeType_TMaxwell,
+	kNewtonIrNodeType_TMultinomial,
+	kNewtonIrNodeType_TNegativeBinomial,
+	kNewtonIrNodeType_TPareto,
+	kNewtonIrNodeType_TPearsonIII,
+	kNewtonIrNodeType_TPoisson,
+	kNewtonIrNodeType_TRayleigh,
+	kNewtonIrNodeType_TStudentT,
+	kNewtonIrNodeType_TStudentZ,
+	kNewtonIrNodeType_TWeibull,
+	kNewtonIrNodeType_TXi,
+	kNewtonIrNodeType_TXiSquared,
+	kNewtonIrNodeType_Taccuracy,
+	kNewtonIrNodeType_Tanalog,
+	kNewtonIrNodeType_Tassign,
 	kNewtonIrNodeType_TatSign,
+	kNewtonIrNodeType_Tbits,
+	kNewtonIrNodeType_TbitwiseOr,
 	kNewtonIrNodeType_Tcolon,
 	kNewtonIrNodeType_Tcomma,
 	kNewtonIrNodeType_Tconstant,
 	kNewtonIrNodeType_Tcross,
+	kNewtonIrNodeType_Tdelay,
 	kNewtonIrNodeType_Tderivation,
 	kNewtonIrNodeType_Tderivative,
-	kNewtonIrNodeType_Tdiv,
+	kNewtonIrNodeType_TdimensionallyAgnosticProportional,
+	kNewtonIrNodeType_TdimensionallyMatchingProportional,
 	kNewtonIrNodeType_Tdimensionless,
+	kNewtonIrNodeType_Tdiv,
 	kNewtonIrNodeType_Tdot,
+	kNewtonIrNodeType_TdotDot,
 	kNewtonIrNodeType_Tequals,
-	kNewtonIrNodeType_Tequivalent,
-	kNewtonIrNodeType_Texponent,
+	kNewtonIrNodeType_TerasureToken,
+	kNewtonIrNodeType_Texponentiation,
 	kNewtonIrNodeType_Tge,
 	kNewtonIrNodeType_Tgt,
+	kNewtonIrNodeType_Ti2c,
 	kNewtonIrNodeType_Tidentifier,
-	kNewtonIrNodeType_TintConst,
+	kNewtonIrNodeType_Tinclude,
+	kNewtonIrNodeType_TintegerConst,
 	kNewtonIrNodeType_Tintegral,
+	kNewtonIrNodeType_Tinterface,
 	kNewtonIrNodeType_Tinvariant,
 	kNewtonIrNodeType_Tle,
 	kNewtonIrNodeType_TleftBrace,
+	kNewtonIrNodeType_TleftBracket,
 	kNewtonIrNodeType_TleftParen,
+	kNewtonIrNodeType_TleftShift,
 	kNewtonIrNodeType_Tlt,
 	kNewtonIrNodeType_Tminus,
+	kNewtonIrNodeType_TminusMinus,
 	kNewtonIrNodeType_Tmul,
+	kNewtonIrNodeType_Tmutualinf,
 	kNewtonIrNodeType_Tname,
 	kNewtonIrNodeType_Tnil,
 	kNewtonIrNodeType_Tnone,
-	kNewtonIrNodeType_TnumericConst,
+	kNewtonIrNodeType_Tpercent,
 	kNewtonIrNodeType_Tplus,
-	kNewtonIrNodeType_Tproportional,
-	kNewtonIrNodeType_TrealConst,	
+	kNewtonIrNodeType_TplusPlus,
+	kNewtonIrNodeType_Tprecision,
+	kNewtonIrNodeType_Trange,
+	kNewtonIrNodeType_Tread,
+	kNewtonIrNodeType_TrealConst,
+	kNewtonIrNodeType_Trelated,
 	kNewtonIrNodeType_TrightBrace,
+	kNewtonIrNodeType_TrightBracket,
 	kNewtonIrNodeType_TrightParen,
+	kNewtonIrNodeType_TrightShift,
 	kNewtonIrNodeType_Tsemicolon,
+	kNewtonIrNodeType_Tsensor,
 	kNewtonIrNodeType_Tsignal,
+	kNewtonIrNodeType_Tspi,
 	kNewtonIrNodeType_TstringConst,
 	kNewtonIrNodeType_Tsymbol,
 	kNewtonIrNodeType_Tto,
+	kNewtonIrNodeType_Tuncertainty,
+	kNewtonIrNodeType_Twrite,
 
 	/*
 	 *	Code depends on this bringing up the rear for Newton Tokens.
@@ -493,35 +551,67 @@ typedef enum
 	 *	Newton grammar productions
 	 */
 	kNewtonIrNodeType_PMin,
-	kNewtonIrNodeType_PbaseSignal,
-	kNewtonIrNodeType_PcompareOp,
-	kNewtonIrNodeType_Pconstant,
+	kNewtonIrNodeType_PaccuracyStatement,
+	kNewtonIrNodeType_ParithmeticCommand,
+	kNewtonIrNodeType_PbaseSignalDefinition,
+	kNewtonIrNodeType_PcomparisonOperator,
+	kNewtonIrNodeType_PconstantDefinition,
 	kNewtonIrNodeType_Pconstraint,
 	kNewtonIrNodeType_PconstraintList,
-	kNewtonIrNodeType_Pderivation,
+	kNewtonIrNodeType_PdelayCommand,
+	kNewtonIrNodeType_PderivationStatement,
+	kNewtonIrNodeType_Pdistribution,
+	kNewtonIrNodeType_PdistributionFactor,
+	kNewtonIrNodeType_PerasureValueStatement,
+	kNewtonIrNodeType_PexponentiationOperator,
+	kNewtonIrNodeType_Pexpression,
+	kNewtonIrNodeType_Pfactor,
+	kNewtonIrNodeType_PfunctionalOperator,
 	kNewtonIrNodeType_PhighPrecedenceBinaryOp,
-	kNewtonIrNodeType_Pinteger,
-	kNewtonIrNodeType_Pinvariant,
+	kNewtonIrNodeType_PhighPrecedenceOperator,
+	kNewtonIrNodeType_PhighPrecedenceQuantityOperator,
+	kNewtonIrNodeType_PinvariantDefinition,
 	kNewtonIrNodeType_PlanguageSetting,
 	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
-	kNewtonIrNodeType_PmidPrecedenceBinaryOp,
-	kNewtonIrNodeType_Pname,
-	kNewtonIrNodeType_PnewtonFile,
+	kNewtonIrNodeType_PlowPrecedenceOperator,
+	kNewtonIrNodeType_PnameStatement,
+	kNewtonIrNodeType_PnewtonDescription,
+	kNewtonIrNodeType_PnumericConst,
+	kNewtonIrNodeType_PnumericConstTuple,
+	kNewtonIrNodeType_PnumericConstTupleList,
+	kNewtonIrNodeType_PnumericExpression,
+	kNewtonIrNodeType_PnumericFactor,
+	kNewtonIrNodeType_PnumericTerm,
 	kNewtonIrNodeType_Pparameter,
 	kNewtonIrNodeType_PparameterTuple,
+	kNewtonIrNodeType_PparameterValueList,
+	kNewtonIrNodeType_PprecisionStatement,
 	kNewtonIrNodeType_Pquantity,
 	kNewtonIrNodeType_PquantityExpression,
 	kNewtonIrNodeType_PquantityFactor,
-	kNewtonIrNodeType_PquantityStatement,
 	kNewtonIrNodeType_PquantityTerm,
-	kNewtonIrNodeType_Pstatement,
-	kNewtonIrNodeType_PstatementList,
-	kNewtonIrNodeType_Psubindex,
-	kNewtonIrNodeType_PsubindexTuple,
-	kNewtonIrNodeType_Psymbol,
-	kNewtonIrNodeType_PtimeOp,
+	kNewtonIrNodeType_PrangeStatement,
+	kNewtonIrNodeType_PreadRegisterCommand,
+	kNewtonIrNodeType_Prule,
+	kNewtonIrNodeType_PruleList,
+	kNewtonIrNodeType_PsensorDefinition,
+	kNewtonIrNodeType_PsensorInterfaceCommand,
+	kNewtonIrNodeType_PsensorInterfaceCommandList,
+	kNewtonIrNodeType_PsensorInterfaceStatement,
+	kNewtonIrNodeType_PsensorInterfaceType,
+	kNewtonIrNodeType_PsensorProperty,
+	kNewtonIrNodeType_PsensorPropertyList,
+	kNewtonIrNodeType_PsubdimensionTuple,
+	kNewtonIrNodeType_PsymbolStatement,
+	kNewtonIrNodeType_Pterm,
 	kNewtonIrNodeType_PunaryOp,
+	kNewtonIrNodeType_PuncertaintyStatement,
+	kNewtonIrNodeType_Punit,
+	kNewtonIrNodeType_PunitExpression,
+	kNewtonIrNodeType_PunitFactor,
+	kNewtonIrNodeType_PunitTerm,
 	kNewtonIrNodeType_PvectorOp,
+	kNewtonIrNodeType_PwriteRegisterCommand,
 
 	/*
 	 *	Code depends on this bringing up the rear for Newton Productions.
@@ -560,9 +650,24 @@ typedef enum
 
 typedef enum
 {
-	kNoisyIrDimensionMatrixPass			= (1 << 0),
-	kNoisyIrPiGroupsPass				= (1 << 1),
+	kNewtonIrPassDimensionalMatrixAnnotation		= (1 << 0),
+	kNewtonIrPassDimensionalMatrixPiGroups			= (1 << 1),
+	kNewtonIrPassDimensionalMatrixKernelRowCanonicalization	= (1 << 2),
+	kNewtonIrPassDimensionalMatrixPiGroupSorted		= (1 << 3),
+	kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates	= (1 << 4),
+	kNewtonIrPassDimensionalMatrixKernelPrinter		= (1 << 5),
+	kNewtonIrPassDimensionalMatrixConvertToList		= (1 << 6),
 
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNewtonIrPassMax,
+} NewtonIrPasses;
+
+
+
+typedef enum
+{
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -573,65 +678,66 @@ typedef enum
 
 typedef enum
 {
-	kNoisyIrBackendDot				= (1 << 0),
-	kNoisyIrBackendProtobuf				= (1 << 1),
+	kNewtonIrBackendDot				= (1 << 0),
+	kNewtonIrBackendProtobuf			= (1 << 1),
 	kNewtonIrBackendSmt				= (1 << 2),
 	kNewtonIrBackendC				= (1 << 3),
 	kNewtonIrBackendRTL				= (1 << 4),
+
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
-	kNoisyIrBackendMax,
-} NoisyIrBackend;
+	kNewtonIrBackendMax,
+} NewtonIrBackends;
 
 
 
 typedef enum
 {
-	kNoisyDotDetailLevelNoText			= (1 << 0),
-	kNoisyDotDetailLevelNoNilNodes			= (1 << 1),
+	kCommonDotDetailLevelNoText			= (1 << 0),
+	kCommonDotDetailLevelNoNilNodes			= (1 << 1),
 	
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
-	kNoisyDotDetailLevelMax,
-} NoisyDotDetailLevel;
+	kCommonDotDetailLevelMax,
+} DetailLevel;
 
 
 
 typedef enum
 {
-	kNoisyIrNodeColorDotBackendColoring		= (1 << 0),
-	kNoisyIrNodeColorProtobufBackendColoring	= (1 << 1),
-	kNoisyIrNodeColorTreeTransformedColoring	= (1 << 2),
+	kCommonIrNodeColorDotBackendColoring		= (1 << 0),
+	kCommonIrNodeColorProtobufBackendColoring	= (1 << 1),
+	kCommonIrNodeColorTreeTransformedColoring	= (1 << 2),
 
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
-	kNoisyIrNodeColor,
+	kCommonIrNodeColor,
 } IrNodeColor;
 
 
 
 typedef enum
 {
-	kNoisyMaxBufferLength				= 8192,
-	kNoisyChunkBufferLength				= 8192,
-	kNoisyMaxErrorTokenCount			= 32,
-	kNoisyStreamchkWidth				= 32,
-	kNoisyMaxPrintBufferLength			= 8192,
-	kNoisyMaxTokenCharacters			= 32,
-	kNoisyMaxFilenameLength				= 128,
-	kNoisyTimestampTimelineLength			= 4000000 /* Set to, e.g., 4000000 if we want to capture very long traces for debug; set to 1 otherwise */,
-	kNoisyCgiRandomDigits				= 10,
-	kNoisyRlimitCpuSeconds				= 5*60,			/*	5 mins	*/
-	kNoisyRlimitRssBytes				= 2*1024*1024*1024UL,	/*	2GB	*/
-	kNoisyProgressTimerSeconds			= 5,
+	kCommonMaxBufferLength				= 8192,
+	kCommonChunkBufferLength			= 8192,
+	kCommonMaxErrorTokenCount			= 32,
+	kCommonStreamchkWidth				= 32,
+	kCommonMaxPrintBufferLength			= 8192,
+	kCommonMaxTokenCharacters			= 32,
+	kCommonMaxFilenameLength			= 128,
+	kCommonTimestampTimelineLength			= 4000000 /* Set to, e.g., 4000000 if we want to capture very long traces for debug; set to 1 otherwise */,
+	kCommonCgiRandomDigits				= 10,
+	kCommonRlimitCpuSeconds				= 5*60,			/*	5 mins	*/
+	kCommonRlimitRssBytes				= 2*1024*1024*1024UL,	/*	2GB	*/
+	kCommonProgressTimerSeconds			= 5,
 
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
-	kNoisyConstantMax,
+	kCommonConstantMax,
 } Constant;
 
 
@@ -653,13 +759,28 @@ typedef enum
 
 typedef enum
 {
-	kNoisyPostFileWriteActionRenderDot		= (1 << 0),
+	kNewtonModeDefault				= (0 << 0),
+	kNewtonModeCallTracing				= (1 << 0),
+	kNewtonModeCallStatistics			= (1 << 1),
+	kNewtonModeCGI					= (1 << 2),
 
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
-	kNoisyPostFileWriteActionMax,
-} NoisyPostFileWriteAction;
+	kNewtonModeMax
+} NewtonMode;
+
+
+
+typedef enum
+{
+	kCommonPostFileWriteActionRenderDot		= (1 << 0),
+
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kCommonPostFileWriteActionMax,
+} PostFileWriteAction;
 
 
 typedef struct Scope		Scope;
@@ -796,7 +917,7 @@ struct Token
 {
 	IrNodeType		type;
 	char *			identifier;
-	uint64_t		integerConst;
+	int64_t			integerConst;
 	double			realConst;
 	char *			stringConst;
 	SourceInfo *		sourceInfo;
@@ -830,7 +951,7 @@ struct Scope
 	/*
 	 *	Each invariant scope will have its own list of parameters
 	 */
-	IrNode *		invariantParameterList;		//	This is just bunch of IrNode's in Xseq
+	IrNode *		scopeParameterList;		//	This is just bunch of IrNode's in Xseq
 
 	/*
 	 *	For the config file, we only have one global scope that keeps track of all
@@ -1025,6 +1146,6 @@ void		dealloc(State *  C);
 void		runPasses(State *  C);
 uint64_t	checkRss(State *  C);
 void		consolePrintBuffers(State *  C);
-void		printToFile(State *  C, const char *  msg, const char *  fileName, NoisyPostFileWriteAction action);
+void		printToFile(State *  C, const char *  msg, const char *  fileName, PostFileWriteAction action);
 void		renderDotInFile(State *  C, char *  pathName, char *  randomizedFileName);
 void		checkCgiCompletion(State *  C, const char *  pathName, const char *  renderExtension);

@@ -52,7 +52,7 @@
 
 include "NewtonBaseSignals.nt"
 
-G : constant = 6.674 * m ** 3 * kg ** -1 * s ** -2;
+G : constant = 6.674 (m ** 3 * kg ** -1 * s ** -2);
 
 #
 #	Dimensional Matrix:

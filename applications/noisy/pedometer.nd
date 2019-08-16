@@ -49,7 +49,7 @@ computeStepsSamples : probdef (inputSamples: sampleType and timeseries) -> (coun
 
 		#
 		#	The `fourier` operator applied to a time series
-		#	returns a list of pairs the freuencies in seconds of the
+		#	returns a list of pairs the frequencies in seconds of the
 		#	component sinusoids and their amplitudes, ordered by decreasing amplitude
 		#
 		exists (cutoff in int8)

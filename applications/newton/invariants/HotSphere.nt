@@ -58,11 +58,11 @@
 
 include "NewtonBaseSignals.nt"
 
-rho	: constant = 1 * kg * m ** -3;
-v	: constant = 10 * m ** 2 * s ** -1;
-cp	: constant = 1 * m ** 2 * s ** -2 * K ** -1;
-a	: constant = 1 * m ** 2 * s ** -1;
-beta	: constant = 1 * K ** -1;
+#rho	: constant = 1	(kg * m ** -3);
+v	: constant = 10	(m ** 2 * s ** -1);
+cp	: constant = 1	(m ** 2 * s ** -2 * K ** -1);
+a	: constant = 1	(m ** 2 * s ** -1);
+beta	: constant = 1	(K ** -1);
 
 #
 #	Dimensional Matrix:

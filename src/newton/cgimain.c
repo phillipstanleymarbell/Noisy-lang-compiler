@@ -81,7 +81,7 @@
 #include "newton-irPass-dimensionalMatrixPiGroupSorted.h"
 #include "newton-irPass-dimensionalMatrixKernelRowCanonicalization.h"
 #include "newton-irPass-dimensionalMatrixKernelPrinter.h"
-#include "newton-dimension-pass.h"
+#include "newton-dimension-prescan.h"
 
 extern char *			gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
 
@@ -102,8 +102,8 @@ State *				newtonCgiDimensionsState;
 
 enum
 {
-	kNoisyCgiFormatWidth		= 580,
-	kNoisyCgiChunkCgiParse		= 1024,
+	kNewtonCgiFormatWidth		= 580,
+	kNewtonCgiChunkCgiParse		= 1024,
 };
 
 
@@ -219,7 +219,7 @@ getCgiVars(void)
 	 *	Split on "&" and ";" to extract the name-value
 	 *	pairs into pairlist.
 	 */
-	pairlist = (char **) malloc(kNoisyCgiChunkCgiParse*sizeof(char *));
+	pairlist = (char **) malloc(kNewtonCgiChunkCgiParse*sizeof(char *));
 	if (pairlist == NULL)
 	{
 		fatal(newtonCgiState, Emalloc);
@@ -231,9 +231,9 @@ getCgiVars(void)
 	{
 		pairlist[paircount++] = strdup(nvpair);
 
-		if (!(paircount % kNoisyCgiChunkCgiParse))
+		if (!(paircount % kNewtonCgiChunkCgiParse))
 		{
-			pairlist = (char **) realloc(pairlist, (paircount + kNoisyCgiChunkCgiParse)*sizeof(char *));
+			pairlist = (char **) realloc(pairlist, (paircount + kNewtonCgiChunkCgiParse)*sizeof(char *));
 		}
 
 		nvpair = strtok(NULL, "&;");
@@ -289,9 +289,9 @@ int
 main(void)
 {
 	char **			cgiVars;
-	char			logFileStub[kNoisyMaxFilenameLength+1];
+	char			logFileStub[kCommonMaxFilenameLength+1];
 	int			jumpParameter, logFd, i;
-	int			fmtWidth = kNoisyCgiFormatWidth, cgiSparameter = 0, cgiOparameter = 0, cgiTparameter = 0;
+	int			fmtWidth = kNewtonCgiFormatWidth, cgiSparameter = 0, cgiOparameter = 0, cgiTparameter = 0;
 	char			tmp;
 	char *			ep = &tmp;
 	struct rlimit		rlp;
@@ -310,12 +310,12 @@ main(void)
 	 *	at hard limit, so we set them to different but meaningful
 	 *	values.
 	 */
-	rlp.rlim_cur = kNoisyRlimitRssBytes;
-	rlp.rlim_max = kNoisyRlimitRssBytes + 1;
+	rlp.rlim_cur = kCommonRlimitRssBytes;
+	rlp.rlim_max = kCommonRlimitRssBytes + 1;
 	setrlimit(RLIMIT_RSS, &rlp);
 
-	rlp.rlim_cur = kNoisyRlimitCpuSeconds;
-	rlp.rlim_max = kNoisyRlimitCpuSeconds + 1;
+	rlp.rlim_cur = kCommonRlimitCpuSeconds;
+	rlp.rlim_max = kCommonRlimitCpuSeconds + 1;
 	setrlimit(RLIMIT_CPU, &rlp);
 
 	memset(&sa, 0, sizeof(sa));
@@ -359,9 +359,9 @@ main(void)
 	 *	programs that don't produce any output over some given timeout,
 	 *	period (yielding a "Timeout waiting for output from CGI script").
 	 */
-	itv.it_interval.tv_sec = kNoisyProgressTimerSeconds;
+	itv.it_interval.tv_sec = kCommonProgressTimerSeconds;
 	itv.it_interval.tv_usec = 0;
-	itv.it_value.tv_sec = kNoisyProgressTimerSeconds;
+	itv.it_value.tv_sec = kCommonProgressTimerSeconds;
 	itv.it_value.tv_usec = 0;
 	setitimer(ITIMER_VIRTUAL, &itv, NULL);
 
@@ -372,8 +372,8 @@ main(void)
 	sigaction(SIGVTALRM, &sa, NULL);
 
 
-	newtonCgiState = init(kNoisyModeDefault|kNoisyModeCallStatistics/* | kNoisyModeCallTracing */|kNoisyModeCGI);
-	newtonCgiDimensionsState = init(kNoisyModeDefault|kNoisyModeCallStatistics/* | kNoisyModeCallTracing */|kNoisyModeCGI);
+	newtonCgiState = init(kNewtonModeDefault|kNewtonModeCallStatistics/* | kNewtonModeCallTracing */|kNewtonModeCGI);
+	newtonCgiDimensionsState = init(kNewtonModeDefault|kNewtonModeCallStatistics/* | kNewtonModeCallTracing */|kNewtonModeCGI);
 	timestampsInit(newtonCgiState);
 
 
@@ -577,7 +577,7 @@ main(void)
 			}
 			else
 			{
-				//newtonCgiState->irBackends |= kNoisyIrBackendXXX;
+				//newtonCgiState->irBackends |= kNewtonIrBackendXXX;
 			}
 		}
 		
@@ -606,7 +606,7 @@ main(void)
 			}
 			else
 			{
-				//newtonCgiState->irPasses |= kNoisyIrPassXXX;
+				//newtonCgiState->irPasses |= kNewtonIrPassXXX;
 			}
 		}
 	}
@@ -621,7 +621,7 @@ main(void)
 	 *	Log the input to a file; mkstemps() require the stub to be
 	 *	writeable.
 	 */
-	snprintf(logFileStub, kNoisyMaxFilenameLength, "%sinput-%s-%s.nt", kNewtonBasePath, getenv("REMOTE_ADDR"), kNewtonCgiInputLogStub);
+	snprintf(logFileStub, kCommonMaxFilenameLength, "%sinput-%s-%s.nt", kNewtonBasePath, getenv("REMOTE_ADDR"), kNewtonCgiInputLogStub);
 	logFd = mkstemps(logFileStub, strlen(kNewtonCgiInputLogExtension));
 	if (logFd == -1)
 	{
@@ -705,35 +705,56 @@ main(void)
 			irPassSmtBackend(newtonCgiState);
 		}
 
-		/*
-	 	 *	Pi groups pass (implies Dimensional matrix pass)
-	 	 */
-		if (newtonCgiState->irPasses & kNoisyIrPiGroupsPass)
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixAnnotation)
 		{
 			irPassDimensionalMatrixAnnotation(newtonCgiState);
+
+			if (newtonCgiState->verbosityLevel > 0)
+			{
+				irPassDimensionalMatrixPrinter(newtonCgiState);
+			}
+		}
+
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixPiGroups)
+		{
 			irPassDimensionalMatrixPiGroups(newtonCgiState);
+		}
+
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixKernelRowCanonicalization)
+		{
 			irPassDimensionalMatrixKernelRowCanonicalization(newtonCgiState);
+		}
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixPiGroupSorted)
+		{
 			irPassDimensionalMatrixPiGroupSorted(newtonCgiState);
+		}
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates)
+		{
 			irPassDimensionalMatrixPiGroupsWeedOutDuplicates(newtonCgiState);
-			irPassDimensionalMatrixConvertToList(newtonCgiState);
-			irPassDimensionalMatrixPrinter(newtonCgiState);
+		}
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixKernelPrinter)
+		{
 			irPassDimensionalMatrixKernelPrinter(newtonCgiState);
+		}
+		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixConvertToList)
+		{
+			irPassDimensionalMatrixConvertToList(newtonCgiState);
 		}
 
 		/*
 		 *	Dot backend.
 		 */
-		if (newtonCgiState->irBackends & kNoisyIrBackendDot)
+		if (newtonCgiState->irBackends & kNewtonIrBackendDot)
 		{
-			printToFile(newtonCgiState, irPassDotBackend(newtonCgiState, newtonCgiState->newtonIrTopScope, newtonCgiState->newtonIrRoot, gNewtonAstNodeStrings), "tmpdot", kNoisyPostFileWriteActionRenderDot);
+			printToFile(newtonCgiState, irPassDotBackend(newtonCgiState, newtonCgiState->newtonIrTopScope, newtonCgiState->newtonIrRoot, gNewtonAstNodeStrings), "tmpdot", kCommonPostFileWriteActionRenderDot);
 		}
 
-		if (newtonCgiState->mode & kNoisyModeCallTracing)
+		if (newtonCgiState->mode & kNewtonModeCallTracing)
 		{
 			timeStampDumpTimeline(newtonCgiState);
 		}
 
-		if (newtonCgiState->mode & kNoisyModeCallStatistics)
+		if (newtonCgiState->mode & kNewtonModeCallStatistics)
 		{
 			uint64_t	irNodeCount = 0, symbolTableNodeCount;
 
@@ -809,7 +830,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 
 	printf("Newton version %s.\n", kNewtonVersion);
 	printf("<br>");
-	printf("Authored 2017-2018 by Jonathan Lim and Phillip Stanley-Marbell. Additional contributors, 2018 onwards. See CONTRIBUTORS.md.\n");
+	printf("Authored 2017-2019 by Jonathan Lim and Phillip Stanley-Marbell. Additional contributors, 2018 onwards. See CONTRIBUTORS.md.\n");
 	printf("<br>");
 	
 #if defined (_OPENMP)
@@ -928,41 +949,42 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("</table>\n");
 	printf("</td>\n");
 	printf("</tr>\n");
-	//printf("<tr><td><img src=\"%s\" width=90 align=\"left\"></td></tr>\n", kNewtonLogoPath);
+	printf("<tr><td><img src=\"%s\" width=250 align=\"left\"></td></tr>\n", kNewtonLogoPath);
 	printf("</table>\n");
 	printf("</td>\n");
 
-	printf("<td align=left; valign=bottom>\n");
-//	printf("<b>Cite this as:</b>\n");
-//	printf("<div style=\"background-color:whitesmoke;\">\n");
-//	printf("P. Stanley-Marbell, P. A. Francese, and M. Rinard. \"Encoder logic for reducing serial I/O power in sensors and sensor hubs.\"\n<i>28th IEEE Hot Chips Symposium (HotChips 28)</i>, 2016.\n");
-//	printf("</div>\n");
-//	printf("<pre>\n");
-//	printf("@inproceedings{hotchips16encoder,\n");
-//	printf("  title={Encoder logic for reducing serial I/O power in sensors and sensor hubs},\n");
-//	printf("  author={P. Stanley-Marbell and P.~A. Francese and M. Rinard},\n");
-//	printf("  booktitle={28th IEEE Hot Chips Symposium (HotChips 28)},\n");
-//	printf("  pages={1--2},\n");
-//	printf("  year={2016},\n");
-//	printf("  organization={IEEE}\n");
-//	printf("}\n");
-//	printf("</pre>\n");
+
+	printf("<td align=left; valign=top>\n");
+	printf("<b>Cite this as:</b>\n");
+	printf("<span style=\"background-color:whitesmoke;\">\n");
+	printf("J. Lim and P. Stanley-Marbell. \"Newton: A Language for Describing Physics.\"\n<i>CoRR abs/1811.04626</i>, 2018.\n");
+	printf("</span>\n");
+	printf("<pre>\n");
+	printf("@inproceedings{journals/corr/abs-1811-04626,\n");
+	printf("  title         = {Newton: A Language for Describing Physics},\n");
+	printf("  author        = {Jonathan Lim and Phillip Stanley-Marbell},\n");
+	printf("  journal       = {CoRR},\n");
+	printf("  volume        = {abs/1811.04626},\n");
+	printf("  year          = {2018},\n");
+	printf("  archivePrefix = {arXiv},\n");
+	printf("  eprint        = {1811.04626},\n");
+	printf("}\n");
+	printf("</pre>\n");
 
 	printf("<b>Additional examples:</b>&nbsp;&nbsp;\n");
-	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23%%09Authored+2018%%2C+James+Rhodes.%%0D%%0A%%23%%0D%%0A%%23%%09All+rights+reserved.%%0D%%0A%%23%%0D%%0A%%23%%09Redistribution+and+use+in+source+and+binary+forms%%2C+with+or+without%%0D%%0A%%23%%09modification%%2C+are+permitted+provided+that+the+following+conditions%%0D%%0A%%23%%09are+met%%3A%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+of+source+code+must+retain+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+in+binary+form+must+reproduce+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer+in+the+documentation+and%%2For+other+materials%%0D%%0A%%23%%09%%09provided+with+the+distribution.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Neither+the+name+of+the+author+nor+the+names+of+its%%0D%%0A%%23%%09%%09contributors+may+be+used+to+endorse+or+promote+products%%0D%%0A%%23%%09%%09derived+from+this+software+without+specific+prior+written%%0D%%0A%%23%%09%%09permission.%%0D%%0A%%23%%0D%%0A%%23%%09THIS+SOFTWARE+IS+PROVIDED+BY+THE+COPYRIGHT+HOLDERS+AND+CONTRIBUTORS%%0D%%0A%%23%%09%%22AS+IS%%22+AND+ANY+EXPRESS+OR+IMPLIED+WARRANTIES%%2C+INCLUDING%%2C+BUT+NOT%%0D%%0A%%23%%09LIMITED+TO%%2C+THE+IMPLIED+WARRANTIES+OF+MERCHANTABILITY+AND+FITNESS%%0D%%0A%%23%%09FOR+A+PARTICULAR+PURPOSE+ARE+DISCLAIMED.+IN+NO+EVENT+SHALL+THE%%0D%%0A%%23%%09COPYRIGHT+OWNER+OR+CONTRIBUTORS+BE+LIABLE+FOR+ANY+DIRECT%%2C+INDIRECT%%2C%%0D%%0A%%23%%09INCIDENTAL%%2C+SPECIAL%%2C+EXEMPLARY%%2C+OR+CONSEQUENTIAL+DAMAGES+%%28INCLUDING%%2C%%0D%%0A%%23%%09BUT+NOT+LIMITED+TO%%2C+PROCUREMENT+OF+SUBSTITUTE+GOODS+OR+SERVICES%%3B%%0D%%0A%%23%%09LOSS+OF+USE%%2C+DATA%%2C+OR+PROFITS%%3B+OR+BUSINESS+INTERRUPTION%%29+HOWEVER%%0D%%0A%%23%%09CAUSED+AND+ON+ANY+THEORY+OF+LIABILITY%%2C+WHETHER+IN+CONTRACT%%2C+STRICT%%0D%%0A%%23%%09LIABILITY%%2C+OR+TORT+%%28INCLUDING+NEGLIGENCE+OR+OTHERWISE%%29+ARISING+IN%%0D%%0A%%23%%09ANY+WAY+OUT+OF+THE+USE+OF+THIS+SOFTWARE%%2C+EVEN+IF+ADVISED+OF+THE%%0D%%0A%%23%%09POSSIBILITY+OF+SUCH+DAMAGE.%%0D%%0A%%23%%0D%%0A%%23%%0D%%0A%%23%%09Description%%3A+Physical+invariant+for+a+violin%%0D%%0A%%23%%0D%%0A%%23%%09Necessary+variables%%0D%%0A%%23%%0D%%0A%%23%%09%%09T+%%3A+tension+of+the+string%%0D%%0A%%23%%0D%%0A%%23%%09%%09L+%%3A+length+of+string+between+finger+and+bridge%%0D%%0A%%23%%0D%%0A%%23%%09%%09%%26%%23956%%3B+%%3A+mass+per+unit+length+of+the+string%%0D%%0A%%23%%0D%%0A%%23%%09%%09f+%%3A+fundamental+frequency+of+the+%%28shortened%%29+string%%0D%%0A%%23%%0D%%0A%%0D%%0Ainclude+%%22NewtonBaseSignals.nt%%22%%0D%%0A%%0D%%0Amu+%%3A+constant+%%3D+0.000078+*+kg+%%2F+m%%3B%%0D%%0A%%0D%%0AOscillatingString%%3A+invariant%%28t%%3A+force%%2C+L%%3A+distance%%2C+f%%3A+frequency%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%09f+**+2+%%7E+%%28t+%%2F+mu%%29+%%2F+%%284+*+L+**+2%%29%%0D%%0A%%7D%%0D%%0A&w=980&s=0&o=0&t=0&b=Compile\">[Violin Example]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
+	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23%%09Authored+2018%%2C+Phillip+Stanley-Marbell.%%0D%%0A%%23%%0D%%0A%%23%%09All+rights+reserved.%%0D%%0A%%23%%0D%%0A%%23%%09Redistribution+and+use+in+source+and+binary+forms%%2C+with+or+without%%0D%%0A%%23%%09modification%%2C+are+permitted+provided+that+the+following+conditions%%0D%%0A%%23%%09are+met%%3A%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+of+source+code+must+retain+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+in+binary+form+must+reproduce+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer+in+the+documentation+and%%2For+other+materials%%0D%%0A%%23%%09%%09provided+with+the+distribution.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Neither+the+name+of+the+author+nor+the+names+of+its%%0D%%0A%%23%%09%%09contributors+may+be+used+to+endorse+or+promote+products%%0D%%0A%%23%%09%%09derived+from+this+software+without+specific+prior+written%%0D%%0A%%23%%09%%09permission.%%0D%%0A%%23%%0D%%0A%%23%%09THIS+SOFTWARE+IS+PROVIDED+BY+THE+COPYRIGHT+HOLDERS+AND+CONTRIBUTORS%%0D%%0A%%23%%09%%22AS+IS%%22+AND+ANY+EXPRESS+OR+IMPLIED+WARRANTIES%%2C+INCLUDING%%2C+BUT+NOT%%0D%%0A%%23%%09LIMITED+TO%%2C+THE+IMPLIED+WARRANTIES+OF+MERCHANTABILITY+AND+FITNESS%%0D%%0A%%23%%09FOR+A+PARTICULAR+PURPOSE+ARE+DISCLAIMED.+IN+NO+EVENT+SHALL+THE%%0D%%0A%%23%%09COPYRIGHT+OWNER+OR+CONTRIBUTORS+BE+LIABLE+FOR+ANY+DIRECT%%2C+INDIRECT%%2C%%0D%%0A%%23%%09INCIDENTAL%%2C+SPECIAL%%2C+EXEMPLARY%%2C+OR+CONSEQUENTIAL+DAMAGES+%%28INCLUDING%%2C%%0D%%0A%%23%%09BUT+NOT+LIMITED+TO%%2C+PROCUREMENT+OF+SUBSTITUTE+GOODS+OR+SERVICES%%3B%%0D%%0A%%23%%09LOSS+OF+USE%%2C+DATA%%2C+OR+PROFITS%%3B+OR+BUSINESS+INTERRUPTION%%29+HOWEVER%%0D%%0A%%23%%09CAUSED+AND+ON+ANY+THEORY+OF+LIABILITY%%2C+WHETHER+IN+CONTRACT%%2C+STRICT%%0D%%0A%%23%%09LIABILITY%%2C+OR+TORT+%%28INCLUDING+NEGLIGENCE+OR+OTHERWISE%%29+ARISING+IN%%0D%%0A%%23%%09ANY+WAY+OUT+OF+THE+USE+OF+THIS+SOFTWARE%%2C+EVEN+IF+ADVISED+OF+THE%%0D%%0A%%23%%09POSSIBILITY+OF+SUCH+DAMAGE.%%0D%%0A%%23%%0D%%0A%%23%%0D%%0A%%23%%09Description%%3A%%09Empty+invariant+for+auto-generating+synthetic+invariants%%0D%%0A%%23%%09%%09%%09for+first+example+from+the+original+Buckingham+paper.%%0D%%0A%%23%%0D%%0A%%23%%09Parameters%%0D%%0A%%23%%0D%%0A%%23%%09%%09F%%09%%3A%%0D%%0A%%23%%09%%09rho%%09%%3A%%0D%%0A%%23%%09%%09D%%09%%3A%%0D%%0A%%23%%09%%09S%%09%%3A%%0D%%0A%%23%%09%%09n%%09%%3A%%0D%%0A%%23%%09%%09mu%%09%%3A%%0D%%0A%%23%%09%%09g%%09%%3A%%0D%%0A%%23%%0D%%0A%%0D%%0Ainclude+%%22NewtonBaseSignals.nt%%22%%0D%%0A%%0D%%0AnDimension%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+1%%2Ftime%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0AmuDimension%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+mass+%%2F+%%28distance*time%%29%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0ABuckinghamPaperFirstExampleForPiGroups%%3A+invariant%%28%%09F_param%%3A%%09force%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09%%09rho_param%%3A%%09density%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09%%09D_param%%3A%%09distance%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09%%09S_param%%3A%%09speed%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09%%09n_param%%3A%%09nDimension%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09%%09mu_param%%3A%%09muDimension%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09%%09g_param%%3A%%09acceleration%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%7D&w=980&s=4&o=3&t=0&b=Compile\">[Example from Buckingham 1914]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
 	printf("&nbsp;&nbsp;\n");
-	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23%%09Authored+2017%%2C+Jonathan+Lim.%%0D%%0A%%23%%0D%%0A%%23%%09All+rights+reserved.%%0D%%0A%%23%%0D%%0A%%23%%09Redistribution+and+use+in+source+and+binary+forms%%2C+with+or+without%%0D%%0A%%23%%09modification%%2C+are+permitted+provided+that+the+following+conditions%%0D%%0A%%23%%09are+met%%3A%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+of+source+code+must+retain+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+in+binary+form+must+reproduce+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer+in+the+documentation+and%%2For+other+materials%%0D%%0A%%23%%09%%09provided+with+the+distribution.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Neither+the+name+of+the+author+nor+the+names+of+its%%0D%%0A%%23%%09%%09contributors+may+be+used+to+endorse+or+promote+products%%0D%%0A%%23%%09%%09derived+from+this+software+without+specific+prior+written%%0D%%0A%%23%%09%%09permission.%%0D%%0A%%23%%0D%%0A%%23%%09THIS+SOFTWARE+IS+PROVIDED+BY+THE+COPYRIGHT+HOLDERS+AND+CONTRIBUTORS%%0D%%0A%%23%%09%%22AS+IS%%22+AND+ANY+EXPRESS+OR+IMPLIED+WARRANTIES%%2C+INCLUDING%%2C+BUT+NOT%%0D%%0A%%23%%09LIMITED+TO%%2C+THE+IMPLIED+WARRANTIES+OF+MERCHANTABILITY+AND+FITNESS%%0D%%0A%%23%%09FOR+A+PARTICULAR+PURPOSE+ARE+DISCLAIMED.+IN+NO+EVENT+SHALL+THE%%0D%%0A%%23%%09COPYRIGHT+OWNER+OR+CONTRIBUTORS+BE+LIABLE+FOR+ANY+DIRECT%%2C+INDIRECT%%2C%%0D%%0A%%23%%09INCIDENTAL%%2C+SPECIAL%%2C+EXEMPLARY%%2C+OR+CONSEQUENTIAL+DAMAGES+%%28INCLUDING%%2C%%0D%%0A%%23%%09BUT+NOT+LIMITED+TO%%2C+PROCUREMENT+OF+SUBSTITUTE+GOODS+OR+SERVICES%%3B%%0D%%0A%%23%%09LOSS+OF+USE%%2C+DATA%%2C+OR+PROFITS%%3B+OR+BUSINESS+INTERRUPTION%%29+HOWEVER%%0D%%0A%%23%%09CAUSED+AND+ON+ANY+THEORY+OF+LIABILITY%%2C+WHETHER+IN+CONTRACT%%2C+STRICT%%0D%%0A%%23%%09LIABILITY%%2C+OR+TORT+%%28INCLUDING+NEGLIGENCE+OR+OTHERWISE%%29+ARISING+IN%%0D%%0A%%23%%09ANY+WAY+OUT+OF+THE+USE+OF+THIS+SOFTWARE%%2C+EVEN+IF+ADVISED+OF+THE%%0D%%0A%%23%%09POSSIBILITY+OF+SUCH+DAMAGE.%%0D%%0A%%23%%0D%%0A%%23%%0D%%0A%%23%%09Description%%3A+Invariants+for+a+simple+pendulum.%%0D%%0A%%23%%0D%%0A%%0D%%0Ainclude+%%22NewtonBaseSignals.nt%%22%%0D%%0A%%0D%%0ASimplePendulum+%%3A+invariant%%28L%%3A+distance%%400%%2C+period%%3A+time%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%09L+%%3E%%3D+2.2+*+meter%%2C%%0D%%0A%%09L+%%3C%%3D++10+*+meter%%2C%%0D%%0A%%09L+%%40%%3C+5+*+meter%%2C%%0D%%0A%%09period+%%7E+%%284+*+kNewtonUnitfree_pi+*+kNewtonUnitfree_pi+*+L+%%2F+kNewtonUnithave_AccelerationDueToGravity%%29+**+3%%2C%%0D%%0A%%09period+%%3E%%3D+3+*+second%%2C%%0D%%0A%%09period+%%3C%%3D+9+*+second%%0D%%0A%%7D%%0D%%0A&w=980&s=0&o=0&t=0&b=Compile\">[Simple Pendulum Example]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
+	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23%%09Authored+2018%%2C+Phillip+Stanley-Marbell.%%0D%%0A%%23%%0D%%0A%%23%%09All+rights+reserved.%%0D%%0A%%23%%0D%%0A%%23%%09Redistribution+and+use+in+source+and+binary+forms%%2C+with+or+without%%0D%%0A%%23%%09modification%%2C+are+permitted+provided+that+the+following+conditions%%0D%%0A%%23%%09are+met%%3A%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+of+source+code+must+retain+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+in+binary+form+must+reproduce+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer+in+the+documentation+and%%2For+other+materials%%0D%%0A%%23%%09%%09provided+with+the+distribution.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Neither+the+name+of+the+author+nor+the+names+of+its%%0D%%0A%%23%%09%%09contributors+may+be+used+to+endorse+or+promote+products%%0D%%0A%%23%%09%%09derived+from+this+software+without+specific+prior+written%%0D%%0A%%23%%09%%09permission.%%0D%%0A%%23%%0D%%0A%%23%%09THIS+SOFTWARE+IS+PROVIDED+BY+THE+COPYRIGHT+HOLDERS+AND+CONTRIBUTORS%%0D%%0A%%23%%09%%22AS+IS%%22+AND+ANY+EXPRESS+OR+IMPLIED+WARRANTIES%%2C+INCLUDING%%2C+BUT+NOT%%0D%%0A%%23%%09LIMITED+TO%%2C+THE+IMPLIED+WARRANTIES+OF+MERCHANTABILITY+AND+FITNESS%%0D%%0A%%23%%09FOR+A+PARTICULAR+PURPOSE+ARE+DISCLAIMED.+IN+NO+EVENT+SHALL+THE%%0D%%0A%%23%%09COPYRIGHT+OWNER+OR+CONTRIBUTORS+BE+LIABLE+FOR+ANY+DIRECT%%2C+INDIRECT%%2C%%0D%%0A%%23%%09INCIDENTAL%%2C+SPECIAL%%2C+EXEMPLARY%%2C+OR+CONSEQUENTIAL+DAMAGES+%%28INCLUDING%%2C%%0D%%0A%%23%%09BUT+NOT+LIMITED+TO%%2C+PROCUREMENT+OF+SUBSTITUTE+GOODS+OR+SERVICES%%3B%%0D%%0A%%23%%09LOSS+OF+USE%%2C+DATA%%2C+OR+PROFITS%%3B+OR+BUSINESS+INTERRUPTION%%29+HOWEVER%%0D%%0A%%23%%09CAUSED+AND+ON+ANY+THEORY+OF+LIABILITY%%2C+WHETHER+IN+CONTRACT%%2C+STRICT%%0D%%0A%%23%%09LIABILITY%%2C+OR+TORT+%%28INCLUDING+NEGLIGENCE+OR+OTHERWISE%%29+ARISING+IN%%0D%%0A%%23%%09ANY+WAY+OUT+OF+THE+USE+OF+THIS+SOFTWARE%%2C+EVEN+IF+ADVISED+OF+THE%%0D%%0A%%23%%09POSSIBILITY+OF+SUCH+DAMAGE.%%0D%%0A%%23%%0D%%0A%%23%%0D%%0A%%23%%09Description%%3A%%09Empty+invariant+for+auto-generating+synthetic+invariants%%0D%%0A%%23%%09%%09%%09for+a+pipe+with+dynamic+viscosity.%%0D%%0A%%23%%0D%%0A%%23%%09Parameters%%0D%%0A%%23%%0D%%0A%%23%%09%%09gradP%%09%%3A%%0D%%0A%%23%%09%%09v%%09%%3A%%0D%%0A%%23%%09%%09D%%09%%3A%%0D%%0A%%23%%09%%09e%%09%%3A%%0D%%0A%%23%%09%%09mu%%09%%3A%%0D%%0A%%23%%09%%09rho%%09%%3A%%0D%%0A%%23%%0D%%0A%%0D%%0Ainclude+%%22NewtonBaseSignals.nt%%22%%0D%%0A%%0D%%0AgradPdimension%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+mass%%2F%%28%%28time**2%%29*%%28distance**2%%29%%29%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0AmuDimension%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+mass%%2F%%28distance*time%%29%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0APipeWithDynamicViscosityForPiGroups%%3A+invariant%%28%%09gradP_param%%3A+gradPdimension%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09v_param%%3A+speed%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09D_param%%3A+distance%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09e_param%%3A+distance%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09mu_param%%3A+muDimension%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09rho_param%%3A+density%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%7D&w=980&s=4&o=3&t=0&b=Compile\">[Pipe, Dynamic Viscosity]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
 	printf("&nbsp;&nbsp;\n");
-	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23%%09Authored+2017%%2C+Jonathan+Lim.%%0D%%0A%%23%%0D%%0A%%23%%09All+rights+reserved.%%0D%%0A%%23%%0D%%0A%%23%%09Redistribution+and+use+in+source+and+binary+forms%%2C+with+or+without%%0D%%0A%%23%%09modification%%2C+are+permitted+provided+that+the+following+conditions%%0D%%0A%%23%%09are+met%%3A%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+of+source+code+must+retain+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+in+binary+form+must+reproduce+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer+in+the+documentation+and%%2For+other+materials%%0D%%0A%%23%%09%%09provided+with+the+distribution.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Neither+the+name+of+the+author+nor+the+names+of+its%%0D%%0A%%23%%09%%09contributors+may+be+used+to+endorse+or+promote+products%%0D%%0A%%23%%09%%09derived+from+this+software+without+specific+prior+written%%0D%%0A%%23%%09%%09permission.%%0D%%0A%%23%%0D%%0A%%23%%09THIS+SOFTWARE+IS+PROVIDED+BY+THE+COPYRIGHT+HOLDERS+AND+CONTRIBUTORS%%0D%%0A%%23%%09%%22AS+IS%%22+AND+ANY+EXPRESS+OR+IMPLIED+WARRANTIES%%2C+INCLUDING%%2C+BUT+NOT%%0D%%0A%%23%%09LIMITED+TO%%2C+THE+IMPLIED+WARRANTIES+OF+MERCHANTABILITY+AND+FITNESS%%0D%%0A%%23%%09FOR+A+PARTICULAR+PURPOSE+ARE+DISCLAIMED.+IN+NO+EVENT+SHALL+THE%%0D%%0A%%23%%09COPYRIGHT+OWNER+OR+CONTRIBUTORS+BE+LIABLE+FOR+ANY+DIRECT%%2C+INDIRECT%%2C%%0D%%0A%%23%%09INCIDENTAL%%2C+SPECIAL%%2C+EXEMPLARY%%2C+OR+CONSEQUENTIAL+DAMAGES+%%28INCLUDING%%2C%%0D%%0A%%23%%09BUT+NOT+LIMITED+TO%%2C+PROCUREMENT+OF+SUBSTITUTE+GOODS+OR+SERVICES%%3B%%0D%%0A%%23%%09LOSS+OF+USE%%2C+DATA%%2C+OR+PROFITS%%3B+OR+BUSINESS+INTERRUPTION%%29+HOWEVER%%0D%%0A%%23%%09CAUSED+AND+ON+ANY+THEORY+OF+LIABILITY%%2C+WHETHER+IN+CONTRACT%%2C+STRICT%%0D%%0A%%23%%09LIABILITY%%2C+OR+TORT+%%28INCLUDING+NEGLIGENCE+OR+OTHERWISE%%29+ARISING+IN%%0D%%0A%%23%%09ANY+WAY+OUT+OF+THE+USE+OF+THIS+SOFTWARE%%2C+EVEN+IF+ADVISED+OF+THE%%0D%%0A%%23%%09POSSIBILITY+OF+SUCH+DAMAGE.%%0D%%0A%%23%%0D%%0A%%23%%09Description%%3A+Invariants+for+an+instrumented+jet+engine.%%0D%%0A%%23%%0D%%0A%%0D%%0Ainclude+%%22NewtonBaseSignals.nt%%22%%0D%%0A%%0D%%0AmassFlowRate%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation%%09%%3D+mass+%%2F+time%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0ASamplingTime%%3A+constant+%%3D+%%285E-3%%29+*+s%%3B%%0D%%0A%%0D%%0AMooreGreitzerJetEngineModel%%3A+invariant%%28%%0D%%0A%%09x%%3A+massFlowRate%%2C%%0D%%0A%%09y%%3A+pressure%%0D%%0A%%29+%%3D+%%0D%%0A%%7B%%0D%%0A%%09x+*+kg+**+2+*+s+**+4%%09%%3E%%09-y+*+kg+**+3+*+s+**+3+%%2F+Pa+-+1.5+*+%%28x+*+SamplingTime%%29+**+2+*+kg+*+s+**+3++-+0.5+*+%%28x+*+SamplingTime%%29+**+3+*+s+**+3+-+0.5+*+kg+**+3+*+s+**+3%%2C%%0D%%0A%%09y+%%2F+SamplingTime+*+kg%%09%%7E%%093+*+x+*+Pa+-+y+*+kg+%%2F+s+%%0D%%0A%%7D%%0D%%0A&w=980&s=0&o=0&t=0&b=Compile\">[Jet Engine]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
+	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23%%09Authored+2018%%2C+Phillip+Stanley-Marbell.%%0D%%0A%%23%%0D%%0A%%23%%09All+rights+reserved.%%0D%%0A%%23%%0D%%0A%%23%%09Redistribution+and+use+in+source+and+binary+forms%%2C+with+or+without%%0D%%0A%%23%%09modification%%2C+are+permitted+provided+that+the+following+conditions%%0D%%0A%%23%%09are+met%%3A%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+of+source+code+must+retain+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+in+binary+form+must+reproduce+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer+in+the+documentation+and%%2For+other+materials%%0D%%0A%%23%%09%%09provided+with+the+distribution.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Neither+the+name+of+the+author+nor+the+names+of+its%%0D%%0A%%23%%09%%09contributors+may+be+used+to+endorse+or+promote+products%%0D%%0A%%23%%09%%09derived+from+this+software+without+specific+prior+written%%0D%%0A%%23%%09%%09permission.%%0D%%0A%%23%%0D%%0A%%23%%09THIS+SOFTWARE+IS+PROVIDED+BY+THE+COPYRIGHT+HOLDERS+AND+CONTRIBUTORS%%0D%%0A%%23%%09%%22AS+IS%%22+AND+ANY+EXPRESS+OR+IMPLIED+WARRANTIES%%2C+INCLUDING%%2C+BUT+NOT%%0D%%0A%%23%%09LIMITED+TO%%2C+THE+IMPLIED+WARRANTIES+OF+MERCHANTABILITY+AND+FITNESS%%0D%%0A%%23%%09FOR+A+PARTICULAR+PURPOSE+ARE+DISCLAIMED.+IN+NO+EVENT+SHALL+THE%%0D%%0A%%23%%09COPYRIGHT+OWNER+OR+CONTRIBUTORS+BE+LIABLE+FOR+ANY+DIRECT%%2C+INDIRECT%%2C%%0D%%0A%%23%%09INCIDENTAL%%2C+SPECIAL%%2C+EXEMPLARY%%2C+OR+CONSEQUENTIAL+DAMAGES+%%28INCLUDING%%2C%%0D%%0A%%23%%09BUT+NOT+LIMITED+TO%%2C+PROCUREMENT+OF+SUBSTITUTE+GOODS+OR+SERVICES%%3B%%0D%%0A%%23%%09LOSS+OF+USE%%2C+DATA%%2C+OR+PROFITS%%3B+OR+BUSINESS+INTERRUPTION%%29+HOWEVER%%0D%%0A%%23%%09CAUSED+AND+ON+ANY+THEORY+OF+LIABILITY%%2C+WHETHER+IN+CONTRACT%%2C+STRICT%%0D%%0A%%23%%09LIABILITY%%2C+OR+TORT+%%28INCLUDING+NEGLIGENCE+OR+OTHERWISE%%29+ARISING+IN%%0D%%0A%%23%%09ANY+WAY+OUT+OF+THE+USE+OF+THIS+SOFTWARE%%2C+EVEN+IF+ADVISED+OF+THE%%0D%%0A%%23%%09POSSIBILITY+OF+SUCH+DAMAGE.%%0D%%0A%%23%%0D%%0A%%23%%0D%%0A%%23%%09Description%%3A%%09Empty+invariant+for+auto-generating+synthetic+invariants%%0D%%0A%%23%%09%%09%%09for+a+pipe+with+kinematic+viscosity.%%0D%%0A%%23%%0D%%0A%%23%%09Parameters%%0D%%0A%%23%%0D%%0A%%23%%09%%09gradP%%09%%3A%%0D%%0A%%23%%09%%09v%%09%%3A%%0D%%0A%%23%%09%%09D%%09%%3A%%0D%%0A%%23%%09%%09e%%09%%3A%%0D%%0A%%23%%09%%09nu%%09%%3A%%0D%%0A%%23%%09%%09rho%%09%%3A%%0D%%0A%%23%%0D%%0A%%0D%%0Ainclude+%%22NewtonBaseSignals.nt%%22%%0D%%0A%%0D%%0AgradPdimension%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+mass%%2F%%28%%28time**2%%29*%%28distance**2%%29%%29%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0AnuDimension%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+%%28distance**2%%29%%2Ftime%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0APipeWithKinematicViscosityForPiGroups%%3A+invariant%%28%%09gradP_param%%3A+gradPdimension%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09%%09v_param%%3A+speed%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09%%09D_param%%3A+distance%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09%%09e_param%%3A+distance%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09%%09nu_param%%3A+nuDimension%%2C%%0D%%0A%%09%%09%%09%%09%%09%%09%%09rho_param%%3A+density%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%7D&w=980&s=4&o=3&t=0&b=Compile\">[Pipe, Kinematic Viscosity]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
 	printf("&nbsp;&nbsp;\n");
-	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23%%09Authored+2018%%2C+Phillip+Stanley-Marbell.%%0D%%0A%%23%%0D%%0A%%23%%09All+rights+reserved.%%0D%%0A%%23%%0D%%0A%%23%%09Redistribution+and+use+in+source+and+binary+forms%%2C+with+or+without%%0D%%0A%%23%%09modification%%2C+are+permitted+provided+that+the+following+conditions%%0D%%0A%%23%%09are+met%%3A%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+of+source+code+must+retain+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+in+binary+form+must+reproduce+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer+in+the+documentation+and%%2For+other+materials%%0D%%0A%%23%%09%%09provided+with+the+distribution.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Neither+the+name+of+the+author+nor+the+names+of+its%%0D%%0A%%23%%09%%09contributors+may+be+used+to+endorse+or+promote+products%%0D%%0A%%23%%09%%09derived+from+this+software+without+specific+prior+written%%0D%%0A%%23%%09%%09permission.%%0D%%0A%%23%%0D%%0A%%23%%09THIS+SOFTWARE+IS+PROVIDED+BY+THE+COPYRIGHT+HOLDERS+AND+CONTRIBUTORS%%0D%%0A%%23%%09%%22AS+IS%%22+AND+ANY+EXPRESS+OR+IMPLIED+WARRANTIES%%2C+INCLUDING%%2C+BUT+NOT%%0D%%0A%%23%%09LIMITED+TO%%2C+THE+IMPLIED+WARRANTIES+OF+MERCHANTABILITY+AND+FITNESS%%0D%%0A%%23%%09FOR+A+PARTICULAR+PURPOSE+ARE+DISCLAIMED.+IN+NO+EVENT+SHALL+THE%%0D%%0A%%23%%09COPYRIGHT+OWNER+OR+CONTRIBUTORS+BE+LIABLE+FOR+ANY+DIRECT%%2C+INDIRECT%%2C%%0D%%0A%%23%%09INCIDENTAL%%2C+SPECIAL%%2C+EXEMPLARY%%2C+OR+CONSEQUENTIAL+DAMAGES+%%28INCLUDING%%2C%%0D%%0A%%23%%09BUT+NOT+LIMITED+TO%%2C+PROCUREMENT+OF+SUBSTITUTE+GOODS+OR+SERVICES%%3B%%0D%%0A%%23%%09LOSS+OF+USE%%2C+DATA%%2C+OR+PROFITS%%3B+OR+BUSINESS+INTERRUPTION%%29+HOWEVER%%0D%%0A%%23%%09CAUSED+AND+ON+ANY+THEORY+OF+LIABILITY%%2C+WHETHER+IN+CONTRACT%%2C+STRICT%%0D%%0A%%23%%09LIABILITY%%2C+OR+TORT+%%28INCLUDING+NEGLIGENCE+OR+OTHERWISE%%29+ARISING+IN%%0D%%0A%%23%%09ANY+WAY+OUT+OF+THE+USE+OF+THIS+SOFTWARE%%2C+EVEN+IF+ADVISED+OF+THE%%0D%%0A%%23%%09POSSIBILITY+OF+SUCH+DAMAGE.%%0D%%0A%%23%%0D%%0A%%23%%0D%%0A%%23%%09Description%%3A%%09Empty+invariant+for+auto-generating+synthetic+invariants%%0D%%0A%%23%%09%%09%%09for+a+beam.%%0D%%0A%%23%%0D%%0A%%23%%09Parameters%%0D%%0A%%23%%0D%%0A%%23%%09%%09P+%%3A%%0D%%0A%%23%%09%%09L+%%3A%%0D%%0A%%23%%09%%09I+%%3A%%0D%%0A%%23%%09%%09E+%%3A%%0D%%0A%%23%%0D%%0A%%0D%%0Ainclude+%%22NewtonBaseSignals.nt%%22%%0D%%0A%%0D%%0AiDimension+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+distance**4%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0AeDimension+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+mass*%%28distance**-1%%29*%%28time**-2%%29%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0ABeamForPiGroups%%3A+invariant%%28%%09P_param%%3A+force%%2C%%0D%%0A%%09%%09%%09%%09L_param%%3A+distance%%2C%%0D%%0A%%09%%09%%09%%09I_param%%3A+iDimension%%2C%%0D%%0A%%09%%09%%09%%09E_param%%3A+eDimension%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%7D&w=980&s=0&o=0&t=0&b=Compile\">[Beam with auto-generated invariants]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
+	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23%%09Authored+2018%%2C+Phillip+Stanley-Marbell.%%0D%%0A%%23%%0D%%0A%%23%%09All+rights+reserved.%%0D%%0A%%23%%0D%%0A%%23%%09Redistribution+and+use+in+source+and+binary+forms%%2C+with+or+without%%0D%%0A%%23%%09modification%%2C+are+permitted+provided+that+the+following+conditions%%0D%%0A%%23%%09are+met%%3A%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+of+source+code+must+retain+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+in+binary+form+must+reproduce+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer+in+the+documentation+and%%2For+other+materials%%0D%%0A%%23%%09%%09provided+with+the+distribution.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Neither+the+name+of+the+author+nor+the+names+of+its%%0D%%0A%%23%%09%%09contributors+may+be+used+to+endorse+or+promote+products%%0D%%0A%%23%%09%%09derived+from+this+software+without+specific+prior+written%%0D%%0A%%23%%09%%09permission.%%0D%%0A%%23%%0D%%0A%%23%%09THIS+SOFTWARE+IS+PROVIDED+BY+THE+COPYRIGHT+HOLDERS+AND+CONTRIBUTORS%%0D%%0A%%23%%09%%22AS+IS%%22+AND+ANY+EXPRESS+OR+IMPLIED+WARRANTIES%%2C+INCLUDING%%2C+BUT+NOT%%0D%%0A%%23%%09LIMITED+TO%%2C+THE+IMPLIED+WARRANTIES+OF+MERCHANTABILITY+AND+FITNESS%%0D%%0A%%23%%09FOR+A+PARTICULAR+PURPOSE+ARE+DISCLAIMED.+IN+NO+EVENT+SHALL+THE%%0D%%0A%%23%%09COPYRIGHT+OWNER+OR+CONTRIBUTORS+BE+LIABLE+FOR+ANY+DIRECT%%2C+INDIRECT%%2C%%0D%%0A%%23%%09INCIDENTAL%%2C+SPECIAL%%2C+EXEMPLARY%%2C+OR+CONSEQUENTIAL+DAMAGES+%%28INCLUDING%%2C%%0D%%0A%%23%%09BUT+NOT+LIMITED+TO%%2C+PROCUREMENT+OF+SUBSTITUTE+GOODS+OR+SERVICES%%3B%%0D%%0A%%23%%09LOSS+OF+USE%%2C+DATA%%2C+OR+PROFITS%%3B+OR+BUSINESS+INTERRUPTION%%29+HOWEVER%%0D%%0A%%23%%09CAUSED+AND+ON+ANY+THEORY+OF+LIABILITY%%2C+WHETHER+IN+CONTRACT%%2C+STRICT%%0D%%0A%%23%%09LIABILITY%%2C+OR+TORT+%%28INCLUDING+NEGLIGENCE+OR+OTHERWISE%%29+ARISING+IN%%0D%%0A%%23%%09ANY+WAY+OUT+OF+THE+USE+OF+THIS+SOFTWARE%%2C+EVEN+IF+ADVISED+OF+THE%%0D%%0A%%23%%09POSSIBILITY+OF+SUCH+DAMAGE.%%0D%%0A%%23%%0D%%0A%%23%%0D%%0A%%23%%09Description%%3A%%09Empty+invariant+for+auto-generating+synthetic+invariants%%0D%%0A%%23%%09%%09%%09for+a+violin+string.%%0D%%0A%%23%%0D%%0A%%23%%09Parameters%%0D%%0A%%23%%0D%%0A%%23%%09%%09T%%09%%3A%%0D%%0A%%23%%09%%09L%%09%%3A%%0D%%0A%%23%%09%%09%%B5%%09%%3A%%0D%%0A%%23%%09%%09f%%09%%3A%%0D%%0A%%23%%0D%%0A%%0D%%0Ainclude+%%22NewtonBaseSignals.nt%%22%%0D%%0A%%0D%%0AmuDimension+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+mass%%2Fdistance%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0AViolinForPiGroups%%3A+invariant%%28%%0D%%0A%%09%%09%%09%%09T_param%%3A%%09force%%2C%%0D%%0A%%09%%09%%09%%09L_param%%3A%%09distance%%2C%%0D%%0A%%09%%09%%09%%09mu_param%%3A%%09muDimension%%2C%%0D%%0A%%09%%09%%09%%09f_param%%3A%%09frequency%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%7D&w=980&s=4&o=3&t=0&b=Compile\">[Violin]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
 	printf("&nbsp;&nbsp;\n");
+	printf("<a href=\"%s-%s?c=%%23%%0D%%0A%%23%%09Authored+2018%%2C+Phillip+Stanley-Marbell.%%0D%%0A%%23%%0D%%0A%%23%%09All+rights+reserved.%%0D%%0A%%23%%0D%%0A%%23%%09Redistribution+and+use+in+source+and+binary+forms%%2C+with+or+without%%0D%%0A%%23%%09modification%%2C+are+permitted+provided+that+the+following+conditions%%0D%%0A%%23%%09are+met%%3A%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+of+source+code+must+retain+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Redistributions+in+binary+form+must+reproduce+the+above%%0D%%0A%%23%%09%%09copyright+notice%%2C+this+list+of+conditions+and+the+following%%0D%%0A%%23%%09%%09disclaimer+in+the+documentation+and%%2For+other+materials%%0D%%0A%%23%%09%%09provided+with+the+distribution.%%0D%%0A%%23%%0D%%0A%%23%%09*%%09Neither+the+name+of+the+author+nor+the+names+of+its%%0D%%0A%%23%%09%%09contributors+may+be+used+to+endorse+or+promote+products%%0D%%0A%%23%%09%%09derived+from+this+software+without+specific+prior+written%%0D%%0A%%23%%09%%09permission.%%0D%%0A%%23%%0D%%0A%%23%%09THIS+SOFTWARE+IS+PROVIDED+BY+THE+COPYRIGHT+HOLDERS+AND+CONTRIBUTORS%%0D%%0A%%23%%09%%22AS+IS%%22+AND+ANY+EXPRESS+OR+IMPLIED+WARRANTIES%%2C+INCLUDING%%2C+BUT+NOT%%0D%%0A%%23%%09LIMITED+TO%%2C+THE+IMPLIED+WARRANTIES+OF+MERCHANTABILITY+AND+FITNESS%%0D%%0A%%23%%09FOR+A+PARTICULAR+PURPOSE+ARE+DISCLAIMED.+IN+NO+EVENT+SHALL+THE%%0D%%0A%%23%%09COPYRIGHT+OWNER+OR+CONTRIBUTORS+BE+LIABLE+FOR+ANY+DIRECT%%2C+INDIRECT%%2C%%0D%%0A%%23%%09INCIDENTAL%%2C+SPECIAL%%2C+EXEMPLARY%%2C+OR+CONSEQUENTIAL+DAMAGES+%%28INCLUDING%%2C%%0D%%0A%%23%%09BUT+NOT+LIMITED+TO%%2C+PROCUREMENT+OF+SUBSTITUTE+GOODS+OR+SERVICES%%3B%%0D%%0A%%23%%09LOSS+OF+USE%%2C+DATA%%2C+OR+PROFITS%%3B+OR+BUSINESS+INTERRUPTION%%29+HOWEVER%%0D%%0A%%23%%09CAUSED+AND+ON+ANY+THEORY+OF+LIABILITY%%2C+WHETHER+IN+CONTRACT%%2C+STRICT%%0D%%0A%%23%%09LIABILITY%%2C+OR+TORT+%%28INCLUDING+NEGLIGENCE+OR+OTHERWISE%%29+ARISING+IN%%0D%%0A%%23%%09ANY+WAY+OUT+OF+THE+USE+OF+THIS+SOFTWARE%%2C+EVEN+IF+ADVISED+OF+THE%%0D%%0A%%23%%09POSSIBILITY+OF+SUCH+DAMAGE.%%0D%%0A%%23%%0D%%0A%%23%%0D%%0A%%23%%09Description%%3A%%09Empty+invariant+for+auto-generating+synthetic+invariants%%0D%%0A%%23%%09%%09%%09for+a+violin+string+with+temperature+dependence%%0D%%0A%%23%%0D%%0A%%23%%09Parameters%%0D%%0A%%23%%0D%%0A%%23%%09%%09T%%09%%3A%%0D%%0A%%23%%09%%09L%%09%%3A%%0D%%0A%%23%%09%%09%%B5%%09%%3A%%0D%%0A%%23%%09%%09f%%09%%3A%%0D%%0A%%23%%09%%09rho%%09%%3A%%0D%%0A%%23%%09%%09theta%%09%%3A%%0D%%0A%%23%%0D%%0A%%0D%%0Ainclude+%%22NewtonBaseSignals.nt%%22%%0D%%0A%%0D%%0AmuDimension+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+mass%%2Fdistance%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0ArhoDimension+%%3A+signal+%%3D%%0D%%0A%%7B%%0D%%0A%%09derivation+%%3D+distance%%2Ftemperature%%3B%%0D%%0A%%7D%%0D%%0A%%0D%%0AViolinForPiGroups%%3A+invariant%%28%%0D%%0A%%09%%09%%09%%09T_param%%3A%%09force%%2C%%0D%%0A%%09%%09%%09%%09L_param%%3A%%09distance%%2C%%0D%%0A%%09%%09%%09%%09mu_param%%3A%%09muDimension%%2C%%0D%%0A%%09%%09%%09%%09f_param%%3A%%09frequency%%2C%%0D%%0A%%09%%09%%09%%09rho_param%%3A%%09rhoDimension%%2C%%0D%%0A%%09%%09%%09%%09theta_param%%3A%%09temperature%%0D%%0A%%09%%09%%09%%09%%29+%%3D%%0D%%0A%%7B%%0D%%0A%%7D&w=980&s=4&o=3&t=0&b=Compile\">[Violin with Temperature Dependence]</a>\n", kNewtonCgiExecutableUrl, kNewtonL10N);
 	printf("</td>\n");
 
-	printf("<td valign=top; align=right>\n");
-	printf("<table border=0>\n");
-	printf("<tr><td><a href=\"http://physcomp.eng.cam.ac.uk\"><img src=\"%s\" width=120 align=\"right\"></a></td></tr>\n", kPhyscomplabLogoPath);
-	printf("</table>\n");
+	printf("<td align=left; valign=top>\n");
+	printf("<a href=\"http://physcomp.eng.cam.ac.uk\"><img src=\"%s\" width=120 align=\"top\"></a>\n", kPhyscomplabLogoPath);
 	printf("</td>\n");
 	
 	printf("</tr>\n");

@@ -8,7 +8,7 @@ assignees: phillipstanleymarbell
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+A clear and concise description of what the bug is. **Include a name of the source file in which you believe the bug resides.**
 
 **To Reproduce**
 Steps to reproduce the behavior:
@@ -27,7 +27,7 @@ If applicable, add screenshots to help explain your problem.
  - Version (e.g., 22).
 
 **You local changes (please complete the following information):**
- - Output of `git diff`.
+- Output of `git diff`.
 - Output of `git remote -v`.
 
 **Additional context**

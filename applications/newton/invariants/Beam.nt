@@ -52,11 +52,11 @@
 
 include "NewtonBaseSignals.nt"
 
-E : constant = 1900000 * N * m **-2;
-w : constant = 0.005 * m;
-h : constant = 0.05 * m;
-I : constant = 1/12 * w * h ** 3 * m ** 4;
-L : constant = 5 * m; 
+E : constant = 1900000 (N * m **-2);
+w : constant = 0.005 m;
+h : constant = 0.05 m;
+I : constant = (1/12) (w * h ** 3 * m ** 4);
+L : constant = 5 m; 
 
 #
 #	Dimensional Matrix:

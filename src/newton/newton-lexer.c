@@ -42,6 +42,7 @@
 #include <setjmp.h>
 #include <string.h>
 #include <stdint.h>
+#include <ctype.h>
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
@@ -62,15 +63,18 @@ static void		checkComment(State *  N);
 static void		checkSingle(State *  N, IrNodeType tokenType);
 static void		checkDoubleQuote(State *  N, bool callFinishTokenFlag);
 static void		finishToken(State *  N);
+static void		checkEqual(State *  N);
 static void		checkGt(State *  N);
 static void		checkLt(State *  N);
 static void		checkMul(State * N);
 static bool		checkProportionality(State * N);
 static void		checkDot(State *  N);
+static void		checkPlusMinus(State *  N, IrNodeType plusOrMinusTokenType);
 static void		makeNumericConst(State *  N);
 static bool		isOperatorOrSeparator(State *  N, char c);
 static void		newtonLex(State *  N, char *  fileName);
 
+bool			gMakeNextTokenNegative = false;
 
 
 void
@@ -115,7 +119,7 @@ newtonLexInit(State *  N, char *  fileName)
 									eofSourceInfo	/* sourceInfo	*/);
 	lexPut(N, eofToken);
 
-	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
+	if (N->verbosityLevel & kCommonVerbosityDebugLexer)
 	{
 		Token *	p = N->tokenList;
 		while (p != NULL)
@@ -149,25 +153,13 @@ newtonLex(State *  N, char *  fileName)
 				switch (cur(N))
 				{
 					/*
-					 *	These tokens may be paired with an equals sign or with another char (e.g., "::"),
-					 *	but otherwise do not require additional special handling as in the case of ".".
-					 *
-					 *	We process the chars seen so far as a finished token, then handle the following chars.
-					 */
-
-					/*
 					 *	These tokens only occur alone.
 					 *
 					 *	We process the chars see so far as a finished token, then handle the following chars.
 					 */
 					case '~':
 					{
-						checkSingle(N, kNewtonIrNodeType_Tequivalent);
-						continue;
-					}
-					case '=':
-					{
-						checkSingle(N, kNewtonIrNodeType_Tequals);
+						checkSingle(N, kNewtonIrNodeType_TdimensionallyMatchingProportional);
 						continue;
 					}
 					case '(':
@@ -192,19 +184,25 @@ newtonLex(State *  N, char *  fileName)
 						checkSingle(N, kNewtonIrNodeType_TrightBrace);
 						continue;
 					}
-					case '+':
+					case '[':
 					{
-						checkSingle(N, kNewtonIrNodeType_Tplus);
+						checkSingle(N, kNewtonIrNodeType_TleftBracket);
 						continue;
 					}
-					case '-':
+
+					case ']':
 					{
-						checkSingle(N, kNewtonIrNodeType_Tminus);
+						checkSingle(N, kNewtonIrNodeType_TrightBracket);
 						continue;
 					}
-					case '*':
+					case '|':
 					{
-						checkMul(N);
+						checkSingle(N, kNewtonIrNodeType_TbitwiseOr);
+						continue;
+					}
+					case '%':
+					{
+						checkSingle(N, kNewtonIrNodeType_Tpercent);
 						continue;
 					}
 					case '/':
@@ -228,7 +226,11 @@ newtonLex(State *  N, char *  fileName)
 						checkSingle(N, kNewtonIrNodeType_Tcolon);
 						continue;
 					}
-
+					case '@':
+					{
+						checkSingle(N, kNewtonIrNodeType_TatSign);
+						continue;
+					}
 					case '.':
 					{
 						checkDot(N);
@@ -239,10 +241,41 @@ newtonLex(State *  N, char *  fileName)
 					 *	These tokens require special handling beyond being paired with an equals,
 					 *	being part of a number, or doubled-up (e.g., ">>", etc.).
 					 */
-					case '@':
+					case '+':
 					{
-						checkProportionality(N);
+						checkPlusMinus(N, kNewtonIrNodeType_Tplus);
 						continue;
+					}
+					case '-':
+					{
+						checkPlusMinus(N, kNewtonIrNodeType_Tminus);
+						continue;
+					}
+					case '*':
+					{
+						checkMul(N);
+						continue;
+					}
+					case '=':
+					{
+						checkEqual(N);
+						continue;
+					}
+					case 'o':
+					{
+						/*
+						 *	'o' is the only character that is sometimes sticky (with ' ' before it and with '<' after)
+						 *	and sometimes not. If the 'o' is not followed immediately by a '<', checkProportionality()
+						 *	returns false and we want to do here what we are otherwise skipping over by doing 'continue'.
+						 */
+						if (checkProportionality(N))
+						{
+							continue;
+						}
+						else
+						{
+							break;
+						}
 					}
 					case '>':
 					{
@@ -262,7 +295,7 @@ newtonLex(State *  N, char *  fileName)
 					case '#':
 					{
 						checkComment(N);
-						
+
 						/*
 						 *	Set columnNumber to lineLength so we stop chomping on this line
 						 */
@@ -340,7 +373,7 @@ checkSingle(State *  N, IrNodeType tokenType)
 
 	gobble(N, 1);
 
-	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
+	if (N->verbosityLevel & kCommonVerbosityDebugLexer)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "checkSingle(), tokenType = %d\n", tokenType);
 	}
@@ -396,9 +429,9 @@ checkDoubleQuote(State *  N, bool callFinishTokenFlag)
 		N->columnNumber++;
 
 		/*
-		 *	NOTE: N->currentToken is pre-allocated to be kNoisyMaxBufferLength characters long.
+		 *	NOTE: N->currentToken is pre-allocated to be kCommonMaxBufferLength characters long.
 		 */
-		while ((cur(N) != '"') && N->currentTokenLength < (kNoisyMaxBufferLength - 1) && (N->columnNumber < N->lineLength))
+		while ((cur(N) != '"') && N->currentTokenLength < (kCommonMaxBufferLength - 1) && (N->columnNumber < N->lineLength))
 		{
 			checkTokenLength(N, 1);
 			N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
@@ -439,7 +472,7 @@ checkDoubleQuote(State *  N, bool callFinishTokenFlag)
 static void
 finishToken(State *  N)
 {
-	if (N->verbosityLevel & kNoisyVerbosityDebugLexer)
+	if (N->verbosityLevel & kCommonVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
 		//fprintf(stderr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
@@ -472,7 +505,7 @@ finishToken(State *  N)
 			 *	to zero and bzero's the N->currentToken buffer), we need to do
 			 *	this manually.
 			 */
-			bzero(N->currentToken, kNoisyMaxBufferLength);
+			bzero(N->currentToken, kCommonMaxBufferLength);
 			N->currentTokenLength = 0;
 
 			char *	newFileName = strdup(N->lastToken->stringConst);
@@ -539,6 +572,7 @@ finishToken(State *  N)
 	if (N->currentToken[0] >= '0' && N->currentToken[0] <= '9')
 	{
 		makeNumericConst(N);
+
 		return;
 	}
 
@@ -563,6 +597,14 @@ finishToken(State *  N)
 static void
 makeNumericConst(State *  N)
 {
+	int	sign = 1;
+
+	if (gMakeNextTokenNegative)
+	{
+		gMakeNextTokenNegative = false;
+		sign = -1;
+	}
+
 	if (N->currentTokenLength == 0)
 	{
 		fatal(N, EruntTokenInNumericConst);
@@ -583,7 +625,7 @@ makeNumericConst(State *  N)
 	{
 		if (N->currentTokenLength == 1)
 		{
-			Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_TnumericConst	/* type		*/,
+			Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_TintegerConst	/* type		*/,
 										NULL	/* identifier	*/,
 										0	/* integerConst	*/,
 										0.0	/* realConst	*/,
@@ -623,10 +665,10 @@ makeNumericConst(State *  N)
 	 */
 	if (isEngineeringRealConst(N, N->currentToken))
 	{
-		Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_TnumericConst /* type		*/,
+		Token *	newToken = lexAllocateToken(N,	kNewtonIrNodeType_TrealConst /* type		*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
-									stringToEngineeringRealConst(N, N->currentToken) /* realConst	*/,
+									sign * stringToEngineeringRealConst(N, N->currentToken) /* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
 
@@ -643,10 +685,10 @@ makeNumericConst(State *  N)
 	 */
 	if (isRealConst(N, N->currentToken))
 	{
-		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TnumericConst	 /* type	*/,
+		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TrealConst	 /* type	*/,
 									NULL				/* identifier	*/,
 									0				/* integerConst	*/,
-									stringToRealConst(N, N->currentToken)	/* realConst	*/,
+									sign * stringToRealConst(N, N->currentToken)	/* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
 
@@ -663,9 +705,9 @@ makeNumericConst(State *  N)
 	 */
 	if (isRadixConst(N, N->currentToken))
 	{
-		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TnumericConst	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TintegerConst	/* type		*/,
 									NULL				/* identifier	*/,
-									stringToRadixConst(N, N->currentToken)	/* integerConst	*/,
+									sign * stringToRadixConst(N, N->currentToken)	/* integerConst	*/,
 									0				/* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
@@ -706,9 +748,9 @@ makeNumericConst(State *  N)
 	uint64_t 	decimalValue = strtoul(N->currentToken, &ep, 0);
 	if (*ep == '\0')
 	{
-		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TnumericConst	/* type		*/,
+		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TintegerConst	/* type		*/,
 									NULL				/* identifier	*/,
-									decimalValue			/* integerConst	*/,
+									sign * decimalValue			/* integerConst	*/,
 									0				/* realConst	*/,
 									NULL				/* stringConst	*/,
 									NULL				/* sourceInfo	*/);
@@ -735,7 +777,12 @@ checkGt(State *  N)
 	 */
 	finishToken(N);
 
-	if (eqf(N))
+	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '<')
+	{
+		gobble(N, 2);
+		type = kNewtonIrNodeType_Tmutualinf;
+	}
+	else if (eqf(N))
 	{
 		gobble(N, 2);
 		type = kNewtonIrNodeType_Tge;
@@ -770,7 +817,12 @@ checkLt(State *  N)
 	 */
 	finishToken(N);
 
-	if (eqf(N))
+	if (N->lineLength >= 3 && N->lineBuffer[N->columnNumber+1] == '-' && N->lineBuffer[N->columnNumber+2] == '>')
+	{
+		gobble(N, 3);
+		type = kNewtonIrNodeType_Trelated;
+	}
+	else if (eqf(N))
 	{
 		gobble(N, 2);
 		type = kNewtonIrNodeType_Tle;
@@ -794,8 +846,8 @@ checkLt(State *  N)
 	done(N, newToken);
 }
 
-static bool 
-checkProportionality(State * N)
+static void
+checkEqual(State *  N)
 {
 	IrNodeType		type;
 
@@ -804,15 +856,15 @@ checkProportionality(State * N)
 	 */
 	finishToken(N);
 
-	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '<')
+	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '=')
 	{
 		gobble(N, 2);
-		type = kNewtonIrNodeType_Tproportional;
+		type = kNewtonIrNodeType_Tequals;
 	}
 	else
 	{
 		gobble(N, 1);
-		type = kNewtonIrNodeType_TatSign;
+		type = kNewtonIrNodeType_Tassign;
 	}
 
 	Token *		newToken = lexAllocateToken(N,			type	/* type		*/,
@@ -826,8 +878,93 @@ checkProportionality(State * N)
 	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
 	 */
 	done(N, newToken);
+}
 
-    return true;
+static bool 
+checkProportionality(State * N)
+{
+	IrNodeType		type;
+
+
+	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '<')
+	{
+		/*
+		 *	Gobble any extant chars.
+		 */
+		finishToken(N);
+
+		gobble(N, 2);
+		type = kNewtonIrNodeType_TdimensionallyAgnosticProportional;
+
+		Token *		newToken = lexAllocateToken(N,		type	/* type		*/,
+									NULL	/* identifier	*/,
+									0	/* integerConst	*/,
+									0.0	/* realConst	*/,
+									NULL	/* stringConst	*/,
+									NULL	/* sourceInfo	*/);
+
+		/*
+		 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+		 */
+		done(N, newToken);
+
+		return true;
+	}
+
+	return false;
+}
+
+static void
+checkPlusMinus(State *  N, IrNodeType plusOrMinusTokenType)
+{
+	/*
+	 *	If the previous two characters were a number and 'e' or 'E', keep eating chars until the first non-number.
+	 */
+	if ((N->lineLength > 2) && isdigit(N->lineBuffer[N->columnNumber-2]) && ((N->lineBuffer[N->columnNumber-1] == 'e') || (N->lineBuffer[N->columnNumber-1] == 'E')))
+	{
+		/*
+		 *	Consume the '+' or '-':
+		 */
+		N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
+
+		while (isdigit(N->lineBuffer[N->columnNumber]))
+		{
+			N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
+		}
+
+		N->columnNumber++; finishToken(N);
+
+		return;
+	}
+
+	/*
+	 *	If the next character is not a number, then simply do checkSingle.
+	 *	Otherwise, create a positive or negative numeric constant.
+	 */
+	if (N->lineLength >= 2 && (N->lineBuffer[N->columnNumber+1] < '0' || N->lineBuffer[N->columnNumber+1] > '9'))
+	{
+		checkSingle(N, plusOrMinusTokenType);
+
+		return;
+	}
+
+	/*
+	 *	Next character is the beginning of a number. Invoke makeNumericConst()
+	 *	with a positive or negative signedness.
+	 */
+	gMakeNextTokenNegative = (plusOrMinusTokenType == kNewtonIrNodeType_Tminus ? true : false);
+
+	/*
+	 *	Next, gobble up the +/- and finish the extant token as though the +/- were
+	 *	whitespace (don't call done() to allocate a Token on the tokenstream).
+	 */
+	N->columnNumber++; finishToken(N);
+
+	/*
+	 *	We are now at the beginning of a numeric constant. The next 'sticky' we see
+	 *	will trigger gobbling. Set global flag to make the next gobbled token negative.
+	 */
+	gMakeNextTokenNegative = true;
 }
 
 static void
@@ -843,7 +980,7 @@ checkMul(State *  N)
 	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '*')
 	{
 		gobble(N, 2);
-		type = kNewtonIrNodeType_Texponent;
+		type = kNewtonIrNodeType_Texponentiation;
 	}
 	else
 	{
@@ -924,14 +1061,18 @@ isOperatorOrSeparator(State *  N, char c)
 		case '"':
 		case '{':
 		case '}':
+		case '[':
+		case ']':
 		case '|':
 		case ',':
 		case '.':
 		case ' ':
+		case '%':
 		case '\n':
 		case '\r':
 		case '\t':
 		case '#':
+		case 'o':
 		{
 			return true;
 		}

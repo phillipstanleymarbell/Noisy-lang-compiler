@@ -1,7 +1,7 @@
 # Noisy and Newton
 Noisy is a programming language for talking to sensors. Newton is a specification language for describing physics. Noisy is descended from the [M programming language](http://www.gemusehaken.org/people/pip/papers/pmup06.pdf) [Stanley-Marbell and Marculescu, 2006] which is in turn descended from the [Limbo programming language](https://en.wikipedia.org/wiki/Limbo_(programming_language)) [Dorward, Pike, Trickey, 1994], and the [Alef programming language](https://en.wikipedia.org/wiki/Alef_(programming_language)) [Winterbottom, 1992].
 
-Newton was originally intended to be a configuration language for the Noisy compiler. The first implementation of Newton based on the Noisy code base, and the API for interfacing to the Newton intermediate representation, was the focus of the [M.Eng. thesis of Jonatham Lim](https://dspace.mit.edu/bitstream/handle/1721.1/119591/1066741153-MIT.pdf?sequence=1). A  [short ArXiv paper](https://arxiv.org/abs/1811.04626) summarizes the concepts in Newton. Newton has evolved into a self-contained foundation for research investigating automated dimensional analysis of physical system descriptions, automated analysis for differential privacy in sensors, and automated generation of physics-constrained function approximation, among other things.
+Newton is a language for specifying assertions (invariants) about physical systems. Newton was originally intended to be a configuration language for the Noisy compiler to encapsulate information about temporally-invariant physical properties of the hardware on which a Noisy program executes. The first implementation of Newton based on the Noisy code base, and the API for interfacing to the Newton intermediate representation, was the focus of the [M.Eng. thesis of Jonatham Lim](https://dspace.mit.edu/bitstream/handle/1721.1/119591/1066741153-MIT.pdf?sequence=1). A  [short ArXiv paper](https://arxiv.org/abs/1811.04626) summarizes the concepts in Newton. Newton has evolved into a self-contained foundation for research investigating automated dimensional analysis of physical system descriptions, automated analysis for differential privacy in sensors, and automated generation of physics-constrained function approximation, among other things. In contrast to Newton which is designed for specifying physical assertions/invariants, alternatives such as [Modelica](https://modelica.org) allow you to imperatively model the dynamics of physical systems. 
 
 Because the Newton compiler started out as a modification of the Noisy compiler implementation to test out ideas, the implementation of Newton borrows/shares many components from the Noisy compiler and is therefore distributed with it.
 - - - -
@@ -59,13 +59,15 @@ for Gnu/Linux and `darwin` for macOS.
 3.	Build Libflex by going to the directory you cloned for Libflex and 
 running `make`. The Makefile assumes the environment variables `OSTYPE`
 and `MACHTYPE` are set. If that is not the case, you will need to 
-explicitly do:
+explicitly set them, for example on macOS:
 
+	```
 	make OSTYPE=darwin MACHTYPE=x86_64
+	```
 
 4.	Build the noisy compiler by running `make`. The makefile assumes the 
 environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the 
-case, you will need to explicitly do:
+case, you will need to explicitly set them, for example on macOS:
 
 	make OSTYPE=darwin MACHTYPE=x86_64
 

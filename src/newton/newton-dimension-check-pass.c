@@ -1,5 +1,5 @@
 /*
-	Authored 2017. Jonathan Lim. Modified 2018, Phillip Stanley-Marbell.
+	Authored 2017. Jonathan Lim.
 
 	All rights reserved.
 
@@ -61,6 +61,11 @@
 #include "common-firstAndFollow.h"
 #include "newton-dimension-check-pass.h"
 
+/*
+ *	I have long ago given up on cleaning this up and am slowly discarding all 
+ *	of JL's Newton API code. This file is only used from JL's "Newton API"
+ *	which I will no longer maintain --- PSM.
+ */
 
 extern int		gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
 extern char* gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
@@ -107,7 +112,7 @@ newtonDimensionCheckExpressionOrStatement(
     IrNode *    compareOp = findNthIrNodeOfTypes(
         N,
         tree,
-        kNewtonIrNodeType_PcompareOp,
+        kNewtonIrNodeType_PcomparisonOperator,
         gNewtonFirsts,
         compareOrAssignOpIndex
 		);
@@ -279,7 +284,7 @@ newtonDimensionCheckQuantityTerm(State * N, IrNode * termRoot, char * errorMessa
 	IrNode *    midBinOp = findNthIrNodeOfTypes(
 		N,
 		termRoot,
-		kNewtonIrNodeType_PmidPrecedenceBinaryOp,
+		kNewtonIrNodeType_PhighPrecedenceOperator,
 		gNewtonFirsts,
 		midBinOpIndex
 		);
@@ -328,7 +333,7 @@ newtonDimensionCheckQuantityTerm(State * N, IrNode * termRoot, char * errorMessa
 		midBinOp = findNthIrNodeOfTypes(
 			N,
 			termRoot,
-			kNewtonIrNodeType_PmidPrecedenceBinaryOp,
+			kNewtonIrNodeType_PhighPrecedenceOperator,
 			gNewtonFirsts,
 			midBinOpIndex
 			);
@@ -594,7 +599,7 @@ newtonDimensionCheckNumericTerm(
 	IrNode *    midBinOp = findNthIrNodeOfTypes(
 		N,
 		termRoot,
-		kNewtonIrNodeType_PmidPrecedenceBinaryOp,
+		kNewtonIrNodeType_PhighPrecedenceOperator,
 		gNewtonFirsts,
 		midBinOpIndex
 		);
@@ -657,7 +662,7 @@ newtonDimensionCheckNumericTerm(
 		midBinOp = findNthIrNodeOfTypes(
 			N,
 			termRoot,
-			kNewtonIrNodeType_PmidPrecedenceBinaryOp,
+			kNewtonIrNodeType_PhighPrecedenceOperator,
 			gNewtonFirsts,
 			midBinOpIndex
 			);
@@ -689,7 +694,7 @@ newtonDimensionCheckNumericFactor(
 		factor->physics = newtonInitPhysics(N, NULL, NULL);
 	}
 	assert(newtonIsDimensionless(factor->physics));
-	assert(factor->type == kNewtonIrNodeType_TnumericConst);
+	assert(factor->type == kNewtonIrNodeType_PnumericConst);
 
 	if (newtonDimensionTableDimensionForName(N, N->newtonIrTopScope, factor->tokenString) == NULL)
 	{

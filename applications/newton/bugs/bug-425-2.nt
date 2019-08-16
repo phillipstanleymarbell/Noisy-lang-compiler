@@ -1,0 +1,37 @@
+time : signal =
+{
+	name		= "second" English;
+	symbol		= s;
+	derivation	= none;
+}
+
+distance : signal =
+{
+	name		= "meter" English;
+	symbol		= m;
+	derivation	= none;
+}
+
+speed : signal =
+{
+	name		= "jiffy" English;
+	symbol		= jf;
+	derivation	= distance / time;
+}
+
+acceleration : signal =
+{
+	name		= "metajiffy" English;
+	symbol		= mjf;
+	derivation	= speed / time;
+}
+
+# foo: constant = 1 mjf;
+foo: constant = 1 ((m / s) / s);
+
+acc: invariant(
+    bar: acceleration,
+    baz: acceleration
+) = {
+    bar == foo + baz
+}
