@@ -55,6 +55,7 @@ SOURCES		=\
 		newton-irPass-dotBackend.c\
 		newton-irPass-smtBackend.c\
 		newton-irPass-cBackend.c\
+		newton-irPass-RTLBackend.c\
 		newton-irPass-dimensionalMatrixAnnotation.c\
 		newton-irPass-dimensionalMatrixPiGroups.c\
 		newton-irPass-dimensionalMatrixPrinter.c\
@@ -93,6 +94,7 @@ OBJS		=\
 		newton-timeStamps.$(OBJECTEXTENSION)\
 		newton-typeSignatures.$(OBJECTEXTENSION)\
 		newton-irPass-cBackend.$(OBJECTEXTENSION)\
+		newton-irPass-RTLBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
@@ -123,6 +125,7 @@ CGIOBJS		=\
 		newton-timeStamps.$(OBJECTEXTENSION)\
 		newton-typeSignatures.$(OBJECTEXTENSION)\
 		newton-irPass-cBackend.$(OBJECTEXTENSION)\
+		newton-irPass-RTLBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
@@ -152,6 +155,7 @@ LIBNEWTONOBJS =\
 		newton-types.$(OBJECTEXTENSION)\
 		newton-timeStamps.$(OBJECTEXTENSION)\
 		newton-irPass-cBackend.$(OBJECTEXTENSION)\
+		newton-irPass-RTLBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
@@ -179,6 +183,7 @@ HEADERS		=\
 		newton-types.h\
 		newton-timeStamps.h\
 		newton-irPass-cBackend.h\
+		newton-irPass-RTLBackend.h\
 		newton-irPass-dotBackend.h\
 		newton-irPass-smtBackend.h\
 		newton-irPass-dimensionalMatrixAnnotation.h\
@@ -194,7 +199,7 @@ HEADERS		=\
 		newton-check-pass.h\
 		newton-eigenLibraryInterface.h\
 
-all: installhooks version.c lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile target examples
+all: installhooks version.c lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile target #examples
 
 installhooks:
 	ln -fs ../../applications/newton/include/NewtonBaseSignals.nt .
