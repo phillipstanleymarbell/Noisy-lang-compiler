@@ -1,5 +1,6 @@
 /*
-	Authored 2019. Phillip Stanley-Marbell, Vlad-Mihai Mandric, Kiseki Hirakawa
+	Authored 2018. Phillip Stanley-Marbell, Vlad-Mihai Mandric
+	Modified 2019. Kiseki Hirakawa
 	All rights reserved.
 
 	Redistribution and use in source and binary forms, with or without
