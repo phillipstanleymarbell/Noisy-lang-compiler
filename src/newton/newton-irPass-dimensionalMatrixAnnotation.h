@@ -1,5 +1,6 @@
 /*
-	Authored 2019. Phillip Stanley-Marbell. Kiseki Hirakawa
+	Authored 2018. Phillip Stanley-Marbell. 
+	Modified 2019. Kiseki Hirakawa
 
 	All rights reserved.
 
