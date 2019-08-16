@@ -1,5 +1,5 @@
 /*
-    Authored 2015-2018, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim.
+    Authored 2015-2018, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim. Modified 2019. Kiseki Hirakawa
 
 	All rights reserved.
 
