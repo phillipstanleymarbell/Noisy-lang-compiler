@@ -1,7 +1,7 @@
 DIRS =\
 	src/common\
 	src/newton\
-	src/noisy\
+#	src/noisy\
 
 all: README.sloccount pre
 	@set -e; for dir in $(DIRS); do \
