@@ -1,5 +1,5 @@
 /*
-	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2019. Phillip Stanley-Marbell. Kiseki Hirakawa
 	Modified, 2016-2017, Jonathan Lim to add Newton hooks.
 
 	All rights reserved.
@@ -657,7 +657,8 @@ typedef enum
 	kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates	= (1 << 4),
 	kNewtonIrPassDimensionalMatrixKernelPrinter		= (1 << 5),
 	kNewtonIrPassDimensionalMatrixConvertToList		= (1 << 6),
-
+	kNewtonIrPassDimensionalMatrixAnnotationByBody          = (1 << 7),
+	kNewtonIrPassDimensionalMatrixKernelPrinterFromBody	= (1 << 8),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -682,13 +683,25 @@ typedef enum
 	kNewtonIrBackendProtobuf			= (1 << 1),
 	kNewtonIrBackendSmt				= (1 << 2),
 	kNewtonIrBackendC				= (1 << 3),
-	kNewtonIrBackendRTL				= (1 << 4),
 
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
 	kNewtonIrBackendMax,
 } NewtonIrBackends;
+
+
+
+typedef enum
+{
+	kNoisyIrBackendDot				= (1 << 0),
+	kNoisyIrBackendProtobuf				= (1 << 1),
+
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNoisyIrBackendMax,
+} NoisyIrBackends;
 
 
 
@@ -895,6 +908,11 @@ struct IrNode
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
 	 */
 	IrNodeColor		nodeColor;
+
+	/*
+		Used to keep track of whether the node was visited or not
+	 */
+	bool			isVisited;   			
 };
 
 
@@ -917,7 +935,7 @@ struct Token
 {
 	IrNodeType		type;
 	char *			identifier;
-	int64_t			integerConst;
+	uint64_t		integerConst;
 	double			realConst;
 	char *			stringConst;
 	SourceInfo *		sourceInfo;
@@ -1065,7 +1083,6 @@ typedef struct
 	FlexPrintBuf *		Fpinfo;
 	FlexPrintBuf *		Fpsmt2;
 	FlexPrintBuf *		Fpc;
-	FlexPrintBuf *		Fprtl;
 	FlexPrintBuf *		Fpmathjax;
 
 	/*
@@ -1115,7 +1132,6 @@ typedef struct
 	char *			outputFilePath;
 	char *			outputSmtFilePath;
 	char *			outputCFilePath;
-	char *			outputRTLFilePath;
 
 	NoisyMode		mode;
 	uint64_t		verbosityLevel;
