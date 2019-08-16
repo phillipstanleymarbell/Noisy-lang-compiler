@@ -102,11 +102,11 @@ main(int argc, char *argv[])
 			{"pikernelprinter",	no_argument,		0,	'P'},
 			{"pigrouptoast",	no_argument,		0,	'a'},
 			{"codegen",		required_argument,	0,	'g'},
-			{"RTLcodegen",		required_argument,		0,	'r'},
+			{"RTLcodegen",		required_argument,		0,	'l'},
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpcr:ePapg:", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpcl:rePapg:", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -323,7 +323,7 @@ main(int argc, char *argv[])
 				break;
 			}
 
-			case 'r':
+			case 'l':
 			{
 				N->irBackends |= kNewtonIrBackendRTL;
 				N->outputRTLFilePath = optarg;
