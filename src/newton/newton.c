@@ -1,6 +1,7 @@
 /*
 	Authored 2017. Jonathan Lim
 	Updated 2018. Phillip Stanley-Marbell, Youchao Wang
+	Updated 2019. Kiseki Hirakawa
 
 	All rights reserved.
 
@@ -127,6 +128,16 @@ processNewtonFile(State *  N, char *  filename)
 		}
 	}
 
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixAnnotationByBody)
+	{
+		irPassDimensionalMatrixAnnotationByBody(N);
+
+		if (N->verbosityLevel > 0)
+		{
+			irPassDimensionalMatrixPrinter(N);
+		}
+	}
+
 	if (N->irPasses & kNewtonIrPassDimensionalMatrixPiGroups)
 	{
 		irPassDimensionalMatrixPiGroups(N);
@@ -147,6 +158,10 @@ processNewtonFile(State *  N, char *  filename)
 	if (N->irPasses & kNewtonIrPassDimensionalMatrixKernelPrinter)
 	{
 		irPassDimensionalMatrixKernelPrinter(N);
+	}
+	if (N->irPasses & kNewtonIrPassDimensionalMatrixKernelPrinterFromBody)
+	{
+		irPassDimensionalMatrixKernelPrinterFromBodyWithNumOfConstant(N);
 	}
 	if (N->irPasses & kNewtonIrPassDimensionalMatrixConvertToList)
 	{

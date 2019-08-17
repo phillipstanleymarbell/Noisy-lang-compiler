@@ -1,6 +1,7 @@
 /*
 	Authored 2015. Phillip Stanley-Marbell.
 	Adapted for Newton in 2017 by Jonathan Lim.
+	Updated 2019. Kiseki Hirakawa
 
 	All rights reserved.
 
@@ -96,6 +97,7 @@ main(int argc, char *argv[])
 			{"optimize",		required_argument,	0,	'O'},
 			{"dmatrixannote",	no_argument,		0,	'm'},
 			{"pigroups",		no_argument,		0,	'p'},
+			{"pigroupsfrombody",		no_argument,	0,	'i'},
 			{"kernelrowcanon",	no_argument,		0,	'c'},
 			{"pigroupsort",		no_argument,		0,	'r'},
 			{"pigroupdedup",	no_argument,		0,	'e'},
@@ -107,7 +109,7 @@ main(int argc, char *argv[])
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpcl:rePapg:x", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpicl:rePapg:x", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -263,6 +265,17 @@ main(int argc, char *argv[])
 				break;
 			}
 
+			case 'P':
+			{
+				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelPrinter;
+				timestampsInit(N);
+
+				break;
+			}
+			
+
 			case 'c':
 			{
 				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
@@ -292,11 +305,11 @@ main(int argc, char *argv[])
 				break;
 			}
 
-			case 'P':
+			case 'i':
 			{
-				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotationByBody;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
-				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelPrinter;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelPrinterFromBody;
 
 				break;
 			}
@@ -428,6 +441,7 @@ usage(State *  N)
 						"                | (--optimize <level>, -O <level>)                           \n"
 						"                | (--dmatrixannote, -m)                                      \n"
 						"                | (--pigroups, -p)                                           \n"
+						"                | (--pigroupsfrombody, -i)                                   \n"
 						"                | (--kernelrowcanon, -c)                                     \n"
 						"                | (--pigroupsort, -r)                                        \n"
 						"                | (--pigroupdedup, -e)                                       \n"

@@ -27,15 +27,14 @@ cat src/newton/version.c >> $trackingDirectory/$statsFile
 cp applications/newton/include/NewtonBaseSignals.nt .
 echo '\n./src/noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s' >> $trackingDirectory/$statsFile
 ./src/noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s >> $trackingDirectory/$statsFile
-echo '\n./src/newton/newton-darwin-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt' >> $trackingDirectory/$statsFile
-./src/newton/newton-darwin-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt >> $trackingDirectory/$statsFile
-rm tmp.smt2
+echo '\n./src/newton/newton-darwin-EN -v 0 -eP applications/newton/invariants/ViolinWithTemperatureDependence-pigroups.nt' >> $trackingDirectory/$statsFile
+./src/newton/newton-darwin-EN -v 0 -eP applications/newton/invariants/ViolinWithTemperatureDependence-pigroups.nt >> $trackingDirectory/$statsFile
 rm NewtonBaseSignals.nt
 
-echo '\nsudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s"' >> $trackingDirectory/$statsFile
-sudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s" noisy/noisy-darwin-EN >> $trackingDirectory/$statsFile
+# echo '\nsudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s"' >> $trackingDirectory/$statsFile
+# sudo dtrace -qs $dtraceDirectory/fcalls.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s" noisy/noisy-darwin-EN >> $trackingDirectory/$statsFile
 
-echo '\nsudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s"' >> $trackingDirectory/$statsFile
-sudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s" >> $trackingDirectory/$statsFile
+# echo '\nsudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s"' >> $trackingDirectory/$statsFile
+# sudo dtrace -qs $dtraceDirectory/malloc.d -c "./noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s" >> $trackingDirectory/$statsFile
 
 cp $trackingDirectory/$statsFile $trackingDirectory/latest.txt
