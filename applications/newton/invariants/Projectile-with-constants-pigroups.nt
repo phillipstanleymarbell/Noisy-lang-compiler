@@ -1,5 +1,5 @@
 #
-#	Authored 2018, Phillip Stanley-Marbell.
+#	Authored 2019, Phillip Stanley-Marbell.
 #
 #	All rights reserved.
 #
@@ -36,37 +36,23 @@
 #
 #
 #	Description:	Empty invariant for auto-generating synthetic invariants
-#			for a violin string with temperature dependence
+#			for a projectile.
 #
 #	Parameters
 #
-#		T	:
-#		L	:
-#		µ	:
-#		f	:
-#		rho	:
-#		theta	:
+#		h :
+#		v :
+#		m :
+#		g :
 #
 
 include "NewtonBaseSignals.nt"
 
-muDimension : signal =
-{
-	derivation = mass/distance;
-}
+v0	: constant = 0 (meter*second**-1);
 
-rhoDimension : signal =
+ProjectileForPiGroups: invariant(	h_p: distance,
+					v_p: speed,
+					m_p: mass) =
 {
-	derivation = distance/temperature;
-}
-
-ViolinWithTemperatureDependenceForPiGroups: invariant(
-				T_param:	force,
-				L_param:	distance,
-				mu_param:	muDimension,
-				f_param:	frequency,
-				rho_param:	rhoDimension,
-				theta_param:	temperature
-				) =
-{
+	h_p ~ {v_p, m_p, v0, kNewtonUnithave_AccelerationDueToGravity}
 }

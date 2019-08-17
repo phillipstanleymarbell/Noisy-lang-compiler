@@ -4,7 +4,7 @@ include		$(TREEROOT)/config.local
 
 PRECOMMITHOOK	= precommitStatisticsHook-$(OSTYPE).sh 
 COMMONPATH	= ../common
-COMPILERVARIANT = clang
+COMPILERVARIANT = gcc	#clang
 
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 include		config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
@@ -12,7 +12,7 @@ include		config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 PLATFORM_CFLAGS	+= -Wno-gnu-designator
 MAKEFLAGS	+= #-j
 
-CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
+CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) -DVariant$(SYSNAME) $(PLATFORM_OPTFLAGS)
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
 
 LIBCOMMON	= Common
@@ -25,7 +25,7 @@ TARGET		= common-$(OSTYPE)-$(COMMON_L10N)
 CCFLAGS		+= -c -std=gnu99 -DkCommonL10N="\"$(COMMON_L10N)\"" -DCOMMON_L10N_EN
 
 WFLAGS		= -Wall -Werror
-INCDIRS		= -I../noisy -I. -I$(LIBFLEXPATH) 
+INCDIRS		= -I../noisy -I../newton -I. -I$(LIBFLEXPATH) 
 PROTOC		= protoc-c
 
 SOURCES		=\
@@ -86,19 +86,7 @@ HEADERS		=\
 
 
 
-all: installhooks lib$(LIBCOMMON)-$(OSTYPE)-$(COMMON_L10N).a $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile
-
-#
-#			Install the pre-commit hooks. There doesn't seem to be any other way to force people to install the hook when comitting on Noisy.
-#
-installhooks:
-	cp $(TREEROOT)/hooks/$(PRECOMMITHOOK) $(TREEROOT)/.git/hooks/pre-commit
-	cp $(TREEROOT)/hooks/commitMessageHook.sh $(TREEROOT)/.git/hooks/commit-msg
-	cp $(TREEROOT)/hooks/postcommitStatisticsHook.sh $(TREEROOT)/.git/hooks/post-commit
-	chmod +x $(TREEROOT)/.git/hooks/pre-commit
-	chmod +x $(TREEROOT)/.git/hooks/commit-msg
-	chmod +x $(TREEROOT)/.git/hooks/post-commit
-
+all: lib$(LIBCOMMON)-$(OSTYPE)-$(COMMON_L10N).a $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile
 
 #
 #			Libraries

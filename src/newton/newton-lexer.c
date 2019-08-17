@@ -80,6 +80,8 @@ bool			gMakeNextTokenNegative = false;
 void
 newtonLexInit(State *  N, char *  fileName)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	N->fileName 		= fileName;
 	N->columnNumber		= 1;
 	N->lineNumber		= 1;
@@ -133,6 +135,8 @@ newtonLexInit(State *  N, char *  fileName)
 static void
 newtonLex(State *  N, char *  fileName)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	size_t			lineBufferSize;
 
 	N->filePointer = fopen(fileName, "r");
@@ -350,6 +354,8 @@ newtonLex(State *  N, char *  fileName)
 static void
 checkComment(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	Gobble any extant chars
 	 */
@@ -366,6 +372,8 @@ checkComment(State *  N)
 static void
 checkSingle(State *  N, IrNodeType tokenType)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	Gobble any extant chars.
 	 */
@@ -395,6 +403,8 @@ checkSingle(State *  N, IrNodeType tokenType)
 static void
 checkDoubleQuote(State *  N, bool callFinishTokenFlag)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	TODO/BUG: we do not handle escaped double quotes in a strconst
 	 */
@@ -472,6 +482,8 @@ checkDoubleQuote(State *  N, bool callFinishTokenFlag)
 static void
 finishToken(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (N->verbosityLevel & kCommonVerbosityDebugLexer)
 	{
 		//flexprint(N->Fe, N->Fm, N->Fperr, "in finishToken(), N->currentToken = [%s]\n", N->currentToken);
@@ -597,6 +609,8 @@ finishToken(State *  N)
 static void
 makeNumericConst(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	int	sign = 1;
 
 	if (gMakeNextTokenNegative)
@@ -745,7 +759,7 @@ makeNumericConst(State *  N)
 	 */
 	char		tmp;
 	char *		ep = &tmp;
-	uint64_t 	decimalValue = strtoul(N->currentToken, &ep, 0);
+	int64_t 	decimalValue = strtol(N->currentToken, &ep, 0);
 	if (*ep == '\0')
 	{
 		Token *	newToken = lexAllocateToken(N,			kNewtonIrNodeType_TintegerConst	/* type		*/,
@@ -770,6 +784,8 @@ makeNumericConst(State *  N)
 static void
 checkGt(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNodeType		type;
 
 	/*
@@ -810,6 +826,8 @@ checkGt(State *  N)
 static void
 checkLt(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNodeType		type;
 
 	/*
@@ -849,6 +867,8 @@ checkLt(State *  N)
 static void
 checkEqual(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNodeType		type;
 
 	/*
@@ -883,6 +903,8 @@ checkEqual(State *  N)
 static bool 
 checkProportionality(State * N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNodeType		type;
 
 
@@ -917,6 +939,8 @@ checkProportionality(State * N)
 static void
 checkPlusMinus(State *  N, IrNodeType plusOrMinusTokenType)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	If the previous two characters were a number and 'e' or 'E', keep eating chars until the first non-number.
 	 */
@@ -970,6 +994,8 @@ checkPlusMinus(State *  N, IrNodeType plusOrMinusTokenType)
 static void
 checkMul(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNodeType		type;
 
 	/*
@@ -1004,6 +1030,8 @@ checkMul(State *  N)
 static void
 checkDot(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	If token thus far is	"0" | onenine {zeronine}	then
 	 *	don't gobble; continue building token.  However, something like
@@ -1040,6 +1068,8 @@ checkDot(State *  N)
 static bool
 isOperatorOrSeparator(State *  N, char c)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	Unlike in our Yacc-driven compielers, we don't use a "stickies" array
 	 */

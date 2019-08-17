@@ -43,7 +43,3 @@ dctIV	: probdef (N: indexType, x: array [N] of sampleType) -> (X: array [N] of s
 		)
 	)
 }
-
-dctIV	: function (N: indexType, x: sampleType) -> (X: sampleType) = 
-{
-}

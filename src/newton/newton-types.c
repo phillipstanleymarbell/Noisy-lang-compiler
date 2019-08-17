@@ -53,13 +53,15 @@
 #include "newton-types.h"
 
 
-extern const char	gNewtonTypeNodeSignatures[kNoisyIrNodeType_TMax];
-extern const char	gNewtonAstNodeStrings[kNoisyIrNodeType_TMax];
+extern const char	gNewtonTypeNodeSignatures[kCommonIrNodeTypeMax];
+extern const char	gNewtonAstNodeStrings[kCommonIrNodeTypeMax];
 
 
 IrNode *
 newtonTypeValidateIrSubtree(State *  N, IrNode *  subtree)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	return NULL;
 }
 
@@ -67,6 +69,8 @@ newtonTypeValidateIrSubtree(State *  N, IrNode *  subtree)
 bool
 newtonTypeEqualsSubtreeTypes(State *  N, IrNode *  subtreeA, IrNode *  subtreeB)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	return false;
 }
 
@@ -74,6 +78,8 @@ newtonTypeEqualsSubtreeTypes(State *  N, IrNode *  subtreeA, IrNode *  subtreeB)
 char *
 newtonTypeMakeTypeSignature(State *  N, IrNode *  subtree)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	char *	signature;
 	char *	leftSignature;
 	char *	rightSignature;
@@ -92,8 +98,8 @@ newtonTypeMakeTypeSignature(State *  N, IrNode *  subtree)
 	char s = gNewtonTypeNodeSignatures[subtree->type];
 	if (s == 0)
 	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "%s, node type is %d (%s)\n", EcannotFindTypeSignatureForNodeType, subtree->type, gNewtonAstNodeStrings[subtree->type]);
-		fatal(N, Esanity);
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s, node type is %d. Using default type signature character '?'\n", EcannotFindTypeSignatureForNodeType, subtree->type);
+		s = '?';
 	}
 
 	leftSignature	= newtonTypeMakeTypeSignature(N, subtree->irLeftChild);

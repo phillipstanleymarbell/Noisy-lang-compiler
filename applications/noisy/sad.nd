@@ -1,7 +1,7 @@
 sad : module (indexType: type, sadType: type, diffType: type, absDiffType: type)
 {
-	sad	: function (N: indexType, diff: array [N] of diffType) -> (sad: sadType);
-	abs	: function (in: diffType) -> (out: absDiffType);
+	sad	: probdef (N: indexType, diff: array [N] of diffType) -> (sad: sadType);
+	abs	: probdef (in: diffType) -> (out: absDiffType);
 
 	init	: function (arguments: list of string) -> (results: list of string);
 }
@@ -15,7 +15,7 @@ sad : module (indexType: type, sadType: type, diffType: type, absDiffType: type)
 #	"Language Definition for a Notation of Computational Problems",
 #	IBM Research Report rz 3828, IBM Research, 2012.
 #
-init : probdef (N: indexType, diff: array [N] of indexType) -> (sad: sadType) =>
+sad : probdef (N: indexType, diff: array [N] of indexType) -> (sad: sadType) =>
 {
 	n >= 0,
 	n <= N-1,
@@ -35,15 +35,4 @@ abs : function (in: diffType) -> (out: absDiffType) =
 	{
 		out = in;
 	}
-}
-
-#
-#	Algorithm implementation
-#
-sad : function (N: indexType, diff: array [N] of indexType) -> (sad: sadType) =
-{
-}
-
-init : function	(arguments: list of string) -> (results: list of string) =
-{
 }

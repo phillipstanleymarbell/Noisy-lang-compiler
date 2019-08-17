@@ -72,6 +72,8 @@ extern int			gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax];
 void
 newtonDimensionPassParse(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyDimensionPassParse);
+
 	newtonDimensionPassParseFile(N, currentScope);
 }
 
@@ -86,12 +88,14 @@ newtonDimensionPassParse(State *  N, Scope *  currentScope)
 void
 newtonDimensionPassParseFile(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyDimensionPassParseFile);
+
 	newtonDimensionPassParseStatementList(N, currentScope);
 
 	if (lexPeek(N, 1)->type != kNewtonIrNodeType_Zeof)
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Zeof, kNewtonIrNodeTypeMax, gNewtonFirsts);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_Zeof);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PnewtonDescription, kNewtonIrNodeTypeMax, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnewtonDescription);
 	}
 
 	/*
@@ -103,6 +107,8 @@ newtonDimensionPassParseFile(State *  N, Scope *  currentScope)
 void
 newtonDimensionPassParseStatementList(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyDimensionPassParseStatementList);
+
 	while (inFirst(N, kNewtonIrNodeType_Prule, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		newtonDimensionPassParseStatement(N, currentScope);
@@ -112,22 +118,16 @@ newtonDimensionPassParseStatementList(State *  N, Scope *  currentScope)
 void
 newtonDimensionPassParseStatement(State * N, Scope * currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyDimensionPassParseStatement);
+
 	/*
 	 *	Rules can be one of sensor, signal, invariant, or constant.
 	 *	Signal and invariant blocks end with a '}'. A constant
 	 *	definition on the other hand ends with a ';'. Because we
-	 *	can have nested braces in sensor descriptions, need to discard
+	 *	can have nested braces in sensor and invariant descriptions, need to discard
 	 *	tokens while tracking number of braces seen.
 	 */
-	if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tinvariant)
-	{
-		while (lexPeek(N, 1)->type != kNewtonIrNodeType_TrightBrace)
-		{
-			lexGet(N, gNewtonTokenDescriptions);
-		}
-		lexGet(N, gNewtonTokenDescriptions);
-	}
-	else if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tconstant)
+	if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tconstant)
 	{
 		while (lexPeek(N, 1)->type != kNewtonIrNodeType_Tsemicolon)
 		{
@@ -135,7 +135,7 @@ newtonDimensionPassParseStatement(State * N, Scope * currentScope)
 		}
 		lexGet(N, gNewtonTokenDescriptions);
 	}
-	else if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tsensor)
+	else if ((lexPeek(N, 3)->type == kNewtonIrNodeType_Tsensor) || (lexPeek(N, 3)->type == kNewtonIrNodeType_Tinvariant))
 	{
 		/*
 		 *	First, find the opening left brace and junk it:
@@ -179,6 +179,8 @@ newtonDimensionPassParseStatement(State * N, Scope * currentScope)
 void
 newtonDimensionPassParseSubindex(State * N, Scope * currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyDimensionPassParseSubindex);
+
 	newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
 	newtonParseNumericConst(N, currentScope);
@@ -189,6 +191,8 @@ newtonDimensionPassParseSubindex(State * N, Scope * currentScope)
 void
 newtonDimensionPassParseSubindexTuple(State * N, Scope * currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyDimensionPassParseSubindexTuple);
+
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
 	newtonDimensionPassParseSubindex(N, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
@@ -198,6 +202,8 @@ newtonDimensionPassParseSubindexTuple(State * N, Scope * currentScope)
 void
 newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyDimensionPassParseBaseSignal);
+
 	newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_Tsignal, currentScope);
@@ -292,6 +298,8 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 IrNode *
 newtonDimensionPassParseName(State * N, Scope * currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyDimensionPassParseName);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnameStatement,
 								NULL /* left child */,
 								NULL /* right child */,

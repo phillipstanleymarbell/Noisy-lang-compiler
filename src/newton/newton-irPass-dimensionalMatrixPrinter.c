@@ -64,6 +64,8 @@
 void
 irPassDimensionalMatrixPrinter(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Invariant *	invariant = N->invariantList;
 
 	while (invariant)

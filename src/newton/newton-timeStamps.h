@@ -44,6 +44,45 @@
 typedef enum
 {
 	/*
+	 *	Catchall default
+	 */
+	kNewtonTimeStampKey,
+
+	/*
+	 *	Dimension pre-scan
+	 */
+	kNewtonTimeStampKeyDimensionPassParse,
+	kNewtonTimeStampKeyDimensionPassParseFile,
+	kNewtonTimeStampKeyDimensionPassParseStatementList,
+	kNewtonTimeStampKeyDimensionPassParseStatement,
+	kNewtonTimeStampKeyDimensionPassParseSubindex,
+	kNewtonTimeStampKeyDimensionPassParseSubindexTuple,
+	kNewtonTimeStampKeyDimensionPassParseBaseSignal,
+	kNewtonTimeStampKeyDimensionPassParseName,
+
+	/*
+	 *	C backend
+	 */
+	kNewtonTimeStampKeyIrPassCIsExpectedTypePresentInRightChild,
+	kNewtonTimeStampKeyIrPassCIsConstraintHumanWritten,
+	kNewtonTimeStampKeyIrPassCNodeToStr,
+	kNewtonTimeStampKeyIrPassCSearchAndPrintNodeType,
+	kNewtonTimeStampKeyIrPassCCountRemainingParameters,
+	kNewtonTimeStampKeyIrPassCConstraintTreeWalk,
+	kNewtonTimeStampKeyIrPassCGenFunctionBody,
+	kNewtonTimeStampKeyIrPassCGenFunctionArgument,
+	kNewtonTimeStampKeyIrPassCGenFunctionName,
+	kNewtonTimeStampKeyIrPassCProcessInvariantList,
+	kNewtonTimeStampKeyIrPassCBackend,
+
+
+	/*
+	 *	Dimensional Matrix Kernel Printer
+	 */
+	kNewtonTimeStampKeyIrPassDimensionalMatrixKernelPrinter,
+
+
+	/*
 	 *	Parser global routines in newton-parser.c.
 	 */
 	kNewtonTimeStampKeyParse,
@@ -69,7 +108,12 @@ typedef enum
 	kNewtonTimeStampKeyParseIdentifierUsageTerminal,
 	kNewtonTimeStampKeyParseConstraint,
 	kNewtonTimeStampKeyParseIdentifierDefinitionTerminal,
-
+	kNewtonTimeStampKeyParseUnitExpression,
+	kNewtonTimeStampKeyParseUnitTerm,
+	kNewtonTimeStampKeySetPhysicsOfBaseNode,
+	kNewtonTimeStampKeyParseUnitFactor,
+	kNewtonTimeStampKeyParseUnit,
+	kNewtonTimeStampKeyParseQuantityExpression,
 
 	/*
 	 *	Parser local routines in newton-parser.c.
@@ -118,8 +162,6 @@ typedef enum
 	kNewtonTimeStampKeyPrintToFile,
 	kNewtonTimeStampKeyRenderDotInFile,
 	kNewtonTimeStampKeyCheckCgiCompletion,
-	kNewtonTimeStampKeyFatal,
-	kNewtonTimeStampKeyError,
 
 
 	/*
@@ -154,8 +196,5 @@ typedef enum
 	kNewtonTimeStampKeyUnknown,
 
 
-	/*
-	 *	Code depends on this being last. We eschew using Noisy/Newton prefix as common-timeStamps.h assumes either Noisy or Newton header will be in effect
-	 */
-	kCommonTimeStampKeyMax,
+#	include "common-timeStamps-keys.h"
 } TimeStampKey;

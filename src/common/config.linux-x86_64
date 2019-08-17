@@ -2,7 +2,7 @@ AR			= /usr/bin/ar
 RANLIB			= /usr/bin/ranlib
 HOSTNAME		= `hostname`
 HTMLBASEPATH		= /var/www/html/tmp/
-PLATFORM_DFLAGS		+= -DkPhyscomplabLogoPath="\"http://$(HOSTNAME)/tmp/orange-logo-full.png\"" -Dk$(SYSNAME)BasePath="\"$(HTMLBASEPATH)\"" -Dk$(SYSNAME)DotCommand="\"/opt/local/bin/dot\"" -Dk$(SYSNAME)LogoPath="\"http://$(HOSTNAME)/tmp/$(SYSNAME)-logo.png\"" -Dk$(SYSNAME)CgiFileUrlBase=\""http://$(HOSTNAME)/tmp/\"" -Dk$(SYSNAME)CgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/$(SYSNAMELOWER)cgi-linux\"" -Dk$(SYSNAME)CgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/$(SYSNAMELOWER)cgi-linux\""
+PLATFORM_DFLAGS		+= -DkPhyscomplabLogoPath="\"http://$(HOSTNAME)/tmp/orange-logo-full.png\"" -DkCommonBasePath="\"$(HTMLBASEPATH)\"" -DkCommonDotCommand="\"/opt/local/bin/dot\"" -Dk$(SYSNAME)LogoPath="\"http://$(HOSTNAME)/tmp/$(SYSNAME)-logo.png\"" -Dk$(SYSNAME)CgiFileUrlBase=\""http://$(HOSTNAME)/tmp/\"" -Dk$(SYSNAME)CgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/$(SYSNAMELOWER)cgi-linux\"" -Dk$(SYSNAME)CgiExecutableUrl="\"http://$(HOSTNAME)/cgi-bin/$(SYSNAMELOWER)cgi-linux\""
 PLATFORM_OPTFLAGS	= -O0
 PLATFORM_DBGFLAGS	+= -g
 PLATFORM_CFLAGS		+= -D$(SYSNAME)OsLinux

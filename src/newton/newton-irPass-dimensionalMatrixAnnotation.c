@@ -64,6 +64,8 @@
 void
 irPassDimensionalMatrixAnnotation(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Invariant *	invariant = N->invariantList;
 
 	while (invariant)

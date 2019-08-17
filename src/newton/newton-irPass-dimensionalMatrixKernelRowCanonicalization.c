@@ -63,6 +63,8 @@
 void
 irPassDimensionalMatrixKernelRowCanonicalization(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Invariant *	invariant = N->invariantList;
 
 	while (invariant)

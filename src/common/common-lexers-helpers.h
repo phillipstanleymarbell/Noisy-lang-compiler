@@ -58,7 +58,7 @@ SourceInfo *	lexAllocateSourceInfo(	State *  N, char **  genealogy,
 							char *  fileName, uint64_t lineNumber,
 							uint64_t columnNumber, uint64_t length);
 Token *		lexAllocateToken(	State *  N, IrNodeType type, 
-							char *  identifier, uint64_t integerConst,
+							char *  identifier, int64_t integerConst,
 							double realConst, char * stringConst,
 							SourceInfo *  sourceInfo);
 void		lexPut(State *  N, Token *  newToken);

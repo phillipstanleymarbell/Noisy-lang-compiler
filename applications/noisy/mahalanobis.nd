@@ -46,7 +46,3 @@ distance: probdef (N: indexType, x: array [N] of valueType, mu: array [N] of val
 		)
 	)
 }
-
-init : function	(arguments: list of string) -> (results: list of string) =
-{
-}

@@ -83,7 +83,7 @@
 #include "newton-irPass-dimensionalMatrixKernelPrinter.h"
 #include "newton-dimension-prescan.h"
 
-extern char *			gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
+extern char *			gNewtonAstNodeStrings[kCommonIrNodeTypeMax];
 
 static const char		kNewtonCgiInputLogStub[]	= "XXXXXXXXXX";
 static const char		kNewtonCgiInputLogExtension[]	= ".nt";
@@ -719,7 +719,6 @@ main(void)
 		{
 			irPassDimensionalMatrixPiGroups(newtonCgiState);
 		}
-
 		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixKernelRowCanonicalization)
 		{
 			irPassDimensionalMatrixKernelRowCanonicalization(newtonCgiState);

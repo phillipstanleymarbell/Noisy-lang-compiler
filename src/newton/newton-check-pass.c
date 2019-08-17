@@ -65,8 +65,8 @@
 #include "newton-check-pass.h"
 
 extern int		gNewtonFirsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax];
-extern char *    gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
-extern const char *     gNewtonTokenDescriptions[kNoisyIrNodeTypeMax];
+extern char *		gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
+extern const char *	gNewtonTokenDescriptions[kNoisyIrNodeTypeMax];
 
 void
 updateDestinationTrackerIndicesFromSource(Indices * dest, Indices * source)
@@ -99,25 +99,25 @@ addConstraintReportToNewtonAPIReport(NewtonAPIReport * newtonReport, ConstraintR
 
 void
 newtonCheckCompareOp(
-    State * N,
-    IrNode * leftExpression,
-    IrNode * rightExpression,
-    char * leftErrorMessage,
-    char * rightErrorMessage,
-    IrNodeType compareOpType,
-    ConstraintReport * report
+	State * N,
+	IrNode * leftExpression,
+	IrNode * rightExpression,
+	char * leftErrorMessage,
+	char * rightErrorMessage,
+	IrNodeType compareOpType,
+	ConstraintReport * report
 ) {
 
-  assert(gNewtonAstNodeStrings[leftExpression->type] != NULL);
-  assert(gNewtonAstNodeStrings[rightExpression->type] != NULL);
+	assert(gNewtonAstNodeStrings[leftExpression->type] != NULL);
+	assert(gNewtonAstNodeStrings[rightExpression->type] != NULL);
 
     switch(compareOpType)
     {
         case kNewtonIrNodeType_Tge:
             report->satisfiesValueConstraint = leftExpression->value >= rightExpression->value;
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
-				((newtonIsDimensionless(leftExpression->physics) &&
-			    newtonIsDimensionless(rightExpression->physics)) ||
+				((newtonIsDimensionless(N, leftExpression->physics) &&
+			    newtonIsDimensionless(N, rightExpression->physics)) ||
 				areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			{
@@ -140,8 +140,8 @@ newtonCheckCompareOp(
         case kNewtonIrNodeType_Tgt:
             report->satisfiesValueConstraint = leftExpression->value > rightExpression->value;
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
-			    ((newtonIsDimensionless(leftExpression->physics) &&
-				newtonIsDimensionless(rightExpression->physics)) ||
+			    ((newtonIsDimensionless(N, leftExpression->physics) &&
+				newtonIsDimensionless(N, rightExpression->physics)) ||
 			    areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			{
@@ -164,8 +164,8 @@ newtonCheckCompareOp(
         case kNewtonIrNodeType_Tle:
             report->satisfiesValueConstraint = leftExpression->value <= rightExpression->value;
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
-			    ((newtonIsDimensionless(leftExpression->physics) &&
-				newtonIsDimensionless(rightExpression->physics)) ||
+			    ((newtonIsDimensionless(N, leftExpression->physics) &&
+				newtonIsDimensionless(N, rightExpression->physics)) ||
 			    areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			{
@@ -188,8 +188,8 @@ newtonCheckCompareOp(
         case kNewtonIrNodeType_Tlt:
             report->satisfiesValueConstraint = leftExpression->value < rightExpression->value;
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
-			    ((newtonIsDimensionless(leftExpression->physics) &&
-				newtonIsDimensionless(rightExpression->physics)) ||
+			    ((newtonIsDimensionless(N, leftExpression->physics) &&
+				newtonIsDimensionless(N, rightExpression->physics)) ||
 			    areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			{
@@ -223,8 +223,8 @@ newtonCheckCompareOp(
              */
             report->satisfiesValueConstraint = leftExpression->value == rightExpression->value;
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
-			    ((newtonIsDimensionless(leftExpression->physics) &&
-				newtonIsDimensionless(rightExpression->physics)) ||
+			    ((newtonIsDimensionless(N, leftExpression->physics) &&
+				newtonIsDimensionless(N, rightExpression->physics)) ||
 			    areTwoPhysicsEquivalent(N, leftExpression->physics, rightExpression->physics));
             if (!report->satisfiesValueConstraint)
 			{
@@ -267,7 +267,7 @@ newtonCheckBinOp(
             parent->value += right->value;
 
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
-			    ((newtonIsDimensionless(left->physics) && newtonIsDimensionless(right->physics)) || \
+			    ((newtonIsDimensionless(N, left->physics) && newtonIsDimensionless(N, right->physics)) || \
 				(areTwoPhysicsEquivalent(N, left->physics, right->physics)));
             break;
 
@@ -275,7 +275,7 @@ newtonCheckBinOp(
             parent->value = left->value - right->value;
 
             report->satisfiesDimensionConstraint = report->satisfiesDimensionConstraint &&
-			    ((newtonIsDimensionless(left->physics) && newtonIsDimensionless(right->physics)) || \
+			    ((newtonIsDimensionless(N, left->physics) && newtonIsDimensionless(N, right->physics)) || \
 			    areTwoPhysicsEquivalent(N, left->physics, right->physics));
             break;
 
@@ -667,7 +667,7 @@ checkQuantityFactor(
 		updateDestinationTrackerIndicesFromSource(tracker, rightTracker);
 	}
     else if (
-		!newtonIsDimensionless(factor->physics) &&
+		!newtonIsDimensionless(N, factor->physics) &&
 		!factor->physics->isConstant &&
 		newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(N, N->newtonIrTopScope, factor->tokenString) == NULL &&
 		newtonPhysicsTablePhysicsForDimensionAlias(N, N->newtonIrTopScope, factor->tokenString) == NULL)

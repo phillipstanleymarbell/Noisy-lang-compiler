@@ -68,6 +68,8 @@ newtonIrPassConstantFolding(State *  N)
 static double
 applyOperator(State *  N, IrNodeType operator, double src1, double src2)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	switch(operator)
 	{
 		case kNewtonIrNodeType_Tplus:
@@ -135,6 +137,8 @@ applyOperator(State *  N, IrNodeType operator, double src1, double src2)
 double
 newtonIrPassConstantFoldingSubtreeEvaluate(State *  N, IrNode *  node)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (node->type == kNewtonIrNodeType_PnumericConst)
 	{
 		/*
