@@ -224,7 +224,6 @@ irPassDimensionalMatrixAnnotationByBody(State *  N)
 	}
 }
 
-
 void
 irPassDimensionalMatrixAnnotation(State *  N)
 {
@@ -249,6 +248,8 @@ irPassDimensionalMatrixAnnotation(State *  N)
 		{
 			dimensionCount++;
 		}
+
+//fprintf(stderr, "In irPassDimensionalMatrixAnnotation(), parameterCount=[%d], dimensionCount=[%d]", parameterCount, dimensionCount);
 
 		if (parameterCount == 0 || dimensionCount == 0)
 		{
@@ -297,6 +298,7 @@ irPassDimensionalMatrixAnnotation(State *  N)
 		bool	usedDimensions[dimensionCount];
 		bzero(usedDimensions, sizeof(usedDimensions));
 
+//fprintf(stderr, "In irPassDimensionalMatrixAnnotation():\n\n");
 		parameter = invariant->parameterList;
 		for (int i = 0; i < parameterCount; i++)
 		{
@@ -304,6 +306,8 @@ irPassDimensionalMatrixAnnotation(State *  N)
 			invariant->dimensionalMatrixColumnLabels[i] = parameter->irLeftChild->physics->identifier;
 			for (int j = 0; j < dimensionCount; j++)
 			{
+//fprintf(stderr, "\tparam %i, dim %d, dim mat col label %d = [%s], dim exponent = [%f]\n", i, j, i, invariant->dimensionalMatrixColumnLabels[i], dimension->exponent);
+
 				tmpMatrix[i][j] = dimension->exponent;
 				if (tmpMatrix[i][j])
 				{
