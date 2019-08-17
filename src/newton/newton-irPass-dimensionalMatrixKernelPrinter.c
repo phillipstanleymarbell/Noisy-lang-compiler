@@ -417,7 +417,7 @@ irPassDimensionalMatrixKernelPrinterFromBodyWithNumOfConstant(State *  N)
 
 						}
 						flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n");
-						flexprint(N->Fe, N->Fm, N->Fpinfo, "\tThe number of constants in the Pi Group is = %d\n",countNumberOfConst);
+						flexprint(N->Fe, N->Fm, N->Fpinfo, "\tThe number of constants in the Pi is = %d\n",countNumberOfConst);
 
 						if(countNumberOfConst == numberOfTerms)
 						{
