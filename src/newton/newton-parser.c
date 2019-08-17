@@ -329,6 +329,23 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 
+	if ((node->irLeftChild->physics != NULL) && (N->verbosityLevel & kCommonVerbosityDebugParser))
+	{
+		Dimension *	tmpDimensionsNode;
+
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\tConstant identifier \"%s\"\n", node->irLeftChild->physics->identifier);
+		
+		for (tmpDimensionsNode = node->irLeftChild->physics->dimensions; tmpDimensionsNode != NULL; tmpDimensionsNode = tmpDimensionsNode->next)
+		{
+			
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "\tDimension \"%s\" with exponent %f\n", 
+				tmpDimensionsNode->name, tmpDimensionsNode->exponent);
+
+		}
+
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
+	}
+
 	/*
 	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
 	 */
@@ -340,21 +357,6 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 	}
 	*/
 
-	Dimension *tmpDimensionsNode;
-
-	if ((node->irLeftChild->physics != NULL) && (N->verbosityLevel & kCommonVerbosityDebugParser))
-	{
-		flexprint(N->Fe, N->Fm, N->Fpinfo, "\tConstant identifier \"%s\"\n", node->irLeftChild->physics->identifier);
-		
-		for (tmpDimensionsNode = node->irLeftChild->physics->dimensions; tmpDimensionsNode != NULL; tmpDimensionsNode = tmpDimensionsNode->next) {
-			
-			flexprint(N->Fe, N->Fm, N->Fpinfo, "\tUnit \"%s\" with exponent %f\n", 
-				tmpDimensionsNode->name, tmpDimensionsNode->exponent);
-
-		}
-	}
-
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 
 	return node;
 }

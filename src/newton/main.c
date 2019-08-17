@@ -335,6 +335,7 @@ main(int argc, char *argv[])
 				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\definecolor{DarkGreen}{rgb}{0,0.3922,0}\n");
 				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\begin{document}\n");
 				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\tiny\n");
+
 				break;
 			}
 
