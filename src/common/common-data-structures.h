@@ -1,6 +1,7 @@
 /*
 	Authored 2015. Phillip Stanley-Marbell.
 	Modified, 2016-2017, Jonathan Lim to add Newton hooks.
+	Modified, 2019, Kiseki Hirakawa
 
 	All rights reserved.
 
@@ -657,7 +658,8 @@ typedef enum
 	kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates	= (1 << 4),
 	kNewtonIrPassDimensionalMatrixKernelPrinter		= (1 << 5),
 	kNewtonIrPassDimensionalMatrixConvertToList		= (1 << 6),
-
+	kNewtonIrPassDimensionalMatrixAnnotationByBody          = (1 << 7),
+	kNewtonIrPassDimensionalMatrixKernelPrinterFromBody	= (1 << 8),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -895,6 +897,11 @@ struct IrNode
 	 *	Used for coloring the IR tree, e.g., during Graphviz/dot generation
 	 */
 	IrNodeColor		nodeColor;
+
+	/*
+		Used to keep track of whether the node was visited or not
+	 */
+	bool			isVisited;   			
 };
 
 
