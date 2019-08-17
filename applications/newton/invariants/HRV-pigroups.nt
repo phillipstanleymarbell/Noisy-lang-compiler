@@ -35,11 +35,14 @@
 #	POSSIBILITY OF SUCH DAMAGE.
 #
 #
+#       Pigroups example based on Dimensional analysis of heart rate 
+#       variability parameters for metabolic dysfunctions diagnosis 
+#       (DOI: 10.1109/ETCM.2017.8247552)
 #
 #	Parameters
 #
 #		RR_param	:
-#		SD_param    :
+#		SD_param        :
 #		RMSSD_param	:
 #		LF_param	:
 #		HF_param	:
