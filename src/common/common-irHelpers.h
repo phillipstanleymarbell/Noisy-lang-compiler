@@ -1,5 +1,6 @@
 /*
 	Authored 2015-2018, Phillip Stanley-Marbell. Modified 2017, Jonathan Lim.
+	Updated  2019, Kiseki Hirakawa.
 
 	All rights reserved.
 
@@ -40,6 +41,7 @@ IrNode *	shallowCopyIrNode(State *  N, IrNode *  original);
 void		errorUseBeforeDefinition(State *  N, const char *  identifier);
 void		errorMultiDefinition(State *  N, Symbol *  symbol);
 IrNode *	depthFirstWalk(State *  N, IrNode *  node);
+int 		countIrNodeOfType(State *  N, IrNode *  node, IrNodeType expectedType);
 IrNode *	depthFirstWalkNoLeftChild(State *  N, IrNode *  node);
 void		addLeaf(State *  N, IrNode *  parent, IrNode *  newNode);
 void		addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode);
