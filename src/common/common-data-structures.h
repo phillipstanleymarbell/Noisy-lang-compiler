@@ -692,7 +692,7 @@ typedef enum
 	 *	the flag enables dumping the LaTeX / KaTeX when the kernel
 	 *	dumping is happening.
 	 */
-	kNewtonIrBackendLatex				= (1 << 4),
+	kNewtonIrBackendLatex				= (1 << 5),
 
 	/*
 	 *	Code depends on this bringing up the rear.

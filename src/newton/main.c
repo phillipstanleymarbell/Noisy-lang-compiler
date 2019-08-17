@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 			{"optimize",		required_argument,	0,	'O'},
 			{"dmatrixannote",	no_argument,		0,	'm'},
 			{"pigroups",		no_argument,		0,	'p'},
-			{"pigroupsfrombody",		no_argument,	0,	'i'},
+			{"pigroupsfrombody",	no_argument,		0,	'i'},
 			{"kernelrowcanon",	no_argument,		0,	'c'},
 			{"pigroupsort",		no_argument,		0,	'r'},
 			{"pigroupdedup",	no_argument,		0,	'e'},
@@ -106,6 +106,7 @@ main(int argc, char *argv[])
 			{"codegen",		required_argument,	0,	'g'},
 			{"latex",		no_argument,		0,	'x'},
 			{"RTLcodegen",		required_argument,	0,	'l'},
+
 			{0,			0,			0,	0}
 		};
 
@@ -448,7 +449,7 @@ usage(State *  N)
 						"                | (--pikernelprinter, -P)                                    \n"
 						"                | (--pigrouptoast, -a)                                       \n"
 						"                | (--codegen <path to output file>, -g <path to output file>)\n"
-						"                | (--RTLcodegen <path to output file>, -r <path to output file>)\n"
+						"                | (--RTLcodegen <path to output file>, -l <path to output file>)\n"
 						"                | (--trace, -t)                                              \n"
 						"                | (--statistics, -s) ]                                       \n"
 						"                | (--latex, -x) ]                                            \n"

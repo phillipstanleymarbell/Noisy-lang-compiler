@@ -331,18 +331,8 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 
 	if ((node->irLeftChild->physics != NULL) && (N->verbosityLevel & kCommonVerbosityDebugParser))
 	{
-		Dimension *	tmpDimensionsNode;
-
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "\tConstant identifier \"%s\"\n", node->irLeftChild->physics->identifier);
-		
-		for (tmpDimensionsNode = node->irLeftChild->physics->dimensions; tmpDimensionsNode != NULL; tmpDimensionsNode = tmpDimensionsNode->next)
-		{
-			
-			flexprint(N->Fe, N->Fm, N->Fpinfo, "\tDimension \"%s\" with exponent %f\n", 
-				tmpDimensionsNode->name, tmpDimensionsNode->exponent);
-
-		}
-
+		printDimensionsOfNode(N, node->irLeftChild, N->Fpinfo);
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 	}
 
@@ -1456,6 +1446,11 @@ newtonParseQuantityExpression(State *  N, Scope *  currentScope)
 
 			if(!areTwoPhysicsEquivalent(N, leftTerm->physics, rightTerm->physics))
 			{
+				flexprint(N->Fe, N->Fm, N->Fperr, "LHS:\n");
+				printDimensionsOfNode(N, leftTerm, N->Fperr);
+				flexprint(N->Fe, N->Fm, N->Fperr, "RHS:\n");
+				printDimensionsOfNode(N, rightTerm, N->Fperr);
+
 				newtonParserSemanticError(N, kNewtonIrNodeType_PlowPrecedenceOperator, (char *)EexpressionPhysicsMismatch);
 				newtonParserErrorRecovery(N, kNewtonIrNodeType_PlowPrecedenceOperator);
 			}
