@@ -186,7 +186,6 @@ findNthIrNodeOfType(State * N, IrNode * root, IrNodeType expectedType, int nth)
 	return findNthIrNodeOfTypeHelper(N, root, expectedType, &ith);
 }
 
-
 IrNode*
 findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int* nth)
 {
@@ -213,6 +212,31 @@ findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int
 	}
 
 	return NULL;
+}
+
+int 
+countIrNodeOfType(State *  N, IrNode *  node, IrNodeType expectedType) 
+{
+    	int counter = 0;
+
+	if (node->irLeftChild == NULL && node->irRightChild == NULL && node->type == expectedType && node->isVisited==false)
+	{
+		counter += 1;
+		node->isVisited = true;
+	}
+		
+		
+	if (node->irLeftChild != NULL)
+	{
+		counter += countIrNodeOfType(N, node->irLeftChild, expectedType);
+	} 	
+
+	if (node->irRightChild != NULL)
+	{
+		counter += countIrNodeOfType(N, node->irRightChild, expectedType);
+	}	
+				
+	return counter;
 }
 
 IrNode *
