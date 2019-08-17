@@ -1,0 +1,19 @@
+
+changeset: 768:85110cba91c09a64e7d48adb6a2c9ffb51d5c6cb
+char kNoisyVersion[] = "0.2-alpha- () (build 08-13-2019-16:53-billtsou@billtsou-Cam-Linux-4.4.0-157-generic-x86_64)";
+char kNewtonVersion[] = "0.3-alpha- () (build 08-13-2019-16:52-billtsou@billtsou-Cam-Linux-4.4.0-157-generic-x86_64)";
+
+./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s
+
+Informational Report:
+---------------------
+
+Non-zero routine residency time upper bounds and counts (0 calls, total of 0.0000 us):
+
+
+Intermediate Representation Information:
+
+    IR node count                        : 178
+    Symbol Table node count              : 3
+
+./src/newton/newton-linux-EN -S tmp.smt2 applications/newton/invariants/PendulumAcceleration.nt

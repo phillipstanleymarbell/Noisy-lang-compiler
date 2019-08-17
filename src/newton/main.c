@@ -103,10 +103,11 @@ main(int argc, char *argv[])
 			{"pigrouptoast",	no_argument,		0,	'a'},
 			{"codegen",		required_argument,	0,	'g'},
 			{"latex",		no_argument,		0,	'x'},
+			{"RTLcodegen",		required_argument,	0,	'l'},
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpcrePapg:x", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpcl:rePapg:x", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -145,7 +146,7 @@ main(int argc, char *argv[])
 
 			case 'd':
 			{
-				N->irBackends |= kNoisyIrBackendDot;
+				N->irBackends |= kNewtonIrBackendDot;
 
 				/*
 				 *	TODO: Rather than accepting the raw enum value as integer,
@@ -197,10 +198,13 @@ main(int argc, char *argv[])
 					/*
 					 *	The verbosity bitmaps are:
 					 *
-					 *		kCommonVerbosityAST
-					 *		kCommonVerbosityFF
-					 *		kCommonVerbosityLex
-					 *		kCommonVerbosityParse
+					 *		...
+					 *		kCommonVerbosityDebugLexer
+					 *		kCommonVerbosityDebugParser
+					 *		kCommonVerbosityDebugAST
+					 *		...
+					 *
+					 *	(See common/common-data-structures.h)
 					 *
 					 */
 
@@ -334,6 +338,14 @@ main(int argc, char *argv[])
 				break;
 			}
 
+			case 'l':
+			{
+				N->irBackends |= kNewtonIrBackendRTL;
+				N->outputRTLFilePath = optarg;
+
+				break;
+			}
+
 			case '?':
 			{
 				/*
@@ -421,6 +433,7 @@ usage(State *  N)
 						"                | (--pikernelprinter, -P)                                    \n"
 						"                | (--pigrouptoast, -a)                                       \n"
 						"                | (--codegen <path to output file>, -g <path to output file>)\n"
+						"                | (--RTLcodegen <path to output file>, -r <path to output file>)\n"
 						"                | (--trace, -t)                                              \n"
 						"                | (--statistics, -s) ]                                       \n"
 						"                | (--latex, -x) ]                                            \n"

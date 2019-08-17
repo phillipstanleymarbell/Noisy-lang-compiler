@@ -220,6 +220,29 @@ irPassCSearchAndPrintNodeType(State *  N, IrNode *  root, IrNodeType expectedTyp
 	return;
 }
 
+void
+irPassCSearchAndCreateArgList(State *  N, IrNode *  root, IrNodeType expectedType, char **argList, int argumentIndex)
+{
+	if (root == NULL)
+	{
+		return;
+	}
+
+	if (root->irRightChild == NULL && root->irLeftChild == NULL
+		&& root->type == expectedType)
+	{
+		argList[argumentIndex] = (char *) malloc((strlen(root->tokenString) + 1) * sizeof(char));
+		strcpy(argList[argumentIndex], root->tokenString);
+		//flexprint(N->Fe, N->Fm, N->Fpc, "%s", root->tokenString);
+		
+		return;
+	}
+
+	irPassCSearchAndCreateArgList(N, root->irLeftChild, expectedType, argList, argumentIndex);
+	
+	return;
+}
+
 int
 irPassCCountRemainingParameters(State *  N, IrNode *  root, int depth)
 {
@@ -407,11 +430,22 @@ irPassCProcessInvariantList(State *  N)
 
 	IrNode *	constraintXSeq = invariant->constraints->irParent;
 
+	IrNode *	parameterListXSeq = invariant->parameterList->irParent->irLeftChild;
+
+	char ** argumentsList;
+		
+	int index = 0;
+
+	int countFunction = 0;
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tGenerated .c file from Newton\n */\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <stdlib.h>\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <stdio.h>\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <math.h>\n\n");
+
 	while(invariant)
 	{
-		for (int countFunction = 0; constraintXSeq != NULL; countFunction++, constraintXSeq = constraintXSeq->irRightChild)
+		for (countFunction = 0; constraintXSeq != NULL; countFunction++, constraintXSeq = constraintXSeq->irRightChild)
 		{
 			assert(constraintXSeq->irLeftChild->type == kNewtonIrNodeType_Pconstraint);
 			/*
@@ -433,9 +467,157 @@ irPassCProcessInvariantList(State *  N)
 			irPassCGenFunctionArgument(N, constraintXSeq->irLeftChild, false);
 			irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
 		}
+		
+		
+		argumentsList = (char **) malloc(invariant->dimensionalMatrixColumnCount * sizeof(char *));
+
+		/*
+		*	Print calculation function
+		*/
+		countFunction = 0;	
+		flexprint(N->Fe, N->Fm, N->Fpc, "double\n%s%d",
+				invariant->identifier, countFunction);
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "(");
+		
+		while (parameterListXSeq != NULL) 
+		{
+			irPassCSearchAndCreateArgList(N, parameterListXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, argumentsList, index);
+			parameterListXSeq = parameterListXSeq->irRightChild;
+			index++;
+		}
+		
+		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fpc, "double %s", argumentsList[index]);
+			if (index < invariant->dimensionalMatrixColumnCount - 1)
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+			}
+		}
+
+		flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
+
+		/*
+		*	Declare
+		*/	
+		flexprint(N->Fe, N->Fm, N->Fpc, "{\n\tdouble calculatedProportion = 0.0;\n");
+
+		/*
+		*	Calculation
+		*/	
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n\tcalculatedProportion = ");
+
+		/*
+		 *	We construct a temporary array to re-locate the positions of the permuted parameters
+		 */
+		int *		tmpPosition = (int *)calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+
+		index = 0;
+		for (int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
+		{
+			for (int j = 0; j < invariant->dimensionalMatrixColumnCount; j++)
+			{
+				tmpPosition[invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + j]] = j;
+			}
+
+			for (int col = 0; col < invariant->kernelColumnCount; col++)
+			{
+				for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
+				{
+					if (invariant->nullSpace[countKernel][tmpPosition[row]][col] != 0) 
+					{
+						//flexprint(N->Fe, N->Fm, N->Fpc, "pow(%c%c, ", 'P'+(row/10), '0'+ (row%10) );
+						flexprint(N->Fe, N->Fm, N->Fpc, "pow(" );
+						flexprint(N->Fe, N->Fm, N->Fpc, "%s", argumentsList[index]);
+						flexprint(N->Fe, N->Fm, N->Fpc, ", %f) * ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
+					}
+					index++;
+				}
+			}
+			/*
+			*   FIXME avoid printing 1.0 to complete the sentence;
+			*/
+			flexprint(N->Fe, N->Fm, N->Fpc, "1.0;");
+		}
+
+		/*
+		*	Return
+		*/	
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n\n\treturn calculatedProportion;");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n}\n");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n\nint \nmain(int argc, char *argv[])\n{\n");
+
+		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble %s", argumentsList[index]);
+			if (index < invariant->dimensionalMatrixColumnCount - 1)
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, ";\n");
+			}
+		}
+		flexprint(N->Fe, N->Fm, N->Fpc, ";");
+
+		/*
+		*	Declare
+		*/	
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n\tdouble calculatedProportion = 0.0;\n\n");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tif (argc < %d) {\n",invariant->dimensionalMatrixColumnCount+1);
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\"Usage is exec_name ");
+
+		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fpc, "%s ", argumentsList[index]);
+		}
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "\\n\");\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\treturn -1;\n\t}\n\n");
+
+		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fpc, "\t%s = atof(argv[%d]);\n", argumentsList[index], index+1);
+		}
+
+		/*
+		*	Calculation
+		*/	
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n\tcalculatedProportion = ");
+
+		countFunction = 0;	
+		flexprint(N->Fe, N->Fm, N->Fpc, "%s%d", invariant->identifier, countFunction);
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "(");
+
+		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fpc, "%s", argumentsList[index]);
+			if (index < invariant->dimensionalMatrixColumnCount - 1)
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+			}
+		}
+
+		flexprint(N->Fe, N->Fm, N->Fpc, ");\n\n");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tprintf(\"Calculated proportion is %%f.\\n\", calculatedProportion);\n\n");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "\treturn 0;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n}\n\n");
+
+		free(tmpPosition);
+		
+		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
+		{
+			free(argumentsList[index]);
+		}
+		free(argumentsList);
 
 		invariant = invariant->next;
 	}
+	
 	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tEnd of the generated .c file\n */\n");
 }
 

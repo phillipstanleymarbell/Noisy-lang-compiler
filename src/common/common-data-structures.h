@@ -683,6 +683,7 @@ typedef enum
 	kNewtonIrBackendProtobuf			= (1 << 1),
 	kNewtonIrBackendSmt				= (1 << 2),
 	kNewtonIrBackendC				= (1 << 3),
+	kNewtonIrBackendRTL				= (1 << 4),
 
 	/*
 	 *	The LaTeX backend isn't a true backend per se, but rather
@@ -696,19 +697,6 @@ typedef enum
 	 */
 	kNewtonIrBackendMax,
 } NewtonIrBackends;
-
-
-
-typedef enum
-{
-	kNoisyIrBackendDot				= (1 << 0),
-	kNoisyIrBackendProtobuf				= (1 << 1),
-
-	/*
-	 *	Code depends on this bringing up the rear.
-	 */
-	kNoisyIrBackendMax,
-} NoisyIrBackends;
 
 
 
@@ -1070,6 +1058,7 @@ typedef struct
 	FlexPrintBuf *		Fpinfo;
 	FlexPrintBuf *		Fpsmt2;
 	FlexPrintBuf *		Fpc;
+	FlexPrintBuf *		Fprtl;
 	FlexPrintBuf *		Fpmathjax;
 
 	/*
@@ -1119,6 +1108,7 @@ typedef struct
 	char *			outputFilePath;
 	char *			outputSmtFilePath;
 	char *			outputCFilePath;
+	char *			outputRTLFilePath;
 
 	CommonMode		mode;
 	uint64_t		verbosityLevel;

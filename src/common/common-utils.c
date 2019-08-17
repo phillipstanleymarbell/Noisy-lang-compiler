@@ -246,6 +246,21 @@ init(CommonMode mode)
 
 
 	/*
+	 *	Used to hold RTL backend output
+	 */
+	N->Fprtl = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
+	if (N->Fprtl == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	N->Fprtl->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
+	if (N->Fprtl->circbuf == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	/*
 	 *	Used during lexing
 	 */
 	N->currentToken = calloc(kCommonMaxBufferLength, sizeof(char));
@@ -396,6 +411,17 @@ consolePrintBuffers(State *  N)
 		{
 			fflush(stdout);
 		}
+	}
+
+	if (N && N->Fprtl && strlen(N->Fprtl->circbuf))
+	{
+		fprintf(stdout, "\nRTL Backend output:\n---------------------\n%s", N->Fprtl->circbuf);
+		
+		if (N->mode & kCommonModeCGI)
+		{
+			fflush(stdout);
+		}
+		
 	}
 
 	if (N && N->Fperr && strlen(N->Fperr->circbuf))

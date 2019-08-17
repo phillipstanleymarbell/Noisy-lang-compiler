@@ -220,3 +220,19 @@ kNewtonUnithave_BoltzmannConstant		: constant = 1.38065E-23 (Joule / Kelvin);
 kNewtonUnithave_ElectronCharge			: constant = 1.60218E-19 Coulomb;
 kNewtonUnithave_SpeedOfSound			: constant = 340.292 (meter * (second ** -1));
 kNewtonUnithave_EarthMass			: constant = 5.9742E24 kilogram;
+
+#
+#	Interim pseudo constants until we have transcendental function implementation merged in
+#
+sin						: constant = 1;
+cos						: constant = 1;
+tan						: constant = 1;
+cotan						: constant = 1;
+sec						: constant = 1;
+cosec						: constant = 1;
+sinh						: constant = 1;
+cosh						: constant = 1;
+tanh						: constant = 1;
+cotanh						: constant = 1;
+sech						: constant = 1;
+cosech						: constant = 1;

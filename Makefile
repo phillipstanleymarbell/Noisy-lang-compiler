@@ -1,7 +1,7 @@
 DIRS =\
 	src/common\
 	src/newton\
-	src/noisy\
+#	src/noisy\
 
 #
 #	Disable Noisy build until we have updated it to use the new kCommon share constants rather than kNoisy*
