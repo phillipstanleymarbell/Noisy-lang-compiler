@@ -35,7 +35,7 @@
 #	POSSIBILITY OF SUCH DAMAGE.
 #
 #
-#	Description:    Empty Newton description for BME680 sensor based on the datasheet for pressure measurements.
+#	Description:    Empty Newton description for BME680 sensor based on the datasheet for humidity measurements.
 #       
 #       Parameters:     
 #               
