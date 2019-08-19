@@ -45,6 +45,5 @@ ProjectileForPiGroupsPOLA: invariant(	h_p:    distance,
 					v_p:    speed,
 					m_p:    mass
                                         theta_p:angle) =
-{
-        
+{       
 }
