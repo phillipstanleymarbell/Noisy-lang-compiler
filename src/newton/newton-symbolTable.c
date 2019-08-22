@@ -49,7 +49,9 @@
 #include "newton-timeStamps.h"
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
+#include "common-irHelpers.h"
 #include "newton-symbolTable.h"
+
 
 
 extern int		primeNumbers[168];
@@ -217,6 +219,67 @@ getTailPhysics(Physics *  list)
 	}
 }
 
+void
+newtonFindNoOfConstantPi(State *  N)
+{
+	Invariant *	invariant = N->invariantList;
+
+	while (invariant)
+	{
+		int *		tmpPosition = (int *)calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+		int 		numberOfConstPiArray[invariant->numberOfUniqueKernels];
+
+		for (int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
+		{
+			for (int j = 0; j < invariant->dimensionalMatrixColumnCount; j++)
+			{
+				tmpPosition[invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + j]] = j;
+			}
+
+			int countNumberOfConst = 0;
+			int numberOfTerms = 0;
+			int numberOfConstPi = 0;
+			int iteratorForConstPiArray = 0;
+
+			for (int col = 0; col < invariant->kernelColumnCount; col++)
+			{
+				for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
+				{
+					if (findNthIrNodeOfType(N,invariant->constraints,kNewtonIrNodeType_Tidentifier,row)->physics->isConstant==true && invariant->nullSpace[countKernel][tmpPosition[row]][col]!=0)
+					{
+						countNumberOfConst += 1;
+					}
+
+					if (invariant->nullSpace[countKernel][tmpPosition[row]][col]!=0)
+					{
+						numberOfTerms += 1;
+					}
+
+				}
+
+				if(countNumberOfConst == numberOfTerms)
+				{
+					numberOfConstPi += 1;
+				}
+
+				countNumberOfConst=0;
+				numberOfTerms=0;
+			}
+			numberOfConstPiArray[iteratorForConstPiArray] = numberOfConstPi;
+			iteratorForConstPiArray += 1;
+			numberOfConstPi = 0;
+		}
+		for(int i=0; i< invariant->numberOfUniqueKernels; i++)
+		{
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "The values in the array are %d", numberOfConstPiArray[i]);
+		}
+		
+
+		free(tmpPosition);
+		invariant = invariant->next;
+	}
+}
+
 Physics * 
 newtonPhysicsTableCopyAndAddPhysics(State *  N, Scope *  scope, Physics *  source)
 {
@@ -269,7 +332,6 @@ newtonPhysicsIncrementExponent(State *  N, Physics *  source, Dimension *  added
 
 	assert(somethingWasAdded); /* TODO remove later */
 }
-
 
 void
 newtonPhysicsAddExponents(State *  N, Physics *  left, Physics *  right)
