@@ -460,11 +460,10 @@ irPassDimensionalMatrixConstantPi(State *  N)
 		}
 		
 		//Comment the code below to remove the prints
-		printf("\nThe constant Pi matrix is\n");
+		flexprint(N->Fe, N->Fm, N->Fpinfo,"\nThe constant Pi matrix is\n");
 		for ( int i = 0; i < invariant->numberOfUniqueKernels; i++ )
     		{
-        		for ( int j = 0; j < invariant->kernelColumnCount; j++ ) printf("%3u", invariant->numberOfConstPiArray[j][i]);
-        		putchar( '\n' );
+        		for ( int j = 0; j < invariant->kernelColumnCount; j++ ) flexprint(N->Fe, N->Fm, N->Fpinfo,"%3u\n", invariant->numberOfConstPiArray[j][i]);
     		}
 
 		free(tmpPosition);
