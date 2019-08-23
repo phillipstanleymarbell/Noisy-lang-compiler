@@ -331,7 +331,19 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PconstantDefinition);
 	}
 	*/
+	
+	Dimension *tmpDimensionsNode;
 
+	if (node->irLeftChild->physics != NULL) {
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(Constant identifier is %s)\n", node->irLeftChild->physics->identifier);
+		
+		for (tmpDimensionsNode = node->irLeftChild->physics->dimensions; tmpDimensionsNode != NULL; tmpDimensionsNode = tmpDimensionsNode->next) {
+			
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(Unit is %s with exponent %f)\n", 
+				tmpDimensionsNode->name, tmpDimensionsNode->exponent);
+
+		}
+	}
 	return node;
 }
 
