@@ -51,7 +51,6 @@ Physics *	shallowCopyPhysicsNode(Physics *  node);
 Physics *	getTailPhysics(Physics *  list);
 IntegralList *	getTailIntegralList(IntegralList *  list);
 int		countNumberTime(Dimension *  head);
-void		newtonFindNoOfConstantPi(State *  N);
 void		newtonPhysicsIncrementExponent(State *  N, Physics *  source, Dimension *  added);
 void		newtonPhysicsAddExponents(State *  N, Physics *  left, Physics *  right);
 void		newtonPhysicsAddExponentsRecursively(State *  N, Physics *  baseNode, IrNode * treeRoot);
