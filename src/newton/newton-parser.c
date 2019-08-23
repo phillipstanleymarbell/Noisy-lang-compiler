@@ -332,20 +332,6 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 	}
 	*/
 
-	Dimension *tmpDimensionsNode;
-
-	if (node->irLeftChild->physics != NULL) {
-		flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(Constant identifier is %s)\n", node->irLeftChild->physics->identifier);
-		
-		for (tmpDimensionsNode = node->irLeftChild->physics->dimensions; tmpDimensionsNode != NULL; tmpDimensionsNode = tmpDimensionsNode->next) {
-			
-			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(Unit is %s with exponent %f)\n", 
-				tmpDimensionsNode->name, tmpDimensionsNode->exponent);
-
-		}
-	}
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
-
 	return node;
 }
 

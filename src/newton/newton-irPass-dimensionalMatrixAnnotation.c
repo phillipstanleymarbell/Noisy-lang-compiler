@@ -393,3 +393,82 @@ irPassDimensionalMatrixAnnotation(State *  N)
 		invariant = invariant->next;
 	}
 }
+
+void
+irPassDimensionalMatrixConstantPi(State *  N)
+{
+	Invariant *	invariant = N->invariantList;
+
+	while (invariant)
+	{
+		int *		tmpPosition = (int *)calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
+		
+		invariant->numberOfConstPiArray = calloc( invariant->numberOfUniqueKernels, sizeof( int * ) );
+
+		if (!invariant->numberOfConstPiArray)
+		{
+			fatal(N, Emalloc);
+		}
+
+		for ( int i = 0; i < invariant->kernelColumnCount; i++ )
+		{
+			invariant->numberOfConstPiArray[i] = calloc( invariant->kernelColumnCount, sizeof( int ) );
+		}
+
+		for (int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
+		{
+			for (int j = 0; j < invariant->dimensionalMatrixColumnCount; j++)
+			{
+				tmpPosition[invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + j]] = j;
+			}
+
+			int countNumberOfConst = 0;
+			int numberOfTerms = 0;
+			int numberOfConstPi = 0;
+
+			for (int col = 0; col < invariant->kernelColumnCount; col++)
+			{
+				for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
+				{
+					if (findNthIrNodeOfType(N,invariant->constraints,kNewtonIrNodeType_Tidentifier,row)->physics->isConstant==true && invariant->nullSpace[countKernel][tmpPosition[row]][col]!=0)
+					{
+						countNumberOfConst += 1;
+					}
+
+					if (invariant->nullSpace[countKernel][tmpPosition[row]][col]!=0)
+					{
+						numberOfTerms += 1;
+					}
+
+				} 
+
+				if(true)
+				{
+					invariant->numberOfConstPiArray[col][countKernel] = 0;
+				}
+
+				if(countNumberOfConst == numberOfTerms)
+				{
+					numberOfConstPi += 1;
+					invariant->numberOfConstPiArray[col][countKernel] = 1;
+				}
+
+				countNumberOfConst=0;
+				numberOfTerms=0;
+			}
+			numberOfConstPi = 0;
+		}
+		
+		//Comment the code below to remove the prints
+		printf("\nThe constant Pi matrix is\n");
+		for ( int i = 0; i < invariant->numberOfUniqueKernels; i++ )
+    		{
+        		for ( int j = 0; j < invariant->kernelColumnCount; j++ ) printf("%3u", invariant->numberOfConstPiArray[j][i]);
+        		putchar( '\n' );
+    		}
+
+		free(tmpPosition);
+		
+		invariant = invariant->next;
+	}
+}
