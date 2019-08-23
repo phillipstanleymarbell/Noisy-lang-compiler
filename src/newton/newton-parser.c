@@ -344,6 +344,8 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 
 		}
 	}
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
+	
 	return node;
 }
 
