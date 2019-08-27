@@ -392,7 +392,7 @@ irPassDimensionalMatrixKernelPrinterFromBodyWithNumOfConstant(State *  N)
 							numberOfConstPi += 1;
 						}*/
 					}
-					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n\t\tProportion of constant Pis = %.2f%%", ((double)numberOfConstPi/(double)invariant->kernelColumnCount)*100);
+					//flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n\t\tProportion of constant Pis = %.2f%%", ((double)numberOfConstPi/(double)invariant->kernelColumnCount)*100);
 				}
 			}
 
