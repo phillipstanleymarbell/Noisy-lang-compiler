@@ -164,7 +164,10 @@ processNewtonFile(State *  N, char *  filename)
 	{
 		irPassDimensionalMatrixConvertToList(N);
 	}
-
+	if (N->irPasses & KNewtonIrPassDimensionalMatrixConstantPi)
+	{
+		irPassDimensionalMatrixConstantPi(N);
+	}
 	/*
 	 *	Dot backend.
 	 */

@@ -52,6 +52,7 @@
 #include "newton-symbolTable.h"
 
 
+
 extern int		primeNumbers[168];
 
 /*
@@ -269,7 +270,6 @@ newtonPhysicsIncrementExponent(State *  N, Physics *  source, Dimension *  added
 
 	assert(somethingWasAdded); /* TODO remove later */
 }
-
 
 void
 newtonPhysicsAddExponents(State *  N, Physics *  left, Physics *  right)

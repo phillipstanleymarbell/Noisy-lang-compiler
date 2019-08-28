@@ -660,6 +660,7 @@ typedef enum
 	kNewtonIrPassDimensionalMatrixConvertToList		= (1 << 6),
 	kNewtonIrPassDimensionalMatrixAnnotationByBody          = (1 << 7),
 	kNewtonIrPassDimensionalMatrixKernelPrinterFromBody	= (1 << 8),
+	KNewtonIrPassDimensionalMatrixConstantPi		= (1 << 9),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -829,6 +830,7 @@ struct Invariant
 	int			numberOfUniqueKernels;		//	Saves the unique kernel count
 	int			numberOfTotalKernels;		//	Saves the total kernels before canonicalisation
 	int *			permutedIndexArrayPointer;	//	Saves the permutation indeces
+	int ** 			numberOfConstPiArray;		//	Saves the number of constant Pi in each kernel
 
 	Invariant *		next;
 };
