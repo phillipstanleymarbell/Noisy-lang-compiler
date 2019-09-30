@@ -1,12 +1,12 @@
 [submodule "submodules/eigen"]
 	path = submodules/eigen
-	url = https://github.com/eigenteam/eigen-git-mirror.git
+	url = git@github.com:eigenteam/eigen-git-mirror.git
 [submodule "submodules/wirth-tools"]
 	path = submodules/wirth-tools
-	url = https://github.com/phillipstanleymarbell/Wirth-tools.git
+	url = git@github.com:phillipstanleymarbell/Wirth-tools.git
 [submodule "submodules/libflex"]
 	path = submodules/libflex
-	url = https://github.com/phillipstanleymarbell/libflex.git
+	url = git@github.com:phillipstanleymarbell/libflex.git
 [submodule "submodules/dtrace-scripts"]
 	path = submodules/dtrace-scripts
-	url = https://github.com/phillipstanleymarbell/DTrace-scripts.git
+	url = git@github.com:phillipstanleymarbell/DTrace-scripts.git
