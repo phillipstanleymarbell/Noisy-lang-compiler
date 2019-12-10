@@ -405,11 +405,14 @@ irPassCProcessInvariantList(State *  N)
 
 	if (invariant->constraints == NULL)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tNo constraints created\n */\n");
-		return;
+		flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tNo human constraints created\n */\n");
+		//return;
+	} else {
+		flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tHuman constraints exist but have not been taken into account\n */\n");
 	}
 
-	IrNode *	constraintXSeq = invariant->constraints->irParent;
+	// Should be included for human contraints
+	// IrNode *	constraintXSeq = invariant->constraints->irParent;
 
 	IrNode *	parameterListXSeq = invariant->parameterList->irParent->irLeftChild;
 
@@ -426,28 +429,29 @@ irPassCProcessInvariantList(State *  N)
 
 	while(invariant)
 	{
-		for (countFunction = 0; constraintXSeq != NULL; countFunction++, constraintXSeq = constraintXSeq->irRightChild)
-		{
-			assert(constraintXSeq->irLeftChild->type == kNewtonIrNodeType_Pconstraint);
-			/*
-			 *	(1) For human written constraints, e.g. we end up having
-			 *	x + y + z < 5 * m / s ** 2, we create two functions, one 
-			 *	for LHS, and another for RHS.
-			 *
-			 *	(2) For machine calculated pi groups, we construct only
-			 *	one function to return the value of RHS.
-			 */
-			if (irPassCIsConstraintHumanWritten(constraintXSeq->irLeftChild))
-			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "double\nhumanWrittenConstraintLHS%d", countFunction);
-				irPassCGenFunctionArgument(N, constraintXSeq->irLeftChild, true);
-				irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, true);
-			}
+		// Should be included for human contraints
+		// for (countFunction = 0; constraintXSeq != NULL; countFunction++, constraintXSeq = constraintXSeq->irRightChild)
+		// {
+		// 	assert(constraintXSeq->irLeftChild->type == kNewtonIrNodeType_Pconstraint);
+		// 	/*
+		// 	 *	(1) For human written constraints, e.g. we end up having
+		// 	 *	x + y + z < 5 * m / s ** 2, we create two functions, one 
+		// 	 *	for LHS, and another for RHS.
+		// 	 *
+		// 	 *	(2) For machine calculated pi groups, we construct only
+		// 	 *	one function to return the value of RHS.
+		// 	 */
+		// 	if (irPassCIsConstraintHumanWritten(constraintXSeq->irLeftChild))
+		// 	{
+		// 		flexprint(N->Fe, N->Fm, N->Fpc, "double\nhumanWrittenConstraintLHS%d", countFunction);
+		// 		irPassCGenFunctionArgument(N, constraintXSeq->irLeftChild, true);
+		// 		irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, true);
+		// 	}
 
-			irPassCGenFunctionName(N, constraintXSeq->irLeftChild, countFunction);
-			irPassCGenFunctionArgument(N, constraintXSeq->irLeftChild, false);
-			irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
-		}
+		// 	irPassCGenFunctionName(N, constraintXSeq->irLeftChild, countFunction);
+		// 	irPassCGenFunctionArgument(N, constraintXSeq->irLeftChild, false);
+		// 	irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
+		// }
 		
 		
 		argumentsList = (char **) malloc(invariant->dimensionalMatrixColumnCount * sizeof(char *));
