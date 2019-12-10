@@ -686,6 +686,7 @@ typedef enum
 	kNewtonIrBackendSmt				= (1 << 2),
 	kNewtonIrBackendC				= (1 << 3),
 	kNewtonIrBackendRTL				= (1 << 4),
+	kNewtonIrBackendTargetParam		= (1 << 5),
 
 	/*
 	 *	Code depends on this bringing up the rear.
@@ -1088,6 +1089,11 @@ typedef struct
 	 *	This is the name of the module that the file we're parsing implements
 	 */
 	char *			moduleOfFile;
+
+	/*
+	 *	This is the target parameter for the targetParam backend
+	 */
+	char *			targetParam;
 
 	/*
 	 *	We keep a global handle on the list of module scopes, for easy reference.

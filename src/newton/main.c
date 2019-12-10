@@ -105,10 +105,11 @@ main(int argc, char *argv[])
 			{"pigrouptoast",	no_argument,		0,	'a'},
 			{"codegen",		required_argument,	0,	'g'},
 			{"RTLcodegen",		required_argument,	0,	'l'},
+			{"targetParam",		required_argument,	0,	'T'},
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpicl:rePapg:", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpicl:rePapg:T:", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -333,6 +334,14 @@ main(int argc, char *argv[])
 			{
 				N->irBackends |= kNewtonIrBackendC;
 				N->outputCFilePath = optarg;
+
+				break;
+			}
+
+			case 'T':
+			{
+				N->irBackends |= kNewtonIrBackendTargetParam;
+				N->targetParam = optarg;
 
 				break;
 			}
