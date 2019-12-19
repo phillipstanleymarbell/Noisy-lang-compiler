@@ -48,13 +48,7 @@ For example,
 	OSTYPE		= linux
 	MACHTYPE	= x86_64
 
-2.	Edit `precommitStatisticsHook-<your os type>.sh` to set
-
-	dtraceDirectory=full-path-to-DTrace-repository-clone
-	libflexDirectory=full-path-to-libflex-repository-clone
-
-For the following steps, valid options for OSTYPE are currently `linux` 
-for Gnu/Linux and `darwin` for macOS.
+2.	Copy `config.local` to the libflex directory
 
 3.	Build Libflex by going to the directory you cloned for Libflex and 
 running `make`. The Makefile assumes the environment variables `OSTYPE`
