@@ -50,6 +50,8 @@ For example,
 
 2.	Copy `config.local` to the libflex directory
 
+	$ cp config.local submodules/libflex
+
 3.	In `src/common/Makefile` and `src/newton/Makefile`, change `COMPILERVARIANT` as necessary (default is `clang`).
 
 4.	Build Libflex by going to the directory you cloned for Libflex and 
@@ -57,16 +59,15 @@ running `make`. The Makefile assumes the environment variables `OSTYPE`
 and `MACHTYPE` are set. If that is not the case, you will need to 
 explicitly set them, for example on macOS:
 
-	```
+```shell
+$ cd submodules/libflex
+$ make OSTYPE=darwin MACHTYPE=x86_64
+```
+
+5.	From the root of this top-level repository, build the Noisy and Newton compilers by running `make`. The makefile assumes the  environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the  case, you will need to explicitly set them, for example on macOS:
+```shell
 	make OSTYPE=darwin MACHTYPE=x86_64
-	```
-
-5.	Build the noisy compiler by running `make`. The makefile assumes the 
-environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the 
-case, you will need to explicitly set them, for example on macOS:
-
-	make OSTYPE=darwin MACHTYPE=x86_64
-
+```
 
 The Noisy compiler
 ------------------
