@@ -53,13 +53,15 @@
 #include "newton-types.h"
 
 
-extern const char	gNewtonTypeNodeSignatures[kNoisyIrNodeType_TMax];
-extern const char	gNewtonAstNodeStrings[kNoisyIrNodeType_TMax];
+extern const char	gNewtonTypeNodeSignatures[kCommonIrNodeTypeMax];
+extern const char	gNewtonAstNodeStrings[kCommonIrNodeTypeMax];
 
 
 IrNode *
 newtonTypeValidateIrSubtree(State *  N, IrNode *  subtree)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	return NULL;
 }
 
@@ -67,6 +69,8 @@ newtonTypeValidateIrSubtree(State *  N, IrNode *  subtree)
 bool
 newtonTypeEqualsSubtreeTypes(State *  N, IrNode *  subtreeA, IrNode *  subtreeB)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	return false;
 }
 
@@ -74,6 +78,8 @@ newtonTypeEqualsSubtreeTypes(State *  N, IrNode *  subtreeA, IrNode *  subtreeB)
 char *
 newtonTypeMakeTypeSignature(State *  N, IrNode *  subtree)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	char *	signature;
 	char *	leftSignature;
 	char *	rightSignature;

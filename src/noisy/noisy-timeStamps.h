@@ -344,8 +344,5 @@ typedef enum
 	kNoisyTimeStampKeyUnknown,
 
 
-	/*
-	 *	Code depends on this being last. We eschew using Noisy/Newton prefix as common-timeStamps.h assumes either Noisy or Newton header will be in effect
-	 */
-	kCommonTimeStampKeyMax,
+#	include "common-timeStamps-keys.h"
 } TimeStampKey;

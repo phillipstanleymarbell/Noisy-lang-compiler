@@ -66,7 +66,11 @@
 void
 irPassDimensionalMatrixKernelPrinter(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassDimensionalMatrixKernelPrinter);
+
 	Invariant *	invariant = N->invariantList;
+	bool		latexOutput = N->irBackends & kNewtonIrBackendLatex;
+
 
 	while (invariant)
 	{
@@ -77,14 +81,14 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 
 		if (invariant->numberOfUniqueKernels == 0)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(No kernel for invariant \"%s\")\n", invariant->identifier);
+			if (!latexOutput) flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(No kernel for invariant \"%s\")\n", invariant->identifier);
 		}
 		else
 		{
-			flexprint(N->Fe, N->Fm, N->Fpinfo, "Invariant \"%s\" has %d unique kernels, each with %d column(s)...\n\n",
+			if (!latexOutput) flexprint(N->Fe, N->Fm, N->Fpinfo, "Invariant \"%s\" has %d unique kernels, each with %d column(s)...\n\n",
 							invariant->identifier, invariant->numberOfUniqueKernels, invariant->kernelColumnCount);
 
-			if (N->mode & kNoisyModeCGI)
+			if ((N->mode & kCommonModeCGI) || (N->irBackends & kNewtonIrBackendLatex))
 			{
 				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\n\n$$\n");
 				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\begin{aligned}\n");
@@ -92,13 +96,12 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 
 			for (int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
 			{
-
-				flexprint(N->Fe, N->Fm, N->Fpinfo, "\tKernel %d is a valid kernel:\n\n", countKernel);
+				if (!latexOutput) flexprint(N->Fe, N->Fm, N->Fpinfo, "\tKernel %d is a valid kernel:\n\n", countKernel);
 
 				/*
 				 *	The number of rows of the kernel equals number of columns of the dimensional matrix.
 				 */
-				for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
+				if (!latexOutput) for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
 				{
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\t");
 					for (int col = 0; col < invariant->kernelColumnCount; col++)
@@ -109,7 +112,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 					}
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 				}
-				flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
+				if (!latexOutput) flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 
 				for (int j = 0; j < invariant->dimensionalMatrixColumnCount; j++)
 				{
@@ -119,7 +122,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 				/*
 				 *	Prints out the a table of the symbolic expressions implied by the Pi groups derived from the kernels.	
 				 */
-				if (N->mode & kNoisyModeCGI)
+				if ((N->mode & kCommonModeCGI) || (N->irBackends & kNewtonIrBackendLatex))
 				{
 					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\t\\qquad\\qquad\\textcolor{DarkSlateGray}{\\mathbf{\\Pi\\text{ group }%d, \\text{ with column order }", countKernel);
 
@@ -131,7 +134,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 					flexprint(N->Fe, N->Fm, N->Fpmathjax, " \\left(");
 					for (int i = 0; i < invariant->dimensionalMatrixColumnCount; i++)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpmathjax, "%c%c", 'P'+(invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + i]/10), 
+						flexprint(N->Fe, N->Fm, N->Fpmathjax, "%c%c", 'P'+(invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + i]/10),
 											'0'+invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + i]%10);
 						if (i < invariant->dimensionalMatrixColumnCount -1)
 						{
@@ -148,7 +151,16 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 							if (invariant->nullSpace[countKernel][tmpPosition[row]][col] > 0)
 							{
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "(");
-								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
+
+								/*
+								 *	We should not use the column labels even though those are the things
+								 *	we have at the moment that are well-named. We really should be using
+								 *	the parameter names, or saving that, the "Pnnn" label.
+								 */
+								//flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
+								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%c%c", 'P'+(invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + row]/10),
+													'0'+invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + row]%10);
+
 								if (invariant->nullSpace[countKernel][tmpPosition[row]][col] > 1)
 								{
 									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^{%g}", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
@@ -164,7 +176,16 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 							if (invariant->nullSpace[countKernel][tmpPosition[row]][col] < 0)
 							{
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "(");
-								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
+
+								/*
+								 *	We should not use the column labels even though those are the things
+								 *	we have at the moment that are well-named. We really should be using
+								 *	the parameter names, or saving that, the "Pnnn" label.
+								 */
+								//flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
+								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%c%c", 'P'+(invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + row]/10),
+													'0'+invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + row]%10);
+
 								if (invariant->nullSpace[countKernel][tmpPosition[row]][col] < -1)
 								{
 									flexprint(N->Fe, N->Fm, N->Fpmathjax, "^{%g}", 0 - invariant->nullSpace[countKernel][tmpPosition[row]][col]);
@@ -187,7 +208,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 						}
 					}
 				}
-				else
+				else if (!latexOutput) 
 				{
 					/*
 					 *	PermutedIndexArray consists of the indices to show how exactly the matrix is permuted.
@@ -215,15 +236,15 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 				}
 			}
 
-			if (N->mode & kNoisyModeCGI)
+			if ((N->mode & kCommonModeCGI) || (N->irBackends & kNewtonIrBackendLatex))
 			{
 				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\n\\end{aligned}\n");
 				flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$\n");
 			}
 
-			flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
+			if (!latexOutput) flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 		}
-		flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
+		if (!latexOutput) flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 
 		free(tmpPosition);
 		invariant = invariant->next;
@@ -251,7 +272,7 @@ irPassDimensionalMatrixKernelPrinterFromBodyWithNumOfConstant(State *  N)
 			flexprint(N->Fe, N->Fm, N->Fpinfo, "Invariant \"%s\" has %d unique kernels, each with %d column(s)...\n\n",
 							invariant->identifier, invariant->numberOfUniqueKernels, invariant->kernelColumnCount);
 
-			if (N->mode & kNoisyModeCGI)
+			if (N->mode & kCommonModeCGI)
 			{
 				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\n\n$$\n");
 				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\begin{aligned}\n");
@@ -286,7 +307,7 @@ irPassDimensionalMatrixKernelPrinterFromBodyWithNumOfConstant(State *  N)
 				/*
 				 *	Prints out the a table of the symbolic expressions implied by the Pi groups derived from the kernels.	
 				 */
-				if (N->mode & kNoisyModeCGI)
+				if (N->mode & kCommonModeCGI)
 				{
 					flexprint(N->Fe, N->Fm, N->Fpmathjax, "\t\\qquad\\qquad\\textcolor{DarkSlateGray}{\\mathbf{\\Pi\\text{ group }%d, \\text{ with column order }", countKernel);
 
@@ -381,7 +402,7 @@ irPassDimensionalMatrixKernelPrinterFromBodyWithNumOfConstant(State *  N)
 				}
 			}
 
-			if (N->mode & kNoisyModeCGI)
+			if (N->mode & kCommonModeCGI)
 			{
 				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\n\\end{aligned}\n");
 				flexprint(N->Fe, N->Fm, N->Fpmathjax, "$$\n");

@@ -369,3 +369,17 @@ getTypeFromOperatorSubtree(State *  N, IrNode *  n)
 
 	return n->type;
 }
+
+void
+printDimensionsOfNode(State *  N, IrNode *  n, FlexPrintBuf *  flexBuf)
+{
+	Dimension *	tmpDimensionsNode;
+
+	for (tmpDimensionsNode = n->physics->dimensions; tmpDimensionsNode != NULL; tmpDimensionsNode = tmpDimensionsNode->next)
+	{
+		flexprint(N->Fe, N->Fm, flexBuf, "\tDimension \"%s\" with exponent %f\n", 
+			tmpDimensionsNode->name, tmpDimensionsNode->exponent);
+	}
+
+	return;
+}

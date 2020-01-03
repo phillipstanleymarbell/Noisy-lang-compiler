@@ -51,7 +51,7 @@
 /*
  *	This is misusing the intent of isType(). See issue #320.
  */
-const char	gNewtonTypeNodeSignatures[kNewtonIrNodeTypeMax] = {
+const char	gNewtonTypeNodeSignatures[kCommonIrNodeTypeMax] = {
 									[	kNewtonIrNodeType_PcomparisonOperator	] = 'O',
 									[	kNewtonIrNodeType_Pconstraint		] = '(',
 									[	kNewtonIrNodeType_PconstraintList	] = ')',

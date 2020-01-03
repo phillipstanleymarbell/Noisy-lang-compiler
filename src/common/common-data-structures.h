@@ -41,7 +41,7 @@ typedef enum
 {
 	kCommonVerbosityDebugLexer	=	(1 << 0),
 	kCommonVerbosityDebugParser	=	(1 << 1),
-	kCommonVerbosityDebugAST		=	(1 << 2),
+	kCommonVerbosityDebugAST	=	(1 << 2),
 	kCommonVerbosityDebugFF		=	(1 << 3),
 	
 	/*
@@ -537,17 +537,18 @@ typedef enum
 	kNewtonIrNodeType_Tuncertainty,
 	kNewtonIrNodeType_Twrite,
 
-	/*
-	 *	Code depends on this bringing up the rear for Newton Tokens.
-	 */
-	kNewtonIrNodeType_TMax,
-	
 	kNewtonIrNodeType_ZbadIdentifier,
 	kNewtonIrNodeType_ZbadStringConst,
 	kNewtonIrNodeType_Zeof,
 	kNewtonIrNodeType_Zepsilon,
 
-	
+	/*
+	 *	Code depends on this bringing up the rear for Newton Tokens.
+	 */
+	kNewtonIrNodeType_TMax,
+
+
+
 	/*
 	 *	Newton grammar productions
 	 */
@@ -635,17 +636,17 @@ typedef enum
 
 typedef enum
 {
-	kNoisyVerbosityVerbose				= (1 << 0),
-	kNoisyVerbosityActionTrace			= (1 << 1),
-	kNoisyVerbosityCallTrace			= (1 << 2),
-	kNoisyVerbosityPostScanStreamCheck		= (1 << 3),
-	kNoisyVerbosityPreScanStreamCheck		= (1 << 4),
+	kCommonVerbosityVerbose				= (1 << 0),
+	kCommonVerbosityActionTrace			= (1 << 1),
+	kCommonVerbosityCallTrace			= (1 << 2),
+	kCommonVerbosityPostScanStreamCheck		= (1 << 3),
+	kCommonVerbosityPreScanStreamCheck		= (1 << 4),
 
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
-	kNoisyVerbosityMax,
-} NoisyVerbosity;
+	kCommonVerbosityMax,
+} CommonVerbosity;
 
 
 
@@ -688,6 +689,13 @@ typedef enum
 	kNewtonIrBackendRTL				= (1 << 4),
 
 	/*
+	 *	The LaTeX backend isn't a true backend per se, but rather
+	 *	the flag enables dumping the LaTeX / KaTeX when the kernel
+	 *	dumping is happening.
+	 */
+	kNewtonIrBackendLatex				= (1 << 5),
+
+	/*
 	 *	Code depends on this bringing up the rear.
 	 */
 	kNewtonIrBackendMax,
@@ -724,7 +732,7 @@ typedef enum
 
 typedef enum
 {
-	kCommonMaxBufferLength				= 8192,
+	kCommonMaxBufferLength				= 65536,
 	kCommonChunkBufferLength			= 8192,
 	kCommonMaxErrorTokenCount			= 32,
 	kCommonStreamchkWidth				= 32,
@@ -747,31 +755,16 @@ typedef enum
 
 typedef enum
 {
-	kNoisyModeDefault				= (0 << 0),
-	kNoisyModeCallTracing				= (1 << 0),
-	kNoisyModeCallStatistics			= (1 << 1),
-	kNoisyModeCGI					= (1 << 2),
+	kCommonModeDefault				= (0 << 0),
+	kCommonModeCallTracing				= (1 << 0),
+	kCommonModeCallStatistics			= (1 << 1),
+	kCommonModeCGI					= (1 << 2),
 
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
-	kNoisyModeMax
-} NoisyMode;
-
-
-
-typedef enum
-{
-	kNewtonModeDefault				= (0 << 0),
-	kNewtonModeCallTracing				= (1 << 0),
-	kNewtonModeCallStatistics			= (1 << 1),
-	kNewtonModeCGI					= (1 << 2),
-
-	/*
-	 *	Code depends on this bringing up the rear.
-	 */
-	kNewtonModeMax
-} NewtonMode;
+	kCommonModeMax
+} CommonMode;
 
 
 
@@ -810,7 +803,7 @@ struct Dimension
 
 struct Invariant
 {
-	char *			identifier;			//	Name of the physics quantity. of type kNoisyConfigType_Tidentifier
+	char *			identifier;			//	Name of the physics quantity, of type Tidentifier
 	Scope *			scope;
 	SourceInfo *		sourceInfo;
 	IrNode *		parameterList;			//	This is just bunch of IrNode's in Xseq
@@ -837,7 +830,7 @@ struct Invariant
 
 struct Physics
 {
-	char *			identifier;			//	Name of the physics quantity. of type kNoisyConfigType_Tidentifier
+	char *			identifier;			//	Name of the physics quantity. of type Tidentifier
 	uint64_t		id;
 	int			subindex;			//	Index for further identification. e.g.) acceleration along x, y, z axes
 	Scope *			scope;
@@ -1126,7 +1119,7 @@ typedef struct
 	char *			outputCFilePath;
 	char *			outputRTLFilePath;
 
-	NoisyMode		mode;
+	CommonMode		mode;
 	uint64_t		verbosityLevel;
 	uint64_t		dotDetailLevel;
 	uint64_t		optimizationLevel;
@@ -1150,7 +1143,7 @@ void		error(State *  C, const char *  msg);
 void		timestampsInit(State *  C);
 void		timeStampDumpTimeline(State *  C);
 void		timeStampDumpResidencies(State *  C);
-State *		init(NoisyMode mode);
+State *		init(CommonMode mode);
 void		dealloc(State *  C);
 void		runPasses(State *  C);
 uint64_t	checkRss(State *  C);

@@ -9,7 +9,7 @@ NOISYPATH	= ../noisy
 INCLUDEPATH	= ../include
 EXAMPLESPATH	= ../../applications/newton
 
-COMPILERVARIANT = clang
+COMPILERVARIANT = gcc	#clang
 
 SYSNAME		= Newton
 SYSNAMELOWER	= newton
@@ -199,8 +199,14 @@ HEADERS		=\
 		newton-check-pass.h\
 		newton-eigenLibraryInterface.h\
 
-all: installhooks version.c lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile target #examples
+all: installhooks common version.c lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile target examples
 
+common:
+	cd ../common && make SYSNAME=Newton SYSNAMELOWER=newton
+
+#
+#			Install the pre-commit hooks. There doesn't seem to be any other way to force people to install the hook when comitting on Noisy.
+#
 installhooks:
 	ln -fs ../../applications/newton/include/NewtonBaseSignals.nt .
 	cp $(TREEROOT)/hooks/$(PRECOMMITHOOK) $(TREEROOT)/.git/hooks/pre-commit
@@ -232,7 +238,7 @@ cgi:lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$
 #
 #			Objects
 #
-%.$(OBJECTEXTENSION): %.c #$(HEADERS) #$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
+%.$(OBJECTEXTENSION): %.c $(HEADERS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
 	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
 	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
@@ -308,3 +314,4 @@ test:
 
 clean:
 	rm -rf version.c $(OBJS) $(CGIOBJS) $(LIBNEWTONOBJS) $(CGI_TARGET) $(CGI_TARGET).dSYM $(TARGET) $(TARGET).dSYM $(CGI_TARGET) $(CGI_TARGET).dsym lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a *.o *.plist
+	cd ../common && make clean

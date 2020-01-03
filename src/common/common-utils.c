@@ -34,18 +34,15 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-#ifdef NoisyOsMacOSX
+#ifdef CommonOsMacOSX
 #	include <mach/mach.h>
 #	include <mach/mach_time.h>
 #	include <unistd.h>
-#endif
-
-#ifdef NoisyOsMacOSX
 #	include <dispatch/dispatch.h>
 #	include <OpenCL/opencl.h>
 #endif
 
-#ifdef NoisyOsLinux
+#ifdef CommonOsLinux
 #	include <sys/types.h>
 #	include <sys/wait.h>
 #endif
@@ -61,35 +58,27 @@
 #include "flextypes.h"
 #include "flexerror.h"
 #include "flex.h"
-#include "noisy-timeStamps.h"
+#ifdef VariantNoisy
+#	include "noisy-timeStamps.h"
+#endif
+#ifdef VariantNewton
+#	include "newton-timeStamps.h"
+#endif
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
 #include "common-errors.h"
-
-/*
- *	NOTE / TODO / BUG: (delete this once th eimplementation settles)
- *
- *	(1) 	The way we handle lexing in M and Noisy compilers does not use the
- *		'stickies' as we do in our Yacc-based parsers.
- *
- *	(2)	We currently split up the input by '\n'-separated newline. This is
- *		OK, since we also recognize '\r' as being a discardable whitespace.
- */
-//const char	gNoisyEol[]			= "\n\r";
-//const char	gNoisyWhitespace[]		= " \t\n\r";
-//const char	gNoisyStickies[]		= "~!%&*()+=[]{}\\|:;'\",<.>/?";
 
 /*
  *	NOTE: -Tpng:gd gets rid of the ugly edge borders which are there in
  *	-Tpng and -Tpng:cairo. However, putting the ":gd" in the arg makes
  *	it not work via rfork, though it does via command line??!!
  */
-static char *	kNoisyDotArgsPNG[]		= {"dot", "-Tpng", "-O"};
-static char	kNoisyRenderExtensionPNG[]	= ".png";
-static char *	kNoisyDotArgsPDF[]		= {"dot", "-Tpdf", "-O"};
-static char	kNoisyRenderExtensionPDF[]	= ".pdf";
-static char *	kNoisyDotArgsSVG[]		= {"dot", "-Tsvg", "-O"};
-static char	kNoisyRenderExtensionSVG[]	= ".svg";
+static char *	kCommonDotArgsPNG[]		= {"dot", "-Tpng", "-O"};
+static char	kCommonRenderExtensionPNG[]	= ".png";
+static char *	kCommonDotArgsPDF[]		= {"dot", "-Tpdf", "-O"};
+static char	kCommonRenderExtensionPDF[]	= ".pdf";
+static char *	kCommonDotArgsSVG[]		= {"dot", "-Tsvg", "-O"};
+static char	kCommonRenderExtensionSVG[]	= ".svg";
 
 
 
@@ -103,9 +92,8 @@ timestampsInit(State *  N)
 	}
 	N->timestampSlots = kCommonTimestampTimelineLength;
 
-
 	//TODO: replace this with a libflex call...
-#ifdef NoisyOsMacOSX
+#ifdef CommonOsMacOSX
 	N->initializationTimestamp = mach_absolute_time();
 #endif
 
@@ -123,13 +111,26 @@ timestampsInit(State *  N)
 		fatal(NULL, Emalloc);
 	}
 
+	N->timestampCount = 0;
+	N->callAggregateTotal = 0;
+	N->timeAggregatesLastTimestamp = TimeMacro;
+	N->timeAggregatesLastKey = kCommonTimeStampKeyTimeStampInit;
+
 	return;
 }
 
+/*
+ *	We used to use the `mode` to determine whether to initialize the
+ *	timestamp statistics gathering and hence to call timestampsInit(N),
+ *	but we now only call the latter when either the tracing or stats mode
+ *	is on. We do need the mode set, since this routine is how CGI etc.
+ *	initialize the State *N instance, and they pass in an appropriate mode.
+ */
 State *
-init(NoisyMode mode)
+init(CommonMode mode)
 {
 	State *	N;
+
 
 	N = (State *)calloc(1, sizeof(State));
 	if (N == NULL)
@@ -137,19 +138,6 @@ init(NoisyMode mode)
 		fatal(NULL, Emalloc);
 	}
 	N->mode = mode;
-
-
-	/*
-	 *	We initialize this as early as possible. In most use cases however,
-	 *	noisyInit() is called with kNoisyModeDefault, and as a result we
-	 *	will not pick up noisyInit in statistics trace.
-	 */
-	if (mode & kNoisyModeCallStatistics)
-	{
-		timestampsInit(N);
-	}
-	TimeStampTraceMacro(kNoisyTimeStampKeyNoisyInit);
-
 
 
 	N->Fe = (FlexErrState *)calloc(1, sizeof(FlexErrState));
@@ -183,6 +171,8 @@ init(NoisyMode mode)
 		fatal(NULL, Emalloc);
 	}
 
+
+
 	/*
 	 *	Used to hold informational messages
 	 */
@@ -198,6 +188,8 @@ init(NoisyMode mode)
 	{
 		fatal(NULL, Emalloc);
 	}
+
+
 
 	/*
 	 *	Used to hold MathJax-formatted output
@@ -215,20 +207,13 @@ init(NoisyMode mode)
 		fatal(NULL, Emalloc);
 	}
 
+
+
 	/*
 	 *	Used to hold SMT2 backend output
 	 */
 	N->Fpsmt2 = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
 	if (N->Fpsmt2 == NULL)
-	{
-		fatal(NULL, Emalloc);
-	}
-
-	/*
-	 *	Used to hold C backend output
-	 */
-	N->Fpc = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
-	if (N->Fpc == NULL)
 	{
 		fatal(NULL, Emalloc);
 	}
@@ -240,11 +225,25 @@ init(NoisyMode mode)
 		fatal(NULL, Emalloc);
 	}
 
+
+
+	/*
+	 *	Used to hold C backend output
+	 */
+	N->Fpc = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
+	if (N->Fpc == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	//TODO: need to figure out right buffer size dynamically. 
 	N->Fpc->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
 	if (N->Fpc->circbuf == NULL)
 	{
 		fatal(NULL, Emalloc);
 	}
+
+
 
 	/*
 	 *	Used to hold RTL backend output
@@ -269,13 +268,15 @@ init(NoisyMode mode)
 	{
 		fatal(NULL, Emalloc);
 	}
-/*
-  *	Both 'gcl_create_dispatch_queue' and 'gcl_get_device_id_with_dispatch_queue'
-  *	are deprecated: first deprecated in macOS 10.14.
-  *	The following block is commented out after discussion with Phillip.
-  */
 
-#ifdef NoisyOsMacOSX
+
+
+	/*
+	 *	Both 'gcl_create_dispatch_queue' and 'gcl_get_device_id_with_dispatch_queue'
+	 *	are deprecated: first deprecated in macOS 10.14.
+	 *	The following block is commented out after discussion with Phillip.
+	 */
+#ifdef CommonOsMacOSX
 /*
 	dispatch_queue_t queue = gcl_create_dispatch_queue(CL_DEVICE_TYPE_GPU, NULL);
 	if (queue == NULL)
@@ -317,7 +318,7 @@ dealloc(State *  N)
 	}
 
 
-	if (N->mode & kNoisyModeCallStatistics)
+	if (N->mode & kCommonModeCallStatistics)
 	{
 		free(N->timestamps);
 		free(N->timeAggregates);
@@ -328,26 +329,11 @@ dealloc(State *  N)
 }
 
 
-void
-runPasses(State *  N)
-{
-	TimeStampTraceMacro(kNoisyTimeStampKeyRunPasses);
-
-	/*
-	 *	Convert the literal strings in tree for numeric and real-valued constants into uint64_t / double.
-	 */
-	//if (N->irPasses & kNoisyIrPassXXX)
-	{
-		//noisyIrPassXXX(C, N->noisyIrRoot, true);
-	}
-}
-
-
 
 uint64_t
 checkRss(State *  N)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyCheckRss);
+	TimeStampTraceMacro(kCommonTimeStampKeyCheckRss);
 
 	char		tmp, *ep = &tmp, buf[kCommonMaxBufferLength];
 	FILE *		pipe;
@@ -378,7 +364,7 @@ checkRss(State *  N)
 #endif
 
 
-	return ret;	
+	return ret;
 }
 
 
@@ -386,13 +372,24 @@ checkRss(State *  N)
 void
 consolePrintBuffers(State *  N)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyConsolePrintBuffers);
+	TimeStampTraceMacro(kCommonTimeStampKeyConsolePrintBuffers);
 
-	//TODO: need a better thought out way to handle printing out the internal buffers when we are running from the command line	
+	/*
+	 *	TODO: need a better thought out way to handle printing out the internal buffers when we are running from the command line
+	 */
+	if (N && N->Fpmathjax && strlen(N->Fpmathjax->circbuf))
+	{
+		fprintf(stdout, "\nLaTeX Backend Output:\n---------------------\n%s", N->Fpmathjax->circbuf);
+		if (N->mode & kCommonModeCGI)
+		{
+			fflush(stdout);
+		}
+	}
+
 	if (N && N->Fpinfo && strlen(N->Fpinfo->circbuf))
 	{
 		fprintf(stdout, "\nInformational Report:\n---------------------\n%s", N->Fpinfo->circbuf);
-		if (N->mode & kNoisyModeCGI)
+		if (N->mode & kCommonModeCGI)
 		{
 			fflush(stdout);
 		}
@@ -401,7 +398,7 @@ consolePrintBuffers(State *  N)
 	if (N && N->Fpsmt2 && strlen(N->Fpsmt2->circbuf))
 	{
 		fprintf(stdout, "\nSMT2 Backend output:\n---------------------\n%s", N->Fpsmt2->circbuf);
-		if (N->mode & kNoisyModeCGI)
+		if (N->mode & kCommonModeCGI)
 		{
 			fflush(stdout);
 		}
@@ -410,7 +407,7 @@ consolePrintBuffers(State *  N)
 	if (N && N->Fpc && strlen(N->Fpc->circbuf))
 	{
 		fprintf(stdout, "\nC Backend output:\n---------------------\n%s", N->Fpc->circbuf);
-		if (N->mode & kNoisyModeCGI)
+		if (N->mode & kCommonModeCGI)
 		{
 			fflush(stdout);
 		}
@@ -420,7 +417,7 @@ consolePrintBuffers(State *  N)
 	{
 		fprintf(stdout, "\nRTL Backend output:\n---------------------\n%s", N->Fprtl->circbuf);
 		
-		if (N->mode & kNoisyModeCGI)
+		if (N->mode & kCommonModeCGI)
 		{
 			fflush(stdout);
 		}
@@ -429,7 +426,7 @@ consolePrintBuffers(State *  N)
 
 	if (N && N->Fperr && strlen(N->Fperr->circbuf))
 	{
-		if (N->mode & kNoisyModeCGI)
+		if (N->mode & kCommonModeCGI)
 		{
 			fprintf(stdout, "Error Report:\n-------------\n%s", N->Fperr->circbuf);
 			fflush(stdout);
@@ -446,7 +443,7 @@ consolePrintBuffers(State *  N)
 void
 printToFile(State *  N, const char *  msg, const char *  fileName, PostFileWriteAction action)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyPrintToFile);
+	TimeStampTraceMacro(kCommonTimeStampKeyPrintToFile);
 
 	int	fd;
 	char *	endName;
@@ -465,7 +462,7 @@ printToFile(State *  N, const char *  msg, const char *  fileName, PostFileWrite
 	/*
 	 *	For CGI mode, we randomize the fileName.
 	 */
-	if (N->mode & kNoisyModeCGI)
+	if (N->mode & kCommonModeCGI)
 	{
 		int	stubAndRandomDigitsNameLength = strlen(fileName)+kCommonCgiRandomDigits+1;
 
@@ -496,13 +493,13 @@ printToFile(State *  N, const char *  msg, const char *  fileName, PostFileWrite
 		endName = randomizedFileName;
 	}
 
-	pathName =  (char *) calloc(strlen(endName)+strlen(kNoisyBasePath) + 1, sizeof(char));
+	pathName =  (char *) calloc(strlen(endName)+strlen(kCommonBasePath) + 1, sizeof(char));
 	if (pathName == NULL)
 	{
 		fatal(N, Emalloc);
 	}
 
-	strcat(pathName, kNoisyBasePath);
+	strcat(pathName, kCommonBasePath);
 	strcat(pathName, endName);
 
 //TODO: at the moment, flexlib's handling of opens is way too screwed... use normal open()
@@ -547,7 +544,7 @@ printToFile(State *  N, const char *  msg, const char *  fileName, PostFileWrite
 void
 renderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyRenderDotInFile);
+	TimeStampTraceMacro(kCommonTimeStampKeyRenderDotInFile);
 
 	/*	The N->lastrender purposefully does not contain VM_BASEPATH	*/
 	N->lastDotRender = realloc(N->lastDotRender, (strlen(randomizedFileName)+1) * sizeof(char));
@@ -563,7 +560,7 @@ renderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 	{
 		case 0:
 		{
-			execl(kNoisyDotCommand, kNoisyDotArgsPNG[0], kNoisyDotArgsPNG[1], kNoisyDotArgsPNG[2], pathName, NULL);
+			execl(kCommonDotCommand, kCommonDotArgsPNG[0], kCommonDotArgsPNG[1], kCommonDotArgsPNG[2], pathName, NULL);
 			exit(0);
 		}
 
@@ -575,9 +572,9 @@ renderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 
 		default:
 		{
-			if (N->mode & kNoisyModeCGI)
+			if (N->mode & kCommonModeCGI)
 			{
-				checkCgiCompletion(N, pathName, kNoisyRenderExtensionPNG);
+				checkCgiCompletion(N, pathName, kCommonRenderExtensionPNG);
 			}
 		}
 	}
@@ -586,7 +583,7 @@ renderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 	{
 		case 0:
 		{
-			execl(kNoisyDotCommand, kNoisyDotArgsPDF[0], kNoisyDotArgsPDF[1], kNoisyDotArgsPDF[2], pathName, NULL);
+			execl(kCommonDotCommand, kCommonDotArgsPDF[0], kCommonDotArgsPDF[1], kCommonDotArgsPDF[2], pathName, NULL);
 			exit(0);
 		}
 
@@ -598,9 +595,9 @@ renderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 
 		default:
 		{
-			if (N->mode & kNoisyModeCGI)
+			if (N->mode & kCommonModeCGI)
 			{
-				checkCgiCompletion(N, pathName, kNoisyRenderExtensionPDF);
+				checkCgiCompletion(N, pathName, kCommonRenderExtensionPDF);
 			}
 		}
 	}
@@ -608,7 +605,7 @@ renderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 	{
 		case 0:
 		{
-			execl(kNoisyDotCommand, kNoisyDotArgsSVG[0], kNoisyDotArgsSVG[1], kNoisyDotArgsSVG[2], pathName, NULL);
+			execl(kCommonDotCommand, kCommonDotArgsSVG[0], kCommonDotArgsSVG[1], kCommonDotArgsSVG[2], pathName, NULL);
 			exit(0);
 		}
 
@@ -620,9 +617,9 @@ renderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 
 		default:
 		{
-			if (N->mode & kNoisyModeCGI)
+			if (N->mode & kCommonModeCGI)
 			{
-				checkCgiCompletion(N, pathName, kNoisyRenderExtensionSVG);
+				checkCgiCompletion(N, pathName, kCommonRenderExtensionSVG);
 			}
 		}
 	}
@@ -634,7 +631,7 @@ renderDotInFile(State *  N, char *  pathName, char *  randomizedFileName)
 void
 checkCgiCompletion(State *  N, const char *  pathName, const char *  renderExtension)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyCheckCgiCompletion);
+	TimeStampTraceMacro(kCommonTimeStampKeyCheckCgiCompletion);
 
 	char *	renderPathName;
 
@@ -669,7 +666,7 @@ checkCgiCompletion(State *  N, const char *  pathName, const char *  renderExten
 void
 fatal(State *  N, const char *  msg)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyFatal);
+	TimeStampTraceMacro(kCommonTimeStampKeyFatal);
 
 	fflush(stdout);
 	fflush(stderr);
@@ -684,17 +681,17 @@ fatal(State *  N, const char *  msg)
 	}
 	else
 	{
-		if (N->mode & kNoisyModeCallTracing)
+		if (N->mode & kCommonModeCallTracing)
 		{
 			timeStampDumpTimeline(N);
 		}
 
-		if (N->mode & kNoisyModeCallStatistics)
+		if (N->mode & kCommonModeCallStatistics)
 		{
 			timeStampDumpResidencies(N);
 		}
 
-		TimeStampTraceMacro(kNoisyTimeStampKeyFatal);
+		TimeStampTraceMacro(kCommonTimeStampKeyFatal);
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n%s%s\n\n", Efatal, msg);
 	}
 
@@ -727,7 +724,7 @@ fatal(State *  N, const char *  msg)
 	 */
 	if (N != NULL)
 	{
-		//flexprint(N->Fe, N->Fm, N->Fperr, "\nDump of Noisy IR at point of failure:\n%s\n", noisyIrDotBackend(N));
+		//flexprint(N->Fe, N->Fm, N->Fperr, "\nDump of IR at point of failure:\n%s\n", noisyIrDotBackend(N));
 	}
 
 	consolePrintBuffers(N);
@@ -735,7 +732,7 @@ fatal(State *  N, const char *  msg)
 	/*
 	 *	CGI depends on clean failure of cgi program
 	 */
-	if ((N != NULL) && (N->mode & kNoisyModeCGI))
+	if ((N != NULL) && (N->mode & kCommonModeCGI))
 	{
 		exit(EXIT_SUCCESS);
 	}
@@ -748,16 +745,16 @@ fatal(State *  N, const char *  msg)
 void
 error(State *  N, const char *  msg)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyError);
+	TimeStampTraceMacro(kCommonTimeStampKeyError);
 
 	if (N == NULL)
 	{
 		fatal(N, Esanity);
 	}
 
-	TimeStampTraceMacro(kNoisyTimeStampKeyError);
+	TimeStampTraceMacro(kCommonTimeStampKeyError);
 
-	if (!(N->verbosityLevel & kNoisyVerbosityVerbose))
+	if (!(N->verbosityLevel & kCommonVerbosityVerbose))
 	{
 		return;
 	}

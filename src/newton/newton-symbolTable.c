@@ -47,6 +47,7 @@
 #include "flex.h"
 #include "version.h"
 #include "newton-timeStamps.h"
+#include "common-errors.h"
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
 #include "newton-symbolTable.h"
@@ -62,13 +63,15 @@ extern int		primeNumbers[168];
  *	"b".  See, e.g., comments at P_TYPENAME in noisy-irPass-cBackend.
  */
 
-static Dimension *	copyDimensionNode(Dimension *  list);
-static Dimension *	copyDimensionList(Dimension *  list);
+static Dimension *	copyDimensionNode(State *  N, Dimension *  list);
+static Dimension *	copyDimensionList(State *  N, Dimension *  list);
 
 
 static Invariant *
-getTailInvariant(Invariant *  head)
+getTailInvariant(State *  N, Invariant *  head)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (head == NULL)
 	{
 		return NULL;
@@ -86,8 +89,10 @@ getTailInvariant(Invariant *  head)
 
 
 static Dimension *
-copyDimensionNode(Dimension *  list)
+copyDimensionNode(State *  N, Dimension *  list)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Dimension *	temp = (Dimension *) calloc(1, sizeof(Dimension));
 
 	temp->name		= list->name;
@@ -109,8 +114,10 @@ copyDimensionNode(Dimension *  list)
 }
 
 static Dimension *
-copyDimensionList(Dimension *  source)
+copyDimensionList(State *  N, Dimension *  source)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Dimension *	returnNode = NULL;
 	Dimension *	destHead = NULL;
 	Dimension *	sourceHead = source;
@@ -119,12 +126,12 @@ copyDimensionList(Dimension *  source)
 	{
 		if (destHead == NULL)
 		{
-			destHead = copyDimensionNode(sourceHead);
+			destHead = copyDimensionNode(N, sourceHead);
 			returnNode = destHead;
 		}
 		else
 		{
-			destHead->next = copyDimensionNode(sourceHead);
+			destHead->next = copyDimensionNode(N, sourceHead);
 			destHead = destHead->next;
 		}
 
@@ -135,8 +142,10 @@ copyDimensionList(Dimension *  source)
 }
 
 Physics *
-shallowCopyPhysicsNode(Physics *  node)
+shallowCopyPhysicsNode(State *  N, Physics *  node)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Physics *	copy = (Physics *) calloc(1, sizeof(Physics));
 
 	copy->identifier	= node->identifier;
@@ -156,11 +165,13 @@ shallowCopyPhysicsNode(Physics *  node)
 }
 
 Physics *
-deepCopyPhysicsNode(Physics *  node)
+deepCopyPhysicsNode(State *  N, Physics *  node)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Physics *	copy = (Physics *) calloc(1, sizeof(Physics));
 
-	copy->dimensions	= copyDimensionList(node->dimensions);
+	copy->dimensions	= copyDimensionList(N, node->dimensions);
 
 	copy->identifier	= node->identifier;
 	copy->scope		= node->scope;
@@ -183,8 +194,10 @@ deepCopyPhysicsNode(Physics *  node)
 
 
 IntegralList *
-getTailIntegralList(IntegralList *  list)
+getTailIntegralList(State *  N, IntegralList *  list)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (list == NULL)
 	{
 		return NULL;
@@ -201,8 +214,10 @@ getTailIntegralList(IntegralList *  list)
 }
 
 Physics *
-getTailPhysics(Physics *  list)
+getTailPhysics(State *  N, Physics *  list)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (list == NULL)
 	{
 		return NULL;
@@ -221,10 +236,12 @@ getTailPhysics(Physics *  list)
 Physics * 
 newtonPhysicsTableCopyAndAddPhysics(State *  N, Scope *  scope, Physics *  source)
 {
-	Physics *	dest = deepCopyPhysicsNode(source);
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
+	Physics *	dest = deepCopyPhysicsNode(N, source);
 
 	Physics *	tail;
-	if ((tail = getTailPhysics(source)) == NULL)
+	if ((tail = getTailPhysics(N, source)) == NULL)
 	{
 		scope->firstPhysics = dest;
 	}
@@ -239,8 +256,10 @@ newtonPhysicsTableCopyAndAddPhysics(State *  N, Scope *  scope, Physics *  sourc
 void
 newtonAddInvariant(State *  N, Invariant *  invariant)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Invariant *	tail;
-	if ((tail = getTailInvariant(N->invariantList)) == NULL)
+	if ((tail = getTailInvariant(N, N->invariantList)) == NULL)
 	{
 		N->invariantList = invariant;
 	}
@@ -254,6 +273,8 @@ newtonAddInvariant(State *  N, Invariant *  invariant)
 void
 newtonPhysicsIncrementExponent(State *  N, Physics *  source, Dimension *  added)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Dimension *	current = source->dimensions;
 
 	bool	somethingWasAdded = false;
@@ -274,6 +295,8 @@ newtonPhysicsIncrementExponent(State *  N, Physics *  source, Dimension *  added
 void
 newtonPhysicsAddExponents(State *  N, Physics *  left, Physics *  right)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (right == NULL)
 	{
 		return;
@@ -284,13 +307,17 @@ newtonPhysicsAddExponents(State *  N, Physics *  left, Physics *  right)
 
 	assert(currentLeft != NULL && currentRight != NULL);
 
+//fprintf(stderr, ">>>\n");
 	while (currentLeft != NULL && currentRight != NULL)
 	{
+//fprintf(stderr, "(%f, %f) --> ", currentLeft->exponent, currentRight->exponent);
 		currentLeft->exponent += currentRight->exponent;
+//fprintf(stderr, "(%f, %f)\n", currentLeft->exponent, currentRight->exponent);
 
 		currentLeft = currentLeft->next;
 		currentRight = currentRight->next;
 	}
+//fprintf(stderr, "<<<\n");
 }
 
 void
@@ -314,6 +341,8 @@ newtonPhysicsAddExponentsRecursively(State *  N, Physics *  baseNode, IrNode * t
 void
 newtonPhysicsSubtractExponents(State *  N, Physics *  left, Physics *  right)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Dimension *	currentLeft = left->dimensions;
 	Dimension *	currentRight = right->dimensions;
 
@@ -332,6 +361,8 @@ newtonPhysicsSubtractExponents(State *  N, Physics *  left, Physics *  right)
 void
 newtonPhysicsMultiplyExponents(State *  N, Physics *  source, double multiplier)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Dimension *	current = source->dimensions;
 	assert(current != NULL);
 
@@ -347,6 +378,8 @@ newtonPhysicsMultiplyExponents(State *  N, Physics *  source, double multiplier)
 Dimension *
 newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  nameToken, Token *  abbrevToken)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Dimension *	newDimension;
 
 	newDimension = (Dimension *) calloc(1, sizeof(Dimension));
@@ -383,6 +416,8 @@ newtonDimensionTableAddDimensionForToken(State *  N, Scope *  scope, Token *  na
 Physics * 
 newtonInitPhysics(State * N, Scope * scope, Token * token)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Physics *	newPhysics = (Physics *) calloc(1, sizeof(Physics));
 	if (newPhysics == NULL)
 	{
@@ -390,7 +425,7 @@ newtonInitPhysics(State * N, Scope * scope, Token * token)
 	}
 
 	assert(N->newtonIrTopScope->firstDimension != NULL);
-	newPhysics->dimensions = copyDimensionList(N->newtonIrTopScope->firstDimension);
+	newPhysics->dimensions = copyDimensionList(N, N->newtonIrTopScope->firstDimension);
 
 	newPhysics->scope = scope;
 
@@ -407,7 +442,10 @@ newtonInitPhysics(State * N, Scope * scope, Token * token)
 Physics *
 newtonPhysicsTableAddPhysicsForToken(State *  N, Scope *  scope, Token *  token)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Physics *	newPhysics;
+
 	if (N->newtonIrTopScope->firstDimension == NULL)
 	{
 		newPhysics = (Physics *) calloc(1, sizeof(Physics));
@@ -444,6 +482,8 @@ newtonPhysicsTableAddPhysicsForToken(State *  N, Scope *  scope, Token *  token)
 bool
 areTwoPhysicsEquivalent(State * N, Physics * left, Physics * right)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Dimension *	leftCurrent = left->dimensions;
 	Dimension *	rightCurrent = right->dimensions;
 
@@ -453,6 +493,7 @@ areTwoPhysicsEquivalent(State * N, Physics * left, Physics * right)
 	{
 		if (leftCurrent->exponent != rightCurrent->exponent)
 		{
+//fprintf(stderr, "(%f, %f) ", leftCurrent->exponent, rightCurrent->exponent);
 			return false;
 		}
 		leftCurrent = leftCurrent->next;
@@ -470,6 +511,8 @@ areTwoPhysicsEquivalent(State * N, Physics * left, Physics * right)
 Dimension *
 newtonDimensionTableDimensionForName(State *  N, Scope *  scope, const char *  name)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (scope == NULL)
 	{
 		return NULL;
@@ -491,6 +534,8 @@ newtonDimensionTableDimensionForName(State *  N, Scope *  scope, const char *  n
 Physics *
 newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(State *  N, Scope *  scope, const char * dimensionAliasAbbreviation)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (scope == NULL)
 	{
 		return NULL;
@@ -516,6 +561,8 @@ newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(State *  N, Scope *  scop
 Physics *
 newtonPhysicsTablePhysicsForDimensionAlias(State *  N, Scope *  scope, const char * dimensionAliasIdentifier)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (scope == NULL)
 	{
 		return NULL;
@@ -541,6 +588,8 @@ newtonPhysicsTablePhysicsForDimensionAlias(State *  N, Scope *  scope, const cha
 Physics *
 newtonPhysicsTablePhysicsForIdentifierAndSubindex(State *  N, Scope *  scope, const char *  identifier, int subindex)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (scope == NULL)
 	{
 		return NULL;
@@ -563,6 +612,8 @@ newtonPhysicsTablePhysicsForIdentifierAndSubindex(State *  N, Scope *  scope, co
 Physics *
 newtonPhysicsTablePhysicsForIdentifier(State *  N, Scope *  scope, const char *  identifier)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (scope == NULL)
 	{
 		return NULL;
@@ -585,6 +636,8 @@ newtonPhysicsTablePhysicsForIdentifier(State *  N, Scope *  scope, const char * 
 Scope *
 newtonSymbolTableAllocScope(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Scope *		newScope;
 
 	newScope = (Scope *) calloc(1, sizeof(Scope));
@@ -600,6 +653,8 @@ newtonSymbolTableAllocScope(State *  N)
 Scope *
 newtonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Scope *		newScope = newtonSymbolTableAllocScope(N);
 
 	newScope->parent	= scope;
@@ -613,5 +668,7 @@ newtonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 void
 newtonSymbolTableCloseScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	scope->end = subTree->sourceInfo;
 }

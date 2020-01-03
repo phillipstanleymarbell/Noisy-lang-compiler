@@ -61,6 +61,7 @@
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
 #include "common-symbolTable.h"
+#include "common-irPass-helpers.h"
 
 #include "newton-parser.h"
 #include "newton-lexer.h"
@@ -89,6 +90,8 @@ processNewtonFileDimensionPass(char * filename);
 void
 processNewtonFile(State *  N, char *  filename)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	Tokenize input, then parse it and build AST + symbol table.
 	 */
@@ -193,6 +196,43 @@ processNewtonFile(State *  N, char *  filename)
 	}
 
 	/*
+	 *	LaTeX backend: Hard work is done in the kernel printer. Just Epilogue here.
+	 */
+	if (N->irBackends & kNewtonIrBackendLatex)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\end{document}\n");
+	}
+
+	if (N->mode & kCommonModeCallTracing)
+	{
+		timeStampDumpTimeline(N);
+	}
+
+	if (N->mode & kCommonModeCallStatistics)
+	{
+		uint64_t	irNodeCount = 0, symbolTableNodeCount = 0;
+
+
+		timeStampDumpResidencies(N);
+
+		irNodeCount = irPassHelperIrSize(N, N->newtonIrRoot);
+		symbolTableNodeCount = irPassHelperSymbolTableSize(N, N->newtonIrTopScope);
+
+
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "Intermediate Representation Information:\n\n");
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "    IR node count                        : %llu\n", irNodeCount);
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "    Symbol Table node count              : %llu\n", symbolTableNodeCount);
+
+		/*
+		 *	Libflex malloc statistics:
+		 */
+		if (N->Fm->debug)
+		{
+			flexmblocksdisplay(N->Fe, N->Fm, N->Fperr);
+		}
+	}
+
+	/*
 	 *	RTL backend
 	 */
 	if (N->irBackends & kNewtonIrBackendRTL)
@@ -204,7 +244,14 @@ processNewtonFile(State *  N, char *  filename)
 static State*
 processNewtonFileDimensionPass(char * filename)
 {
-	State *		N = init(kNoisyModeDefault);
+	State *		N = init(kCommonModeDefault);
+	
+
+	/*
+	 *	In this case, put macro here since it needs 'N'
+	 */
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	newtonLexInit(N, filename);
 
 	N->newtonIrTopScope = commonSymbolTableAllocScope(N);

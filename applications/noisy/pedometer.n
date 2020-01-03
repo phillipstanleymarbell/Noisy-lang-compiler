@@ -1,9 +1,9 @@
 #
 #	For the math->min and math->max function:
 #
-include "math.nd"
-include "VDBS.nd"
-include "pedometer.nd"
+include "math.nd";
+include "VDBS.nd";
+include "pedometer.nd";
 
 PedometerConstants: const = 
 {
