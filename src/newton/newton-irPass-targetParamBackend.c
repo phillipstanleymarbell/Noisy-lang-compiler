@@ -101,6 +101,7 @@ irPassTargetParamDimensionalMatrixKernelPrinter(State *  N)
 	/* FIXME check if invariant or invariant->list are null */
 	argumentsList = (char **) malloc(invariant->dimensionalMatrixColumnCount * sizeof(char *));
 
+	/* FIXME check if this while is needed */
 	while (parameterListXSeq != NULL) 
 	{
 		irPassTargetParamSearchAndCreateArgList(N, parameterListXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, argumentsList, index);
@@ -175,7 +176,7 @@ irPassTargetParamDimensionalMatrixKernelPrinter(State *  N)
 				if (targetParamApperanceCnt == 1) 
 				{
 					//flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\t\tTargeParam YES\n\n");
-
+					N->targetParamLocatedKernel = countKernel;
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\tDFS: ");
 
 					index = 0;

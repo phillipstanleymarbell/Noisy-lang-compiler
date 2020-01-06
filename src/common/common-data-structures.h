@@ -1096,6 +1096,11 @@ typedef struct
 	char *			targetParam;
 
 	/*
+	 *	This is the invariant where the target parameter appears only once (for the targetParam backend)
+	 */
+	int 			targetParamLocatedKernel;
+
+	/*
 	 *	We keep a global handle on the list of module scopes, for easy reference.
 	 *	In this use case, the node->identifier holds the scopes string name, and we
 	 *	chain then using their prev/next fields.
