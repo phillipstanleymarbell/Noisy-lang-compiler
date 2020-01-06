@@ -493,12 +493,9 @@ irPassRTLProcessInvariantList(State *  N)
 		 */
 		int *tmpPosition = (int *)calloc(targetInvariant->dimensionalMatrixColumnCount, sizeof(int));
 		int *fractionValues = (int *)calloc(targetInvariant->dimensionalMatrixColumnCount, sizeof(int));
-#ifndef AOUA		
 		int divisorMultiplications=0, dividendMultiplications=0, fractionsLCM=1, integerPower;
 		multChain *dividendMultChainHead=NULL, *divisorMultChainHead=NULL; /* FIXME free variables */
-#else 	
-		int fractionsLCM=1;	
-#endif
+
 		for (int j = 0; j < targetInvariant->dimensionalMatrixColumnCount; j++)
 		{
 			tmpPosition[targetInvariant->permutedIndexArrayPointer[targetKernel * targetInvariant->dimensionalMatrixColumnCount + j]] = j;
