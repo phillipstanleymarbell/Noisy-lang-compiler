@@ -142,7 +142,7 @@ irPassTargetParamDimensionalMatrixKernelPrinter(State *  N)
 			for (int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
 			{
 
-				flexprint(N->Fe, N->Fm, N->Fpinfo, "Kernel %d:\n", countKernel);
+				// flexprint(N->Fe, N->Fm, N->Fpinfo, "Kernel %d:\n", countKernel);
 
 				for (int j = 0; j < invariant->dimensionalMatrixColumnCount; j++)
 				{
@@ -154,24 +154,25 @@ irPassTargetParamDimensionalMatrixKernelPrinter(State *  N)
 
 				for (int piIndex = 0; piIndex < invariant->kernelColumnCount; piIndex++)
 				{
-					if (abs((int) invariant->nullSpace[countKernel][tmpPosition[targetParamIndex]][piIndex]) == 1) /*FIXME for fractional values*/
+					//if (abs((int) invariant->nullSpace[countKernel][tmpPosition[targetParamIndex]][piIndex]) == 1) /*FIXME for fractional values*/
+					if (invariant->nullSpace[countKernel][tmpPosition[targetParamIndex]][piIndex] != 0.0) /*FIXME for fractional values*/
 					{
 						targetParamUniquePiGroup = piIndex;
 						targetParamApperanceCnt++; /* If there are more than one instances this will be overwritten but not taken into account later */
 					}
 				}
 
-				for (int piIndex = 0; piIndex < invariant->kernelColumnCount; piIndex++)
-				{
-					flexprint(N->Fe, N->Fm, N->Fpinfo, "\tPi group %d, Pi %d is:\t", countKernel, piIndex);
-					for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
-					{
-						flexprint(N->Fe, N->Fm, N->Fpinfo, "%c%c", 'P'+(row/10), '0'+ (row%10) );
-						flexprint(N->Fe, N->Fm, N->Fpinfo, "^(%2g)  ", invariant->nullSpace[countKernel][tmpPosition[row]][piIndex]);
-					}
-					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n");
-				}
-				//flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
+				// for (int piIndex = 0; piIndex < invariant->kernelColumnCount; piIndex++)
+				// {
+				// 	flexprint(N->Fe, N->Fm, N->Fpinfo, "\tPi group %d, Pi %d is:\t", countKernel, piIndex);
+				// 	for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
+				// 	{
+				// 		flexprint(N->Fe, N->Fm, N->Fpinfo, "%c%c", 'P'+(row/10), '0'+ (row%10) );
+				// 		flexprint(N->Fe, N->Fm, N->Fpinfo, "^(%2g)  ", invariant->nullSpace[countKernel][tmpPosition[row]][piIndex]);
+				// 	}
+				// 	flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n");
+				// }
+				// //flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
 
 				if (targetParamApperanceCnt == 1) 
 				{
@@ -179,46 +180,53 @@ irPassTargetParamDimensionalMatrixKernelPrinter(State *  N)
 					N->targetParamLocatedKernel = countKernel;
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\tDFS: ");
 
-					index = 0;
-					for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
+					//index = 0;
+					flexprint(N->Fe, N->Fm, N->Fpinfo, "{");
+					for (int row = 0; row < invariant->dimensionalMatrixColumnCount-1; row++)
 					{
-						if (invariant->nullSpace[countKernel][tmpPosition[row]][targetParamUniquePiGroup] != 0) 
-						{
-							if (index == 0) /* Has smth been printed? */
-							{
-								flexprint(N->Fe, N->Fm, N->Fpinfo, "%s^%.2f", argumentsList[row],invariant->nullSpace[countKernel][tmpPosition[row]][targetParamUniquePiGroup]);
-								index++;
-							} else {
-								flexprint(N->Fe, N->Fm, N->Fpinfo, " * %s^%.2f", argumentsList[row],invariant->nullSpace[countKernel][tmpPosition[row]][targetParamUniquePiGroup]);
-							}
-						}
+						// if (invariant->nullSpace[countKernel][tmpPosition[row]][targetParamUniquePiGroup] != 0) 
+						// {
+						// 	if (index == 0) /* Has smth been printed? */
+						// 	{
+						// 		flexprint(N->Fe, N->Fm, N->Fpinfo, "%s^%.2f", argumentsList[row],invariant->nullSpace[countKernel][tmpPosition[row]][targetParamUniquePiGroup]);
+						// 		index++;
+						// 	} else {
+						// 		flexprint(N->Fe, N->Fm, N->Fpinfo, " * %s^%.2f", argumentsList[row],invariant->nullSpace[countKernel][tmpPosition[row]][targetParamUniquePiGroup]);
+						// 	}
+						// }
+						flexprint(N->Fe, N->Fm, N->Fpinfo, "(%s,%.2f),", argumentsList[row],invariant->nullSpace[countKernel][tmpPosition[row]][targetParamUniquePiGroup]);
 					}
-
-					flexprint(N->Fe, N->Fm, N->Fpinfo, " = Phi (");
+					flexprint(N->Fe, N->Fm, N->Fpinfo, "(%s,%.2f)", argumentsList[invariant->dimensionalMatrixColumnCount-1],invariant->nullSpace[countKernel][tmpPosition[invariant->dimensionalMatrixColumnCount-1]][targetParamUniquePiGroup]);
+					flexprint(N->Fe, N->Fm, N->Fpinfo, "}");
+					//flexprint(N->Fe, N->Fm, N->Fpinfo, " = Phi (");
 
 					for (int piIndex = 0; piIndex < invariant->kernelColumnCount; piIndex++)
 					{
 						if (piIndex != targetParamUniquePiGroup)
 						{		
-							index = 0;
-							for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
+							//index = 0;
+							flexprint(N->Fe, N->Fm, N->Fpinfo, ",{");
+							for (int row = 0; row < invariant->dimensionalMatrixColumnCount-1; row++)
 							{
-								if (invariant->nullSpace[countKernel][tmpPosition[row]][piIndex] != 0) 
-								{
-									if (index == 0) /* Has smth been printed? */
-									{
-										flexprint(N->Fe, N->Fm, N->Fpinfo, "%s^%.2f", argumentsList[row],invariant->nullSpace[countKernel][tmpPosition[row]][piIndex]);
-										index++;
-									} else {
-										flexprint(N->Fe, N->Fm, N->Fpinfo, " * %s^%.2f", argumentsList[row],invariant->nullSpace[countKernel][tmpPosition[row]][piIndex]);
-									}
-								}
+								// if (invariant->nullSpace[countKernel][tmpPosition[row]][piIndex] != 0) 
+								// {
+								// 	if (index == 0) /* Has smth been printed? */
+								// 	{
+								// 		flexprint(N->Fe, N->Fm, N->Fpinfo, "%s^%.2f", argumentsList[row],invariant->nullSpace[countKernel][tmpPosition[row]][piIndex]);
+								// 		index++;
+								// 	} else {
+								// 		flexprint(N->Fe, N->Fm, N->Fpinfo, " * %s^%.2f", argumentsList[row],invariant->nullSpace[countKernel][tmpPosition[row]][piIndex]);
+								// 	}
+								// }
+								flexprint(N->Fe, N->Fm, N->Fpinfo, "(%s,%.2f),", argumentsList[row],invariant->nullSpace[countKernel][tmpPosition[row]][targetParamUniquePiGroup]);
 							}
-							flexprint(N->Fe, N->Fm, N->Fpinfo, ", ");
+							//flexprint(N->Fe, N->Fm, N->Fpinfo, ", ");
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "(%s,%.2f)", argumentsList[invariant->dimensionalMatrixColumnCount-1],invariant->nullSpace[countKernel][tmpPosition[invariant->dimensionalMatrixColumnCount-1]][targetParamUniquePiGroup]);
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "}");
 						}	
 					}
-					flexprint(N->Fe, N->Fm, N->Fpinfo, ")\n\n");
-					
+					//flexprint(N->Fe, N->Fm, N->Fpinfo, ")\n\n");
+					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n");
 				} else {
 					//flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\t\tTargeParam NO\n\n");
 				}
