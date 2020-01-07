@@ -69,6 +69,7 @@
 
 #define Q_PARAMETER 15
 #define N_PARAMETER 32
+#define ICE40
 
 static char multiplierVersion[32] = "qmultSequential";
 static char dividerVersion[32] = "qdivSequential";
@@ -80,7 +81,7 @@ module qmultSequential #(\n\
 	parameter N = 32\n\
 	)\n\
 	(\n\
-	input 	[N-1:0]  i_multiplicand,\n\
+	input 	[N-1:0] i_multiplicand,\n\
 	input 	[N-1:0]	i_multiplier,\n\
 	input 	i_start,\n\
 	input 	i_clk,\n\
@@ -418,19 +419,6 @@ irPassRTLProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fprtl, "/*\n *\tInvariantList is NULL\n */\n");
 		return;
 	}
-
-	// if (N->targetParamLocatedKernel == -1) 
-	// {
-	// 	/*
-	// 	 *	If no target param has been specified check only the first invariant
-	// 	 */
-	// 	targetInvariant = N->invariantList;
-	// }
-	// else
-	// {
-	// 	/* If target param has been specified then get the relevant invariant */
-	// 	targetInvariant = N->targetParamInvariant;
-	// }
 	
 	/* Constraints list removed */
 	IrNode *	parameterListXSeq = targetInvariant->parameterList->irParent->irLeftChild;
@@ -444,7 +432,6 @@ irPassRTLProcessInvariantList(State *  N)
     /* FIXME add checks - to CBackend as well if current assumptions are met */
 
 	flexprint(N->Fe, N->Fm, N->Fprtl, "/*\n *\tGenerated .v file from Newton\n */\n\n");
-	//flexprint(N->Fe, N->Fm, N->Fprtl, "\n#include <math.h>\n\n");
 
 	flexprint(N->Fe, N->Fm, N->Fprtl, "%s\n", qmultSequential);
 	flexprint(N->Fe, N->Fm, N->Fprtl, "\n");
@@ -466,9 +453,9 @@ irPassRTLProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\tparameter Q = %d,\n", Q_PARAMETER);
         flexprint(N->Fe, N->Fm, N->Fprtl, "\tparameter N = %d", N_PARAMETER);
         flexprint(N->Fe, N->Fm, N->Fprtl, "\n\t)\n\t(\n", N_PARAMETER);
-
+#ifndef ICE40
         flexprint(N->Fe, N->Fm, N->Fprtl, "\tinput\ti_clk,\n");
-
+#endif
 		while (parameterListXSeq != NULL) /* Create a list of function parameters */
 		{
 			irPassRTLSearchAndCreateArgList(N, parameterListXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, argumentsList, index);
@@ -479,14 +466,35 @@ irPassRTLProcessInvariantList(State *  N)
 		}
 		
 		/*
-		*	Declare
-		*/
-        flexprint(N->Fe, N->Fm, N->Fprtl, "\toutput\t[N-1:0] ratio_sig\n");
+		 *	Declare
+		 */
+        for (int piIndex = 0; piIndex < targetInvariant->kernelColumnCount-1; piIndex++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\toutput\t[N-1:0] pi_%d_calcSig,\n", piIndex);
+		}
+		/* Avoid printing a comma for the last Pi calculation signal */
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\toutput\t[N-1:0] pi_%d_calcSig\n", (targetInvariant->kernelColumnCount-1));
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t);\n\n");
 
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\treg i_st;\n");
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\treg [N-1:0] ratio_sig_reg;\n\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\treg\ti_st;\n");
 
+		for (int piIndex = 0; piIndex < targetInvariant->kernelColumnCount; piIndex++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\treg\t[N-1:0] pi_%d_calcReg;\n", piIndex);
+		}
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\twire\toc_Pi;\n");
+#ifdef ICE40
+        flexprint(N->Fe, N->Fm, N->Fprtl, "\twire\ti_clk;\n\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* \n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t *\tCreates a 48MHz clock signal from\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t *\tinternal oscillator of the iCE40\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t */\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\tSB_HFOSC OSCInst0 (\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.CLKHFPU(1'b1),\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.CLKHFEN(1'b1),\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.CLKHF(i_clk)\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t);\n\n");
+#endif	
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\tinitial i_st = 1'b0;\n\n");
 		/*
 		 *	We construct a temporary array to re-locate the positions of the permuted parameters
@@ -501,7 +509,7 @@ irPassRTLProcessInvariantList(State *  N)
 			tmpPosition[targetInvariant->permutedIndexArrayPointer[targetKernel * targetInvariant->dimensionalMatrixColumnCount + j]] = j;
 		}
 
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* ----- Original Pi values were ----- \n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* ----- Original Pi values were ----- */\n");
 
 		/*
 		 * targetInvariant->kernelColumnCount equals to the number of Pis in the designated Pi group
@@ -525,10 +533,9 @@ irPassRTLProcessInvariantList(State *  N)
 			}
 		
 			fractionsLCM = irPassRTLCalculateLCM(fractionValues, targetInvariant->dimensionalMatrixColumnCount);
-			flexprint(N->Fe, N->Fm, N->Fprtl, "\t * fractionsLCM %d multiplierVersion %s\n", fractionsLCM, multiplierVersion);
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\t * fractionsLCM %d \n", fractionsLCM);
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\t */\n\n");
 		}
-		
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\t */\n\n");
 
 		/* FIXME!!! - Need to free the nodes of the list when traversing!!! */
 		/*
@@ -571,8 +578,8 @@ irPassRTLProcessInvariantList(State *  N)
 			divisorMultiplications--;
 
 			/*
-				*	Print declarations of intermediate dividend multiplication wires
-				*/
+			 *	Print declarations of intermediate dividend multiplication wires
+			 */
 			if (dividendMultiplications == 0) {
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\treg oc_dividend_Pi_%d;\n", col);
 				
@@ -591,8 +598,8 @@ irPassRTLProcessInvariantList(State *  N)
 			}
 
 			/*
-				*	Print declarations of intermediate dividend multiplication wires
-				*/
+			 *	Print declarations of intermediate dividend multiplication wires
+			 */
 			if (divisorMultiplications == 0) {
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\treg oc_divisor_Pi_%d;\n", col);
 
@@ -612,7 +619,7 @@ irPassRTLProcessInvariantList(State *  N)
 			
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\n\t/* ----- Dividend ----- */\n");
 			if (dividendMultiplications == 0 ) {
-				flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign dividend_Pi_%d = %s_sig;\n\n", col, dividendMultChainHead->operandName);	
+				flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign dividend_Pi_%d = %s_sig;\n", col, dividendMultChainHead->operandName);	
 			} else if (dividendMultiplications == 1 ) {
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\t%s mul_inst_dividend_Pi_%d (\n\t\t.i_multiplicand(%s_sig),\n", 
 					multiplierVersion, col, dividendMultChainHead->operandName);
@@ -668,7 +675,7 @@ irPassRTLProcessInvariantList(State *  N)
 
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\n\t/* ----- Divisor ----- */\n");
 			if (divisorMultiplications == 0 ) {
-				flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign divisor_Pi_%d = %s_sig;\n\n", col, divisorMultChainHead->operandName);	
+				flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign divisor_Pi_%d = %s_sig;\n", col, divisorMultChainHead->operandName);	
 			} else if (divisorMultiplications == 1 ) {
 				flexprint(N->Fe, N->Fm, N->Fprtl, 
 					"\t%s mul_inst_divisor_Pi_%d (\n\t\t.i_multiplicand(%s_sig),\n", multiplierVersion, col, divisorMultChainHead->operandName);
@@ -723,7 +730,7 @@ irPassRTLProcessInvariantList(State *  N)
 					\n\t\t.o_overflow(of_Pi_%d)\n\t);\n\n", col, index, col, index, col);
 			}
 
-			flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* ----- Division enabling ----- */\n");
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\n\t/* ----- Division enabling ----- */\n");
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign i_st_ratio_Pi_%d = oc_dividend_Pi_%d & oc_divisor_Pi_%d;\n\n", col, col, col);
 
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* ----- Division ----- */\n");
@@ -738,8 +745,19 @@ irPassRTLProcessInvariantList(State *  N)
 				\n\t\t.o_overflow(of_Pi_%d)\n\t);\n\n", dividerVersion, col, col, col, col, col, col, col);
 		}
 
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign ratio_sig = ratio_sig_reg;\n\n");
-	
+		for (int piIndex = 0; piIndex < targetInvariant->kernelColumnCount; piIndex++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign pi_%d_calcSig = pi_%d_calcReg;\n", piIndex, piIndex);
+		}
+		
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign oc_Pi = ");
+		for (int piIndex = 0; piIndex < targetInvariant->kernelColumnCount-1; piIndex++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fprtl, "oc_Pi_%d & ", piIndex);
+		}
+		flexprint(N->Fe, N->Fm, N->Fprtl, "oc_Pi_%d;\n", targetInvariant->kernelColumnCount-1);
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\n");
+
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\talways @( posedge i_clk )\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\tbegin\n\n");
 	   
@@ -748,7 +766,12 @@ irPassRTLProcessInvariantList(State *  N)
        	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\tend\n");
        	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\telse begin\n");
         flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t\tif (oc_Pi) begin\n");
-    	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t\t\tratio_sig_reg = division_res;\n");
+    	
+		for (int piIndex = 0; piIndex < targetInvariant->kernelColumnCount; piIndex++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t\t\tpi_%d_calcReg = division_res_Pi_%d;\n", piIndex, piIndex);
+		}
+
     	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t\t\ti_st = 1'b0;\n");
         flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t\tend\n");
        	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\tend\n");	   
