@@ -762,7 +762,7 @@ irPassRTLProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\tbegin\n\n");
 	   
        	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\tif (~i_st) begin\n");
-        flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t\ti_st <= 1'b1;\n");
+        flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t\ti_st = 1'b1;\n");
        	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\tend\n");
        	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\telse begin\n");
         flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t\tif (oc_Pi) begin\n");
@@ -790,7 +790,7 @@ irPassRTLProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\toutput\t pi_%d_calcSig\n", targetInvariant->kernelColumnCount-1);
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t);\n\n");
 
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\twire\tclk48;\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\twire\tclk12;\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\treg\tENCLKHF\t= 1'b1;	// Plock enable\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\treg\tCLKHF_POWERUP\t= 1'b1;	// Power up the HFOSC circuit\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\treg\ti_rst;\n");
@@ -817,13 +817,13 @@ irPassRTLProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\n");
 		
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* \n");
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\t *\tCreates a 48MHz clock signal from\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t *\tCreates a 12MHz clock signal from\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t *\tinternal oscillator of the iCE40\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t */\n");
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\tSB_HFOSC #(.CLKHF_DIV(\"0b00\")) OSCInst0 (\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\tSB_HFOSC #(.CLKHF_DIV(\"0b10\")) OSCInst0 (\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.CLKHFEN(ENCLKHF),\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.CLKHFPU(CLKHF_POWERUP),\n");
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.CLKHF(clk48)\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.CLKHF(clk12)\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t);\n\n");
 
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t%s%dSerial %sRTL (\n", targetInvariant->identifier, countFunction, targetInvariant->identifier);
@@ -842,13 +842,13 @@ irPassRTLProcessInvariantList(State *  N)
 		{
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.pi_%d_calcSig(pi_%d_calcSigWire),\n", piIndex, piIndex);
 		}
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.i_clk(clk48)\n", (targetInvariant->kernelColumnCount-1));
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.i_clk(clk12)\n", (targetInvariant->kernelColumnCount-1));
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t);\n\n");
 
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\tLFSR_Plus LFSR_PlusInt (\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.g_noise_out(randG_out),\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.u_noise_out(randU_out),\n");
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.clk(clk48),\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.clk(clk12),\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.n_reset(i_rst),\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.enable(ENCLKHF)\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t);\n\n");
@@ -880,7 +880,7 @@ irPassRTLProcessInvariantList(State *  N)
 		}
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\n");
 
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\talways @( posedge clk48 )\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\talways @( posedge clk12 )\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\tbegin\n\n");
 	   
        	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\tif (~i_rst) begin\n");
