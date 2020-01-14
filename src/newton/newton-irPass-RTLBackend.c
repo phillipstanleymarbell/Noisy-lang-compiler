@@ -69,7 +69,7 @@
 
 #define Q_PARAMETER 15
 #define N_PARAMETER 32
-#define ICE40
+//#define ICE40
 
 static char multiplierVersion[32] = "qmultSequential";
 static char dividerVersion[32] = "qdivSequential";
@@ -590,7 +590,7 @@ irPassRTLProcessInvariantList(State *  N)
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_dividend_Pi_%d;\n", col);
 
 				for (index=1; index < dividendMultiplications; index++) {
-					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire [N-1:0] mult_res_dividend_Pi_%d_inter%d;\n", col, index);
+					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire [N-1:0]mult_res_dividend_inter_Pi_%d_%d;\n", col, index);
 					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_dividend_Pi_%d_%d;\n", col, index);
 				}
 			} else {
@@ -598,7 +598,7 @@ irPassRTLProcessInvariantList(State *  N)
 			}
 
 			/*
-			 *	Print declarations of intermediate dividend multiplication wires
+			 *	Print declarations of intermediate divisor multiplication wires
 			 */
 			if (divisorMultiplications == 0) {
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\treg oc_divisor_Pi_%d;\n", col);
@@ -610,7 +610,7 @@ irPassRTLProcessInvariantList(State *  N)
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_divisor_Pi_%d;\n", col);
 
 				for (index=1; index < divisorMultiplications; index++) {
-					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire [N-1:0] mult_res_divisor_Pi_%d_inter%d;\n", col, index);	
+					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire [N-1:0] mult_res_divisor_inter_Pi_%d_%d;\n", col, index);	
 					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_divisor_Pi_%d_%d;\n", col, index);
 				}
 			} else {
@@ -776,7 +776,7 @@ irPassRTLProcessInvariantList(State *  N)
         flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t\tend\n");
        	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\tend\n");	   
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\tend\n");
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\tendmodule\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "endmodule\n");
 
 		free(tmpPosition);
 		free(fractionValues);
