@@ -776,16 +776,127 @@ irPassRTLProcessInvariantList(State *  N)
         flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t\tend\n");
        	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\tend\n");	   
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\tend\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "endmodule\n\n");
+
+		/* Print Top module including LFSR */
+		flexprint(N->Fe, N->Fm, N->Fprtl, "module %sTopLFSR #(parameter N = 32, W = 24, V = 18, g_type = 0, u_type = 1)\n",
+				targetInvariant->identifier);
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t(\n");		
+		/* Ouputs */
+        for (int piIndex = 0; piIndex < targetInvariant->kernelColumnCount-1; piIndex++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\t\toutput\t pi_%d_calcSig,\n", piIndex);
+		}
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\toutput\t pi_%d_calcSig\n", targetInvariant->kernelColumnCount-1);
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t);\n\n");
+
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\twire\tclk48;\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\treg\tENCLKHF\t= 1'b1;	// Plock enable\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\treg\tCLKHF_POWERUP\t= 1'b1;	// Power up the HFOSC circuit\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\treg\ti_rst;\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\tinitial i_rst = 1'b0;\n\n");
+		
+		parameterListXSeq = targetInvariant->parameterList->irParent->irLeftChild;
+		while (parameterListXSeq != NULL) /* Create a list of function parameters */
+		{
+			irPassRTLSearchAndCreateArgList(N, parameterListXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, argumentsList, index);
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\twire\t[N-1:0] %s_sigWire;\n", argumentsList[index]);			
+			
+			parameterListXSeq = parameterListXSeq->irRightChild;
+			index++;
+		}
+		/* Ouputs */
+        for (int piIndex = 0; piIndex < targetInvariant->kernelColumnCount; piIndex++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\twire\t[N-1:0] pi_%d_calcSigWire;\n", piIndex);
+		}
+
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\twire [W-1 : 0] 	randG_out;\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\twire [W-1 : 0] 	randU_out;\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\n");
+		
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* \n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t *\tCreates a 48MHz clock signal from\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t *\tinternal oscillator of the iCE40\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t */\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\tSB_HFOSC #(.CLKHF_DIV(\"0b00\")) OSCInst0 (\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.CLKHFEN(ENCLKHF),\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.CLKHFPU(CLKHF_POWERUP),\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.CLKHF(clk48)\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t);\n\n");
+
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t%s%dSerial %sRTL (\n", targetInvariant->identifier, countFunction, targetInvariant->identifier);
+		parameterListXSeq = targetInvariant->parameterList->irParent->irLeftChild;
+		while (parameterListXSeq != NULL) /* Create a list of function parameters */
+		{
+			irPassRTLSearchAndCreateArgList(N, parameterListXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, argumentsList, index);
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.%s_sig(%s_sigWire),\n", argumentsList[index], argumentsList[index]);			
+			
+			parameterListXSeq = parameterListXSeq->irRightChild;
+			index++;
+		}
+		
+		/* Ouputs */
+        for (int piIndex = 0; piIndex < targetInvariant->kernelColumnCount; piIndex++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.pi_%d_calcSig(pi_%d_calcSigWire),\n", piIndex, piIndex);
+		}
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.i_clk(clk48)\n", (targetInvariant->kernelColumnCount-1));
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t);\n\n");
+
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\tLFSR_Plus LFSR_PlusInt (\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.g_noise_out(randG_out),\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.u_noise_out(randU_out),\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.clk(clk48),\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.n_reset(i_rst),\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.enable(ENCLKHF)\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t);\n\n");
+
+		/* Ouputs */
+        for (int piIndex = 0; piIndex < targetInvariant->kernelColumnCount; piIndex++) 
+		{
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign\t pi_%d_calcSig = ", piIndex);
+
+			for (int i=31; i>0; i--)
+			{
+				flexprint(N->Fe, N->Fm, N->Fprtl, "pi_%d_calcSigWire[%d] | ", piIndex, i);
+				if (i % 8 == 0) 
+				{
+					flexprint(N->Fe, N->Fm, N->Fprtl, "\n\t\t");
+				} 
+			}
+			flexprint(N->Fe, N->Fm, N->Fprtl, "pi_%d_calcSigWire[0];\n\n", piIndex);
+		}
+
+		parameterListXSeq = targetInvariant->parameterList->irParent->irLeftChild;
+		while (parameterListXSeq != NULL) /* Create a list of function parameters */
+		{
+			irPassRTLSearchAndCreateArgList(N, parameterListXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, argumentsList, index);
+			flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign %s_sigWire = randG_out;\n\n", argumentsList[index]);			
+			
+			parameterListXSeq = parameterListXSeq->irRightChild;
+			index++;
+		}
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\n");
+
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\talways @( posedge clk48 )\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\tbegin\n\n");
+	   
+       	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\tif (~i_rst) begin\n");
+        flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t\ti_rst <= 1'b1;\n");
+       	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\tend\n");
+       	flexprint(N->Fe, N->Fm, N->Fprtl, "\tend\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "endmodule\n");
 
-		free(tmpPosition);
-		free(fractionValues);
+		// free(tmpPosition);
+		// free(fractionValues);
 
-		for (index = 0; index < targetInvariant->dimensionalMatrixColumnCount; index++) 
-		{
-			free(argumentsList[index]);
-		}
-		free(argumentsList);
+		// for (index = 0; index < targetInvariant->dimensionalMatrixColumnCount; index++) 
+		// {
+		// 	free(argumentsList[index]);
+		// }
+		// free(argumentsList);
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fprtl, "\n/*\n *\tEnd of the generated .v file\n */\n");
