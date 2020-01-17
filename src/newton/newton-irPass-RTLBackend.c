@@ -427,11 +427,12 @@ irPassRTLProcessInvariantList(State *  N)
 		
 	int index = 0;
 
-	int countFunction = 0, targetKernel = N->targetParamLocatedKernel;
+	int targetKernel = N->targetParamLocatedKernel;
 
     /* FIXME add checks - to CBackend as well if current assumptions are met */
 
 	flexprint(N->Fe, N->Fm, N->Fprtl, "/*\n *\tGenerated .v file from Newton\n */\n\n");
+	flexprint(N->Fe, N->Fm, N->Fprtl, "`timescale 1 ns/ 100 ps\n\n");
 
 	flexprint(N->Fe, N->Fm, N->Fprtl, "%s\n", qmultSequential);
 	flexprint(N->Fe, N->Fm, N->Fprtl, "\n");
@@ -445,9 +446,7 @@ irPassRTLProcessInvariantList(State *  N)
 		/*
 		*	Print calculation module -- FIXME more clear support of various architectures
 		*/
-		countFunction = 0;	
-		flexprint(N->Fe, N->Fm, N->Fprtl, "module %s%dSerial",
-				targetInvariant->identifier, countFunction);
+		flexprint(N->Fe, N->Fm, N->Fprtl, "module %sSerial", targetInvariant->identifier);
 
 		flexprint(N->Fe, N->Fm, N->Fprtl, " #(\n\t//Parameterized values\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\tparameter Q = %d,\n", Q_PARAMETER);
@@ -502,7 +501,7 @@ irPassRTLProcessInvariantList(State *  N)
 		int *tmpPosition = (int *)calloc(targetInvariant->dimensionalMatrixColumnCount, sizeof(int));
 		int *fractionValues = (int *)calloc(targetInvariant->dimensionalMatrixColumnCount, sizeof(int));
 		int divisorMultiplications=0, dividendMultiplications=0, fractionsLCM=1, integerPower;
-		multChain *dividendMultChainHead=NULL, *divisorMultChainHead=NULL; /* FIXME free variables */
+		multChain *dividendMultChainHead=NULL, *divisorMultChainHead=NULL, *tmpChainNode;
 
 		for (int j = 0; j < targetInvariant->dimensionalMatrixColumnCount; j++)
 		{
@@ -556,6 +555,22 @@ irPassRTLProcessInvariantList(State *  N)
 
 			divisorMultiplications = 0;
 			dividendMultiplications = 0;
+
+			/* Clear dividendMultChainHead */
+			while (dividendMultChainHead != NULL) 
+			{
+				tmpChainNode = dividendMultChainHead;
+				dividendMultChainHead = dividendMultChainHead->next;
+				free(tmpChainNode);
+			}
+
+			/* Clear divisorMultChainHead */
+			while (divisorMultChainHead != NULL) 
+			{
+				tmpChainNode = divisorMultChainHead;
+				divisorMultChainHead = divisorMultChainHead->next;
+				free(tmpChainNode);
+			}
 
 			for (int row = 0; row < targetInvariant->dimensionalMatrixColumnCount; row++)
 			{
@@ -776,9 +791,18 @@ irPassRTLProcessInvariantList(State *  N)
         flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t\tend\n");
        	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\tend\n");	   
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\tend\n");
+
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* the \"macro\" to dump signals */\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "`ifdef COCOTB_SIM\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\tinitial begin\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t$dumpfile (\"%sSerial.vcd\");\n", targetInvariant->identifier);
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t$dumpvars (0, %sSerial);\n", targetInvariant->identifier);
+	  	flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t#1;\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\tend\n");
+		flexprint(N->Fe, N->Fm, N->Fprtl, "`endif\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "endmodule\n\n");
 
-		/* Print Top module including LFSR */
+		/************ Print Top module including LFSR *************/
 		flexprint(N->Fe, N->Fm, N->Fprtl, "module %sTopLFSR #(parameter N = 32, W = 24, V = 18, g_type = 0, u_type = 1)\n",
 				targetInvariant->identifier);
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t(\n");		
@@ -826,7 +850,7 @@ irPassRTLProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.CLKHF(clk12)\n");
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t);\n\n");
 
-		flexprint(N->Fe, N->Fm, N->Fprtl, "\t%s%dSerial %sRTL (\n", targetInvariant->identifier, countFunction, targetInvariant->identifier);
+		flexprint(N->Fe, N->Fm, N->Fprtl, "\t%sSerial %sRTL (\n", targetInvariant->identifier, targetInvariant->identifier);
 		parameterListXSeq = targetInvariant->parameterList->irParent->irLeftChild;
 		while (parameterListXSeq != NULL) /* Create a list of function parameters */
 		{
