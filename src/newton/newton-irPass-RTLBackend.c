@@ -510,13 +510,15 @@ irPassRTLProcessInvariantList(State *  N)
 
 		flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* ----- Original Pi values were ----- */\n");
 
+		/* FIXME!!! - Need to free the nodes of the list when traversing!!! */
 		/*
-		 * targetInvariant->kernelColumnCount equals to the number of Pis in the designated Pi group
-		 */
+		 *	One pass to determine the number of required multiplications in divisor and dividend.
+		 * 	Also create a chain of multiplications that need to be performed. Then deploy RTL based on that list.
+		 */			
 		for (int col = 0; col < targetInvariant->kernelColumnCount; col++)
 		{
 			index = 0;
-
+			/* targetInvariant->kernelColumnCount equals to the number of Pis in the designated Pi group */
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* ----- Pi %d ----- \n", col);
 
 			for (int row = 0; row < targetInvariant->dimensionalMatrixColumnCount; row++)
@@ -534,15 +536,7 @@ irPassRTLProcessInvariantList(State *  N)
 			fractionsLCM = irPassRTLCalculateLCM(fractionValues, targetInvariant->dimensionalMatrixColumnCount);
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\t * fractionsLCM %d \n", fractionsLCM);
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\t */\n\n");
-		}
-
-		/* FIXME!!! - Need to free the nodes of the list when traversing!!! */
-		/*
-		 *	One pass to determine the number of required multiplications in divisor and dividend.
-		 * 	Also create a chain of multiplications that need to be performed. Then deploy RTL based on that list.
-		 */			
-		for (int col = 0; col < targetInvariant->kernelColumnCount; col++)
-		{
+			
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\t/* ----- Calculations for Pi %d ----- */\n", col);
 
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\twire [N-1:0] division_res_Pi_%d;\n", col);
