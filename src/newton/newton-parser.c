@@ -1645,6 +1645,7 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
  *
  *		quantityFactor			::=	quantity [exponentiationOperator numericFactor]			|
  *							functionalOperator {functionalOperator} quantityFactor quantityFactor	|
+ *							distribution "(" quantityExpression {"," quantityExpression} ")" 		|
  *							"(" quantityExpression ")" [exponentiationOperator numericFactor]	|
  *							"{" quantityExpression {"," quantityExpression} "}" .
  */
@@ -1703,6 +1704,20 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 		 *	Created GitHub issue to track moving all setting of physics from
 		 *	parse-time to a dedicated to physics tree-annotation pass, #402.
 		 */
+	}
+	else if (inFirst(N, kNewtonIrNodeType_Pdistribution, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		addLeafWithChainingSeq(N, intermediate, newtonParseDistribution(N, currentScope));
+		
+		newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
+		addLeafWithChainingSeq(N, intermediate, newtonParseQuantityExpression(N, currentScope));
+		while (peekCheck(N, 1, kNewtonIrNodeType_Tcomma))
+		{
+			newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
+			addLeafWithChainingSeq(N, intermediate, newtonParseQuantityExpression(N, currentScope));
+		}
+		newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
+
 	}
 	else if (peekCheck(N, 1, kNewtonIrNodeType_TleftParen))
 	{

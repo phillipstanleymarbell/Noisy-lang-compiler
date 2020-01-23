@@ -118,12 +118,14 @@ production kNewtonIrNodeType_PquantityTerm:		firstset = {
 
 --//		quantityFactor			::=	quantity [exponentiationOperator numericFactor]						|
 --//								functionalOperator {functionalOperator} quantityFactor quantityFactor		|
+--//								distribution "(" quantityExpression {"," quantityExpression} ")" 		|
 --//								"(" quantityExpression ")" [exponentiationOperator numericFactor]			|
 --//								"{" quantityExpression {"," quantityExpression} "}" .
 production kNewtonIrNodeType_PquantityFactor:		firstset = {
 									kNewtonIrNodeType_TleftParen,
 									kNewtonIrNodeType_TleftBrace,
 									firstset(kNewtonIrNodeType_PfunctionalOperator),
+									firstset(kNewtonIrNodeType_Pdistribution),
 									firstset(kNewtonIrNodeType_Pquantity),
 								}
 
@@ -533,6 +535,7 @@ production kNewtonIrNodeType_PquantityTerm:		followset = {
 
 --//		quantityFactor			::=	quantity [exponentiationOperator numericFactor]						|
 --//								functionalOperator {functionalOperator} quantityFactor quantityFactor		|
+--//								distribution "(" quantityExpression {"," quantityExpression} ")" 		|
 --//								"(" quantityExpression ")" [exponentiationOperator numericFactor]		|
 --//								"{" quantityExpression {"," quantityExpression} "}" .
 production kNewtonIrNodeType_PquantityFactor:		followset = {

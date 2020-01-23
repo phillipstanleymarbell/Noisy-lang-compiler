@@ -68,6 +68,7 @@ quantityTerm			::=	[unaryOp] quantityFactor {highPrecedenceQuantityOperator quan
  */
 quantityFactor			::=	quantity [exponentiationOperator numericFactor]						|
 						functionalOperator {functionalOperator} quantityFactor quantityFactor			|
+						distribution "(" quantityExpression {"," quantityExpression} ")" 		|
 						"(" quantityExpression ")" [exponentiationOperator numericFactor]			|
 						"{" quantityExpression {"," quantityExpression} "}" .
 /*
