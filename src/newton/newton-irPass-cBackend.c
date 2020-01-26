@@ -125,12 +125,21 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 			snprintf(output, needed, "%f", node->value);
 			break;
 		}
-
+		/*
+		 *	Edge case: This does not take into account a constant 
+		 *	declared with value = 0.
+		 */
 		case kNewtonIrNodeType_Tidentifier:
-		{
-			int needed = snprintf(NULL, 0, "%s", node->tokenString) + 1;
-			output = malloc(needed);
-			snprintf(output, needed, "%s", node->tokenString);
+		{	
+			if (node->value == 0) {
+				int needed = snprintf(NULL, 0, "%s", node->tokenString) + 1;
+				output = malloc(needed);
+				snprintf(output, needed, "%s", node->tokenString);
+			} else {
+				int needed = snprintf(NULL, 0, "%f", node->value) + 1;
+				output = malloc(needed);
+				snprintf(output, needed, "%f", node->value);
+			}
 			break;
 		}
 
@@ -281,7 +290,13 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 		return;
 	}
 
-	static bool	isleftBracketPrinted = false;
+	static bool	isPowLeftBracketPrinted = false;
+
+	if (root->type == kNewtonIrNodeType_PquantityExpression)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, " (");
+	}
+	
 
 	/*
 	 *	There is no operator for power exponents
@@ -291,7 +306,7 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 	if (irPassCIsExpectedTypePresentInRightChild(N, root, kNewtonIrNodeType_PexponentiationOperator) == true)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, " pow(");
-		isleftBracketPrinted = true;
+		isPowLeftBracketPrinted = true;
 	}
 
 	if (root->irRightChild == NULL && root->irLeftChild == NULL)
@@ -303,11 +318,11 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 		/*
 		 *	Print out the right bracket of pow() function.
 		 */
-		if (isleftBracketPrinted == true && 
+		if (isPowLeftBracketPrinted == true && 
 		   (root->type == kNewtonIrNodeType_PnumericConst || root->type == kNewtonIrNodeType_TintegerConst))
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, ")");
-			isleftBracketPrinted = false;
+			isPowLeftBracketPrinted = false;
 		}
 
 		return;
@@ -315,6 +330,11 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 
 	irPassCConstraintTreeWalk(N, root->irLeftChild);
 	irPassCConstraintTreeWalk(N, root->irRightChild);
+	
+	if (root->type == kNewtonIrNodeType_PquantityExpression)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, ")");
+	}
 }
 
 /*
