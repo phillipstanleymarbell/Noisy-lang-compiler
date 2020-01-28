@@ -106,6 +106,9 @@ main(int argc, char *argv[])
 			{"codegen",		required_argument,	0,	'g'},
 			{"latex",		no_argument,		0,	'x'},
 			{"RTLcodegen",		required_argument,	0,	'l'},
+			{"estimator-synthesis", no_argument, 0, 420},
+			{"process", required_argument, 0, 421},
+			{"measurement", required_argument, 0, 422},
 
 			{0,			0,			0,	0}
 		};
@@ -359,6 +362,24 @@ main(int argc, char *argv[])
 				N->irBackends |= kNewtonIrBackendRTL;
 				N->outputRTLFilePath = optarg;
 
+				break;
+			}
+
+			case 420:
+			{
+				N->irBackends |= kNewtonIrBackendEstimatorSynthesis;
+				break;
+			}
+
+			case 421:
+			{
+				N->estimatorProcessModel = optarg;
+				break;
+			}
+
+			case 422:
+			{
+				N->estimatorMeasurementModel = optarg;
 				break;
 			}
 

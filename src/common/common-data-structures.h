@@ -694,6 +694,7 @@ typedef enum
 	 *	dumping is happening.
 	 */
 	kNewtonIrBackendLatex				= (1 << 5),
+	kNewtonIrBackendEstimatorSynthesis	= (1 << 6),
 
 	/*
 	 *	Code depends on this bringing up the rear.
@@ -1118,6 +1119,12 @@ typedef struct
 	char *			outputSmtFilePath;
 	char *			outputCFilePath;
 	char *			outputRTLFilePath;
+	
+	/*
+	 *	Invariant identifiers specified for State Estimator Synthesis
+	 */
+	char *			estimatorProcessModel;
+	char *			estimatorMeasurementModel;
 
 	CommonMode		mode;
 	uint64_t		verbosityLevel;
