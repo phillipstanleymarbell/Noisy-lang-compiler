@@ -71,5 +71,9 @@
 void
 irPassEstimatorSynthesisBackend(State *  N)
 {
-    printf("Hello.");
+    if (N->estimatorProcessModel == NULL || N->estimatorMeasurementModel == NULL) 
+    {
+        flexprint(N->Fe, N->Fm, N->Fperr, "Please specify the invariant identifiers for the process and measurement model.\n");
+		fatal(N, Esanity);
+    }
 }

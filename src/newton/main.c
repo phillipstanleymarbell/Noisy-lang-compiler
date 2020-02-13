@@ -473,8 +473,11 @@ usage(State *  N)
 						"                | (--codegen <path to output file>, -g <path to output file>)\n"
 						"                | (--RTLcodegen <path to output file>, -l <path to output file>)\n"
 						"                | (--trace, -t)                                              \n"
-						"                | (--statistics, -s) ]                                       \n"
-						"                | (--latex, -x) ]                                            \n"
+						"                | (--statistics, -s)                                         \n"
+						"                | (--latex, -x)                                              \n"
+						"                | (--estimator-synthesis)                                    \n"
+						"                | (--process <process invariant identifier>)                 \n"
+						"                | (--measurement <measurement invariant identifier>) ]       \n"
 						"                                                                             \n"
 						"              <filenames>\n\n", kNewtonL10N);
 }

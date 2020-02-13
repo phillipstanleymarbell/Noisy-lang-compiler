@@ -3866,6 +3866,10 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 		physicsSearchResult = newtonParseGetPhysicsByBoundIdentifier(N, scope->scopeParameterList, t->identifier);
 	}
 
+	/**
+	 * 	TODO: Check common symbol table?
+	 */
+
 	if (physicsSearchResult == NULL)
 	{
 		/*
