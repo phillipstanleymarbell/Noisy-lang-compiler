@@ -64,9 +64,49 @@
 #include "common-irPass-helpers.h"
 #include "common-lexers-helpers.h"
 #include "common-irHelpers.h"
+#include "common-symbolTable.h"
 #include "newton-types.h"
 #include "newton-symbolTable.h"
 
+Invariant *
+findInvariantByIdentifier(State *  N, const char *  identifier)
+{
+	Symbol *	invariantSym = commonSymbolTableSymbolForIdentifier(N, N->newtonIrTopScope, identifier);
+	IrNode *	invariantNode = invariantSym->typeTree->irParent;
+
+	/*
+	 *	We are, in fact, comparing addresses here.
+	 */
+	Invariant *	invariant = N->invariantList;
+	while (invariant != NULL && invariant->identifier != invariantNode->tokenString)
+	{
+		invariant = invariant->next;
+	}
+
+	if (invariant == NULL)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "Process invariant identifier not found in input.\n");
+		fatal(N, Esanity);		
+	}
+	
+	return invariant;
+}
+
+void
+irPassEstimatorSynthesisProcessInvariantList(State *  N)
+{
+	/*
+	 *	Find the invariants  
+	 */
+	Invariant *	processInvariant = findInvariantByIdentifier(N, N->estimatorProcessModel);
+	Invariant *	measureInvariant = findInvariantByIdentifier(N, N->estimatorMeasurementModel);
+	processInvariant++;
+	measureInvariant++;
+	/*
+	 *	Deduce the state variables from the process model invariant 
+	 */
+
+}
 
 void
 irPassEstimatorSynthesisBackend(State *  N)
@@ -76,4 +116,9 @@ irPassEstimatorSynthesisBackend(State *  N)
         flexprint(N->Fe, N->Fm, N->Fperr, "Please specify the invariant identifiers for the process and measurement model.\n");
 		fatal(N, Esanity);
     }
+
+	// FILE *	rtlFile;
+
+	irPassEstimatorSynthesisProcessInvariantList(N);	
+	
 }

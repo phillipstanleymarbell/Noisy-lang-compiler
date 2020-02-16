@@ -72,12 +72,6 @@ commonSymbolTableAllocScope(State *  N)
 	return newScope;
 }
 
-// Symbol *
-// commonSymbolTableOnlyLookupSymbolForToken(State *  N, Scope *  scope, Token *  token)
-// {
-
-// }
-
 Symbol *
 commonSymbolTableAddOrLookupSymbolForToken(State *  N, Scope *  scope, Token *  token)
 {

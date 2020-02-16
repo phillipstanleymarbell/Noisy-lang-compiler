@@ -384,6 +384,7 @@ newtonParseInvariant(State *  N, Scope *  currentScope)
 
 	Invariant *	invariant	= (Invariant *) calloc(1, sizeof(Invariant));
 	IrNode *	invariantName	= newtonParseIdentifier(N, currentScope);
+	invariantName->irParent = node;
 
 	/*
 	 *	Also add it to the AST
@@ -1367,7 +1368,7 @@ newtonParseIdentifier(State *  N, Scope *  currentScope)
 	if (peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
 	{
 		n = newtonParseIdentifierDefinitionTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
-
+		n->symbol->typeTree = n;
 		return n;
 	}
 

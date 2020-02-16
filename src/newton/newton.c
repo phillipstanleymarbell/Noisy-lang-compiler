@@ -241,7 +241,7 @@ processNewtonFile(State *  N, char *  filename)
 		irPassRTLBackend(N);
 	}
 
-	/**
+	/*
 	 *	Estimator Synthesis backend
 	 */
 	if (N->irBackends & kNewtonIrBackendEstimatorSynthesis)
