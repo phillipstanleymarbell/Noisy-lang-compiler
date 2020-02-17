@@ -77,7 +77,7 @@ irPassCIsExpectedTypePresentInRightChild(State *  N, IrNode *  parentNode, IrNod
 		return isExpectedTypePresent;
 	}
 
-	if (parentNode->irRightChild->type == expectedType)
+	if (parentNode->irRightChild->irLeftChild->type == expectedType)
 	{
 		isExpectedTypePresent = true;
 	}
@@ -118,6 +118,7 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 	switch(node->type)
 	{
 		case kNewtonIrNodeType_PnumericConst:
+		case kNewtonIrNodeType_TintegerConst:
 		{
 			int needed = snprintf(NULL, 0, "%f", node->value) + 1;
 			output = malloc(needed);
@@ -126,37 +127,43 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 		}
 
 		case kNewtonIrNodeType_Tidentifier:
-		{
-			int needed = snprintf(NULL, 0, "%s", node->tokenString) + 1;
-			output = malloc(needed);
-			snprintf(output, needed, "%s", node->tokenString);
+		{	
+			if (node->physics->isConstant == true) {
+				int needed = snprintf(NULL, 0, "%f", node->value) + 1;
+				output = malloc(needed);
+				snprintf(output, needed, "%f", node->value);
+			} else {
+				int needed = snprintf(NULL, 0, "%s", node->tokenString) + 1;
+				output = malloc(needed);
+				snprintf(output, needed, "%s", node->tokenString);
+			}
 			break;
 		}
 
 		case kNewtonIrNodeType_Tplus:
 		{
-			output = malloc(4);
+			output = malloc(4*sizeof(char));
 			strcpy(output, " + ");
 			break;
 		}
 
 		case kNewtonIrNodeType_Tminus:
 		{
-			output = malloc(4);
+			output = malloc(4*sizeof(char));
 			strcpy(output, " - ");
 			break;
 		}
 
 		case kNewtonIrNodeType_Tdiv:
 		{
-			output = malloc(4);
+			output = malloc(4*sizeof(char));
 			strcpy(output, " / ");
 			break;
 		}
 
 		case kNewtonIrNodeType_Tmul:
 		{
-			output = malloc(4);
+			output = malloc(4*sizeof(char));
 			strcpy(output, " * ");
 			break;
 		}
@@ -168,7 +175,7 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 		 */
 		case kNewtonIrNodeType_Texponentiation:
 		{
-			output = malloc(4);
+			output = malloc(4*sizeof(char));
 			strcpy(output, ",");
 			break;
 		}
@@ -280,17 +287,23 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 		return;
 	}
 
-	static bool	isleftBracketPrinted = false;
+	static bool	isPowLeftBracketPrinted = false;
+
+	if (root->type == kNewtonIrNodeType_PquantityExpression)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, " (");
+	}
+	
 
 	/*
 	 *	There is no operator for power exponents
 	 *	operation in C. We therefore must use
 	 *	double pow( double para, double exponent)
 	 */
-	if (irPassCIsExpectedTypePresentInRightChild(N, root, kNewtonIrNodeType_PhighPrecedenceBinaryOp) == true)
+	if (irPassCIsExpectedTypePresentInRightChild(N, root, kNewtonIrNodeType_PexponentiationOperator) == true)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "pow(");
-		isleftBracketPrinted = true;
+		flexprint(N->Fe, N->Fm, N->Fpc, " pow(");
+		isPowLeftBracketPrinted = true;
 	}
 
 	if (root->irRightChild == NULL && root->irLeftChild == NULL)
@@ -302,10 +315,11 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 		/*
 		 *	Print out the right bracket of pow() function.
 		 */
-		if (isleftBracketPrinted == true && root->type == kNewtonIrNodeType_PnumericConst)
+		if (isPowLeftBracketPrinted == true && 
+		   (root->type == kNewtonIrNodeType_PnumericConst || root->type == kNewtonIrNodeType_TintegerConst))
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, ")");
-			isleftBracketPrinted = false;
+			isPowLeftBracketPrinted = false;
 		}
 
 		return;
@@ -313,6 +327,11 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 
 	irPassCConstraintTreeWalk(N, root->irLeftChild);
 	irPassCConstraintTreeWalk(N, root->irRightChild);
+	
+	if (root->type == kNewtonIrNodeType_PquantityExpression)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, ")");
+	}
 }
 
 /*
@@ -340,11 +359,11 @@ irPassCGenFunctionBody(State *  N, IrNode *  constraint, bool isLeft)
 
 	if (isLeft == false)
 	{
-		irPassCConstraintTreeWalk(N, constraint->irRightChild->irRightChild->irLeftChild->irLeftChild);
+		irPassCConstraintTreeWalk(N, constraint->irRightChild->irLeftChild->irLeftChild->irLeftChild);
 	}
 	else
 	{
-		irPassCConstraintTreeWalk(N, constraint->irLeftChild->irLeftChild);
+		irPassCConstraintTreeWalk(N, constraint->irLeftChild);
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fpc, ";\n");
@@ -369,11 +388,15 @@ irPassCGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft)
 
 	if (isLeft == false)
 	{
-		constraintsXSeq = constraint->irRightChild->irRightChild->irLeftChild->irLeftChild;
+		/*
+		 * Right child of constraint is XSeq, the left child of which
+		 * is the RHS quantityExpression. 
+		 */
+		constraintsXSeq = constraint->irRightChild->irLeftChild;
 	}
 	else
 	{
-		constraintsXSeq = constraint->irLeftChild->irLeftChild;
+		constraintsXSeq = constraint->irLeftChild;
 	}
 
 	while (constraintsXSeq->irRightChild != NULL)
@@ -428,7 +451,7 @@ irPassCProcessInvariantList(State *  N)
 		return;
 	}
 
-	IrNode *	constraintXSeq = invariant->constraints->irParent;
+	IrNode *	constraintXSeq = invariant->constraints;
 
 	IrNode *	parameterListXSeq = invariant->parameterList->irParent->irLeftChild;
 
