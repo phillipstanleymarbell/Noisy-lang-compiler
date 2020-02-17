@@ -330,7 +330,7 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 	
 	if (root->type == kNewtonIrNodeType_PquantityExpression)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, ")");
+		flexprint(N->Fe, N->Fm, N->Fpc, " )");
 	}
 }
 
@@ -359,7 +359,7 @@ irPassCGenFunctionBody(State *  N, IrNode *  constraint, bool isLeft)
 
 	if (isLeft == false)
 	{
-		irPassCConstraintTreeWalk(N, constraint->irRightChild->irLeftChild->irLeftChild->irLeftChild);
+		irPassCConstraintTreeWalk(N, constraint->irRightChild);
 	}
 	else
 	{

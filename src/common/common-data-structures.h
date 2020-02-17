@@ -1119,6 +1119,7 @@ typedef struct
 	char *			outputSmtFilePath;
 	char *			outputCFilePath;
 	char *			outputRTLFilePath;
+	char *			outputEstimatorSynthesisFilePath;
 	
 	/*
 	 *	Invariant identifiers specified for State Estimator Synthesis

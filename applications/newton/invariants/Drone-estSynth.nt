@@ -34,6 +34,8 @@
 #	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #	POSSIBILITY OF SUCH DAMAGE.
 #
+#       Run with:
+#       ./newton-linux-EN --estimator-synthesis=filterApi.c --process=process --measurement=measure /<path>/<to>/Drone-estSynth.nt
 
 include "NewtonBaseSignals.nt"
 
@@ -62,13 +64,13 @@ attitudeQuaternion : signal(i: 0 to 3) =
 #### Declare process model ####
 ###############################
 
-process : invariant ( P : multiAxisDistance,        # Position
-                      V : multiAxisSpeed,           # Velocity
-                      Q : attitudeQuaternion,       # Attitude as quaternion
+process : invariant ( P : distance,        # Position
+                      V : speed,           # Velocity
+                      Q : angle,       # Attitude as quaternion
                       u : force,
-                      t : time) = 
+                      dt : time) = 
 { 
-    P ~ P + V,
+    P ~ P + 2*V*dt + P,
     V ~ V,
     Q ~ Q
 }

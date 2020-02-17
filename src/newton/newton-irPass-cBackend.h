@@ -35,4 +35,6 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+void	irPassCGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft);
+void	irPassCGenFunctionBody(State *  N, IrNode *  constraint, bool isLeft);
 void	irPassCBackend(State *  N);
