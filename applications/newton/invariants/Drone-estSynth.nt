@@ -68,7 +68,7 @@ process : invariant ( P : multiAxisDistance,        # Position
                       u : force,
                       t : time) = 
 { 
-    P ~ P,
+    P ~ P + V,
     V ~ V,
     Q ~ Q
 }

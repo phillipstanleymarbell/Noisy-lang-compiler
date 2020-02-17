@@ -78,34 +78,87 @@ findInvariantByIdentifier(State *  N, const char *  identifier)
 	 *	We are, in fact, comparing addresses here.
 	 */
 	Invariant *	invariant = N->invariantList;
-	while (invariant != NULL && invariant->identifier != invariantNode->tokenString)
+	while (invariant != NULL && invariant->identifier != invariantNode->irLeftChild->tokenString)
 	{
 		invariant = invariant->next;
 	}
 
 	if (invariant == NULL)
 	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "Process invariant identifier not found in input.\n");
-		fatal(N, Esanity);		
+		flexprint(N->Fe, N->Fm, N->Fperr, "Invariant with identifier \"%s\" not found in input files.\n", identifier);
+		fatal(N, Esanity);
 	}
 	
 	return invariant;
+}
+
+/*
+ *	Finds the number of the subdimensions by counting how many 
+ *	consecutive Physics notes have the same identifier.
+ */
+int
+newtonPhysicsLength(Physics *  physics)
+{
+	int length = 0;
+	char *	identifier = physics->identifier;
+	while (physics && physics->identifier == identifier)
+	{
+		length++;
+		physics = physics->next;
+	}
+	return length;
 }
 
 void
 irPassEstimatorSynthesisProcessInvariantList(State *  N)
 {
 	/*
+	 *	Check if the file called is simply an include.nt
+	 */
+	if (N->invariantList == NULL)
+	{
+		flexprint(N->Fe, N->Fm, N->Fprtl, "/*\n *\tPlease specify a valid file\n */\n");
+		fatal(N, Esanity);
+	}
+
+	/*
 	 *	Find the invariants  
 	 */
 	Invariant *	processInvariant = findInvariantByIdentifier(N, N->estimatorProcessModel);
 	Invariant *	measureInvariant = findInvariantByIdentifier(N, N->estimatorMeasurementModel);
-	processInvariant++;
-	measureInvariant++;
+	
 	/*
 	 *	Deduce the state variables from the process model invariant 
 	 */
+	int stateDimension = 0;
+	if (processInvariant->constraints->irLeftChild != NULL)
+	{	
+		IrNode *	currentConstraint = processInvariant->constraints->irLeftChild;
+		Physics *	stateVariablePhysics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope, currentConstraint->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->physics->identifier);
+		
+		stateDimension += newtonPhysicsLength(stateVariablePhysics);
 
+		
+		currentConstraint = processInvariant->constraints->irRightChild;
+		while (currentConstraint != NULL)
+		{
+			stateVariablePhysics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope, currentConstraint->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->physics->identifier);
+			stateDimension += newtonPhysicsLength(stateVariablePhysics);
+			currentConstraint = currentConstraint->irRightChild;
+		}
+	}
+	else
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "Process invariant is empty.");
+		fatal(N, Esanity);		
+	}
+
+	// TODO: Flatten state variable dimensions
+	// TODO: 2d-array to relate state variables
+	
+	/// DEBUG CODE to be able to compile with -Wunused-variable
+	processInvariant++;
+	measureInvariant++;
 }
 
 void
