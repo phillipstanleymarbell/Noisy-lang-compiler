@@ -359,7 +359,7 @@ irPassCGenFunctionBody(State *  N, IrNode *  constraint, bool isLeft)
 
 	if (isLeft == false)
 	{
-		irPassCConstraintTreeWalk(N, constraint->irRightChild);
+		irPassCConstraintTreeWalk(N, constraint->irRightChild->irRightChild);
 	}
 	else
 	{
@@ -392,7 +392,7 @@ irPassCGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft)
 		 * Right child of constraint is XSeq, the left child of which
 		 * is the RHS quantityExpression. 
 		 */
-		constraintsXSeq = constraint->irRightChild->irLeftChild;
+		constraintsXSeq = constraint->irRightChild->irRightChild->irLeftChild;
 	}
 	else
 	{
@@ -407,7 +407,7 @@ irPassCGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft)
 
 	irPassCSearchAndPrintNodeType(N, constraintsXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, true,
 					irPassCCountRemainingParameters(N, constraintsXSeq->irLeftChild, 0));
-	flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, ")");
 }
 
 /*

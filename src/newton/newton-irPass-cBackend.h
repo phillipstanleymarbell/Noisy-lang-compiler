@@ -37,4 +37,5 @@
 
 void	irPassCGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft);
 void	irPassCGenFunctionBody(State *  N, IrNode *  constraint, bool isLeft);
+void	irPassCConstraintTreeWalk(State *  N, IrNode *  root);
 void	irPassCBackend(State *  N);

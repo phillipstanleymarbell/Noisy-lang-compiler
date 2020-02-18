@@ -282,6 +282,8 @@ addLeaf(State *  N, IrNode *  parent, IrNode *  newNode)
 		fatal(N, Esanity);
 	}
 
+	newNode->irParent = node;
+
 	if (node->irLeftChild == NULL)
 	{
 		node->irLeftChild = newNode;
@@ -304,6 +306,8 @@ addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode)
 		fatal(N, Esanity);
 	}
 
+	newNode->irParent = node;
+
 	if (node->irLeftChild == NULL)
 	{
 		node->irLeftChild = newNode;
@@ -315,6 +319,7 @@ addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode)
 						newNode /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
+	node->irRightChild->irParent = node;
 }
 
 void

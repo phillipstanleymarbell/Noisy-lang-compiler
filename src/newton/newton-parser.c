@@ -2131,6 +2131,7 @@ newtonParseCompareOp(State *  N, Scope *  currentScope)
 		)
 	{
 		addLeaf(N, node, newtonParseTerminal(N, type, currentScope));
+		return node;
 	}
 	else
 	{
@@ -3837,6 +3838,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 	assert(!strcmp(n->token->identifier, n->tokenString));
 
 	Physics *   physicsSearchResult;
+	Symbol * symbolSearchResult;
 
 	if ((physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, t->identifier)) == NULL)
 	{
@@ -3864,14 +3866,11 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 			newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
 		}
 
+		symbolSearchResult = commonSymbolTableSymbolForIdentifier(N, scope, t->identifier);
 		physicsSearchResult = newtonParseGetPhysicsByBoundIdentifier(N, scope->scopeParameterList, t->identifier);
 	}
 
-	/**
-	 * 	TODO: Check common symbol table?
-	 */
-
-	if (physicsSearchResult == NULL)
+	if (physicsSearchResult == NULL && symbolSearchResult == NULL)
 	{
 		/*
 		 *	Identifier use before definition.
@@ -3885,6 +3884,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
 	}
 
+	n->symbol = symbolSearchResult;
 	n->physics = deepCopyPhysicsNode(N, physicsSearchResult);
 	assert(n->physics->dimensions != NULL);
 

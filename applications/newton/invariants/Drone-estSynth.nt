@@ -70,7 +70,7 @@ process : invariant ( P : distance,        # Position
                       u : force,
                       dt : time) = 
 { 
-    P ~ P + 2*V*dt + P,
+    P ~ 2*3*4*P + 2*V*dt,
     V ~ V,
     Q ~ Q
 }
@@ -89,6 +89,5 @@ measure : invariant ( P : multiAxisDistance,         # Position
                       t : time) = 
 { 
     Po ~ P,
-    Vo ~ V,
-    Q ~ Q + D
+    Vo ~ V
 }
