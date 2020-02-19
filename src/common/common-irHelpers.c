@@ -218,8 +218,9 @@ findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int
 int 
 countIrNodeOfType(State *  N, IrNode *  node, IrNodeType expectedType) 
 {
-    	int counter = 0;
-
+    int counter = 0;
+	
+	// TODO: Possible redundant checks
 	if (node->irLeftChild == NULL && node->irRightChild == NULL && node->type == expectedType && node->isVisited==false)
 	{
 		counter += 1;

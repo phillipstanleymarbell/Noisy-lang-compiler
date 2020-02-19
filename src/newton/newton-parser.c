@@ -1345,7 +1345,7 @@ newtonParseTerminal(State *  N, IrNodeType expectedType, Scope *  currentScope)
 
 	if (t->type == kNewtonIrNodeType_TintegerConst)
 	{
-		n->value = t->integerConst;
+		n->integerValue = t->integerConst;
 	}
 
 	if (t->type == kNewtonIrNodeType_TrealConst)
@@ -3261,7 +3261,7 @@ newtonParseNumericConst(State *  N, Scope *  currentScope)
 	{
 		IrNode *	valueNode = newtonParseTerminal(N, kNewtonIrNodeType_TintegerConst, currentScope);
 		addLeaf(N, node, valueNode);
-		node->value = valueNode->value;
+		node->integerValue = valueNode->integerValue;
 	}
 	else if (peekCheck(N, 1, kNewtonIrNodeType_TrealConst))
 	{

@@ -33,6 +33,15 @@
 	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
+
+	This code makes the following assumptions for ease of implementation:
+	- No signals with subdimensions.
+	- Model must by factorised (e.g. 4*P+X and not 3*P+X+P).
+	- LHS of invariants is assumed to contain solely the state identifiers.
+	- System takes no input (B=0).
+	
+	Many of these can and will be lifted as development progresses.
+
 */
 
 #include <errno.h>
@@ -110,6 +119,42 @@ newtonPhysicsLength(Physics *  physics)
 	return length;
 }
 
+bool
+irPassEstimatorSynthesisExpressionLinear(State *  N, IrNode *  expressionXSeq) {
+	bool  stillLinear = true;
+
+	switch (expressionXSeq->type)
+	{
+		case kNewtonIrNodeType_PquantityExpression:
+		{	
+			while (stillLinear && expressionXSeq != NULL)
+			{
+				stillLinear &= irPassEstimatorSynthesisExpressionLinear(N, expressionXSeq->irLeftChild);
+				expressionXSeq = expressionXSeq->irRightChild;
+			}
+			return stillLinear;
+		} break;
+
+		case kNewtonIrNodeType_PquantityTerm:
+		{
+			if (countIrNodeOfType(N, expressionXSeq, kNewtonIrNodeType_PexponentiationOperator) > 0	||
+			    countIrNodeOfType(N, expressionXSeq, kNewtonIrNodeType_Texponentiation) > 0	||
+				countIrNodeOfType(N, expressionXSeq, kNewtonIrNodeType_TExponential) > 0 ||
+				countIrNodeOfType(N, expressionXSeq, kNewtonIrNodeType_Tidentifier) > 2)
+			{
+				return false;
+			}
+			// TODO: Also check for transcendentals
+			// TODO: kNewtonIrNodeType_Tidentifier > 1 is linear ONLY for identifier*step
+		} break;
+	
+		default:
+			break;
+	}
+
+	return true;	
+}
+
 /*
  *	Isolate factors of stateVariableSymbols found in ExpressionXSeq in 
  *	an IrNode subtree of additions. Essentially 1st-level factorisation.
@@ -123,28 +168,41 @@ irPassEstimatorSynthesisIsolateSymbolFactors(State *  N, IrNode *  ExpressionXSe
 										NULL /* source info */
 									);
 	int nth = 0;
-	IrNode *  foundIdentifierIrNode;
+	int timesDetected = 0;
+	IrNode *  foundMatchingIrNode = NULL;
+	IrNode *  foundIdentifierIrNode = NULL;
 	foundIdentifierIrNode = findNthIrNodeOfType(N, ExpressionXSeq, kNewtonIrNodeType_Tidentifier, nth);
-	while(foundIdentifierIrNode != NULL && foundIdentifierIrNode->symbol != stateVariableSymbol)
+	while(foundIdentifierIrNode != NULL)
 	{
+		if (foundIdentifierIrNode->symbol == stateVariableSymbol)
+		{
+			timesDetected++;
+			foundMatchingIrNode = foundIdentifierIrNode;
+		}
 		nth++;
 		foundIdentifierIrNode = findNthIrNodeOfType(N, ExpressionXSeq, kNewtonIrNodeType_Tidentifier, nth);
 	}
+	if (timesDetected > 1) {
+		// TODO: Actually handle factorisation
+		flexprint(N->Fe, N->Fm, N->Fperr, "Warning: Symbol %s detected in multiple terms.\n", stateVariableSymbol->identifier);
+	}
 	
-	if (foundIdentifierIrNode != NULL)
+	if (foundMatchingIrNode != NULL)
 	{	
+		/*
+		 *	Remove identifier from sub-tree
+		 *	Hack: Substitute with identity element
+		 */
+		foundMatchingIrNode->type = kNewtonIrNodeType_TintegerConst;
+		foundMatchingIrNode->integerValue = 1;
 		/*
 		 *	Get the identifier's quantityTerm
 		 */
-		while (foundIdentifierIrNode->type != kNewtonIrNodeType_PquantityTerm)
+		while (foundMatchingIrNode->type != kNewtonIrNodeType_PquantityTerm)
 		{
-			foundIdentifierIrNode = foundIdentifierIrNode->irParent;
+			foundMatchingIrNode = foundMatchingIrNode->irParent;
 		}
-		addLeaf(N, symbolFactors, foundIdentifierIrNode);
-		/*
-		 *	Note that foundIdentifierIrNode still contains the identifier somewhere
-		 */
-		// TODO: Remove identifier from sub-tree
+		addLeaf(N, symbolFactors, foundMatchingIrNode);
 		// TODO: Constant propagation
 	}
 	
@@ -160,7 +218,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	 */
 	if (N->invariantList == NULL)
 	{
-		flexprint(N->Fe, N->Fm, N->Fprtl, "/*\n *\tPlease specify a valid file\n */\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tPlease specify a valid input file\n */\n");
 		fatal(N, Esanity);
 	}
 
@@ -184,9 +242,12 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tGenerated .c file from Newton\n */\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <stdlib.h>");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <stdio.h>");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <math.h>\n\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "#include <stdlib.h>\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "#include <stdio.h>\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "#include <math.h>\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "#include \"matrix.h\"\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
 	IrNode *	constraintXSeq = NULL;
 	Physics *	stateVariablePhysics = NULL;
@@ -233,83 +294,129 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tSTATE_DIMENSION\n} filterCoreStateIdx;\n\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "typedef struct {\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tState\n\t */\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble S[STATE_DIMENSION];\n\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble S[STATE_DIMENSION];\n\tmatrix *\tSm;\n\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tState covariance matrix\n\t */\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble P[STATE_DIMENSION][STATE_DIMENSION];\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble P[STATE_DIMENSION][STATE_DIMENSION];\n\tmatrix *\tPm;\n");
 	// TODO: Populate covariance matrix?
 	flexprint(N->Fe, N->Fm, N->Fpc, "} CoreState;\n\n");
 
-	/*	If linear:
-	 *	Deduce state transition matrix F
-	 */
-	IrNode * fMatrixIrNodes[stateDimension][stateDimension];
-	int fRow = 0;
-	flexprint(N->Fe, N->Fm, N->Fpc, "double fmatrix[STATE_DIMENSION][STATE_DIMENSION] = \n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "{ ");
-	for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; fRow++, constraintXSeq = constraintXSeq->irRightChild)
-	{	
-		/*
-		 *	Find the Right Hand Side Expression of the constraint:
-		 *	RHSExpression = constraintlist-> constraint -> right hand side -> bypass comparison -> quantity expression
-		 */
-		IrNode *  RHSExpressionXSeq = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
-		// flexprint(N->Fe, N->Fm, N->Fpc, "//\tFrom expression:\n");
-		// irPassCConstraintTreeWalk(N, RHSExpressionXSeq);
-		// flexprint(N->Fe, N->Fm, N->Fpc, "\n//\tGenerated:\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "{ ");
-		for (int fColumn = 0; fColumn < stateDimension; fColumn++)
-		{	
-			fMatrixIrNodes[fRow][fColumn] = irPassEstimatorSynthesisIsolateSymbolFactors(N, RHSExpressionXSeq, stateVariableSymbols[fColumn]);
-			if (fMatrixIrNodes[fRow][fColumn]->irRightChild == NULL &&
-				fMatrixIrNodes[fRow][fColumn]->irLeftChild == NULL) {
-				flexprint(N->Fe, N->Fm, N->Fpc, "( 0 ), ");
-			}
-			else
-			{
-				irPassCConstraintTreeWalk(N, fMatrixIrNodes[fRow][fColumn]);				
-				flexprint(N->Fe, N->Fm, N->Fpc, ", ");
-			}
-			
-		}
-		
-		flexprint(N->Fe, N->Fm, N->Fpc, "},\n");
-	}
-	flexprint(N->Fe, N->Fm, N->Fpc, "};\n");
-
-
-	/*	If non-linear:
-	 *	Generate process model functions
-	 */
-	counter = 0;
-	for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; counter++, constraintXSeq = constraintXSeq->irRightChild)
-	{	
-		flexprint(N->Fe, N->Fm, N->Fpc, "double\nprocess_%s ", stateVariableNames[counter]);
-		irPassCGenFunctionArgument(N, constraintXSeq->irLeftChild, false);
-		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-		irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
-	}
-
 	/*
-	 *	Generate init function
+	 *	Generate filterInit function
 	 */
-	flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterInit (CoreState * cState, double S0[STATE_DIMENSION], double P0[STATE_DIMENSION][STATE_DIMENSION]) {\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (int i = 0; i < STATE_DIMENSION; i++)\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterInit (CoreState * cState, double S0[STATE_DIMENSION], double P0[STATE_DIMENSION][STATE_DIMENSION]) \n{\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (int i = %s; i < STATE_DIMENSION; i++)\n", stateVariableNames[0]);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t{\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tcState->S[i] = S0[i];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (int i = 0; i < STATE_DIMENSION; i++)\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Sm = makeMatrix(1, STATE_DIMENSION);\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Sm->data = &cState->S[0];\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+	flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (int i = %s; i < STATE_DIMENSION; i++)\n", stateVariableNames[0]);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t{\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tfor (int j = 0; j < STATE_DIMENSION; j++)\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tfor (int j = %s; j < STATE_DIMENSION; j++)\n", stateVariableNames[0]);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\t{\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\t\tcState->P[i][j] = P0[i][j];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\t}\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Pm = makeMatrix(STATE_DIMENSION, STATE_DIMENSION);\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Pm->data = &cState->P[0][0];\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n");
 
+
 	/*
-	 *	Generate predict function
+	 *	Generate filterPredict function
 	 */
-	flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterPredict (double step) {\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterPredict (CoreState *  cState, double step) {\n");
+
+	/*
+	 *	Determine linearity of process model
+	 */
+	bool linearProcess = true;
+	for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
+	{
+		linearProcess &= irPassEstimatorSynthesisExpressionLinear(N, constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild);
+	}
+	
+	if (linearProcess == true)
+	{
+		/*	If linear:
+		 *	Deduce state transition matrix F
+		 */
+		IrNode * fMatrixIrNodes[stateDimension][stateDimension];
+		int fRow = 0;
+		flexprint(N->Fe, N->Fm, N->Fpc, "double fmatrix[STATE_DIMENSION][STATE_DIMENSION] = \n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "{ ");
+		for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; fRow++, constraintXSeq = constraintXSeq->irRightChild)
+		{	
+			/*
+			 *	Find the Right Hand Side Expression of the constraint:
+			 *	RHSExpression = constraintlist-> constraint -> right hand side -> bypass comparison -> quantity expression
+			 */
+			IrNode *  RHSExpressionXSeq = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
+
+			flexprint(N->Fe, N->Fm, N->Fpc, "{ ");
+			for (int fColumn = 0; fColumn < stateDimension; fColumn++)
+			{	
+				fMatrixIrNodes[fRow][fColumn] = irPassEstimatorSynthesisIsolateSymbolFactors(N, RHSExpressionXSeq, stateVariableSymbols[fColumn]);
+				if (fMatrixIrNodes[fRow][fColumn]->irRightChild == NULL &&
+					fMatrixIrNodes[fRow][fColumn]->irLeftChild == NULL) {
+					flexprint(N->Fe, N->Fm, N->Fpc, "( 0 ), ");
+				}
+				else
+				{
+					irPassCConstraintTreeWalk(N, fMatrixIrNodes[fRow][fColumn]);				
+					flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+				}
+				
+			}
+			
+			flexprint(N->Fe, N->Fm, N->Fpc, "},\n");
+		}
+		flexprint(N->Fe, N->Fm, N->Fpc, "};\n");
+
+		/**
+		 *	Declare matrix struct;
+		 */
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix Fm = { .height = (int) STATE_DIMENSION, ");
+		flexprint(N->Fe, N->Fm, N->Fpc, ".width = (int) STATE_DIMENSION, ");
+		flexprint(N->Fe, N->Fm, N->Fpc, ".data = fmatrix };\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix * imm1 = multiplyMatrix(&Fm, cState->Sm);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "cState->Sm = copyMatrix(imm1);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix * Fm_T = transposeMatrix(&Fm);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix * imm1 = multiplyMatrix(&Fm, cState->Pm);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix * imm2 = multiplyMatrix(imm1, Fm_T);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "double *  p = cState->Pm->data;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "double *  q = Qm->data;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < STATE_DIMENSION*STATE_DIMENSION; i++)\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "{\n\t*p += *q;\n\tp++;\n\tq++;\n}\n");
+
+	}
+	else 
+	{
+		/*	If non-linear:
+		*	Generate process model equations
+		*/
+		counter = 0;
+		for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; counter++, constraintXSeq = constraintXSeq->irRightChild)
+		{	
+			flexprint(N->Fe, N->Fm, N->Fpc, "double\nprocess_%s ", stateVariableNames[counter]);
+			irPassCGenFunctionArgument(N, constraintXSeq->irLeftChild, false);
+			flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+			irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
+		}
+	}
+
 	counter = 0;
 	for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
 	{	
@@ -347,7 +454,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		measureDimension++;
 	}
 
-	/**
+	/*
 	 *	Map stateVariableSymbols to measurementSymbols
 	 */
 	Symbol * measurementSymbols[stateDimension];
@@ -367,15 +474,24 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			}
 	}
 
+	/*
+	 *	Determine linearity of measurement model
+	 */
+	bool linearMeasurement = true;
+	for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
+	{
+		linearMeasurement &= irPassEstimatorSynthesisExpressionLinear(N, constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild);
+	}
+	
 	/*	
 	 *	If linear:
 	 *	Deduce measurement matrix H 
 	 */
 	IrNode * hMatrixIrNodes[measureDimension][stateDimension];
-	fRow = 0;
 	flexprint(N->Fe, N->Fm, N->Fpc, "double hMatrix[%d][STATE_DIMENSION] = \n", measureDimension);
 	flexprint(N->Fe, N->Fm, N->Fpc, "{ ");
-	for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; fRow++, constraintXSeq = constraintXSeq->irRightChild)
+	int hRow = 0;
+	for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; hRow++, constraintXSeq = constraintXSeq->irRightChild)
 	{	
 		/*
 		 *	Find the Right Hand Side Expression of the constraint:
@@ -383,18 +499,18 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		 */
 		IrNode *  RHSExpressionXSeq = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
 		flexprint(N->Fe, N->Fm, N->Fpc, "{ ");
-		for (int fColumn = 0; fColumn < stateDimension; fColumn++)
+		for (int hColumn = 0; hColumn < stateDimension; hColumn++)
 		{	
 
 
-			hMatrixIrNodes[fRow][fColumn] = irPassEstimatorSynthesisIsolateSymbolFactors(N, RHSExpressionXSeq, measurementSymbols[fColumn]);
-			if (hMatrixIrNodes[fRow][fColumn]->irRightChild == NULL &&
-				hMatrixIrNodes[fRow][fColumn]->irLeftChild == NULL) {
+			hMatrixIrNodes[hRow][hColumn] = irPassEstimatorSynthesisIsolateSymbolFactors(N, RHSExpressionXSeq, measurementSymbols[hColumn]);
+			if (hMatrixIrNodes[hRow][hColumn]->irRightChild == NULL &&
+				hMatrixIrNodes[hRow][hColumn]->irLeftChild == NULL) {
 				flexprint(N->Fe, N->Fm, N->Fpc, "( 0 ), ");
 			}
 			else
 			{
-				irPassCConstraintTreeWalk(N, hMatrixIrNodes[fRow][fColumn]);				
+				irPassCConstraintTreeWalk(N, hMatrixIrNodes[hRow][hColumn]);				
 				flexprint(N->Fe, N->Fm, N->Fpc, ", ");
 			}
 			
@@ -404,7 +520,6 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "};\n");
 
-	
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n\nint \nmain(int argc, char *argv[])\n{\n\treturn 0;\n}\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n/*\n *\tEnd of the generated .c file\n */\n");
 }

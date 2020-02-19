@@ -39,27 +39,6 @@
 
 include "NewtonBaseSignals.nt"
 
-multiAxisDistance : signal(i: 0 to 2) =
-{
-        derivation      = distance@i;
-}
-
-multiAxisSpeed : signal(i: 0 to 2) =
-{
-        derivation      = speed@i;
-}
-
-multiAxisAttitudeError : signal(i: 0 to 2) =
-{
-        derivation      = angle@i;
-}
-
-attitudeQuaternion : signal(i: 0 to 3) =
-{
-        derivation      = angle@i;
-}
-
-
 ###############################
 #### Declare process model ####
 ###############################
@@ -68,10 +47,10 @@ process : invariant ( P : distance,        # Position
                       V : speed,           # Velocity
                       Q : angle,       # Attitude as quaternion
                       u : force,
-                      dt : time) = 
+                      step : time) = 
 { 
-    P ~ 2*3*4*P + 2*V*dt,
-    V ~ V,
+    P ~ 3.14*2*3*4*P + 2*V*step,
+    V ~ 2*V,
     Q ~ Q
 }
 
@@ -79,15 +58,15 @@ process : invariant ( P : distance,        # Position
 #### Declare measurement model ####
 ###################################
 
-measure : invariant ( P : multiAxisDistance,         # Position
-                      Po : multiAxisDistance,        # Position observed
-                      V : multiAxisSpeed,            # Velocity
-                      Vo : multiAxisSpeed,           # Velocity observed
-                      Q : attitudeQuaternion,        # Attitude as quaternion
-                      D : multiAxisAttitudeError,    # Attitude change
+measure : invariant ( P : distance,     # Position
+                      Ar : area,         # Area observed
+                      V : speed,        # Velocity
+                      Ac : acceleration,       # Acceleration observed
+                      Q : angle,        # Attitude as quaternion
+                      D : angle,        # Attitude change
                       u : force,
                       t : time) = 
 { 
-    Po ~ P,
-    Vo ~ V
+    Ar ~ 2*P,
+    Ac ~ V
 }

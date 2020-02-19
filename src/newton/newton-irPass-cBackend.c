@@ -1,5 +1,6 @@
 /*
 	Authored 2018. Youchao Wang.
+	Updated 2020. Orestis Kaparounakis.
 
 	All rights reserved.
 
@@ -118,11 +119,19 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 	switch(node->type)
 	{
 		case kNewtonIrNodeType_PnumericConst:
-		case kNewtonIrNodeType_TintegerConst:
+		case kNewtonIrNodeType_TrealConst:
 		{
 			int needed = snprintf(NULL, 0, "%f", node->value) + 1;
 			output = malloc(needed);
 			snprintf(output, needed, "%f", node->value);
+			break;
+		}
+
+		case kNewtonIrNodeType_TintegerConst:
+		{
+			int needed = snprintf(NULL, 0, "%d", node->integerValue) + 1;
+			output = malloc(needed);
+			snprintf(output, needed, "%d", node->integerValue);
 			break;
 		}
 
@@ -316,7 +325,9 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 		 *	Print out the right bracket of pow() function.
 		 */
 		if (isPowLeftBracketPrinted == true && 
-		   (root->type == kNewtonIrNodeType_PnumericConst || root->type == kNewtonIrNodeType_TintegerConst))
+		   (root->type == kNewtonIrNodeType_PnumericConst ||
+		    root->type == kNewtonIrNodeType_TrealConst	||
+		    root->type == kNewtonIrNodeType_TintegerConst))
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, ")");
 			isPowLeftBracketPrinted = false;

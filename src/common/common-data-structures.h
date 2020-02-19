@@ -880,6 +880,7 @@ struct IrNode
 	 *	Only if this node belongs to a ParseNumericExpression subtree
 	 */
 	double			value;
+	int				integerValue;
 
 	int			subindexStart;
 	int			subindexEnd;
@@ -1016,7 +1017,7 @@ struct Symbol
 	/*
 	 *	If an I_CONST, its value.
 	 */
-	int			intConst;
+	int				intConst;
 	double			realConst;
 	char *			stringConst;
 	
