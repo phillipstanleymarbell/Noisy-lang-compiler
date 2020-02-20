@@ -386,20 +386,21 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		 */
 		flexprint(N->Fe, N->Fm, N->Fpc, "matrix Fm = { .height = (int) STATE_DIMENSION, ");
 		flexprint(N->Fe, N->Fm, N->Fpc, ".width = (int) STATE_DIMENSION, ");
-		flexprint(N->Fe, N->Fm, N->Fpc, ".data = fmatrix };\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, ".data = &fmatrix[0][0] };\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "matrix * imm1 = multiplyMatrix(&Fm, cState->Sm);\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "cState->Sm = copyMatrix(imm1);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix * FSm = multiplyMatrix(&Fm, cState->Sm);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "cState->Sm = copyMatrix(FSm);\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "matrix * Fm_T = transposeMatrix(&Fm);\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "matrix * imm1 = multiplyMatrix(&Fm, cState->Pm);\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "matrix * imm2 = multiplyMatrix(imm1, Fm_T);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix * FPm = multiplyMatrix(&Fm, cState->Pm);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix * FPFm_T = multiplyMatrix(FPm, Fm_T);\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
 		flexprint(N->Fe, N->Fm, N->Fpc, "double *  p = cState->Pm->data;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "double *fpf = FPFm_T->data;\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "double *  q = Qm->data;\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < STATE_DIMENSION*STATE_DIMENSION; i++)\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "{\n\t*p += *q;\n\tp++;\n\tq++;\n}\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "{\n\t*p = *fpf + *q;\n\tp++;\n\tfpf++\n\tq++;\n}\n");
 
 	}
 	else 
@@ -415,23 +416,23 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 			irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
 		}
-	}
+		counter = 0;
+		for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
+		{	
+			IrNode *  leafLeftAST = constraintXSeq->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild;
+			stateVariablePhysics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope, leafLeftAST->physics->identifier);
+			int subdimensionLength = newtonPhysicsLength(stateVariablePhysics);
 
-	counter = 0;
-	for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
-	{	
-		IrNode *  leafLeftAST = constraintXSeq->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild;
-		stateVariablePhysics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope, leafLeftAST->physics->identifier);
-		int subdimensionLength = newtonPhysicsLength(stateVariablePhysics);
-
-		for (int i = 0; i < subdimensionLength; i++)
-		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "\tprocess_%s", stateVariableNames[counter+i]);
-			// TODO: This is where I need the relation matrix.
-			flexprint(N->Fe, N->Fm, N->Fpc, ";\n");
+			for (int i = 0; i < subdimensionLength; i++)
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, "\tprocess_%s", stateVariableNames[counter+i]);
+				// TODO: This is where I need the relation matrix.
+				flexprint(N->Fe, N->Fm, N->Fpc, ";\n");
+			}
+			counter += subdimensionLength;
 		}
-		counter += subdimensionLength;
 	}
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n");
 
 	/*
@@ -482,43 +483,109 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	{
 		linearMeasurement &= irPassEstimatorSynthesisExpressionLinear(N, constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild);
 	}
-	
-	/*	
-	 *	If linear:
-	 *	Deduce measurement matrix H 
-	 */
-	IrNode * hMatrixIrNodes[measureDimension][stateDimension];
-	flexprint(N->Fe, N->Fm, N->Fpc, "double hMatrix[%d][STATE_DIMENSION] = \n", measureDimension);
-	flexprint(N->Fe, N->Fm, N->Fpc, "{ ");
-	int hRow = 0;
-	for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; hRow++, constraintXSeq = constraintXSeq->irRightChild)
-	{	
-		/*
-		 *	Find the Right Hand Side Expression of the constraint:
-		 *	RHSExpression = constraintlist-> constraint -> right hand side -> bypass comparison -> quantity expression
-		 */
-		IrNode *  RHSExpressionXSeq = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
+
+	flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterUpdate (CoreState *  cState, double Z[%d], double step) {\n", measureDimension);
+	if (linearMeasurement == true)
+	{
+		/*	
+		*	If linear:
+		*	Deduce measurement matrix H 
+		*/
+		IrNode * hMatrixIrNodes[measureDimension][stateDimension];
+		flexprint(N->Fe, N->Fm, N->Fpc, "double hMatrix[%d][STATE_DIMENSION] = \n", measureDimension);
 		flexprint(N->Fe, N->Fm, N->Fpc, "{ ");
-		for (int hColumn = 0; hColumn < stateDimension; hColumn++)
+		int hRow = 0;
+		for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; hRow++, constraintXSeq = constraintXSeq->irRightChild)
 		{	
+			/*
+			*	Find the Right Hand Side Expression of the constraint:
+			*	RHSExpression = constraintlist-> constraint -> right hand side -> bypass comparison -> quantity expression
+			*/
+			IrNode *  RHSExpressionXSeq = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
+			flexprint(N->Fe, N->Fm, N->Fpc, "{ ");
+			for (int hColumn = 0; hColumn < stateDimension; hColumn++)
+			{	
 
 
-			hMatrixIrNodes[hRow][hColumn] = irPassEstimatorSynthesisIsolateSymbolFactors(N, RHSExpressionXSeq, measurementSymbols[hColumn]);
-			if (hMatrixIrNodes[hRow][hColumn]->irRightChild == NULL &&
-				hMatrixIrNodes[hRow][hColumn]->irLeftChild == NULL) {
-				flexprint(N->Fe, N->Fm, N->Fpc, "( 0 ), ");
-			}
-			else
-			{
-				irPassCConstraintTreeWalk(N, hMatrixIrNodes[hRow][hColumn]);				
-				flexprint(N->Fe, N->Fm, N->Fpc, ", ");
-			}
+				hMatrixIrNodes[hRow][hColumn] = irPassEstimatorSynthesisIsolateSymbolFactors(N, RHSExpressionXSeq, measurementSymbols[hColumn]);
+				if (hMatrixIrNodes[hRow][hColumn]->irRightChild == NULL &&
+					hMatrixIrNodes[hRow][hColumn]->irLeftChild == NULL) {
+					flexprint(N->Fe, N->Fm, N->Fpc, "( 0 ), ");
+				}
+				else
+				{
+					irPassCConstraintTreeWalk(N, hMatrixIrNodes[hRow][hColumn]);				
+					flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+				}
 			
+			}
+
+			flexprint(N->Fe, N->Fm, N->Fpc, "},\n");
 		}
-		
-		flexprint(N->Fe, N->Fm, N->Fpc, "},\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "};\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix Hm = { .height = %d, .width = STATE_DIMENSION, .data = &hMatrix[0][0] };\n", measureDimension);
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix Zm = { .height = %d, .width = 1, .data = Z };\n", measureDimension);
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "// Kg = PH^T * (HPH^T + Q)^(-1)\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  Hm_T = transposeMatrix(&Hm);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  PHm_T = multiplyMatrix(cState->Pm, Hm_T);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  HPHm_T = multiplyMatrix(&Hm, PHm_T);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "double *hph = HPHm_T->data;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "double *r = Rm->data;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < %d * %d; i++)\n{\n", measureDimension, measureDimension);
+		flexprint(N->Fe, N->Fm, N->Fpc, "*hph += *r;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "hph++;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "r++;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "}\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  HPHm_T_inv = matrixInverse(HPHm_T);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  Kg = multiplyMatrix(PHm_T, HPHm_T_inv);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "// S <- S + Kg (Z - HS)\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  HSm = multiplyMatrix(&Hm, cState->Sm);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "double *  hs = HSm->data;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "double *  z = &Z[0];\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < 3; i++)\n{\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "*hs = *z - *hs;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "hs++;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "z++;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "}\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix * KgZHS = multiplyMatrix(Kg, HSm);\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "double *  s = &cState->S[0];\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "double *  kgzhs = KgZHS->data;\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < (int) STATE_DIMENSION; i++)\n{\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "*s += *kgzhs;\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "s++;\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "kgzhs++;\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "}\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");	
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "// P <- P - KgHP\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  HPm = multiplyMatrix(&Hm, cState->Pm);\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  KgHPm = multiplyMatrix(Kg, HPm);\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "double *  p = &cState->P[0][0];\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "double *  kghp = KgHPm->data;\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < STATE_DIMENSION*STATE_DIMENSION; i++)\n{\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "*p -= *kghp;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "p++;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "kghp++;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "}\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "}\n");
 	}
-	flexprint(N->Fe, N->Fm, N->Fpc, "};\n");
+	else
+	{
+		
+	}
+	
+	
 
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n\nint \nmain(int argc, char *argv[])\n{\n\treturn 0;\n}\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n/*\n *\tEnd of the generated .c file\n */\n");
