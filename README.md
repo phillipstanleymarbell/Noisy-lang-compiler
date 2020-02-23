@@ -54,23 +54,27 @@ For example,
 	MACHTYPE	= x86_64
 ```
 
-2.	Edit `precommitStatisticsHook-<your os type>.sh` to set
-```sh
-	dtraceDirectory=full-path-to-DTrace-repository-clone
-	libflexDirectory=full-path-to-libflex-repository-clone
-```
-For the following steps, valid options for OSTYPE are currently `linux` 
-for Gnu/Linux and `darwin` for macOS.
+2.	Copy `config.local` to the libflex directory
 
-3.	Build Libflex by going to the directory you cloned for Libflex and 
+	$ cp config.local submodules/libflex
+
+
+3.	In `src/common/Makefile` and `src/newton/Makefile`, change `COMPILERVARIANT` as necessary (default is `clang`).
+
+
+4.	Build Libflex by going to the directory you cloned for Libflex and 
 running `make`. The Makefile assumes the environment variables `OSTYPE`
 and `MACHTYPE` are set. If that is not the case, you will need to 
 explicitly set them, for example on macOS:
-```sh
-	make OSTYPE=darwin MACHTYPE=x86_64
+```shell
+$ cd submodules/libflex
+$ make OSTYPE=darwin MACHTYPE=x86_64
 ```
 
-4.	Build the Noisy and Newton compilers by running `make`.
+5.	From the root of this top-level repository, build the Noisy and Newton compilers by running `make`. The makefile assumes the  environment variables `OSTYPE` and `MACHTYPE` are set. If that is not the  case, you will need to explicitly set them, for example on macOS:
+```shell
+	make OSTYPE=darwin MACHTYPE=x86_64
+```
 
 
 ## The Newton compiler
@@ -101,13 +105,12 @@ with the flags `-h` or `--help` to see the usage:
                                                                              
 	              <filenames>
 ```
-
 For example, to compile a Newton description to LaTeX:
 ```sh
 	./newton-darwin-EN ../../applications/newton/invariants/Waves-pigroups.nt -x
 ```
 
-##The Noisy compiler
+## The Noisy compiler
 The Noisy compiler takes Noisy programs and compiles them to either Noisy Bytecode (the Noisy IR serialized via Google's Protocol Buffers), or renders the IR and symbol table using GraphViz/Dot for debugging.
 
 You can invoke the compiler on your platform, e.g., `./noisy-darwin-EN`, with the flags `-h` or `--help` to see the usage:

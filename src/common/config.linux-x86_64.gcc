@@ -9,4 +9,3 @@ PLATFORM_DBGFLAGS	+= -g  # Compiling with '-g' causes the complaint "warning: (x
 PLATFORM_CFLAGS		+= -DCommonOsLinux
 CGI_BIN			= /usr/lib/cgi-bin/
 LINTFLAGS		= #--analyze
-
