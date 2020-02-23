@@ -769,6 +769,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("<textarea NAME=\"c\" name=\"data-editor\" data-editor=\"noisy\" COLS=1 ROWS=1>\n");
 	printf("%s", noisyCodeBuffer);
 	printf("</textarea>\n");
+	printf("(<b>vi key bindings</b> for the text editor above)<p>\n");
 
 	printf("<div style=\"background-color:#EEEEEE; color:#444444; padding:3px;\">\n");
 	printf("&nbsp;&nbsp;(Noisy/%" PRIu64 

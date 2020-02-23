@@ -18,6 +18,7 @@ newton:
 
 pre:
 	cp config.local submodules/libflex
+	cd submodules/libflex && make
 
 README.sloccount:
 	sloccount src > README.sloccount
