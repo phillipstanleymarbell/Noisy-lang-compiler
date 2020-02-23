@@ -22,7 +22,7 @@ make clean
 make #-j
 make README.sloccount
 
-cat src/noisy/version.c >> $trackingDirectory/$statsFile
+#cat src/noisy/version.c >> $trackingDirectory/$statsFile
 cat src/newton/version.c >> $trackingDirectory/$statsFile
 cp applications/newton/include/NewtonBaseSignals.nt .
 #echo '\n./src/noisy/noisy-bsd44-EN -O0 applications/noisy/helloWorld.n -s' >> $trackingDirectory/$statsFile
