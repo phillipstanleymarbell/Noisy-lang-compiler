@@ -25,8 +25,8 @@ make README.sloccount
 cat src/noisy/version.c >> $trackingDirectory/$statsFile
 cat src/newton/version.c >> $trackingDirectory/$statsFile
 cp applications/newton/include/NewtonBaseSignals.nt .
-echo '\n./src/noisy/noisy-bsd44-EN -O0 applications/noisy/helloWorld.n -s' >> $trackingDirectory/$statsFile
-./src/noisy/noisy-bsd44-EN -O0 applications/noisy/helloWorld.n -s >> $trackingDirectory/$statsFile
+#echo '\n./src/noisy/noisy-bsd44-EN -O0 applications/noisy/helloWorld.n -s' >> $trackingDirectory/$statsFile
+#./src/noisy/noisy-bsd44-EN -O0 applications/noisy/helloWorld.n -s >> $trackingDirectory/$statsFile
 echo '\n./src/newton/newton-bsd44-EN -v 0 -eP applications/newton/invariants/ViolinWithTemperatureDependence-pigroups.nt' >> $trackingDirectory/$statsFile
 ./src/newton/newton-bsd44-EN -v 0 -eP applications/newton/invariants/ViolinWithTemperatureDependence-pigroups.nt >> $trackingDirectory/$statsFile
 rm NewtonBaseSignals.nt
