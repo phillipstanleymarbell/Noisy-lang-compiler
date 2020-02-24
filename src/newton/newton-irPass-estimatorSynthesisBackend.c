@@ -400,7 +400,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "double *fpf = FPFm_T->data;\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "double *  q = Qm->data;\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < STATE_DIMENSION*STATE_DIMENSION; i++)\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "{\n\t*p = *fpf + *q;\n\tp++;\n\tfpf++\n\tq++;\n}\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "{\n\t*p = *fpf + *q;\n\tp++;\n\tfpf++;\n\tq++;\n}\n");
 
 	}
 	else 
@@ -586,8 +586,82 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	}
 	
 	
-
+	/*
+	 *	Generate main for testing purposes
+	 */
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n\nint \nmain(int argc, char *argv[])\n{\n\treturn 0;\n}\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "int noOfValues = 1 + STATE_DIMENSION + MEASURE_DIMENSION;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "int nread;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "size_t nlen = 0;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "char *  line;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+	flexprint(N->Fe, N->Fm, N->Fpc, "CoreState cs;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "// First line is column names\n");
+	// flexprint(N->Fe, N->Fm, N->Fpc, "nread = getline(&line, &nlen, stdin);\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "double initState[%d];\n", measureDimension);
+	flexprint(N->Fe, N->Fm, N->Fpc, "double time;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "scanf(\"%%lf\", &time);\n");
+	for (int i = 0; i < measureDimension; i++)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "scanf(\",%%lf\", &initState[%d]);\n", i);
+	}
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+	flexprint(N->Fe, N->Fm, N->Fpc, "double initCov[STATE_DIMENSION][STATE_DIMENSION] = ");
+	for (int i = 0; i < stateDimension; i++)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "{");
+		for (int j = 0; j < stateDimension; j++)
+		{
+			if (i == j)
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, "100,");
+			}
+			else
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, "1,");
+			}		
+		}
+		flexprint(N->Fe, N->Fm, N->Fpc, "},");		
+	}
+	flexprint(N->Fe, N->Fm, N->Fpc, "};\n");
+	
+	flexprint(N->Fe, N->Fm, N->Fpc, "filterInit(&cs, initState, initCov);\n");
+
+
+	flexprint(N->Fe, N->Fm, N->Fpc, "double prevtime = time;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "double measure[%d];\n", stateDimension);
+	flexprint(N->Fe, N->Fm, N->Fpc, "while (scanf(\"%%lf\", &time) > 0)\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "{\n");
+	for (int i = 0; i < stateDimension; i++)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "scanf(\",%%*lf\");\n", i);
+	}
+	for (int i = 0; i < measureDimension; i++)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "scanf(\",%%lf\", &measure[%d]);\n", i);
+	}
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "filterPredict(&cs, time - prevtime);\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "printf(\"Predict: %%lf, time);\n");
+	for (int i = 0; i < stateDimension; i++)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "printf(\", %%lf\", cs.S[%d]);\n");
+	}
+	flexprint(N->Fe, N->Fm, N->Fpc, "printf(\"\\n\");\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "filterUpdate(&cs, measure, time - prevtime);\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "printf(\"Update: %%lf, time);\n");
+	for (int i = 0; i < stateDimension; i++)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "printf(\", %%lf\", cs.S[%d]);\n");
+	}
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "prevtime = time;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "}\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "return 0;\n}\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n/*\n *\tEnd of the generated .c file\n */\n");
 }
 
