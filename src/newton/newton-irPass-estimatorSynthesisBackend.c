@@ -514,6 +514,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		 *  This is: f_1(s1,s2, ... s_j), ... f_i(x,y, ... s_j)
 		 */
 		counter = 0;
+		int functionLastArg[stateDimension];
 		for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; counter++, constraintXSeq = constraintXSeq->irRightChild)
 		{	
 			flexprint(N->Fe, N->Fm, N->Fpc, "double\nprocess_%s ", stateVariableNames[counter]);
@@ -524,6 +525,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			{
 				if (relationMatrix[counter][lastArg] == true)
 				{
+					functionLastArg[counter] = lastArg;
 					break;
 				} 	
 			}
@@ -543,6 +545,67 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
 			flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 			irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
+
+			/**
+			 *	Generate partial derivatives
+			 */
+			for (int currDeriv = 0; currDeriv < stateDimension; currDeriv++)
+			{
+				if (relationMatrix[counter][currDeriv] == true)
+				{
+					flexprint(N->Fe, N->Fm, N->Fpc, "double\nd_process_%s_d%s ", stateVariableNames[counter], stateVariableSymbols[currDeriv]->identifier);
+					flexprint(N->Fe, N->Fm, N->Fpc, "(");
+					for (currArg = 0; currArg < processParameterLength; currArg++)
+					{
+						if (relationMatrix[counter][currArg] == true)
+						{
+							flexprint(N->Fe, N->Fm, N->Fpc, "double %s, ", parameterVariableSymbols[currArg]->identifier);
+						}
+					}
+					flexprint(N->Fe, N->Fm, N->Fpc, "double h)\n{\n");
+					flexprint(N->Fe, N->Fm, N->Fpc, "double calculatedValue = 0.0;");
+
+					flexprint(N->Fe, N->Fm, N->Fpc, "calculatedValue = (( process_%s(", stateVariableNames[counter]);
+
+					for (currArg = 0; currArg < processParameterLength; currArg++)
+					{
+						if (relationMatrix[counter][currArg] == true)
+						{	
+							if (currArg == currDeriv)
+							{
+								flexprint(N->Fe, N->Fm, N->Fpc, "%s+h", parameterVariableSymbols[currArg]->identifier);	
+							}
+							else
+							{
+								flexprint(N->Fe, N->Fm, N->Fpc, "%s", parameterVariableSymbols[currArg]->identifier);
+							}
+							
+							if (currArg != functionLastArg[counter])
+							{
+								flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+							}
+						}
+					}
+					flexprint(N->Fe, N->Fm, N->Fpc, ")");
+					
+					flexprint(N->Fe, N->Fm, N->Fpc, " - process_%s(", stateVariableNames[counter]);
+					currArg = 0;
+					for (currArg = 0; currArg < processParameterLength; currArg++)
+					{
+						if (relationMatrix[counter][currArg] == true)
+						{	
+							flexprint(N->Fe, N->Fm, N->Fpc, "%s", parameterVariableSymbols[currArg]->identifier);
+							if (currArg != functionLastArg[counter])
+							{
+								flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+							}
+						}
+					}
+					flexprint(N->Fe, N->Fm, N->Fpc, ") ) / h );\n}\n");
+
+				}
+			}
+		
 		}
 		
 
@@ -558,19 +621,9 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		
 		flexprint(N->Fe, N->Fm, N->Fpc, "double newState[STATE_DIMENSION];\n");
 		counter = 0;
-		int functionLastArg[stateDimension];
 		for (counter = 0; counter < stateDimension; counter++)
 		{	
 			flexprint(N->Fe, N->Fm, N->Fpc, "newState[%s] = process_%s(", stateVariableNames[counter], stateVariableNames[counter]);
-			int lastArg = 0;
-			for (lastArg = processParameterLength-1; lastArg >= 0; lastArg--)
-			{
-				if (relationMatrix[counter][lastArg] == true)
-				{
-					functionLastArg[counter] = lastArg;
-					break;
-				} 	
-			}
 
 			int currArg = 0;
 			for (currArg = 0; currArg < processParameterLength; currArg++)
@@ -578,7 +631,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 				if (relationMatrix[counter][currArg] == true)
 				{	
 					flexprint(N->Fe, N->Fm, N->Fpc, "%s", parameterVariableSymbols[currArg]->identifier);
-					if (currArg != lastArg)
+					if (currArg != functionLastArg[counter])
 					{
 						flexprint(N->Fe, N->Fm, N->Fpc, ", ");
 					}
@@ -598,54 +651,23 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		{
 			for (int j = 0; j < stateDimension; j++)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "fMatrix[%d][%d] = ((", i, j);
+				flexprint(N->Fe, N->Fm, N->Fpc, "fMatrix[%d][%d] = ", i, j);
 				
 				if (relationMatrix[i][j] == false)
 				{
-					flexprint(N->Fe, N->Fm, N->Fpc, "0 ));");
+					flexprint(N->Fe, N->Fm, N->Fpc, "0;");
 					continue;
 				}
 				
-
-				flexprint(N->Fe, N->Fm, N->Fpc, "process_%s(", stateVariableNames[i]);
-				int currArg = 0;
-				for (currArg = 0; currArg < processParameterLength; currArg++)
+				flexprint(N->Fe, N->Fm, N->Fpc, "d_process_%s_d%s(", stateVariableNames[i], stateVariableSymbols[j]->identifier);
+				for (int currArg = 0; currArg < processParameterLength; currArg++)
 				{
 					if (relationMatrix[i][currArg] == true)
-					{	
-						if (currArg == j)
-						{
-							flexprint(N->Fe, N->Fm, N->Fpc, "%s+h", parameterVariableSymbols[currArg]->identifier);	
-						}
-						else
-						{
-							flexprint(N->Fe, N->Fm, N->Fpc, "%s", parameterVariableSymbols[currArg]->identifier);
-						}
-						
-						if (currArg != functionLastArg[i])
-						{
-							flexprint(N->Fe, N->Fm, N->Fpc, ", ");
-						}
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "%s, ", parameterVariableSymbols[currArg]->identifier);
 					}
 				}
-				flexprint(N->Fe, N->Fm, N->Fpc, ")");
-				
-				flexprint(N->Fe, N->Fm, N->Fpc, " - process_%s(", stateVariableNames[i]);
-				currArg = 0;
-				for (currArg = 0; currArg < processParameterLength; currArg++)
-				{
-					if (relationMatrix[i][currArg] == true)
-					{	
-						flexprint(N->Fe, N->Fm, N->Fpc, "%s", parameterVariableSymbols[currArg]->identifier);
-						if (currArg != functionLastArg[i])
-						{
-							flexprint(N->Fe, N->Fm, N->Fpc, ", ");
-						}
-					}
-				}
-				flexprint(N->Fe, N->Fm, N->Fpc, ") ) / h );\n");
-
-
+				flexprint(N->Fe, N->Fm, N->Fpc, "h);");
 			}
 		}
 	}
@@ -826,8 +848,68 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 				}
 			}
 			flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
-			flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 			irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
+			flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+			/*
+			 *	Generate derivative functions of h()
+			 */
+			for (int currDeriv = 0; currDeriv < stateDimension; currDeriv++)
+			{
+				if (relationMatrix[counter][currDeriv] == true)
+				{
+					flexprint(N->Fe, N->Fm, N->Fpc, "double\nd_measure_%s_d%s ", measureVariableNames[counter], stateVariableSymbols[currDeriv]->identifier);
+					flexprint(N->Fe, N->Fm, N->Fpc, "(");
+					for (int currArg = 0; currArg < stateDimension; currArg++)
+					{
+						if (relationMatrix[counter][currArg] == true)
+						{
+							flexprint(N->Fe, N->Fm, N->Fpc, "double %s, ", measurementSymbols[currArg]->identifier);
+						}
+					}
+					flexprint(N->Fe, N->Fm, N->Fpc, "double h)\n{\n");
+					flexprint(N->Fe, N->Fm, N->Fpc, "double calculatedValue = 0.0;");
+
+					flexprint(N->Fe, N->Fm, N->Fpc, "calculatedValue = ((");
+					flexprint(N->Fe, N->Fm, N->Fpc, "measure_%s(", measureVariableNames[currDeriv]);
+
+					for (int currArg = 0; currArg < stateDimension; currArg++)
+					{
+						if (relationMatrix[counter][currArg] == true)
+						{	
+							if (currArg == currDeriv)
+							{
+								flexprint(N->Fe, N->Fm, N->Fpc, "%s+h", measurementSymbols[currArg]->identifier);	
+							}
+							else
+							{
+								flexprint(N->Fe, N->Fm, N->Fpc, "%s", measurementSymbols[currArg]->identifier);
+							}
+							
+							if (currArg != functionLastArg[counter])
+							{
+								flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+							}
+						}
+					}
+					flexprint(N->Fe, N->Fm, N->Fpc, ")");
+					
+					flexprint(N->Fe, N->Fm, N->Fpc, " - measure_%s(", measureVariableNames[counter]);
+					currArg = 0;
+					for (currArg = 0; currArg < stateDimension; currArg++)
+					{
+						if (relationMatrix[counter][currArg] == true)
+						{	
+							flexprint(N->Fe, N->Fm, N->Fpc, "%s", measurementSymbols[currArg]->identifier);
+							if (currArg != functionLastArg[counter])
+							{
+								flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+							}
+						}
+					}
+					flexprint(N->Fe, N->Fm, N->Fpc, ") ) / h );\n}\n\n");
+				}
+			}
 		}
 
 		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterUpdate (CoreState *  cState, double Z[MEASURE_DIMENSION], double step) {\n");
@@ -868,54 +950,24 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		{
 			for (int j = 0; j < stateDimension; j++)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "hMatrix[%d][%d] = ((", i, j);
+				flexprint(N->Fe, N->Fm, N->Fpc, "hMatrix[%d][%d] = ", i, j);
 				
 				if (relationMatrix[i][j] == false)
 				{
-					flexprint(N->Fe, N->Fm, N->Fpc, "0 ));");
+					flexprint(N->Fe, N->Fm, N->Fpc, "0;");
 					continue;
 				}
 				
-
-				flexprint(N->Fe, N->Fm, N->Fpc, "measure_%s(", measureVariableNames[i]);
-				int currArg = 0;
-				for (currArg = 0; currArg < stateDimension; currArg++)
+				flexprint(N->Fe, N->Fm, N->Fpc, "d_measure_%s_d%s ", measureVariableNames[i], stateVariableSymbols[j]->identifier);
+				flexprint(N->Fe, N->Fm, N->Fpc, "(");
+				for (int currArg = 0; currArg < stateDimension; currArg++)
 				{
 					if (relationMatrix[i][currArg] == true)
-					{	
-						if (currArg == j)
-						{
-							flexprint(N->Fe, N->Fm, N->Fpc, "%s+h", measurementSymbols[currArg]->identifier);	
-						}
-						else
-						{
-							flexprint(N->Fe, N->Fm, N->Fpc, "%s", measurementSymbols[currArg]->identifier);
-						}
-						
-						if (currArg != functionLastArg[i])
-						{
-							flexprint(N->Fe, N->Fm, N->Fpc, ", ");
-						}
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "%s, ", measurementSymbols[currArg]->identifier);
 					}
 				}
-				flexprint(N->Fe, N->Fm, N->Fpc, ")");
-				
-				flexprint(N->Fe, N->Fm, N->Fpc, " - measure_%s(", measureVariableNames[i]);
-				currArg = 0;
-				for (currArg = 0; currArg < stateDimension; currArg++)
-				{
-					if (relationMatrix[i][currArg] == true)
-					{	
-						flexprint(N->Fe, N->Fm, N->Fpc, "%s", measurementSymbols[currArg]->identifier);
-						if (currArg != functionLastArg[i])
-						{
-							flexprint(N->Fe, N->Fm, N->Fpc, ", ");
-						}
-					}
-				}
-				flexprint(N->Fe, N->Fm, N->Fpc, ") ) / h );\n");
-
-
+				flexprint(N->Fe, N->Fm, N->Fpc, "h);");
 			}
 		}
 
