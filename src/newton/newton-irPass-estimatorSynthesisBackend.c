@@ -36,9 +36,11 @@
 
 	This code makes the following assumptions for ease of implementation:
 	- No signals with subdimensions.
-	- Model must by factorised (e.g. 4*P+X and not 3*P+X+P).
-	- LHS of invariants is assumed to contain solely the state identifiers.
+	- Linear model must by factorised (e.g. 4*P+X and not 3*P+X+P).
+	- LHS of invariants is assumed to contain solely the state and measurement identifiers.
 	- System takes no input (B=0).
+	- Invariant parameter lists start with the state variables, in the same order
+	  with which they appear in the invariant body.
 	
 	Many of these can and will be lifted as development progresses.
 
@@ -278,7 +280,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "#include <stdio.h>\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "#include <math.h>\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "#include \"matrix.h\"\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "#include \"C-Linear-Algebra/matrix.h\"\n#include \"C-Linear-Algebra/matrixadv.h\"\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
 	IrNode *	constraintXSeq = NULL;
@@ -648,14 +650,25 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	}
 
 	/*
-	 *	Generate matrix predict operations
+	 *	Generate predict state
 	 */
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix Fm = {.height = STATE_DIMENSION, .width = STATE_DIMENSION, .data = &fmatrix[0][0]};\n");
-
-	flexprint(N->Fe, N->Fm, N->Fpc, "matrix * FSm = multiplyMatrix(&Fm, cState->Sm);\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Sm = copyMatrix(FSm);\n");
+	if (linearProcess) 
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix * FSm = multiplyMatrix(&Fm, cState->Sm);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "cState->Sm = copyMatrix(FSm);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "double *sn = FSm->data;\n");
+	}
+	else
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "double *sn = &newState[0];\n");		
+	}	
+	flexprint(N->Fe, N->Fm, N->Fpc, "double *s = &cState->S[0];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < STATE_DIMENSION; i++)\n{\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "cState->S[i] = cState->Sm->data[i];\n}\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "*s = *sn;\ns++;\nsn++;\n}\n");
+	/*
+	 *	Generate covariance propagation
+	 */
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix * Fm_T = transposeMatrix(&Fm);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix * FPm = multiplyMatrix(&Fm, cState->Pm);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix * FPFm_T = multiplyMatrix(FPm, Fm_T);\n");
@@ -759,7 +772,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "r++;\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "}\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  HPHm_T_inv = matrixInverse(HPHm_T);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  HPHm_T_inv = inverseMatrix(HPHm_T);\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  Kg = multiplyMatrix(PHm_T, HPHm_T_inv);\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
@@ -821,10 +834,10 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "CoreState cs;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "// First line is column names\n");
 	// flexprint(N->Fe, N->Fm, N->Fpc, "nread = getline(&line, &nlen, stdin);\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "double initState[%d];\n", measureDimension);
+	flexprint(N->Fe, N->Fm, N->Fpc, "double initState[STATE_DIMENSION];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "double time;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "scanf(\"%%lf\", &time);\n");
-	for (int i = 0; i < measureDimension; i++)
+	for (int i = 0; i < stateDimension; i++)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "scanf(\",%%lf\", &initState[%d]);\n", i);
 	}
@@ -853,7 +866,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 
 	flexprint(N->Fe, N->Fm, N->Fpc, "double prevtime = time;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "double measure[%d];\n", stateDimension);
+	flexprint(N->Fe, N->Fm, N->Fpc, "double measure[MEASURE_DIMENSION];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "while (scanf(\"%%lf\", &time) > 0)\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "{\n");
 	for (int i = 0; i < stateDimension; i++)
