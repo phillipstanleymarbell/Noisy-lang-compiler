@@ -119,6 +119,15 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 	switch(node->type)
 	{
 		case kNewtonIrNodeType_PnumericConst:
+		{
+			/*
+			 *	Either realConst or integerConst, whose case is below.
+			 *	Recursion to avoid direct jump.
+			 */
+			output = irPassCNodeToStr(N, node->irLeftChild);
+			break;
+		}
+
 		case kNewtonIrNodeType_TrealConst:
 		{
 			int needed = snprintf(NULL, 0, "%f", node->value) + 1;

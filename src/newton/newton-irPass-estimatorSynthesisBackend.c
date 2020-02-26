@@ -185,6 +185,151 @@ irPassEstimatorSynthesisDetectSymbol(State *  N, IrNode *  ExpressionXSeq, Symbo
 }
 
 /*
+ *	Annotate expression tree's nodes' tokenString field.
+ *	Each node (intermediate value) gets its own id token.
+ *	Prefix supplied with parentTokenString.
+ *	e.g. P*V + G*H*sin(G) + K, with root's tokenString="w",
+ *  *should* look like:
+ *	w
+ *	├── w_1 ── w_1_1 ── w_1_1_1 ── P
+ *	│	│
+ *	│   └── w_1_2 ── w_1_2_1 ── V
+ *	│
+ *	├── w_2 ── w_2_1 ── w_2_1_1 ── G
+ *	│	│
+ *	│   ├── w_2_2 ── w_2_2_1 ── H
+ *	│	│
+ *	│   └── w_2_3 ── w_2_3_1 ── G
+ *	│ 
+ *	└── w_3 ── w_3_1 ── w_3_1_1 ── K
+ */
+void
+irPassEstimatorSynthesisADAnnotate(State *  N, IrNode *  root, char * parentTokenString)
+{
+	int dUid = 1;
+
+	switch (root->type)
+	{
+		case kNewtonIrNodeType_Pquantity:
+		{
+			/*
+			*	Self-assign name for Static Single Assignment expression
+			*/
+			int	needed = snprintf(NULL, 0, "%s_%d", parentTokenString, dUid) + 1;
+			root->tokenString = malloc(needed);
+			snprintf(root->tokenString, needed, "%s_%d", parentTokenString, dUid++);
+			break;
+		}
+
+		case kNewtonIrNodeType_PquantityFactor:
+		{
+			irPassEstimatorSynthesisADAnnotate(N, root->irLeftChild, root->tokenString);
+			// flexprint(N->Fe, N->Fm, N->Fpc, "double %s = %s;\n", root->tokenString, root->irLeftChild->tokenString);
+			// TODO: This can introduce another quantityExpression.
+			// 		 e.g exp(), sin(), cos(), tan()
+			break;
+		} 
+
+		case kNewtonIrNodeType_PquantityExpression:
+		case kNewtonIrNodeType_PquantityTerm:
+		{
+			IrNode * currXSeq = NULL;
+			dUid = 1;
+			for (currXSeq = root; currXSeq != NULL; currXSeq = currXSeq->irRightChild)
+			{
+				if (currXSeq->irLeftChild->type == kNewtonIrNodeType_PquantityTerm ||
+					currXSeq->irLeftChild->type == kNewtonIrNodeType_PquantityFactor)
+				{
+					/*
+					 *	Assign each child a name for Static Single Assignment expression
+					 */
+					int	needed = snprintf(NULL, 0, "%s_%d", root->tokenString, dUid) + 1;
+					currXSeq->irLeftChild->tokenString = malloc(needed);
+					snprintf(currXSeq->irLeftChild->tokenString, needed, "%s_%d", root->tokenString, dUid++);
+				}
+			}
+
+			for (currXSeq = root; currXSeq != NULL; currXSeq = currXSeq->irRightChild)
+			{
+				irPassEstimatorSynthesisADAnnotate(N, currXSeq->irLeftChild, root->tokenString);
+			}
+		}
+		default:
+			break;
+	}
+}
+
+/*
+ *	Generate Static Single Assignment (SSA) form of given expression
+ *	based on existing annotations (node->tokenString).
+ */
+void
+irPassEstimatorSynthesisADGenExpressionSSA(State *  N, IrNode *  root)
+{
+	switch (root->type)
+	{
+		case kNewtonIrNodeType_Pquantity:
+		{
+			flexprint(N->Fe, N->Fm, N->Fpc, "double %s = %s;\n", root->tokenString, irPassCNodeToStr(N, root->irLeftChild));		
+			break;
+		}
+
+		case kNewtonIrNodeType_PquantityFactor:
+		{
+			irPassEstimatorSynthesisADGenExpressionSSA(N, root->irLeftChild);
+			flexprint(N->Fe, N->Fm, N->Fpc, "double %s = %s;\n", root->tokenString, root->irLeftChild->tokenString);
+			// TODO: exp(), sin(), cos(), tan()
+			break;
+		}
+
+		case kNewtonIrNodeType_PquantityExpression:
+		case kNewtonIrNodeType_PquantityTerm:
+		{
+			IrNode *  currXSeq = NULL;
+
+			for (currXSeq = root; currXSeq != NULL; currXSeq = currXSeq->irRightChild)
+			{
+				irPassEstimatorSynthesisADGenExpressionSSA(N, currXSeq->irLeftChild);
+			}
+
+			flexprint(N->Fe, N->Fm, N->Fpc, "double %s = ", root->tokenString);
+			flexprint(N->Fe, N->Fm, N->Fpc, " %s ", root->irLeftChild->tokenString);
+			for (currXSeq = root->irRightChild; currXSeq != NULL; currXSeq = currXSeq->irRightChild)
+			{
+					if (currXSeq->irLeftChild->type == kNewtonIrNodeType_PlowPrecedenceOperator)
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "%s", irPassCNodeToStr(N, currXSeq->irLeftChild->irLeftChild));
+					}
+					else if (currXSeq->irLeftChild->type == kNewtonIrNodeType_PhighPrecedenceQuantityOperator)
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "%s", irPassCNodeToStr(N, currXSeq->irLeftChild->irLeftChild->irLeftChild));
+					}
+					else
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, " %s ", currXSeq->irLeftChild->tokenString);					
+					}
+			}
+			flexprint(N->Fe, N->Fm, N->Fpc, ";\n\n");
+		}
+		
+		default:
+			break;
+	}
+}
+
+/*
+ *	Generate reverse mode AutoDiff-aumented C code for given expression.
+ */
+void
+irPassEstimatorSynthesisGenAutoDiffExpression(State *  N, IrNode *  ExpressionXSeq, Symbol *  wrtSymbols, char * parentTokenString)
+{
+	ExpressionXSeq->tokenString = "w";
+	irPassEstimatorSynthesisADAnnotate(N, ExpressionXSeq, ExpressionXSeq->tokenString);
+	irPassEstimatorSynthesisADGenExpressionSSA(N, ExpressionXSeq);
+	return;
+}
+
+/*
  *	Isolate factors of stateVariableSymbols found in ExpressionXSeq in 
  *	an IrNode subtree of additions. Essentially 1st-level factorisation.
  */
@@ -275,6 +420,13 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fperr, "Measurement invariant is empty. Unobservable system.");
 		fatal(N, Esanity);		
 	}
+	
+	// AUTODIFF TESTBED START
+	// ######################
+	irPassEstimatorSynthesisGenAutoDiffExpression(N, processInvariant->constraints->irLeftChild->irRightChild->irRightChild->irLeftChild, NULL, "w");
+	return;
+	// ####################
+	// AUTODIFF TESTBED END
 
 	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tGenerated .c file from Newton\n */\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "#include <stdlib.h>\n");

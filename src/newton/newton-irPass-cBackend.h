@@ -34,7 +34,7 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
+char *	irPassCNodeToStr(State *  N, IrNode *  node);
 void	irPassCGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft);
 void	irPassCGenFunctionBody(State *  N, IrNode *  constraint, bool isLeft);
 void	irPassCConstraintTreeWalk(State *  N, IrNode *  root);
