@@ -158,7 +158,9 @@ irPassEstimatorSynthesisExpressionLinear(State *  N, IrNode *  expressionXSeq) {
 	return true;	
 }
 
-/**
+
+
+/*
  *	Detect symbol appearance in expression.
  *	Return the symbol's identifier node in the expression.
  */
@@ -213,8 +215,8 @@ irPassEstimatorSynthesisADAnnotate(State *  N, IrNode *  root, char * parentToke
 		case kNewtonIrNodeType_Pquantity:
 		{
 			/*
-			*	Self-assign name for Static Single Assignment expression
-			*/
+			 *	Self-assign name for Static Single Assignment expression
+			 */
 			int	needed = snprintf(NULL, 0, "%s_%d", parentTokenString, dUid) + 1;
 			root->tokenString = malloc(needed);
 			snprintf(root->tokenString, needed, "%s_%d", parentTokenString, dUid++);
@@ -317,15 +319,128 @@ irPassEstimatorSynthesisADGenExpressionSSA(State *  N, IrNode *  root)
 	}
 }
 
+/**
+ *	Generate reverse mode derivative SSA expression.
+ *	g(id) = ds/d(id), where s is the function output
+ */
+void
+irPassEstimatorSynthesisADGenReverse(State *  N, IrNode *  root)
+{
+	switch (root->type)
+	{
+		case kNewtonIrNodeType_PquantityExpression:
+		{
+			IrNode *  currXSeq = NULL;
+			
+			flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s;\n", root->irLeftChild->tokenString, root->tokenString);
+			irPassEstimatorSynthesisADGenReverse(N, root->irLeftChild);
+			flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+			for (currXSeq = root->irRightChild; currXSeq != NULL; currXSeq = currXSeq->irRightChild->irRightChild)
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = %sg%s;\n", currXSeq->irRightChild->irLeftChild->tokenString, 
+				                                                         irPassCNodeToStr(N, currXSeq->irLeftChild->irLeftChild),
+				                                                         root->tokenString);
+				irPassEstimatorSynthesisADGenReverse(N, currXSeq->irRightChild->irLeftChild);
+				flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+			}
+			
+			break;
+		}
+
+		case kNewtonIrNodeType_PquantityTerm:
+		{
+			IrNode *  currXSeq = NULL;
+			
+			for (currXSeq = root; currXSeq != NULL; currXSeq = currXSeq->irRightChild)
+			{	
+				if (currXSeq->irLeftChild->type == kNewtonIrNodeType_PhighPrecedenceQuantityOperator)
+				{
+					continue;
+				}
+				
+				flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s", currXSeq->irLeftChild->tokenString, root->tokenString);
+				
+				if (currXSeq == root)
+				{
+					flexprint(N->Fe, N->Fm, N->Fpc, " * 1");
+				}
+				else
+				{
+					flexprint(N->Fe, N->Fm, N->Fpc, " * %s", root->irLeftChild->tokenString);					
+				}				
+
+				for (IrNode *  currXSeqOp = root->irRightChild; currXSeqOp != NULL; currXSeqOp = currXSeqOp->irRightChild->irRightChild)
+				{
+					if (currXSeq == currXSeqOp->irRightChild)
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, " * 1");
+					}
+					else
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "%s%s", irPassCNodeToStr(N, currXSeqOp->irLeftChild->irLeftChild->irLeftChild),
+																   currXSeqOp->irRightChild->irLeftChild->tokenString);
+					}
+				}
+				flexprint(N->Fe, N->Fm, N->Fpc, ";\n");
+				irPassEstimatorSynthesisADGenReverse(N, currXSeq->irLeftChild);
+				flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+			}
+
+			break;
+		}
+
+		case kNewtonIrNodeType_PquantityFactor:
+		{
+			flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s;\n", root->irLeftChild->tokenString, root->tokenString);
+			// TODO: exp(), sin(), cos(), tan(), pow()
+			irPassEstimatorSynthesisADGenReverse(N, root->irLeftChild);
+			break;
+		}
+
+		case kNewtonIrNodeType_Pquantity:
+		{
+			flexprint(N->Fe, N->Fm, N->Fpc, "g%s += g%s;\n", irPassCNodeToStr(N, root->irLeftChild), root->tokenString);	
+			break;
+		}
+		
+		default:
+			break;
+	}
+	return;
+}
+
 /*
  *	Generate reverse mode AutoDiff-aumented C code for given expression.
  */
 void
-irPassEstimatorSynthesisGenAutoDiffExpression(State *  N, IrNode *  ExpressionXSeq, Symbol *  wrtSymbols, char * parentTokenString)
+irPassEstimatorSynthesisGenAutoDiffExpression(State *  N, IrNode *  expressionXSeq, Symbol *  wrtSymbols, char * parentTokenString)
 {
-	ExpressionXSeq->tokenString = "w";
-	irPassEstimatorSynthesisADAnnotate(N, ExpressionXSeq, ExpressionXSeq->tokenString);
-	irPassEstimatorSynthesisADGenExpressionSSA(N, ExpressionXSeq);
+	expressionXSeq->tokenString = parentTokenString;
+	irPassEstimatorSynthesisADAnnotate(N, expressionXSeq, expressionXSeq->tokenString);
+	irPassEstimatorSynthesisADGenExpressionSSA(N, expressionXSeq);
+
+	/*
+	 *	Initialize ds/d(id) values for the symbols of the expression
+	 */
+	flexprint(N->Fe, N->Fm, N->Fpc, "// Reverse calculation of derivatives\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "// g%1$s_i ≡ d%1$s/d%1$s_i\n\n", parentTokenString);
+	Symbol *  expressionScopeSymbols = findNthIrNodeOfType(N, expressionXSeq, kNewtonIrNodeType_Tidentifier, 0)->symbol->scope->firstSymbol;
+	Symbol *  currSymbol = NULL;
+	for (currSymbol = expressionScopeSymbols; currSymbol != NULL; currSymbol = currSymbol->next)
+	{
+		if (irPassEstimatorSynthesisDetectSymbol(N, expressionXSeq, currSymbol))
+		{
+			flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = 0;\n", currSymbol->identifier);
+		}	
+	}
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+	irPassEstimatorSynthesisADGenReverse(N, expressionXSeq);
+
+	/*
+	 *	Pass desired derivatives back
+	 */
+
 	return;
 }
 
