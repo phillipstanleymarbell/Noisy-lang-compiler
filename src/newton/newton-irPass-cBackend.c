@@ -1,5 +1,6 @@
 /*
 	Authored 2018. Youchao Wang.
+	Updated 2020. Orestis Kaparounakis.
 
 	All rights reserved.
 
@@ -118,11 +119,28 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 	switch(node->type)
 	{
 		case kNewtonIrNodeType_PnumericConst:
-		case kNewtonIrNodeType_TintegerConst:
+		{
+			/*
+			 *	Either realConst or integerConst, whose case is below.
+			 *	Recursion to avoid direct jump.
+			 */
+			output = irPassCNodeToStr(N, node->irLeftChild);
+			break;
+		}
+
+		case kNewtonIrNodeType_TrealConst:
 		{
 			int needed = snprintf(NULL, 0, "%f", node->value) + 1;
 			output = malloc(needed);
 			snprintf(output, needed, "%f", node->value);
+			break;
+		}
+
+		case kNewtonIrNodeType_TintegerConst:
+		{
+			int needed = snprintf(NULL, 0, "%d", node->integerValue) + 1;
+			output = malloc(needed);
+			snprintf(output, needed, "%d", node->integerValue);
 			break;
 		}
 
@@ -316,7 +334,9 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 		 *	Print out the right bracket of pow() function.
 		 */
 		if (isPowLeftBracketPrinted == true && 
-		   (root->type == kNewtonIrNodeType_PnumericConst || root->type == kNewtonIrNodeType_TintegerConst))
+		   (root->type == kNewtonIrNodeType_PnumericConst ||
+		    root->type == kNewtonIrNodeType_TrealConst	||
+		    root->type == kNewtonIrNodeType_TintegerConst))
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, ")");
 			isPowLeftBracketPrinted = false;
@@ -330,7 +350,7 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 	
 	if (root->type == kNewtonIrNodeType_PquantityExpression)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, ")");
+		flexprint(N->Fe, N->Fm, N->Fpc, " )");
 	}
 }
 
@@ -359,7 +379,7 @@ irPassCGenFunctionBody(State *  N, IrNode *  constraint, bool isLeft)
 
 	if (isLeft == false)
 	{
-		irPassCConstraintTreeWalk(N, constraint->irRightChild->irLeftChild->irLeftChild->irLeftChild);
+		irPassCConstraintTreeWalk(N, constraint->irRightChild->irRightChild);
 	}
 	else
 	{
@@ -392,7 +412,7 @@ irPassCGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft)
 		 * Right child of constraint is XSeq, the left child of which
 		 * is the RHS quantityExpression. 
 		 */
-		constraintsXSeq = constraint->irRightChild->irLeftChild;
+		constraintsXSeq = constraint->irRightChild->irRightChild->irLeftChild;
 	}
 	else
 	{
@@ -407,7 +427,7 @@ irPassCGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft)
 
 	irPassCSearchAndPrintNodeType(N, constraintsXSeq->irLeftChild, kNewtonIrNodeType_Tidentifier, true,
 					irPassCCountRemainingParameters(N, constraintsXSeq->irLeftChild, 0));
-	flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, ")");
 }
 
 /*

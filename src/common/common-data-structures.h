@@ -694,6 +694,7 @@ typedef enum
 	 *	dumping is happening.
 	 */
 	kNewtonIrBackendLatex				= (1 << 5),
+	kNewtonIrBackendEstimatorSynthesis	= (1 << 6),
 
 	/*
 	 *	Code depends on this bringing up the rear.
@@ -879,6 +880,7 @@ struct IrNode
 	 *	Only if this node belongs to a ParseNumericExpression subtree
 	 */
 	double			value;
+	int				integerValue;
 
 	int			subindexStart;
 	int			subindexEnd;
@@ -1015,7 +1017,7 @@ struct Symbol
 	/*
 	 *	If an I_CONST, its value.
 	 */
-	int			intConst;
+	int				intConst;
 	double			realConst;
 	char *			stringConst;
 	
@@ -1118,6 +1120,14 @@ typedef struct
 	char *			outputSmtFilePath;
 	char *			outputCFilePath;
 	char *			outputRTLFilePath;
+	char *			outputEstimatorSynthesisFilePath;
+	
+	/*
+	 *	Invariant identifiers specified for State Estimator Synthesis
+	 */
+	char *			estimatorProcessModel;
+	char *			estimatorMeasurementModel;
+	bool			autodiff;
 
 	CommonMode		mode;
 	uint64_t		verbosityLevel;
