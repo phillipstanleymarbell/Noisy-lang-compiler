@@ -109,6 +109,7 @@ main(int argc, char *argv[])
 			{"estimator-synthesis", required_argument, 0, 420},
 			{"process", required_argument, 0, 421},
 			{"measurement", required_argument, 0, 422},
+			{"auto-diff", no_argument, 0, 423},
 
 			{0,			0,			0,	0}
 		};
@@ -384,6 +385,12 @@ main(int argc, char *argv[])
 				break;
 			}
 
+			case 423:
+			{
+				N->autodiff = true;
+				break;
+			}
+
 			case '?':
 			{
 				/*
@@ -476,9 +483,10 @@ usage(State *  N)
 						"                | (--trace, -t)                                              \n"
 						"                | (--statistics, -s)                                         \n"
 						"                | (--latex, -x)                                              \n"
-						"                | (--estimator-synthesis <path to output file>)              \n"
-						"                | (--process <process invariant identifier>)                 \n"
-						"                | (--measurement <measurement invariant identifier>) ]       \n"
+						"                | (--estimator-synthesis=<path to output file>)              \n"
+						"                | (--process=<process invariant identifier>)                 \n"
+						"                | (--measurement=<measurement invariant identifier>)         \n"
+						"                | (--auto-diff)                                      ]       \n"
 						"                                                                             \n"
 						"              <filenames>\n\n", kNewtonL10N);
 }

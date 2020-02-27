@@ -1127,6 +1127,7 @@ typedef struct
 	 */
 	char *			estimatorProcessModel;
 	char *			estimatorMeasurementModel;
+	bool			autodiff;
 
 	CommonMode		mode;
 	uint64_t		verbosityLevel;

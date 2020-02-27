@@ -428,10 +428,7 @@ irPassEstimatorSynthesisGenAutoDiffExpression(State *  N, IrNode *  expressionXS
 	Symbol *  currSymbol = NULL;
 	for (currSymbol = expressionScopeSymbols; currSymbol != NULL; currSymbol = currSymbol->next)
 	{
-		if (irPassEstimatorSynthesisDetectSymbol(N, expressionXSeq, currSymbol))
-		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = 0;\n", currSymbol->identifier);
-		}
+		flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = 0;\n", currSymbol->identifier);
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
@@ -535,13 +532,6 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fperr, "Measurement invariant is empty. Unobservable system.");
 		fatal(N, Esanity);
 	}
-
-	// AUTODIFF TESTBED START
-	// ######################
-	irPassEstimatorSynthesisGenAutoDiffExpression(N, processInvariant->constraints->irLeftChild->irRightChild->irRightChild->irLeftChild, NULL, "w");
-	return;
-	// ####################
-	// AUTODIFF TESTBED END
 
 	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tGenerated .c file from Newton\n */\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "#include <stdlib.h>\n");
@@ -719,11 +709,9 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 				}
 
 			}
-
 			flexprint(N->Fe, N->Fm, N->Fpc, "},\n");
 		}
 		flexprint(N->Fe, N->Fm, N->Fpc, "};\n");
-
 	}
 	else
 	{
@@ -809,72 +797,91 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 					}
 				}
 			}
-			flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
-			flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-			irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
-
-			/**
-			 *	Generate partial derivatives
-			 */
-			for (int currDeriv = 0; currDeriv < stateDimension; currDeriv++)
+			if (N->autodiff == true)
 			{
-				if (relationMatrix[counter][currDeriv] == true)
+				IrNode *  RHSExpression = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
+				flexprint(N->Fe, N->Fm, N->Fpc, ", double Ji[STATE_DIMENSION])\n{\n");
+
+				flexprint(N->Fe, N->Fm, N->Fpc, "// Original expression:\n");
+				flexprint(N->Fe, N->Fm, N->Fpc, "//");
+				irPassCConstraintTreeWalk(N, RHSExpression);
+				flexprint(N->Fe, N->Fm, N->Fpc, "\n\n"); 
+
+				flexprint(N->Fe, N->Fm, N->Fpc, "double gw = 1;\n");
+
+				irPassEstimatorSynthesisGenAutoDiffExpression(N, RHSExpression, NULL, "w");
+				for (int i = 0; i < stateDimension; i++)
 				{
-					flexprint(N->Fe, N->Fm, N->Fpc, "double\nd_process_%s_d%s ", stateVariableNames[counter], stateVariableSymbols[currDeriv]->identifier);
-					flexprint(N->Fe, N->Fm, N->Fpc, "(");
-					for (currArg = 0; currArg < processParameterLength; currArg++)
-					{
-						if (relationMatrix[counter][currArg] == true)
-						{
-							flexprint(N->Fe, N->Fm, N->Fpc, "double %s, ", parameterVariableSymbols[currArg]->identifier);
-						}
-					}
-					flexprint(N->Fe, N->Fm, N->Fpc, "double h)\n{\n");
-					flexprint(N->Fe, N->Fm, N->Fpc, "double calculatedValue = 0.0;");
+					flexprint(N->Fe, N->Fm, N->Fpc, "Ji[%s] = g%s;\n", stateVariableNames[i], stateVariableSymbols[i]->identifier);
+				}
 
-					flexprint(N->Fe, N->Fm, N->Fpc, "calculatedValue = (( process_%s(", stateVariableNames[counter]);
-
-					for (currArg = 0; currArg < processParameterLength; currArg++)
+				flexprint(N->Fe, N->Fm, N->Fpc, "\nreturn w;\n}\n\n");
+			}
+			else
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
+				flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+				irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
+				/*
+				 *	Generate partial derivatives
+				 */
+				for (int currDeriv = 0; currDeriv < stateDimension; currDeriv++)
+				{
+					if (relationMatrix[counter][currDeriv] == true)
 					{
-						if (relationMatrix[counter][currArg] == true)
+						flexprint(N->Fe, N->Fm, N->Fpc, "double\nd_process_%s_d%s ", stateVariableNames[counter], stateVariableSymbols[currDeriv]->identifier);
+						flexprint(N->Fe, N->Fm, N->Fpc, "(");
+						for (currArg = 0; currArg < processParameterLength; currArg++)
 						{
-							if (currArg == currDeriv)
+							if (relationMatrix[counter][currArg] == true)
 							{
-								flexprint(N->Fe, N->Fm, N->Fpc, "%s+h", parameterVariableSymbols[currArg]->identifier);
+								flexprint(N->Fe, N->Fm, N->Fpc, "double %s, ", parameterVariableSymbols[currArg]->identifier);
 							}
-							else
+						}
+						flexprint(N->Fe, N->Fm, N->Fpc, "double h)\n{\n");
+						flexprint(N->Fe, N->Fm, N->Fpc, "double calculatedValue = 0.0;");
+
+						flexprint(N->Fe, N->Fm, N->Fpc, "calculatedValue = (( process_%s(", stateVariableNames[counter]);
+
+						for (currArg = 0; currArg < processParameterLength; currArg++)
+						{
+							if (relationMatrix[counter][currArg] == true)
+							{
+								if (currArg == currDeriv)
+								{
+									flexprint(N->Fe, N->Fm, N->Fpc, "%s+h", parameterVariableSymbols[currArg]->identifier);
+								}
+								else
+								{
+									flexprint(N->Fe, N->Fm, N->Fpc, "%s", parameterVariableSymbols[currArg]->identifier);
+								}
+
+								if (currArg != functionLastArg[counter])
+								{
+									flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+								}
+							}
+						}
+						flexprint(N->Fe, N->Fm, N->Fpc, ")");
+
+						flexprint(N->Fe, N->Fm, N->Fpc, " - process_%s(", stateVariableNames[counter]);
+						currArg = 0;
+						for (currArg = 0; currArg < processParameterLength; currArg++)
+						{
+							if (relationMatrix[counter][currArg] == true)
 							{
 								flexprint(N->Fe, N->Fm, N->Fpc, "%s", parameterVariableSymbols[currArg]->identifier);
-							}
-
-							if (currArg != functionLastArg[counter])
-							{
-								flexprint(N->Fe, N->Fm, N->Fpc, ", ");
-							}
-						}
-					}
-					flexprint(N->Fe, N->Fm, N->Fpc, ")");
-
-					flexprint(N->Fe, N->Fm, N->Fpc, " - process_%s(", stateVariableNames[counter]);
-					currArg = 0;
-					for (currArg = 0; currArg < processParameterLength; currArg++)
-					{
-						if (relationMatrix[counter][currArg] == true)
-						{
-							flexprint(N->Fe, N->Fm, N->Fpc, "%s", parameterVariableSymbols[currArg]->identifier);
-							if (currArg != functionLastArg[counter])
-							{
-								flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+								if (currArg != functionLastArg[counter])
+								{
+									flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+								}
 							}
 						}
+						flexprint(N->Fe, N->Fm, N->Fpc, ") ) / h );\n}\n");
 					}
-					flexprint(N->Fe, N->Fm, N->Fpc, ") ) / h );\n}\n");
-
 				}
 			}
-
 		}
-
 
 		/*
 		 *	Generate predict function
@@ -887,6 +894,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		}
 
 		flexprint(N->Fe, N->Fm, N->Fpc, "double newState[STATE_DIMENSION];\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "double fMatrix[STATE_DIMENSION][STATE_DIMENSION];\n");
+
 		counter = 0;
 		for (counter = 0; counter < stateDimension; counter++)
 		{
@@ -904,37 +913,44 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 					}
 				}
 			}
-			flexprint(N->Fe, N->Fm, N->Fpc, ");\n");
+			if (N->autodiff == true)
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, ", fMatrix[%s]);\n", stateVariableNames[counter]);
+			}
+			else
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, ");\n");
+			}
 		}
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "double h = 0.0005;");
-		flexprint(N->Fe, N->Fm, N->Fpc, "double fMatrix[STATE_DIMENSION][STATE_DIMENSION];\n");
-
-		/*
-		 *	Generate calculation of Jacobian of f()
-		 */
-
-		for (int i = 0; i < stateDimension; i++)
+		if (N->autodiff != true)
 		{
-			for (int j = 0; j < stateDimension; j++)
+			/*
+			 *	Generate calculation of Jacobian of f() with standard diff
+			 */
+			flexprint(N->Fe, N->Fm, N->Fpc, "double h = 0.0005;");
+			for (int i = 0; i < stateDimension; i++)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "fMatrix[%d][%d] = ", i, j);
-
-				if (relationMatrix[i][j] == false)
+				for (int j = 0; j < stateDimension; j++)
 				{
-					flexprint(N->Fe, N->Fm, N->Fpc, "0;");
-					continue;
-				}
+					flexprint(N->Fe, N->Fm, N->Fpc, "fMatrix[%d][%d] = ", i, j);
 
-				flexprint(N->Fe, N->Fm, N->Fpc, "d_process_%s_d%s(", stateVariableNames[i], stateVariableSymbols[j]->identifier);
-				for (int currArg = 0; currArg < processParameterLength; currArg++)
-				{
-					if (relationMatrix[i][currArg] == true)
+					if (relationMatrix[i][j] == false)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "%s, ", parameterVariableSymbols[currArg]->identifier);
+						flexprint(N->Fe, N->Fm, N->Fpc, "0;");
+						continue;
 					}
+
+					flexprint(N->Fe, N->Fm, N->Fpc, "d_process_%s_d%s(", stateVariableNames[i], stateVariableSymbols[j]->identifier);
+					for (int currArg = 0; currArg < processParameterLength; currArg++)
+					{
+						if (relationMatrix[i][currArg] == true)
+						{
+							flexprint(N->Fe, N->Fm, N->Fpc, "%s, ", parameterVariableSymbols[currArg]->identifier);
+						}
+					}
+					flexprint(N->Fe, N->Fm, N->Fpc, "h);");
 				}
-				flexprint(N->Fe, N->Fm, N->Fpc, "h);");
 			}
 		}
 	}
@@ -1114,67 +1130,89 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 					}
 				}
 			}
-			flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
-			irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
-			flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-
-			/*
-			 *	Generate derivative functions of h()
-			 */
-			for (int currDeriv = 0; currDeriv < stateDimension; currDeriv++)
+			if (N->autodiff == true)
 			{
-				if (relationMatrix[counter][currDeriv] == true)
+				IrNode *  RHSExpression = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
+				flexprint(N->Fe, N->Fm, N->Fpc, ", double Ji[STATE_DIMENSION])\n{\n");
+				
+				flexprint(N->Fe, N->Fm, N->Fpc, "// Original expression:\n");
+				flexprint(N->Fe, N->Fm, N->Fpc, "//");
+				irPassCConstraintTreeWalk(N, RHSExpression);
+				flexprint(N->Fe, N->Fm, N->Fpc, "\n\n"); 
+
+				flexprint(N->Fe, N->Fm, N->Fpc, "double gw = 1;\n");
+				irPassEstimatorSynthesisGenAutoDiffExpression(N, RHSExpression, NULL, "w");
+				for (int i = 0; i < stateDimension; i++)
 				{
-					flexprint(N->Fe, N->Fm, N->Fpc, "double\nd_measure_%s_d%s ", measureVariableNames[counter], stateVariableSymbols[currDeriv]->identifier);
-					flexprint(N->Fe, N->Fm, N->Fpc, "(");
-					for (int currArg = 0; currArg < stateDimension; currArg++)
-					{
-						if (relationMatrix[counter][currArg] == true)
-						{
-							flexprint(N->Fe, N->Fm, N->Fpc, "double %s, ", measurementSymbols[currArg]->identifier);
-						}
-					}
-					flexprint(N->Fe, N->Fm, N->Fpc, "double h)\n{\n");
-					flexprint(N->Fe, N->Fm, N->Fpc, "double calculatedValue = 0.0;");
+					flexprint(N->Fe, N->Fm, N->Fpc, "Ji[%s] = g%s;\n", stateVariableNames[i], measurementSymbols[i]->identifier);
+				}
 
-					flexprint(N->Fe, N->Fm, N->Fpc, "calculatedValue = ((");
-					flexprint(N->Fe, N->Fm, N->Fpc, "measure_%s(", measureVariableNames[currDeriv]);
+				flexprint(N->Fe, N->Fm, N->Fpc, "\nreturn w;\n}\n\n");
+			}
+			else
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
+				irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
+				flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
-					for (int currArg = 0; currArg < stateDimension; currArg++)
+				/*
+				*	Generate derivative functions of h()
+				*/
+				for (int currDeriv = 0; currDeriv < stateDimension; currDeriv++)
+				{
+					if (relationMatrix[counter][currDeriv] == true)
 					{
-						if (relationMatrix[counter][currArg] == true)
+						flexprint(N->Fe, N->Fm, N->Fpc, "double\nd_measure_%s_d%s ", measureVariableNames[counter], stateVariableSymbols[currDeriv]->identifier);
+						flexprint(N->Fe, N->Fm, N->Fpc, "(");
+						for (int currArg = 0; currArg < stateDimension; currArg++)
 						{
-							if (currArg == currDeriv)
+							if (relationMatrix[counter][currArg] == true)
 							{
-								flexprint(N->Fe, N->Fm, N->Fpc, "%s+h", measurementSymbols[currArg]->identifier);
+								flexprint(N->Fe, N->Fm, N->Fpc, "double %s, ", measurementSymbols[currArg]->identifier);
 							}
-							else
+						}
+						flexprint(N->Fe, N->Fm, N->Fpc, "double h)\n{\n");
+						flexprint(N->Fe, N->Fm, N->Fpc, "double calculatedValue = 0.0;");
+
+						flexprint(N->Fe, N->Fm, N->Fpc, "calculatedValue = ((");
+						flexprint(N->Fe, N->Fm, N->Fpc, "measure_%s(", measureVariableNames[currDeriv]);
+
+						for (int currArg = 0; currArg < stateDimension; currArg++)
+						{
+							if (relationMatrix[counter][currArg] == true)
+							{
+								if (currArg == currDeriv)
+								{
+									flexprint(N->Fe, N->Fm, N->Fpc, "%s+h", measurementSymbols[currArg]->identifier);
+								}
+								else
+								{
+									flexprint(N->Fe, N->Fm, N->Fpc, "%s", measurementSymbols[currArg]->identifier);
+								}
+
+								if (currArg != functionLastArg[counter])
+								{
+									flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+								}
+							}
+						}
+						flexprint(N->Fe, N->Fm, N->Fpc, ")");
+
+						flexprint(N->Fe, N->Fm, N->Fpc, " - measure_%s(", measureVariableNames[counter]);
+						currArg = 0;
+						for (currArg = 0; currArg < stateDimension; currArg++)
+						{
+							if (relationMatrix[counter][currArg] == true)
 							{
 								flexprint(N->Fe, N->Fm, N->Fpc, "%s", measurementSymbols[currArg]->identifier);
-							}
-
-							if (currArg != functionLastArg[counter])
-							{
-								flexprint(N->Fe, N->Fm, N->Fpc, ", ");
-							}
-						}
-					}
-					flexprint(N->Fe, N->Fm, N->Fpc, ")");
-
-					flexprint(N->Fe, N->Fm, N->Fpc, " - measure_%s(", measureVariableNames[counter]);
-					currArg = 0;
-					for (currArg = 0; currArg < stateDimension; currArg++)
-					{
-						if (relationMatrix[counter][currArg] == true)
-						{
-							flexprint(N->Fe, N->Fm, N->Fpc, "%s", measurementSymbols[currArg]->identifier);
-							if (currArg != functionLastArg[counter])
-							{
-								flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+								if (currArg != functionLastArg[counter])
+								{
+									flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+								}
 							}
 						}
+						flexprint(N->Fe, N->Fm, N->Fpc, ") ) / h );\n}\n\n");
 					}
-					flexprint(N->Fe, N->Fm, N->Fpc, ") ) / h );\n}\n\n");
 				}
 			}
 		}
@@ -1187,6 +1225,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		}
 
 		flexprint(N->Fe, N->Fm, N->Fpc, "double HS[MEASURE_DIMENSION];\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "double hMatrix[MEASURE_DIMENSION][STATE_DIMENSION];\n");
 		counter = 0;
 		for (counter = 0; counter < measureDimension; counter++)
 		{
@@ -1203,41 +1242,48 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 					}
 				}
 			}
-			flexprint(N->Fe, N->Fm, N->Fpc, ");\n");
-		}
-
-		flexprint(N->Fe, N->Fm, N->Fpc, "double h = 0.0005;");
-		flexprint(N->Fe, N->Fm, N->Fpc, "double hMatrix[MEASURE_DIMENSION][STATE_DIMENSION];\n");
-
-		/*
-		 *	Generate calculation of Jacobian of h()
-		 */
-
-		for (int i = 0; i < measureDimension; i++)
-		{
-			for (int j = 0; j < stateDimension; j++)
+			if (N->autodiff == true)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "hMatrix[%d][%d] = ", i, j);
-
-				if (relationMatrix[i][j] == false)
-				{
-					flexprint(N->Fe, N->Fm, N->Fpc, "0;");
-					continue;
-				}
-
-				flexprint(N->Fe, N->Fm, N->Fpc, "d_measure_%s_d%s ", measureVariableNames[i], stateVariableSymbols[j]->identifier);
-				flexprint(N->Fe, N->Fm, N->Fpc, "(");
-				for (int currArg = 0; currArg < stateDimension; currArg++)
-				{
-					if (relationMatrix[i][currArg] == true)
-					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "%s, ", measurementSymbols[currArg]->identifier);
-					}
-				}
-				flexprint(N->Fe, N->Fm, N->Fpc, "h);");
+				flexprint(N->Fe, N->Fm, N->Fpc, ", hMatrix[%s]);\n", measureVariableNames[counter]);
+			}
+			else
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, ");\n");
 			}
 		}
 
+		if (N->autodiff != true)
+		{
+			/*
+			 *	Generate calculation of Jacobian of h()
+			 */
+			flexprint(N->Fe, N->Fm, N->Fpc, "double h = 0.0005;");
+
+			for (int i = 0; i < measureDimension; i++)
+			{
+				for (int j = 0; j < stateDimension; j++)
+				{
+					flexprint(N->Fe, N->Fm, N->Fpc, "hMatrix[%d][%d] = ", i, j);
+
+					if (relationMatrix[i][j] == false)
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "0;");
+						continue;
+					}
+
+					flexprint(N->Fe, N->Fm, N->Fpc, "d_measure_%s_d%s ", measureVariableNames[i], stateVariableSymbols[j]->identifier);
+					flexprint(N->Fe, N->Fm, N->Fpc, "(");
+					for (int currArg = 0; currArg < stateDimension; currArg++)
+					{
+						if (relationMatrix[i][currArg] == true)
+						{
+							flexprint(N->Fe, N->Fm, N->Fpc, "%s, ", measurementSymbols[currArg]->identifier);
+						}
+					}
+					flexprint(N->Fe, N->Fm, N->Fpc, "h);");
+				}
+			}
+		}
 	}
 
 	/*
