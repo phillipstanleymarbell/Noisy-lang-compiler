@@ -439,7 +439,7 @@ irPassRTLProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fprtl, "%s\n", qdivSequential);
 	flexprint(N->Fe, N->Fm, N->Fprtl, "\n");
 
-	if(targetInvariant != NULL)
+	if (targetInvariant != NULL)
 	{
 		argumentsList = (char **) malloc(targetInvariant->dimensionalMatrixColumnCount * sizeof(char *));
 
