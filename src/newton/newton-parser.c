@@ -956,6 +956,7 @@ newtonParseNumericFactor(State *  N, Scope *  currentScope)
 		IrNode *	constChildNode = newtonParseNumericConst(N, currentScope);
 		addLeaf(N, node, constChildNode);
 		node->value = constChildNode->value;
+		node->integerValue = constChildNode->integerValue;
 
 		/*
 		 *	We have to check whether the token after the operator is a numeric const.
@@ -1346,6 +1347,7 @@ newtonParseTerminal(State *  N, IrNodeType expectedType, Scope *  currentScope)
 	if (t->type == kNewtonIrNodeType_TintegerConst)
 	{
 		n->integerValue = t->integerConst;
+		n->value = (double) t->integerConst;
 	}
 
 	if (t->type == kNewtonIrNodeType_TrealConst)
@@ -3262,6 +3264,7 @@ newtonParseNumericConst(State *  N, Scope *  currentScope)
 		IrNode *	valueNode = newtonParseTerminal(N, kNewtonIrNodeType_TintegerConst, currentScope);
 		addLeaf(N, node, valueNode);
 		node->integerValue = valueNode->integerValue;
+		node->value = (double) valueNode->integerValue;
 	}
 	else if (peekCheck(N, 1, kNewtonIrNodeType_TrealConst))
 	{
