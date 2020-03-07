@@ -399,11 +399,22 @@ irPassEstimatorSynthesisADGenReverse(State *  N, IrNode *  root)
 
 		case kNewtonIrNodeType_Pquantity:
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "g%s += g%s;\n", irPassCNodeToStr(N, root->irLeftChild), root->tokenString);
+			if (root->irLeftChild->type == kNewtonIrNodeType_Tidentifier)
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, "g%s += g%s;\n", irPassCNodeToStr(N, root->irLeftChild), root->tokenString);
+			}
+			else
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, "// %1$s is const, g%1$s undefined\n", irPassCNodeToStr(N, root->irLeftChild));
+			}
 			break;
 		}
 
 		default:
+			/*
+			 *	Code relies on irrelevant cases (e.g. operators) 
+			 *	hitting the default rule.
+			 */
 			break;
 	}
 	return;
