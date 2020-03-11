@@ -55,7 +55,7 @@ production kNewtonIrNodeType_PinvariantDefinition:	firstset = {
 									kNewtonIrNodeType_Tidentifier,
 								}
 
---//		baseSignalDefinition		::=	identifier ":" "signal" [subdimensionTuple] "=" "{" [nameStatement] symbolStatement derivationStatement "}" .
+--//		baseSignalDefinition		::=	identifier ":" "signal" [subdimensionTuple] "=" "{" [nameStatement] [signalUncertaintyStatement] [sensorStatement] symbolStatement derivationStatement "}" .
 production kNewtonIrNodeType_PbaseSignalDefinition:	firstset = {
 									kNewtonIrNodeType_Tidentifier,
 								}
@@ -68,6 +68,16 @@ production kNewtonIrNodeType_PsensorDefinition:		firstset = {
 --//		nameStatement			::=	"name" "=" stringConst languageSetting ";" .
 production kNewtonIrNodeType_PnameStatement:		firstset = {
 									kNewtonIrNodeType_Tname,
+								}
+
+--//		signalUncertaintyStatement	::= "uncertainty" "=" distribution [parameterTuple] ";" .
+production kNewtonIrNodeType_PsignalUncertaintyStatement:		firstset = {
+									kNewtonIrNodeType_Tuncertainty,
+								}
+
+--//		sensorStatement			::=	"sensor" "=" identifier ";" .
+production kNewtonIrNodeType_PsensorStatement:		firstset = {
+									kNewtonIrNodeType_Tsensor,
 								}
 
 --//		symbolStatement			::=	"symbol" "=" identifier ";" .
@@ -119,6 +129,7 @@ production kNewtonIrNodeType_PquantityTerm:		firstset = {
 --//		quantityFactor			::=	quantity [exponentiationOperator numericFactor]						|
 --//								functionalOperator {functionalOperator} quantityFactor quantityFactor		|
 --//								distribution "(" quantityExpression {"," quantityExpression} ")" 		|
+--//								transcendental "(" quantityExpression ")"			|
 --//								"(" quantityExpression ")" [exponentiationOperator numericFactor]			|
 --//								"{" quantityExpression {"," quantityExpression} "}" .
 production kNewtonIrNodeType_PquantityFactor:		firstset = {
@@ -126,6 +137,7 @@ production kNewtonIrNodeType_PquantityFactor:		firstset = {
 									kNewtonIrNodeType_TleftBrace,
 									firstset(kNewtonIrNodeType_PfunctionalOperator),
 									firstset(kNewtonIrNodeType_Pdistribution),
+									firstset(kNewtonIrNodeType_Ptranscendental),
 									firstset(kNewtonIrNodeType_Pquantity),
 								}
 
@@ -393,6 +405,28 @@ production kNewtonIrNodeType_Pdistribution:		firstset = {
 									kNewtonIrNodeType_TXiSquared,
 								}
 
+--//		transcendental			::= "sin" | "cos" | "tan"
+--//								| "arcsin" | "arccos" | "arctan"
+--//								| "sinh" | "cosh" | "tanh"
+--//								| "exp" | "sqrt"
+--//								| "ln" | "log10" | "log2" .
+production kNewtonIrNodeType_Ptranscendental:	firstset = {
+									kNewtonIrNodeType_Tsin,
+									kNewtonIrNodeType_Tcos,
+									kNewtonIrNodeType_Ttan,
+									kNewtonIrNodeType_Tarcsin,
+									kNewtonIrNodeType_Tarccos,
+									kNewtonIrNodeType_Tarctan,
+									kNewtonIrNodeType_Tsinh,
+									kNewtonIrNodeType_Tcosh,
+									kNewtonIrNodeType_Ttanh,
+									kNewtonIrNodeType_Texp,
+									kNewtonIrNodeType_Tsqrt,
+									kNewtonIrNodeType_Tln,
+									kNewtonIrNodeType_Tlog10,
+									kNewtonIrNodeType_Tlog2
+								}
+
 --//		highPrecedenceBinaryOp		::=	"*" | "/" | "%" | "**" .
 production kNewtonIrNodeType_PhighPrecedenceBinaryOp:	firstset = {
 									kNewtonIrNodeType_Tmul,
@@ -463,7 +497,7 @@ production kNewtonIrNodeType_PinvariantDefinition:	followset = {
 									followset(kNewtonIrNodeType_Prule),
 								}
 
---//		baseSignalDefinition		::=	identifier ":" "signal" [subdimensionTuple] "=" "{" [nameStatement] symbolStatement derivationStatement "}" .
+--//		baseSignalDefinition		::=	identifier ":" "signal" [subdimensionTuple] "=" "{" [nameStatement] [signalUncertaintyStatement] [sensorStatement] symbolStatement derivationStatement "}" .
 production kNewtonIrNodeType_PbaseSignalDefinition:	followset = {
 									followset(kNewtonIrNodeType_Prule),
 								}
@@ -475,6 +509,19 @@ production kNewtonIrNodeType_PsensorDefinition:		followset = {
 
 --//		nameStatement			::=	"name" "=" stringConst languageSetting ";" .
 production kNewtonIrNodeType_PnameStatement:		followset = {
+									firstset(kNewtonIrNodeType_PsignalUncertaintyStatement),
+									firstset(kNewtonIrNodeType_PsensorStatement),
+									firstset(kNewtonIrNodeType_PsymbolStatement),
+								}
+
+--//		signalUncertaintyStatement	::= "uncertainty" "=" distribution [parameterTuple] ";" .
+production kNewtonIrNodeType_PsignalUncertaintyStatement:		followset = {
+									firstset(kNewtonIrNodeType_PsensorStatement),
+									firstset(kNewtonIrNodeType_PsymbolStatement),
+								}
+
+--//		sensorStatement			::=	"sensor" "=" identifier ";" .
+production kNewtonIrNodeType_PsensorStatement:		followset = {
 									firstset(kNewtonIrNodeType_PsymbolStatement),
 								}
 
@@ -623,6 +670,7 @@ production kNewtonIrNodeType_Punit:			followset = {
 production kNewtonIrNodeType_PnumericExpression:	followset = {
 									kNewtonIrNodeType_TrightParen,
 									kNewtonIrNodeType_Tcomma,
+									kNewtonIrNodeType_TleftBracket,
 									kNewtonIrNodeType_TrightBracket,
 									kNewtonIrNodeType_Tto,
 									followset(kNewtonIrNodeType_PreadRegisterCommand),
@@ -640,7 +688,6 @@ production kNewtonIrNodeType_PnumericTerm:		followset = {
 production kNewtonIrNodeType_PnumericFactor:		followset = {
 									firstset(kNewtonIrNodeType_PunitFactor),
 									kNewtonIrNodeType_Tsemicolon,
-									followset(kNewtonIrNodeType_Pquantity),
 									kNewtonIrNodeType_TatSign,
 									followset(kNewtonIrNodeType_PunitFactor),
 									firstset(kNewtonIrNodeType_PhighPrecedenceOperator),
@@ -783,7 +830,18 @@ production kNewtonIrNodeType_PparameterValueList:	followset = {
 --//							| "LogSeries" | "Gumbel" | "Rayleigh" | "Gibrat" | "PearsonIII"
 --//							| "ExtremeValue" | "F" | "Xi" | "XiSquared" .
 production kNewtonIrNodeType_Pdistribution:		followset = {
-									firstset(kNewtonIrNodeType_PparameterValueList)
+									kNewtonIrNodeType_TleftParen,
+									firstset(kNewtonIrNodeType_PparameterTuple),
+									firstset(kNewtonIrNodeType_PparameterValueList),
+								}
+
+--//		transcendental			::= "sin" | "cos" | "tan"
+--//								| "arcsin" | "arccos" | "arctan"
+--//								| "sinh" | "cosh" | "tanh"
+--//								| "exp" | "sqrt"
+--//								| "ln" | "log10" | "log2" .
+production kNewtonIrNodeType_Ptranscendental:	followset = {
+									kNewtonIrNodeType_TleftParen
 								}
 
 --//		highPrecedenceBinaryOp		::=	"*" | "/" | "%" | "**" .
@@ -902,6 +960,34 @@ token	kNewtonIrNodeType_TF:				followset = {
 token	kNewtonIrNodeType_TXi:				followset = {
 									}
 token	kNewtonIrNodeType_TXiSquared:			followset = {
+									}
+token 	kNewtonIrNodeType_Tsin:				followset = {
+									}
+token 	kNewtonIrNodeType_Tcos:				followset = {
+									}
+token 	kNewtonIrNodeType_Ttan:				followset = {
+									}
+token 	kNewtonIrNodeType_Tarcsin:				followset = {
+									}
+token 	kNewtonIrNodeType_Tarccos:				followset = {
+									}
+token 	kNewtonIrNodeType_Tarctan:				followset = {
+									}
+token 	kNewtonIrNodeType_Tsinh:				followset = {
+									}
+token 	kNewtonIrNodeType_Tcosh:				followset = {
+									}
+token 	kNewtonIrNodeType_Ttanh:				followset = {
+									}
+token 	kNewtonIrNodeType_Texp:				followset = {
+									}
+token 	kNewtonIrNodeType_Tsqrt:				followset = {
+									}
+token 	kNewtonIrNodeType_Tln:				followset = {
+									}
+token 	kNewtonIrNodeType_Tlog10:				followset = {
+									}
+token 	kNewtonIrNodeType_Tlog2:				followset = {
 									}
 token	kNewtonIrNodeType_Tge:				followset = {
 									}

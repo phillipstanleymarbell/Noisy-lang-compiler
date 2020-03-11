@@ -48,14 +48,16 @@ ruleList			::=	{rule} .
 rule				::=	constantDefinition | invariantDefinition | baseSignalDefinition | sensorDefinition .
 constantDefinition		::=	identifier ":" "constant" "=" numericFactor [unitFactor] ";" .
 invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" [constraintList] "}" .
-baseSignalDefinition		::=	identifier ":" "signal" [subdimensionTuple] "=" "{" [nameStatement] symbolStatement derivationStatement "}" .
+baseSignalDefinition		::=	identifier ":" "signal" [subdimensionTuple] "=" "{" [nameStatement] [signalUncertaintyStatement] [sensorStatement] symbolStatement derivationStatement "}" .
 sensorDefinition		::=	identifier ":" "sensor" parameterTuple "=" "{" sensorPropertyList "}" .
 nameStatement			::=	"name" "=" stringConst languageSetting ";" .
+signalUncertaintyStatement	::= "uncertainty" "=" distribution [parameterTuple] ";" .
+sensorStatement			::=	"sensor" "=" identifier ";" .
 symbolStatement			::=	"symbol" "=" identifier ";" .
 derivationStatement		::=	"derivation" "=" ("none" | "dimensionless" | quantityExpression) ";" .
 subdimensionTuple		::=	"(" identifier ":" numericExpression "to" numericExpression ")" .
 parameterTuple			::=	"(" parameter {"," parameter} ")" .
-parameter			::=	identifier ":" (identifier | numericExpression) {"@" integerConst} .
+parameter			::=	identifier ":" (identifier | numericExpression) {"[" integerConst "]"} .
 constraintList			::=	[constraint] {"," constraint} .
 constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
 quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
@@ -68,21 +70,22 @@ quantityTerm			::=	[unaryOp] quantityFactor {highPrecedenceQuantityOperator quan
  */
 quantityFactor			::=	quantity [exponentiationOperator numericFactor]						|
 						functionalOperator {functionalOperator} quantityFactor quantityFactor			|
-						distribution "(" quantityExpression {"," quantityExpression} ")" 		|
+						distribution "(" quantityExpression {"," quantityExpression} ")"		|
+						transcendental "(" quantityExpression ")"			|
 						"(" quantityExpression ")" [exponentiationOperator numericFactor]			|
 						"{" quantityExpression {"," quantityExpression} "}" .
 /*
  *	The following needs to be
  *
- *			numericConst | (identifier {"@" numericFactor}) .
+ *			numericConst | (identifier {"[" numericFactor "]"}) .
  *
  *	and not
  *
- *			numericFactor | (identifier {"@" numericFactor}) .
+ *			numericFactor | (identifier {"[" numericFactor "]"}) .
  *
  *	because the latter would lead to an ambiguity in parsing quantityFactor
  */
-quantity			::=	numericConst | (identifier ["@" numericFactor]) .
+quantity			::=	numericConst | (identifier ["[" numericFactor "]"]) .
 highPrecedenceQuantityOperator	::=	highPrecedenceOperator | vectorOp | "><" .
 lowPrecedenceOperator		::=	"+" | "-" .
 highPrecedenceOperator		::=	"*" | "/" .
@@ -127,7 +130,12 @@ distribution			::=	"Gaussian" | "Laplacian" | "StudentT" | "Bernoulli" | "Binomi
 					| "Cauchy" | "LogNormal" | "Pareto" | "BetaPrime" | "StudentZ" 
 					| "Weibull" | "Erlang" | "Maxwell" | "FermiDirac" | "FisherZ" 
 					| "LogSeries" | "Gumbel" | "Rayleigh" | "Gibrat" | "PearsonIII"
-					| "ExtremeValue" | "F" | "Xi" | "XiSquared" .
+					| "ExtremeValue" | "F" | "Xi" | "XiSquared" | "UnconstrainedDistribution" .
+transcendental			::= "sin" | "cos" | "tan"
+						| "arcsin" | "arccos" | "arctan"
+						| "sinh" | "cosh" | "tanh"
+						| "exp" | "sqrt"
+						| "ln" | "log10" | "log2" .
 highPrecedenceBinaryOp		::=	"*" | "/" | "%" | "**" .
 lowPrecedenceBinaryOp		::=	"+" | "-" | ">>" | "<<" | "|" .
 unaryOp				::=	"-"  | "+" .

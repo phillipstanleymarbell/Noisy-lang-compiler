@@ -437,6 +437,9 @@ typedef enum
 	 *	Newton tokens
 	 */
 	kNewtonIrNodeType_TMin,	
+	/*
+	 *	From auto-generated sets:
+	 */
 	kNewtonIrNodeType_Tidentifier,
 	kNewtonIrNodeType_TstringConst,
 	kNewtonIrNodeType_TrealConst,
@@ -488,6 +491,20 @@ typedef enum
 	kNewtonIrNodeType_Ti2c,
 	kNewtonIrNodeType_Tgt,
 	kNewtonIrNodeType_Tge,
+	kNewtonIrNodeType_Tlog2,
+	kNewtonIrNodeType_Tlog10,
+	kNewtonIrNodeType_Tln,
+	kNewtonIrNodeType_Tsqrt,
+	kNewtonIrNodeType_Texp,
+	kNewtonIrNodeType_Ttanh,
+	kNewtonIrNodeType_Tcosh,
+	kNewtonIrNodeType_Tsinh,
+	kNewtonIrNodeType_Tarctan,
+	kNewtonIrNodeType_Tarccos,
+	kNewtonIrNodeType_Tarcsin,
+	kNewtonIrNodeType_Ttan,
+	kNewtonIrNodeType_Tcos,
+	kNewtonIrNodeType_Tsin,
 	kNewtonIrNodeType_TXiSquared,
 	kNewtonIrNodeType_TXi,
 	kNewtonIrNodeType_TF,
@@ -553,10 +570,13 @@ typedef enum
 	 *	Newton grammar productions
 	 */
 	kNewtonIrNodeType_PMin,
-
+	/*
+	 *	From auto-generated sets:
+	 */
 	kNewtonIrNodeType_PunaryOp,
 	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
 	kNewtonIrNodeType_PhighPrecedenceBinaryOp,
+	kNewtonIrNodeType_Ptranscendental,
 	kNewtonIrNodeType_Pdistribution,
 	kNewtonIrNodeType_PparameterValueList,
 	kNewtonIrNodeType_PdistributionFactor,
@@ -606,6 +626,8 @@ typedef enum
 	kNewtonIrNodeType_PsubdimensionTuple,
 	kNewtonIrNodeType_PderivationStatement,
 	kNewtonIrNodeType_PsymbolStatement,
+	kNewtonIrNodeType_PsensorStatement,
+	kNewtonIrNodeType_PsignalUncertaintyStatement,
 	kNewtonIrNodeType_PnameStatement,
 	kNewtonIrNodeType_PsensorDefinition,
 	kNewtonIrNodeType_PbaseSignalDefinition,
