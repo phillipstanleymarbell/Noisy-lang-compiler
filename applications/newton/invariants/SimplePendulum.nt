@@ -40,7 +40,7 @@
 
 include "NewtonBaseSignals.nt"
 
-SimplePendulum : invariant(L: distance@0, period: time) =
+SimplePendulum : invariant(L: distance[0], period: time) =
 {
 	L >= 2.2 * meter,
 	L <=  10 * meter,

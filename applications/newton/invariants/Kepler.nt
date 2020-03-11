@@ -66,7 +66,7 @@ G : constant = 6.674 (m ** 3 * kg ** -1 * s ** -2);
 #		z = null(A,'r')
 #
 
-Kepler : invariant(r: distance@0, period: time) =
+Kepler : invariant(r: distance[0], period: time) =
 {
 	(period ** 2) ~ (r ** 3 / (kNewtonUnithave_GravitationalConstant * kilogram))
 }

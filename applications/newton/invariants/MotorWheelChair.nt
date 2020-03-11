@@ -50,9 +50,9 @@ SafetyCheck: invariant(
 }
 
 SpeedCheck: invariant(
-	x: acceleration@0,
-	y: acceleration@1,
-	z: acceleration@2
+	x: acceleration[0],
+	y: acceleration[1],
+	z: acceleration[2]
 ) = {
 	x + y + z < 5 * m / s ** 2
 }

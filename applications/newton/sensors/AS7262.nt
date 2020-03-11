@@ -84,12 +84,12 @@ kAS7262Lambda650RStdev: constant = -1;
 
 AS7262: sensor (
 			as7262Temperature: temperature,
-			as7262Lambda450V: irradianceResponsivity@0,
-			as7262Lambda500B: irradianceResponsivity@1,
-			as7262Lambda550G: irradianceResponsivity@2,
-			as7262Lambda570Y: irradianceResponsivity@3,
-			as7262Lambda600O: irradianceResponsivity@4,
-			as7262Lambda650R: irradianceResponsivity@5
+			as7262Lambda450V: irradianceResponsivity[0],
+			as7262Lambda500B: irradianceResponsivity[1],
+			as7262Lambda550G: irradianceResponsivity[2],
+			as7262Lambda570Y: irradianceResponsivity[3],
+			as7262Lambda600O: irradianceResponsivity[4],
+			as7262Lambda650R: irradianceResponsivity[5]
 			) =
 {
 
@@ -140,7 +140,7 @@ AS7262: sensor (
 	#
 	#	Register address of channel data can be found in Figure 20 of I2C Virtual Register Set on page 22.
 	#
-	interface as7262Lambda450V@16*bits == i2c (address: 16r49)
+	interface as7262Lambda450V[16]*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -152,7 +152,7 @@ AS7262: sensor (
 		#as7262Lambda450V = (V_High << 8) | (V_Low);
 	},
 
-	interface as7262Lambda450V@16*bits == spi
+	interface as7262Lambda450V[16]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -164,7 +164,7 @@ AS7262: sensor (
 		#as7262Lambda450V = (V_High << 8) | (V_Low);
 	},
 
-	interface as7262Lambda450V@32*bits == i2c (address: 16r49)
+	interface as7262Lambda450V[32]*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -178,7 +178,7 @@ AS7262: sensor (
 		#as7262Lambda450V = (V_Cal_High << 24) |(V_Cal_Xhigh << 16) |(V_Cal_Low << 8) | (V_Cal_Xlow);
 	},
 
-	interface as7262Lambda450V@32*bits == spi
+	interface as7262Lambda450V[32]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -192,7 +192,7 @@ AS7262: sensor (
 		#as7262Lambda450V = (V_Cal_High << 24) |(V_Cal_Xhigh << 16) |(V_Cal_Low << 8) | (V_Cal_Xlow);
 	},
 	
-	interface as7262Lambda500B@16*bits == i2c (address: 16r49)
+	interface as7262Lambda500B[16]*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -204,7 +204,7 @@ AS7262: sensor (
 		#as7262Lambda500B = (B_High << 8) | (B_Low);
 	},
 
-	interface as7262Lambda500B@16*bits == spi
+	interface as7262Lambda500B[16]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -216,7 +216,7 @@ AS7262: sensor (
 		#as7262Lambda500B = (B_High << 8) | (B_Low);
 	},
 
-	interface as7262Lambda500B@32*bits == i2c (address: 16r49)
+	interface as7262Lambda500B[32]*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -230,7 +230,7 @@ AS7262: sensor (
 		#as7262Lambda500B = (B_Cal_High << 24) |(B_Cal_Xhigh << 16) |(B_Cal_Low << 8) | (B_Cal_Xlow);
 	},
 
-	interface as7262Lambda500B@32*bits == spi
+	interface as7262Lambda500B[32]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -244,7 +244,7 @@ AS7262: sensor (
 		#as7262Lambda500B = (B_Cal_High << 24) |(B_Cal_Xhigh << 16) |(B_Cal_Low << 8) | (B_Cal_Xlow);
 	},
 
-	interface as7262Lambda550G@16*bits == i2c (address: 16r49)
+	interface as7262Lambda550G[16]*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -256,7 +256,7 @@ AS7262: sensor (
 		#as7262Lambda550G = (G_High << 8) | (G_Low);
 	},
 	
-	interface as7262Lambda550G@16*bits == spi
+	interface as7262Lambda550G[16]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -268,7 +268,7 @@ AS7262: sensor (
 		#as7262Lambda550G = (G_High << 8) | (G_Low);
 	},
 	
-	interface as7262Lambda550G@32*bits == i2c (address: 16r49)
+	interface as7262Lambda550G[32]*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -282,7 +282,7 @@ AS7262: sensor (
 		#as7262Lambda550G = (G_Cal_High << 24) |(G_Cal_Xhigh << 16) |(G_Cal_Low << 8) | (G_Cal_Xlow);
 	},
 
-	interface as7262Lambda550G@32*bits == spi
+	interface as7262Lambda550G[32]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -296,7 +296,7 @@ AS7262: sensor (
 		#as7262Lambda550G = (G_Cal_High << 24) |(G_Cal_Xhigh << 16) |(G_Cal_Low << 8) | (G_Cal_Xlow);
 	},
 
-	interface as7262Lambda570Y@16*bits == i2c (address: 16r49)
+	interface as7262Lambda570Y[16]*bits == i2c (address: 16r49)
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -308,7 +308,7 @@ AS7262: sensor (
 		#as7262Lambda570Y = (Y_High << 8) | (Y_Low);
 	},
 	
-	interface as7262Lambda570Y@16*bits == spi
+	interface as7262Lambda570Y[16]*bits == spi
 	{
 		#		
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -320,7 +320,7 @@ AS7262: sensor (
 		#as7262Lambda570Y = (Y_High << 8) | (Y_Low);
 	},
 	
-	interface as7262Lambda570Y@32*bits == i2c (address: 16r49)
+	interface as7262Lambda570Y[32]*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -334,7 +334,7 @@ AS7262: sensor (
 		#as7262Lambda570Y = (Y_Cal_High << 24) |(Y_Cal_Xhigh << 16) |(Y_Cal_Low << 8) | (Y_Cal_Xlow);
 	},
 
-	interface as7262Lambda570Y@32*bits == spi
+	interface as7262Lambda570Y[32]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -348,7 +348,7 @@ AS7262: sensor (
 		#as7262Lambda570Y = (Y_Cal_High << 24) |(Y_Cal_Xhigh << 16) |(Y_Cal_Low << 8) | (Y_Cal_Xlow);
 	},
 
-	interface as7262Lambda600O@16*bits == i2c (address: 16r49)
+	interface as7262Lambda600O[16]*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -360,7 +360,7 @@ AS7262: sensor (
 		#as7262Lambda600O = (O_High << 8) | (O_Low);
 	},
 	
-	interface as7262Lambda600O@16*bits == spi
+	interface as7262Lambda600O[16]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -372,7 +372,7 @@ AS7262: sensor (
 		#as7262Lambda600O = (O_High << 8) | (O_Low);
 	},
 
-	interface as7262Lambda600O@32*bits == i2c (address: 16r49)
+	interface as7262Lambda600O[32]*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -386,7 +386,7 @@ AS7262: sensor (
 		#as7262Lambda600O = (O_Cal_High << 24) |(O_Cal_Xhigh << 16) |(O_Cal_Low << 8) | (O_Cal_Xlow);
 	},
 
-	interface as7262Lambda600O@32*bits == spi
+	interface as7262Lambda600O[32]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -400,7 +400,7 @@ AS7262: sensor (
 		#as7262Lambda600O = (O_Cal_High << 24) |(O_Cal_Xhigh << 16) |(O_Cal_Low << 8) | (O_Cal_Xlow);
 	},
 
-	interface as7262Lambda650R@16*bits == i2c (address: 16r49)
+	interface as7262Lambda650R[16]*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -412,7 +412,7 @@ AS7262: sensor (
 		#as7262Lambda650R = (R_High << 8) | (R_Low);
 	},
 	
-	interface as7262Lambda650R@16*bits == spi
+	interface as7262Lambda650R[16]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -424,7 +424,7 @@ AS7262: sensor (
 		#as7262Lambda650R = (R_High << 8) | (R_Low);
 	},
 
-	interface as7262Lambda650R@32*bits == i2c (address: 16r49)
+	interface as7262Lambda650R[32]*bits == i2c (address: 16r49)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -438,7 +438,7 @@ AS7262: sensor (
 		#as7262Lambda650R = (R_Cal_High << 24) |(R_Cal_Xhigh << 16) |(R_Cal_Low << 8) | (R_Cal_Xlow);
 	},
 
-	interface as7262Lambda600O@32*bits == spi
+	interface as7262Lambda600O[32]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...

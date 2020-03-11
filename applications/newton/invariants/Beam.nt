@@ -71,7 +71,7 @@ L : constant = 5 m;
 #
 #
 
-beam : invariant(d: distance@0, P: force) =
+beam : invariant(d: distance[0], P: force) =
 {
-	d ~ (P * L / (3 * E * I)) 
+	d ~ (P * L / (3 * E * I))
 }

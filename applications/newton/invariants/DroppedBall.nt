@@ -45,10 +45,10 @@ initialHeight	: constant = 10 m;
 ballMass	: constant = 1 kg;
 
 mechanicalEnergyDecreasing: invariant (
-	h: distance@2,
-	x: acceleration@0,
-	y: acceleration@1,
-	z: acceleration@2
+	h: distance[2],
+	x: acceleration[0],
+	y: acceleration[1],
+	z: acceleration[2]
 ) = {
 	(ballMass * kNewtonUnithave_AccelerationDueToGravity * initialHeight / SamplingTime) >= (ballMass * kNewtonUnithave_AccelerationDueToGravity * h / SamplingTime + 0.5 * ballMass * (x ** 2 + y ** 2 + z ** 2) * s - 10 * J / SamplingTime)
 }
