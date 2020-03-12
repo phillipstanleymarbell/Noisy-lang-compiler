@@ -55,6 +55,20 @@ const char *	gNewtonTokenDescriptions[kCommonIrNodeTypeMax] = {
 									/*
 									 *	Begin keywords
 									 */
+									[kNewtonIrNodeType_Tlog2]		= "log2",
+									[kNewtonIrNodeType_Tlog10]		= "log10",
+									[kNewtonIrNodeType_Tln]		= "ln",
+									[kNewtonIrNodeType_Tsqrt]		= "sqrt",
+									[kNewtonIrNodeType_Texp]		= "exp",
+									[kNewtonIrNodeType_Ttanh]		= "tanh",
+									[kNewtonIrNodeType_Tcosh]		= "cosh",
+									[kNewtonIrNodeType_Tsinh]		= "sinh",
+									[kNewtonIrNodeType_Tarctan]		= "arctan",
+									[kNewtonIrNodeType_Tarccos]		= "arccos",
+									[kNewtonIrNodeType_Tarcsin]		= "arcsin",
+									[kNewtonIrNodeType_Ttan]		= "tan",
+									[kNewtonIrNodeType_Tcos]		= "cos",
+									[kNewtonIrNodeType_Tsin]		= "sin",
 									[kNewtonIrNodeType_TBernoulli]		= "BernoulliDistribution",
 									[kNewtonIrNodeType_TBeta]		= "BetaDistribution",
 									[kNewtonIrNodeType_TBetaBinomial]	= "BetaBinomialDistribution",

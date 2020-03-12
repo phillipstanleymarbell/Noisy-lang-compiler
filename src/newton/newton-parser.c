@@ -1230,7 +1230,7 @@ newtonParseSignalUncertainty(State * N, Scope *  currentScope)
 	addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope));
 	addLeafWithChainingSeq(N, node, newtonParseDistribution(N, currentScope));
 
-	if (lexPeek(N, 1)->type == kNewtonIrNodeType_PparameterTuple)
+	if (inFirst(N, kNewtonIrNodeType_PparameterTuple, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		addLeafWithChainingSeq(N, node, newtonParseParameterTuple(N, currentScope));
 	}

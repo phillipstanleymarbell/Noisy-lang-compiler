@@ -815,6 +815,7 @@ production kNewtonIrNodeType_Pfactor:			followset = {
 --//		distributionFactor		::=	distribution parameterValueList .
 production kNewtonIrNodeType_PdistributionFactor:	followset = {
 									followset(kNewtonIrNodeType_Pfactor)
+									firstset(kNewtonIrNodeType_PparameterTuple)
 								}
 
 --//		parameterValueList		::=	"(" identifier ":" expression {"," identifier ":" expression} ")" .
