@@ -42,24 +42,24 @@ include "NewtonBaseSignals.nt"
 
 multiAxisAcceleration : signal(i: 0 to 5) =
 {
-	derivation	= acceleration@i;
+	derivation	= acceleration[i];
 }
 
 multiAxisAngularVelocity : signal(i: 0 to 2) =
 {
-	derivation = angularVelocity@i;
+	derivation = angularVelocity[i];
 }
 
 TimeBetweenSensors	: constant = 5E-6 s;
 SamplingTime		: constant = 5E-4 s;
 
 accelerationAndGyro : invariant(
-	x	: multiAxisAcceleration@0, 
-	y	: multiAxisAcceleration@1, 
-	z	: multiAxisAcceleration@2, 
-	row	: multiAxisAngularVelocity@0, 
-	pitch	: multiAxisAngularVelocity@1, 
-	yaw	: multiAxisAngularVelocity@2
+	x	: multiAxisAcceleration[0], 
+	y	: multiAxisAcceleration[1], 
+	z	: multiAxisAcceleration[2], 
+	row	: multiAxisAngularVelocity[0], 
+	pitch	: multiAxisAngularVelocity[1], 
+	yaw	: multiAxisAngularVelocity[2]
 ) = {
 	#
 	#	Rectangular integration estimation
@@ -69,12 +69,12 @@ accelerationAndGyro : invariant(
 }
 
 redundantAccelerometers : invariant(
-	x1: multiAxisAcceleration@0, 
-	y1: multiAxisAcceleration@1, 
-	z1: multiAxisAcceleration@2, 
-	x2: multiAxisAcceleration@3, 
-	y2: multiAxisAcceleration@4, 
-	z2: multiAxisAcceleration@5
+	x1: multiAxisAcceleration[0], 
+	y1: multiAxisAcceleration[1], 
+	z1: multiAxisAcceleration[2], 
+	x2: multiAxisAcceleration[3], 
+	y2: multiAxisAcceleration[4], 
+	z2: multiAxisAcceleration[5]
 ) = {
 	x1 ~ x2,
 	y1 ~ y2,

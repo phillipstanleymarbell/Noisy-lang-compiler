@@ -71,9 +71,9 @@ kL3GD20HzAngularRateStdev		: constant = -1;
 kL3GD20HTemperatureStdev		: constant = -1;
 
 L3GD20H: sensor (
-			l3gd20hxAngularRate: angularRate@0,
-			l3gd20hyAngularRate: angularRate@1,
-			l3gd20hzAngularRate: angularRate@2,
+			l3gd20hxAngularRate: angularRate[0],
+			l3gd20hyAngularRate: angularRate[1],
+			l3gd20hzAngularRate: angularRate[2],
 			l3gd20hTemperature: temperature
 			) =
 {

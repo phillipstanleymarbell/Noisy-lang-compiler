@@ -50,15 +50,15 @@ multiDimensionalTemperature: signal(i: 0 to 17) = {
 maxTemp: constant = 120 celcius;
 
 tempInRange: invariant(
-	neighborTempNW: multiDimensionalTemperature@0,
-	neighborTempN: multiDimensionalTemperature@1,
-	neighborTempNE: multiDimensionalTemperature@2,
-	neighborTempE: multiDimensionalTemperature@3,
-	neighborTempW: multiDimensionalTemperature@4,
-	neighborTempSW: multiDimensionalTemperature@5,
-	neighborTempS: multiDimensionalTemperature@6,
-	neighborTempSE: multiDimensionalTemperature@7,
-	selfTemp: multiDimensionalTemperature@8
+	neighborTempNW: multiDimensionalTemperature[0],
+	neighborTempN: multiDimensionalTemperature[1],
+	neighborTempNE: multiDimensionalTemperature[2],
+	neighborTempE: multiDimensionalTemperature[3],
+	neighborTempW: multiDimensionalTemperature[4],
+	neighborTempSW: multiDimensionalTemperature[5],
+	neighborTempS: multiDimensionalTemperature[6],
+	neighborTempSE: multiDimensionalTemperature[7],
+	selfTemp: multiDimensionalTemperature[8]
 ) = {
 	neighborTempNW < maxTemp,
 	neighborTempN < maxTemp,
@@ -72,24 +72,24 @@ tempInRange: invariant(
 }
 
 multiDimensionalTemperatureRedundancy: invariant(
-	neighborTempNW1: multiDimensionalTemperature@0,
-	neighborTempN1: multiDimensionalTemperature@1,
-	neighborTempNE1: multiDimensionalTemperature@2,
-	neighborTempE1: multiDimensionalTemperature@3,
-	neighborTempW1: multiDimensionalTemperature@4,
-	neighborTempSW1: multiDimensionalTemperature@5,
-	neighborTempS1: multiDimensionalTemperature@6,
-	neighborTempSE1: multiDimensionalTemperature@7,
-	selfTemp1: multiDimensionalTemperature@8,
-	neighborTempNW2: multiDimensionalTemperature@9,
-	neighborTempN2: multiDimensionalTemperature@10,
-	neighborTempNE2: multiDimensionalTemperature@11,
-	neighborTempE2: multiDimensionalTemperature@12,
-	neighborTempW2: multiDimensionalTemperature@13,
-	neighborTempSW2: multiDimensionalTemperature@14,
-	neighborTempS2: multiDimensionalTemperature@15,
-	neighborTempSE2: multiDimensionalTemperature@16,
-	selfTemp2: multiDimensionalTemperature@17
+	neighborTempNW1: multiDimensionalTemperature[0],
+	neighborTempN1: multiDimensionalTemperature[1],
+	neighborTempNE1: multiDimensionalTemperature[2],
+	neighborTempE1: multiDimensionalTemperature[3],
+	neighborTempW1: multiDimensionalTemperature[4],
+	neighborTempSW1: multiDimensionalTemperature[5],
+	neighborTempS1: multiDimensionalTemperature[6],
+	neighborTempSE1: multiDimensionalTemperature[7],
+	selfTemp1: multiDimensionalTemperature[8],
+	neighborTempNW2: multiDimensionalTemperature[9],
+	neighborTempN2: multiDimensionalTemperature[10],
+	neighborTempNE2: multiDimensionalTemperature[11],
+	neighborTempE2: multiDimensionalTemperature[12],
+	neighborTempW2: multiDimensionalTemperature[13],
+	neighborTempSW2: multiDimensionalTemperature[14],
+	neighborTempS2: multiDimensionalTemperature[15],
+	neighborTempSE2: multiDimensionalTemperature[16],
+	selfTemp2: multiDimensionalTemperature[17]
 ) = {
 	neighborTempNW1 ~ neighborTempNW2,
 	neighborTempN1 ~ neighborTempN2,

@@ -43,7 +43,7 @@ include "NewtonBaseSignals.nt"
 SamplingTime: constant = 5E-5 s;
 
 GPSAndAccelerometerMatch : invariant (
-	ds: distance@3,
+	ds: distance[3],
 	v: speed
 ) = {
 	#
@@ -54,10 +54,10 @@ GPSAndAccelerometerMatch : invariant (
 }
 
 GPSRedundancy: invariant(
-	x1: distance@0,
-	y1: distance@1,
-	x2: distance@3,
-	y2: distance@4
+	x1: distance[0],
+	y1: distance[1],
+	x2: distance[3],
+	y2: distance[4]
 ) = {
 	x1 ~ x2,
 	y1 ~ y2

@@ -93,18 +93,18 @@ kBMX055yAngularRateStdev		: constant = -1;
 kBMX055zAngularRateStdev		: constant = -1;
 
 bmx055: sensor (
-			bmx055xAcceleration: acceleration@0,
-			bmx055yAcceleration: acceleration@1,
-			bmx055zAcceleration: acceleration@2,
+			bmx055xAcceleration: acceleration[0],
+			bmx055yAcceleration: acceleration[1],
+			bmx055zAcceleration: acceleration[2],
 			bmx055Temperature: temperature,
 
-			bmx055xMagneto: magneticFluxDensity@0,
-			bmx055yMagneto: magneticFluxDensity@1,
-			bmx055zMagneto: magneticFluxDensity@2,
+			bmx055xMagneto: magneticFluxDensity[0],
+			bmx055yMagneto: magneticFluxDensity[1],
+			bmx055zMagneto: magneticFluxDensity[2],
 
-			bmx055xAngularRate: angularRate@0,
-			bmx055yAngularRate: angularRate@1,
-			bmx055zAngularRate: angularRate@2
+			bmx055xAngularRate: angularRate[0],
+			bmx055yAngularRate: angularRate[1],
+			bmx055zAngularRate: angularRate[2]
 			) =
 {
 	#
