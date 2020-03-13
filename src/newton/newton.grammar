@@ -130,10 +130,11 @@ distribution			::=	"Gaussian" | "Laplacian" | "StudentT" | "Bernoulli" | "Binomi
 					| "Cauchy" | "LogNormal" | "Pareto" | "BetaPrime" | "StudentZ" 
 					| "Weibull" | "Erlang" | "Maxwell" | "FermiDirac" | "FisherZ" 
 					| "LogSeries" | "Gumbel" | "Rayleigh" | "Gibrat" | "PearsonIII"
-					| "ExtremeValue" | "F" | "Xi" | "XiSquared" | "UnconstrainedDistribution" .
-transcendental			::= "sin" | "cos" | "tan"
-						| "arcsin" | "arccos" | "arctan"
-						| "sinh" | "cosh" | "tanh"
+					| "ExtremeValue" | "F" | "Xi" | "XiSquared" | "Unconstrained" .
+transcendental			::= "sin" | "cos" | "tan" | "cotan" | "sec"  | "cosec"
+						| "arcsin" | "arccos" | "arctan" | "arccotan" | "arcsec"  | "arccosec"
+						| "sinh" | "cosh" | "tanh" | "cotanh" | "sech"  | "cosech"
+						| "arcsinh" | "arccosh" | "arctanh" | "arccotanh" | "arcsech"  | "arccosech"
 						| "exp" | "sqrt"
 						| "ln" | "log10" | "log2" .
 highPrecedenceBinaryOp		::=	"*" | "/" | "%" | "**" .

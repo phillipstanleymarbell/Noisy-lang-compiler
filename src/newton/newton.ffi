@@ -403,6 +403,7 @@ production kNewtonIrNodeType_Pdistribution:		firstset = {
 									kNewtonIrNodeType_TF,
 									kNewtonIrNodeType_TXi,
 									kNewtonIrNodeType_TXiSquared,
+									kNewtonIrNodeType_TUnconstrained,									
 								}
 
 --//		transcendental			::= "sin" | "cos" | "tan"
@@ -414,12 +415,27 @@ production kNewtonIrNodeType_Ptranscendental:	firstset = {
 									kNewtonIrNodeType_Tsin,
 									kNewtonIrNodeType_Tcos,
 									kNewtonIrNodeType_Ttan,
+									kNewtonIrNodeType_Tcotan,
+									kNewtonIrNodeType_Tsec,
+									kNewtonIrNodeType_Tcosec,
 									kNewtonIrNodeType_Tarcsin,
 									kNewtonIrNodeType_Tarccos,
 									kNewtonIrNodeType_Tarctan,
+									kNewtonIrNodeType_Tarccotan,
+									kNewtonIrNodeType_Tarcsec,
+									kNewtonIrNodeType_Tarccosec,
 									kNewtonIrNodeType_Tsinh,
 									kNewtonIrNodeType_Tcosh,
 									kNewtonIrNodeType_Ttanh,
+									kNewtonIrNodeType_Tcotanh,
+									kNewtonIrNodeType_Tsech,
+									kNewtonIrNodeType_Tcosech,
+									kNewtonIrNodeType_Tarcsinh,
+									kNewtonIrNodeType_Tarccosh,
+									kNewtonIrNodeType_Tarctanh,
+									kNewtonIrNodeType_Tarccotanh,
+									kNewtonIrNodeType_Tarcsech,
+									kNewtonIrNodeType_Tarccosech,
 									kNewtonIrNodeType_Texp,
 									kNewtonIrNodeType_Tsqrt,
 									kNewtonIrNodeType_Tln,
@@ -962,33 +978,65 @@ token	kNewtonIrNodeType_TXi:				followset = {
 									}
 token	kNewtonIrNodeType_TXiSquared:			followset = {
 									}
-token 	kNewtonIrNodeType_Tsin:				followset = {
+token	kNewtonIrNodeType_TUnconstrained:			followset = {
 									}
-token 	kNewtonIrNodeType_Tcos:				followset = {
+token	kNewtonIrNodeType_Tsin:			followset = {
 									}
-token 	kNewtonIrNodeType_Ttan:				followset = {
+token	kNewtonIrNodeType_Tcos:			followset = {
 									}
-token 	kNewtonIrNodeType_Tarcsin:				followset = {
+token	kNewtonIrNodeType_Ttan:			followset = {
 									}
-token 	kNewtonIrNodeType_Tarccos:				followset = {
+token	kNewtonIrNodeType_Tcotan:			followset = {
 									}
-token 	kNewtonIrNodeType_Tarctan:				followset = {
+token	kNewtonIrNodeType_Tsec:			followset = {
 									}
-token 	kNewtonIrNodeType_Tsinh:				followset = {
+token	kNewtonIrNodeType_Tcosec:			followset = {
 									}
-token 	kNewtonIrNodeType_Tcosh:				followset = {
+token	kNewtonIrNodeType_Tarcsin:			followset = {
 									}
-token 	kNewtonIrNodeType_Ttanh:				followset = {
+token	kNewtonIrNodeType_Tarccos:			followset = {
 									}
-token 	kNewtonIrNodeType_Texp:				followset = {
+token	kNewtonIrNodeType_Tarctan:			followset = {
 									}
-token 	kNewtonIrNodeType_Tsqrt:				followset = {
+token	kNewtonIrNodeType_Tarccotan:			followset = {
 									}
-token 	kNewtonIrNodeType_Tln:				followset = {
+token	kNewtonIrNodeType_Tarcsec:			followset = {
 									}
-token 	kNewtonIrNodeType_Tlog10:				followset = {
+token	kNewtonIrNodeType_Tarccosec:			followset = {
 									}
-token 	kNewtonIrNodeType_Tlog2:				followset = {
+token	kNewtonIrNodeType_Tsinh:			followset = {
+									}
+token	kNewtonIrNodeType_Tcosh:			followset = {
+									}
+token	kNewtonIrNodeType_Ttanh:			followset = {
+									}
+token	kNewtonIrNodeType_Tcotanh:			followset = {
+									}
+token	kNewtonIrNodeType_Tsech:			followset = {
+									}
+token	kNewtonIrNodeType_Tcosech:			followset = {
+									}
+token	kNewtonIrNodeType_Tarcsinh:			followset = {
+									}
+token	kNewtonIrNodeType_Tarccosh:			followset = {
+									}
+token	kNewtonIrNodeType_Tarctanh:			followset = {
+									}
+token	kNewtonIrNodeType_Tarccotanh:			followset = {
+									}
+token	kNewtonIrNodeType_Tarcsech:			followset = {
+									}
+token	kNewtonIrNodeType_Tarccosech:			followset = {
+									}
+token	kNewtonIrNodeType_Texp:			followset = {
+									}
+token	kNewtonIrNodeType_Tsqrt:			followset = {
+									}
+token	kNewtonIrNodeType_Tln:			followset = {
+									}
+token	kNewtonIrNodeType_Tlog10:			followset = {
+									}
+token	kNewtonIrNodeType_Tlog2:			followset = {
 									}
 token	kNewtonIrNodeType_Tge:				followset = {
 									}

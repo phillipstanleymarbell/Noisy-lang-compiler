@@ -3678,7 +3678,7 @@ newtonParseParameterValueList(State *  N, Scope *  currentScope)
  *							| "Cauchy" | "LogNormal" | "Pareto" | "BetaPrime" | "StudentZ"
  *							| "Weibull" | "Erlang" | "Maxwell" | "FermiDirac" | "FisherZ"
  *							| "LogSeries" | "Gumbel" | "Rayleigh" | "Gibrat" | "PearsonIII"
- *							| "ExtremeValue" | "F" | "Xi" | "XiSquared" .
+ *							| "ExtremeValue" | "F" | "Xi" | "XiSquared" | "Unconstrained" .
  */
 IrNode *
 newtonParseDistribution(State *  N, Scope *  currentScope)
@@ -3820,6 +3820,10 @@ newtonParseDistribution(State *  N, Scope *  currentScope)
 	{
 		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TXiSquared, currentScope));
 	}
+	else if (peekCheck(N, 1, kNewtonIrNodeType_TUnconstrained))
+	{
+		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TUnconstrained, currentScope));
+	}
 	else
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_Pdistribution, kNewtonIrNodeType_Pdistribution, gNewtonFirsts);
@@ -3843,11 +3847,12 @@ newtonParseDistribution(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		transcendental			::= "sin" | "cos" | "tan"
- *							| "arcsin" | "arccos" | "arctan"
- *							| "sinh" | "cosh" | "tanh"
- *							| "exp" | "sqrt"
- *							| "ln" | "log10" | "log2" .
+ *		transcendental	::= "sin" | "cos" | "tan" | "cotan" | "sec"  | "cosec"
+ *						| "arcsin" | "arccos" | "arctan" | "arccotan" | "arcsec"  | "arccosec"
+ *						| "sinh" | "cosh" | "tanh" | "cotanh" | "sech"  | "cosech"
+ *						| "arcsinh" | "arccosh" | "arctanh" | "arccotanh" | "arcsech"  | "arccosech"
+ *						| "exp" | "sqrt"
+ *						| "ln" | "log10" | "log2" .
  */
 IrNode *
 newtonParseTranscendental(State * N, Scope *  currentScope)
