@@ -59,6 +59,7 @@ void		printDimensionsOfNode(State *  N, IrNode *  n, FlexPrintBuf *  flexBuf);
 #define P(node)		(node)->irParent
 
 #define LL(node)	L(L(node))
+#define LLL(node)	L(L(L(node)))
 #define LLR(node)	R(L(L(node)))
 #define LR(node)	R(L(node))
 #define LRL(node)	L(R(L(node)))

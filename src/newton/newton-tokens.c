@@ -55,6 +55,7 @@ const char *	gNewtonTokenDescriptions[kCommonIrNodeTypeMax] = {
 									/*
 									 *	Begin keywords
 									 */
+									[kNewtonIrNodeType_Tsin]		= "sin",
 									[kNewtonIrNodeType_Tcos]		= "cos",
 									[kNewtonIrNodeType_Ttan]		= "tan",
 									[kNewtonIrNodeType_Tcotan]		= "cotan",

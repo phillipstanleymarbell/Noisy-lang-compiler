@@ -147,7 +147,20 @@ irPassEstimatorSynthesisExpressionLinear(State *  N, IrNode *  expressionXSeq) {
 			{
 				return false;
 			}
-			// TODO: Also check for transcendentals
+
+			/*
+			 *	Check for identifiers inside transcendentals.
+			 */
+			IrNode* found = NULL;
+			for (int n = 0;  (found = findNthIrNodeOfType(N, expressionXSeq, kNewtonIrNodeType_Ptranscendental, n)) != NULL; n++)
+			{
+				IrNode* foundIdentifier = NULL;
+				for (int k = 0;  (foundIdentifier = findNthIrNodeOfType(N, found->irParent, kNewtonIrNodeType_Tidentifier, k)) != NULL; k++)			
+				if (!foundIdentifier->physics->isConstant)
+				{
+					return false;
+				}				
+			}
 			// TODO: kNewtonIrNodeType_Tidentifier > 1 is linear ONLY for identifier*step
 		} break;
 
@@ -225,22 +238,36 @@ irPassEstimatorSynthesisADAnnotate(State *  N, IrNode *  root, char * parentToke
 
 		case kNewtonIrNodeType_PquantityFactor:
 		{
-			irPassEstimatorSynthesisADAnnotate(N, root->irLeftChild, root->tokenString);
-			// flexprint(N->Fe, N->Fm, N->Fpc, "double %s = %s;\n", root->tokenString, root->irLeftChild->tokenString);
-			// TODO: This can introduce another quantityExpression.
-			// 		 e.g exp(), sin(), cos(), tan()
+			if (root->irLeftChild->type == kNewtonIrNodeType_Ptranscendental)
+			{	
+				// TODO: RL(root) is a quantityExpression and is not assigned tokenString
+				irPassEstimatorSynthesisADAnnotate(N, RL(root), root->tokenString);
+			}
+			else
+			{
+				irPassEstimatorSynthesisADAnnotate(N, root->irLeftChild, root->tokenString);
+			}
 			break;
 		}
 
 		case kNewtonIrNodeType_PquantityExpression:
 		case kNewtonIrNodeType_PquantityTerm:
 		{
+			if (root->type == kNewtonIrNodeType_PquantityExpression &&
+				root->tokenString == NULL &&
+				parentTokenString != NULL)
+			{
+				int	needed = snprintf(NULL, 0, "%s_%d", parentTokenString, dUid) + 1;
+				root->tokenString = malloc(needed);
+				snprintf(root->tokenString, needed, "%s_%d", parentTokenString, dUid++);
+			}
+			
 			IrNode * currXSeq = NULL;
 			dUid = 1;
 			for (currXSeq = root; currXSeq != NULL; currXSeq = currXSeq->irRightChild)
 			{
 				if (currXSeq->irLeftChild->type == kNewtonIrNodeType_PquantityTerm ||
-					currXSeq->irLeftChild->type == kNewtonIrNodeType_PquantityFactor)
+					currXSeq->irLeftChild->type == kNewtonIrNodeType_PquantityFactor )
 				{
 					/*
 					 *	Assign each child a name for Static Single Assignment expression
@@ -278,9 +305,16 @@ irPassEstimatorSynthesisADGenExpressionSSA(State *  N, IrNode *  root)
 
 		case kNewtonIrNodeType_PquantityFactor:
 		{
-			irPassEstimatorSynthesisADGenExpressionSSA(N, root->irLeftChild);
-			flexprint(N->Fe, N->Fm, N->Fpc, "double %s = %s;\n", root->tokenString, root->irLeftChild->tokenString);
-			// TODO: exp(), sin(), cos(), tan()
+			if (root->irLeftChild->type == kNewtonIrNodeType_Ptranscendental)
+			{
+				irPassEstimatorSynthesisADGenExpressionSSA(N, RL(root));
+				flexprint(N->Fe, N->Fm, N->Fpc, "double %s = %s(%s);\n", root->tokenString, irPassCNodeToStr(N, LL(root)), RL(root)->tokenString);
+			}
+			else
+			{
+				irPassEstimatorSynthesisADGenExpressionSSA(N, root->irLeftChild);
+				flexprint(N->Fe, N->Fm, N->Fpc, "double %s = %s;\n", root->tokenString, root->irLeftChild->tokenString);
+			}
 			break;
 		}
 
@@ -304,7 +338,7 @@ irPassEstimatorSynthesisADGenExpressionSSA(State *  N, IrNode *  root)
 					}
 					else if (currXSeq->irLeftChild->type == kNewtonIrNodeType_PhighPrecedenceQuantityOperator)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "%s", irPassCNodeToStr(N, currXSeq->irLeftChild->irLeftChild->irLeftChild));
+						flexprint(N->Fe, N->Fm, N->Fpc, "%s", irPassCNodeToStr(N, LLL(currXSeq)));
 					}
 					else
 					{
@@ -377,6 +411,7 @@ irPassEstimatorSynthesisADGenReverse(State *  N, IrNode *  root)
 					}
 					else
 					{
+						// TODO: Handle derivative of division
 						flexprint(N->Fe, N->Fm, N->Fpc, "%s%s", irPassCNodeToStr(N, currXSeqOp->irLeftChild->irLeftChild->irLeftChild),
 																   currXSeqOp->irRightChild->irLeftChild->tokenString);
 					}
@@ -391,9 +426,106 @@ irPassEstimatorSynthesisADGenReverse(State *  N, IrNode *  root)
 
 		case kNewtonIrNodeType_PquantityFactor:
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s;\n", root->irLeftChild->tokenString, root->tokenString);
-			// TODO: exp(), sin(), cos(), tan(), pow()
-			irPassEstimatorSynthesisADGenReverse(N, root->irLeftChild);
+			if (R(root) && RL(root)->type == kNewtonIrNodeType_PexponentiationOperator)
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, "double g%1$s = g%2$s * %3$s * pow(%1$s, %4$s)", L(root)->tokenString, root->tokenString, RRL(root)->value, RRL(root)->value - 1);
+				irPassEstimatorSynthesisADGenReverse(N, root->irLeftChild);
+			}
+			else if (root->irLeftChild->type == kNewtonIrNodeType_Ptranscendental)
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s *", RL(root)->tokenString, root->tokenString);
+				switch (LL(root)->type)
+				{
+					case kNewtonIrNodeType_Tsin:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "cos(%s);\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Tcos:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "(-sin(%s));\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Ttan:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "(1/(cos(%1$s)*cos(%1$s));\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Tcotan:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "((-sin(%1$s)*sin(%1$s)-cos(%1$s)*cos(%1$s))/(sin(%1$s)*sin(%1$s)));\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Tsec:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "(sin(%1$s/(cos(%1$s)*cos(%1$s)));\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Tcosec:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "((-cos(%1$s)/(sin(%1$s)*sin(%1$s)));\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Tarcsin:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "(1/sqrt(1 - %1$s*%1$s));\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Tarccos:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "(-1/sqrt(1 - %1$s*%1$s));\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Tarctan:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "(1/(1 + %1$s*%1$s));\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Tarccotan:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "(-1/(1 + %1$s*%1$s));\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Tarcsec:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "(1/(abs(%1$s)*sqrt(%1$s*%1$s - 1)));\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Tarccosec:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "(-1/(abs(%1$s)*sqrt(%1$s*%1$s - 1)));\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Tsinh:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "cosh(%s);\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Tcosh:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "sinh(%s);\n", RL(root)->tokenString);	
+						break;
+					}
+					case kNewtonIrNodeType_Ttanh:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "(1 - tanh(%1$s)*tanh(%1$s));\n", RL(root)->tokenString);	
+						break;
+					}
+					default:
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, ";\n");	
+						flexprint(N->Fe, N->Fm, N->Fperr, "Unhandled transcendental case.\n");			
+						break;
+					}
+				}
+				irPassEstimatorSynthesisADGenReverse(N, RL(root));
+			}
+			else
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s;\n", root->irLeftChild->tokenString, root->tokenString);
+				irPassEstimatorSynthesisADGenReverse(N, root->irLeftChild);
+			}
+			
 			break;
 		}
 

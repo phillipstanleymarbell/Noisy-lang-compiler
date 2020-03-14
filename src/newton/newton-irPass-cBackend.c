@@ -66,6 +66,8 @@
 #include "newton-types.h"
 #include "newton-symbolTable.h"
 
+extern const char *		gNewtonTokenDescriptions[kCommonIrNodeTypeMax];
+
 bool
 irPassCIsExpectedTypePresentInRightChild(State *  N, IrNode *  parentNode, IrNodeType expectedType)
 {
@@ -195,6 +197,25 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 		{
 			output = malloc(4*sizeof(char));
 			strcpy(output, ",");
+			break;
+		}
+
+		case kNewtonIrNodeType_Tlog2:
+		case kNewtonIrNodeType_Tlog10:
+		case kNewtonIrNodeType_Tln:
+		case kNewtonIrNodeType_Tsqrt:
+		case kNewtonIrNodeType_Texp:
+		case kNewtonIrNodeType_Ttanh:
+		case kNewtonIrNodeType_Tcosh:
+		case kNewtonIrNodeType_Tsinh:
+		case kNewtonIrNodeType_Tarctan:
+		case kNewtonIrNodeType_Tarccos:
+		case kNewtonIrNodeType_Tarcsin:
+		case kNewtonIrNodeType_Ttan:
+		case kNewtonIrNodeType_Tcos:
+		case kNewtonIrNodeType_Tsin:
+		{			
+			output = strdup(gNewtonTokenDescriptions[node->type]);
 			break;
 		}
 
