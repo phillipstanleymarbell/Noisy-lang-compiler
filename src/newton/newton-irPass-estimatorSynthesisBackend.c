@@ -38,7 +38,7 @@
 	- No signals with subdimensions.
 	- Linear model must by factorised (e.g. 4*P+X and not 3*P+X+P).
 	- LHS of invariants is assumed to contain solely the state and measurement identifiers.
-	- System takes no input (B=0).
+	- System takes no input in linear case (B=0). // TODO: This is fixable.
 	- Invariant parameter lists start with the state variables, in the same order
 	  with which they appear in the invariant body.
 	- Measure invariant does not skip unused state variables.
@@ -155,11 +155,11 @@ irPassEstimatorSynthesisExpressionLinear(State *  N, IrNode *  expressionXSeq) {
 			for (int n = 0;  (found = findNthIrNodeOfType(N, expressionXSeq, kNewtonIrNodeType_Ptranscendental, n)) != NULL; n++)
 			{
 				IrNode* foundIdentifier = NULL;
-				for (int k = 0;  (foundIdentifier = findNthIrNodeOfType(N, found->irParent, kNewtonIrNodeType_Tidentifier, k)) != NULL; k++)			
+				for (int k = 0;  (foundIdentifier = findNthIrNodeOfType(N, found->irParent, kNewtonIrNodeType_Tidentifier, k)) != NULL; k++)
 				if (!foundIdentifier->physics->isConstant)
 				{
 					return false;
-				}				
+				}
 			}
 			// TODO: kNewtonIrNodeType_Tidentifier > 1 is linear ONLY for identifier*step
 		} break;
@@ -171,6 +171,17 @@ irPassEstimatorSynthesisExpressionLinear(State *  N, IrNode *  expressionXSeq) {
 	return true;
 }
 
+bool
+irPassEstimatorSynthesisInvariantLinear(State *  N, Invariant *  invariant)
+{
+	bool stillLinear = true;
+	for (IrNode *  constraintXSeq = invariant->constraints; stillLinear && (constraintXSeq != NULL); constraintXSeq = constraintXSeq->irRightChild)
+	{
+		stillLinear &= irPassEstimatorSynthesisExpressionLinear(N, L(constraintXSeq));
+		stillLinear &= irPassEstimatorSynthesisExpressionLinear(N, LRRL(constraintXSeq));
+	}
+	return stillLinear;
+}
 
 
 /*
@@ -239,7 +250,7 @@ irPassEstimatorSynthesisADAnnotate(State *  N, IrNode *  root, char * parentToke
 		case kNewtonIrNodeType_PquantityFactor:
 		{
 			if (root->irLeftChild->type == kNewtonIrNodeType_Ptranscendental)
-			{	
+			{
 				// TODO: RL(root) is a quantityExpression and is not assigned tokenString
 				irPassEstimatorSynthesisADAnnotate(N, RL(root), root->tokenString);
 			}
@@ -261,7 +272,7 @@ irPassEstimatorSynthesisADAnnotate(State *  N, IrNode *  root, char * parentToke
 				root->tokenString = malloc(needed);
 				snprintf(root->tokenString, needed, "%s_%d", parentTokenString, dUid++);
 			}
-			
+
 			IrNode * currXSeq = NULL;
 			dUid = 1;
 			for (currXSeq = root; currXSeq != NULL; currXSeq = currXSeq->irRightChild)
@@ -284,6 +295,10 @@ irPassEstimatorSynthesisADAnnotate(State *  N, IrNode *  root, char * parentToke
 			}
 		}
 		default:
+			/*
+			 *	Code relies on irrelevant cases (e.g. operators)
+			 *	hitting the default rule.
+			 */
 			break;
 	}
 }
@@ -349,6 +364,10 @@ irPassEstimatorSynthesisADGenExpressionSSA(State *  N, IrNode *  root)
 		}
 
 		default:
+			/*
+			 *	Code relies on irrelevant cases (e.g. operators)
+			 *	hitting the default rule.
+			 */
 			break;
 	}
 }
@@ -403,17 +422,30 @@ irPassEstimatorSynthesisADGenReverse(State *  N, IrNode *  root)
 					flexprint(N->Fe, N->Fm, N->Fpc, " * %s", root->irLeftChild->tokenString);
 				}
 
-				for (IrNode *  currXSeqOp = root->irRightChild; currXSeqOp != NULL; currXSeqOp = currXSeqOp->irRightChild->irRightChild)
+				/*
+				 *	Iterate over operators
+				 */
+				for (IrNode *  currXSeqOp = root->irRightChild; currXSeqOp != NULL; currXSeqOp = RR(currXSeqOp))
 				{
 					if (currXSeq == currXSeqOp->irRightChild)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, " * 1");
+						/*
+						 *	Derivation is w.r.t. R(currXSeqOp)
+						 */
+						if (LLL(currXSeqOp)->type == kNewtonIrNodeType_Tdiv) {
+							flexprint(N->Fe, N->Fm, N->Fpc, " * (-1/pow(%s, 2))", RL(currXSeqOp)->tokenString);
+						}
+						else
+						{
+							flexprint(N->Fe, N->Fm, N->Fpc, " * 1");
+						}
 					}
 					else
 					{
-						// TODO: Handle derivative of division
-						flexprint(N->Fe, N->Fm, N->Fpc, "%s%s", irPassCNodeToStr(N, currXSeqOp->irLeftChild->irLeftChild->irLeftChild),
-																   currXSeqOp->irRightChild->irLeftChild->tokenString);
+						/*
+						 *	R(currXSeqOp) is simply a factor.
+						 */
+						flexprint(N->Fe, N->Fm, N->Fpc, "%s%s", irPassCNodeToStr(N, LLL(currXSeqOp)), RL(currXSeqOp)->tokenString);
 					}
 				}
 				flexprint(N->Fe, N->Fm, N->Fpc, ";\n");
@@ -428,93 +460,93 @@ irPassEstimatorSynthesisADGenReverse(State *  N, IrNode *  root)
 		{
 			if (R(root) && RL(root)->type == kNewtonIrNodeType_PexponentiationOperator)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "double g%1$s = g%2$s * %3$s * pow(%1$s, %4$s)", L(root)->tokenString, root->tokenString, RRL(root)->value, RRL(root)->value - 1);
+				flexprint(N->Fe, N->Fm, N->Fpc, "double g%1$s = g%2$s * %3$d * pow(%1$s, %4$d);\n", L(root)->tokenString, root->tokenString, RRL(root)->integerValue, RRL(root)->integerValue - 1);
 				irPassEstimatorSynthesisADGenReverse(N, root->irLeftChild);
 			}
 			else if (root->irLeftChild->type == kNewtonIrNodeType_Ptranscendental)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s *", RL(root)->tokenString, root->tokenString);
+				flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s * ", RL(root)->tokenString, root->tokenString);
 				switch (LL(root)->type)
 				{
 					case kNewtonIrNodeType_Tsin:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "cos(%s);\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "cos(%s);\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Tcos:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "(-sin(%s));\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "(-sin(%s));\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Ttan:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "(1/(cos(%1$s)*cos(%1$s));\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "(1/(cos(%1$s)*cos(%1$s));\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Tcotan:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "((-sin(%1$s)*sin(%1$s)-cos(%1$s)*cos(%1$s))/(sin(%1$s)*sin(%1$s)));\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "((-sin(%1$s)*sin(%1$s)-cos(%1$s)*cos(%1$s))/(sin(%1$s)*sin(%1$s)));\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Tsec:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "(sin(%1$s/(cos(%1$s)*cos(%1$s)));\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "(sin(%1$s/(cos(%1$s)*cos(%1$s)));\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Tcosec:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "((-cos(%1$s)/(sin(%1$s)*sin(%1$s)));\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "((-cos(%1$s)/(sin(%1$s)*sin(%1$s)));\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Tarcsin:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "(1/sqrt(1 - %1$s*%1$s));\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "(1/sqrt(1 - %1$s*%1$s));\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Tarccos:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "(-1/sqrt(1 - %1$s*%1$s));\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "(-1/sqrt(1 - %1$s*%1$s));\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Tarctan:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "(1/(1 + %1$s*%1$s));\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "(1/(1 + %1$s*%1$s));\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Tarccotan:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "(-1/(1 + %1$s*%1$s));\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "(-1/(1 + %1$s*%1$s));\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Tarcsec:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "(1/(abs(%1$s)*sqrt(%1$s*%1$s - 1)));\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "(1/(abs(%1$s)*sqrt(%1$s*%1$s - 1)));\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Tarccosec:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "(-1/(abs(%1$s)*sqrt(%1$s*%1$s - 1)));\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "(-1/(abs(%1$s)*sqrt(%1$s*%1$s - 1)));\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Tsinh:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "cosh(%s);\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "cosh(%s);\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Tcosh:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "sinh(%s);\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "sinh(%s);\n", RL(root)->tokenString);
 						break;
 					}
 					case kNewtonIrNodeType_Ttanh:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "(1 - tanh(%1$s)*tanh(%1$s));\n", RL(root)->tokenString);	
+						flexprint(N->Fe, N->Fm, N->Fpc, "(1 - tanh(%1$s)*tanh(%1$s));\n", RL(root)->tokenString);
 						break;
 					}
 					default:
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, ";\n");	
-						flexprint(N->Fe, N->Fm, N->Fperr, "Unhandled transcendental case.\n");			
+						flexprint(N->Fe, N->Fm, N->Fpc, ";\n");
+						flexprint(N->Fe, N->Fm, N->Fperr, "Unhandled transcendental case.\n");
 						break;
 					}
 				}
@@ -525,7 +557,7 @@ irPassEstimatorSynthesisADGenReverse(State *  N, IrNode *  root)
 				flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s;\n", root->irLeftChild->tokenString, root->tokenString);
 				irPassEstimatorSynthesisADGenReverse(N, root->irLeftChild);
 			}
-			
+
 			break;
 		}
 
@@ -537,14 +569,14 @@ irPassEstimatorSynthesisADGenReverse(State *  N, IrNode *  root)
 			}
 			else
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "// %1$s is const, g%1$s undefined\n", irPassCNodeToStr(N, root->irLeftChild));
+				flexprint(N->Fe, N->Fm, N->Fpc, "// %1$s is a constant, g%1$s undefined\n", irPassCNodeToStr(N, root->irLeftChild));
 			}
 			break;
 		}
 
 		default:
 			/*
-			 *	Code relies on irrelevant cases (e.g. operators) 
+			 *	Code relies on irrelevant cases (e.g. operators)
 			 *	hitting the default rule.
 			 */
 			break;
@@ -613,14 +645,15 @@ irPassEstimatorSynthesisIsolateSymbolFactors(State *  N, IrNode *  ExpressionXSe
 	}
 	if (timesDetected > 1) {
 		// TODO: Actually handle factorisation
-		flexprint(N->Fe, N->Fm, N->Fperr, "Warning: Symbol %s detected in multiple terms.\n", stateVariableSymbol->identifier);
+		flexprint(N->Fe, N->Fm, N->Fperr, "Warning: Symbol \"%s\" detected in multiple terms.\n", stateVariableSymbol->identifier);
 	}
 
 	if (foundMatchingIrNode != NULL)
 	{
 		/*
-		 *	Remove identifier from sub-tree
-		 *	Hack: Substitute with identity element
+		 *	Remove identifier from sub-tree.
+		 *	Hack: Substitute with identity element.
+		 *	Problem: Mutates the tree.
 		 */
 		foundMatchingIrNode->type = kNewtonIrNodeType_TintegerConst;
 		foundMatchingIrNode->integerValue = 1;
@@ -632,7 +665,7 @@ irPassEstimatorSynthesisIsolateSymbolFactors(State *  N, IrNode *  ExpressionXSe
 			foundMatchingIrNode = foundMatchingIrNode->irParent;
 		}
 		addLeaf(N, symbolFactors, foundMatchingIrNode);
-		// TODO: Constant propagation
+		// TODO: Constant propagation. -- No. Let gcc/clang handle that.
 	}
 	return symbolFactors;
 }
@@ -694,10 +727,11 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
 	{
 		// IrNode *  leafLeftAST = constraintXSeq->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild;
-		// TODO: For multidimensional signals:
+		// TODO: Support for multi-dimensional signals.
 		// stateVariablePhysics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope, leafLeftAST->physics->identifier);
 		// int subdimensionLength = newtonPhysicsLength(stateVariablePhysics);
 		stateDimension++;
+		// TODO: Get uncertainty for each
 	}
 
 	constraintXSeq = NULL;
@@ -709,6 +743,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
 	{
 		measureDimension++;
+		// TODO: Get uncertainty for each
 	}
 
 	/*
@@ -721,7 +756,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	int counter = 0;
 	for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; counter++, constraintXSeq = constraintXSeq->irRightChild)
 	{
-		IrNode *  leafLeftAST = constraintXSeq->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild;
+		// IrNode *  leafLeftAST = constraintXSeq->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild;
+		IrNode *  leafLeftAST = LLL(LLL(constraintXSeq));
 
 		int	needed = snprintf(NULL, 0, "STATE_%s_%d", leafLeftAST->tokenString, 0) + 1;
 		stateVariableNames[counter] = malloc(needed);
@@ -737,7 +773,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	counter = 0;
 	for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; counter++, constraintXSeq = constraintXSeq->irRightChild)
 	{
-		IrNode *  leafLeftAST = constraintXSeq->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild;
+		// IrNode *  leafLeftAST = constraintXSeq->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild;
+		IrNode *  leafLeftAST = LLL(LLL(constraintXSeq));
 
 		int	needed = snprintf(NULL, 0, "MEASURE_%s_%d", leafLeftAST->tokenString, 0) + 1;
 		measureVariableNames[counter] = malloc(needed);
@@ -813,11 +850,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	/*
 	 *	Determine linearity of process model
 	 */
-	bool linearProcess = true;
-	for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
-	{
-		linearProcess &= irPassEstimatorSynthesisExpressionLinear(N, constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild);
-	}
+	bool linearProcess = irPassEstimatorSynthesisInvariantLinear(N, processInvariant);;
 
 	if (linearProcess == true)
 	{
@@ -832,15 +865,16 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; fRow++, constraintXSeq = constraintXSeq->irRightChild)
 		{
 			/*
-			 *	Find the Right Hand Side Expression of the constraint:
+			 *	Right Hand Side Expression of the constraint:
 			 *	RHSExpression = constraintlist-> constraint -> right hand side -> bypass comparison -> quantity expression
 			 */
-			IrNode *  RHSExpressionXSeq = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
+			IrNode *  RHSExpressionXSeq = LRRL(constraintXSeq);
 
 			flexprint(N->Fe, N->Fm, N->Fpc, "{ ");
 			for (int fColumn = 0; fColumn < stateDimension; fColumn++)
 			{
 				fMatrixIrNodes[fRow][fColumn] = irPassEstimatorSynthesisIsolateSymbolFactors(N, RHSExpressionXSeq, stateVariableSymbols[fColumn]);
+
 				if (fMatrixIrNodes[fRow][fColumn]->irRightChild == NULL &&
 					fMatrixIrNodes[fRow][fColumn]->irLeftChild == NULL) {
 					flexprint(N->Fe, N->Fm, N->Fpc, "( 0 ), ");
@@ -948,7 +982,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 				flexprint(N->Fe, N->Fm, N->Fpc, "// Original expression:\n");
 				flexprint(N->Fe, N->Fm, N->Fpc, "//");
 				irPassCConstraintTreeWalk(N, RHSExpression);
-				flexprint(N->Fe, N->Fm, N->Fpc, "\n\n"); 
+				flexprint(N->Fe, N->Fm, N->Fpc, "\n\n");
 
 				flexprint(N->Fe, N->Fm, N->Fpc, "double gw = 1;\n");
 
@@ -1158,18 +1192,14 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	/*
 	 *	Determine linearity of measurement model
 	 */
-	bool linearMeasurement = true;
-	for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
-	{
-		linearMeasurement &= irPassEstimatorSynthesisExpressionLinear(N, constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild);
-	}
+	bool linearMeasurement = irPassEstimatorSynthesisInvariantLinear(N, measureInvariant);
 
 	if (linearMeasurement == true)
 	{
 		/*
-		*	If linear:
-		*	Deduce measurement matrix H
-		*/
+		 *	If linear:
+		 *	Deduce measurement matrix H
+		 */
 		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterUpdate (CoreState *  cState, double Z[MEASURE_DIMENSION], double step) {\n");
 		IrNode * hMatrixIrNodes[measureDimension][stateDimension];
 		flexprint(N->Fe, N->Fm, N->Fpc, "double hMatrix[MEASURE_DIMENSION][STATE_DIMENSION] = \n");
@@ -1178,9 +1208,9 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; hRow++, constraintXSeq = constraintXSeq->irRightChild)
 		{
 			/*
-			*	Find the Right Hand Side Expression of the constraint:
-			*	RHSExpression = constraintlist-> constraint -> right hand side -> bypass comparison -> quantity expression
-			*/
+			 *	Find the Right Hand Side Expression of the constraint:
+			 *	RHSExpression = constraintlist-> constraint -> right hand side -> bypass comparison -> quantity expression
+			 */
 			IrNode *  RHSExpressionXSeq = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
 			flexprint(N->Fe, N->Fm, N->Fpc, "{ ");
 			for (int hColumn = 0; hColumn < stateDimension; hColumn++)
@@ -1217,7 +1247,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		 *	Create relation matrix
 		 *	Each measurement equation has its own row
 		 *	relating it to the state variables*.
-		 *	*Here: Mapping of measurementSymbols to stateVariableSymbols.
+		 *	*Here a mapping of measurementSymbols to stateVariableSymbols.
 		 */
 		bool relationMatrix[measureDimension][stateDimension];
 		counter = 0;
@@ -1277,11 +1307,11 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			{
 				IrNode *  RHSExpression = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
 				flexprint(N->Fe, N->Fm, N->Fpc, ", double Ji[STATE_DIMENSION])\n{\n");
-				
+
 				flexprint(N->Fe, N->Fm, N->Fpc, "// Original expression:\n");
 				flexprint(N->Fe, N->Fm, N->Fpc, "//");
 				irPassCConstraintTreeWalk(N, RHSExpression);
-				flexprint(N->Fe, N->Fm, N->Fpc, "\n\n"); 
+				flexprint(N->Fe, N->Fm, N->Fpc, "\n\n");
 
 				flexprint(N->Fe, N->Fm, N->Fpc, "double gw = 1;\n");
 				irPassEstimatorSynthesisGenAutoDiffExpression(N, RHSExpression, NULL, "w");
@@ -1299,8 +1329,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 				flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
 				/*
-				*	Generate derivative functions of h()
-				*/
+				 *	Generate derivative functions of h()
+				 */
 				for (int currDeriv = 0; currDeriv < stateDimension; currDeriv++)
 				{
 					if (relationMatrix[counter][currDeriv] == true)
