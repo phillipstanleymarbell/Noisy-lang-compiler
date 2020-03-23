@@ -59,7 +59,7 @@
 #include "common-irHelpers.h"
 #include "newton-types.h"
 
-#ifdef NoisyOsLinux
+#ifdef CommonOsLinux
 #	include <time.h>
 #endif
 
@@ -341,7 +341,7 @@ irPassDotAstPrintWalk(State *  N, IrNode *  irNode, char *  buf, int bufferLengt
 
 	if (L(irNode) == irNode || R(irNode) == irNode)
 	{
-		fatal(N, "Immediate cycle in Ir, seen noisyIrPassAstDotPrintWalk()!!\n");
+		fatal(N, "Immediate cycle in Ir, seen noisyIrPassAstDotPrintWalk()...\n");
 
 		/*
 		 *	Not reached
@@ -363,7 +363,7 @@ irPassDotAstPrintWalk(State *  N, IrNode *  irNode, char *  buf, int bufferLengt
 	{
 		if(astNodeStrings[irNode->type] == NULL)
 		{
-			fatal(N, "Unknown node type seen in noisyIrPassAstDotPrintWalk()!!\n");
+			fatal(N, "Unknown node type seen in noisyIrPassAstDotPrintWalk()...\n");
 		}
 
 		n2 = irPassDotAstDotFmt(N, &buf[n0+n1], bufferLength-(n0+n1), irNode, astNodeStrings);

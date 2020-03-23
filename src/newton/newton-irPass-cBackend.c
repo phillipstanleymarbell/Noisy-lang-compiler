@@ -66,8 +66,10 @@
 #include "newton-symbolTable.h"
 
 bool
-irPassCIsExpectedTypePresentInRightChild(IrNode *  parentNode, IrNodeType expectedType)
+irPassCIsExpectedTypePresentInRightChild(State *  N, IrNode *  parentNode, IrNodeType expectedType)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassCIsExpectedTypePresentInRightChild);
+
 	bool	isExpectedTypePresent = false;
 
 	if (parentNode->irRightChild == NULL)
@@ -84,8 +86,10 @@ irPassCIsExpectedTypePresentInRightChild(IrNode *  parentNode, IrNodeType expect
 }
 
 bool
-irPassCIsConstraintHumanWritten(IrNode *  parentNode)
+irPassCIsConstraintHumanWritten(State *  N, IrNode *  parentNode)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassCIsConstraintHumanWritten);
+
 	char *	checkString = NULL;
 	int	needed = snprintf(NULL, 0, "%s", parentNode->sourceInfo->fileName) + 1;
 	checkString = malloc(needed);
@@ -108,6 +112,8 @@ irPassCIsConstraintHumanWritten(IrNode *  parentNode)
 char *
 irPassCNodeToStr(State *  N, IrNode *  node)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassCNodeToStr);
+
 	char *	output = NULL;
 	switch(node->type)
 	{
@@ -179,6 +185,8 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 void
 irPassCSearchAndPrintNodeType(State *  N, IrNode *  root, IrNodeType expectedType, bool isLastParameter, int depthWalk)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassCSearchAndPrintNodeType);
+
 	if (root == NULL)
 	{
 		return;
@@ -238,6 +246,8 @@ irPassCSearchAndCreateArgList(State *  N, IrNode *  root, IrNodeType expectedTyp
 int
 irPassCCountRemainingParameters(State *  N, IrNode *  root, int depth)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassCCountRemainingParameters);
+
 	if (root == NULL)
 	{
 		return depth;
@@ -259,6 +269,8 @@ irPassCCountRemainingParameters(State *  N, IrNode *  root, int depth)
 void
 irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassCConstraintTreeWalk);
+
 	/*
 	 *	This branch should be reached for return.
 	 *	It completes a preorder tree traversal.
@@ -275,7 +287,7 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 	 *	operation in C. We therefore must use
 	 *	double pow( double para, double exponent)
 	 */
-	if (irPassCIsExpectedTypePresentInRightChild(root, kNewtonIrNodeType_PhighPrecedenceBinaryOp) == true)
+	if (irPassCIsExpectedTypePresentInRightChild(N, root, kNewtonIrNodeType_PhighPrecedenceBinaryOp) == true)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "pow(");
 		isleftBracketPrinted = true;
@@ -292,7 +304,6 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 		 */
 		if (isleftBracketPrinted == true && root->type == kNewtonIrNodeType_PnumericConst)
 		{
-			
 			flexprint(N->Fe, N->Fm, N->Fpc, ")");
 			isleftBracketPrinted = false;
 		}
@@ -315,14 +326,16 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 void
 irPassCGenFunctionBody(State *  N, IrNode *  constraint, bool isLeft)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassCGenFunctionBody);
+
 	/*
 	 *	Declare
-	 */	
+	 */
 	flexprint(N->Fe, N->Fm, N->Fpc, "{\n\tdouble calculatedValue = 0.0;\n");
 
 	/*
 	 *	Calculation
-	 */	
+	 */
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tcalculatedValue =");
 
 	if (isLeft == false)
@@ -348,6 +361,8 @@ irPassCGenFunctionBody(State *  N, IrNode *  constraint, bool isLeft)
 void
 irPassCGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassCGenFunctionArgument);
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "(");
 
 	IrNode *	constraintsXSeq;
@@ -378,7 +393,9 @@ irPassCGenFunctionArgument(State *  N, IrNode *  constraint, bool isLeft)
 void
 irPassCGenFunctionName(State *  N, IrNode *  constraints, int countFunction)
 {
-	if (irPassCIsConstraintHumanWritten(constraints))
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassCGenFunctionName);
+
+	if (irPassCIsConstraintHumanWritten(N, constraints))
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "double\nhumanWrittenConstraintRHS%d", countFunction);
 	}
@@ -392,6 +409,8 @@ irPassCGenFunctionName(State *  N, IrNode *  constraints, int countFunction)
 void
 irPassCProcessInvariantList(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassCProcessInvariantList);
+
 	/*
 	 *	Check if the file called is simply an include.nt
 	 */
@@ -622,6 +641,8 @@ irPassCProcessInvariantList(State *  N)
 void
 irPassCBackend(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassCBackend);
+
 	FILE *	cFile;
 
 	irPassCProcessInvariantList(N);

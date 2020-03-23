@@ -72,9 +72,9 @@
 
 extern unsigned long int	bigNumberOffset;
 extern int			primeNumbers[];
-extern const char *		gNewtonTokenDescriptions[];
-extern char *			gNewtonAstNodeStrings[];
-extern char *			gProductionDescriptions[];
+extern const char *		gNewtonTokenDescriptions[kCommonIrNodeTypeMax];
+extern const char *		gNewtonAstNodeStrings[kCommonIrNodeTypeMax];
+extern const char *		gProductionDescriptions[kCommonIrNodeTypeMax];
 extern int			gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax];
 extern int			gNewtonFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax];
 extern void			fatal(State *  N, const char *  msg);
@@ -92,6 +92,8 @@ static void			setPhysicsOfBaseNode(State *  N, IrNode *  baseNode, IrNode *  exp
 IrNode *
 newtonParse(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParse);
+
 	return newtonParseFile(N, currentScope);
 }
 
@@ -105,6 +107,8 @@ newtonParse(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseFile(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParseFile);
+
 	IrNode *	node = genIrNode(
 						N,
 						kNewtonIrNodeType_PnewtonDescription,
@@ -122,8 +126,8 @@ newtonParseFile(State *  N, Scope *  currentScope)
 
 	if (lexPeek(N, 1)->type != kNewtonIrNodeType_Zeof)
 	{
-		newtonParserSyntaxError(N, kNewtonIrNodeType_Zeof, kNewtonIrNodeTypeMax, gNewtonFollows);
-		newtonParserErrorRecovery(N, kNewtonIrNodeType_Zeof);
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PnewtonDescription, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PnewtonDescription);
 	}
 
 	/*
@@ -155,6 +159,8 @@ newtonParseFile(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseRuleList(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParseRuleList);
+
 	IrNode *	node = genIrNode(
 						N,
 						kNewtonIrNodeType_PruleList,
@@ -197,6 +203,8 @@ newtonParseRuleList(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseRule(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParseRule);
+
 	IrNode *	node;
 
 	currentScope->begin = lexPeek(N, 1)->sourceInfo;
@@ -260,6 +268,8 @@ newtonParseRule(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseConstant(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParseConstant);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PconstantDefinition,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -306,11 +316,9 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 		/*
 		 *	The actual `unit` node is in the left child of the unitFactor node
 		 */
-		//newtonPhysicsAddExponents(N, constantPhysics, unitFactorNode->irLeftChild->physics);
 		newtonPhysicsAddExponentsRecursively(N, constantPhysics, unitFactorNode);
 		addLeafWithChainingSeq(N, node, unitFactorNode);
-
-		node->irLeftChild->physics = deepCopyPhysicsNode(constantPhysics);
+		node->irLeftChild->physics = deepCopyPhysicsNode(N, constantPhysics);
 	}
 	else
 	{
@@ -320,6 +328,13 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 	}
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
+
+	if ((node->irLeftChild->physics != NULL) && (N->verbosityLevel & kCommonVerbosityDebugParser))
+	{
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\tConstant identifier \"%s\"\n", node->irLeftChild->physics->identifier);
+		printDimensionsOfNode(N, node->irLeftChild, N->Fpinfo);
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
+	}
 
 	/*
 	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
@@ -331,22 +346,20 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PconstantDefinition);
 	}
 	*/
-#ifdef CHATTY	
-	Dimension *tmpDimensionsNode;
-
-
-	if (node->irLeftChild->physics != NULL) {
+	
+  /*
+	Dimension * tmpDimensionsNode;
+	if (node->irLeftChild->physics != NULL)
+  {
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(Constant identifier is %s)\n", node->irLeftChild->physics->identifier);
 		
-		for (tmpDimensionsNode = node->irLeftChild->physics->dimensions; tmpDimensionsNode != NULL; tmpDimensionsNode = tmpDimensionsNode->next) {
-			
-			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(Unit is %s with exponent %f)\n", 
-				tmpDimensionsNode->name, tmpDimensionsNode->exponent);
-
+		for (tmpDimensionsNode = node->irLeftChild->physics->dimensions; tmpDimensionsNode != NULL; tmpDimensionsNode = tmpDimensionsNode->next)
+    {
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(Unit is %s with exponent %f)\n", tmpDimensionsNode->name, tmpDimensionsNode->exponent);
 		}
 	}
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "\n");
-#endif
+*/
 
 	return node;
 }
@@ -361,6 +374,8 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseInvariant(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParseInvariant);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PinvariantDefinition,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -435,6 +450,8 @@ newtonParseInvariant(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseSubindexTuple(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParseSubindexTuple);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsubdimensionTuple,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -486,6 +503,8 @@ newtonParseSubindexTuple(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseParameterTuple(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParseParameterTuple);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PparameterTuple,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -528,6 +547,8 @@ newtonParseParameterTuple(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseParameter(State *  N, Scope *  currentScope, int parameterNumber)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParseParameter);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pparameter,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -591,6 +612,8 @@ newtonParseParameter(State *  N, Scope *  currentScope, int parameterNumber)
 IrNode *
 newtonParseUnitExpression(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParseUnitExpression);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PunitExpression,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -623,6 +646,8 @@ newtonParseUnitExpression(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseUnitTerm(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParseUnitTerm);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PunitTerm,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -656,6 +681,8 @@ newtonParseUnitTerm(State *  N, Scope *  currentScope)
 static void
 setPhysicsOfBaseNode(State *  N, IrNode *  baseNode, IrNode *  exponent)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeySetPhysicsOfBaseNode);
+
 	/*
 	 *	This is not necessary, but keeping it since an earlier implementation
 	 *	(erroneously / pointlessly) set the value of the quantityExpression
@@ -670,7 +697,7 @@ setPhysicsOfBaseNode(State *  N, IrNode *  baseNode, IrNode *  exponent)
 	 *	One use case is noise for many sensors (e.g., accelerometers)
 	 *	which is derivation = 1E-6 * (acceleration / (frequency ** 0.5));
 	 */
-	if (!newtonIsDimensionless(baseNode->physics))
+	if (!newtonIsDimensionless(N, baseNode->physics))
 	{
 		/*
 		 *	TODO: get rid of this commented block during a future cleanup.
@@ -705,6 +732,8 @@ setPhysicsOfBaseNode(State *  N, IrNode *  baseNode, IrNode *  exponent)
 IrNode *
 newtonParseUnitFactor(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParseUnitFactor);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PunitFactor,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -760,6 +789,8 @@ newtonParseUnitFactor(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseUnit(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParseUnit);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Punit,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -798,6 +829,8 @@ newtonParseUnit(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseNumericExpression(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnumericExpression,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -852,6 +885,8 @@ newtonParseNumericExpression(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseNumericTerm(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnumericTerm,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -907,6 +942,8 @@ newtonParseNumericTerm(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseNumericFactor(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnumericFactor,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -976,6 +1013,8 @@ newtonParseNumericFactor(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseBaseSignal(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PbaseSignalDefinition,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -1037,6 +1076,7 @@ newtonParseBaseSignal(State *  N, Scope *  currentScope)
 
 	if (derivationExpression->type != kNewtonIrNodeType_Tnone)
 	{
+//fprintf(stderr, "in newtonParseBaseSignal(), about to set physics...\n");
 		newtonPhysicsAddExponents(N, newPhysics, derivationExpression->physics);
 
 /*
@@ -1113,6 +1153,8 @@ while (p != NULL)
 IrNode *
 newtonParseName(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnameStatement,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -1153,6 +1195,8 @@ newtonParseName(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseLanguageSetting(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PlanguageSetting,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -1193,6 +1237,8 @@ newtonParseLanguageSetting(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseSymbol(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsymbolStatement,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -1232,6 +1278,8 @@ newtonParseSymbol(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseDerivation(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PderivationStatement,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -1276,6 +1324,8 @@ newtonParseDerivation(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseTerminal(State *  N, IrNodeType expectedType, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (!peekCheck(N, 1, expectedType))
 	{
 		newtonParserSyntaxError(N, expectedType, expectedType, gNewtonFirsts);
@@ -1310,6 +1360,8 @@ newtonParseTerminal(State *  N, IrNodeType expectedType, Scope *  currentScope)
 IrNode *
 newtonParseIdentifier(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	n;
 
 	if (peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
@@ -1360,6 +1412,8 @@ newtonParseIdentifier(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseQuantityExpression(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKeyParseQuantityExpression);
+
 	IrNode *	expression = genIrNode(N,	kNewtonIrNodeType_PquantityExpression,
 							NULL /* left child */,
 							NULL /* right child */,
@@ -1382,7 +1436,7 @@ newtonParseQuantityExpression(State *  N, Scope *  currentScope)
 			addLeafWithChainingSeq(N, expression, operatorProductionNode);
 
 			/*
-			 *	Since the actual oeprator type node is somewhere in the left of the subtree, grab it
+			 *	Since the actual operator type node is somewhere in the left of the subtree, grab it
 			 */
 			IrNodeType	operatorType = getTypeFromOperatorSubtree(N, operatorProductionNode);
 
@@ -1405,6 +1459,11 @@ newtonParseQuantityExpression(State *  N, Scope *  currentScope)
 
 			if(!areTwoPhysicsEquivalent(N, leftTerm->physics, rightTerm->physics))
 			{
+				flexprint(N->Fe, N->Fm, N->Fperr, "LHS:\n");
+				printDimensionsOfNode(N, leftTerm, N->Fperr);
+				flexprint(N->Fe, N->Fm, N->Fperr, "RHS:\n");
+				printDimensionsOfNode(N, rightTerm, N->Fperr);
+
 				newtonParserSemanticError(N, kNewtonIrNodeType_PlowPrecedenceOperator, (char *)EexpressionPhysicsMismatch);
 				newtonParserErrorRecovery(N, kNewtonIrNodeType_PlowPrecedenceOperator);
 			}
@@ -1440,6 +1499,8 @@ newtonParseQuantityExpression(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	bool		hasUnary = false;
 	bool		hasNumberInTerm = false;
 	int		numVectorsInTerm = 0;
@@ -1477,9 +1538,10 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 		}
 	}
 
-	if (!newtonIsDimensionless(leftFactor->physics))
+	if (!newtonIsDimensionless(N, leftFactor->physics))
 	{
 		assert(leftFactor->physics != NULL);
+//fprintf(stderr, "in newtonParseQuantityTerm() case 1, about to set physics...\n");
 		newtonPhysicsAddExponents(N, intermediate->physics, leftFactor->physics);
 
 		/*
@@ -1500,7 +1562,7 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 		addLeafWithChainingSeq(N, intermediate, operatorProductionNode);
 
 		/*
-		 *	Since the actual oeprator type node is somewhere in the left of the subtree, grab it
+		 *	Since the actual operator type node is somewhere in the left of the subtree, grab it
 		 */
 		IrNodeType	operatorType = getTypeFromOperatorSubtree(N, operatorProductionNode);
 
@@ -1529,7 +1591,7 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 			}
 		}
 
-		if (!newtonIsDimensionless(rightFactor->physics) && rightFactor->physics->isVector)
+		if (!newtonIsDimensionless(N, rightFactor->physics) && rightFactor->physics->isVector)
 		{
 			intermediate->physics->isVector = true;
 			numVectorsInTerm++;
@@ -1542,17 +1604,18 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 			assert(numVectorsInTerm < 2);
 		}
 
-		if (!newtonIsDimensionless(rightFactor->physics) && (operatorType == kNewtonIrNodeType_Tmul))
+		if (!newtonIsDimensionless(N, rightFactor->physics) && (operatorType == kNewtonIrNodeType_Tmul))
 		{
+//fprintf(stderr, "in newtonParseCQuantityTerm() case 2, about to set physics...\n");
 			newtonPhysicsAddExponents(N, intermediate->physics, rightFactor->physics);
 		}
-		else if (!newtonIsDimensionless(rightFactor->physics) && (operatorType == kNewtonIrNodeType_Tdiv))
+		else if (!newtonIsDimensionless(N, rightFactor->physics) && (operatorType == kNewtonIrNodeType_Tdiv))
 		{
 			newtonPhysicsSubtractExponents(N, intermediate->physics, rightFactor->physics);
 		}
 		else
 		{
-			fprintf(stderr, "is this option valid?!");
+			//TODO: check: is this option valid?!
 		}
 	}
 
@@ -1588,6 +1651,8 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	intermediate = genIrNode(N, kNewtonIrNodeType_PquantityFactor,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -1709,6 +1774,8 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseQuantity(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	intermediate = genIrNode(N, kNewtonIrNodeType_Pquantity,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -1727,7 +1794,7 @@ newtonParseQuantity(State *  N, Scope *  currentScope)
 		/*
 		 *	TODO: This is odd. This is carried over from Jonathan's implementation. A deep copy from self to self makes no sense, and copying the physics->value makes no sense either. Check and remove in future --- PSM.
 		 */
-		identifierNode->physics = deepCopyPhysicsNode(identifierNode->physics);
+		identifierNode->physics = deepCopyPhysicsNode(N, identifierNode->physics);
 		identifierNode->value = identifierNode->physics->value;
 
 		/*
@@ -1752,7 +1819,7 @@ newtonParseQuantity(State *  N, Scope *  currentScope)
 		 *	TODO: This is carried over from Jonathan's implementation:
 		 *		Check if there's a matchable parameter corresponding the invariant parameter.
 		 */
-		if (!newtonIsDimensionless(identifierNode->physics) &&
+		if (!newtonIsDimensionless(N, identifierNode->physics) &&
 			!identifierNode->physics->isConstant &&
 			newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(N, N->newtonIrTopScope, identifierNode->tokenString) == NULL &&
 			newtonPhysicsTablePhysicsForDimensionAlias(N, N->newtonIrTopScope, identifierNode->tokenString) == NULL &&
@@ -1797,6 +1864,8 @@ newtonParseQuantity(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseFunctionalOperator(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PfunctionalOperator,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -1841,6 +1910,8 @@ newtonParseFunctionalOperator(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseVectorOp(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PvectorOp,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -1885,6 +1956,8 @@ newtonParseVectorOp(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseExponentiationOperator(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PexponentiationOperator,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -1925,6 +1998,8 @@ newtonParseExponentiationOperator(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseLowPrecedenceBinaryOp(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -1982,6 +2057,8 @@ newtonParseLowPrecedenceBinaryOp(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseUnaryOp(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2026,6 +2103,8 @@ newtonParseUnaryOp(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseCompareOp(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2085,6 +2164,8 @@ newtonParseCompareOp(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseHighPrecedenceBinaryOp(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2137,6 +2218,8 @@ newtonParseHighPrecedenceBinaryOp(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseLowPrecedenceOperator(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PlowPrecedenceOperator,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2181,6 +2264,8 @@ newtonParseLowPrecedenceOperator(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseHighPrecedenceOperator(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PhighPrecedenceOperator,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2225,6 +2310,8 @@ newtonParseHighPrecedenceOperator(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseHighPrecedenceQuantityOperator(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PhighPrecedenceQuantityOperator,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2274,6 +2361,8 @@ newtonParseHighPrecedenceQuantityOperator(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseConstraint(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pconstraint,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2321,6 +2410,8 @@ IrNode *
 newtonParseConstraintList(State *  N, Scope *  currentScope)
 
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PconstraintList,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2368,6 +2459,8 @@ newtonParseConstraintList(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseSensorDefinition(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsensorDefinition,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2419,6 +2512,8 @@ newtonParseSensorDefinition(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseSensorPropertyList(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsensorPropertyList,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2457,6 +2552,8 @@ newtonParseSensorPropertyList(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseSensorProperty(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsensorProperty,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2517,6 +2614,8 @@ newtonParseSensorProperty(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseSensorInterfaceStatement(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsensorInterfaceStatement,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2596,6 +2695,8 @@ newtonParseSensorInterfaceStatement(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseSensorInterfaceType(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsensorInterfaceType,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2644,6 +2745,8 @@ newtonParseSensorInterfaceType(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseSensorInterfaceCommandList(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsensorInterfaceCommandList,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2683,6 +2786,8 @@ newtonParseSensorInterfaceCommandList(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseSensorInterfaceCommand(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsensorInterfaceCommand,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2735,6 +2840,8 @@ newtonParseSensorInterfaceCommand(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseReadRegisterCommand(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PreadRegisterCommand,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2779,6 +2886,8 @@ newtonParseReadRegisterCommand(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseWriteRegisterCommand(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PwriteRegisterCommand,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2814,6 +2923,8 @@ newtonParseWriteRegisterCommand(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseDelayCommand(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PdelayCommand,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2847,6 +2958,8 @@ newtonParseDelayCommand(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseArithmeticCommand(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_ParithmeticCommand,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2881,6 +2994,8 @@ newtonParseArithmeticCommand(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseRangeStatement(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PrangeStatement,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2932,6 +3047,8 @@ newtonParseRangeStatement(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseUncertaintyStatement(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PuncertaintyStatement,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -2972,6 +3089,8 @@ newtonParseUncertaintyStatement(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseErasureValueStatement(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PerasureValueStatement,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -3012,6 +3131,8 @@ newtonParseErasureValueStatement(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseAccuracyStatement(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PaccuracyStatement,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -3047,6 +3168,8 @@ newtonParseAccuracyStatement(State *  N, Scope *  currentScope)
 IrNode *
 newtonParsePrecisionStatement(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PprecisionStatement,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -3082,6 +3205,8 @@ newtonParsePrecisionStatement(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseNumericConstTupleList(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnumericConstTupleList,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -3122,6 +3247,8 @@ newtonParseNumericConstTupleList(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseNumericConst(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnumericConst,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -3170,6 +3297,8 @@ newtonParseNumericConst(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseNumericConstTuple(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PnumericConstTuple,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -3212,6 +3341,8 @@ newtonParseNumericConstTuple(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseExpression(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pexpression,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -3250,6 +3381,8 @@ newtonParseExpression(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseTerm(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pterm,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -3300,6 +3433,8 @@ newtonParseTerm(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseFactor(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pfactor,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -3361,6 +3496,8 @@ newtonParseFactor(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseDistributionFactor(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PdistributionFactor,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -3394,6 +3531,8 @@ newtonParseDistributionFactor(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseParameterValueList(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PparameterValueList,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -3445,6 +3584,8 @@ newtonParseParameterValueList(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseDistribution(State *  N, Scope *  currentScope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Pdistribution,
 						NULL /* left child */,
 						NULL /* right child */,
@@ -3625,6 +3766,8 @@ newtonParseDistribution(State *  N, Scope *  currentScope)
 IrNode *
 newtonParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Scope *  scope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (!peekCheck(N, 1, expectedType))
 	{
 		newtonParserSyntaxError(N, expectedType, expectedType, gNewtonFirsts);
@@ -3671,6 +3814,8 @@ newtonParseIdentifierDefinitionTerminal(State *  N, IrNodeType  expectedType, Sc
 IrNode *
 newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope *  scope)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (!peekCheck(N, 1, expectedType))
 	{
 		newtonParserSyntaxError(N, expectedType, expectedType, gNewtonFirsts);
@@ -3735,7 +3880,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
 	}
 
-	n->physics = deepCopyPhysicsNode(physicsSearchResult);
+	n->physics = deepCopyPhysicsNode(N, physicsSearchResult);
 	assert(n->physics->dimensions != NULL);
 
 /*
@@ -3809,6 +3954,8 @@ while (p != NULL)
 IrNode *
 newtonParseFindNodeByPhysicsId(State *N, IrNode * root, int physicsId)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	Do DFS and find the node whose right child node has given identifier
 	 *	and return the left node's identifier
@@ -3850,6 +3997,8 @@ newtonParseFindNodeByPhysicsId(State *N, IrNode * root, int physicsId)
 IrNode *
 newtonParseFindNodeByParameterNumberAndSubindex(State *N, IrNode * root, int parameterNumber, int subindex)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (	root->type == kNewtonIrNodeType_Pparameter	&&
 		root->parameterNumber == parameterNumber	&&
 		root->physics != NULL				&&
@@ -3887,6 +4036,8 @@ newtonParseFindNodeByParameterNumberAndSubindex(State *N, IrNode * root, int par
 IrNode *
 newtonParseFindParameterByTokenString(State *N, IrNode * root, char* tokenString)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (root->type == kNewtonIrNodeType_Pparameter)
 	{
 		assert(root->irLeftChild != NULL && root->irRightChild != NULL);
@@ -3925,6 +4076,8 @@ newtonParseFindParameterByTokenString(State *N, IrNode * root, char* tokenString
 Physics *
 newtonParseGetPhysicsByBoundIdentifier(State *  N, IrNode * root, char* boundVariableIdentifier)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	Do DFS and find the node whose left child node has given identifier
 	 *	and return the right node's identifier
@@ -3973,6 +4126,8 @@ newtonParseGetPhysicsByBoundIdentifier(State *  N, IrNode * root, char* boundVar
 unsigned long long int
 newtonGetInvariantIdByParameters(State *  N, IrNode * parameterTreeRoot, unsigned long long int invariantId)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (parameterTreeRoot->type == kNewtonIrNodeType_Pparameter)
 	{
 		assert(parameterTreeRoot->physics->id != 0);
@@ -4000,6 +4155,8 @@ void newtonParseResetPhysicsWithCorrectSubindex(
 	char * identifier,
 	int subindex)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Physics *   physicsSearchResult = newtonPhysicsTablePhysicsForIdentifierAndSubindex(N, scope, identifier, subindex);
 
 	if (physicsSearchResult == NULL)
@@ -4016,7 +4173,7 @@ void newtonParseResetPhysicsWithCorrectSubindex(
 	/* 
 	 *	Defensive copying to keep the Physics list in State immutable 
 	 */
-	node->physics = deepCopyPhysicsNode(physicsSearchResult);
+	node->physics = deepCopyPhysicsNode(N, physicsSearchResult);
 	if (node->physics->dimensions == NULL)
 	{
 		fatal(N, Esanity);
@@ -4024,8 +4181,10 @@ void newtonParseResetPhysicsWithCorrectSubindex(
 }
 
 bool
-newtonIsDimensionless(Physics * physics)
+newtonIsDimensionless(State *  N, Physics *  physics)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (physics == NULL)
 	{
 		return true;
@@ -4058,6 +4217,8 @@ newtonIsDimensionless(Physics * physics)
 int
 newtonGetPhysicsId(State *  N, Physics * physics)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	return primeNumbers[N->primeNumbersIndex++];
 }
 
@@ -4081,13 +4242,15 @@ void
 newtonParserSyntaxAndSemanticPre(State *  N, IrNodeType currentlyParsingTokenOrProduction,
 	const char *  string1, const char *  string2, const char *  string3, const char *  string4)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n");
-	if (N->mode & kNewtonModeCGI)
+	if (N->mode & kCommonModeCGI)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "<b>");
 	}
 
-	if (N->mode & kNewtonModeCGI)
+	if (N->mode & kCommonModeCGI)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\t%s, line %d position %d, %s %s\"",
 						string1,
@@ -4132,7 +4295,9 @@ newtonParserSyntaxAndSemanticPre(State *  N, IrNodeType currentlyParsingTokenOrP
 void
 newtonParserSyntaxAndSemanticPost(State *  N)
 {
-	if (N->mode & kNewtonModeCGI)
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
+	if (N->mode & kCommonModeCGI)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "%s</b>", kNewtonErrorDetailHtmlTagClose);
 	}
@@ -4144,7 +4309,6 @@ void
 newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction, IrNodeType expectedProductionOrToken, int firstOrFollowsArray[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax])
 {
 	int		seen = 0;
-
 
 	TimeStampTraceMacro(kNewtonTimeStampKeyParserSyntaxError);
 
@@ -4185,6 +4349,8 @@ newtonParserSyntaxError(State *  N, IrNodeType currentlyParsingTokenOrProduction
 void
 newtonParserSemanticError(State *  N, IrNodeType currentlyParsingTokenOrProduction, char *  details)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	TimeStampTraceMacro(kNewtonTimeStampKeyParserSemanticError);
 	newtonParserSyntaxAndSemanticPre(N, currentlyParsingTokenOrProduction, EsemanticsA, EsemanticsB, details, EsemanticsD);
 	newtonParserSyntaxAndSemanticPost(N);

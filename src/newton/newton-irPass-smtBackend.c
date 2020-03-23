@@ -69,6 +69,8 @@
 void
 irPassSmtProcessPhysicsList(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Physics *	current = N->newtonIrTopScope->firstPhysics;
 	char *		lastPhysicsName = NULL;
 
@@ -120,6 +122,8 @@ irPassSmtProcessPhysicsList(State *  N)
 char *
 irPassSmtGenParameterName(State *  N, Invariant *  parentInvariant, IrNode *  parameter)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	Calling snprintf with second argument being 0 returns the actual
 	 *	length of the to-be-printed string, +1 as it is \0 terminated.
@@ -138,6 +142,8 @@ irPassSmtGenParameterName(State *  N, Invariant *  parentInvariant, IrNode *  pa
 char *
 irPassSmtGenNodeName(State *  N, Invariant *  parentInvariant, IrNode *  node)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	currentParameter = parentInvariant->parameterList;
 	char *		currentParameterName = NULL;
 	char *		output = NULL;
@@ -176,6 +182,8 @@ irPassSmtGenNodeName(State *  N, Invariant *  parentInvariant, IrNode *  node)
 char *
 irPassSmtNodeToStr(State *  N, Invariant *  parentInvariant, IrNode *  node)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	char *	output = NULL;
 	switch(node->type)
 	{
@@ -285,6 +293,8 @@ irPassSmtNodeToStr(State *  N, Invariant *  parentInvariant, IrNode *  node)
 void
 irPassSmtTreeWalk(State *  N, Invariant *  parentInvariant, IrNode *  root)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	char *	nodeString = irPassSmtNodeToStr(N, parentInvariant, root);
 
 	/*
@@ -349,6 +359,8 @@ irPassSmtTreeWalk(State *  N, Invariant *  parentInvariant, IrNode *  root)
 void
 irPassSmtDivisorWalk(State *  N, Invariant *  parentInvariant, IrNode *  root)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (root == NULL)
 	{
 		return;
@@ -371,6 +383,8 @@ irPassSmtDivisorWalk(State *  N, Invariant *  parentInvariant, IrNode *  root)
 void
 irPassSmtProcessConstraint(State *  N, Invariant *  parentInvariant, IrNode *  root)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	transformed = commonTreeTransform(N, root);
 
 	flexprint(N->Fe, N->Fm, N->Fpsmt2, "(assert ");
@@ -385,6 +399,8 @@ irPassSmtProcessConstraint(State *  N, Invariant *  parentInvariant, IrNode *  r
 void
 irPassDeclareParameters(State *  N, Invariant *  input)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	IrNode *	currentParameter = input->parameterList;
 
 	for (; currentParameter != NULL; currentParameter = currentParameter->irRightChild)
@@ -401,6 +417,8 @@ irPassDeclareParameters(State *  N, Invariant *  input)
 void
 irPassSmtProcessInvariant(State *  N, Invariant *  input)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	if (input->constraints == NULL)
 	{
 		return;
@@ -422,6 +440,8 @@ irPassSmtProcessInvariant(State *  N, Invariant *  input)
 void
 irPassSmtProcessInvariantList(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Invariant *	current = N->invariantList;
 
 	for (; current != NULL; current = current->next)
@@ -435,8 +455,9 @@ irPassSmtProcessInvariantList(State *  N)
 void
 irPassSmtBackend(State *  N)
 {
-	FILE *	smtFile;
+	TimeStampTraceMacro(kNewtonTimeStampKey);
 
+	FILE *	smtFile;
 
 	/*
 	 *	Heuristic

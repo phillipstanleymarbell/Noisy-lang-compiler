@@ -126,7 +126,10 @@ HEADERS		=\
 
 
 
-all: installhooks lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile examples
+all: installhooks common lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a target $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile examples
+
+common:
+	cd ../common && make SYSNAME=Noisy SYSNAMELOWER=noisy
 
 #
 #			Install the pre-commit hooks. There doesn't seem to be any other way to force people to install the hook when comitting on Noisy.
@@ -217,3 +220,4 @@ test:
 
 clean:
 	rm -rf version.c $(OBJS) $(CGIOBJS) $(LIBNOISYOBJS) $(TARGET) $(TARGET).dSYM $(CGI_TARGET) $(CGI_TARGET).dsym lib$(LIBNOISY)-$(OSTYPE)-$(NOISY_L10N).a *.o *.plist noisy.pb-c.c noisy.pb-c.h
+	cd ../common && make clean

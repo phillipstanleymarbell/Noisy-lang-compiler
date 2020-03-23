@@ -60,7 +60,7 @@ rhoDimension : signal =
 	derivation = distance/temperature;
 }
 
-ViolinForPiGroups: invariant(
+ViolinWithTemperatureDependenceForPiGroups: invariant(
 				T_param:	force,
 				L_param:	distance,
 				mu_param:	muDimension,

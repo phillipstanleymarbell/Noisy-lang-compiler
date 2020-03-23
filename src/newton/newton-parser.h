@@ -125,7 +125,7 @@ IrNode *		newtonParseVectorOp(State * N, Scope *  currentScope);
 IrNode *		newtonParseWriteRegisterCommand(State * N, Scope *  currentScope);
 
 
-bool			newtonIsDimensionless(Physics *  physics);
+bool			newtonIsDimensionless(State *  N, Physics *  physics);
 void 			newtonParseResetPhysicsWithCorrectSubindex(
 				State *  N,
 				IrNode *  node,

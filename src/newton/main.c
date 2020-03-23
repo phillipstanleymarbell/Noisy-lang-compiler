@@ -68,7 +68,7 @@ main(int argc, char *argv[])
 	State *		N;
 
 
-	N = init(kNoisyModeDefault);
+	N = init(kCommonModeDefault);
 	
 	if (N == NULL)
 	{
@@ -97,19 +97,20 @@ main(int argc, char *argv[])
 			{"optimize",		required_argument,	0,	'O'},
 			{"dmatrixannote",	no_argument,		0,	'm'},
 			{"pigroups",		no_argument,		0,	'p'},
-			{"pigroupsfrombody",		no_argument,	0,	'i'},
+			{"pigroupsfrombody",	no_argument,		0,	'i'},
 			{"kernelrowcanon",	no_argument,		0,	'c'},
 			{"pigroupsort",		no_argument,		0,	'r'},
 			{"pigroupdedup",	no_argument,		0,	'e'},
 			{"pikernelprinter",	no_argument,		0,	'P'},
 			{"pigrouptoast",	no_argument,		0,	'a'},
 			{"codegen",		required_argument,	0,	'g'},
+			{"latex",		no_argument,		0,	'x'},
 			{"RTLcodegen",		required_argument,	0,	'l'},
 			{"targetParam",		required_argument,	0,	'T'},
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpicl:rePapg:T:", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpicl:rePapg:xT:", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -179,17 +180,15 @@ main(int argc, char *argv[])
 
 			case 't':
 			{
-				N->mode |= kNoisyModeCallTracing;
-				N->mode |= kNoisyModeCallStatistics;
-				timestampsInit(N);
+				N->mode |= kCommonModeCallTracing;
+				N->mode |= kCommonModeCallStatistics;
 
 				break;
 			}
 
 			case 's':
 			{
-				N->mode |= kNoisyModeCallStatistics;
-				timestampsInit(N);
+				N->mode |= kCommonModeCallStatistics;
 
 				break;
 			}
@@ -202,13 +201,14 @@ main(int argc, char *argv[])
 					/*
 					 *	The verbosity bitmaps are:
 					 *
-					 *		kNoisyVerbosityAST
-					 *		kNoisyVerbosityFF
-					 *		kNoisyVerbosityLex
-					 *		kNoisyVerbosityParse
+					 *		...
+					 *		kCommonVerbosityDebugLexer
+					 *		kCommonVerbosityDebugParser
+					 *		kCommonVerbosityDebugAST
+					 *		...
 					 *
-					 *	TODO: This still needs to be decoupled from the original
-					 *	Noisy implementation.
+					 *	(See common/common-data-structures.h)
+					 *
 					 */
 
 					N->verbosityLevel = tmpInt;
@@ -232,7 +232,9 @@ main(int argc, char *argv[])
 				/*
 				 *	Implies the following (basic) passes:
 				 */
-				//...
+				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelRowCanonicalization;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroupSorted;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates;
 
 				uint64_t tmpInt = strtoul(optarg, &ep, 0);
 				if (*ep == '\0')
@@ -252,7 +254,6 @@ main(int argc, char *argv[])
 			case 'm':
 			{
 				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
-				timestampsInit(N);
 
 				break;
 			}
@@ -261,7 +262,6 @@ main(int argc, char *argv[])
 			{
 				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
-				timestampsInit(N);
 
 				break;
 			}
@@ -282,7 +282,6 @@ main(int argc, char *argv[])
 				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelRowCanonicalization;
-				timestampsInit(N);
 
 				break;
 			}
@@ -292,7 +291,6 @@ main(int argc, char *argv[])
 				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroupSorted;
-				timestampsInit(N);
 
 				break;
 			}
@@ -304,7 +302,6 @@ main(int argc, char *argv[])
 				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelRowCanonicalization;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroupSorted;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroupsWeedOutDuplicates;
-				timestampsInit(N);
 
 				break;
 			}
@@ -315,7 +312,6 @@ main(int argc, char *argv[])
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
 				N->irPasses |= KNewtonIrPassDimensionalMatrixConstantPi;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelPrinterFromBody;
-				timestampsInit(N);
 
 				break;
 			}
@@ -325,7 +321,6 @@ main(int argc, char *argv[])
 				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixConvertToList;
-				timestampsInit(N);
 
 				break;
 			}
@@ -342,6 +337,27 @@ main(int argc, char *argv[])
 			{
 				N->irBackends |= kNewtonIrBackendTargetParam;
 				N->targetParam = optarg;
+        
+        break;
+			}
+
+      case 'x':
+			{
+				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixKernelPrinter;
+				N->irBackends |= kNewtonIrBackendLatex;
+
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\documentclass{article}\n");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\usepackage{amsmath}\n");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\usepackage{amssymb}\n");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\usepackage[a0paper, portrait]{geometry}\n");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\usepackage{color}\n");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\definecolor{DarkSlateGray}{rgb}{0.1843,0.3098,0.3098}\n");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\definecolor{DeepSkyBlue}{rgb}{0,0.7490,1}\n");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\definecolor{DarkGreen}{rgb}{0,0.3922,0}\n");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\begin{document}\n");
+				flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\tiny\n");
 
 				break;
 			}
@@ -375,6 +391,10 @@ main(int argc, char *argv[])
 		}
 	}
 
+	if (N->mode & kCommonModeCallStatistics)
+	{
+		timestampsInit(N);
+	}
 
 	if (optind < argc)
 	{
@@ -400,7 +420,7 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	if (!(N->mode & kNoisyModeCGI))
+	if (!(N->mode & kCommonModeCGI))
 	{
 		consolePrintBuffers(N);
 	}
@@ -438,9 +458,10 @@ usage(State *  N)
 						"                | (--pikernelprinter, -P)                                    \n"
 						"                | (--pigrouptoast, -a)                                       \n"
 						"                | (--codegen <path to output file>, -g <path to output file>)\n"
-						"                | (--RTLcodegen <path to output file>, -r <path to output file>)\n"
+						"                | (--RTLcodegen <path to output file>, -l <path to output file>)\n"
 						"                | (--trace, -t)                                              \n"
 						"                | (--statistics, -s) ]                                       \n"
+						"                | (--latex, -x) ]                                            \n"
 						"                                                                             \n"
 						"              <filenames>\n\n", kNewtonL10N);
 }

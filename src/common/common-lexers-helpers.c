@@ -47,7 +47,12 @@
 #include "flexerror.h"
 #include "flex.h"
 #include "common-errors.h"
-#include "noisy-timeStamps.h"
+#ifdef VariantNoisy
+#	include "noisy-timeStamps.h"
+#endif
+#ifdef VariantNewton
+#	include "newton-timeStamps.h"
+#endif
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
 #include "common-lexers-helpers.h"
@@ -55,7 +60,7 @@
 void
 checkTokenLength(State *  N, int  count)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckTokenLength);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerCheckTokenLength);
 
 	if (N->currentTokenLength+count >= kCommonMaxBufferLength)
 	{
@@ -66,7 +71,7 @@ checkTokenLength(State *  N, int  count)
 char
 cur(State *  N)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCur);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerCur);
 
 	return N->lineBuffer[N->columnNumber];
 }
@@ -74,7 +79,7 @@ cur(State *  N)
 void
 gobble(State *  N, int count)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerGobble);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerGobble);
 
 	checkTokenLength(N, count);
 	strncpy(N->currentToken, &N->lineBuffer[N->columnNumber], count);
@@ -91,7 +96,7 @@ gobble(State *  N, int count)
 void
 done(State *  N, Token *  newToken)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerDone);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerDone);
 
 	newToken->sourceInfo = lexAllocateSourceInfo(N,	NULL						/*	genealogy	*/,
 								N->fileName				/*	fileName 	*/,
@@ -107,7 +112,7 @@ done(State *  N, Token *  newToken)
 bool
 eqf(State *  N)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerEqf);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerEqf);
 
 	return (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '=');
 }
@@ -117,7 +122,7 @@ eqf(State *  N)
 bool
 isDecimal(State *  N, char *  string)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimal);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerIsDecimal);
 
 	if (string == NULL)
 	{
@@ -140,7 +145,7 @@ isDecimal(State *  N, char *  string)
 char *
 stringAtLeft(State *  N, char *  string, char character)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerStringAtLeft);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerStringAtLeft);
 
 	if (string == NULL)
 	{
@@ -172,7 +177,7 @@ stringAtLeft(State *  N, char *  string, char character)
 char *
 stringAtRight(State *  N, char *  string, char character)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerStringAtRight);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerStringAtRight);
 
 	if (string == NULL)
 	{
@@ -193,7 +198,7 @@ stringAtRight(State *  N, char *  string, char character)
 bool
 isDecimalSeparatedWithChar(State *  N, char *  string, char  character)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerIsDecimalSeparatedWithChar);
 
 	if (string == NULL)
 	{
@@ -227,7 +232,7 @@ isDecimalSeparatedWithChar(State *  N, char *  string, char  character)
 bool
 isDecimalOrRealSeparatedWithChar(State *  N, char *  string, char  character)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsDecimalSeparatedWithChar);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerIsDecimalSeparatedWithChar);
 
 	if (string == NULL)
 	{
@@ -260,7 +265,7 @@ isDecimalOrRealSeparatedWithChar(State *  N, char *  string, char  character)
 bool
 isRadixConst(State *  N, char *  string)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsRadixConst);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerIsRadixConst);
 
 	if (string == NULL || !strchr(string, 'r'))
 	{
@@ -288,7 +293,7 @@ isRadixConst(State *  N, char *  string)
 bool
 isHexConstWithoutLeading0x(State *  N, char *  string)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsHexConstWithoutLeading0x);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerIsHexConstWithoutLeading0x);
 
 	for (int i = 0; i < strlen(string); i++)
 	{
@@ -305,7 +310,7 @@ isHexConstWithoutLeading0x(State *  N, char *  string)
 bool
 isRealConst(State *  N, char *  string)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsRealConst);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerIsRealConst);
 
 	if (string == NULL || !strchr(string, '.'))
 	{
@@ -319,7 +324,7 @@ isRealConst(State *  N, char *  string)
 bool
 isEngineeringRealConst(State *  N, char *  string)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerIsEngineeringRealConst);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerIsEngineeringRealConst);
 
 	if (string == NULL || (!strchr(string, 'e') && !strchr(string, 'E')))
 	{
@@ -333,7 +338,7 @@ isEngineeringRealConst(State *  N, char *  string)
 uint64_t
 stringToRadixConst(State *  N, char *  string)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerStringToRadixConst);
+	TimeStampTraceMacro(kNCommonTimeStampKeyLexerStringToRadixConst);
 
 	char		tmp;
 	char *		ep = &tmp;
@@ -421,7 +426,7 @@ stringToRadixConst(State *  N, char *  string)
 double
 stringToRealConst(State *  N, char *  string)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerStringToRealConst);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerStringToRealConst);
 
 	char		tmp;
 	char *		ep = &tmp;
@@ -444,7 +449,7 @@ stringToRealConst(State *  N, char *  string)
 double
 stringToEngineeringRealConst(State *  N, char *  string)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexerStringToEngineeringRealConst);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexerStringToEngineeringRealConst);
 
 	char		engineeringChar;
 	char *		left;
@@ -485,7 +490,7 @@ SourceInfo *
 lexAllocateSourceInfo(	State *  N, char **  genealogy, char *  fileName,
 				uint64_t lineNumber, uint64_t columnNumber, uint64_t length)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexAllocateSourceInfo);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexAllocateSourceInfo);
 
 	SourceInfo *	newSourceInfo;
 
@@ -510,7 +515,7 @@ lexAllocateToken(	State *  N, IrNodeType type, char *  identifier,
 			int64_t integerConst, double realConst, char * stringConst,
 			SourceInfo *  sourceInfo)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexAllocateToken);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexAllocateToken);
 
 	Token *	newToken;
 
@@ -535,7 +540,7 @@ lexAllocateToken(	State *  N, IrNodeType type, char *  identifier,
 void
 lexPut(State *  N, Token *  newToken)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexPut);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexPut);
 
 	if (newToken == NULL)
 	{
@@ -559,9 +564,9 @@ lexPut(State *  N, Token *  newToken)
 
 
 Token *
-lexGet(State *  N, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
+lexGet(State *  N, const char *tokenDescriptionArray[kCommonIrNodeTypeMax])
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexGet);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexGet);
 
 	if (N->tokenList == NULL)
 	{
@@ -574,7 +579,7 @@ lexGet(State *  N, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
 	{
 		N->tokenList = N->tokenList->next;
 	}
-	else if (t->type != kNoisyIrNodeType_Zeof)
+	else if ((t->type != kNewtonIrNodeType_Zeof) && (t->type != kNoisyIrNodeType_Zeof))
 	{
 		fatal(N, Esanity);
 	}
@@ -591,7 +596,7 @@ lexGet(State *  N, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax])
 Token *
 lexPeek(State *  N, int lookAhead)
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexPeek);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexPeek);
 
 	if (N->tokenList == NULL)
 	{
@@ -605,6 +610,15 @@ lexPeek(State *  N, int lookAhead)
 		tmp = tmp->next;
 	}
 
+	/*
+	 *	We don't intend for callers to check if the result of lexPeek is NULL
+	 *	as it should only be used when lexPeek should never result in NULL 
+	 */
+	if (tmp == NULL)
+	{
+		fatal(N, Esanity);
+	}
+
 	return tmp;
 }
 
@@ -612,29 +626,33 @@ lexPeek(State *  N, int lookAhead)
 void
 lexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexPrintToken);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexPrintToken);
 
 	switch (t->type)
 	{
 		case kNoisyIrNodeType_Tidentifier:
+		case kNewtonIrNodeType_Tidentifier:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, "\"%s\"", t->identifier);
 			break;
 		}
 
 		case kNoisyIrNodeType_TintegerConst:
+		case kNewtonIrNodeType_TintegerConst:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, "\"%d\"", t->integerConst);
 			break;
 		}
 
 		case kNoisyIrNodeType_TrealConst:
+		case kNewtonIrNodeType_TrealConst:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, "\"%f\"", t->realConst);
 			break;
 		}
 
 		case kNoisyIrNodeType_TstringConst:
+		case kNewtonIrNodeType_TstringConst:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, "\"%s\"", t->stringConst);
 			break;
@@ -648,8 +666,8 @@ lexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 			}
 			else
 			{
-				flexprint(N->Fe, N->Fm, N->Fperr, ">>>Unhandled IR node type [%d] in lexPrintToken (code is still specific to Noisy).<<<", t->type);
-				//fatal(N, Esanity);
+				flexprint(N->Fe, N->Fm, N->Fperr, ">>>Unhandled IR node type [%d] in lexPrintToken", t->type);
+				fatal(N, Esanity);
 			}
 		}
 	}
@@ -658,31 +676,35 @@ lexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 void
 lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexDebugPrintToken);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexDebugPrintToken);
 
 	flexprint(N->Fe, N->Fm, N->Fperr, "Token %30s: ", tokenDescriptionArray[t->type]);
 
 	switch (t->type)
 	{
 		case kNoisyIrNodeType_Tidentifier:
+		case kNewtonIrNodeType_Tidentifier:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, "\"%20s\", ", t->identifier);
 			break;
 		}
 
 		case kNoisyIrNodeType_TintegerConst:
+		case kNewtonIrNodeType_TintegerConst:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, "\"%20d\", ", t->integerConst);
 			break;
 		}
 
 		case kNoisyIrNodeType_TrealConst:
+		case kNewtonIrNodeType_TrealConst:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, "\"%20f\", ", t->realConst);
 			break;
 		}
 
 		case kNoisyIrNodeType_TstringConst:
+		case kNewtonIrNodeType_TstringConst:
 		{
 			flexprint(N->Fe, N->Fm, N->Fperr, "\"%20s\", ", t->stringConst);
 			break;
@@ -696,13 +718,13 @@ lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 			}
 			else
 			{
-				flexprint(N->Fe, N->Fm, N->Fperr, ">>>Unhandled IR node type [%d] in lexPrintToken (code is still specific to Noisy).<<<", t->type);
-				//fatal(N, Esanity);
+				flexprint(N->Fe, N->Fm, N->Fperr, "Unhandled IR node type [%d] in lexPrintToken.", t->type);
+				fatal(N, Esanity);
 			}
 		}
 	}
 
-	if (N->mode & kNoisyModeCGI)
+	if (N->mode & kCommonModeCGI)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "line %3d, position %3d, length %3d\n",
 			t->sourceInfo->lineNumber, t->sourceInfo->columnNumber, t->sourceInfo->length);
@@ -717,7 +739,7 @@ lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[])
 void
 lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenDescriptionArray[])
 {
-	TimeStampTraceMacro(kNoisyTimeStampKeyLexPeekPrint);
+	TimeStampTraceMacro(kCommonTimeStampKeyLexPeekPrint);
 
 	if (N->tokenList == NULL)
 	{
@@ -727,7 +749,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 	int		tripCharacters = 0, done = 0;
 	Token *	tmp = N->tokenList;
 
-	if (N->mode & kNoisyModeCGI)
+	if (N->mode & kCommonModeCGI)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\tline %5d, token %3d\t", tmp->sourceInfo->lineNumber, tmp->sourceInfo->columnNumber);
 	}
@@ -816,8 +838,8 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 					}
 					else
 					{
-						flexprint(N->Fe, N->Fm, N->Fperr, ">>>Unhandled IR node type [%d] in lexPrintToken (code is still specific to Noisy).<<<", tmp->type);
-						//fatal(N, Esanity);
+						flexprint(N->Fe, N->Fm, N->Fperr, "Unhandled IR node type [%d] in lexPrintToken.", tmp->type);
+						fatal(N, Esanity);
 					}
 				}
 			}
@@ -827,7 +849,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 				//flexprint(N->Fe, N->Fm, N->Fperr, "(newlines)");
 				tripCharacters = 0;
 
-				if (N->mode & kNoisyModeCGI)
+				if (N->mode & kCommonModeCGI)
 				{
 					flexprint(N->Fe, N->Fm, N->Fperr, "\n\tline %5d\t\t", tmp->next->sourceInfo->lineNumber);
 				}
@@ -839,7 +861,7 @@ lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenD
 			else if (tripCharacters >= formatCharacters)
 			{
 				tripCharacters = 0;
-				if (N->mode & kNoisyModeCGI)
+				if (N->mode & kCommonModeCGI)
 				{
 					flexprint(N->Fe, N->Fm, N->Fperr, "\n\t\t\t\t");
 				}

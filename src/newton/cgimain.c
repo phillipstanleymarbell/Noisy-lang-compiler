@@ -83,7 +83,7 @@
 #include "newton-irPass-dimensionalMatrixKernelPrinter.h"
 #include "newton-dimension-prescan.h"
 
-extern char *			gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
+extern char *			gNewtonAstNodeStrings[kCommonIrNodeTypeMax];
 
 static const char		kNewtonCgiInputLogStub[]	= "XXXXXXXXXX";
 static const char		kNewtonCgiInputLogExtension[]	= ".nt";
@@ -372,8 +372,8 @@ main(void)
 	sigaction(SIGVTALRM, &sa, NULL);
 
 
-	newtonCgiState = init(kNewtonModeDefault|kNewtonModeCallStatistics/* | kNewtonModeCallTracing */|kNewtonModeCGI);
-	newtonCgiDimensionsState = init(kNewtonModeDefault|kNewtonModeCallStatistics/* | kNewtonModeCallTracing */|kNewtonModeCGI);
+	newtonCgiState = init(kCommonModeDefault|kCommonModeCallStatistics/* | kCommonModeCallTracing */|kCommonModeCGI);
+	newtonCgiDimensionsState = init(kCommonModeDefault|kCommonModeCallStatistics/* | kCommonModeCallTracing */|kCommonModeCGI);
 	timestampsInit(newtonCgiState);
 
 
@@ -621,7 +621,7 @@ main(void)
 	 *	Log the input to a file; mkstemps() require the stub to be
 	 *	writeable.
 	 */
-	snprintf(logFileStub, kCommonMaxFilenameLength, "%sinput-%s-%s.nt", kNewtonBasePath, getenv("REMOTE_ADDR"), kNewtonCgiInputLogStub);
+	snprintf(logFileStub, kCommonMaxFilenameLength, "%sinput-%s-%s.nt", kCommonBasePath, getenv("REMOTE_ADDR"), kNewtonCgiInputLogStub);
 	logFd = mkstemps(logFileStub, strlen(kNewtonCgiInputLogExtension));
 	if (logFd == -1)
 	{
@@ -719,7 +719,6 @@ main(void)
 		{
 			irPassDimensionalMatrixPiGroups(newtonCgiState);
 		}
-
 		if (newtonCgiState->irPasses & kNewtonIrPassDimensionalMatrixKernelRowCanonicalization)
 		{
 			irPassDimensionalMatrixKernelRowCanonicalization(newtonCgiState);
@@ -749,12 +748,12 @@ main(void)
 			printToFile(newtonCgiState, irPassDotBackend(newtonCgiState, newtonCgiState->newtonIrTopScope, newtonCgiState->newtonIrRoot, gNewtonAstNodeStrings), "tmpdot", kCommonPostFileWriteActionRenderDot);
 		}
 
-		if (newtonCgiState->mode & kNewtonModeCallTracing)
+		if (newtonCgiState->mode & kCommonModeCallTracing)
 		{
 			timeStampDumpTimeline(newtonCgiState);
 		}
 
-		if (newtonCgiState->mode & kNewtonModeCallStatistics)
+		if (newtonCgiState->mode & kCommonModeCallStatistics)
 		{
 			uint64_t	irNodeCount = 0, symbolTableNodeCount;
 
@@ -844,6 +843,7 @@ doTail(int fmtWidth, int cgiSparameter, int cgiOparameter, int cgiTparameter)
 	printf("<textarea NAME=\"c\" name=\"data-editor\" data-editor=\"newton\" COLS=1 ROWS=1>\n");
 	printf("%s", newtonCodeBuffer);
 	printf("</textarea>\n");
+	printf("(<b>vi key bindings</b> for the text editor above)<p>\n");
 
 	printf("<div style=\"background-color:#EEEEEE; color:444444; padding:3px;\">\n");
 	printf("&nbsp;&nbsp;(Newton/%" PRIu64 

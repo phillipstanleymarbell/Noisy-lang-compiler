@@ -67,8 +67,10 @@
 #include "newton-symbolTable.h"
 
 char *
-irPassSearchParameterListTokenString(IrNode *  root, char *  parameterLabel)
+irPassSearchParameterListTokenString(State *  N, IrNode *  root, char *  parameterLabel)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	Walk through the parameterTuple sub-tree.
 	 *	When the label string matches the one stored in rightChild of a Pparameter
@@ -81,7 +83,7 @@ irPassSearchParameterListTokenString(IrNode *  root, char *  parameterLabel)
 		return root->irLeftChild->irLeftChild->tokenString;
 	}
 
-	return irPassSearchParameterListTokenString(root->irRightChild, parameterLabel);
+	return irPassSearchParameterListTokenString(N, root->irRightChild, parameterLabel);
 }
 
 void
@@ -89,6 +91,8 @@ irPassGenLoopsInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *
 				int **  row, int **  col, int ***  rowIndependent, int ***  colIndependent,
 				int kernel, int whichParameter, int whichIndependentParameter)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	TODO: This function should ideally be compressed for a better 'hygiene'
 	 *	since most of the time it is doing some genIrNode() loops
@@ -116,7 +120,7 @@ irPassGenLoopsInRightExpression(State *  N, IrNode *  newNodeQTerm, SourceInfo *
 				NULL,
 				NULL,
 				genSrcInfo);
-	newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N->invariantList->parameterList,
+	newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N, N->invariantList->parameterList,
 						N->invariantList->canonicallyReorderedLabels[kernel][rowIndependent[kernel][whichParameter][whichIndependentParameter]]);
 	addLeaf(N, newNodeQFactor, newNodeIdentifier);
 
@@ -174,6 +178,8 @@ IrNode *
 irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoop, bool isLeft,
 			int **  row, int **  col, int ***  rowIndependent, int ***  colIndependent, int kernel, int whichParameter)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	TODO: This function should ideally be compressed for a better 'hygiene'
 	 *	since most of the time it is doing some genIrNode() loops
@@ -223,12 +229,12 @@ irPassGenExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int co
 				genSrcInfo);
 	if(isLeft == true)
 	{
-		newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N->invariantList->parameterList, 
+		newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N, N->invariantList->parameterList, 
 							N->invariantList->canonicallyReorderedLabels[kernel][row[kernel][whichParameter]]);
 	}
 	else
 	{
-		newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N->invariantList->parameterList, 
+		newNodeIdentifier->tokenString = irPassSearchParameterListTokenString(N, N->invariantList->parameterList, 
 							N->invariantList->canonicallyReorderedLabels[kernel][rowIndependent[kernel][whichParameter][0]]);
 	}
 
@@ -318,6 +324,8 @@ void
 irPassGenInvariantPiGroupsExpression(State *  N, IrNode *  node, SourceInfo *  genSrcInfo, int countLoop,
 				int **  row, int **  col, int *** rowIndependent, int *** colIndependent, int kernel, int whichParameter)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	/*
 	 *	After identifying the dependent variable, we assign the corresponding
 	 *	pi consisting the parameter in question to the proportionality equation.
@@ -358,6 +366,8 @@ irPassGenInvariantPiGroupsExpression(State *  N, IrNode *  node, SourceInfo *  g
 void
 irPassDimensionalMatrixConvertToList(State *  N)
 {
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
 	Invariant *	invariant = N->invariantList;
 	IrNode *	node;
 

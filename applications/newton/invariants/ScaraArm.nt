@@ -1,0 +1,97 @@
+#
+#	Authored 2020, Marcus Pirron.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description: Invariants for a sensor-instrumented reactor.
+#
+include "NewtonBaseSignals.nt"
+
+torque : signal =
+{
+	name		= "Newtonmeter" English;
+	symbol		= Nm;
+	derivation	= force * distance;
+}
+
+E_1	: constant = 1900000 (N * m **-2);
+E_2	: constant = 1900000 (N * m **-2);
+w	: constant = 0.005 m;
+h	: constant = 0.05 m;
+I	: constant = (1/12) (w * h ** 3 * m ** 4);
+L_1	: constant = 5 m;
+L_2	: constant = 5 m;
+
+beam_1 : invariant(d_1: distance@0, P_1: force) =
+{
+	d_1 ~ (P_1 * L_1 / (3 * E_1 * I))
+}
+
+beam_2 : invariant(d_2: distance@0, P_2: force) =
+{
+	d_2 ~ (P_2 * L_2 / (3 * E_2 * I))
+}
+
+#
+#	Needs length of Beam 1 for τ₁
+#
+revolute_joint_1: invariant(t_f: angle, P_1: force, r_1: distance, M_1:
+torque)=
+{
+	#
+	#	Transcendentals are not really supported in the grammar.
+	#
+	M_1 ~ r_1 * P_1 #* sin( t_f )
+}
+
+#
+#	Needs length of Beam 2 for τ₂
+#
+revolute_joint_2: invariant(t_2: angle, P_2: force, r_2: distance, M_2:
+torque)=
+{
+	M_2 ~ r_2 * P_2 #* sin( t_2 )
+}
+
+#
+#	Invariant for position, orientation and force(?)
+#
+endeffector_1: invariant(d1: distance, x: distance, x_0: distance, y: distance, y_0: distance, z: distance, z_0: distance, t_1: angle, t2: angle, mForce: force, F: force)=
+{
+	x ~ x_0 + d1,			#*cos(t_1) + d2*cos(t_1+t_2),
+	y ~ y_0 + d1,			#*sin(t_1) + d2*sin(t_1+t_2),
+	z ~ z_0,
+	F ~ (x**2+y**2+z**2)**(1/2) * mForce	#* ( pi/2-arctan(y/x) ),
+}

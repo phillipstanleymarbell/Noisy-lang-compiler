@@ -46,11 +46,11 @@ Physics *	newtonPhysicsTablePhysicsForDimensionAlias(State *  N, Scope *  scope,
 Physics *	newtonPhysicsTablePhysicsForDimensionAliasAbbreviation(State *  N, Scope *  scope, const char * dimensionAliasAbbreviation);
 Physics *	newtonPhysicsTableAddPhysics(State *  N, Scope *  scope);
 Physics *	newtonPhysicsTableCopyAndAddPhysics(State *  N, Scope *  scope, Physics *  source);
-Physics *	deepCopyPhysicsNode(Physics *  node);
-Physics *	shallowCopyPhysicsNode(Physics *  node);
-Physics *	getTailPhysics(Physics *  list);
-IntegralList *	getTailIntegralList(IntegralList *  list);
-int		countNumberTime(Dimension *  head);
+Physics *	deepCopyPhysicsNode(State *  N, Physics *  node);
+Physics *	shallowCopyPhysicsNode(State *  N, Physics *  node);
+Physics *	getTailPhysics(State *  N, Physics *  list);
+IntegralList *	getTailIntegralList(State *  N, IntegralList *  list);
+int		countNumberTime(State *  N, Dimension *  head);
 void		newtonPhysicsIncrementExponent(State *  N, Physics *  source, Dimension *  added);
 void		newtonPhysicsAddExponents(State *  N, Physics *  left, Physics *  right);
 void		newtonPhysicsAddExponentsRecursively(State *  N, Physics *  baseNode, IrNode * treeRoot);

@@ -42,9 +42,10 @@ typedef struct
 } TimeStamp;
 
 
-#ifdef NoisyOsMacOSX
-#include <mach/mach.h>
-#include <mach/mach_time.h>
+#ifdef CommonOsMacOSX
+#	include <mach/mach.h>
+#	include <mach/mach_time.h>
+#endif /* CommonOsMacOSX */
 
 /*
  *	NOTE: The final N->callAggregateTotal and N->timestampCount won't match
@@ -55,9 +56,20 @@ typedef struct
  *	lets us validate our DTrace setup, while also providing a quick statistics in
  *	a self-contained mechanism.
  */
-#define TimeStampTraceMacro(routineKey)		if (N->mode & kNoisyModeCallStatistics)\
+#ifdef CommonOsMacOSX
+#	define TimeMacro mach_absolute_time()
+#else
+#	define TimeMacro 0
+#endif /* CommonOsMacOSX */
+
+#define TimeStampTraceMacro(routineKey)		if (N->mode & kCommonModeCallStatistics)\
 						{\
-							uint64_t	now = mach_absolute_time();\
+							if (((routineKey) >= kCommonTimeStampKeyMax) || ((routineKey) < 0))\
+							{\
+								fatal(N, Esanity);\
+							}\
+							\
+							uint64_t	now = TimeMacro;\
 							\
 							N->timestamps[N->timestampCount].nanoseconds = now;\
 							N->timestamps[N->timestampCount].key = (routineKey);\
@@ -71,13 +83,8 @@ typedef struct
 							N->timeAggregatesLastKey = (routineKey);\
 							N->timeAggregatesLastTimestamp = now;\
 							N->timestampCount = (N->timestampCount + 1) % N->timestampSlots;\
-							\
-							N->callAggregates[routineKey]++;\
+							N->callAggregates[(routineKey)]++;\
 							N->callAggregateTotal++;\
 						}\
 
-#else
-#define TimeStampTraceMacro(routineKey) 
-#endif /* #ifdef NoisyOsMacOSX */
-
-extern const char *     TimeStampKeyStrings[kCommonTimeStampKeyMax];
+extern const char *	TimeStampKeyStrings[kCommonTimeStampKeyMax];
