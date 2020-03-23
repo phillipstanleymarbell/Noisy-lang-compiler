@@ -347,7 +347,7 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 	}
 	*/
 	
-/*
+  /*
 	Dimension * tmpDimensionsNode;
 	if (node->irLeftChild->physics != NULL)
   {

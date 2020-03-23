@@ -687,6 +687,7 @@ typedef enum
 	kNewtonIrBackendSmt				= (1 << 2),
 	kNewtonIrBackendC				= (1 << 3),
 	kNewtonIrBackendRTL				= (1 << 4),
+	kNewtonIrBackendTargetParam		= (1 << 5),
 
 	/*
 	 *	The LaTeX backend isn't a true backend per se, but rather
@@ -1081,6 +1082,16 @@ typedef struct
 	 *	This is the name of the module that the file we're parsing implements
 	 */
 	char *			moduleOfFile;
+
+	/*
+	 *	This is the target parameter for the targetParam backend
+	 */
+	char *			targetParam;
+
+	/*
+	 *	This is the invariant where the target parameter appears only once (for the targetParam backend)
+	 */
+	int 			targetParamLocatedKernel;
 
 	/*
 	 *	We keep a global handle on the list of module scopes, for easy reference.

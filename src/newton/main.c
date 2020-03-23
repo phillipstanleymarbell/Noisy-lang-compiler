@@ -106,11 +106,11 @@ main(int argc, char *argv[])
 			{"codegen",		required_argument,	0,	'g'},
 			{"latex",		no_argument,		0,	'x'},
 			{"RTLcodegen",		required_argument,	0,	'l'},
-
+			{"targetParam",		required_argument,	0,	'T'},
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpicl:rePapg:x", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpicl:rePapg:xT:", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -333,7 +333,15 @@ main(int argc, char *argv[])
 				break;
 			}
 
-			case 'x':
+			case 'T':
+			{
+				N->irBackends |= kNewtonIrBackendTargetParam;
+				N->targetParam = optarg;
+        
+        break;
+			}
+
+      case 'x':
 			{
 				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;

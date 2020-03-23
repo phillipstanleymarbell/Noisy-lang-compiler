@@ -420,65 +420,59 @@ irPassCProcessInvariantList(State *  N)
 		return;
 	}
 
-	Invariant *	invariant = N->invariantList;
+	Invariant *	targetInvariant = N->invariantList;
 
-	if (invariant->constraints == NULL)
+	if (targetInvariant->constraints == NULL)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tNo constraints created\n */\n");
-		return;
+		flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tNo human constraints created\n */\n");
+		//return;
+	} else {
+		flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tHuman constraints exist but have not been taken into account\n */\n");
 	}
 
-	IrNode *	constraintXSeq = invariant->constraints->irParent;
+	// Should be included for human contraints
+	// IrNode *	constraintXSeq = invariant->constraints->irParent;
 
-	IrNode *	parameterListXSeq = invariant->parameterList->irParent->irLeftChild;
+	IrNode *	parameterListXSeq = targetInvariant->parameterList->irParent->irLeftChild;
 
 	char ** argumentsList;
 		
 	int index = 0;
 
-	int countFunction = 0;
+	int targetKernel = N->targetParamLocatedKernel;
 
 	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tGenerated .c file from Newton\n */\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <stdlib.h>\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <stdio.h>\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <stdlib.h>");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <stdio.h>");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n#include <math.h>\n\n");
 
-	while(invariant)
+	if (targetInvariant != NULL)
 	{
-		for (countFunction = 0; constraintXSeq != NULL; countFunction++, constraintXSeq = constraintXSeq->irRightChild)
-		{
-			assert(constraintXSeq->irLeftChild->type == kNewtonIrNodeType_Pconstraint);
-			/*
-			 *	(1) For human written constraints, e.g. we end up having
-			 *	x + y + z < 5 * m / s ** 2, we create two functions, one 
-			 *	for LHS, and another for RHS.
-			 *
-			 *	(2) For machine calculated pi groups, we construct only
-			 *	one function to return the value of RHS.
-			 */
-			if (irPassCIsConstraintHumanWritten(N, constraintXSeq->irLeftChild))
-			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "double\nhumanWrittenConstraintLHS%d", countFunction);
-				irPassCGenFunctionArgument(N, constraintXSeq->irLeftChild, true);
-				irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, true);
-			}
+		// Should be included for human contraints
+		// for (countFunction = 0; constraintXSeq != NULL; countFunction++, constraintXSeq = constraintXSeq->irRightChild)
+		// {
+		// 	assert(constraintXSeq->irLeftChild->type == kNewtonIrNodeType_Pconstraint);
+		// 	/*
+		// 	 *	(1) For human written constraints, e.g. we end up having
+		// 	 *	x + y + z < 5 * m / s ** 2, we create two functions, one 
+		// 	 *	for LHS, and another for RHS.
+		// 	 *
+		// 	 *	(2) For machine calculated pi groups, we construct only
+		// 	 *	one function to return the value of RHS.
+		// 	 */
+		// 	if (irPassCIsConstraintHumanWritten(constraintXSeq->irLeftChild))
+		// 	{
+		// 		flexprint(N->Fe, N->Fm, N->Fpc, "double\nhumanWrittenConstraintLHS%d", countFunction);
+		// 		irPassCGenFunctionArgument(N, constraintXSeq->irLeftChild, true);
+		// 		irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, true);
+		// 	}
 
-			irPassCGenFunctionName(N, constraintXSeq->irLeftChild, countFunction);
-			irPassCGenFunctionArgument(N, constraintXSeq->irLeftChild, false);
-			irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
-		}
+		// 	irPassCGenFunctionName(N, constraintXSeq->irLeftChild, countFunction);
+		// 	irPassCGenFunctionArgument(N, constraintXSeq->irLeftChild, false);
+		// 	irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
+		// }
 		
-		
-		argumentsList = (char **) malloc(invariant->dimensionalMatrixColumnCount * sizeof(char *));
-
-		/*
-		*	Print calculation function
-		*/
-		countFunction = 0;	
-		flexprint(N->Fe, N->Fm, N->Fpc, "double\n%s%d",
-				invariant->identifier, countFunction);
-
-		flexprint(N->Fe, N->Fm, N->Fpc, "(");
+		argumentsList = (char **) malloc(targetInvariant->dimensionalMatrixColumnCount * sizeof(char *));
 		
 		while (parameterListXSeq != NULL) 
 		{
@@ -487,73 +481,89 @@ irPassCProcessInvariantList(State *  N)
 			index++;
 		}
 		
-		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
+		flexprint(N->Fe, N->Fm, N->Fpc, "float\nPhi_%s(", targetInvariant->identifier);
+
+		for (int col = 0; col < targetInvariant->kernelColumnCount-1; col++)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "double %s", argumentsList[index]);
-			if (index < invariant->dimensionalMatrixColumnCount - 1)
-			{
-				flexprint(N->Fe, N->Fm, N->Fpc, ", ");
-			}
+			flexprint(N->Fe, N->Fm, N->Fpc, "float pi%dValue, ", col);
 		}
+		flexprint(N->Fe, N->Fm, N->Fpc, "float pi%dValue)\n{", targetInvariant->kernelColumnCount-1);
 
-		flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n\n\treturn 0.0f;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "}\n\n");
 
-		/*
-		*	Declare
-		*/	
-		flexprint(N->Fe, N->Fm, N->Fpc, "{\n\tdouble calculatedProportion = 0.0;\n");
-
-		/*
-		*	Calculation
-		*/	
-		flexprint(N->Fe, N->Fm, N->Fpc, "\n\tcalculatedProportion = ");
-
-		/*
-		 *	We construct a temporary array to re-locate the positions of the permuted parameters
-		 */
-		int *		tmpPosition = (int *)calloc(invariant->dimensionalMatrixColumnCount, sizeof(int));
-
-		index = 0;
-		for (int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
+		/* Col is the number of unique kernels */
+		for (int col = 0; col < targetInvariant->kernelColumnCount; col++)
 		{
-			for (int j = 0; j < invariant->dimensionalMatrixColumnCount; j++)
-			{
-				tmpPosition[invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + j]] = j;
-			}
+			index = 0;
+			flexprint(N->Fe, N->Fm, N->Fpc, "/* ----- Pi %d ----- */\n", col);
 
-			for (int col = 0; col < invariant->kernelColumnCount; col++)
+			flexprint(N->Fe, N->Fm, N->Fpc, "float\nPi_%d(", col);
+
+			for (index = 0; index < targetInvariant->dimensionalMatrixColumnCount; index++) 
 			{
-				for (int row = 0; row < invariant->dimensionalMatrixColumnCount; row++)
+				flexprint(N->Fe, N->Fm, N->Fpc, "float %s", argumentsList[index]);
+				if (index < targetInvariant->dimensionalMatrixColumnCount - 1)
 				{
-					if (invariant->nullSpace[countKernel][tmpPosition[row]][col] != 0) 
-					{
-						//flexprint(N->Fe, N->Fm, N->Fpc, "pow(%c%c, ", 'P'+(row/10), '0'+ (row%10) );
-						flexprint(N->Fe, N->Fm, N->Fpc, "pow(" );
-						flexprint(N->Fe, N->Fm, N->Fpc, "%s", argumentsList[index]);
-						flexprint(N->Fe, N->Fm, N->Fpc, ", %f) * ", invariant->nullSpace[countKernel][tmpPosition[row]][col]);
-					}
-					index++;
+					flexprint(N->Fe, N->Fm, N->Fpc, ", ");
 				}
 			}
+		
+			flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
+
+			/*
+			 *	Declare Pi Group result
+			 */	
+			flexprint(N->Fe, N->Fm, N->Fpc, "{\n\tfloat pi%dValue = 0.0;\n", col);
+
+			/*
+			*	Calculation
+			*/	
+			flexprint(N->Fe, N->Fm, N->Fpc, "\n\tpi%dValue = ", col);
+
+			/*
+			*	We construct a temporary array to re-locate the positions of the permuted parameters
+			*/
+			int *		tmpPosition = (int *)calloc(targetInvariant->dimensionalMatrixColumnCount, sizeof(int));
+
+			index = 0;
+			for (int j = 0; j < targetInvariant->dimensionalMatrixColumnCount; j++)
+			{
+				tmpPosition[targetInvariant->permutedIndexArrayPointer[targetKernel * targetInvariant->dimensionalMatrixColumnCount + j]] = j;
+			}
+
+			for (int row = 0; row < targetInvariant->dimensionalMatrixColumnCount; row++)
+			{
+				if (targetInvariant->nullSpace[targetKernel][tmpPosition[row]][col] != 0) 
+				{
+					flexprint(N->Fe, N->Fm, N->Fpc, "powf(" );
+					flexprint(N->Fe, N->Fm, N->Fpc, "%s", argumentsList[index]);
+					flexprint(N->Fe, N->Fm, N->Fpc, ", %f) * ", targetInvariant->nullSpace[targetKernel][tmpPosition[row]][col]);
+				}
+				index++;
+			}
+
 			/*
 			*   FIXME avoid printing 1.0 to complete the sentence;
 			*/
 			flexprint(N->Fe, N->Fm, N->Fpc, "1.0;");
+
+			/*
+			*	Return
+			*/	
+			flexprint(N->Fe, N->Fm, N->Fpc, "\n\n\treturn pi%dValue;", col);
+
+			flexprint(N->Fe, N->Fm, N->Fpc, "\n}\n\n");
+
+			free(tmpPosition);
 		}
-
-		/*
-		*	Return
-		*/	
-		flexprint(N->Fe, N->Fm, N->Fpc, "\n\n\treturn calculatedProportion;");
-
-		flexprint(N->Fe, N->Fm, N->Fpc, "\n}\n");
 
 		flexprint(N->Fe, N->Fm, N->Fpc, "\n\nint \nmain(int argc, char *argv[])\n{\n");
 
-		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
+		for (index = 0; index < targetInvariant->dimensionalMatrixColumnCount; index++) 
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble %s", argumentsList[index]);
-			if (index < invariant->dimensionalMatrixColumnCount - 1)
+			flexprint(N->Fe, N->Fm, N->Fpc, "\tfloat %s", argumentsList[index]);
+			if (index < targetInvariant->dimensionalMatrixColumnCount - 1)
 			{
 				flexprint(N->Fe, N->Fm, N->Fpc, ";\n");
 			}
@@ -563,12 +573,12 @@ irPassCProcessInvariantList(State *  N)
 		/*
 		*	Declare
 		*/	
-		flexprint(N->Fe, N->Fm, N->Fpc, "\n\tdouble calculatedProportion = 0.0;\n\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n\tfloat calculatedValue = 0.0;\n\n");
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tif (argc < %d) {\n",invariant->dimensionalMatrixColumnCount+1);
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tif (argc < %d) {\n",targetInvariant->dimensionalMatrixColumnCount+1);
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\"Usage is exec_name ");
 
-		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
+		for (index = 0; index < targetInvariant->dimensionalMatrixColumnCount; index++) 
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, "%s ", argumentsList[index]);
 		}
@@ -576,7 +586,7 @@ irPassCProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "\\n\");\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t\treturn -1;\n\t}\n\n");
 
-		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
+		for (index = 0; index < targetInvariant->dimensionalMatrixColumnCount; index++) 
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, "\t%s = atof(argv[%d]);\n", argumentsList[index], index+1);
 		}
@@ -584,38 +594,45 @@ irPassCProcessInvariantList(State *  N)
 		/*
 		*	Calculation
 		*/	
-		flexprint(N->Fe, N->Fm, N->Fpc, "\n\tcalculatedProportion = ");
-
-		countFunction = 0;	
-		flexprint(N->Fe, N->Fm, N->Fpc, "%s%d", invariant->identifier, countFunction);
-
-		flexprint(N->Fe, N->Fm, N->Fpc, "(");
-
-		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n\tcalculatedValue = Phi_%s\n\t(\n", targetInvariant->identifier);
+		
+		for (int col = 0; col < targetInvariant->kernelColumnCount; col++)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "%s", argumentsList[index]);
-			if (index < invariant->dimensionalMatrixColumnCount - 1)
+			flexprint(N->Fe, N->Fm, N->Fpc, "\t\tPi_%d(", col);
+
+			for (int index = 0; index < targetInvariant->dimensionalMatrixColumnCount; index++) 
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+				flexprint(N->Fe, N->Fm, N->Fpc, "%s", argumentsList[index]);
+				if (index < targetInvariant->dimensionalMatrixColumnCount - 1)
+				{
+					flexprint(N->Fe, N->Fm, N->Fpc, ", ");
+				}
 			}
-		}
+		
+			flexprint(N->Fe, N->Fm, N->Fpc, ")");
 
-		flexprint(N->Fe, N->Fm, N->Fpc, ");\n\n");
+			if (col < targetInvariant->kernelColumnCount - 1)
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, ",\n");
+			}
+			else
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, "\n\t);\n\n");
+			}
+		}	
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tprintf(\"Calculated proportion is %%f.\\n\", calculatedProportion);\n\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tprintf(\"Calculated value is %%f.\\n\", calculatedValue);\n\n");
 
 		flexprint(N->Fe, N->Fm, N->Fpc, "\treturn 0;\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\n}\n\n");
-
-		free(tmpPosition);
 		
-		for (index = 0; index < invariant->dimensionalMatrixColumnCount; index++) 
+		for (index = 0; index < targetInvariant->dimensionalMatrixColumnCount; index++) 
 		{
 			free(argumentsList[index]);
 		}
 		free(argumentsList);
 
-		invariant = invariant->next;
+		targetInvariant = targetInvariant->next;
 	}
 	
 	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tEnd of the generated .c file\n */\n");
