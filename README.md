@@ -55,9 +55,9 @@ For example,
 ```
 
 2.	Copy `config.local` to the libflex directory
-
+```shell
 	$ cp config.local submodules/libflex
-
+```
 
 3.	In `src/common/Makefile` and `src/newton/Makefile`, change `COMPILERVARIANT` as necessary (default is `clang`).
 
