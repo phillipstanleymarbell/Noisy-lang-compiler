@@ -105,6 +105,18 @@ findInvariantByIdentifier(State *  N, const char *  identifier)
 	return invariant;
 }
 
+double
+getSignalUncertainty(State *  N, Physics * p)
+{
+	/*
+	 *	TODO: The Physics struct does not support the newly-added uncertainty grammar.
+	 *	We can either add it to the struct or derive it whenever we need it
+	 *	from the signal definition in the AST. Adding it to the struct may also
+	 *	require representing distribution information in some struct.
+	 */
+	return 0.0;
+}
+
 /*
  *	Finds the number of the subdimensions by counting how many
  *	consecutive Physics notes have the same identifier.
@@ -320,7 +332,12 @@ irPassEstimatorSynthesisADGenExpressionSSA(State *  N, IrNode *  root)
 
 		case kNewtonIrNodeType_PquantityFactor:
 		{
-			if (root->irLeftChild->type == kNewtonIrNodeType_Ptranscendental)
+			if (R(root) && RL(root)->type == kNewtonIrNodeType_PexponentiationOperator)
+			{
+				irPassEstimatorSynthesisADGenExpressionSSA(N, L(root));
+				flexprint(N->Fe, N->Fm, N->Fpc, "double %s = pow(%s, %f);\n", root->tokenString, root->irLeftChild->tokenString, RRL(root)->value);
+			}
+			else if (root->irLeftChild->type == kNewtonIrNodeType_Ptranscendental)
 			{
 				irPassEstimatorSynthesisADGenExpressionSSA(N, RL(root));
 				flexprint(N->Fe, N->Fm, N->Fpc, "double %s = %s(%s);\n", root->tokenString, irPassCNodeToStr(N, LL(root)), RL(root)->tokenString);
@@ -460,7 +477,7 @@ irPassEstimatorSynthesisADGenReverse(State *  N, IrNode *  root)
 		{
 			if (R(root) && RL(root)->type == kNewtonIrNodeType_PexponentiationOperator)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "double g%1$s = g%2$s * %3$d * pow(%1$s, %4$d);\n", L(root)->tokenString, root->tokenString, RRL(root)->integerValue, RRL(root)->integerValue - 1);
+				flexprint(N->Fe, N->Fm, N->Fpc, "double g%1$s = g%2$s * %3$f * pow(%1$s, %4$f);\n", L(root)->tokenString, root->tokenString, RRL(root)->value, RRL(root)->value - 1);
 				irPassEstimatorSynthesisADGenReverse(N, root->irLeftChild);
 			}
 			else if (root->irLeftChild->type == kNewtonIrNodeType_Ptranscendental)
@@ -748,15 +765,15 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 	/*
 	 *	Generate state variable names and
-	 *	book-keep corresponding symbols.
+	 *	book-keep corresponding symbols and uncertainties.
 	 */
-	char * stateVariableNames[stateDimension];
-	Symbol * stateVariableSymbols[stateDimension];
+	char *	stateVariableNames[stateDimension];
+	Symbol *	stateVariableSymbols[stateDimension];
+	double	stateVariableUncertainties[stateDimension];
 
 	int counter = 0;
 	for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; counter++, constraintXSeq = constraintXSeq->irRightChild)
 	{
-		// IrNode *  leafLeftAST = constraintXSeq->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild;
 		IrNode *  leafLeftAST = LLL(LLL(constraintXSeq));
 
 		int	needed = snprintf(NULL, 0, "STATE_%s_%d", leafLeftAST->tokenString, 0) + 1;
@@ -764,12 +781,15 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		snprintf(stateVariableNames[counter], needed, "STATE_%s_%d", leafLeftAST->tokenString, 0);
 
 		stateVariableSymbols[counter] = leafLeftAST->symbol;
+
+		stateVariableUncertainties[counter] = getSignalUncertainty(N, leafLeftAST->physics);
 	}
 
 	/*
 	 *	Generate measure variable names
 	 */
 	char * measureVariableNames[measureDimension];
+	double	measureVariableUncertainties[measureDimension];
 	counter = 0;
 	for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; counter++, constraintXSeq = constraintXSeq->irRightChild)
 	{
@@ -779,6 +799,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		int	needed = snprintf(NULL, 0, "MEASURE_%s_%d", leafLeftAST->tokenString, 0) + 1;
 		measureVariableNames[counter] = malloc(needed);
 		snprintf(measureVariableNames[counter], needed, "MEASURE_%s_%d", leafLeftAST->tokenString, 0);
+
+		measureVariableUncertainties[counter] = getSignalUncertainty(N, leafLeftAST->physics);
 	}
 
 
@@ -809,8 +831,12 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tState\n\t */\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble S[STATE_DIMENSION];\n\tmatrix *\tSm;\n\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tState covariance matrix\n\t */\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble P[STATE_DIMENSION][STATE_DIMENSION];\n\tmatrix *\tPm;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble P[STATE_DIMENSION][STATE_DIMENSION];\n\tmatrix *\tPm;\n\n");
 	// TODO: Populate covariance matrix?
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tProcess noise matrix\n\t */\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble Q[STATE_DIMENSION][STATE_DIMENSION];\n\tmatrix *\tQm;\n\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tProcess noise matrix\n\t */\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble R[MEASURE_DIMENSION][MEASURE_DIMENSION];\n\tmatrix *\tRm;\n\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "} CoreState;\n\n");
 
 	/*
@@ -835,11 +861,47 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\t}\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-
 	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Pm = makeMatrix(STATE_DIMENSION, STATE_DIMENSION);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Pm->data = &cState->P[0][0];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	for (int i = 0; i < stateDimension; i++)
+	{
+		for (int j = 0; j < stateDimension; j++)
+		{
+			flexprint(N->Fe, N->Fm, N->Fpc, "cState->Q[%d][%d] =", i, j);
+			if (i != j) {
+				flexprint(N->Fe, N->Fm, N->Fpc, " %f;\n", stateVariableUncertainties[i]*stateVariableUncertainties[j]);
+			}
+			else
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, " %f;\n", stateVariableUncertainties[i]);
+			}
+		}
+	}
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Qm = makeMatrix(STATE_DIMENSION, STATE_DIMENSION);\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Qm->data = &cState->Q[0][0];\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	for (int i = 0; i < measureDimension; i++)
+	{
+		for (int j = 0; j < measureDimension; j++)
+		{
+			flexprint(N->Fe, N->Fm, N->Fpc, "cState->R[%d][%d] =", i, j);
+			if (i != j) {
+				flexprint(N->Fe, N->Fm, N->Fpc, " %f;\n", measureVariableUncertainties[i]*measureVariableUncertainties[j]);
+			}
+			else
+			{
+				flexprint(N->Fe, N->Fm, N->Fpc, " %f;\n", measureVariableUncertainties[i]);
+			}
+		}
+	}
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Rm = makeMatrix(MEASURE_DIMENSION, MEASURE_DIMENSION);\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Rm->data = &cState->R[0][0];\n");
 
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n");
 
 
@@ -1159,7 +1221,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  p = cState->Pm->data;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  fpf = FPFm_T->data;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "double *  q = Qm->data;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "double *  q = cState->Qm->data;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < STATE_DIMENSION*STATE_DIMENSION; i++)\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "{\n\t*p = *fpf + *q;\n\tp++;\n\tfpf++;\n\tq++;\n}\n");
 
@@ -1472,7 +1534,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  HPHm_T = multiplyMatrix(&Hm, PHm_T);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  hph = HPHm_T->data;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "double *  r = Rm->data;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "double *  r = cState->Rm->data;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < MEASURE_DIMENSION * MEASURE_DIMENSION; i++)\n{\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "*hph += *r;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "hph++;\n");
