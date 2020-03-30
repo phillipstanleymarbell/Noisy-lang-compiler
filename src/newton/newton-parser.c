@@ -346,8 +346,8 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PconstantDefinition);
 	}
 	*/
-
-/*
+	
+  /*
 	Dimension * tmpDimensionsNode;
 	if (node->irLeftChild->physics != NULL)
   {

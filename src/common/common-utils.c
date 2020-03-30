@@ -291,6 +291,13 @@ init(CommonMode mode)
 */
 #endif
 
+	/*
+	 *	Initialization for the targetParam backend. 
+	 *	Used to signify whether an invariant for target param has been identified.
+	 *	If not then the default kernel is the first regardless of how many there are.
+	 */
+	N->targetParamLocatedKernel = 0;
+
 	return N;
 }
 
