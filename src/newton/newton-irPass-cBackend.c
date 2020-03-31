@@ -326,7 +326,7 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 		return;
 	}
 
-	static bool	isPowLeftBracketPrinted = false;
+	static int	powLeftBracketsPrinted = 0;
 
 	if (root->type == kNewtonIrNodeType_PquantityExpression)
 	{
@@ -342,7 +342,7 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 	if (irPassCIsExpectedTypePresentInRightChild(N, root, kNewtonIrNodeType_PexponentiationOperator) == true)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, " pow(");
-		isPowLeftBracketPrinted = true;
+		powLeftBracketsPrinted++;
 	}
 
 	if (root->irRightChild == NULL && root->irLeftChild == NULL)
@@ -354,13 +354,13 @@ irPassCConstraintTreeWalk(State *  N, IrNode *  root)
 		/*
 		 *	Print out the right bracket of pow() function.
 		 */
-		if (isPowLeftBracketPrinted == true && 
+		if (powLeftBracketsPrinted > 0 && 
 		   (root->type == kNewtonIrNodeType_PnumericConst ||
 		    root->type == kNewtonIrNodeType_TrealConst	||
 		    root->type == kNewtonIrNodeType_TintegerConst))
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, ")");
-			isPowLeftBracketPrinted = false;
+			powLeftBracketsPrinted--;
 		}
 
 		return;

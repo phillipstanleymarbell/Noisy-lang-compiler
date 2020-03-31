@@ -128,7 +128,12 @@ newtonDimensionPassParseStatement(State * N, Scope * currentScope)
 	 *	tokens while tracking number of braces seen.
 	 */
 	if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tconstant)
-	{
+	{	
+		/*
+		 *	TODO:
+		 *	If semicolon ';' is omitted (e.g. by mistake) 
+		 *	Newton loops infinitely here.
+		 */
 		while (lexPeek(N, 1)->type != kNewtonIrNodeType_Tsemicolon)
 		{
 			lexGet(N, gNewtonTokenDescriptions);

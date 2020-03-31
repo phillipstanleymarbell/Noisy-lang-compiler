@@ -1,0 +1,149 @@
+#
+#	Authored 2020, Orestis Kaparounakis.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description: Invariants for a sine wave estimation using the 
+#               Estimator Synthesis backend. 
+#
+
+include "NewtonBaseSignals.nt"
+
+p_time : signal =
+{
+    uncertainty = GaussianDistribution(mean: 0, var: 0.001);
+    symbol		= p_s;
+	derivation	= distance;
+}
+
+p_distance : signal =
+{
+    uncertainty = GaussianDistribution(mean: 0, var: 0.01);
+    symbol		= p_m;
+	derivation	= distance;
+}
+
+p_ampl : signal =
+{
+    uncertainty = GaussianDistribution(mean: 0, var: 0.001);
+    symbol		= p_a;
+	derivation	= distance;
+}
+
+p_speed : signal =
+{
+    uncertainty = GaussianDistribution(mean: 0, var: 0.01);
+    symbol		= p_jf;
+	derivation	= speed;
+}
+
+p_angle : signal =
+{
+    uncertainty = GaussianDistribution(mean: 0, var: 0.01);
+    symbol		= p_deg;
+	derivation	= angle;
+}
+
+p_frequency : signal =
+{
+    uncertainty = GaussianDistribution(mean: 0, var: 0.001);
+    symbol		= p_freq;
+	derivation	= angle;
+}
+
+p_angular_rate : signal =
+{
+    uncertainty = GaussianDistribution(mean: 0, var: 0.01);
+    symbol		= p_ajf;
+	derivation	= angularRate;
+}
+
+m_distance : signal =
+{
+    uncertainty = GaussianDistribution(mean: 0, var: 0.64);
+    symbol		= m_m;
+	derivation	= distance;
+}
+
+process_01 : invariant (x : p_distance) =
+{
+    x ~ x
+}
+
+dx : constant = 1 (s**-1);
+
+process_02 : invariant (x : p_distance,
+                        dt : time) =
+{
+    x ~ x + dx*cos(x)*dt
+}
+
+process_03 : invariant (x : p_distance,
+                        Ampl : p_distance,
+                        phi : p_angle,
+                        omega : p_angular_rate,
+                        dt : time) =
+{
+    x ~ Ampl*sin(phi),
+    Ampl ~ Ampl,
+    phi ~ phi + omega*dt,
+    omega ~ omega
+}
+
+process_04 : invariant (x : p_distance,
+                        Ampl : p_ampl,
+                        phi : p_angle,
+                        f : p_frequency,
+                        dt : time) =
+{
+    x ~ Ampl*sin(phi),
+    Ampl ~ Ampl,
+    phi ~ phi + 2*3.14*f,
+    f ~ f
+}
+
+process_05 : invariant (t : p_time,
+                        x : p_distance,
+                        dt: time) = 
+{
+    t ~ t + 0.002*dt,
+    x ~ 3*sin(2*3.1415*t)
+}
+
+measure_01 : invariant (x : p_distance, 
+                     x_m : m_distance) =
+{
+    x_m ~ x
+}

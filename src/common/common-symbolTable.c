@@ -174,6 +174,9 @@ commonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 
 	newScope->parent = scope;
 	newScope->begin = subTree->sourceInfo;
+	/*
+	 *	TODO: Is first child always overwritten by subsequent scope siblings?
+	 */
 	scope->firstChild = newScope;
 
 	return newScope;

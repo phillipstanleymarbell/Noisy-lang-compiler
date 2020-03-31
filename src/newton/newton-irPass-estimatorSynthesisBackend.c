@@ -106,7 +106,7 @@ findInvariantByIdentifier(State *  N, const char *  identifier)
 }
 
 double
-getSignalUncertainty(State *  N, Physics * p)
+getIdentifierSignalUncertainty(State *  N, Physics *p)
 {
 	/*
 	 *	TODO: The Physics struct does not support the newly-added uncertainty grammar.
@@ -114,7 +114,13 @@ getSignalUncertainty(State *  N, Physics * p)
 	 *	from the signal definition in the AST. Adding it to the struct may also
 	 *	require representing distribution information in some struct.
 	 */
-	return 0.0;
+	Physics *	signalPhysics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope, p->identifier);
+	if (signalPhysics == NULL)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "No Physics entry found for identifier '%s'.\n", p->identifier);
+	}	
+	Symbol * varSymbol = commonSymbolTableSymbolForIdentifier(N, signalPhysics->uncertaintyScope, "var");
+	return varSymbol->typeTree->irParent->irRightChild->value;
 }
 
 /*
@@ -580,7 +586,8 @@ irPassEstimatorSynthesisADGenReverse(State *  N, IrNode *  root)
 
 		case kNewtonIrNodeType_Pquantity:
 		{
-			if (root->irLeftChild->type == kNewtonIrNodeType_Tidentifier)
+			if (root->irLeftChild->type == kNewtonIrNodeType_Tidentifier &&
+				root->irLeftChild->physics->isConstant == false)
 			{
 				flexprint(N->Fe, N->Fm, N->Fpc, "g%s += g%s;\n", irPassCNodeToStr(N, root->irLeftChild), root->tokenString);
 			}
@@ -735,21 +742,22 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
 	IrNode *	constraintXSeq = NULL;
-	// Physics *	stateVariablePhysics = NULL;
-
 	/*
 	 *	Find state vector dimension (N)
 	 */
 	int stateDimension = 0;
 	for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
 	{
-		// IrNode *  leafLeftAST = constraintXSeq->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild;
-		// TODO: Support for multi-dimensional signals.
-		// stateVariablePhysics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope, leafLeftAST->physics->identifier);
-		// int subdimensionLength = newtonPhysicsLength(stateVariablePhysics);
 		stateDimension++;
-		// TODO: Get uncertainty for each
 	}
+
+	constraintXSeq = NULL;
+	int stateExtraParams = 0;
+	for (constraintXSeq = processInvariant->parameterList; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild) 
+	{
+		stateExtraParams++;
+	}
+	stateExtraParams = stateExtraParams - stateDimension;
 
 	constraintXSeq = NULL;
 	// stateVariablePhysics = NULL;
@@ -760,8 +768,15 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
 	{
 		measureDimension++;
-		// TODO: Get uncertainty for each
 	}
+
+	constraintXSeq = NULL;
+	int measureExtraParams = 0;
+	for (constraintXSeq = processInvariant->parameterList; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild) 
+	{
+		measureExtraParams++;
+	}
+	measureExtraParams = measureExtraParams - stateDimension - measureDimension;
 
 	/*
 	 *	Generate state variable names and
@@ -782,8 +797,34 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 		stateVariableSymbols[counter] = leafLeftAST->symbol;
 
-		stateVariableUncertainties[counter] = getSignalUncertainty(N, leafLeftAST->physics);
+		stateVariableUncertainties[counter] = getIdentifierSignalUncertainty(N, leafLeftAST->physics);
 	}
+
+	Symbol *	stateExtraParamSymbols[measureExtraParams];
+	counter = 0;
+	for (constraintXSeq = processInvariant->parameterList; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
+	{
+		Symbol *	parameterSymbol = LL(constraintXSeq)->symbol;
+		bool		isStateVariable = false;
+
+		for (int i = 0; i < stateDimension; i++)
+		{
+			if (parameterSymbol == stateVariableSymbols[i])
+			{
+				isStateVariable = true;
+				break;
+			}
+		}
+
+		if (isStateVariable)
+		{
+			continue;
+		}
+
+		stateExtraParamSymbols[counter] = parameterSymbol;
+		counter++;
+	}
+
 
 	/*
 	 *	Generate measure variable names
@@ -800,7 +841,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		measureVariableNames[counter] = malloc(needed);
 		snprintf(measureVariableNames[counter], needed, "MEASURE_%s_%d", leafLeftAST->tokenString, 0);
 
-		measureVariableUncertainties[counter] = getSignalUncertainty(N, leafLeftAST->physics);
+		measureVariableUncertainties[counter] = getIdentifierSignalUncertainty(N, leafLeftAST->physics);
 	}
 
 
@@ -916,7 +957,12 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 	if (linearProcess == true)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterPredict (CoreState *  cState, double step) {\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterPredict (CoreState *  cState");
+		for (int i = 0; i < stateExtraParams; i++)
+		{
+			flexprint(N->Fe, N->Fm, N->Fpc, ", double %s", stateExtraParamSymbols[i]->identifier);
+		}
+		flexprint(N->Fe, N->Fm, N->Fpc, ") {\n");
 		/*	If linear:
 		 *	Deduce state transition matrix F
 		 */
@@ -1125,7 +1171,12 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		/*
 		 *	Generate predict function
 		 */
-		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterPredict (CoreState *  cState, double step)\n{\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterPredict (CoreState *  cState");
+		for (int i = 0; i < stateExtraParams; i++)
+		{
+			flexprint(N->Fe, N->Fm, N->Fpc, ", double %s", stateExtraParamSymbols[i]->identifier);
+		}
+		flexprint(N->Fe, N->Fm, N->Fpc, ") {\n");
 
 		for (int i = 0; i < stateDimension; i++)
 		{
@@ -1201,7 +1252,6 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	if (linearProcess)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  FSm = multiplyMatrix(&Fm, cState->Sm);\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "cState->Sm = copyMatrix(FSm);\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "double *  sn = FSm->data;\n");
 	}
 	else
@@ -1560,7 +1610,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  z = &Z[0];\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < 3; i++)\n{\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < MEASURE_DIMENSION; i++)\n{\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "*hs = *z - *hs;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "hs++;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "z++;\n");
@@ -1604,11 +1654,12 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "// First line is column names\n");
 	// flexprint(N->Fe, N->Fm, N->Fpc, "nread = getline(&line, &nlen, stdin);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "double initState[STATE_DIMENSION];\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "double time;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "scanf(\"%%lf\", &time);\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "double time = 0;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "//scanf(\"%%lf\", &time);\n");
 	for (int i = 0; i < stateDimension; i++)
-	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "scanf(\",%%lf\", &initState[%d]);\n", i);
+	{	
+		flexprint(N->Fe, N->Fm, N->Fpc, "initState[%s] = 0;\n", stateVariableNames[i]);
+		flexprint(N->Fe, N->Fm, N->Fpc, "//scanf(\",%%lf\", &initState[%d]);\n", i);
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
@@ -1647,7 +1698,13 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "scanf(\",%%lf\", &measure[%d]);\n", i);
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "filterPredict(&cs, time - prevtime);\n");
+	// flexprint(N->Fe, N->Fm, N->Fpc, "filterPredict(&cs, time - prevtime);\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "filterPredict (&cs");
+	for (int i = 0; i < stateExtraParams; i++)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, ", %s", stateExtraParamSymbols[i]->identifier);
+	}
+	flexprint(N->Fe, N->Fm, N->Fpc, ");\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "printf(\"Predict: %%lf\", time);\n");
 	for (int i = 0; i < stateDimension; i++)
 	{
@@ -1661,6 +1718,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "printf(\", %%lf\", cs.S[%s]);\n", stateVariableNames[i]);
 	}
+	flexprint(N->Fe, N->Fm, N->Fpc, "printf(\"\\n\");\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "prevtime = time;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n");

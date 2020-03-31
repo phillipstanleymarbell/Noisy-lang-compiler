@@ -875,6 +875,7 @@ struct Physics
 	uint64_t		id;
 	int			subindex;			//	Index for further identification. e.g.) acceleration along x, y, z axes
 	Scope *			scope;
+	Scope *			uncertaintyScope;
 	SourceInfo *		sourceInfo;
 	bool			isVector;
 	Physics *		vectorCounterpart;		//	Non-NULL if a scalar AND counterpart defined in vectorScalarPairScope

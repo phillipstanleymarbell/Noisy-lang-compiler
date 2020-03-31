@@ -346,7 +346,7 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PconstantDefinition);
 	}
 	*/
-	
+
   /*
 	Dimension * tmpDimensionsNode;
 	if (node->irLeftChild->physics != NULL)
@@ -579,7 +579,7 @@ newtonParseParameter(State *  N, Scope *  currentScope, int parameterNumber)
 					physicsName->token->identifier,
 					newtonParseTerminal(N, kNewtonIrNodeType_TintegerConst, currentScope)->value
 					);
-			
+
 			newtonParseTerminal(N, kNewtonIrNodeType_TrightBracket, currentScope);
 		}
 
@@ -1066,6 +1066,12 @@ newtonParseBaseSignal(State *  N, Scope *  currentScope)
 	{
 		signalUncertainty = newtonParseSignalUncertainty(N, currentScope);
 		addLeafWithChainingSeq(N, node, signalUncertainty);
+		/*
+		 *	Based on the implementation of commonSymbolTableOpenScope()
+		 *	the most recent subscope is in firstChild. 
+		 *	Not sure why this is the behaviour, though. -- Orestis
+		 */
+		newPhysics->uncertaintyScope = currentScope->firstChild;
 	}
 
 	/*
@@ -1230,14 +1236,19 @@ newtonParseSignalUncertainty(State * N, Scope *  currentScope)
 
 	addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tuncertainty, currentScope));
 	addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope));
-	addLeafWithChainingSeq(N, node, newtonParseDistribution(N, currentScope));
+
+	IrNode *	scopeBegin = newtonParseDistribution(N, currentScope);
+	Scope *	newScope = commonSymbolTableOpenScope(N, currentScope, scopeBegin);
+
+	addLeafWithChainingSeq(N, node, scopeBegin);
 
 	if (inFirst(N, kNewtonIrNodeType_PparameterTuple, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeafWithChainingSeq(N, node, newtonParseParameterTuple(N, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseParameterTuple(N, newScope));
 	}
 
-	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
+	IrNode *	scopeEnd = newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, newScope);
+	commonSymbolTableCloseScope(N, newScope, scopeEnd);
 
 	return node;
 }
