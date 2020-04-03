@@ -144,9 +144,9 @@ endeffector_2: invariant(
 	x: distance,  # position
 	y: distance,
 	z: distance,
-	mForce: force,		# force pulling down at the effector
 	F0: torque,			# torque on the motor at R0
 	F1: torque,			# torque on the motor at R1
+	mForce: force,		# force pulling down at the effector
 	dt : time) =
 {
 	R0SetPoint ~ R0SetPoint,
@@ -205,17 +205,31 @@ bridgeR2: constant = 1000 O;
 bridgeR3: constant = 1000 O;
 
 endeffector_2_measure_3: invariant(
-	R0SetPoint: angularDisplacement,
+	# State
+	R0SetPoint: angularDisplacement, # set point of the actuators
 	R1SetPoint: angularDisplacement,
+	R0Angle: angularDisplacement, # state of the actuators
+	R1Angle: angularDisplacement,
+	R0EffectiveAngle: angularDisplacement, # overall angle including a small deflection
+	R1EffectiveAngle: angularDisplacement,
+	x: distance,  # position
+	y: distance,
+	z: distance,
+	F0: torque,			# torque on the motor at R0
+	F1: torque,			# torque on the motor at R1
+	# Measurement
+	R0SetPoint_measure: angularDisplacement, # set point of the actuators
+	R1SetPoint_measure: angularDisplacement,
 	Flex0: electricPotential,
 	Flex1: electricPotential,
+	# Extra parameters
 	mWeight: kilogram,
+	mForce: force,
 	dt: time) =
 {
-	dt ~ dt,
-	R0SetPoint ~ R0SetPoint,
-	R1SetPoint ~ R1SetPoint,
-	mWeight ~ mForce / kNewtonUnithave_AccelerationDueToGravity,
+	R0SetPoint_measure ~ R0SetPoint,
+	R1SetPoint_measure ~ R1SetPoint,
+	# mWeight ~ mForce / kNewtonUnithave_AccelerationDueToGravity,
 	Flex0 ~ vRef * (
 		bridgeR2 / (bridgeR1 + bridgeR2)
 		- ((R0EffectiveAngle - R0Angle) * Flex_sensor_resistance_delta + Flex_sensor_resistance_base) / (bridgeR2 + bridgeR3)
