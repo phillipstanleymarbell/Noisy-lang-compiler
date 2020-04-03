@@ -39,25 +39,50 @@
 
 include "NewtonBaseSignals.nt"
 
+p_distance : signal =
+{
+    # uncertainty = GaussianDistribution(mean: p_distance, var: 0.01);
+    uncertainty = GaussianDistribution(mean: 0, var: 0.01);
+    symbol		= p_m;
+	derivation	= distance;
+}
+
+p_speed : signal =
+{
+    # uncertainty = GaussianDistribution(mean: p_speed, var: 0.01);
+    uncertainty = GaussianDistribution(mean: 0, var: 0.01);
+    symbol		= p_jf;
+	derivation	= speed;
+}
+
+m_area : signal =
+{
+    # uncertainty = GaussianDistribution(mean: m_area, var: 0.1);
+    uncertainty = GaussianDistribution(mean: 0, var: 0.1);
+	symbol		= m_sq;
+	derivation	= area;
+}
+
 ###############################
 #### Declare process model ####
 ###############################
 
-process : invariant ( P : distance,        # Position
-                      V : speed,
+process : invariant ( P : p_distance,        # Position
+                      V : p_speed,
                       step : time) = 
 { 
-    P ~ P*V*step,
-    V ~ 0.1*V 
+    P ~ P/V*step,
+    V ~ sin(V) + (cos(V))**2
 }
 
 ###################################
 #### Declare measurement model ####
 ###################################
 
-measure : invariant ( Po : area,
-                      P : distance,
+measure : invariant ( P : p_distance,
+                      V : p_speed,
+                      Po : m_area,
                       t : time) = 
 { 
-    Po ~ 0.4*P**2
+    Po ~ P**2
 }

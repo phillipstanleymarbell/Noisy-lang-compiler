@@ -118,6 +118,7 @@ endeffector_1_measure: invariant(
 	R0SetPoint: angularDisplacement,
 	R1SetPoint: angularDisplacement,
 	mWeight: kilogram,	# the mass pulling down
+	mForce: force,		# force pulling down at the effector
 	dt: time) =
 {
 	dt ~ dt,
@@ -135,6 +136,7 @@ areaMoment : constant = (1/12 * 0.005 * 0.05 ** 3) (m ** 4);
 
 # Euler beam model
 endeffector_2: invariant(
+	# State
 	R0SetPoint: angularDisplacement, # set point of the actuators
 	R1SetPoint: angularDisplacement,
 	R0Angle: angularDisplacement, # state of the actuators
@@ -170,6 +172,7 @@ endeffector_2_measure_1: invariant(
 	y: distance,
 	z: distance,
 	mWeight: kilogram,	# the mass pulling down
+	mForce: force,		# force pulling down at the effector
 	dt : time) =
 {
 	dt ~ dt,
@@ -182,9 +185,14 @@ endeffector_2_measure_1: invariant(
 endeffector_2_measure_2: invariant(
 	R0SetPoint: angularDisplacement,
 	R1SetPoint: angularDisplacement,
+	R0Angle: angularDisplacement, # state of the actuators
+	R1Angle: angularDisplacement,
+	R0EffectiveAngle: angularDisplacement, # overall angle including a small deflection
+	R1EffectiveAngle: angularDisplacement,
 	Beam0Deflexion: angularDisplacement,
 	Beam1Deflexion: angularDisplacement,
 	mWeight: kilogram,	# the mass pulling down
+	mForce: force,		# force pulling down at the effector
 	dt : time) =
 {
 	dt ~ dt,
@@ -247,9 +255,12 @@ torquePerAmp: constant = 1 (t * rad ** (-1)); #TODO get number from datasheet
 endeffector_2_measure_4: invariant(
 	R0SetPoint: angularDisplacement,
 	R1SetPoint: angularDisplacement,
+	F0: torque,			# torque on the motor at R0
+	F1: torque,			# torque on the motor at R1
 	C0: current,
 	C1: current,
 	mWeight: kilogram,
+	mForce: force,		# force pulling down at the effector
 	dt: time) =
 {
 	dt ~ dt,

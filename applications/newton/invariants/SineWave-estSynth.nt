@@ -45,7 +45,7 @@ p_time : signal =
 {
     uncertainty = GaussianDistribution(mean: 0, var: 0.001);
     symbol		= p_s;
-	derivation	= distance;
+	derivation	= time;
 }
 
 p_distance : signal =
@@ -102,7 +102,7 @@ process_01 : invariant (x : p_distance) =
     x ~ x
 }
 
-dx : constant = 1 (s**-1);
+dx : constant = 1 (m*s**-1);
 
 process_02 : invariant (x : p_distance,
                         dt : time) =

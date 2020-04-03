@@ -767,10 +767,10 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		stateDimension++;
 	}
 
+	constraintXSeq = NULL;
 	/*
 	 *	Find number of invariant parameters that are not state variables.
 	 */
-	constraintXSeq = NULL;
 	int stateExtraParams = 0;
 	for (constraintXSeq = processInvariant->parameterList; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild) 
 	{
@@ -778,10 +778,10 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	}
 	stateExtraParams = stateExtraParams - stateDimension;
 
+	constraintXSeq = NULL;
 	/*
 	 *	Find measurement vector dimension (Z)
 	 */
-	constraintXSeq = NULL;
 	int measureDimension = 0;
 	for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
 	{
@@ -790,7 +790,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 	constraintXSeq = NULL;
 	int measureExtraParams = 0;
-	for (constraintXSeq = processInvariant->parameterList; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild) 
+	for (constraintXSeq = measureInvariant->parameterList; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild) 
 	{
 		measureExtraParams++;
 	}
@@ -807,15 +807,15 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	int counter = 0;
 	for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; counter++, constraintXSeq = constraintXSeq->irRightChild)
 	{
-		IrNode *  leafLeftAST = LLL(LLL(constraintXSeq));
+		IrNode *  leafLHS = LLL(LLL(constraintXSeq));
 
-		int	needed = snprintf(NULL, 0, "STATE_%s_%d", leafLeftAST->tokenString, 0) + 1;
+		int	needed = snprintf(NULL, 0, "STATE_%s_%d", leafLHS->tokenString, 0) + 1;
 		stateVariableNames[counter] = malloc(needed);
-		snprintf(stateVariableNames[counter], needed, "STATE_%s_%d", leafLeftAST->tokenString, 0);
+		snprintf(stateVariableNames[counter], needed, "STATE_%s_%d", leafLHS->tokenString, 0);
 
-		stateVariableSymbols[counter] = leafLeftAST->symbol;
+		stateVariableSymbols[counter] = leafLHS->symbol;
 
-		stateVariableUncertainties[counter] = getIdentifierSignalUncertainty(N, leafLeftAST->physics);
+		stateVariableUncertainties[counter] = getIdentifierSignalUncertainty(N, leafLHS->physics);
 	}
 
 	Symbol *	stateExtraParamSymbols[stateExtraParams];
@@ -841,9 +841,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 		if (counter >= stateExtraParams)
 		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "Process invariant identifiers that are state variables \
-			appear to be less than constraints. \
-			This should not be able to happen. Please contact the developers or open an bug issue.\n");
+			flexprint(N->Fe, N->Fm, N->Fperr, "Process invariant identifiers that are state variables appear to be less than constraints. This should not be able to happen. Please contact the developers or open an bug issue.\n");
 			/*
 			 *	The reason this should not be able to happen at this stage is because
 			 *	it probably is a variable usage before declaration, which is caught in earlier passes.
@@ -866,15 +864,15 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	counter = 0;
 	for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; counter++, constraintXSeq = constraintXSeq->irRightChild)
 	{
-		IrNode *  leafLeftAST = LLL(LLL(constraintXSeq));
+		IrNode *  leafLHS = LLL(LLL(constraintXSeq));
 
-		int	needed = snprintf(NULL, 0, "MEASURE_%s_%d", leafLeftAST->tokenString, 0) + 1;
+		int	needed = snprintf(NULL, 0, "MEASURE_%s_%d", leafLHS->tokenString, 0) + 1;
 		measureVariableNames[counter] = malloc(needed);
-		snprintf(measureVariableNames[counter], needed, "MEASURE_%s_%d", leafLeftAST->tokenString, 0);
+		snprintf(measureVariableNames[counter], needed, "MEASURE_%s_%d", leafLHS->tokenString, 0);
 
-		measureVariableSymbols[counter] = leafLeftAST->symbol;
+		measureVariableSymbols[counter] = leafLHS->symbol;
 
-		measureVariableUncertainties[counter] = getIdentifierSignalUncertainty(N, leafLeftAST->physics);
+		measureVariableUncertainties[counter] = getIdentifierSignalUncertainty(N, leafLHS->physics);
 	}
 
 
@@ -939,6 +937,23 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Pm->data = &cState->P[0][0];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	// flexprint(N->Fe, N->Fm, N->Fpc, "cState->Q = (double [STATE_DIMENSION][STATE_DIMENSION])\n{");
+	// for (int i = 0; i < stateDimension; i++)
+	// {
+	// 	flexprint(N->Fe, N->Fm, N->Fpc, "{");
+	// 	for (int j = 0; j < stateDimension; j++)
+	// 	{	
+	// 		if (i != j) {
+	// 			flexprint(N->Fe, N->Fm, N->Fpc, " %f,", stateVariableUncertainties[i]*stateVariableUncertainties[j]);
+	// 		}
+	// 		else
+	// 		{
+	// 			flexprint(N->Fe, N->Fm, N->Fpc, " %f,", stateVariableUncertainties[i]);
+	// 		}
+	// 	}
+	// 	flexprint(N->Fe, N->Fm, N->Fpc, "},\n");
+	// }
+	// flexprint(N->Fe, N->Fm, N->Fpc, "};");
 	for (int i = 0; i < stateDimension; i++)
 	{
 		for (int j = 0; j < stateDimension; j++)
@@ -1375,9 +1390,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 		if (counter >= measureExtraParams)
 		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "Measurement invariant identifiers that are measurement \
-			variables or state variables appear to be less than #measurement_constraints + #state_variables. \
-			This should not happen.\n");
+			flexprint(N->Fe, N->Fm, N->Fperr, "Measurement Invariant Parameter identifiers that are either measurement variables or state variables appear to be less than #measurement_constraints + #state_variables. This should not happen.\n");
 			fatal(N, Efatal);
 		}
 
