@@ -73,16 +73,20 @@ IrNode *  binaryOpTreeTransform(State *  N, IrNode *  inputAST)
      * In the binary operator tree, it is represented in a structure similar to
      * a linked list, e.g., a1 - a2 is (AUX a1 (X_SEQ / (X_SEQ a2 NILL)).
      * 
-     * In order that we handle the precedence correctly, this function recurses on
+     * In order to handle the precedence correctly, this function recurses on
      * the left operand, as +,-,*,/ are all left recursive. In the example of
      * a1 + a2 - a3 - a4, the function essentially considers it to be 
      * (((a1 + a2) - a3) - a4). It handles the innerset (a1 + a2) in the first call,
      * and processes the expression in the parenthesis one level higher in each
      * iteration, until it reaches the outerest level.
      */
-    IrNodeType opType = L(R(inputAST))->type;
+    IrNodeType opType = RLL(inputAST)->type;
+    if (opType == kNewtonIrNodeType_PhighPrecedenceOperator)
+    {
+        opType = RLLL(inputAST)->type;
+    }
     IrNode *  leftOperand = commonTreeTransform(N, L(inputAST));
-    IrNode *  rightOperand = commonTreeTransform(N, L(R(R(inputAST))));
+    IrNode *  rightOperand = commonTreeTransform(N, RRL(inputAST));
 
     IrNode *  newLeftOperand = genIrNode(N, opType, leftOperand, rightOperand, inputAST->sourceInfo);
     irPassHelperColorIr(N, newLeftOperand, kCommonIrNodeColorTreeTransformedColoring, true, false);
@@ -204,7 +208,7 @@ IrNode *  commonTreeTransform(State *  N, IrNode *  inputAST)
             /*
              * When it is a sum of quantity expressions
              */
-            else if (R(inputAST)->type == kNewtonIrNodeType_PhighPrecedenceBinaryOp)
+            else if (RL(inputAST)->type == kNewtonIrNodeType_PexponentiationOperator)
             {
                 return binaryOpTreeTransform(N, inputAST);
             }
@@ -214,14 +218,35 @@ IrNode *  commonTreeTransform(State *  N, IrNode *  inputAST)
             }
             break;
         }
-        case kNewtonIrNodeType_Tidentifier:
+
+        case kNewtonIrNodeType_Pquantity:
+        {
+            /*
+             * When it is a single quantity
+             */
+            if (R(inputAST) == NULL)
+            {
+                return commonTreeTransform(N, L(inputAST));
+            }
+        }
+
         case kNewtonIrNodeType_PnumericConst:
+        {
+            if (R(inputAST) == NULL)
+            {
+                return commonTreeTransform(N, L(inputAST));
+            }
+        }
+
+        case kNewtonIrNodeType_Tidentifier:
+        case kNewtonIrNodeType_TrealConst:
+        case kNewtonIrNodeType_TintegerConst:
         {
             return inputAST;
         }
         default:
         {
-            fatal(N, "Unknown AST Root Node!");
+            fatal(N, "Unknown AST Root Node Type!");
         }
     }
 }

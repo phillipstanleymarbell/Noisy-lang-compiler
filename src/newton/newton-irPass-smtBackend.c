@@ -78,7 +78,7 @@ irPassSmtProcessPhysicsList(State *  N)
 	{
 		if (current->isConstant)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpsmt2, "(declare-fun %s () Real)\n(assert  ( = %s %.17g ) )\n", 
+			flexprint(N->Fe, N->Fm, N->Fpsmt2, "(declare-fun %s () Real)\n(assert  ( = %s %f ) )\n", 
 					current->identifier, current->identifier, current->value);
 		}
 
@@ -187,6 +187,11 @@ irPassSmtNodeToStr(State *  N, Invariant *  parentInvariant, IrNode *  node)
 	char *	output = NULL;
 	switch(node->type)
 	{
+		case kNewtonIrNodeType_PnumericConst:
+		{
+			output = irPassSmtNodeToStr(N, parentInvariant, node->irLeftChild);
+			break;
+		}
 		case kNewtonIrNodeType_TintegerConst:
 		{
 			int needed = snprintf(NULL, 0, "%d", (int)node->value) + 1;
@@ -295,7 +300,6 @@ irPassSmtTreeWalk(State *  N, Invariant *  parentInvariant, IrNode *  root)
 {
 	TimeStampTraceMacro(kNewtonTimeStampKey);
 
-	char *	nodeString = irPassSmtNodeToStr(N, parentInvariant, root);
 
 	/*
 	 *	This branch should not be reached (by the SMT2 backend),
@@ -306,6 +310,8 @@ irPassSmtTreeWalk(State *  N, Invariant *  parentInvariant, IrNode *  root)
 	{
 		return;
 	}
+
+	char *	nodeString = irPassSmtNodeToStr(N, parentInvariant, root);
 
 	/*
 	 *	To add brackets correctly, we need to identifier whether
@@ -424,11 +430,10 @@ irPassSmtProcessInvariant(State *  N, Invariant *  input)
 		return;
 	}
 
-	IrNode *	current = input->constraints->irParent;
 
 	irPassDeclareParameters(N, input);
 
-	for (; current != NULL; current = current->irRightChild)
+	for (IrNode * current = input->constraints; current != NULL; current = current->irRightChild)
 	{
 		assert(current->irLeftChild->type == kNewtonIrNodeType_Pconstraint);
 		irPassSmtProcessConstraint(N, input, current->irLeftChild);
