@@ -78,7 +78,7 @@ irPassSmtProcessPhysicsList(State *  N)
 	{
 		if (current->isConstant)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpsmt2, "(declare-fun %s () Real)\n(assert  ( = %s %f ) )\n", 
+			flexprint(N->Fe, N->Fm, N->Fpsmt2, "(declare-fun %s () Real)\n(assert  ( = %s %.17g ) )\n", 
 					current->identifier, current->identifier, current->value);
 		}
 
