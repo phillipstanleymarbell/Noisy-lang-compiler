@@ -1619,7 +1619,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 						flexprint(N->Fe, N->Fm, N->Fpc, "double calculatedValue = 0.0;\n");
 
 						flexprint(N->Fe, N->Fm, N->Fpc, "calculatedValue = ((");
-						flexprint(N->Fe, N->Fm, N->Fpc, "measure_%s(", measureVariableNames[currDeriv]);
+						flexprint(N->Fe, N->Fm, N->Fpc, "measure_%s(", measureVariableNames[counter]);
 
 						for (int currArg = 0; currArg < stateDimension; currArg++)
 						{
