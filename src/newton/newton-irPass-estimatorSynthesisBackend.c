@@ -107,9 +107,10 @@ findInvariantByIdentifier(State *  N, const char *  identifier)
 
 /*
  *	Find unique Symbols in expression.
- *	Return: A chain of (newly created) IrNodes containing the found symbols.
+ *	Return: A chain of IrNodes, shallow copies of the ones detected.
  */
-IrNode * findExpressionSymbols(State *  N, IrNode *  root)
+IrNode *
+findExpressionIdentifiers(State *  N, IrNode *  root)
 {
 	int	i = 0;
 	IrNode *	currSymbolNode = findNthIrNodeOfType(N, root, kNewtonIrNodeType_Tidentifier, i++);
@@ -124,15 +125,15 @@ IrNode * findExpressionSymbols(State *  N, IrNode *  root)
 	while ((currSymbolNode = findNthIrNodeOfType(N, root, kNewtonIrNodeType_Tidentifier, i++)) != NULL)
 	{
 		bool	alreadyAdded = false;
-		
+
 		for (IrNode *  currNode = head; currNode != NULL; currNode = currNode->irRightChild)
 		{
 			if (currNode->symbol == currSymbolNode->symbol)
 			{
 				alreadyAdded = true;
 				break;
-			}			
-		}		
+			}
+		}
 		if (alreadyAdded == true)
 		{
 			continue;
@@ -140,6 +141,7 @@ IrNode * findExpressionSymbols(State *  N, IrNode *  root)
 
 		IrNode *	newNode = shallowCopyIrNode(N, currSymbolNode);
 		tail->irRightChild = newNode;
+		tail->irRightChild->irParent = tail;
 		tail = tail->irRightChild;
 	}
 
@@ -155,6 +157,7 @@ IrNode * findExpressionSymbols(State *  N, IrNode *  root)
 double
 getIdentifierSignalUncertainty(State *  N, Physics *p)
 {
+	static const double defaultUncertainty = 1e-6;
 	/*
 	 *	NOTE: We do not yet have a data structure for representing uncertainties
 	 *	and/or probability distributions.
@@ -169,14 +172,14 @@ getIdentifierSignalUncertainty(State *  N, Physics *p)
 		 *	it probably is a variable usage before declaration, which is caught in earlier passes.
 		 */
 		fatal(N, Efatal);
-	}	
+	}
 	Symbol * varSymbol = commonSymbolTableSymbolForIdentifier(N, signalPhysics->uncertaintyScope, "var");
 	if (varSymbol == NULL)
 	{
 		error(N, "No Symbol entry found for identifier 'var'.");
-		flexprint(N->Fe, N->Fm, N->Fperr, "Variance for signal '%s' not found. Setting to 0.\n", p->identifier);
-		return 0;
-	}	
+		flexprint(N->Fe, N->Fm, N->Fperr, "Variance for signal '%s' not found. Setting to %f.\n", p->identifier, defaultUncertainty);
+		return defaultUncertainty;
+	}
 	return varSymbol->typeTree->irParent->irRightChild->value;
 }
 
@@ -706,7 +709,7 @@ irPassEstimatorSynthesisGenAutoDiffBody(State *  N, IrNode *  expressionXSeq, ch
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n// Rest of Symbols from expression\n");
-	IrNode *	expressionSymbols = findExpressionSymbols(N, expressionXSeq);
+	IrNode *	expressionSymbols = findExpressionIdentifiers(N, expressionXSeq);
 	for (IrNode * currSymbolNode = expressionSymbols; currSymbolNode != NULL; currSymbolNode = currSymbolNode->irRightChild)
 	{
 		bool inWrtSymbols = false;
@@ -716,7 +719,7 @@ irPassEstimatorSynthesisGenAutoDiffBody(State *  N, IrNode *  expressionXSeq, ch
 			{
 				inWrtSymbols = true;
 				break;
-			}			
+			}
 		}
 		if ((inWrtSymbols == true) || (currSymbolNode->physics->isConstant))
 		{
@@ -854,7 +857,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	 *	Find number of invariant parameters that are not state variables.
 	 */
 	int stateExtraParams = 0;
-	for (constraintXSeq = processInvariant->parameterList; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild) 
+	for (constraintXSeq = processInvariant->parameterList; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
 	{
 		stateExtraParams++;
 	}
@@ -872,7 +875,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 	constraintXSeq = NULL;
 	int measureExtraParams = 0;
-	for (constraintXSeq = measureInvariant->parameterList; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild) 
+	for (constraintXSeq = measureInvariant->parameterList; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
 	{
 		measureExtraParams++;
 	}
@@ -1025,7 +1028,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	// {
 	// 	flexprint(N->Fe, N->Fm, N->Fpc, "{");
 	// 	for (int j = 0; j < stateDimension; j++)
-	// 	{	
+	// 	{
 	// 		if (i != j) {
 	// 			flexprint(N->Fe, N->Fm, N->Fpc, " %f,", stateVariableUncertainties[i]*stateVariableUncertainties[j]);
 	// 		}
@@ -1401,11 +1404,11 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	 */
 
 	/*
-	 *	Find correspondence between state variable Symbol identifiers and 
-	 *	measurement Invariant parameter identifiers. Essentially map 
+	 *	Find correspondence between state variable Symbol identifiers and
+	 *	measurement Invariant parameter identifiers. Essentially map
 	 *	stateVariableSymbols to symbols in the measurement Invariant.
 	 */
-	
+
 	/*
 	 *	Declared Measurement Invariant Symbols that correspond to state variables.
 	 */
@@ -1817,7 +1820,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "double time = 0;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "//scanf(\"%%lf\", &time);\n");
 	for (int i = 0; i < stateDimension; i++)
-	{	
+	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "initState[%s] = 0;\n", stateVariableNames[i]);
 		flexprint(N->Fe, N->Fm, N->Fpc, "//scanf(\",%%lf\", &initState[%d]);\n", i);
 	}
@@ -1878,7 +1881,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, ", %s", measureExtraParamSymbols[i]->identifier);
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, ");\n");
-	
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "printf(\"Update: %%lf\", time);\n");
 	for (int i = 0; i < stateDimension; i++)
 	{
