@@ -1,0 +1,18 @@
+distance : signal =
+{
+	name		= "meter" English;
+	symbol		= m;
+	derivation	= none;
+}
+
+charge : signal =
+{
+	name		= "Coulomb" English;
+	symbol		= C;
+	derivation	= none;
+}
+
+example : invariant ( C : distance) =
+{
+    C ~ C
+}
