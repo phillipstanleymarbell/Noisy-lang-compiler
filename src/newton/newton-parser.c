@@ -2175,7 +2175,7 @@ newtonParseUnaryOp(State *  N, Scope *  currentScope)
 {
 	TimeStampTraceMacro(kNewtonTimeStampKey);
 
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PunaryOp,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */

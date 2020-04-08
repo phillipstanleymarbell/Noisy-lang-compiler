@@ -63,7 +63,59 @@ include "NewtonBaseSignals.nt"
 #	z = null(A,'r')
 #
 
+troll : signal =
+{
+	name		= "troll" English;
+	symbol		= trl;
+	derivation	= distance / second / second;
+}
+
 pendulum : invariant(L: distance, period: time) =
 {
 	period  ** 2 ~ (4 * kNewtonUnitfree_pi * kNewtonUnitfree_pi * L / kNewtonUnithave_AccelerationDueToGravity)
 }
+
+g : constant = 9.80665 trl;
+# zero_trick : constant = 0 ajf;
+# mass : constant = 1 kg;
+
+pendulum_process_1 : invariant( theta	: angle,
+								dtheta	: angularRate,
+								dt		: time,
+								L		: distance) =
+{
+	theta ~ theta + dtheta*dt,
+	dtheta ~ dtheta - g/L*sin(theta)*dt
+}
+
+
+
+pendulum_measure_1 : invariant( theta	: angle,
+								dtheta	: angularRate,
+								dt		: time,
+								gyro_z	: angularRate ) =
+{
+	gyro_z ~ dtheta
+}
+
+# pendulum_process_2 : invariant( theta	: angle,
+# 								dt		: time,
+# 								L		: distance) =
+# {
+# 	theta ~ theta - g/L*sin(theta)*dt
+# }
+
+# pendulum_measure_2 : invariant( theta	: angle,
+# 								gyro_z	: angularRate,
+# 								L		: distance ) =
+# {
+# 	gyro_z ~ -g/L*sin(theta)
+# }
+
+# # sensor fusion -- ieee-esl-2017.pdf equation (10)
+# pendulum_measure_2 : invariant( _ ) =
+# {
+# 	gyro_x ~ dtheta,
+# #	acc_y ~ L * derivative dtheta dt + g*sin(theta),
+# 	acc_z ~  - g*cos(theta) - L*dtheta**2
+# }

@@ -384,7 +384,21 @@ irPassEstimatorSynthesisADGenExpressionSSA(State *  N, IrNode *  root)
 			}
 
 			flexprint(N->Fe, N->Fm, N->Fpc, "double %s = ", root->tokenString);
-			flexprint(N->Fe, N->Fm, N->Fpc, " %s ", root->irLeftChild->tokenString);
+			if (root->irLeftChild->type == kNewtonIrNodeType_PunaryOp)
+			{
+				/*
+				 *	root contains the unary operator
+				 */
+				flexprint(N->Fe, N->Fm, N->Fpc, "%s", irPassCNodeToStr(N, LL(root)));
+			}
+			else
+			{
+				/*
+				 *	root contains actual first factor
+				 */
+				flexprint(N->Fe, N->Fm, N->Fpc, " %s ", root->irLeftChild->tokenString);
+			}
+
 			for (currXSeq = root->irRightChild; currXSeq != NULL; currXSeq = currXSeq->irRightChild)
 			{
 					if (currXSeq->irLeftChild->type == kNewtonIrNodeType_PlowPrecedenceOperator)
@@ -425,7 +439,7 @@ irPassEstimatorSynthesisADGenReverse(State *  N, IrNode *  root)
 		{
 			IrNode *  currXSeq = NULL;
 
-			flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s;\n", root->irLeftChild->tokenString, root->tokenString);
+			flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s;\n\n", root->irLeftChild->tokenString, root->tokenString);
 			irPassEstimatorSynthesisADGenReverse(N, root->irLeftChild);
 			flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 			for (currXSeq = root->irRightChild; currXSeq != NULL; currXSeq = currXSeq->irRightChild->irRightChild)
@@ -442,30 +456,43 @@ irPassEstimatorSynthesisADGenReverse(State *  N, IrNode *  root)
 
 		case kNewtonIrNodeType_PquantityTerm:
 		{
-			IrNode *  currXSeq = NULL;
-
-			for (currXSeq = root; currXSeq != NULL; currXSeq = currXSeq->irRightChild)
+			IrNode * firstFactor = root;
+			IrNode * firstOperator = root->irRightChild;
+			bool startsWithUnaryOp = false;
+			if (root->irLeftChild->type == kNewtonIrNodeType_PunaryOp)
+			{
+				firstFactor = root->irRightChild;
+				firstOperator = RR(root);
+				startsWithUnaryOp = true;
+			}
+			
+			for (IrNode * currXSeq = firstFactor; currXSeq != NULL; currXSeq = currXSeq->irRightChild)
 			{
 				if (currXSeq->irLeftChild->type == kNewtonIrNodeType_PhighPrecedenceQuantityOperator)
 				{
 					continue;
 				}
 
-				flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s", currXSeq->irLeftChild->tokenString, root->tokenString);
+				flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = ", currXSeq->irLeftChild->tokenString);
+				if (startsWithUnaryOp == true)
+				{
+					flexprint(N->Fe, N->Fm, N->Fpc, "%s", irPassCNodeToStr(N, LL(root)));
+				}
+				flexprint(N->Fe, N->Fm, N->Fpc, "g%s", root->tokenString);
 
-				if (currXSeq == root)
+				if (currXSeq == firstFactor)
 				{
 					flexprint(N->Fe, N->Fm, N->Fpc, " * 1");
 				}
 				else
 				{
-					flexprint(N->Fe, N->Fm, N->Fpc, " * %s", root->irLeftChild->tokenString);
+					flexprint(N->Fe, N->Fm, N->Fpc, " * %s", firstFactor->irLeftChild->tokenString);
 				}
 
 				/*
-				 *	Iterate over operators
+				 *	Iterate over operators only (notice index update clause)
 				 */
-				for (IrNode *  currXSeqOp = root->irRightChild; currXSeqOp != NULL; currXSeqOp = RR(currXSeqOp))
+				for (IrNode *  currXSeqOp = firstOperator; currXSeqOp != NULL; currXSeqOp = RR(currXSeqOp))
 				{
 					if (currXSeq == currXSeqOp->irRightChild)
 					{
@@ -921,22 +948,22 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	/*
 	 *	Generate state indexing enumerator
 	 */
-	flexprint(N->Fe, N->Fm, N->Fpc, "\ntypedef enum\n{\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\nenum filterCoreStateIdx\n{\n");
 	for (int i = 0; i < stateDimension; i++)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t%s,\n", stateVariableNames[i]);
 	}
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tSTATE_DIMENSION\n} filterCoreStateIdx;\n\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\tSTATE_DIMENSION\n};\n\n");
 
 	/*
 	 *	Generate measure indexing enumerator
 	 */
-	flexprint(N->Fe, N->Fm, N->Fpc, "\ntypedef enum\n{\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\nenum filterMeasureIdx\n{\n");
 	for (int i = 0; i < measureDimension; i++)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t%s,\n", measureVariableNames[i]);
 	}
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tMEASURE_DIMENSION\n} filterMeasureIdx;\n\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\tMEASURE_DIMENSION\n};\n\n");
 
 	/*
 	 *	Generate core filter-state struct
@@ -977,37 +1004,19 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Pm = makeMatrix(STATE_DIMENSION, STATE_DIMENSION);\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Pm->data = &cState->P[0][0];\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-	// flexprint(N->Fe, N->Fm, N->Fpc, "cState->Q = (double [STATE_DIMENSION][STATE_DIMENSION])\n{");
-	// for (int i = 0; i < stateDimension; i++)
-	// {
-	// 	flexprint(N->Fe, N->Fm, N->Fpc, "{");
-	// 	for (int j = 0; j < stateDimension; j++)
-	// 	{
-	// 		if (i != j) {
-	// 			flexprint(N->Fe, N->Fm, N->Fpc, " %f,", stateVariableUncertainties[i]*stateVariableUncertainties[j]);
-	// 		}
-	// 		else
-	// 		{
-	// 			flexprint(N->Fe, N->Fm, N->Fpc, " %f,", stateVariableUncertainties[i]);
-	// 		}
-	// 	}
-	// 	flexprint(N->Fe, N->Fm, N->Fpc, "},\n");
-	// }
-	// flexprint(N->Fe, N->Fm, N->Fpc, "};");
+	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Pm->data = &cState->P[0][0];\n\n");
+
 	for (int i = 0; i < stateDimension; i++)
 	{
 		for (int j = 0; j < stateDimension; j++)
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, "cState->Q[%d][%d] =", i, j);
 			if (i != j) {
-				flexprint(N->Fe, N->Fm, N->Fpc, " %f;\n", stateVariableUncertainties[i]*stateVariableUncertainties[j]);
+				flexprint(N->Fe, N->Fm, N->Fpc, " %g;\n", pow(10, (log10(stateVariableUncertainties[i]*stateVariableUncertainties[j])/2))*1e-1);
 			}
 			else
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, " %f;\n", stateVariableUncertainties[i]);
+				flexprint(N->Fe, N->Fm, N->Fpc, " %g;\n", stateVariableUncertainties[i]);
 			}
 		}
 	}
@@ -1015,25 +1024,25 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Qm = makeMatrix(STATE_DIMENSION, STATE_DIMENSION);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Qm->data = &cState->Q[0][0];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
 	for (int i = 0; i < measureDimension; i++)
 	{
 		for (int j = 0; j < measureDimension; j++)
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, "cState->R[%d][%d] =", i, j);
 			if (i != j) {
-				flexprint(N->Fe, N->Fm, N->Fpc, " %f;\n", measureVariableUncertainties[i]*measureVariableUncertainties[j]);
+				flexprint(N->Fe, N->Fm, N->Fpc, " %g;\n", pow(10, (log10(measureVariableUncertainties[i]*measureVariableUncertainties[j])/2))*1e-1);
 			}
 			else
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, " %f;\n", measureVariableUncertainties[i]);
+				flexprint(N->Fe, N->Fm, N->Fpc, " %g;\n", measureVariableUncertainties[i]);
 			}
 		}
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Rm = makeMatrix(MEASURE_DIMENSION, MEASURE_DIMENSION);\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Rm->data = &cState->R[0][0];\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "cState->Rm->data = &cState->R[0][0];\n\n");
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n\n");
 
 
