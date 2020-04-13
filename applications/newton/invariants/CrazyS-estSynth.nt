@@ -1,0 +1,153 @@
+#
+#	Authored 2020, Orestis Kaparounakis.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description: Invariants for CrazyS state estimation using the Estimator Synthesis backend.
+#                Based on work by Guiseppe Silano: - https://giuseppesilano.net/publications/rosChapter19.pdf
+#                                                  - https://github.com/gsilano/CrazyS
+#
+
+include "NewtonBaseSignals.nt"
+
+# ZYX Convention Rotation Matrix:
+# from https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
+# 1=φ, 2=θ, 3=ψ
+# [ cos(φ)*cos(θ)   cos(φ)*sin(θ)*sin(ψ) - cos(ψ)*sin(φ)   sin(φ)*sin(ψ) - cos(φ)*cos(ψ)*sin(θ) ]
+# [ cos(θ)*sin(φ)   cos(φ)*cos(ψ) + sin(φ)*sin(θ)*sin(ψ)   cos(ψ)*sin(φ)*sin(θ) - cos(φ)*sin(ψ) ]
+# [ -sin(θ)         cos(θ)*sin(ψ)                          cos(θ)*cos(ψ)                        ]
+
+# [p]   [u]   [q*w - r*v]
+# [q] x [v] = [r*u - p*w]
+# [r]   [w]   [p*v - q*u]
+
+# from CrazyS/rotors_description/urdf/crazyflie2.xacro:
+# J = diag(Ix, Iy, Iz)
+#       Ix = 1.657171e-05 kg*m**2
+#       Iy = 1.657171e-05 kg*m**2
+#       Iz = 2.9261652e-05 kg*m**2
+
+CT : constant = 1.28192e-8 (kg*m/rad**2);
+CM : constant = 5.964552e-3 (kg*m**2/rad**2);
+CD : constant = 8.06428e-5 (kg/rad);
+CR : constant = 1e-6 (kg*m/rad);
+
+Ix : constant = 1.657171e-5 (kg*m**2);
+Iy : constant = 1.657171e-5 (kg*m**2);
+Iz : constant = 2.9261652e-5 (kg*m**2);
+
+# arm length
+d : constant = 0.046 m;
+
+# gravitational constant
+g : constant = 9.80665 mjf;
+# g : constant = 9.80665 (m/s/s);
+
+# vehicle mass
+vmass : constant = 0.025 kg;
+
+process : invariant ( # State
+                      x : distance,
+                      y : distance,
+                      z : distance,
+                      u : speed,
+                      v : speed,
+                      w : speed,
+                      p : angularRate,
+                      q : angularRate,
+                      r : angularRate,
+                      φ : angle,
+                      θ : angle,
+                      ψ : angle,
+                      # System input
+                      ω1: angularRate,
+                      ω2: angularRate,
+                      ω3: angularRate,
+                      ω4: angularRate,
+                      # Other parameters
+                      t : time ) =
+{
+    # Position in the fixed inertial frame
+    derivative x t ~ cos(φ)*cos(θ)*u + cos(θ)*sin(φ)*v - sin(θ)*w,
+    derivative y t ~ (cos(φ)*sin(θ)*sin(ψ) - cos(ψ)*sin(φ))*u + (cos(φ)*cos(ψ) + sin(φ)*sin(θ)*sin(ψ))*v + cos(θ)*sin(ψ)*w,
+    derivative z t ~ (sin(φ)*sin(ψ) - cos(φ)*cos(ψ)*sin(θ))*u + (cos(ψ)*sin(φ)*sin(θ) - cos(φ)*sin(ψ))*v + cos(θ)*cos(ψ)*w,
+    # Velocities in the aircraft body center frame
+    derivative u t ~ -(sin(φ)*sin(ψ) - cos(φ)*cos(ψ)*sin(θ))*g - (q*w - r*v),
+    derivative v t ~ -(cos(ψ)*sin(φ)*sin(θ) - cos(φ)*sin(ψ))*g - (r*u - p*w),
+    derivative w t ~ CT*(ω1**2 + ω2**2 + ω3**2 + ω4**2)/vmass - cos(θ)*cos(ψ)*g - (p*v - q*u),
+    # Angular Rates in the aircraft body center frame
+    derivative p t ~ (1/sqrt(2)*CT*d*(-ω1**2 - ω2**2 + ω3**2 + ω4**2) - q*r*(Iz-Iy))/Ix,    # [Ix, 0, 0]-1 (Mx - [p] [Ix, 0, 0][p])
+    derivative q t ~ (1/sqrt(2)*CT*d*(-ω1**2 + ω2**2 + ω3**2 - ω4**2) - p*r*(Ix-Iz))/Iy,    # [0, Iy, 0]   (Mx - [q]x[0, Iy, 0][q])
+    derivative r t ~ (CM*(-ω1**2 + ω2**2 - ω3**2 + ω4**2) - p*q*(Iy-Ix))/Iz,                # [0, 0, Iz]   (Mx - [r] [0, 0, Iz][r])
+    # Euler angles according to ZYX convention in the fixad inertial frame
+    derivative φ t ~ p + sin(φ)*tan(θ)*q + cos(φ)*tan(θ)*r,
+    derivative θ t ~ cos(φ)*q - sin(φ)*r,
+    derivative ψ t ~ sin(φ)/cos(θ)*q + cos(φ)/cos(θ)*r
+}
+
+measure : invariant ( # State
+                      x : distance,
+                      y : distance,
+                      z : distance,
+                      u : speed,
+                      v : speed,
+                      w : speed,
+                      p : angularRate,
+                      q : angularRate,
+                      r : angularRate,
+                      φ : angle,
+                      θ : angle,
+                      ψ : angle,
+                      # Measurement
+                      acc_x : acceleration,
+                      acc_y : acceleration,
+                      acc_z : acceleration,
+                      gyro_x: angularRate,
+                      gyro_y: angularRate,
+                      gyro_z: angularRate,
+                      # Other parameters
+                      dt : time,
+                      ω1: angularRate,
+                      ω2: angularRate,
+                      ω3: angularRate,
+                      ω4: angularRate) =
+{
+    acc_x ~ u/dt,
+    acc_y ~ v/dt,
+    acc_z ~ w/dt,
+    gyro_x ~ p,
+    gyro_y ~ q,
+    gyro_z ~ r
+}

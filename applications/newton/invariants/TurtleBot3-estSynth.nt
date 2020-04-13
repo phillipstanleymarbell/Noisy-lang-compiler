@@ -35,58 +35,26 @@
 #	POSSIBILITY OF SUCH DAMAGE.
 #
 #
-#	Description: Invariants for a sine wave estimation using the 
-#               Estimator Synthesis backend. 
+#	Description: Invariants for TurtleBot3 state estimation using the 
+#               Estimator Synthesis backend.
 #
 
 include "NewtonBaseSignals.nt"
 
+l : constant = 1 m; # wheel to wheel distance
 
-process_01 : invariant (x : distance) =
-{
-    x ~ x
+process : invariant () =
+{   # vl = left wheel speed, vr = right wheel speed
+    # if vl == vr:
+    derivative x t ~ (vr + vl)/2 * cos(θ),
+    derivative y t ~ (vr + vl)/2 * sin(θ), # Only translational movement, no strafing on differential robots
+    # else if vl == -vr:
+    derivative θ t ~ (vr - vl)/l
+    # not sure if this will work
 }
 
-dx : constant = 1 (m*s**-1);
-dxx : constant = 1 (s**-1);
-
-process_02 : invariant (x : distance,
-                        t : time,
-                        dt : time
-                        ) =
+measure : invariant () =
 {
-    x ~ x + dx*2*cos(x/2)*dt    # This is utterly wrong
-}
-
-process_03 : invariant (x : distance,
-                        phi : angle,
-                        omega : angularRate,
-                        dt : time) =
-{
-    x ~ 2*sin(phi) + 2*cos(phi)*dt*dxx,
-    phi ~ phi + omega*dt,
-    omega ~ omega
-}
-
-process_04 : invariant (x : distance,
-                        t : time,                        
-                        dt: time) = 
-{
-    x ~ 2*sin(t),
-    t ~ t + 0.002*dt
-}
-
-process_05 : invariant (x : distance,
-                        t: time) = 
-{
-    x ~ 2*sin(t)
-}
-
-measure_01 : invariant (x : distance,
-                        phi : angle,
-                        omega : angularRate,
-                        dt : time,
-                        x_m : distance) =
-{
-    x_m ~ x
+    acc_x_m ~ tv/dt,
+    gyro_z ~ θ/dt
 }

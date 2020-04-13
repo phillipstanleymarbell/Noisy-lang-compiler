@@ -1,5 +1,6 @@
 #
 #	Authored 2017, Shao-Tuan Chen.
+#	Differential models: Authored 2020, Orestis Kaparounakis.
 #
 #	All rights reserved.
 #
@@ -63,11 +64,11 @@ include "NewtonBaseSignals.nt"
 #	z = null(A,'r')
 #
 
-troll : signal =
+damptype : signal =
 {
-	name		= "troll" English;
-	symbol		= trl;
-	derivation	= distance / second / second;
+	name		= "damptype" English;
+	symbol		= dmptyp;
+	derivation	= mass / second;
 }
 
 pendulum : invariant(L: distance, period: time) =
@@ -75,10 +76,10 @@ pendulum : invariant(L: distance, period: time) =
 	period  ** 2 ~ (4 * kNewtonUnitfree_pi * kNewtonUnitfree_pi * L / kNewtonUnithave_AccelerationDueToGravity)
 }
 
-g : constant = 9.80665 trl;
-# zero_trick : constant = 0 ajf;
-# mass : constant = 1 kg;
+g : constant = 9.80665 ajf;
+bobmass : constant = 1 kg;
 
+# Ideal pendulum
 pendulum_process_1 : invariant( theta	: angle,
 								dtheta	: angularRate,
 								dt		: time,
@@ -98,12 +99,16 @@ pendulum_measure_1 : invariant( theta	: angle,
 	gyro_z ~ dtheta
 }
 
-# pendulum_process_2 : invariant( theta	: angle,
-# 								dt		: time,
-# 								L		: distance) =
-# {
-# 	theta ~ theta - g/L*sin(theta)*dt
-# }
+# Pendulum with damping factor
+pendulum_process_2 : invariant( theta	: angle,
+								dtheta	: angularRate,
+								dt		: time,
+								damp	: damptype,
+								L		: distance) =
+{
+	theta ~ theta + dtheta*dt,
+	dtheta ~ dtheta - damp/bobmass*dtheta*dt - g/L*sin(theta)*dt
+}
 
 # pendulum_measure_2 : invariant( theta	: angle,
 # 								gyro_z	: angularRate,

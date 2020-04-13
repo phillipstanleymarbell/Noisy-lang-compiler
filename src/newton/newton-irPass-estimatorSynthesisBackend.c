@@ -122,8 +122,8 @@ getIdentifierSignalUncertainty(State *  N, Physics *p)
 	Physics *	signalPhysics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope, p->identifier);
 	if (signalPhysics == NULL)
 	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "No Physics entry found for identifier '%s'. \
-		This should not be able to happen. Please contact the developers or open an bug issue.\n", p->identifier);
+		flexprint(N->Fe, N->Fm, N->Fperr, "No Physics entry found for identifier '%s'.\n", p->identifier);
+		flexprint(N->Fe, N->Fm, N->Fperr, "This should not be able to happen. Please contact the developers or open an bug issue providing the input that was used.\n");
 		/*
 		 *	The reason this should not be able to happen at this stage is because
 		 *	it probably is a variable usage before declaration, which is caught in earlier passes.
@@ -134,6 +134,7 @@ getIdentifierSignalUncertainty(State *  N, Physics *p)
 	if (varSymbol == NULL)
 	{
 		error(N, "No Symbol entry found for identifier 'var'.");
+		// TODO: Write *what* you are setting to $defaultUncertainty
 		flexprint(N->Fe, N->Fm, N->Fperr, "Variance for signal '%s' not found. Setting to %f.\n", p->identifier, defaultUncertainty);
 		return defaultUncertainty;
 	}
@@ -821,10 +822,9 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tGenerated .c file from Newton\n */\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "#include <stdlib.h>\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "#include <stdio.h>\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "#include <math.h>\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "#include \"C-Linear-Algebra/matrix.h\"\n#include \"C-Linear-Algebra/matrixadv.h\"\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "#include <math.h>\n\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "#include \"../C-Linear-Algebra/matrix.h\"\n#include \"../C-Linear-Algebra/matrixadv.h\"\n\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "#define DEG2RAD 3.1415926535/180\n");
 
 	IrNode *	constraintXSeq = NULL;
 	/*
@@ -1430,7 +1430,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 		if (counter >= measureExtraParams)
 		{
-			fatal(N, "Measurement Invariant Parameter identifiers that are either measurement variables or state variables appear to be less than #measurement_constraints + #state_variables. Are *all* state variables present in the invariant's parameter?\n");
+			fatal(N, "Measurement Invariant Parameter identifiers that are either measurement variables or state variables appear to be less than #measurement_constraints + #process_constraints. Are *all* state variables present in the Measurement Invariant's parameter?\n");
 		}
 
 		measureExtraParamSymbols[counter] = parameterSymbol;
@@ -1814,6 +1814,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "filterInit(&cs, initState, initCov);\n");
 
 
+	flexprint(N->Fe, N->Fm, N->Fpc, "double dt;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "double prevtime = time;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "double measure[MEASURE_DIMENSION];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "while (scanf(\"%%lf\", &time) > 0)\n");
@@ -1826,7 +1827,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "scanf(\",%%lf\", &measure[%d]);\n", i);
 	}
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "dt = time-prevtime;\n\n");
 	// flexprint(N->Fe, N->Fm, N->Fpc, "filterPredict(&cs, time - prevtime);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "filterPredict (&cs");
 	for (int i = 0; i < stateExtraParams; i++)
