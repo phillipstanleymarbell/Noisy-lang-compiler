@@ -88,33 +88,33 @@ process : invariant ( # State
                       p : angularRate,
                       q : angularRate,
                       r : angularRate,
-                      φ : angle,
-                      θ : angle,
-                      ψ : angle,
+                      phi : angle,
+                      theta : angle,
+                      psi : angle,
                       # System input
-                      ω1: angularRate,
-                      ω2: angularRate,
-                      ω3: angularRate,
-                      ω4: angularRate,
+                      omega1: angularRate,
+                      omega2: angularRate,
+                      omega3: angularRate,
+                      omega4: angularRate,
                       # Other parameters
-                      t : time ) =
+                      dt : time ) =
 {
     # Position in the fixed inertial frame
-    derivative x t ~ cos(φ)*cos(θ)*u + cos(θ)*sin(φ)*v - sin(θ)*w,
-    derivative y t ~ (cos(φ)*sin(θ)*sin(ψ) - cos(ψ)*sin(φ))*u + (cos(φ)*cos(ψ) + sin(φ)*sin(θ)*sin(ψ))*v + cos(θ)*sin(ψ)*w,
-    derivative z t ~ (sin(φ)*sin(ψ) - cos(φ)*cos(ψ)*sin(θ))*u + (cos(ψ)*sin(φ)*sin(θ) - cos(φ)*sin(ψ))*v + cos(θ)*cos(ψ)*w,
+    x ~ x + (cos(phi)*cos(theta)*u + cos(theta)*sin(phi)*v - sin(theta)*w)*dt,
+    y ~ y + ((cos(phi)*sin(theta)*sin(psi) - cos(psi)*sin(phi))*u + (cos(phi)*cos(psi) + sin(phi)*sin(theta)*sin(psi))*v + cos(theta)*sin(psi)*w)*dt,
+    z ~ z + ((sin(phi)*sin(psi) - cos(phi)*cos(psi)*sin(theta))*u + (cos(psi)*sin(phi)*sin(theta) - cos(phi)*sin(psi))*v + cos(theta)*cos(psi)*w)*dt,
     # Velocities in the aircraft body center frame
-    derivative u t ~ -(sin(φ)*sin(ψ) - cos(φ)*cos(ψ)*sin(θ))*g - (q*w - r*v),
-    derivative v t ~ -(cos(ψ)*sin(φ)*sin(θ) - cos(φ)*sin(ψ))*g - (r*u - p*w),
-    derivative w t ~ CT*(ω1**2 + ω2**2 + ω3**2 + ω4**2)/vmass - cos(θ)*cos(ψ)*g - (p*v - q*u),
+    u ~ u - ((sin(phi)*sin(psi) - cos(phi)*cos(psi)*sin(theta))*g - (q*w - r*v))*dt,
+    v ~ v - ((cos(psi)*sin(phi)*sin(theta) - cos(phi)*sin(psi))*g - (r*u - p*w))*dt,
+    w ~ w + (CT*(omega1**2 + omega2**2 + omega3**2 + omega4**2)/vmass - cos(theta)*cos(psi)*g - (p*v - q*u))*dt,
     # Angular Rates in the aircraft body center frame
-    derivative p t ~ (1/sqrt(2)*CT*d*(-ω1**2 - ω2**2 + ω3**2 + ω4**2) - q*r*(Iz-Iy))/Ix,    # [Ix, 0, 0]-1 (Mx - [p] [Ix, 0, 0][p])
-    derivative q t ~ (1/sqrt(2)*CT*d*(-ω1**2 + ω2**2 + ω3**2 - ω4**2) - p*r*(Ix-Iz))/Iy,    # [0, Iy, 0]   (Mx - [q]x[0, Iy, 0][q])
-    derivative r t ~ (CM*(-ω1**2 + ω2**2 - ω3**2 + ω4**2) - p*q*(Iy-Ix))/Iz,                # [0, 0, Iz]   (Mx - [r] [0, 0, Iz][r])
+    p ~ p + ((CT*d*(-omega1**2 - omega2**2 + omega3**2 + omega4**2)/2**0.5 - q*r*(Iz-Iy))/Ix)*dt,    # [Ix, 0, 0]-1 (Mx - [p] [Ix, 0, 0][p])
+    q ~ q + ((CT*d*(-omega1**2 + omega2**2 + omega3**2 - omega4**2)/2**0.5 - p*r*(Ix-Iz))/Iy)*dt,    # [0, Iy, 0]   (Mx - [q]x[0, Iy, 0][q])
+    r ~ r + ((CM*(-omega1**2 + omega2**2 - omega3**2 + omega4**2) - p*q*(Iy-Ix))/Iz)*dt,                # [0, 0, Iz]   (Mx - [r] [0, 0, Iz][r])
     # Euler angles according to ZYX convention in the fixad inertial frame
-    derivative φ t ~ p + sin(φ)*tan(θ)*q + cos(φ)*tan(θ)*r,
-    derivative θ t ~ cos(φ)*q - sin(φ)*r,
-    derivative ψ t ~ sin(φ)/cos(θ)*q + cos(φ)/cos(θ)*r
+    phi ~ phi + (p + sin(phi)*tan(theta)*q + cos(phi)*tan(theta)*r)*dt,
+    theta ~ theta + (cos(phi)*q - sin(phi)*r)*dt,
+    psi ~ psi + (sin(phi)/cos(theta)*q + cos(phi)/cos(theta)*r)*dt
 }
 
 measure : invariant ( # State
@@ -127,9 +127,9 @@ measure : invariant ( # State
                       p : angularRate,
                       q : angularRate,
                       r : angularRate,
-                      φ : angle,
-                      θ : angle,
-                      ψ : angle,
+                      phi : angle,
+                      theta : angle,
+                      psi : angle,
                       # Measurement
                       acc_x : acceleration,
                       acc_y : acceleration,
@@ -139,10 +139,10 @@ measure : invariant ( # State
                       gyro_z: angularRate,
                       # Other parameters
                       dt : time,
-                      ω1: angularRate,
-                      ω2: angularRate,
-                      ω3: angularRate,
-                      ω4: angularRate) =
+                      omega1: angularRate,
+                      omega2: angularRate,
+                      omega3: angularRate,
+                      omega4: angularRate) =
 {
     acc_x ~ u/dt,
     acc_y ~ v/dt,
@@ -151,3 +151,43 @@ measure : invariant ( # State
     gyro_y ~ q,
     gyro_z ~ r
 }
+
+# Process with derivative notation -- not supported yet
+# process_derivatives : invariant ( # State
+#                       x : distance,
+#                       y : distance,
+#                       z : distance,
+#                       u : speed,
+#                       v : speed,
+#                       w : speed,
+#                       p : angularRate,
+#                       q : angularRate,
+#                       r : angularRate,
+#                       phi : angle,
+#                       theta : angle,
+#                       psi : angle,
+#                       # System input
+#                       omega1: angularRate,
+#                       omega2: angularRate,
+#                       omega3: angularRate,
+#                       omega4: angularRate,
+#                       # Other parameters
+#                       dt : time ) =
+# {
+#     # Position in the fixed inertial frame
+#     derivative x t ~ cos(phi)*cos(theta)*u + cos(theta)*sin(phi)*v - sin(theta)*w,
+#     derivative y t ~ (cos(phi)*sin(theta)*sin(psi) - cos(psi)*sin(phi))*u + (cos(phi)*cos(psi) + sin(phi)*sin(theta)*sin(psi))*v + cos(theta)*sin(psi)*w,
+#     derivative z t ~ (sin(phi)*sin(psi) - cos(phi)*cos(psi)*sin(theta))*u + (cos(psi)*sin(phi)*sin(theta) - cos(phi)*sin(psi))*v + cos(theta)*cos(psi)*w,
+#     # Velocities in the aircraft body center frame
+#     derivative u t ~ -(sin(phi)*sin(psi) - cos(phi)*cos(psi)*sin(theta))*g - (q*w - r*v),
+#     derivative v t ~ -(cos(psi)*sin(phi)*sin(theta) - cos(phi)*sin(psi))*g - (r*u - p*w),
+#     derivative w t ~ CT*(omega1**2 + omega2**2 + omega3**2 + omega4**2)/vmass - cos(theta)*cos(psi)*g - (p*v - q*u),
+#     # Angular Rates in the aircraft body center frame
+#     derivative p t ~ (1/sqrt(2)*CT*d*(-omega1**2 - omega2**2 + omega3**2 + omega4**2) - q*r*(Iz-Iy))/Ix,    # [Ix, 0, 0]-1 (Mx - [p] [Ix, 0, 0][p])
+#     derivative q t ~ (1/sqrt(2)*CT*d*(-omega1**2 + omega2**2 + omega3**2 - omega4**2) - p*r*(Ix-Iz))/Iy,    # [0, Iy, 0]   (Mx - [q]x[0, Iy, 0][q])
+#     derivative r t ~ (CM*(-omega1**2 + omega2**2 - omega3**2 + omega4**2) - p*q*(Iy-Ix))/Iz,                # [0, 0, Iz]   (Mx - [r] [0, 0, Iz][r])
+#     # Euler angles according to ZYX convention in the fixad inertial frame
+#     derivative phi t ~ p + sin(phi)*tan(theta)*q + cos(phi)*tan(theta)*r,
+#     derivative theta t ~ cos(phi)*q - sin(phi)*r,
+#     derivative psi t ~ sin(phi)/cos(theta)*q + cos(phi)/cos(theta)*r
+# }

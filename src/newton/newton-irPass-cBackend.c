@@ -132,9 +132,9 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 
 		case kNewtonIrNodeType_TrealConst:
 		{
-			int needed = snprintf(NULL, 0, "%f", node->value) + 1;
+			int needed = snprintf(NULL, 0, "%g", node->value) + 1;
 			output = malloc(needed);
-			snprintf(output, needed, "%f", node->value);
+			snprintf(output, needed, "%g", node->value);
 			break;
 		}
 
@@ -149,9 +149,9 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 		case kNewtonIrNodeType_Tidentifier:
 		{	
 			if (node->physics->isConstant == true) {
-				int needed = snprintf(NULL, 0, "%f", node->value) + 1;
+				int needed = snprintf(NULL, 0, "%g", node->value) + 1;
 				output = malloc(needed);
-				snprintf(output, needed, "%f", node->value);
+				snprintf(output, needed, "%g", node->value);
 			} else {
 				int needed = snprintf(NULL, 0, "%s", node->tokenString) + 1;
 				output = malloc(needed);

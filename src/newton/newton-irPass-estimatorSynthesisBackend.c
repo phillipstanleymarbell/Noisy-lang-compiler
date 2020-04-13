@@ -614,7 +614,7 @@ irPassEstimatorSynthesisADGenReverse(State *  N, IrNode *  root)
 					default:
 					{
 						flexprint(N->Fe, N->Fm, N->Fpc, ";\n");
-						flexprint(N->Fe, N->Fm, N->Fperr, "Unhandled transcendental case.\n");
+						flexprint(N->Fe, N->Fm, N->Fperr, "Unhandled transcendental case type number '%d'.\n", LL(root)->type);
 						break;
 					}
 				}
@@ -824,7 +824,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "#include <stdio.h>\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "#include <math.h>\n\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "#include \"../C-Linear-Algebra/matrix.h\"\n#include \"../C-Linear-Algebra/matrixadv.h\"\n\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "#define DEG2RAD 3.1415926535/180\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "#define DEG2RAD (3.1415926535/180)\n");
 
 	IrNode *	constraintXSeq = NULL;
 	/*
@@ -1266,13 +1266,15 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		}
 		flexprint(N->Fe, N->Fm, N->Fpc, ") {\n");
 
+		flexprint(N->Fe, N->Fm, N->Fpc, "double newState[STATE_DIMENSION];\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "double fMatrix[STATE_DIMENSION][STATE_DIMENSION] = {0};\n");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n{\n");
 		for (int i = 0; i < stateDimension; i++)
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, "double %s = cState->S[%s];\n", stateVariableSymbols[i]->identifier, stateVariableNames[i]);
 		}
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "double newState[STATE_DIMENSION];\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "double fMatrix[STATE_DIMENSION][STATE_DIMENSION] = {0};\n");
 
 		counter = 0;
 		for (counter = 0; counter < stateDimension; counter++)
@@ -1331,6 +1333,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 				}
 			}
 		}
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n}\n");
 	}
 
 	/*
@@ -1636,13 +1639,15 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		}
 		flexprint(N->Fe, N->Fm, N->Fpc, ") {\n");
 
+		flexprint(N->Fe, N->Fm, N->Fpc, "double HS[MEASURE_DIMENSION];\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "double hMatrix[MEASURE_DIMENSION][STATE_DIMENSION] = {0};\n");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n{\n");
 		for (int i = 0; i < stateDimension; i++)
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, "double %s = cState->S[%s];\n", measureInvariantStateVariableSymbols[i]->identifier, stateVariableNames[i]);
 		}
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "double HS[MEASURE_DIMENSION];\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "double hMatrix[MEASURE_DIMENSION][STATE_DIMENSION] = {0};\n");
 		counter = 0;
 		for (counter = 0; counter < measureDimension; counter++)
 		{
@@ -1700,6 +1705,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 				}
 			}
 		}
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n}\n");
 	}
 
 	/*
