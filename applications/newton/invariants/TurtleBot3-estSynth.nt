@@ -41,20 +41,60 @@
 
 include "NewtonBaseSignals.nt"
 
-l : constant = 1 m; # wheel to wheel distance
+l : constant = 0.16 m;  # Wheel separation: The distance of the left and right wheel(s).
 
-process : invariant () =
-{   # vl = left wheel speed, vr = right wheel speed
+# R = (l/2 * (vl+vr)/(vr-vl))
+# omega = (vr - vl)/l
+
+# process_1 : invariant ( x : distance,
+#                         y : distance,
+#                         theta : angularDisplacement,
+#                         dt  : time,
+#                         vr  : speed,    # Right wheel speed
+#                         vl  : speed     # Left wheel speed
+#                         ) =
+# {
+#     x ~ 2*x + cos((vr-vl)/l*dt)*(l/2 * (vl+vr)/(vr-vl))*sin(θ) + sin((vr-vl)/l*dt)*(l/2 * (vl+vr)/(vr-vl))*cos(θ) - l/2 * (vl+vr)/(vr-vl)*sin(theta),
+#     y ~ 2*y + sin((vr-vl)/l*dt)*(l/2 * (vl+vr)/(vr-vl))*sin(theta) - cos((vr-vl)/l*dt)*(l/2 * (vl+vr)/(vr-vl))*cos(theta) + l/2 * (vl+vr)/(vr-vl)*cos(theta),
+#     theta ~ theta + (vr-vl)/l*dt
+# }
+
+process_2 : invariant ( x : distance,
+                        y : distance,
+                        vx : speed,
+                        vy : speed,
+                        theta : angularDisplacement,
+                        omega : angularVelocity,
+                        dt  : time,
+                        vr  : speed,    # Right wheel speed
+                        vl  : speed     # Left wheel speed
+                        ) =
+{   # ONLY IF ROBOT HAS EITHER vl == vr OR vl == - vr !!!!
     # if vl == vr:
-    derivative x t ~ (vr + vl)/2 * cos(θ),
-    derivative y t ~ (vr + vl)/2 * sin(θ), # Only translational movement, no strafing on differential robots
+    x ~ x + vx*dt,
+    y ~ y + vy*dt, # Only translational movement, no strafing on differential robots
+    vx ~ (vr + vl)/2 * cos(theta),
+    vy ~ (vr + vl)/2 * sin(theta),
     # else if vl == -vr:
-    derivative θ t ~ (vr - vl)/l
+    theta ~ theta +  omega*dt,
+    omega ~ (vr - vl)/l
     # not sure if this will work
 }
 
-measure : invariant () =
+measure : invariant ( # State 
+                     x : distance,
+                     y : distance,
+                     vx : speed,
+                     vy : speed,
+                     theta : angularDisplacement,
+                     omega : angularVelocity,
+                     # Measure
+                     odom_x : distance,
+                     odom_y : distance,
+                     gyro_z: angularVelocity,
+                     dt  : time) =
 {
-    acc_x_m ~ tv/dt,
-    gyro_z ~ θ/dt
+    odom_x ~ x,
+    odom_y ~ y,
+    gyro_z ~ omega
 }

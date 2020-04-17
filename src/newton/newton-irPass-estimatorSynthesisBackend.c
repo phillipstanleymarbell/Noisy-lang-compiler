@@ -715,15 +715,15 @@ irPassEstimatorSynthesisGenAutoDiffBody(State *  N, IrNode *  expressionXSeq, ch
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n// ---\n");
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "\ndouble gw = 1;\n\n");
-	irPassEstimatorSynthesisGenAutoDiffExpression(N, expressionXSeq, "w");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\ndouble gad_ = 1;\n\n");
+	irPassEstimatorSynthesisGenAutoDiffExpression(N, expressionXSeq, "ad_");
 
 	for (int i = 0; i < wrtSymbolsLength; i++)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "Ji[%s] = g%s;\n", wrtNames[i], wrtSymbols[i]->identifier);
 	}
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "\nreturn w;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\nreturn ad_;\n");
 }
 
 /*
@@ -1715,7 +1715,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix Zm = { .height = MEASURE_DIMENSION, .width = 1, .data = Z };\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "// Kg = PH^T * (HPH^T + Q)^(-1)\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "// Kg = PH^T * (HPH^T + R)^(-1)\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  Hm_T = transposeMatrix(&Hm);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  PHm_T = multiplyMatrix(cState->Pm, Hm_T);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  HPHm_T = multiplyMatrix(&Hm, PHm_T);\n");
