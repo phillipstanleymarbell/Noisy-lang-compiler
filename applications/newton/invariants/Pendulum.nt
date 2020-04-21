@@ -76,38 +76,39 @@ pendulum : invariant(L: distance, period: time) =
 	period  ** 2 ~ (4 * kNewtonUnitfree_pi * kNewtonUnitfree_pi * L / kNewtonUnithave_AccelerationDueToGravity)
 }
 
-g : constant = 9.80665 ajf;
+
+g : constant = 9.80665 (ajf*jf);
 bobmass : constant = 1 kg;
 
 # Ideal pendulum
-pendulum_process_1 : invariant( theta	: angle,
-								dtheta	: angularRate,
-								dt		: time,
-								L		: distance) =
+pendulum_ideaL_process : invariant( theta	: angle,
+									dtheta	: angularRate,
+									dt		: time,
+									L		: distance) =
 {
 	theta ~ theta + dtheta*dt,
 	dtheta ~ dtheta - g/L*sin(theta)*dt
 }
 
 
-
-pendulum_measure_1 : invariant( theta	: angle,
-								dtheta	: angularRate,
-								dt		: time,
-								gyro_z	: angularRate ) =
-{
-	gyro_z ~ dtheta
-}
-
 # Pendulum with damping factor
-pendulum_process_2 : invariant( theta	: angle,
-								dtheta	: angularRate,
-								dt		: time,
-								damp	: damptype,
-								L		: distance) =
+pendulum_damped_process : invariant( theta	: angle,
+									dtheta	: angularRate,
+									dt		: time,
+									damp	: damptype,
+									L		: distance) =
 {
 	theta ~ theta + dtheta*dt,
 	dtheta ~ dtheta - damp/bobmass*dtheta*dt - g/L*sin(theta)*dt
+}
+
+
+pendulum_measure : invariant( theta	: angle,
+							dtheta	: angularRate,
+							dt		: time,
+							gyro_z	: angularRate ) =
+{
+	gyro_z ~ dtheta
 }
 
 # pendulum_measure_2 : invariant( theta	: angle,

@@ -59,20 +59,18 @@ include "NewtonBaseSignals.nt"
 #       Iy = 1.657171e-05 kg*m**2
 #       Iz = 2.9261652e-05 kg*m**2
 
-CT : constant = 1.28192e-8 (kg*m/rad**2);
-CM : constant = 5.964552e-3 (kg*m**2/rad**2);
-CD : constant = 8.06428e-5 (kg/rad);
-CR : constant = 1e-6 (kg*m/rad);
+CT : constant = 1.28192e-8 (kg*m/rad**2);     # Motor constant
+CM : constant = 5.964552e-3 (kg*m**2/rad**2); # Moment constant
+CD : constant = 8.06428e-5 (kg/rad);          # Rotor drag coefficient
+CR : constant = 1e-6 (kg*m/rad);              # Rolling moment coefficient
 
-Ix : constant = 1.657171e-5 (kg*m**2);
-Iy : constant = 1.657171e-5 (kg*m**2);
-Iz : constant = 2.9261652e-5 (kg*m**2);
+Ix : constant = 1.657171e-5 (kg*m**2);    # Inertia about X axis
+Iy : constant = 1.657171e-5 (kg*m**2);    # Inertia about Y axis
+Iz : constant = 2.9261652e-5 (kg*m**2);   # Inertia about Z axis
 
-# arm length
-d : constant = 0.046 m;
+d : constant = 0.046 m;   # Arm length
 
-# gravitational constant
-g : constant = 9.80665 mjf;
+g : constant = 9.80665 mjf;   # Gravitational constant
 # g : constant = 9.80665 (m/s/s);
 
 # vehicle mass
@@ -110,7 +108,8 @@ process : invariant ( # State
     # Angular Rates in the aircraft body center frame
     p ~ p + ((CT*d*(-omega1**2 - omega2**2 + omega3**2 + omega4**2)/2**0.5 - q*r*(Iz-Iy))/Ix)*dt,       # [Ix, 0, 0]-1 (Mx - [p] [Ix, 0, 0][p])
     q ~ q + ((CT*d*(-omega1**2 + omega2**2 + omega3**2 - omega4**2)/2**0.5 - p*r*(Ix-Iz))/Iy)*dt,       # [0, Iy, 0]   (Mx - [q]x[0, Iy, 0][q])
-    r ~ r + ((CM*(-omega1**2 + omega2**2 - omega3**2 + omega4**2) - p*q*(Iy-Ix))/Iz)*dt,                # [0, 0, Iz]   (Mx - [r] [0, 0, Iz][r])
+    r ~ r + ((CM*(-omega1**2 + omega2**2 - omega3**2 + omega4**2))/Iz)*dt,                              # [0, 0, Iz]   (Mx - [r] [0, 0, Iz][r])
+    # r ~ r + ((CM*(-omega1**2 + omega2**2 - omega3**2 + omega4**2) - p*q*(Iy-Ix))/Iz)*dt,              
     # Euler angles according to ZYX convention in the fixad inertial frame
     phi ~ phi + (p + sin(phi)*tan(theta)*q + cos(phi)*tan(theta)*r)*dt,
     theta ~ theta + (cos(phi)*q - sin(phi)*r)*dt,
@@ -131,25 +130,26 @@ measure : invariant ( # State
                       theta : angle,
                       psi : angle,
                       # Measurement
-                      acc_x : acceleration,
-                      acc_y : acceleration,
-                      acc_z : acceleration,
+                      # acc_x : acceleration,
+                      # acc_y : acceleration,
+                      # acc_z : acceleration,
                       gyro_x: angularRate,
                       gyro_y: angularRate,
                       gyro_z: angularRate,
                       # Other parameters
-                      dt : time,
-                      omega1: angularRate,
-                      omega2: angularRate,
-                      omega3: angularRate,
-                      omega4: angularRate) =
+                      dt : time
+                    #   omega1: angularRate,
+                    #   omega2: angularRate,
+                    #   omega3: angularRate,
+                    #   omega4: angularRate
+                      ) =
 {
-    acc_x ~ u/dt,
-    acc_y ~ v/dt,
-    acc_z ~ w/dt,
     gyro_x ~ p,
     gyro_y ~ q,
     gyro_z ~ r
+    # acc_x ~ integral u dt,
+    # acc_y ~ integral v dt,
+    # acc_z ~ integral (-w) dt
 }
 
 # Process with derivative notation -- not supported yet
