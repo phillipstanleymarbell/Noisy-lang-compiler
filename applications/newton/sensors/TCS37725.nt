@@ -92,20 +92,20 @@ kTCS37725LambdaDominant615RStdev: constant = -1;
 kTCS37725LambdaDominant615CStdev: constant = -1;
 
 TCS37725: sensor (
-			Lambda465B: irradianceResponsivity@0,
-			Lambda465G: irradianceResponsivity@1,
-			Lambda465R: irradianceResponsivity@2,
-			Lambda465C: irradianceResponsivity@3,
+			Lambda465B: irradianceResponsivity[0],
+			Lambda465G: irradianceResponsivity[1],
+			Lambda465R: irradianceResponsivity[2],
+			Lambda465C: irradianceResponsivity[3],
 
-			Lambda525B: irradianceResponsivity@4,
-			Lambda525G: irradianceResponsivity@5,
-			Lambda525R: irradianceResponsivity@6,
-			Lambda525C: irradianceResponsivity@7,
+			Lambda525B: irradianceResponsivity[4],
+			Lambda525G: irradianceResponsivity[5],
+			Lambda525R: irradianceResponsivity[6],
+			Lambda525C: irradianceResponsivity[7],
 
-			Lambda615B: irradianceResponsivity@8,
-			Lambda615G: irradianceResponsivity@9,
-			Lambda615R: irradianceResponsivity@10,
-			Lambda615C: irradianceResponsivity@11
+			Lambda615B: irradianceResponsivity[8],
+			Lambda615G: irradianceResponsivity[9],
+			Lambda615R: irradianceResponsivity[10],
+			Lambda615C: irradianceResponsivity[11]
 			) =
 {
 

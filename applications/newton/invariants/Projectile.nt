@@ -65,7 +65,7 @@ g : constant = 9.8 (m * s ** -2);
 #		z = null(A,'r')
 #
 
-Projectile : invariant(h: distance@0, v: speed@0, period: time) =
+Projectile : invariant(h: distance[0], v: speed[0], period: time) =
 {
 	h ~ (v ** 2 / g )
 }

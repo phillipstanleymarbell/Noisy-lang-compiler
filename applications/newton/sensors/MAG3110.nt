@@ -71,9 +71,9 @@ kMAG3110zMagneticFluxDensityStdev		: constant = -1;
 kMAG3110TemperatureStdev			: constant = -1;
 
 MAG3110: sensor (
-			mag3110xMagneticFluxDensity: magneticFluxDensity@0,
-			mag3110yMagneticFluxDensity: magneticFluxDensity@1,
-			mag3110zMagneticFluxDensity: magneticFluxDensity@2,
+			mag3110xMagneticFluxDensity: magneticFluxDensity[0],
+			mag3110yMagneticFluxDensity: magneticFluxDensity[1],
+			mag3110zMagneticFluxDensity: magneticFluxDensity[2],
 			mag3110Temperature: temperature
 			) =
 {

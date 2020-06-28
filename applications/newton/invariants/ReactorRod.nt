@@ -48,8 +48,8 @@ targetCoolingTemperature: constant = 70 C;
 #	If we can't cool in max amount of time, something has gone wrong.
 #
 RodCooling: invariant(
-	rodTemp: temperature@0,
-	waterTemp: temperature@1
+	rodTemp: temperature[0],
+	waterTemp: temperature[1]
 ) =
 {
 	rodTemp - NewtonsLawConstant * (rodTemp - waterTemp) * maxCoolingTime <= targetCoolingTemperature

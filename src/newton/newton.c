@@ -72,6 +72,7 @@
 #include "newton-irPass-RTLBackend.h"
 #include "newton-irPass-dotBackend.h"
 #include "newton-irPass-smtBackend.h"
+#include "newton-irPass-estimatorSynthesisBackend.h"
 #include "newton-irPass-dimensionalMatrixAnnotation.h"
 #include "newton-irPass-dimensionalMatrixPiGroups.h"
 #include "newton-irPass-dimensionalMatrixPrinter.h"
@@ -248,6 +249,15 @@ processNewtonFile(State *  N, char *  filename)
 	{
 		irPassRTLBackend(N);
 	}
+
+	/*
+	 *	Estimator Synthesis backend
+	 */
+	if (N->irBackends & kNewtonIrBackendEstimatorSynthesis)
+	{
+		irPassEstimatorSynthesisBackend(N);
+	}
+	
 }
 
 static State*

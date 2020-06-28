@@ -346,13 +346,13 @@ newtonParseConstant(State *  N, Scope *  currentScope)
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_PconstantDefinition);
 	}
 	*/
-	
+
   /*
 	Dimension * tmpDimensionsNode;
 	if (node->irLeftChild->physics != NULL)
   {
 		flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(Constant identifier is %s)\n", node->irLeftChild->physics->identifier);
-		
+
 		for (tmpDimensionsNode = node->irLeftChild->physics->dimensions; tmpDimensionsNode != NULL; tmpDimensionsNode = tmpDimensionsNode->next)
     {
 			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t(Unit is %s with exponent %f)\n", tmpDimensionsNode->name, tmpDimensionsNode->exponent);
@@ -384,6 +384,7 @@ newtonParseInvariant(State *  N, Scope *  currentScope)
 
 	Invariant *	invariant	= (Invariant *) calloc(1, sizeof(Invariant));
 	IrNode *	invariantName	= newtonParseIdentifier(N, currentScope);
+	invariantName->irParent = node;
 
 	/*
 	 *	Also add it to the AST
@@ -542,7 +543,7 @@ newtonParseParameterTuple(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		parameter			::=	identifier ":" (identifier | numericExpression) {"@" integerConst} .
+ *		parameter			::=	identifier ":" (identifier | numericExpression) {"[" integerConst "]"} .
  */
 IrNode *
 newtonParseParameter(State *  N, Scope *  currentScope, int parameterNumber)
@@ -566,9 +567,10 @@ newtonParseParameter(State *  N, Scope *  currentScope, int parameterNumber)
 		IrNode *	physicsName = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
 		addLeaf(N, node, physicsName);
 
-		if (lexPeek(N, 1)->type == kNewtonIrNodeType_TatSign)
+		if (lexPeek(N, 1)->type == kNewtonIrNodeType_TleftBracket)
 		{
-			newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
+			// newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
+			newtonParseTerminal(N, kNewtonIrNodeType_TleftBracket, currentScope);
 
 			newtonParseResetPhysicsWithCorrectSubindex(
 					N,
@@ -577,7 +579,10 @@ newtonParseParameter(State *  N, Scope *  currentScope, int parameterNumber)
 					physicsName->token->identifier,
 					newtonParseTerminal(N, kNewtonIrNodeType_TintegerConst, currentScope)->value
 					);
-			}
+
+			newtonParseTerminal(N, kNewtonIrNodeType_TrightBracket, currentScope);
+		}
+
 
 			node->physics = physicsName->physics;
 	}
@@ -692,7 +697,7 @@ setPhysicsOfBaseNode(State *  N, IrNode *  baseNode, IrNode *  exponent)
 
 //fprintf(stderr, "\tin setPhysicsOfBaseNode(), baseNode->value = [%f],  exponent->value = [%f]\n", baseNode->value, exponent->value);
 	/*
-	 *	If the base is a Physics quantity, we used to check that the 
+	 *	If the base is a Physics quantity, we used to check that the
 	 *	exponent must be an integer. We no longer restrict this.
 	 *	One use case is noise for many sensors (e.g., accelerometers)
 	 *	which is derivation = 1E-6 * (acceleration / (frequency ** 0.5));
@@ -955,6 +960,7 @@ newtonParseNumericFactor(State *  N, Scope *  currentScope)
 		IrNode *	constChildNode = newtonParseNumericConst(N, currentScope);
 		addLeaf(N, node, constChildNode);
 		node->value = constChildNode->value;
+		node->integerValue = constChildNode->integerValue;
 
 		/*
 		 *	We have to check whether the token after the operator is a numeric const.
@@ -1053,7 +1059,33 @@ newtonParseBaseSignal(State *  N, Scope *  currentScope)
 	}
 
 	/*
-	 *	Abbreviation syntax is also optional
+	 *	Uncertainty syntax is optional
+	 */
+	IrNode *	signalUncertainty = NULL;
+	if (inFirst(N, kNewtonIrNodeType_PsignalUncertaintyStatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		signalUncertainty = newtonParseSignalUncertainty(N, currentScope);
+		addLeafWithChainingSeq(N, node, signalUncertainty);
+		/*
+		 *	Based on the implementation of commonSymbolTableOpenScope()
+		 *	the most recent subscope is in firstChild. 
+		 *	Not sure why this is the behaviour, though. -- Orestis
+		 */
+		newPhysics->uncertaintyScope = currentScope->firstChild;
+	}
+
+	/*
+	 *	Sensor syntax is optional
+	 */
+	IrNode *	signalSensor = NULL;
+	if (inFirst(N, kNewtonIrNodeType_PsensorStatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		signalSensor = newtonParseSignalSensor(N, currentScope);
+		addLeafWithChainingSeq(N, node, signalSensor);
+	}
+
+	/*
+	 *	Abbreviation syntax is also optional // TODO: It is appear optional in the newton.grammar
 	 */
 	IrNode *	unitAbbreviation = NULL;
 	if (inFirst(N, kNewtonIrNodeType_PsymbolStatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
@@ -1186,6 +1218,65 @@ newtonParseName(State *  N, Scope *  currentScope)
 }
 
 
+/*
+ *	Grammar production:
+ *
+ *		signalUncertaintyStatement	::= "uncertainty" "=" distribution [parameterTuple] ";" .
+ */
+IrNode *
+newtonParseSignalUncertainty(State * N, Scope *  currentScope)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsignalUncertaintyStatement,
+					NULL /* left child */,
+					NULL /* right child */,
+					lexPeek(N, 1)->sourceInfo /* source info */
+				);
+
+	addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tuncertainty, currentScope));
+	addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope));
+
+	IrNode *	scopeBegin = newtonParseDistribution(N, currentScope);
+	Scope *	newScope = commonSymbolTableOpenScope(N, currentScope, scopeBegin);
+
+	addLeafWithChainingSeq(N, node, scopeBegin);
+
+	if (inFirst(N, kNewtonIrNodeType_PparameterTuple, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		addLeafWithChainingSeq(N, node, newtonParseParameterTuple(N, newScope));
+	}
+
+	IrNode *	scopeEnd = newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, newScope);
+	commonSymbolTableCloseScope(N, newScope, scopeEnd);
+
+	return node;
+}
+
+
+/*
+ *	Grammar production:
+ *
+ *		sensorStatement			::=	"sensor" "=" identifier ";" .
+ */
+IrNode *
+newtonParseSignalSensor(State * N, Scope *  currentScope)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PsensorStatement,
+					NULL /* left child */,
+					NULL /* right child */,
+					lexPeek(N, 1)->sourceInfo /* source info */
+				);
+
+	addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tsensor, currentScope));
+	addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope));
+	addLeafWithChainingSeq(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
+
+	return node;
+}
 
 /*
  *	Grammar production:
@@ -1344,7 +1435,8 @@ newtonParseTerminal(State *  N, IrNodeType expectedType, Scope *  currentScope)
 
 	if (t->type == kNewtonIrNodeType_TintegerConst)
 	{
-		n->value = t->integerConst;
+		n->integerValue = t->integerConst;
+		n->value = (double) t->integerConst;
 	}
 
 	if (t->type == kNewtonIrNodeType_TrealConst)
@@ -1367,7 +1459,7 @@ newtonParseIdentifier(State *  N, Scope *  currentScope)
 	if (peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
 	{
 		n = newtonParseIdentifierDefinitionTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
-
+		n->symbol->typeTree = n;
 		return n;
 	}
 
@@ -1395,7 +1487,7 @@ newtonParseIdentifier(State *  N, Scope *  currentScope)
 /*
  *	The following functions were originally in newton-parser-expression.c.
  *	I've moved them in here, deleted newton-parser-expression.c, and
- *	started cleaning them up (removing assert()s that should be 
+ *	started cleaning them up (removing assert()s that should be
  *	newtonParserSemanticError()s, adding the !inFollow()s, etc.) as part
  *	of general hygiene. --- PSM.
  */
@@ -1645,6 +1737,7 @@ newtonParseQuantityTerm(State *  N, Scope *  currentScope)
  *
  *		quantityFactor			::=	quantity [exponentiationOperator numericFactor]			|
  *							functionalOperator {functionalOperator} quantityFactor quantityFactor	|
+ *							distribution "(" quantityExpression {"," quantityExpression} ")" 		|
  *							"(" quantityExpression ")" [exponentiationOperator numericFactor]	|
  *							"{" quantityExpression {"," quantityExpression} "}" .
  */
@@ -1665,7 +1758,7 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 		IrNode *	subnode = newtonParseQuantity(N, currentScope);
 
 		addLeaf(N, intermediate, subnode);
-	
+
 		if (inFirst(N, kNewtonIrNodeType_PexponentiationOperator, gNewtonFirsts, kNewtonIrNodeTypeMax))
 		{
 			addLeafWithChainingSeq(N, intermediate, newtonParseExponentiationOperator(N, currentScope));
@@ -1703,6 +1796,27 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 		 *	Created GitHub issue to track moving all setting of physics from
 		 *	parse-time to a dedicated to physics tree-annotation pass, #402.
 		 */
+	}
+	else if (inFirst(N, kNewtonIrNodeType_Pdistribution, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		addLeafWithChainingSeq(N, intermediate, newtonParseDistribution(N, currentScope));
+
+		newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
+		addLeafWithChainingSeq(N, intermediate, newtonParseQuantityExpression(N, currentScope));
+		while (peekCheck(N, 1, kNewtonIrNodeType_Tcomma))
+		{
+			newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
+			addLeafWithChainingSeq(N, intermediate, newtonParseQuantityExpression(N, currentScope));
+		}
+		newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
+
+	}
+	else if (inFirst(N, kNewtonIrNodeType_Ptranscendental, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		addLeafWithChainingSeq(N, intermediate, newtonParseTranscendental(N, currentScope));
+		newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
+		addLeafWithChainingSeq(N, intermediate, newtonParseQuantityExpression(N, currentScope));
+		newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 	}
 	else if (peekCheck(N, 1, kNewtonIrNodeType_TleftParen))
 	{
@@ -1769,7 +1883,7 @@ newtonParseQuantityFactor(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		quantity			::=	numericConst | (identifier ["@" numericFactor]) .
+ *		quantity			::=	numericConst | (identifier ["[" numericFactor "]"]) .
  */
 IrNode *
 newtonParseQuantity(State *  N, Scope *  currentScope)
@@ -1802,9 +1916,10 @@ newtonParseQuantity(State *  N, Scope *  currentScope)
 		 */
 		assert(identifierNode->tokenString != NULL);
 
-		if (peekCheck(N, 1, kNewtonIrNodeType_TatSign))
+		if (peekCheck(N, 1, kNewtonIrNodeType_TleftBracket))
 		{
-			newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
+			// newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
+			newtonParseTerminal(N, kNewtonIrNodeType_TleftBracket, currentScope);
 			newtonParseTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
 			newtonParseResetPhysicsWithCorrectSubindex(
 				N,
@@ -1813,6 +1928,7 @@ newtonParseQuantity(State *  N, Scope *  currentScope)
 				identifierNode->token->identifier,
 				currentScope->currentSubindex);
 
+			newtonParseTerminal(N, kNewtonIrNodeType_TrightBracket, currentScope);
 		}
 
 		/*
@@ -2059,7 +2175,7 @@ newtonParseUnaryOp(State *  N, Scope *  currentScope)
 {
 	TimeStampTraceMacro(kNewtonTimeStampKey);
 
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PunaryOp,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
@@ -2105,7 +2221,7 @@ newtonParseCompareOp(State *  N, Scope *  currentScope)
 {
 	TimeStampTraceMacro(kNewtonTimeStampKey);
 
-	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PlowPrecedenceBinaryOp,
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PcomparisonOperator,
 						NULL /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
@@ -2113,7 +2229,7 @@ newtonParseCompareOp(State *  N, Scope *  currentScope)
 
 	/*
 	 *	NOTE: The '<->' syntax is intended to be used in combination with the
-	 *	"set of quantities syntax", i.e., 
+	 *	"set of quantities syntax", i.e.,
 	 *
 	 *		pendulumPeriod <-> {acceleration, length}
 	 */
@@ -2130,6 +2246,7 @@ newtonParseCompareOp(State *  N, Scope *  currentScope)
 		)
 	{
 		addLeaf(N, node, newtonParseTerminal(N, type, currentScope));
+		return node;
 	}
 	else
 	{
@@ -2148,10 +2265,7 @@ newtonParseCompareOp(State *  N, Scope *  currentScope)
 	}
 	*/
 
-	/*
-	 *	Not reached.
-	 */
-	return NULL;
+	return node;
 }
 
 
@@ -3259,7 +3373,8 @@ newtonParseNumericConst(State *  N, Scope *  currentScope)
 	{
 		IrNode *	valueNode = newtonParseTerminal(N, kNewtonIrNodeType_TintegerConst, currentScope);
 		addLeaf(N, node, valueNode);
-		node->value = valueNode->value;
+		node->integerValue = valueNode->integerValue;
+		node->value = (double) valueNode->integerValue;
 	}
 	else if (peekCheck(N, 1, kNewtonIrNodeType_TrealConst))
 	{
@@ -3573,13 +3688,13 @@ newtonParseParameterValueList(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		distribution			::=	  "Gaussian" | "Laplacian" | "StudentT" | "Bernoulli" | "Binomial" 
+ *		distribution			::=	  "Gaussian" | "Laplacian" | "StudentT" | "Bernoulli" | "Binomial"
  *							| "Poisson" | "NegativeBinomial" | "BetaBinomial" | "Exponential"
  *							| "Gamma" | "Multinomial" | "Beta" | "LogitNormal" | "Dirichlet"
- *							| "Cauchy" | "LogNormal" | "Pareto" | "BetaPrime" | "StudentZ" 
- *							| "Weibull" | "Erlang" | "Maxwell" | "FermiDirac" | "FisherZ" 
+ *							| "Cauchy" | "LogNormal" | "Pareto" | "BetaPrime" | "StudentZ"
+ *							| "Weibull" | "Erlang" | "Maxwell" | "FermiDirac" | "FisherZ"
  *							| "LogSeries" | "Gumbel" | "Rayleigh" | "Gibrat" | "PearsonIII"
- *							| "ExtremeValue" | "F" | "Xi" | "XiSquared" .
+ *							| "ExtremeValue" | "F" | "Xi" | "XiSquared" | "Unconstrained" .
  */
 IrNode *
 newtonParseDistribution(State *  N, Scope *  currentScope)
@@ -3721,6 +3836,10 @@ newtonParseDistribution(State *  N, Scope *  currentScope)
 	{
 		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TXiSquared, currentScope));
 	}
+	else if (peekCheck(N, 1, kNewtonIrNodeType_TUnconstrained))
+	{
+		addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TUnconstrained, currentScope));
+	}
 	else
 	{
 		newtonParserSyntaxError(N, kNewtonIrNodeType_Pdistribution, kNewtonIrNodeType_Pdistribution, gNewtonFirsts);
@@ -3741,7 +3860,39 @@ newtonParseDistribution(State *  N, Scope *  currentScope)
 	return node;
 }
 
+/*
+ *	Grammar production:
+ *
+ *		transcendental	::= "sin" | "cos" | "tan" | "cotan" | "sec"  | "cosec"
+ *						| "arcsin" | "arccos" | "arctan" | "arccotan" | "arcsec"  | "arccosec"
+ *						| "sinh" | "cosh" | "tanh" | "cotanh" | "sech"  | "cosech"
+ *						| "arcsinh" | "arccosh" | "arctanh" | "arccotanh" | "arcsech"  | "arccosech"
+ *						| "exp" | "sqrt"
+ *						| "ln" | "log10" | "log2" .
+ */
+IrNode *
+newtonParseTranscendental(State * N, Scope *  currentScope)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
 
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_Ptranscendental,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */
+					);
+
+	if (inFirst(N, kNewtonIrNodeType_Ptranscendental, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		addLeaf(N, node, newtonParseTerminal(N, lexPeek(N, 1)->type, currentScope));
+	}
+	else
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_Ptranscendental, kNewtonIrNodeType_Ptranscendental, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Ptranscendental);
+	}
+
+	return node;
+}
 
 
 
@@ -3836,6 +3987,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 	assert(!strcmp(n->token->identifier, n->tokenString));
 
 	Physics *   physicsSearchResult;
+	Symbol * symbolSearchResult;
 
 	if ((physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, t->identifier)) == NULL)
 	{
@@ -3863,10 +4015,11 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 			newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
 		}
 
+		symbolSearchResult = commonSymbolTableSymbolForIdentifier(N, scope, t->identifier);
 		physicsSearchResult = newtonParseGetPhysicsByBoundIdentifier(N, scope->scopeParameterList, t->identifier);
 	}
 
-	if (physicsSearchResult == NULL)
+	if (physicsSearchResult == NULL && symbolSearchResult == NULL)
 	{
 		/*
 		 *	Identifier use before definition.
@@ -3880,6 +4033,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
 	}
 
+	n->symbol = symbolSearchResult;
 	n->physics = deepCopyPhysicsNode(N, physicsSearchResult);
 	assert(n->physics->dimensions != NULL);
 
@@ -3948,7 +4102,7 @@ while (p != NULL)
 /*
  *	This method is used by the Newton API to search through the parameters
  *	that correspond to each Physics node in the invariant tree.
- *	TODO (Jonathan): can add nth like findNthNodeType method to accommodate multiple 
+ *	TODO (Jonathan): can add nth like findNthNodeType method to accommodate multiple
  *	parameters with same Physics
  */
 IrNode *
@@ -4017,7 +4171,7 @@ newtonParseFindNodeByParameterNumberAndSubindex(State *N, IrNode * root, int par
 
 	if (targetNode != NULL)
 	{
-		return targetNode; 
+		return targetNode;
 	}
 
 	if (root->irRightChild != NULL)
@@ -4170,8 +4324,8 @@ void newtonParseResetPhysicsWithCorrectSubindex(
 		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
 	}
 
-	/* 
-	 *	Defensive copying to keep the Physics list in State immutable 
+	/*
+	 *	Defensive copying to keep the Physics list in State immutable
 	 */
 	node->physics = deepCopyPhysicsNode(N, physicsSearchResult);
 	if (node->physics->dimensions == NULL)
@@ -4195,7 +4349,7 @@ newtonIsDimensionless(State *  N, Physics *  physics)
 	while (current != NULL)
 	{
 		/*
-		 *	If the base is a Physics quantity, we used to check that the 
+		 *	If the base is a Physics quantity, we used to check that the
 		 *	exponent must be an integer. We no longer restrict this.
 		 *	One use case is noise for many sensors (e.g., accelerometers)
 		 *	which is derivation = 1E-6 * (acceleration / (frequency ** 0.5));

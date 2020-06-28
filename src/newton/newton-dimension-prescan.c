@@ -128,7 +128,12 @@ newtonDimensionPassParseStatement(State * N, Scope * currentScope)
 	 *	tokens while tracking number of braces seen.
 	 */
 	if (lexPeek(N, 3)->type == kNewtonIrNodeType_Tconstant)
-	{
+	{	
+		/*
+		 *	TODO:
+		 *	If semicolon ';' is omitted (e.g. by mistake) 
+		 *	Newton loops infinitely here.
+		 */
 		while (lexPeek(N, 1)->type != kNewtonIrNodeType_Tsemicolon)
 		{
 			lexGet(N, gNewtonTokenDescriptions);
@@ -226,7 +231,27 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 	}
 
 	/*
-	 *	Abbreviation syntax is also optional
+	 *	Uncertainty syntax is optional
+	 */
+	if (inFirst(N, kNewtonIrNodeType_PsignalUncertaintyStatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		// IrNode *	signalUncertainty = NULL;
+		// signalUncertainty = 
+		newtonParseSignalUncertainty(N, currentScope);
+	}
+
+	/*
+	 *	Sensor syntax is optional
+	 */
+	if (inFirst(N, kNewtonIrNodeType_PsensorStatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		// IrNode *	signalSensor = NULL;
+		// signalSensor = 
+		newtonParseSignalSensor(N, currentScope);
+	}
+
+	/*
+	 *	Abbreviation syntax is also optional // TODO: This is not represented in the grammar.
 	 */
 	IrNode *    unitAbbreviation = NULL;
 	if (inFirst(N, kNewtonIrNodeType_PsymbolStatement, gNewtonFirsts, kNewtonIrNodeTypeMax))
@@ -252,7 +277,9 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 			  inFirst(N, kNewtonIrNodeType_PquantityExpression, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
 			  inFirst(N, kNewtonIrNodeType_PquantityTerm, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
 			  inFirst(N, kNewtonIrNodeType_PquantityFactor, gNewtonFirsts, kNewtonIrNodeTypeMax) ||
-			  lexPeek(N, 1)->type == kNewtonIrNodeType_TatSign ||
+			//   lexPeek(N, 1)->type == kNewtonIrNodeType_TatSign ||
+			  lexPeek(N, 1)->type == kNewtonIrNodeType_TleftBracket ||
+			  lexPeek(N, 1)->type == kNewtonIrNodeType_TrightBracket ||
 			  lexPeek(N, 1)->type == kNewtonIrNodeType_TrightParen
 			)
 		{

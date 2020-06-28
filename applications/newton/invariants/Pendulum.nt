@@ -1,5 +1,6 @@
 #
 #	Authored 2017, Shao-Tuan Chen.
+#	Differential models: Authored 2020, Orestis Kaparounakis.
 #
 #	All rights reserved.
 #
@@ -63,7 +64,64 @@ include "NewtonBaseSignals.nt"
 #	z = null(A,'r')
 #
 
+damptype : signal =
+{
+	name		= "damptype" English;
+	symbol		= dmptyp;
+	derivation	= mass / second;
+}
+
 pendulum : invariant(L: distance, period: time) =
 {
 	period  ** 2 ~ (4 * kNewtonUnitfree_pi * kNewtonUnitfree_pi * L / kNewtonUnithave_AccelerationDueToGravity)
 }
+
+
+g : constant = 9.80665 (ajf*jf);
+bobmass : constant = 1 kg;
+
+# Ideal pendulum
+pendulum_ideaL_process : invariant( theta	: angle,
+									dtheta	: angularRate,
+									dt		: time,
+									L		: distance) =
+{
+	theta ~ theta + dtheta*dt,
+	dtheta ~ dtheta - g/L*sin(theta)*dt
+}
+
+
+# Pendulum with damping factor
+pendulum_damped_process : invariant( theta	: angle,
+									dtheta	: angularRate,
+									dt		: time,
+									damp	: damptype,
+									L		: distance) =
+{
+	theta ~ theta + dtheta*dt,
+	dtheta ~ dtheta - damp/bobmass*dtheta*dt - g/L*sin(theta)*dt
+}
+
+
+pendulum_measure : invariant( theta	: angle,
+							dtheta	: angularRate,
+							dt		: time,
+							gyro_z	: angularRate ) =
+{
+	gyro_z ~ dtheta
+}
+
+# pendulum_measure_2 : invariant( theta	: angle,
+# 								gyro_z	: angularRate,
+# 								L		: distance ) =
+# {
+# 	gyro_z ~ -g/L*sin(theta)
+# }
+
+# # sensor fusion -- ieee-esl-2017.pdf equation (10)
+# pendulum_measure_2 : invariant( _ ) =
+# {
+# 	gyro_x ~ dtheta,
+# #	acc_y ~ L * derivative dtheta dt + g*sin(theta),
+# 	acc_z ~  - g*cos(theta) - L*dtheta**2
+# }
