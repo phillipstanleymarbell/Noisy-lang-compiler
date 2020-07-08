@@ -169,7 +169,7 @@ irPassEstimatorSynthesisExpressionLinear(State *  N, IrNode *  expressionXSeq) {
 		{
 			while (stillLinear && expressionXSeq != NULL)
 			{
-				stillLinear &= irPassEstimatorSynthesisExpressionLinear(N, expressionXSeq->irLeftChild);
+				stillLinear = stillLinear && irPassEstimatorSynthesisExpressionLinear(N, expressionXSeq->irLeftChild);
 				expressionXSeq = expressionXSeq->irRightChild;
 			}
 			return stillLinear;
@@ -214,8 +214,8 @@ irPassEstimatorSynthesisInvariantLinear(State *  N, Invariant *  invariant)
 	bool stillLinear = true;
 	for (IrNode *  constraintXSeq = invariant->constraints; stillLinear && (constraintXSeq != NULL); constraintXSeq = constraintXSeq->irRightChild)
 	{
-		stillLinear &= irPassEstimatorSynthesisExpressionLinear(N, L(constraintXSeq));
-		stillLinear &= irPassEstimatorSynthesisExpressionLinear(N, LRRL(constraintXSeq));
+		stillLinear = stillLinear && irPassEstimatorSynthesisExpressionLinear(N, L(constraintXSeq));
+		stillLinear = stillLinear && irPassEstimatorSynthesisExpressionLinear(N, LRRL(constraintXSeq));
 	}
 	return stillLinear;
 }
