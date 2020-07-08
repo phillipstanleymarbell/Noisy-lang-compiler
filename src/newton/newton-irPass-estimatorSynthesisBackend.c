@@ -81,6 +81,13 @@
 #include "newton-symbolTable.h"
 #include "newton-irPass-cBackend.h"
 
+/*
+	Toggle usage of pointer arithmetic vs array indexing.
+	Temporary definition until functionality is exposed at 
+	cli arguments.
+*/
+// #define POINTER_ARITHMETIC
+
 Invariant *
 findInvariantByIdentifier(State *  N, const char *  identifier)
 {
@@ -1342,16 +1349,24 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix Fm = {.height = STATE_DIMENSION, .width = STATE_DIMENSION, .data = &fMatrix[0][0]};\n");
 	if (linearProcess)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  FSm = multiplyMatrix(&Fm, cState->Sm);\n");
+		// TODO: Generalize to use functions to newState[]
+		// like in nonlinear
+		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  FSm = multiplyMatrix(&Fm, cState->Sm);\t// TODO: Use functions here!\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "double *  sn = FSm->data;\n");
 	}
+	#ifdef POINTER_ARITHMETIC
 	else
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "double *  sn = &newState[0];\n");
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  s = &cState->S[0];\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < STATE_DIMENSION; i++)\n{\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "*s = *sn;\ns++;\nsn++;\n}\n");
+	#endif
+	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < STATE_DIMENSION; i++)\n");
+	#ifdef POINTER_ARITHMETIC
+	flexprint(N->Fe, N->Fm, N->Fpc, "{\n*s = *sn;\ns++;\nsn++;\n}\n");
+	#else
+	flexprint(N->Fe, N->Fm, N->Fpc, "{\ncState->S[i] = newState[i];\n}\n");
+	#endif
 	/*
 	 *	Generate covariance propagation
 	 */
@@ -1360,12 +1375,26 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  FPFm_T = multiplyMatrix(FPm, Fm_T);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
+	#ifdef POINTER_ARITHMETIC
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  p = cState->Pm->data;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  fpf = FPFm_T->data;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  q = cState->Qm->data;\n");
+	#endif
+
+	
+	#ifdef POINTER_ARITHMETIC
 	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < STATE_DIMENSION*STATE_DIMENSION; i++)\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "{\n\t*p = *fpf + *q;\n\tp++;\n\tfpf++;\n\tq++;\n}\n");
+	#else
+	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < STATE_DIMENSION; i++)\n{\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "for (int j = 0; j < STATE_DIMENSION; j++)\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "{\n\tcState->Pm->data[i*STATE_DIMENSION + j] = FPFm_T->data[i*STATE_DIMENSION + j] + cState->Q[i][j];\n}\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n}\n");
+	#endif
 
+	/*
+	 *	Closing bracket of filterPredict()
+	 */
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n\n");
 
 	/*
@@ -1720,6 +1749,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  PHm_T = multiplyMatrix(cState->Pm, Hm_T);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  HPHm_T = multiplyMatrix(&Hm, PHm_T);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	
+	#ifdef POINTER_ARITHMETIC
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  hph = HPHm_T->data;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  r = cState->Rm->data;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < MEASURE_DIMENSION * MEASURE_DIMENSION; i++)\n{\n");
@@ -1727,6 +1758,13 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "hph++;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "r++;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n");
+	#else
+	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < MEASURE_DIMENSION; i++)\n{\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (int j = 0; j < MEASURE_DIMENSION; j++)\n{\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "HPHm_T->data[i*MEASURE_DIMENSION + j] += cState->R[i][j];\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n}\n}\n");
+	#endif
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  HPHm_T_inv = inverseMatrix(HPHm_T);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  Kg = multiplyMatrix(PHm_T, HPHm_T_inv);\n");
@@ -1742,28 +1780,53 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "matrix HSm_s = { .height = MEASURE_DIMENSION, .width = 1, .data = &HS[0] };\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  HSm = &HSm_s;\n");
+
+		#ifdef POINTER_ARITHMETIC
 		flexprint(N->Fe, N->Fm, N->Fpc, "double *  hs = &HS[0];\n");
+		#endif
 	}
 
+	#ifdef POINTER_ARITHMETIC
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  z = &Z[0];\n");
+	#endif
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < MEASURE_DIMENSION; i++)\n{\n");
+
+	#ifdef POINTER_ARITHMETIC
 	flexprint(N->Fe, N->Fm, N->Fpc, "*hs = *z - *hs;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "hs++;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "z++;\n");
+	#else
+	flexprint(N->Fe, N->Fm, N->Fpc, "HSm->data[i] = Z[i] - HSm->data[i];\n");
+	#endif
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n");
+	
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  KgZHS = multiplyMatrix(Kg, HSm);\n");
+	#ifdef POINTER_ARITHMETIC
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  s = &cState->S[0];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  kgzhs = KgZHS->data;\n");
+	#endif
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < STATE_DIMENSION; i++)\n{\n");
+
+	#ifdef POINTER_ARITHMETIC
 	flexprint(N->Fe, N->Fm, N->Fpc, "*s += *kgzhs;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "s++;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "kgzhs++;\n");
+	#else
+	flexprint(N->Fe, N->Fm, N->Fpc, "cState->S[i] += KgZHS->data[i];\n");
+	#endif
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "// P <- P - KgHP\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  HPm = multiplyMatrix(&Hm, cState->Pm);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "matrix *  KgHPm = multiplyMatrix(Kg, HPm);\n");
+	
+	#ifdef POINTER_ARITHMETIC
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  p = &cState->P[0][0];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "double *  kghp = KgHPm->data;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < STATE_DIMENSION*STATE_DIMENSION; i++)\n{\n");
@@ -1771,8 +1834,16 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "p++;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "kghp++;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	#else
+	flexprint(N->Fe, N->Fm, N->Fpc, "for (int i = 0; i < STATE_DIMENSION; i++)\n{\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "for (int j = 0; j < STATE_DIMENSION; j++)\n{\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "cState->P[i][j] -= KgHPm->data[i*STATE_DIMENSION + j];\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n}\n}\n");
+	#endif
+
+	/*
+	 *	Closing bracket for filterUpdate()
+	 */
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n\n");
 
 
