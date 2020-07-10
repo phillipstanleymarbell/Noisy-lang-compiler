@@ -738,6 +738,7 @@ typedef enum
 	 */
 	kNewtonIrBackendLatex				= (1 << 5),
 	kNewtonIrBackendEstimatorSynthesis	= (1 << 6),
+	kNewtonIrBackendIpsa				= (1 << 7),
 
 	/*
 	 *	Code depends on this bringing up the rear.

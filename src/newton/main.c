@@ -113,6 +113,7 @@ main(int argc, char *argv[])
 			{"auto-diff", no_argument, 0, 423},
 			{"kernelNumber", required_argument, 0, 494},
 			{"piNumber", required_argument, 0, 495},
+			{"ipsa", no_argument, 0, 489},
 			{0,			0,			0,	0}
 		};
 
@@ -413,6 +414,12 @@ main(int argc, char *argv[])
 				N->piNumber = atoi(optarg);
 				N->enablePiSelect = true;
 				break;
+			}
+
+			case 489:
+			{
+				N->irBackends |= kNewtonIrBackendIpsa;
+				break;	
 			}
 
 			case '?':

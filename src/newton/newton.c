@@ -75,6 +75,7 @@
 #include "newton-irPass-estimatorSynthesisBackend.h"
 #include "newton-irPass-invariantSignalAnnotation.h"
 #include "newton-irPass-piGroupsSignalAnnotation.h"
+#include "newton-irPass-ipsaBackend.h"
 #include "newton-irPass-dimensionalMatrixAnnotation.h"
 #include "newton-irPass-dimensionalMatrixPiGroups.h"
 #include "newton-irPass-dimensionalMatrixPrinter.h"
@@ -267,6 +268,15 @@ processNewtonFile(State *  N, char *  filename)
 	{
 		irPassEstimatorSynthesisBackend(N);
 	}
+
+	/*
+	 * Ipsa backend
+	 */
+	if (N->irBackends & kNewtonIrBackendIpsa)
+	{
+		irPassIpsaBackend(N, N->newtonIrTopScope, N->newtonIrRoot, gNewtonAstNodeStrings);
+		//printf("%s \n", "Test");
+	} 
 	
 }
 
