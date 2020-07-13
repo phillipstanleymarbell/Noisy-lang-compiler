@@ -68,9 +68,11 @@
 #include "newton-symbolTable.h"
 #include "newton.h"
 #include "newton-irPass-cBackend.h"
+#include "newton-irPass-targetParamBackend.h"
 #include "newton-irPass-RTLBackend.h"
 #include "newton-irPass-dotBackend.h"
 #include "newton-irPass-smtBackend.h"
+#include "newton-irPass-estimatorSynthesisBackend.h"
 #include "newton-irPass-dimensionalMatrixAnnotation.h"
 #include "newton-irPass-dimensionalMatrixPiGroups.h"
 #include "newton-irPass-dimensionalMatrixPrinter.h"
@@ -188,6 +190,14 @@ processNewtonFile(State *  N, char *  filename)
 	}
 
 	/*
+	 *	Target param backend
+	 */
+	if (N->irBackends & kNewtonIrBackendTargetParam)
+	{
+		irPassTargetParamBackend(N);
+	}
+
+	/*
 	 *	C backend
 	 */
 	if (N->irBackends & kNewtonIrBackendC)
@@ -239,6 +249,15 @@ processNewtonFile(State *  N, char *  filename)
 	{
 		irPassRTLBackend(N);
 	}
+
+	/*
+	 *	Estimator Synthesis backend
+	 */
+	if (N->irBackends & kNewtonIrBackendEstimatorSynthesis)
+	{
+		irPassEstimatorSynthesisBackend(N);
+	}
+	
 }
 
 static State*

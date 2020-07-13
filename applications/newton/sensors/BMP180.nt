@@ -99,7 +99,7 @@ BMP180: sensor (
 	#
 	#	Register address of Pressure Sensor can be found in Figure 6 of document 4 on page 18.
 	#
-	interface bmp180Pressure@16*bits == i2c (address: 16r77)
+	interface bmp180Pressure[16]*bits == i2c (address: 16r77)
 	{
 		#
 		#	write to pressure value (oss=0) in register address 16rF4
@@ -111,13 +111,13 @@ BMP180: sensor (
 		#
 		out_p_msb = read 16rF6;
 		out_p_lsb = read 16rF7;
-		bmp180Pressure@16*bits = (out_p_msb << 8) | (out_p_lsb);
+		bmp180Pressure[16]*bits = (out_p_msb << 8) | (out_p_lsb);
 	},
 	
 	#
 	#	Datasheet states that we could extend it to 19 bits though the conversion is not given. However, extending it to 21 bits makes more sense to me.
 	#
-	interface bmp180Pressure@21*bits == i2c (address: 16r77)
+	interface bmp180Pressure[21]*bits == i2c (address: 16r77)
 	{
 		#
 		#	write to pressure value (oss=0) in register address 16rF4
@@ -130,7 +130,7 @@ BMP180: sensor (
 		out_p_msb = read 16rF6;
 		out_p_lsb = read 16rF7;
 		out_p_xlsb = read 16rF8;
-		bmp180Pressure@21*bits = (out_p_msb << 13) | (out_p_lsb << 5) | (out_p_xlsb >> 3);
+		bmp180Pressure[21]*bits = (out_p_msb << 13) | (out_p_lsb << 5) | (out_p_xlsb >> 3);
 	},
 
 	#

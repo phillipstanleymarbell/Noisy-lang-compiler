@@ -1,5 +1,5 @@
 #
-#	Authored 2020, Marcus Pirron.
+#	Authored 2020, Marcus Pirron and Damien Zufferey.
 #
 #	All rights reserved.
 #
@@ -39,59 +39,234 @@
 #
 include "NewtonBaseSignals.nt"
 
-torque : signal =
-{
-	name		= "Newtonmeter" English;
-	symbol		= Nm;
-	derivation	= force * distance;
+# Additional includes and signals
+
+electricResistance : signal = {
+	name = "Ohm" English;
+	symbol = O;
+	derivation = power/current;
 }
 
-E_1	: constant = 1900000 (N * m **-2);
-E_2	: constant = 1900000 (N * m **-2);
-w	: constant = 0.005 m;
-h	: constant = 0.05 m;
-I	: constant = (1/12) (w * h ** 3 * m ** 4);
-L_1	: constant = 5 m;
-L_2	: constant = 5 m;
-
-beam_1 : invariant(d_1: distance@0, P_1: force) =
-{
-	d_1 ~ (P_1 * L_1 / (3 * E_1 * I))
+electricPotential : signal = {
+	name = "Electric Potential" English;
+	symbol = V;
+	derivation = work / charge;
 }
 
-beam_2 : invariant(d_2: distance@0, P_2: force) =
-{
-	d_2 ~ (P_2 * L_2 / (3 * E_2 * I))
+torque: signal = {
+	name = "Torque" English;
+	symbol = t;
+	derivation = angularDisplacement * distance * force;
 }
 
-#
-#	Needs length of Beam 1 for τ₁
-#
-revolute_joint_1: invariant(t_f: angle, P_1: force, r_1: distance, M_1:
-torque)=
-{
-	#
-	#	Transcendentals are not really supported in the grammar.
-	#
-	M_1 ~ r_1 * P_1 #* sin( t_f )
+secondMomentOfArea : signal = {
+	name = "Second Moment of area" English;
+	symbol = I;
+	derivation = distance * distance * distance * distance;
 }
 
-#
-#	Needs length of Beam 2 for τ₂
-#
-revolute_joint_2: invariant(t_2: angle, P_2: force, r_2: distance, M_2:
-torque)=
-{
-	M_2 ~ r_2 * P_2 #* sin( t_2 )
+flexuralModulus : signal = {
+	name = "Flexural Modulus" English;
+	symbol = E;
+	derivation = force * distance * distance * distance / (secondMomentOfArea * distance);
 }
 
-#
-#	Invariant for position, orientation and force(?)
-#
-endeffector_1: invariant(d1: distance, x: distance, x_0: distance, y: distance, y_0: distance, z: distance, z_0: distance, t_1: angle, t2: angle, mForce: force, F: force)=
+
+# Model of mperl model:
+# In this section, the complete description of the mperl generated
+# model is given.
+
+
+# length of the beams
+Prismatic0Length: constant = 0.2 m;
+Prismatic1Length: constant = 0.2 m;
+# x0, y0, z0: Origin (y is up)
+x0: constant = 0 m;
+y0: constant = 0 m;
+z0: constant = 0 m;
+# controller propostionality constant
+pCtr: constant = 0.2 (s ** (-1));
+
+#################
+#################
+#################
+
+# Rigid body model
+endeffector_1: invariant(
+	R0SetPoint: angularDisplacement, # set point of the actuators
+	R1SetPoint: angularDisplacement,
+	R0Angle: angularDisplacement, # state of the actuators
+	R1Angle: angularDisplacement,
+	x: distance,  # position of the end effector
+	y: distance,
+	z: distance,
+	mForce: force,		# force pulling down
+	F: torque,			# torque on the motor at the base
+	dt : time) =
 {
-	x ~ x_0 + d1,			#*cos(t_1) + d2*cos(t_1+t_2),
-	y ~ y_0 + d1,			#*sin(t_1) + d2*sin(t_1+t_2),
-	z ~ z_0,
-	F ~ (x**2+y**2+z**2)**(1/2) * mForce	#* ( pi/2-arctan(y/x) ),
+	R0SetPoint ~ R0SetPoint,
+	R1SetPoint ~ R1SetPoint,
+	R0Angle ~ R0Angle + pCtr * (R0SetPoint - R0Angle) * dt, # simple proportional controller
+	R1Angle ~ R1Angle + pCtr * (R1SetPoint - R1Angle) * dt, # simple proportional controller
+	x ~ x0 + Prismatic0Length * cos(R0Angle) + Prismatic1Length * cos(R0Angle+R1Angle),
+	y ~ y0 + Prismatic0Length * sin(R0Angle) + Prismatic1Length * sin(R0Angle+R1Angle),
+	z ~ z0 ,
+	F ~ ((x-x0)**2 + (y-y0)**2 + (z-z0)**2)**(1/2) * mForce * ( kNewtonUnitfree_pi/2-arctan(y/x) )
+}
+
+endeffector_1_measure: invariant(
+	R0SetPoint: angularDisplacement,
+	R1SetPoint: angularDisplacement,
+	mWeight: kilogram,	# the mass pulling down
+	mForce: force,		# force pulling down at the effector
+	dt: time) =
+{
+	dt ~ dt,
+	R0SetPoint ~ R0SetPoint,
+	R1SetPoint ~ R1SetPoint,
+	mWeight ~ mForce / kNewtonUnithave_AccelerationDueToGravity
+}
+
+#################
+#################
+#################
+
+flexMod : constant = 1900000 (N * m **-2);
+areaMoment : constant = (1/12 * 0.005 * 0.05 ** 3) (m ** 4);
+
+# Euler beam model
+endeffector_2: invariant(
+	# State
+	R0SetPoint: angularDisplacement, # set point of the actuators
+	R1SetPoint: angularDisplacement,
+	R0Angle: angularDisplacement, # state of the actuators
+	R1Angle: angularDisplacement,
+	R0EffectiveAngle: angularDisplacement, # overall angle including a small deflection
+	R1EffectiveAngle: angularDisplacement,
+	x: distance,  # position
+	y: distance,
+	z: distance,
+	F0: torque,			# torque on the motor at R0
+	F1: torque,			# torque on the motor at R1
+	mForce: force,		# force pulling down at the effector
+	dt : time) =
+{
+	R0SetPoint ~ R0SetPoint,
+	R1SetPoint ~ R1SetPoint,
+	R0Angle ~ R0Angle + pCtr * (R0SetPoint - R0Angle) * dt, # simple proportional controller
+	R1Angle ~ R1Angle + pCtr * (R1SetPoint - R1Angle) * dt, # simple proportional controller
+	R0EffectiveAngle ~ R0Angle + mForce * cos(R0Angle) * Prismatic0Length ** 2 / (3*flexMod*areaMoment), #FIXME probably wrong
+	R1EffectiveAngle ~ R1Angle + mForce * cos(R0EffectiveAngle + R1Angle) * Prismatic1Length ** 2 / (3*flexMod*areaMoment), #FIXME probably wrong
+	x ~ x0 + Prismatic0Length*cos(R0EffectiveAngle) + Prismatic1Length*cos(R0EffectiveAngle + R1EffectiveAngle),
+	y ~ y0 + Prismatic0Length*sin(R0EffectiveAngle) + Prismatic1Length*sin(R0EffectiveAngle + R1EffectiveAngle),
+	z ~ z0,
+	F0 ~ ((x-x0)**2 + (y-y0)**2 + (z-z0)**2)**(1/2) * mForce * ( kNewtonUnitfree_pi/2-arctan(y/x) ),
+	F1 ~ Prismatic1Length * mForce * sin(R0EffectiveAngle + R1EffectiveAngle)
+}
+
+# no embedded sensor to measure deflexion
+endeffector_2_measure_1: invariant(
+	R0SetPoint: angularDisplacement,
+	R1SetPoint: angularDisplacement,
+	x: distance,
+	y: distance,
+	z: distance,
+	mWeight: kilogram,	# the mass pulling down
+	mForce: force,		# force pulling down at the effector
+	dt : time) =
+{
+	dt ~ dt,
+	R0SetPoint ~ R0SetPoint,
+	R1SetPoint ~ R1SetPoint,
+	mWeight ~ mForce / kNewtonUnithave_AccelerationDueToGravity
+}
+
+# with embedded flex sensors returning angles
+endeffector_2_measure_2: invariant(
+	R0SetPoint: angularDisplacement,
+	R1SetPoint: angularDisplacement,
+	R0Angle: angularDisplacement, # state of the actuators
+	R1Angle: angularDisplacement,
+	R0EffectiveAngle: angularDisplacement, # overall angle including a small deflection
+	R1EffectiveAngle: angularDisplacement,
+	Beam0Deflexion: angularDisplacement,
+	Beam1Deflexion: angularDisplacement,
+	mWeight: kilogram,	# the mass pulling down
+	mForce: force,		# force pulling down at the effector
+	dt : time) =
+{
+	dt ~ dt,
+	R0SetPoint ~ R0SetPoint,
+	R1SetPoint ~ R1SetPoint,
+	mWeight ~ mForce / kNewtonUnithave_AccelerationDueToGravity,
+	mForce ~ kNewtonUnithave_AccelerationDueToGravity * mWeight,
+	Beam0Deflexion ~ R0EffectiveAngle - R0Angle,
+	Beam1Deflexion ~ R1EffectiveAngle - R1Angle
+}
+
+# with embedded flex sensors returning voltage
+Flex_sensor_resistance_delta: constant = (11000 / 3.14159 * 4) (O * rad ** (-1));
+Flex_sensor_resistance_base: constant = 17000 O;
+vRef: constant = 5 V;
+bridgeR1: constant = 1000 O;
+bridgeR2: constant = 1000 O;
+bridgeR3: constant = 1000 O;
+
+endeffector_2_measure_3: invariant(
+	# State
+	R0SetPoint: angularDisplacement, # set point of the actuators
+	R1SetPoint: angularDisplacement,
+	R0Angle: angularDisplacement, # state of the actuators
+	R1Angle: angularDisplacement,
+	R0EffectiveAngle: angularDisplacement, # overall angle including a small deflection
+	R1EffectiveAngle: angularDisplacement,
+	x: distance,  # position
+	y: distance,
+	z: distance,
+	F0: torque,			# torque on the motor at R0
+	F1: torque,			# torque on the motor at R1
+	# Measurement
+	R0SetPoint_measure: angularDisplacement, # set point of the actuators
+	R1SetPoint_measure: angularDisplacement,
+	Flex0: electricPotential,
+	Flex1: electricPotential,
+	# Extra parameters
+	mWeight: kilogram,
+	mForce: force,
+	dt: time) =
+{
+	R0SetPoint_measure ~ R0SetPoint,
+	R1SetPoint_measure ~ R1SetPoint,
+	# mWeight ~ mForce / kNewtonUnithave_AccelerationDueToGravity,
+	Flex0 ~ vRef * (
+		bridgeR2 / (bridgeR1 + bridgeR2)
+		- ((R0EffectiveAngle - R0Angle) * Flex_sensor_resistance_delta + Flex_sensor_resistance_base) / (bridgeR2 + bridgeR3)
+	  ), # measure through a Wheatstone bridge
+	Flex1 ~ vRef * (
+		bridgeR2 / (bridgeR1 + bridgeR2)
+		- ((R1EffectiveAngle - R1Angle) * Flex_sensor_resistance_delta + Flex_sensor_resistance_base) / (bridgeR2 + bridgeR3)
+	  )  # measure through a Wheatstone bridge
+}
+
+# measuring torque through motor current
+
+torquePerAmp: constant = 1 (t * rad ** (-1)); #TODO get number from datasheet
+
+endeffector_2_measure_4: invariant(
+	R0SetPoint: angularDisplacement,
+	R1SetPoint: angularDisplacement,
+	F0: torque,			# torque on the motor at R0
+	F1: torque,			# torque on the motor at R1
+	C0: current,
+	C1: current,
+	mWeight: kilogram,
+	mForce: force,		# force pulling down at the effector
+	dt: time) =
+{
+	dt ~ dt,
+	R0SetPoint ~ R0SetPoint,
+	R1SetPoint ~ R1SetPoint,
+	mForce ~ kNewtonUnithave_AccelerationDueToGravity * mWeight,
+	C0 ~ F0 / torquePerAmp,
+	C1 ~ F1 / torquePerAmp
 }

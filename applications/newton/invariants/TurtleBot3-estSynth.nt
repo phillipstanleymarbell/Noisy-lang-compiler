@@ -1,0 +1,100 @@
+#
+#	Authored 2020, Orestis Kaparounakis.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description: Invariants for TurtleBot3 state estimation using the 
+#               Estimator Synthesis backend.
+#
+
+include "NewtonBaseSignals.nt"
+
+l : constant = 0.16 m;  # Wheel separation: The distance of the left and right wheel(s).
+
+# R = (l/2 * (vl+vr)/(vr-vl))
+# omega = (vr - vl)/l
+
+# process_1 : invariant ( x : distance,
+#                         y : distance,
+#                         theta : angularDisplacement,
+#                         dt  : time,
+#                         vr  : speed,    # Right wheel speed
+#                         vl  : speed     # Left wheel speed
+#                         ) =
+# {
+#     x ~ 2*x + cos((vr-vl)/l*dt)*(l/2 * (vl+vr)/(vr-vl))*sin(θ) + sin((vr-vl)/l*dt)*(l/2 * (vl+vr)/(vr-vl))*cos(θ) - l/2 * (vl+vr)/(vr-vl)*sin(theta),
+#     y ~ 2*y + sin((vr-vl)/l*dt)*(l/2 * (vl+vr)/(vr-vl))*sin(theta) - cos((vr-vl)/l*dt)*(l/2 * (vl+vr)/(vr-vl))*cos(theta) + l/2 * (vl+vr)/(vr-vl)*cos(theta),
+#     theta ~ theta + (vr-vl)/l*dt
+# }
+
+process_2 : invariant ( x : distance,
+                        y : distance,
+                        vx : speed,
+                        vy : speed,
+                        theta : angularDisplacement,
+                        omega : angularVelocity,
+                        dt  : time,
+                        vr  : speed,    # Right wheel speed
+                        vl  : speed     # Left wheel speed
+                        ) =
+{   # ONLY IF ROBOT HAS EITHER vl == vr OR vl == - vr !!!!
+    # if vl == vr:
+    x ~ x + vx*dt,
+    y ~ y + vy*dt, # Only translational movement, no strafing on differential robots
+    vx ~ (vr + vl)/2 * cos(theta),
+    vy ~ (vr + vl)/2 * sin(theta),
+    # else if vl == -vr:
+    theta ~ theta +  omega*dt,
+    omega ~ (vr - vl)/l
+    # not sure if this will work
+}
+
+measure : invariant ( # State 
+                     x : distance,
+                     y : distance,
+                     vx : speed,
+                     vy : speed,
+                     theta : angularDisplacement,
+                     omega : angularVelocity,
+                     # Measure
+                     odom_x : distance,
+                     odom_y : distance,
+                     gyro_z: angularVelocity,
+                     dt  : time) =
+{
+    odom_x ~ x,
+    odom_y ~ y,
+    gyro_z ~ omega
+}

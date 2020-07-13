@@ -106,11 +106,15 @@ main(int argc, char *argv[])
 			{"codegen",		required_argument,	0,	'g'},
 			{"latex",		no_argument,		0,	'x'},
 			{"RTLcodegen",		required_argument,	0,	'l'},
-
+			{"targetParam",		required_argument,	0,	'T'},
+			{"estimator-synthesis", required_argument, 0, 420},
+			{"process", required_argument, 0, 421},
+			{"measurement", required_argument, 0, 422},
+			{"auto-diff", no_argument, 0, 423},
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpicl:rePapg:x", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpicl:rePapg:xT:", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -333,7 +337,15 @@ main(int argc, char *argv[])
 				break;
 			}
 
-			case 'x':
+			case 'T':
+			{
+				N->irBackends |= kNewtonIrBackendTargetParam;
+				N->targetParam = optarg;
+        
+        break;
+			}
+
+      case 'x':
 			{
 				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
@@ -359,6 +371,31 @@ main(int argc, char *argv[])
 				N->irBackends |= kNewtonIrBackendRTL;
 				N->outputRTLFilePath = optarg;
 
+				break;
+			}
+
+			case 420:
+			{
+				N->irBackends |= kNewtonIrBackendEstimatorSynthesis;
+				N->outputEstimatorSynthesisFilePath = optarg;
+				break;
+			}
+
+			case 421:
+			{
+				N->estimatorProcessModel = optarg;
+				break;
+			}
+
+			case 422:
+			{
+				N->estimatorMeasurementModel = optarg;
+				break;
+			}
+
+			case 423:
+			{
+				N->autodiff = true;
 				break;
 			}
 
@@ -452,8 +489,12 @@ usage(State *  N)
 						"                | (--codegen <path to output file>, -g <path to output file>)\n"
 						"                | (--RTLcodegen <path to output file>, -l <path to output file>)\n"
 						"                | (--trace, -t)                                              \n"
-						"                | (--statistics, -s) ]                                       \n"
-						"                | (--latex, -x) ]                                            \n"
+						"                | (--statistics, -s)                                         \n"
+						"                | (--latex, -x)                                              \n"
+						"                | (--estimator-synthesis=<path to output file>)              \n"
+						"                | (--process=<process invariant identifier>)                 \n"
+						"                | (--measurement=<measurement invariant identifier>)         \n"
+						"                | (--auto-diff)                                      ]       \n"
 						"                                                                             \n"
 						"              <filenames>\n\n", kNewtonL10N);
 }

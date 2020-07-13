@@ -79,7 +79,7 @@ period : invariant(t: time) = {
 	t ~ particleMass * (particleCharge * mfi) ** -1
 }
 
-ZdirectionAccelerationAndVelocities : invariant(a: acceleration@2, v: speed@2) = {
+ZdirectionAccelerationAndVelocities : invariant(a: acceleration[2], v: speed[2]) = {
 	#
 	#	z-direction acceleration
 	#

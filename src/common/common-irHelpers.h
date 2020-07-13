@@ -53,12 +53,14 @@ IrNode *	findNthIrNodeOfTypeHelper(State *  N, IrNode *  root, IrNodeType expect
 IrNode *	findNthIrNodeOfTypesHelper(State *  N, IrNode *  root, IrNodeType productionOrToken, int firsts[kNoisyIrNodeTypeMax][kNoisyIrNodeTypeMax], int *  nth);
 IrNodeType	getTypeFromOperatorSubtree(State *  N, IrNode *  n);
 void		printDimensionsOfNode(State *  N, IrNode *  n, FlexPrintBuf *  flexBuf);
+IrNode *	findExpressionIdentifiers(State *  N, IrNode *  root);
 
 #define L(node)		(node)->irLeftChild
 #define R(node)		(node)->irRightChild
 #define P(node)		(node)->irParent
 
 #define LL(node)	L(L(node))
+#define LLL(node)	L(L(L(node)))
 #define LLR(node)	R(L(L(node)))
 #define LR(node)	R(L(node))
 #define LRL(node)	L(R(L(node)))
@@ -68,6 +70,7 @@ void		printDimensionsOfNode(State *  N, IrNode *  n, FlexPrintBuf *  flexBuf);
 #define RR(node)	R(R(node))
 #define RRL(node)	L(R(R(node)))
 #define RLL(node)	L(L(R(node)))
+#define RLLL(node)	L(L(L(R(node))))
 #define RLLR(node)	R(L(L(R(node))))
 #define RLLLR(node)	R(L(L(L(R(node)))))
 #define RLR(node)	R(L(R(node)))

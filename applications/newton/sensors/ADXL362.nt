@@ -59,7 +59,7 @@ samplebits : signal =
 
 multiAxisAcceleration : signal(i: 0 to 2) =
 {
-	derivation	= acceleration@i;
+	derivation	= acceleration[i];
 }
 
 #
@@ -87,9 +87,9 @@ kADXL362zAccelerationStdev		: constant = -1;
 kADXL362TemperatureStdev: constant = 0.0025 K;
 
 ADXL362: sensor (
-			adxl362xAcceleration: multiAxisAcceleration@0,
-			adxl362yAcceleration: multiAxisAcceleration@1,
-			adxl362zAcceleration: multiAxisAcceleration@2,
+			adxl362xAcceleration: multiAxisAcceleration[0],
+			adxl362yAcceleration: multiAxisAcceleration[1],
+			adxl362zAcceleration: multiAxisAcceleration[2],
 			adxl362Temperature: temperature
 			) =
 
@@ -113,7 +113,7 @@ ADXL362: sensor (
 	#
 	#	Register address of Accelerometer can be found in Table 11 of register map on page 23.
 	#
-	interface adxl362xAcceleration@8*bits == spi
+	interface adxl362xAcceleration[8]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -123,7 +123,7 @@ ADXL362: sensor (
 		xxadxl362xAcceleration = read 16r08;
 	},
 	
-	interface adxl362xAcceleration@12*bits == spi
+	interface adxl362xAcceleration[12]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -135,7 +135,7 @@ ADXL362: sensor (
 		#adxl362xAcceleration = (XDATA_H << 8) | (XDATA_L);
 	},
 
-	interface adxl362yAcceleration@8*bits == spi
+	interface adxl362yAcceleration[8]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -145,7 +145,7 @@ ADXL362: sensor (
 		xxadxl362yAcceleration = read 16r09;
 	},
 
-	interface adxl362yAcceleration@12*bits == spi
+	interface adxl362yAcceleration[12]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -157,7 +157,7 @@ ADXL362: sensor (
 		#adxl362yAcceleration = (YDATA_H << 8) | (YDATA_L);
 	},
 
-	interface adxl362zAcceleration@8*bits == spi
+	interface adxl362zAcceleration[8]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -167,7 +167,7 @@ ADXL362: sensor (
 		xxadxl362zAcceleration = read 16r0A;
 	},
 
-	interface adxl362zAcceleration@12*bits == spi
+	interface adxl362zAcceleration[12]*bits == spi
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...

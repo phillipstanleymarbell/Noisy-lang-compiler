@@ -218,8 +218,9 @@ findNthIrNodeOfTypeHelper(State * N, IrNode * root, IrNodeType expectedType, int
 int 
 countIrNodeOfType(State *  N, IrNode *  node, IrNodeType expectedType) 
 {
-    	int counter = 0;
-
+    int counter = 0;
+	
+	// TODO: Possible redundant checks
 	if (node->irLeftChild == NULL && node->irRightChild == NULL && node->type == expectedType && node->isVisited==false)
 	{
 		counter += 1;
@@ -282,6 +283,8 @@ addLeaf(State *  N, IrNode *  parent, IrNode *  newNode)
 		fatal(N, Esanity);
 	}
 
+	newNode->irParent = node;
+
 	if (node->irLeftChild == NULL)
 	{
 		node->irLeftChild = newNode;
@@ -304,6 +307,8 @@ addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode)
 		fatal(N, Esanity);
 	}
 
+	newNode->irParent = node;
+
 	if (node->irLeftChild == NULL)
 	{
 		node->irLeftChild = newNode;
@@ -315,6 +320,7 @@ addLeafWithChainingSeq(State *  N, IrNode *  parent, IrNode *  newNode)
 						newNode /* left child */,
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */);
+	node->irRightChild->irParent = node;
 }
 
 void
@@ -382,4 +388,48 @@ printDimensionsOfNode(State *  N, IrNode *  n, FlexPrintBuf *  flexBuf)
 	}
 
 	return;
+}
+
+/*
+ *	Find unique Symbols in expression.
+ *	Return: A chain of IrNodes, shallow copies of the ones detected.
+ */
+IrNode *
+findExpressionIdentifiers(State *  N, IrNode *  root)
+{
+	int	i = 0;
+	IrNode *	currSymbolNode = findNthIrNodeOfType(N, root, kNewtonIrNodeType_Tidentifier, i++);
+	if (currSymbolNode == NULL)
+	{
+		return NULL;
+	}
+
+	IrNode *	head = shallowCopyIrNode(N, currSymbolNode);
+	IrNode *	tail = head;
+
+	while ((currSymbolNode = findNthIrNodeOfType(N, root, kNewtonIrNodeType_Tidentifier, i++)) != NULL)
+	{
+		bool	alreadyAdded = false;
+
+		for (IrNode *  currNode = head; currNode != NULL; currNode = currNode->irRightChild)
+		{
+			if (currNode->symbol == currSymbolNode->symbol)
+			{
+				alreadyAdded = true;
+				break;
+			}
+		}
+		if (alreadyAdded == true)
+		{
+			continue;
+		}
+
+		IrNode *	newNode = shallowCopyIrNode(N, currSymbolNode);
+		
+		tail->irRightChild = newNode;
+		tail->irRightChild->irParent = tail;
+		tail = tail->irRightChild;
+	}
+
+	return head;
 }

@@ -224,15 +224,15 @@ kNewtonUnithave_EarthMass			: constant = 5.9742E24 kilogram;
 #
 #	Interim pseudo constants until we have transcendental function implementation merged in
 #
-sin						: constant = 1;
-cos						: constant = 1;
-tan						: constant = 1;
-cotan						: constant = 1;
-sec						: constant = 1;
-cosec						: constant = 1;
-sinh						: constant = 1;
-cosh						: constant = 1;
-tanh						: constant = 1;
-cotanh						: constant = 1;
-sech						: constant = 1;
-cosech						: constant = 1;
+#sin						: constant = 1;
+#cos						: constant = 1;
+#tan						: constant = 1;
+#cotan						: constant = 1;
+#sec						: constant = 1;
+#cosec						: constant = 1;
+#sinh						: constant = 1;
+#cosh						: constant = 1;
+#tanh						: constant = 1;
+#cotanh						: constant = 1;
+#sech						: constant = 1;
+#cosech						: constant = 1;

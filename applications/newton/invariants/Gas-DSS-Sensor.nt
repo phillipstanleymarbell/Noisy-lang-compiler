@@ -1,0 +1,104 @@
+#
+#	Authored 2019, Vasileios Tsoutsouras.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description:    Empty Newton description for BME680 sensor based on the datasheet for humidity measurements.
+#       
+#       Parameters:     
+#               
+#               H:              Measured relative humidity(Raw relative humidity)
+#               T_A:            Operating temperature
+#               I_DD:           Supply Current
+#               A_H:            Absolute accuracy of humidity
+#               H_H:            Hysteresis
+#               Non_L:          Non linearity  
+#               Resp_t:         Response time to complete 63% of step
+#               SD_param:       Resolution
+#               N_H:            Noise in Humidity 
+#               H_stab:         Lond-term stability
+
+include "NewtonBaseSignals.nt"
+
+ECO2_dim: signal =
+{
+    name        = "CO_2 concentration" English;
+	symbol      = ECO2;
+	derivation	= dimensionless;
+}
+
+TVOC_dim: signal =
+{
+    name        = "Total Volatile Organic Compound (TVOC) concentration" English;
+	symbol      = TVOC;
+	derivation	= dimensionless;
+}
+
+rHallDimension : signal =
+{
+	name       = "Hall coefficient" English;	
+	derivation = distance**3/charge;
+}
+
+
+#Dimension	M L2 T−3 I−1
+voltage : signal =
+{
+	name       	= "Hall coefficient" English;
+	symbol		= V;	
+	derivation 	= mass*(distance**2)*(time**-3)*(current**-1);
+}
+
+thermalConductivity : signal =
+{
+	name       	= "Thermal conductivity" English;
+	derivation 	= power/(mass*temperature);
+}
+
+thermalCapacity : signal =
+{
+	name       	= "Thermal capacity" English;
+	derivation 	= work/(mass*temperature);
+}
+
+gasDSSSensorParameters: invariant(    	inputModulationFreq: frequency,
+										gasDensity:	density,
+										gasThermalConductivity:	thermalConductivity,
+										gasHeatCapacity: thermalCapacity,
+										thermalDiodeTemp: temperature,
+										outputAccousticSigA: voltage        
+) =
+{     
+}

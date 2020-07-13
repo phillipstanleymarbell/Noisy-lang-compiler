@@ -42,20 +42,20 @@ include "NewtonBaseSignals.nt"
 
 multiAxisAcceleration : signal(i: 0 to 5) =
 {
-	derivation	= acceleration@i;
+	derivation	= acceleration[i];
 }
 
 multiAxisAngularVelocity : signal(i: 0 to 5) =
 {
-	derivation = angularVelocity@i;
+	derivation = angularVelocity[i];
 }
 
 SamplingTime : constant = 5E-4 s;
 
 maximumAcceleration: invariant(
-	x: multiAxisAcceleration@0, 
-	y: multiAxisAcceleration@1, 
-	z: multiAxisAcceleration@2
+	x: multiAxisAcceleration[0], 
+	y: multiAxisAcceleration[1], 
+	z: multiAxisAcceleration[2]
 ) = {
 	x < 9.5 * m / s ** 2,
 	x > - 9.5 * m / s ** 2,
@@ -66,12 +66,12 @@ maximumAcceleration: invariant(
 }
 
 accelerationAndGyro : invariant(
-	x: multiAxisAcceleration@0, 
-	y: multiAxisAcceleration@1, 
-	z: multiAxisAcceleration@2, 
-	row: multiAxisAngularVelocity@0, 
-	pitch: multiAxisAngularVelocity@1, 
-	yaw: multiAxisAngularVelocity@2
+	x: multiAxisAcceleration[0], 
+	y: multiAxisAcceleration[1], 
+	z: multiAxisAcceleration[2], 
+	row: multiAxisAngularVelocity[0], 
+	pitch: multiAxisAngularVelocity[1], 
+	yaw: multiAxisAngularVelocity[2]
 ) = {
 	#
 	#	Rectangular integration estimation
@@ -81,12 +81,12 @@ accelerationAndGyro : invariant(
 }
 
 accelerationRedundancy: invariant (
-	x1: multiAxisAcceleration@0, 
-	y1: multiAxisAcceleration@1, 
-	z1: multiAxisAcceleration@2, 
-	x2: multiAxisAcceleration@3, 
-	y2: multiAxisAcceleration@4, 
-	z2: multiAxisAcceleration@5
+	x1: multiAxisAcceleration[0], 
+	y1: multiAxisAcceleration[1], 
+	z1: multiAxisAcceleration[2], 
+	x2: multiAxisAcceleration[3], 
+	y2: multiAxisAcceleration[4], 
+	z2: multiAxisAcceleration[5]
 ) = {
 	x1 ~ x2,
 	y1 ~ y2,
@@ -94,12 +94,12 @@ accelerationRedundancy: invariant (
 }
 
 gyroRedundancy: invariant (
-	x1: multiAxisAngularVelocity@0, 
-	y1: multiAxisAngularVelocity@1, 
-	z1: multiAxisAngularVelocity@2, 
-	x2: multiAxisAngularVelocity@3, 
-	y2: multiAxisAngularVelocity@4, 
-	z2: multiAxisAngularVelocity@5
+	x1: multiAxisAngularVelocity[0], 
+	y1: multiAxisAngularVelocity[1], 
+	z1: multiAxisAngularVelocity[2], 
+	x2: multiAxisAngularVelocity[3], 
+	y2: multiAxisAngularVelocity[4], 
+	z2: multiAxisAngularVelocity[5]
 ) = {
 	x1 ~ x2,
 	y1 ~ y2,
