@@ -52,6 +52,7 @@ SOURCES		=\
 		newton-parser.c\
 		newton-dimension-pass.c\
 		newton-dimension-check-pass.c\
+		newton-irPass-autoDiff.c\
 		newton-irPass-dotBackend.c\
 		newton-irPass-smtBackend.c\
 		newton-irPass-cBackend.c\
@@ -95,6 +96,7 @@ OBJS		=\
 		newton-types.$(OBJECTEXTENSION)\
 		newton-timeStamps.$(OBJECTEXTENSION)\
 		newton-typeSignatures.$(OBJECTEXTENSION)\
+		newton-irPass-autoDiff.$(OBJECTEXTENSION)\
 		newton-irPass-cBackend.$(OBJECTEXTENSION)\
 		newton-irPass-RTLBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
@@ -128,11 +130,12 @@ CGIOBJS		=\
 		newton-types.$(OBJECTEXTENSION)\
 		newton-timeStamps.$(OBJECTEXTENSION)\
 		newton-typeSignatures.$(OBJECTEXTENSION)\
+		newton-irPass-autoDiff.$(OBJECTEXTENSION)\
 		newton-irPass-cBackend.$(OBJECTEXTENSION)\
 		newton-irPass-RTLBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
-		newton-irPass-estimatorSynthesisBackend/$(OBJECTEXTENSION)\
+		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPiGroups.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
@@ -160,6 +163,7 @@ LIBNEWTONOBJS =\
 		newton-typeSignatures.$(OBJECTEXTENSION)\
 		newton-types.$(OBJECTEXTENSION)\
 		newton-timeStamps.$(OBJECTEXTENSION)\
+		newton-irPass-autoDiff.$(OBJECTEXTENSION)\
 		newton-irPass-cBackend.$(OBJECTEXTENSION)\
 		newton-irPass-RTLBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
@@ -190,6 +194,7 @@ HEADERS		=\
 		newton-parser.h\
 		newton-types.h\
 		newton-timeStamps.h\
+		newton-irPass-autoDiff.h\
 		newton-irPass-cBackend.h\
 		newton-irPass-RTLBackend.h\
 		newton-irPass-dotBackend.h\
