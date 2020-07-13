@@ -34,7 +34,8 @@
 #	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #	POSSIBILITY OF SUCH DAMAGE.
 #
-#	Description: Newton description based on Table 2 of the paper
+#	Description: Newton description based on parameters in the Appendix
+#	of the paper
 #
 #		Meurig Thomas, Gavin J. Baxter, Iain Todd
 #		"Normalised model-based processing diagrams for additive layer manufacture of engineering alloys",
@@ -48,7 +49,7 @@ SurfaceAbsorptivity : signal =
 	#	We can express derivation in terms of either
 	#	fundamental dimensions or in terms of units.
 	#	In this case, we use fundamental dimensions.
-	#	
+	#
 	derivation = (mass**0)*(distance**0)*(time**0)*(temperature**0);
 }
 
@@ -57,9 +58,9 @@ ThermalDiffusivity : signal =
 	#
 	#	We can express derivation in terms of either
 	#	fundamental dimensions or in terms of units.
-	#	In this case, we use units via the units 
-	#	abbreviated symbol 
-	#	
+	#	In this case, we use units via the units
+	#	abbreviated symbol.
+	#
 	derivation = (m**2)*(s**-1);
 }
 
@@ -68,9 +69,9 @@ SpecificHeatCapacity : signal =
 	#
 	#	We can express derivation in terms of either
 	#	fundamental dimensions or in terms of units.
-	#	In this case, we use units via the units 
-	#	abbreviated symbol 
-	#	
+	#	In this case, we use units via the units
+	#	abbreviated symbol.
+	#
 	derivation = J*(kg**-1)*(K**-1);
 }
 
@@ -79,9 +80,9 @@ HatchSpacing : signal =
 	#
 	#	We can express derivation in terms of either
 	#	fundamental dimensions or in terms of units.
-	#	In this case, we use units via the units 
-	#	abbreviated symbol 
-	#	
+	#	In this case, we use units via the units
+	#	abbreviated symbol.
+	#
 	derivation = m;
 }
 
@@ -91,7 +92,7 @@ AlphaTitaniumLathWidth : signal =
 	#	We can express derivation in terms of either
 	#	fundamental dimensions or in terms of units.
 	#	In this case, we use fundamental dimensions.
-	#	
+	#
 	derivation = distance;
 }
 
@@ -100,9 +101,9 @@ LatentHeatOfMelting : signal =
 	#
 	#	We can express derivation in terms of either
 	#	fundamental dimensions or in terms of units.
-	#	In this case, we use units via the units 
-	#	abbreviated symbol 
-	#	
+	#	In this case, we use units via the units
+	#	abbreviated symbol.
+	#
 	derivation = J/kg;
 }
 
@@ -111,12 +112,65 @@ ThermalConductivity : signal =
 	#
 	#	We can express derivation in terms of either
 	#	fundamental dimensions or in terms of units.
-	#	In this case, we use units via the units 
-	#	abbreviated symbol 
-	#	
+	#	In this case, we use units via the units
+	#	abbreviated symbol.
+	#
 	derivation = W*(m**-1)*(K**-1);
 }
 
+BeamPower : signal =
+{
+	#
+	#	We can express derivation in terms of either
+	#	fundamental dimensions or in terms of units.
+	#	In this case, we use units via the units
+	#	abbreviated symbol.
+	#
+	derivation = W;
+}
+
+BeamRadius : signal =
+{
+	#
+	#	We can express derivation in terms of either
+	#	fundamental dimensions or in terms of units.
+	#	In this case, we use fundamental dimensions.
+	#
+	derivation = distance;
+}
+
+MeltingTemperature : signal =
+{
+	#
+	#	We can express derivation in terms of either
+	#	fundamental dimensions or in terms of units.
+	#	In this case, we use units via the units
+	#	abbreviated symbol.
+	#
+	derivation = K;
+}
+
+PowderBedTemperature : signal =
+{
+	#
+	#	We can express derivation in terms of either
+	#	fundamental dimensions or in terms of units.
+	#	In this case, we use units via the units
+	#	abbreviated symbol.
+	#
+	derivation = K;
+}
+
+BeamSpeed : signal =
+{
+	#
+	#	We can express derivation in terms of either
+	#	fundamental dimensions or in terms of units.
+	#	In this case, we use units via the derived
+	#	signal (speed).
+	#
+	derivation = speed;
+}
 
 
 #
@@ -132,11 +186,10 @@ AppendixSystem: invariant(				Ax:		SurfaceAbsorptivity,
 							Lm:		LatentHeatOfMelting,
 							lambda:		ThermalConductivity,
 							r:		density,
-							q:		W,
-							beamRadius:	m,
-							Tx:		K,
-							Tm:		K,
-							T0:		K,
-							v:		speed) =
+							q:		BeamPower,
+							beamRadius:	BeamRadius,
+							Tm:		MeltingTemperature,
+							T0:		PowderBedTemperature,
+							v:		BeamSpeed)			=
 {
 }

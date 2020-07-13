@@ -157,7 +157,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 								 *	we have at the moment that are well-named. We really should be using
 								 *	the parameter names, or saving that, the "Pnnn" label.
 								 */
-								//flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
+								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s.", invariant->dimensionalMatrixColumnLabels[row]);
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%c%c", 'P'+(invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + row]/10),
 													'0'+invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + row]%10);
 
@@ -182,7 +182,7 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 								 *	we have at the moment that are well-named. We really should be using
 								 *	the parameter names, or saving that, the "Pnnn" label.
 								 */
-								//flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s", invariant->dimensionalMatrixColumnLabels[row]);
+								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%s.", invariant->dimensionalMatrixColumnLabels[row]);
 								flexprint(N->Fe, N->Fm, N->Fpmathjax, "%c%c", 'P'+(invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + row]/10),
 													'0'+invariant->permutedIndexArrayPointer[countKernel * invariant->dimensionalMatrixColumnCount + row]%10);
 
@@ -204,7 +204,10 @@ irPassDimensionalMatrixKernelPrinter(State *  N)
 						}
 						else
 						{
-							flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\\\");
+							if (countKernel != invariant->numberOfUniqueKernels - 1)
+							{
+								flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\\\\n");
+							}
 						}
 					}
 				}
@@ -305,7 +308,7 @@ irPassDimensionalMatrixKernelPrinterFromBodyWithNumOfConstant(State *  N)
 				}
 
 				/*
-				 *	Prints out the a table of the symbolic expressions implied by the Pi groups derived from the kernels.	
+				 *	Prints out a table of the symbolic expressions implied by the Pi groups derived from the kernels.	
 				 */
 				if (N->mode & kCommonModeCGI)
 				{
@@ -371,7 +374,10 @@ irPassDimensionalMatrixKernelPrinterFromBodyWithNumOfConstant(State *  N)
 						}
 						else
 						{
-							flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\\\");
+							if (countKernel != invariant->numberOfUniqueKernels - 1)
+							{
+								flexprint(N->Fe, N->Fm, N->Fpmathjax, "\\\\\n");
+							}
 						}
 					}
 				}
