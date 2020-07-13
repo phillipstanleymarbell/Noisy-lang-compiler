@@ -71,14 +71,39 @@
 #include "newton-symbolTable.h"
 #include "newton-irPass-cBackend.h"
 
+/*
+ * TODO: Add support for I2C write instructions.
+ * TODO: Add support for identifying sensor from signal definition.
+ */
+
+
+
+/* 
+ * Check user's OS and make according adjustments.
+ */
+
+#if defined(_MSC_VER)
+#include <direct.h>
+#define getcwd _getcwd
+#elif defined(__GNUC__)
+#include <unistd.h>
+#endif
+
+
 
 int numberOfSensorInterfaceCommands = 0;
-int64_t readRegisterAddressList[5];
-int64_t writeRegisterAddressList[5];
-int64_t writeValueList[5]; 
+int64_t registerAddressList[10];
+int64_t writeValueList[10]; 
 
+FILE *fptr;
 
-IrNode * findSensorDefinitionByIdentifier(char * identifier, State * N, IrNode * noisyIrRoot, Scope *  noisyIrTopScope)
+/* 
+ * Function searches AST and returns a sensor definition node
+ * with a matching identifier, generally corresponding to the
+ * name of the sensor (e.g. 'BMP180').
+ */
+
+IrNode * findSensorDefinitionByIdentifier(char * identifier, State * N, IrNode * noisyIrRoot)
 {
    int nth;
    IrNode * sensorDefinition = NULL;
@@ -88,12 +113,11 @@ IrNode * findSensorDefinitionByIdentifier(char * identifier, State * N, IrNode *
        
        if (!strcmp(sensorDefinition->irLeftChild->tokenString, identifier))
        {
-           //printf("%s \n", "test");
            break;
        }
        else
        {
-           //printf("%s \n", "test2");
+
        }
    }
 
@@ -107,7 +131,13 @@ IrNode * findSensorDefinitionByIdentifier(char * identifier, State * N, IrNode *
 }
 
 
-char * findSensorParameterNameByParameterIdentifier(char * identifier, State * N, IrNode * sensorDefinition, Scope *  noisyIrTopScope)
+/* 
+ * Function finds and returns a sensor parameter name corresponding
+ * to a parameter identifier. For example, for the BMP180, the 
+ * parameter identifier 'temperature' would return 'bmp180temperature'.
+ */
+
+char * findSensorParameterNameByParameterIdentifier(char * identifier, State * N, IrNode * sensorDefinition)
 {
     char * sensorParameterName = NULL;
 
@@ -133,7 +163,13 @@ char * findSensorParameterNameByParameterIdentifier(char * identifier, State * N
 }
 
 
-IrNode * findSensorInterface(char * identifier, State * N, IrNode * sensorDefinition, Scope * noisyIrTopScope)
+/* 
+ * Function searches AST from the sensor definition root node
+ * and returns a sensor interface definition which matches the
+ * sensor parameter name used as the identifier.
+ */
+
+IrNode * findSensorInterface(char * identifier, State * N, IrNode * sensorDefinition)
 {
     
     IrNode * sensorInterfaceStatement = NULL;
@@ -158,14 +194,19 @@ IrNode * findSensorInterface(char * identifier, State * N, IrNode * sensorDefini
 }
 
 
-int64_t findI2CAddress(State * N, IrNode * sensorInterfaceStatement, Scope * noisyIrTopScope, char* astNodeStrings[])
+/* 
+ * Function finds and returns the I2C address associated with
+ * a given sensor interface statement node.
+ */
+
+int64_t findI2CAddress(State * N, IrNode * sensorInterfaceStatement, char* astNodeStrings[])
 {
     int64_t i2cAddress = 0;
     
     IrNode * sensorInterfaceType = findNthIrNodeOfType(N, sensorInterfaceStatement, kNewtonIrNodeType_PsensorInterfaceType, 0);
     if (sensorInterfaceType->irLeftChild->type == kNewtonIrNodeType_Ti2c)
     {
-        printf("%s \n", "Test");
+
         IrNode * integerConst = findNthIrNodeOfType(N, sensorInterfaceStatement->irRightChild, kNewtonIrNodeType_TintegerConst, 0);
 
         //printf("%s \n", astNodeStrings[sensorInterfaceStatement->irRightChild->irRightChild->type]);
@@ -188,8 +229,13 @@ int64_t findI2CAddress(State * N, IrNode * sensorInterfaceStatement, Scope * noi
 }
 
 
+/* 
+ * Function generates a list of I2C read and write commands
+ * with associated register address and write values for
+ * a given sensor interface statement node. 
+ */
 
-int * generateRWList(State * N, IrNode * sensorInterfaceStatement, Scope * noisyIrTopScope, char* astNodeStrings[])
+int * generateRWList(State * N, IrNode * sensorInterfaceStatement, char* astNodeStrings[])
 {
     static int rwList[5];
     int nth;
@@ -207,8 +253,7 @@ int * generateRWList(State * N, IrNode * sensorInterfaceStatement, Scope * noisy
             rwList[nth] = 0;
             IrNode * integerConst = findNthIrNodeOfType(N, readRegisterCommand, kNewtonIrNodeType_TintegerConst, 0);
 
-            readRegisterAddressList[nth] = integerConst->token->integerConst;
-            writeRegisterAddressList[nth] = 1;
+            registerAddressList[nth] = integerConst->token->integerConst;
             writeValueList[nth] = 1;
             numberOfSensorInterfaceCommands++;
         }
@@ -220,8 +265,7 @@ int * generateRWList(State * N, IrNode * sensorInterfaceStatement, Scope * noisy
              * TODO: Need to take care of searching AST for writeRegisterAddress and writeValue.
              */
 
-            readRegisterAddressList[nth] = 1;
-            writeRegisterAddressList[nth] = 1;
+            registerAddressList[nth] = 1;
             writeValueList[nth] = 1;
             numberOfSensorInterfaceCommands++;
             
@@ -239,32 +283,264 @@ int * generateRWList(State * N, IrNode * sensorInterfaceStatement, Scope * noisy
 }
 
 
+/* 
+ * Function to convert decimal to binary.
+ */
+long long convert(int64_t n) {
+    long long bin = 0;
+    int rem, i = 1;
+    while (n != 0) {
+        rem = n % 2;
+        n /= 2;
+        bin += rem * i;
+        i *= 10;
+    }
+    return bin;
+}
 
-void irPassIpsaBackend(State *  N, Scope *  noisyIrTopScope, IrNode * noisyIrRoot, char* astNodeStrings[])
+
+/* 
+ * Function to calculate the number of digits
+ * in a binary number.
+ */
+
+int numberOfDigits(int64_t num) {
+    int count = 0;
+
+    /* Calculate total digits */
+    count = (num == 0) ? 1  : (log10(num) + 1);
+
+    //printf("Total digits: %d \n", count);
+
+    return count;
+
+}
+
+
+/*
+ * Function to generate a string of zeroes to 
+ * complete an Ipsa instruction with the correct
+ * number of zeroes at the front.
+ */
+
+char * generateZeroes(int len, int option)
+{
+    int i;
+
+    if (option == 0)
+    {
+        i = 8 - len;
+    }
+    else
+    {
+        i = 5 - len;
+    }
+
+    char * zeroes;
+
+    if (i == 0)
+    {
+        zeroes = "";
+    }
+    else if (i == 1)
+    {
+        zeroes = "0";
+    }
+    else if (i == 2)
+    {
+        zeroes = "00";
+    }
+    else if (i == 3)
+    {
+        zeroes = "000";
+    }
+    else if (i == 4)
+    {
+        zeroes = "0000";
+    }
+    else if (i == 5)
+    {
+        zeroes = "00000";
+    }
+    else if (i == 6)
+    {
+        zeroes = "000000";
+    }
+    else if (i == 7)
+    {
+        zeroes = "0000000";
+    }
+    else if (i == 8)
+    {
+        zeroes = "00000000";
+    }
+    else
+    {
+        zeroes = "";
+    }
+    
+    return zeroes;
+}
+
+
+/*
+ * Function to create an Ipsa I2C read instruction
+ * and write it to the "instruction_list.v" file.
+ */
+
+int create_read_instruction(int currentInstruction, int64_t i2cAddr, int64_t regAddr, int64_t dimIndex) {
+    
+    int64_t i2cAddrB = convert(i2cAddr);
+    int64_t regAddrB = convert(regAddr);
+    int64_t dimIndexB = convert(dimIndex);
+
+    int i2cAddrBLen = numberOfDigits(i2cAddrB);
+    int regAddrBLen = numberOfDigits(regAddrB);
+    int dimIndexBLen = numberOfDigits(dimIndexB);
+
+    char * zeroes1 = generateZeroes(i2cAddrBLen, 0);
+    char * zeroes2 = generateZeroes(regAddrBLen, 0);
+    char * zeroes3 = generateZeroes(dimIndexBLen, 1);
+
+    fprintf(fptr, "%s%d%s%s%lld%s%s%lld%s%s%lld%s \n", "instr_mem_reg[", currentInstruction, "] = 32'b101_", zeroes1, i2cAddrB, "_" , zeroes2, regAddrB, "_00000001_", zeroes3, dimIndexB, ";");
+
+    return 0;
+}
+
+
+/*
+ * Function to create an Ipsa I2C write instruction
+ * and write it to the "instruction_list.v" file.
+ */
+
+int create_write_instruction(int currentInstruction, int64_t i2cAddr, int64_t regAddr, int64_t immediate) {
+    
+
+    int64_t i2cAddrB = convert(i2cAddr);
+    int64_t regAddrB = convert(regAddr);
+    int64_t immediateB = convert(immediate);
+
+    int i2cAddrBLen = numberOfDigits(i2cAddrB);
+    int regAddrBLen = numberOfDigits(regAddrB);
+    int immediateBLen = numberOfDigits(immediateB);
+
+    char * zeroes1 = generateZeroes(i2cAddrBLen, 0);
+    char * zeroes2 = generateZeroes(regAddrBLen, 0);
+    char * zeroes3 = generateZeroes(immediateBLen, 1);
+
+    fprintf(fptr, "%s%d%s%s%lld%s%s%lld%s%s%lld%s%s \n", "instr_mem_reg[", currentInstruction, "] = 32'b100_", zeroes1, i2cAddrB, "_" , zeroes2, regAddrB, "_", zeroes3, immediateB, "_", "00000;");
+
+    return 0;
+}
+
+
+/*
+ * Function to create an "intstruction_list.v file for Ipsa."
+ */
+
+int ipsa_create_instructions(int rwList[10], int64_t i2cAddr, int64_t regAddrList[10], int64_t immediateList[10], int64_t dimIndexList[10]){
+
+    char* currentDirectory;
+
+    currentDirectory = getcwd(NULL, 0);
+
+    //printf("%s \n", currentDirectory);
+    
+    strcat(currentDirectory, "/instruction_list.v");
+    
+    fptr = fopen(currentDirectory,"w");
+
+    if(fptr == NULL)
+    {
+        printf("Error!");   
+        exit(1);             
+    }
+
+    fprintf(fptr, "%s \n", "/*This instruction list was generated by the Ipsa backend of the Newton compiler.*/");
+    fprintf(fptr, "%s \n", "initial begin");
+    fprintf(fptr, "%s \n", "instr_mem_reg[0] = 32'b010_00000000000000010000000000000;"); //Barrier
+    fprintf(fptr, "%s \n", "instr_mem_reg[1] = 32'b001_0000_000000000000000_00001_00011;"); //Config Start
+    fprintf(fptr, "%s \n", "instr_mem_reg[2] = 32'b011_0000_000001000000000_00001_00011;"); //Config End
+
+    int i;
+    int rwLen = sizeof(&rwList) / sizeof(rwList[0]);
+    //printf("%i \n", rwLen);
+
+    int currentInstruction = 3;
+
+    for (i=0; i<rwLen; i++) {
+        fprintf(fptr, "%s%i%s \n", "instr_mem_reg[", currentInstruction ,"] = 32'b010_00000000000000010000000000000;"); //Barrier
+        currentInstruction++;
+        if (rwList[i] == 0){
+            int64_t regAddr; 
+            regAddr = regAddrList[i];
+            int64_t dimIndex;
+            dimIndex = dimIndexList[i];
+            create_read_instruction(currentInstruction, i2cAddr, regAddr, dimIndex); //Read
+
+            //printf("%s \n", regAddrH);
+            //fprintf(fptr, "%s \n", "Read"); //Read
+            currentInstruction++;
+        }
+        else if (rwList[i] == 1){
+            int64_t regAddr; 
+            regAddr = regAddrList[i];
+            int64_t immediate;
+            immediate = immediateList[i];
+            create_write_instruction(currentInstruction, i2cAddr, regAddr, immediate); //Write
+            
+            
+            //fprintf(fptr, "%s \n", "Write"); //Write
+
+            currentInstruction++;
+        }
+        else {
+
+        }
+    }
+
+    fprintf(fptr, "%s \n", "end");
+    fclose(fptr);
+    
+    return 0;
+}
+
+
+/*
+ * Ipsa backend main function.
+ */
+
+void irPassIpsaBackend(State *  N, IrNode * noisyIrRoot, char* astNodeStrings[])
 {
     printf("%s \n", "Made it to the Ipsa backend!");
 
-    IrNode * sensorDef = findSensorDefinitionByIdentifier("BMP180", N, noisyIrRoot, noisyIrTopScope);
+    IrNode * sensorDef = findSensorDefinitionByIdentifier("BMP180", N, noisyIrRoot);
     //printf("%s \n", astNodeStrings[sensorDef->irRightChild->irLeftChild->irLeftChild->irRightChild->type]);
     //printf("%s \n", sensorDef->irRightChild->irLeftChild->irLeftChild->irRightChild->tokenString);
 
-    char * sensorParameterName = findSensorParameterNameByParameterIdentifier("temperature", N, sensorDef, noisyIrTopScope);
+    char * sensorParameterName = findSensorParameterNameByParameterIdentifier("temperature", N, sensorDef);
     //printf("%s \n", sensorParameterName);
 
-    IrNode * sensorInterfaceStatement = findSensorInterface(sensorParameterName, N, sensorDef, noisyIrTopScope);
+    IrNode * sensorInterfaceStatement = findSensorInterface(sensorParameterName, N, sensorDef);
     //printf("%s \n", sensorInterfaceStatement->irLeftChild->tokenString);
 
-    int64_t i2cAddress = findI2CAddress(N, sensorInterfaceStatement, noisyIrTopScope, astNodeStrings);
-    printf("%llu \n", i2cAddress);
+    int64_t i2cAddress = findI2CAddress(N, sensorInterfaceStatement, astNodeStrings);
+    //printf("%llu \n", i2cAddress);
 
     int *rwList;
-    rwList = generateRWList(N, sensorInterfaceStatement, noisyIrTopScope, astNodeStrings);
-    printf("%i \n", rwList[1]);
+    rwList = generateRWList(N, sensorInterfaceStatement, astNodeStrings);
+    //printf("%i \n", rwList[1]);
     //printf("%i \n", numberOfSensorInterfaceCommands);
-    printf("%lld \n", readRegisterAddressList[1]);
-    printf("%lld \n", writeRegisterAddressList[1]);
-    printf("%lld \n", writeValueList[1]);
+    //printf("%lld \n", readRegisterAddressList[1]);
+    //printf("%lld \n", writeRegisterAddressList[1]);
+    //printf("%lld \n", writeValueList[1]);
+
+    int64_t dimIndexHList[10] = {1, 1};
+
+    ipsa_create_instructions(rwList, i2cAddress, registerAddressList, writeValueList, dimIndexHList);
+
+    system("mv instruction_list.v ../../../Ipsa-core/verilog/toplevel/Instruction_Mem_Examples");
+
+    printf("%s \n", "Ipsa instruction list generated, Ipsa now ready for synthesis.");
     
-
-
 }

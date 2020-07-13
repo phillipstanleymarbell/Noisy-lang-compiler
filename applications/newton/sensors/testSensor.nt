@@ -29,3 +29,19 @@ BMP180: sensor (
 		#bmp180Temperature = (out_t_msb << 8) | (out_t_Lsb);
 	}
 }
+
+
+#mySignal : signal =
+#{
+#	name		= "m" English;
+#	sensor		= BMP180;
+#	symbol		= temp;
+#	derivation	= none;
+#}
+
+#mySignal : signal =
+#{
+#    name = "m" English;
+#	derivation = none;
+#    sensor  = BMP180;
+#}

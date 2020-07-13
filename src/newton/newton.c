@@ -274,8 +274,7 @@ processNewtonFile(State *  N, char *  filename)
 	 */
 	if (N->irBackends & kNewtonIrBackendIpsa)
 	{
-		irPassIpsaBackend(N, N->newtonIrTopScope, N->newtonIrRoot, gNewtonAstNodeStrings);
-		//printf("%s \n", "Test");
+		irPassIpsaBackend(N, N->newtonIrRoot, gNewtonAstNodeStrings);
 	} 
 	
 }
