@@ -1,0 +1,60 @@
+
+    Hardware Overview:
+
+      Model Name: MacBook Pro
+      Model Identifier: MacBookPro16,2
+      Processor Name: Quad-Core Intel Core i5
+      Processor Speed: 2 GHz
+      Number of Processors: 1
+      Total Number of Cores: 4
+      L2 Cache (per Core): 512 KB
+      L3 Cache: 6 MB
+      Hyper-Threading Technology: Enabled
+
+changeset: 943:da541088d4562b9a42eb0a08df52a5bc5bc5242d
+char kNewtonVersion[] = "0.3-alpha-943 (da541088d4562b9a42eb0a08df52a5bc5bc5242d) (build 07-13-2020-17:50-oliver@MacBook-Pro-Darwin-19.5.0-x86_64)";
+
+./src/noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s
+
+./src/newton/newton-darwin-EN -v 0 -eP applications/newton/invariants/ViolinWithTemperatureDependence-pigroups.nt
+
+Informational Report:
+---------------------
+Invariant "ViolinWithTemperatureDependenceForPiGroups" has 2 unique kernels, each with 2 column(s)...
+
+	Kernel 0 is a valid kernel:
+
+		   1   1
+		-0.5  -0
+		   1   0
+		 0.5   0
+		   0  -1
+		  -0  -1
+
+
+		The ordering of parameters is:	P1 P0 P3 P2 P4 P5 
+
+			Pi group 0, Pi 0 is:	P0^(-0.5)  P1^( 1)  P2^(0.5)  P3^( 1)  P4^( 0)  P5^(-0)  
+
+			Pi group 0, Pi 1 is:	P0^(-0)  P1^( 1)  P2^( 0)  P3^( 0)  P4^(-1)  P5^(-1)  
+
+
+	Kernel 1 is a valid kernel:
+
+		   1   0
+		-0.5   1
+		   1  -2
+		 0.5  -1
+		  -0  -2
+		   0  -2
+
+
+		The ordering of parameters is:	P1 P0 P3 P2 P4 P5 
+
+			Pi group 1, Pi 0 is:	P0^(-0.5)  P1^( 1)  P2^(0.5)  P3^( 1)  P4^(-0)  P5^( 0)  
+
+			Pi group 1, Pi 1 is:	P0^( 1)  P1^( 0)  P2^(-1)  P3^(-2)  P4^(-2)  P5^(-2)  
+
+
+
+
