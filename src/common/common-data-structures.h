@@ -1134,6 +1134,7 @@ typedef struct
 	FlexPrintBuf *		Fpc;
 	FlexPrintBuf *		Fprtl;
 	FlexPrintBuf *		Fpmathjax;
+	FlexPrintBuf *		Fpipsa;
 
 	/*
 	 *	The output file of the last render. TODO: Not very happy
@@ -1194,6 +1195,7 @@ typedef struct
 	char *			outputCFilePath;
 	char *			outputRTLFilePath;
 	char *			outputEstimatorSynthesisFilePath;
+	char *			outputIpsaFilePath;
 	
 	/*
 	 *	Invariant identifiers specified for State Estimator Synthesis

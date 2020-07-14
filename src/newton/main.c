@@ -114,6 +114,7 @@ main(int argc, char *argv[])
 			{"kernelNumber", required_argument, 0, 494},
 			{"piNumber", required_argument, 0, 495},
 			{"ipsa", no_argument, 0, 489},
+			{"ipsa", required_argument, 0, 489},
 			{0,			0,			0,	0}
 		};
 
@@ -419,7 +420,9 @@ main(int argc, char *argv[])
 			case 489:
 			{
 				N->irBackends |= kNewtonIrBackendIpsa;
-				break;	
+				N->outputIpsaFilePath = optarg;
+				break;
+				
 			}
 
 			case '?':
