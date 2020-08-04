@@ -419,6 +419,8 @@ main(int argc, char *argv[])
 
 			case 489:
 			{
+				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
+				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
 				N->irBackends |= kNewtonIrBackendIpsa;
 				N->outputIpsaFilePath = optarg;
 				break;

@@ -263,7 +263,7 @@ int generateRWList(State * N, IrNode * sensorInterfaceStatement, char* astNodeSt
 
 
 /* 
- *  Function to convert decimal to binary.
+ *  Function to convert decimal to a binary representation.
  */
 long long convertDecimalToBinary(int64_t n) {
     long long bin = 0;
@@ -370,6 +370,12 @@ int ipsa_create_instructions(char *rwList, int64_t i2cAddr, int64_t regAddrList[
 
 void irPassIpsaBackend(State *  N, IrNode * noisyIrRoot, char* astNodeStrings[])
 {
+
+    /*
+     *  Code below is for generating an instruction
+     *  list for Ipsa.
+     */
+
     int numberOfSensorInterfaceCommands = 0;
     int64_t registerAddressList[10];
     int64_t writeValueList[10];
@@ -377,12 +383,14 @@ void irPassIpsaBackend(State *  N, IrNode * noisyIrRoot, char* astNodeStrings[])
     /*
      *  TODO: Function to assosciate a signal with a sensor identifier (e.g. "BMP180").
      *  TODO: And find parameter name that sensor is measuring (e.g. "temperature").
+     *  TODO: Need safety checks to respond appropriately if the Newton description is not exactly as expected. (ie doesn't contain a sensor description)
      */
 
     IrNode * sensorDef = findSensorDefinitionByIdentifier("BMP180", N, noisyIrRoot);
     //printf("%s \n", astNodeStrings[sensorDef->irRightChild->irLeftChild->irLeftChild->irRightChild->type]);
     //printf("%s \n", sensorDef->irRightChild->irLeftChild->irLeftChild->irRightChild->tokenString);
-
+    
+    
     char * sensorParameterName = findSensorParameterNameByParameterIdentifier("temperature", N, sensorDef);
 
     IrNode * sensorInterfaceStatement = findSensorInterface(sensorParameterName, N, sensorDef);
@@ -396,31 +404,33 @@ void irPassIpsaBackend(State *  N, IrNode * noisyIrRoot, char* astNodeStrings[])
     //printf("%lld \n", readRegisterAddressList[1]);
     //printf("%lld \n", writeRegisterAddressList[1]);
     //printf("%lld \n", writeValueList[1]);
-
-
-
-
+    
     char rwList[10];
     generateRWList(N, sensorInterfaceStatement, astNodeStrings, &numberOfSensorInterfaceCommands, registerAddressList, writeValueList, rwList);
+    
 
     /*
      *  TODO: Take care of the dimension index list.
      *  Value of dimension index depends on what parameter is being measured.
      *  E.g. 'temperature' could have a dimension index of 1.
      */
+    
     int64_t dimIndexList[numberOfSensorInterfaceCommands];
     int i;
     for (i=0; i<numberOfSensorInterfaceCommands; i++)
     {
         dimIndexList[i] = 1;
     }
+    
 
-
+    
     ipsa_create_instructions(rwList, i2cAddress, registerAddressList, writeValueList, dimIndexList, &numberOfSensorInterfaceCommands, N);
+    
 
     /*
      *  Print buffer contents to file.
      */
+    
     FILE *instructionListFile;
 
     instructionListFile = fopen(N->outputIpsaFilePath,"w");
@@ -434,6 +444,8 @@ void irPassIpsaBackend(State *  N, IrNode * noisyIrRoot, char* astNodeStrings[])
     fprintf(instructionListFile, "%s", N->Fpipsa->circbuf);
 
     fclose(instructionListFile);
+
+
 
     //system("mv instruction_list.v ../../../Ipsa-core/verilog/toplevel/Instruction_Mem_Examples");
 
