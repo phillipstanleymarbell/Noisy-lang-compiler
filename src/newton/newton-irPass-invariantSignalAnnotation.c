@@ -122,15 +122,15 @@ findSignalByIdentifier(State * N, char * identifier, char* astNodeStrings[])
 			}
 			signal = parameter->signal;
 		}
-		/*
-		if(!strcmp(parameter->signal->identifier, identifier))
+		
+		if(strcmp(signal->identifier, identifier) == 0)
 		{
-			return signal;
+			break;
 		} else {
 			invariant = invariant->next;
 		}
-		*/
-		invariant = invariant->next;
+		
+		//invariant = invariant->next;
 	}
 
 	if(strcmp(signal->identifier, identifier) != 0)
@@ -164,15 +164,15 @@ findSignalByInvariantExpressionIdentifier(State * N, char * identifier, char* as
 			}
 			signal = parameter->signal;
 		}
-		/*
-		if(!strcmp(parameter->signal->identifier, identifier))
+		
+		if(strcmp(signal->invariantExpressionIdentifier, identifier) == 0)
 		{
-			return signal;
+			break;
 		} else {
 			invariant = invariant->next;
 		}
-		*/
-		invariant = invariant->next;
+		
+		//invariant = invariant->next;
 	}
 
 	if(strcmp(signal->invariantExpressionIdentifier, identifier) != 0)
@@ -219,8 +219,9 @@ findConstantByIdentifier(State * N, char * identifier, char* astNodeStrings[])
 }
 
 int
-attachSignalsToParameterNodes(State * N, Invariant * invariant, char* astNodeStrings[])
+attachSignalsToParameterNodes(State * N, char* astNodeStrings[])
 {
+	Invariant * invariant = N->invariantList;
 	while(invariant)
 	{
 		IrNode * parameterList = invariant->parameterList;
@@ -273,7 +274,7 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
      *  Loop through parameterList and attach a signal to each parameter node.
      *  Also add the baseNode and identifier to each signal.
      */
-	attachSignalsToParameterNodes(N, invariant, astNodeStrings);
+	attachSignalsToParameterNodes(N, astNodeStrings);
 
 	
 
@@ -582,11 +583,13 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 	invariant = N->invariantList;
 
 
-	Signal * testSignal = findSignalByIdentifier(N, "distance", astNodeStrings);
+	printf("%s \n", "Test");
+	Signal * testSignal = findSignalByIdentifier(N, "force", astNodeStrings);
+	printf("%s \n", testSignal->relatedSignalList->identifier);
+	printf("%s \n", testSignal->relatedSignalList->relatedSignalListNext->identifier);
 	printf("%s \n", testSignal->relatedSignalList->relatedSignalListNext->relatedSignalListNext->identifier);
-
-
-
+	printf("%s \n", testSignal->relatedSignalList->relatedSignalListNext->relatedSignalListNext->relatedSignalListNext->identifier);
+	printf("%s \n", testSignal->relatedSignalList->relatedSignalListNext->relatedSignalListNext->relatedSignalListNext->relatedSignalListNext->identifier);
 
 
 
