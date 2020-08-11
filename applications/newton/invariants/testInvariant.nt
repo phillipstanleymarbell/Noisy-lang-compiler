@@ -7,8 +7,12 @@ OscillatingString: invariant(t: force, L: distance, f: frequency) =
 	f ** 2 ~ (t / mu) / (4 * L ** 2)
 }
 
-OscillatingString2: invariant(t: force, d: distance, Ti: time, f: frequency) =
+#OscillatingString2: invariant(t: force, d: distance, Ti: time, f: frequency, z: speed) =
+#{
+#	Ti ** 2 ~ (d / mu) / (4 * t ** 2)
+#}
+
+OscillatingString2: invariant(t: force, L: distance, Ti: time, f: frequency, z: speed, ma: mass, acc: acceleration) =
 {
-	Ti ** 2 ~ (d / mu) / (4 * t ** 2),
-    f ** 2 ~ (Ti / mu) / (4 * t ** 2)
+	Ti == (L / z)
 }

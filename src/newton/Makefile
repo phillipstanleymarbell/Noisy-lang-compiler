@@ -273,7 +273,7 @@ version.c: $(HEADERS) Makefile
 #			Examples
 #
 examples: $(EXAMPLES) target
-#	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/include/NewtonBaseSignals.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/include/NewtonBaseSignals.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/include/AlSi10Mg.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/include/EosPEEK.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/include/Nylon11.nt
