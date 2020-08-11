@@ -63,22 +63,9 @@
 
 
 
-/*
- *	Function for making a copy of an instance
- *	of the Signal struct.
- */
-Signal *
-copySignal(Signal * signal)
-{
-	Signal * copyOfSignal = (Signal *) calloc(1, sizeof(Signal));
-	copyOfSignal->baseNode = signal->baseNode;
-	copyOfSignal->identifier = signal->identifier;
-	copyOfSignal->invariantExpressionIdentifier = signal->invariantExpressionIdentifier;
-	copyOfSignal->sensorIdentifier = signal->sensorIdentifier;
-	copyOfSignal->physicalGroupNumber = signal->physicalGroupNumber;
 
-	return copyOfSignal;
-}
+
+
 
 
 /*
@@ -257,6 +244,198 @@ attachSignalsToParameterNodes(State * N, char* astNodeStrings[])
 	return 0;
 }
 
+
+/*
+ *	Function for making a copy of an instance
+ *	of the Signal struct.
+ */
+Signal *
+copySignal(State * N, Signal * signal, char* astNodeStrings[])
+{
+	Signal * copyOfSignal = (Signal *) calloc(1, sizeof(Signal));
+
+	Signal * originSignal = findSignalByIdentifier(N, signal->identifier, astNodeStrings);
+	copyOfSignal->baseNode = originSignal->baseNode;
+	copyOfSignal->identifier = originSignal->identifier;
+	copyOfSignal->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
+	copyOfSignal->sensorIdentifier = originSignal->sensorIdentifier;
+	copyOfSignal->physicalGroupNumber = originSignal->physicalGroupNumber;
+
+	return copyOfSignal;
+}
+
+Signal *
+copySignalList(State * N, Signal * signal, char* astNodeStrings[])
+{
+	while(signal->relatedSignalListPrev != NULL)
+	{
+		signal = signal->relatedSignalListPrev;
+	}
+	Signal * currentSignal = (Signal *) calloc(1, sizeof(Signal));
+
+	int length = 0;
+
+			while(signal != NULL)
+			{
+				if(length == 0)
+				{
+					Signal * originSignal = findSignalByIdentifier(N, signal->identifier, astNodeStrings);
+
+					currentSignal->baseNode = originSignal->baseNode;
+					currentSignal->identifier = originSignal->identifier;
+					currentSignal->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
+					currentSignal->sensorIdentifier = originSignal->sensorIdentifier;
+					currentSignal->physicalGroupNumber = originSignal->physicalGroupNumber;
+					length++;
+				} else {
+					//headSignalCopyNext = copySignal(headSignal->relatedSignalListNext);
+
+					Signal * originSignal = findSignalByIdentifier(N, signal->identifier, astNodeStrings);
+					Signal * nextSignal = (Signal *) calloc(1, sizeof(Signal));
+					nextSignal->baseNode = originSignal->baseNode;
+					nextSignal->identifier = originSignal->identifier;
+					nextSignal->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
+					nextSignal->sensorIdentifier = originSignal->sensorIdentifier;
+					nextSignal->physicalGroupNumber = originSignal->physicalGroupNumber;
+
+
+					nextSignal->relatedSignalListPrev = currentSignal;
+					currentSignal->relatedSignalListNext = nextSignal;
+				
+					currentSignal = nextSignal;
+					length++;
+				}
+				
+				
+				if(signal->relatedSignalListNext == NULL)
+				{
+					break;
+				}
+				
+				signal = signal->relatedSignalListNext;
+				
+				
+				
+			}
+
+	while(currentSignal->relatedSignalListPrev != NULL)
+	{
+		currentSignal = currentSignal->relatedSignalListPrev;
+	}
+
+
+	
+	return currentSignal;
+	
+}
+
+int
+checkIfSignalPresentInList(State * N, Signal * signalList, Signal * signal, char*astNodeStrings[])
+{
+	int val = 0;
+	while(signalList != NULL)
+	{
+		//printf("%s %s \n", signalList->identifier, signal->identifier);
+		if(!strcmp(signalList->identifier, signal->identifier))
+		{
+			val = 1;
+		}
+		if(signalList->relatedSignalListNext == NULL)
+		{
+			break;
+		}
+		signalList = signalList->relatedSignalListNext;
+	}
+
+	return val;
+}
+
+
+Signal *
+removeDuplicates(State * N, Signal * signalList, char* astNodeStrings[])
+{
+	Signal * newSignalList = NULL;
+	Signal * nextSignal = NULL;
+	//Signal * signalListCopy = copySignalList(N, signalList, astNodeStrings);
+
+	int count = 0;
+
+	while(signalList != NULL)
+	{
+		if(count == 0)
+		{
+			newSignalList = copySignal(N, signalList, astNodeStrings);
+			count++;
+		} else {
+			Signal * newSignalListCopy = copySignalList(N, newSignalList, astNodeStrings);
+			int check = checkIfSignalPresentInList(N, newSignalListCopy, signalList, astNodeStrings);
+			//printf("%i \n", check);
+			if(check == 1)
+			{
+				
+			} else {
+				nextSignal = copySignal(N, signalList, astNodeStrings);
+				newSignalList->relatedSignalListNext = nextSignal;
+				nextSignal->relatedSignalListPrev = newSignalList;
+				newSignalList = nextSignal;
+			}
+		}
+		if(signalList->relatedSignalListNext == NULL)
+		{
+			break;
+		}
+		signalList = signalList->relatedSignalListNext;
+	}
+	/*
+	int count = 0;
+
+	while(signalList != NULL)
+	{
+		if(count == 0)
+		{
+			newSignalList = copySignal(N, signalList, astNodeStrings);
+			count++;
+		}
+		Signal * newSignalListCopy = copySignalList(N, newSignalList, astNodeStrings);
+		while(newSignalListCopy != NULL)
+		{
+			if(strcmp(signalList->identifier, newSignalListCopy->identifier) == 0)
+			{
+				
+			} else {
+				nextSignal = copySignal(N, signalList, astNodeStrings);
+				newSignalList->relatedSignalListNext = nextSignal;
+				nextSignal->relatedSignalListPrev = newSignalList;
+				newSignalList = nextSignal;
+				
+			}
+			if(newSignalListCopy->relatedSignalListNext == NULL)
+			{
+				break;
+			}
+			newSignalListCopy = newSignalListCopy->relatedSignalListNext;
+		}
+		if(signalList->relatedSignalListNext == NULL)
+		{
+			break;
+		}
+		signalList = signalList->relatedSignalListNext;
+	}
+	*/
+
+	while(newSignalList->relatedSignalListPrev != NULL)
+	{
+		newSignalList = newSignalList->relatedSignalListPrev;
+	}
+
+	return newSignalList;
+}
+
+
+
+
+
+/*
 int
 annotateSignals(State * N, char* astNodeStrings[])
 {
@@ -267,7 +446,7 @@ annotateSignals(State * N, char* astNodeStrings[])
 		IrNode * invariantDefinition = invariant->parameterList->irParent->irParent;
 		IrNode * constraintList = findNthIrNodeOfType(N, invariantDefinition, kNewtonIrNodeType_PconstraintList, 0);
 		int kth = 0;
-		printf("%i \n", kth);
+		printf("%s %i \n", "kth:", kth);
 		IrNode * constraint = findNthIrNodeOfType(N, constraintList, kNewtonIrNodeType_Pconstraint, kth);
 		while(constraint != NULL)
 		{
@@ -275,6 +454,7 @@ annotateSignals(State * N, char* astNodeStrings[])
 			{
 				break;
 			}
+
 
 			int nth = 0;
 			IrNode * identifierNode = findNthIrNodeOfType(N, constraint, kNewtonIrNodeType_Tidentifier, nth);
@@ -348,7 +528,10 @@ annotateSignals(State * N, char* astNodeStrings[])
 				headSignal = headSignal->relatedSignalListPrev;
 			}
 
-			//printf("%s \n", headSignal->relatedSignalListNext->relatedSignalListNext->identifier);
+			printf("%s \n", "HeadSignal:");
+			printf("%s \n", headSignal->identifier);
+			printf("%s \n", headSignal->relatedSignalListNext->identifier);
+			printf("%s \n", headSignal->relatedSignalListNext->relatedSignalListNext->identifier);
 	
 	
 			int i = 0;
@@ -524,6 +707,23 @@ annotateSignals(State * N, char* astNodeStrings[])
 						tempBase = tempBase->relatedSignalListNext;
 					}
 
+					printf("%s \n", "baseTailCurrent:");
+					if(baseTailCurrent != NULL)
+					{
+						printf("%s \n", baseTailCurrent->identifier);
+					}
+					
+					if(baseTailCurrent->relatedSignalListNext != NULL)
+					{
+						printf("%s \n", baseTailCurrent->relatedSignalListNext->identifier);
+					}
+					if(baseTailCurrent->relatedSignalListNext->relatedSignalListNext != NULL)
+					{
+						printf("%s \n", baseTailCurrent->relatedSignalListNext->relatedSignalListNext->identifier);
+					}
+					
+					
+
 					baseTailCurrent->relatedSignalListNext = currentRelatedSignal;
 					while(baseTailCurrent->relatedSignalListPrev != NULL)
 					{
@@ -541,6 +741,318 @@ annotateSignals(State * N, char* astNodeStrings[])
 
 				i++;
 			}
+
+			kth++;
+			constraint = findNthIrNodeOfType(N, constraintList, kNewtonIrNodeType_Pconstraint, kth);
+		}
+		invariant = invariant->next;
+	}
+
+	return 0;
+}
+*/
+
+int
+annotateSignals2(State * N, char* astNodeStrings[])
+{
+	Invariant * invariant = N->invariantList;
+
+	while(invariant)
+	{
+		IrNode * invariantDefinition = invariant->parameterList->irParent->irParent;
+		IrNode * constraintList = findNthIrNodeOfType(N, invariantDefinition, kNewtonIrNodeType_PconstraintList, 0);
+		int kth = 0;
+		printf("%s %i \n", "kth:", kth);
+		IrNode * constraint = findNthIrNodeOfType(N, constraintList, kNewtonIrNodeType_Pconstraint, kth);
+		while(constraint != NULL)
+		{
+			if(constraint == NULL)
+			{
+				break;
+			}
+
+
+			int nth = 0;
+			IrNode * identifierNode = findNthIrNodeOfType(N, constraint, kNewtonIrNodeType_Tidentifier, nth);
+			
+			char * invariantExpressionIdentifier = identifierNode->tokenString;
+
+			
+			IrNode * constantDefinition = findConstantByIdentifier(N, invariantExpressionIdentifier, astNodeStrings);
+			if(constantDefinition != NULL)
+			{
+				nth++;
+				identifierNode = findNthIrNodeOfType(N, constraint, kNewtonIrNodeType_Tidentifier, nth);
+				invariantExpressionIdentifier = identifierNode->tokenString;
+			}
+			
+			
+			Signal * signal = (Signal *) calloc(1, sizeof(Signal));
+			signal->invariantExpressionIdentifier = invariantExpressionIdentifier;
+
+			printf("%s \n", invariantExpressionIdentifier);
+
+			Signal * baseSignal = findSignalByInvariantExpressionIdentifier(N, invariantExpressionIdentifier, astNodeStrings);
+			
+			
+
+			signal->baseNode = baseSignal->baseNode;
+			signal->identifier = baseSignal->identifier;
+			
+		
+			//printf("%s \n", invariantExpressionIdentifier);
+
+			nth++;
+			identifierNode = findNthIrNodeOfType(N, constraint, kNewtonIrNodeType_Tidentifier, nth);
+	
+			while(identifierNode != NULL)
+			{
+
+				invariantExpressionIdentifier = identifierNode->tokenString;
+
+				IrNode * constantDefinition = findConstantByIdentifier(N, invariantExpressionIdentifier, astNodeStrings);
+				if(constantDefinition != NULL)
+				{
+					nth++;
+					identifierNode = findNthIrNodeOfType(N, constraint, kNewtonIrNodeType_Tidentifier, nth);
+					continue;
+				}
+			
+				Signal * nextSignal = (Signal *) calloc(1, sizeof(Signal));
+			
+				nextSignal->invariantExpressionIdentifier = invariantExpressionIdentifier;
+
+				Signal * baseSignal = findSignalByInvariantExpressionIdentifier(N, invariantExpressionIdentifier, astNodeStrings);
+				nextSignal->baseNode = baseSignal->baseNode;
+				nextSignal->identifier = baseSignal->identifier;
+
+				signal->relatedSignalListNext = nextSignal;
+				nextSignal->relatedSignalListPrev = signal;
+				signal = nextSignal;
+			
+			
+
+				//printf("%s \n", invariantExpressionIdentifier);
+				//printf("%s \n", astNodeStrings[identifierNode->irRightChild->type]);
+
+
+				nth++;
+				identifierNode = findNthIrNodeOfType(N, constraint, kNewtonIrNodeType_Tidentifier, nth);
+			}
+
+
+			Signal * headSignal = signal;
+			while(headSignal->relatedSignalListPrev != NULL)
+			{
+				headSignal = headSignal->relatedSignalListPrev;
+			}
+			
+
+
+			// NEW
+			
+			Signal * headSignalCopy = (Signal *) calloc(1, sizeof(Signal));
+			
+			
+			
+			int length = 0;
+
+			while(headSignal != NULL)
+			{
+				if(length == 0)
+				{
+					Signal * originSignal = findSignalByIdentifier(N, headSignal->identifier, astNodeStrings);
+
+					headSignalCopy->identifier = originSignal->identifier;
+					headSignalCopy->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
+					headSignalCopy->baseNode = originSignal->baseNode;
+					length++;
+				} else {
+					//headSignalCopyNext = copySignal(headSignal->relatedSignalListNext);
+
+					Signal * originSignal = findSignalByIdentifier(N, headSignal->identifier, astNodeStrings);
+					Signal * headSignalCopyNext = (Signal *) calloc(1, sizeof(Signal));
+					headSignalCopyNext->identifier = originSignal->identifier;
+					headSignalCopyNext->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
+					headSignalCopyNext->baseNode = originSignal->baseNode;
+
+
+					headSignalCopyNext->relatedSignalListPrev = headSignalCopy;
+					headSignalCopy->relatedSignalListNext = headSignalCopyNext;
+				
+					headSignalCopy = headSignalCopyNext;
+					length++;
+				}
+				
+				
+				if(headSignal->relatedSignalListNext == NULL)
+				{
+					break;
+				}
+				
+				headSignal = headSignal->relatedSignalListNext;
+				
+				
+				
+			}
+
+			//Signal * headSignalCopy2 = headSignalCopy;
+
+			
+			
+
+			while(headSignal->relatedSignalListPrev != NULL)
+			{
+				headSignal = headSignal->relatedSignalListPrev;
+			}
+
+			/*
+			int i = 0;
+			length = length-1;
+			for(i=0; i<length; i++)
+			{
+				headSignalCopy = headSignalCopy->relatedSignalListPrev;
+
+			}
+			*/
+
+			while(headSignalCopy->relatedSignalListPrev != NULL)
+			{
+				headSignalCopy = headSignalCopy->relatedSignalListPrev;
+			}
+
+			
+			
+			
+			//int i = 0;
+			//int j = 0;
+
+			
+			while(headSignal != NULL)
+			{
+				Signal * baseSignal = findSignalByIdentifier(N, headSignal->identifier, astNodeStrings);
+				if(baseSignal->relatedSignalList == NULL)
+				{
+					baseSignal->relatedSignalList = copySignalList(N, headSignalCopy, astNodeStrings);
+				} else {
+					//TODO.
+					printf("%s \n", "Else:");
+					baseSignal = baseSignal->relatedSignalList;
+					while(baseSignal != NULL)
+					{
+						if(baseSignal->relatedSignalListNext == NULL)
+						{
+							break;
+						}
+						baseSignal = baseSignal->relatedSignalListNext;
+						printf("%s \n", baseSignal->identifier);
+					}
+					baseSignal->relatedSignalListNext = copySignalList(N, headSignalCopy, astNodeStrings);
+				}
+				if(headSignal->relatedSignalListNext == NULL)
+				{
+					break;
+				}
+				headSignal = headSignal->relatedSignalListNext;
+			}
+
+			while(headSignal->relatedSignalListPrev != NULL)
+			{
+				headSignal = headSignal->relatedSignalListPrev;
+			}
+			
+
+
+			
+			/*
+			printf("%s \n", "Head signal copy test:");
+			printf("%s \n", headSignalCopy->identifier);
+			
+			headSignalCopy = headSignalCopy->relatedSignalListNext;
+			printf("%s \n", headSignalCopy->identifier);
+			
+			headSignalCopy = headSignalCopy->relatedSignalListNext;
+			printf("%s \n", headSignalCopy->identifier);
+			
+			headSignalCopy = headSignalCopy->relatedSignalListPrev;
+			printf("%s \n", headSignalCopy->identifier);
+
+			headSignalCopy = headSignalCopy->relatedSignalListPrev;
+			printf("%s \n", headSignalCopy->identifier);
+			*/
+			/*
+			while(headSignalCopy->relatedSignalListPrev != NULL)
+			{
+				if(headSignalCopy->relatedSignalListPrev == NULL)
+				{
+					break;
+				}
+				headSignalCopy = headSignal->relatedSignalListPrev;
+			}
+			*/
+			
+
+			
+			
+			//printf("%s \n", "Head signal copy:");
+			//printf("%s \n", headSignalCopy2->identifier);
+			//printf("%s \n", headSignalCopy->relatedSignalListNext->identifier);
+			//printf("%s \n", headSignalCopy->relatedSignalListNext->relatedSignalListNext->identifier);
+
+			
+
+			/*
+			int i = 0;
+			int j = 0;
+			while(headSignal != NULL)
+			{
+				while(headSignal->relatedSignalListPrev != NULL)
+				{
+					headSignal = headSignal->relatedSignalListPrev;
+				}
+				for(j=0; j<i; j++)
+				{
+					headSignal = headSignal->relatedSignalListNext;
+				}
+				if(headSignal->relatedSignalListNext == NULL)
+				{
+					break;
+				}
+				
+				Signal * baseSignal = findSignalByIdentifier(N, headSignal->identifier, astNodeStrings);
+				int count = 0;
+				Signal * currentRelatedSignal;
+				Signal * nextRelatedSignal;
+				while(headSignal != NULL)
+				{
+
+				}
+				if(baseSignal->relatedSignalList == NULL)
+				{
+					if(count == 0)
+					{
+						count++;
+					} else {
+
+					}
+				} else {
+
+				}
+				
+				i++;
+			}
+
+			while(headSignal->relatedSignalListPrev != NULL)
+			{
+				headSignal = headSignal->relatedSignalListPrev;
+			}
+			*/
+			/*
+			printf("%s \n", "HeadSignal:");
+			printf("%s \n", headSignal->identifier);
+			printf("%s \n", headSignal->relatedSignalListNext->identifier);
+			printf("%s \n", headSignal->relatedSignalListNext->relatedSignalListNext->identifier);
+			*/
 
 			kth++;
 			constraint = findNthIrNodeOfType(N, constraintList, kNewtonIrNodeType_Pconstraint, kth);
@@ -572,20 +1084,36 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 	 *	expression, and add them as relatedSignalList to all signals in the expression.
 	 *	Check for duplicates in the relatedSignalList.
 	 */
-	annotateSignals(N, astNodeStrings);
+	annotateSignals2(N, astNodeStrings);
 
 
 	invariant = N->invariantList;
 
 
 	printf("%s \n", "Test");
+	
 	Signal * testSignal = findSignalByIdentifier(N, "distance", astNodeStrings);
+
+	//printf("%s \n", testSignal->relatedSignalList->identifier);
+
+	
+	
+
+	testSignal = testSignal->relatedSignalList;
+	testSignal = removeDuplicates(N, testSignal, astNodeStrings);
+	printf("%s \n", testSignal->identifier);
+	while(testSignal->relatedSignalListNext != NULL)
+	{
+		testSignal = testSignal->relatedSignalListNext;
+		printf("%s \n", testSignal->identifier);
+	}
+	/*
 	printf("%s \n", testSignal->relatedSignalList->identifier);
 	printf("%s \n", testSignal->relatedSignalList->relatedSignalListNext->identifier);
 	printf("%s \n", testSignal->relatedSignalList->relatedSignalListNext->relatedSignalListNext->identifier);
 	printf("%s \n", testSignal->relatedSignalList->relatedSignalListNext->relatedSignalListNext->relatedSignalListNext->identifier);
 	printf("%s \n", testSignal->relatedSignalList->relatedSignalListNext->relatedSignalListNext->relatedSignalListNext->relatedSignalListNext->identifier);
-
+	*/
 
 
 }

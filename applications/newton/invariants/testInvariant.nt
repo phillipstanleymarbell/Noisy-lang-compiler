@@ -14,5 +14,7 @@ OscillatingString: invariant(t: force, L: distance, f: frequency) =
 
 OscillatingString2: invariant(t: force, L: distance, Ti: time, f: frequency, z: speed, ma: mass, acc: acceleration) =
 {
-	Ti == (L / z)
+	Ti == (L / z),
+	t == (ma * acc),
+	f <-> Ti * t
 }
