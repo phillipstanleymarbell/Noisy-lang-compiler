@@ -702,6 +702,8 @@ typedef enum
 	kNewtonIrPassDimensionalMatrixKernelPrinterFromBody	= (1 << 8),
 	KNewtonIrPassDimensionalMatrixConstantPi		= (1 << 9),
 	kNewtonIrPassInvariantSignalAnnotation			= (1 << 10),
+
+	kNewtonIrPassPiGroupsSignalAnnotation			= (1 << 11),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
