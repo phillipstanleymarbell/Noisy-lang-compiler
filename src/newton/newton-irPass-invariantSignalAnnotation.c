@@ -411,7 +411,7 @@ removeDuplicates(State * N, Signal * signalList, char* astNodeStrings[])
  *	an invariant constraint.
  */
 int
-annotateSignals(State * N, char* astNodeStrings[])
+annotateSignalsInvariantConstraints(State * N, char* astNodeStrings[])
 {
 	Invariant * invariant = N->invariantList;
 
@@ -419,6 +419,11 @@ annotateSignals(State * N, char* astNodeStrings[])
 	{
 		IrNode * invariantDefinition = invariant->parameterList->irParent->irParent;
 		IrNode * constraintList = findNthIrNodeOfType(N, invariantDefinition, kNewtonIrNodeType_PconstraintList, 0);
+		if(constraintList == NULL)
+		{
+			invariant = invariant->next;
+			continue;
+		}
 		int kth = 0;
 		IrNode * constraint = findNthIrNodeOfType(N, constraintList, kNewtonIrNodeType_Pconstraint, kth);
 		while(constraint != NULL)
@@ -600,12 +605,14 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
      */
 	attachSignalsToParameterNodes(N, astNodeStrings);
 
+	printf("%s \n", "Middle.");
+
 	/*
 	 *	Look at each invariant expression, generate a list of signals used in the
 	 *	expression, and add them as relatedSignalList to all signals in the expression.
 	 *	Check for duplicates in the relatedSignalList.
 	 */
-	annotateSignals(N, astNodeStrings);
+	annotateSignalsInvariantConstraints(N, astNodeStrings);
 
 	/*
 	 *	Below code is for testing purposes.
@@ -622,10 +629,12 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 	testSignal = testSignal->relatedSignalList;
 	testSignal = removeDuplicates(N, testSignal, astNodeStrings);
 	printf("%s \n", testSignal->identifier);
+	
 	while(testSignal->relatedSignalListNext != NULL)
 	{
 		testSignal = testSignal->relatedSignalListNext;
 		printf("%s \n", testSignal->identifier);
 	}
+	
 
 }
