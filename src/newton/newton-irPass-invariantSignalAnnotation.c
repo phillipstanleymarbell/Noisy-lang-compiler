@@ -172,6 +172,18 @@ findKthSignalByIdentifier(State * N, char * identifier, char* astNodeStrings[], 
 
 
 /*
+ *	TODO: Function to find the first instance of a signal by identifier and index.
+ */
+Signal *
+findSignalByIdentifierAndIndex(State * N, char * identifier, int index, char* astNodeStrings[])
+{
+	Signal * signal = NULL;
+
+	return signal;
+}
+
+
+/*
  *	Function to find the first instance of the Signal
  *	in the AST with a particular identifier used in 
  *	an invariant constraint.
@@ -740,7 +752,7 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 	 *	Below code is for testing purposes.
 	 */
 
-	/*
+	
 	char * identifier = "frequency";
 
 	printf("%s %s \n", "The related signals are the following for the signal with identifier:", identifier);
@@ -758,6 +770,6 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 		testSignal = testSignal->relatedSignalListNext;
 		printf("%s \n", testSignal->identifier);
 	}
-	*/
+	
 
 }
