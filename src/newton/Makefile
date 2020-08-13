@@ -280,7 +280,7 @@ examples: $(EXAMPLES) target
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/include/Nylon12.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/include/Steel17-4.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/include/Titanium6-4.nt
-#	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/ActivityClassifier.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/ActivityClassifier.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/AirplanePressure.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Beam.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Cyclotron.nt
