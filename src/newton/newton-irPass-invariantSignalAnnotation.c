@@ -114,6 +114,62 @@ findSignalByIdentifier(State * N, char * identifier, char* astNodeStrings[])
 	return signal;
 }
 
+/*
+ *	Function to find the kth instance of a signal struct
+ *	with a particular identifier in the AST.
+ */
+Signal *
+findKthSignalByIdentifier(State * N, char * identifier, char* astNodeStrings[], int kth)
+{
+	Signal * signal = NULL;
+	Invariant * invariant = N->invariantList;
+	int count = 0;
+	while(invariant)
+	{
+		IrNode * parameterList = invariant->parameterList;
+		int nth = 0;
+		IrNode * parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
+		//signal = parameter->signal;
+		while(parameter != NULL)
+		{
+			if(strcmp(parameter->signal->identifier, identifier) == 0)
+			{
+				if(count == kth)
+				{
+					signal = parameter->signal;
+					break;
+				} else {
+					count++;
+				}
+			}
+			nth++;
+			parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
+			if(parameter == NULL)
+			{
+				break;
+			}
+			
+			//signal = parameter->signal;
+		}
+		
+		if(signal != NULL)
+		{
+			break;
+		} else {
+			invariant = invariant->next;
+		}
+	}
+
+	if(signal == NULL)
+	{
+		//printf("%s%s \n", "No signal found with identifier: ", identifier);
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s%s \n", "No signal found with identifier: ", identifier);
+	}
+
+	invariant = N->invariantList;
+	return signal;
+}
+
 
 /*
  *	Function to find the first instance of the Signal
@@ -636,11 +692,32 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 	 *	Code for debugging.
 	 */
 
+	/*
+	char * identifier = "distance";
+
+	printf("%s %s \n", "The related signals are the following for the signal with identifier:", identifier);
+
+	Signal * testSignal = findKthSignalByIdentifier(N, identifier, astNodeStrings, 1);
+
+	printf("%s \n", testSignal->identifier);
+	*/
+	/*
+	testSignal = testSignal->relatedSignalList;
+	testSignal = removeDuplicates(N, testSignal, astNodeStrings);
+	printf("%s \n", testSignal->identifier);
+	
+	while(testSignal->relatedSignalListNext != NULL)
+	{
+		testSignal = testSignal->relatedSignalListNext;
+		printf("%s \n", testSignal->identifier);
+	}
+	*/
 
 	/*
 	 *	Test search of AST for signals
 	 *	with several indices.
 	 */
+	/*
 	Invariant * invariant = N->invariantList;
 	IrNode * parameterList = invariant->parameterList;
 
@@ -656,7 +733,7 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 	Physics * physics = parameter->irRightChild->physics;
 
 	printf("%s \n", physics->identifier);
-
+	*/
 
 
 	/*
