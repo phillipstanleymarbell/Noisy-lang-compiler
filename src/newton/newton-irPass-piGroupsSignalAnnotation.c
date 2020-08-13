@@ -91,7 +91,8 @@ findSignalByIdentifier(State * N, char * identifier, char* astNodeStrings[])
 
 	if(strcmp(signal->identifier, identifier) != 0)
 	{
-		printf("%s%s \n", "No signal found with identifier: ", identifier);
+		//printf("%s%s \n", "No signal found with identifier: ", identifier);
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s%s \n", "No signal found with identifier: ", identifier);
 	}
 
 	invariant = N->invariantList;
@@ -136,7 +137,8 @@ findSignalByInvariantExpressionIdentifier(State * N, char * identifier, char* as
 
 	if(strcmp(signal->invariantExpressionIdentifier, identifier) != 0)
 	{
-		printf("%s%s \n", "No signal found with identifier: ", identifier);
+		//printf("%s%s \n", "No signal found with identifier: ", identifier);
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s%s \n", "No signal found with invariant constraint expression identifier: ", identifier);
 	}
 
 	invariant = N->invariantList;
@@ -160,6 +162,11 @@ findSignalBaseNodeByIdentifier(State * N, char * identifier, char* astNodeString
 	{
 		signalBaseNode = findNthIrNodeOfType(N, N->newtonIrRoot, kNewtonIrNodeType_PbaseSignalDefinition, nth);
 		nth++;
+	}
+
+	if(signalBaseNode == NULL)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s%s \n", "No signal base node found with identifier: ", identifier);
 	}
 
 	return signalBaseNode;
@@ -196,6 +203,11 @@ int
 attachSignalsToParameterNodes(State * N, char* astNodeStrings[])
 {
 	Invariant * invariant = N->invariantList;
+	if(invariant == NULL)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s \n", "Newton description contains no invariants.");
+	}
+
 	while(invariant)
 	{
 		IrNode * parameterList = invariant->parameterList;
