@@ -31,13 +31,13 @@ BMP180: sensor (
 }
 
 
-#mySignal : signal =
-#{
-#	name		= "m" English;
-#	sensor		= BMP180;
-#	symbol		= temp;
-#	derivation	= none;
-#}
+mySignal : signal =
+{
+	name		= "m" English;
+	sensor		= BMP180;
+	symbol		= temp;
+	derivation	= none;
+}
 
 #mySignal : signal =
 #{
