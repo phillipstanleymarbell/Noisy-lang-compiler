@@ -564,7 +564,7 @@ irPassPiGroupsSignalAnnotation(State * N, char* astNodeStrings[])
 	 *	Below code is for testing purposes.
 	 */
 
-	char * identifier = "temperature";
+	char * identifier = "Edimension";
 
 	printf("%s %s \n", "The related signals are the following for the signal with identifier:", identifier);
 	
