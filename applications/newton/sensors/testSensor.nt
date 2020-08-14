@@ -19,7 +19,7 @@ BMP180: sensor (
 		#
 		#	write to temperature value in register address 16rF4
 		#
-		#write 16r2E 16rF4
+		write 16r2E, 16rF4;
 		
 		#
 		#	Get MSB and LSB of Temp data...
