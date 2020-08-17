@@ -63,12 +63,6 @@
 
 
 /*
- *	TODO: The relatedSignalsList structs are only attached to the first instance of a particular signal. Look into this.
- *	The relatedSignalList structs should be attached to all instances of a particular signal.
- */
-
-
-/*
  *	Function to find the kth instance of a signal struct
  *	with a particular identifier in the AST.
  */
@@ -757,6 +751,68 @@ annotateSignalsInvariantConstraints(State * N, char* astNodeStrings[])
 	return 0;
 }
 
+
+/*
+ *	Function to find the kth signal in the AST.
+ */
+Signal *
+findKthSignal(State * N, int kth, char* astNodeStrings[])
+{
+	Signal * signal = NULL;
+	int count = 0;
+	Invariant * invariant = N->invariantList;
+	while(invariant)
+	{
+		int nth = 0;
+		IrNode * parameterList = invariant->parameterList;
+		IrNode * parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
+		while(parameter != NULL)
+		{
+			if(count == kth)
+			{
+				signal = parameter->signal;
+				break;
+			} else {
+				count++;
+				nth++;
+				parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
+			}
+		}
+		if(count == kth && parameter != NULL)
+		{
+			break;
+		}
+		invariant = invariant->next;
+	}
+	/*
+	if(signal == NULL)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s%i \n", "No Signal found in AST at kth=", kth);
+	}
+	*/
+	return signal;
+}
+
+/*
+ *	Function to copy the relatedSignalsList for the first instance
+ *	of each Signal with a particular identifier and axis
+ *	to every other instance of a Signal with the same identifier
+ *	and axis in the AST.
+ */
+void
+copyRelatedSignalsToAllSignals(State * N, char* astNodeStrings[])
+{
+	int kth = 0;
+	Signal * signal = findKthSignal(N, kth, astNodeStrings);
+	while(signal != NULL)
+	{
+		Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis, astNodeStrings);
+		signal->relatedSignalList = copySignalList(N, originSignal->relatedSignalList, astNodeStrings);
+		kth++;
+		signal = findKthSignal(N, kth, astNodeStrings);
+	}
+}
+
 void
 irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 {
@@ -776,6 +832,14 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 	annotateSignalsInvariantConstraints(N, astNodeStrings);
 
 
+	/*
+ 	 *	Copy the relatedSignalsList for the first instance
+	 *	of each Signal with a particular identifier and axis
+	 *	to every other instance of a Signal with the same identifier
+	 *	and axis in the AST.
+ 	 */
+	copyRelatedSignalsToAllSignals(N, astNodeStrings);
+
 
 
 	/*
@@ -783,12 +847,13 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 	 */
 
 	
-	char * identifier = "force";
-	int axis = 0;
+	char * identifier = "distance";
+	//int axis = 0;
 
 	printf("%s %s \n", "The related signals are the following for the signal with identifier:", identifier);
 	
-	Signal * testSignal = findSignalByIdentifierAndAxis(N, identifier, axis, astNodeStrings);
+	//Signal * testSignal = findSignalByIdentifierAndAxis(N, identifier, axis, astNodeStrings);
+	Signal * testSignal = findKthSignalByIdentifier(N, identifier, astNodeStrings, 0);
 	printf("%i \n", testSignal->axis);
 	
 
@@ -806,6 +871,11 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 	Signal * testSignal2 = findSignalByInvariantExpressionIdentifierAndAxis(N, "t", 1, astNodeStrings);
 	printf("%s%s \n", "Identifier: ", testSignal2->identifier);
 	printf("%s%i \n", "Axis: ", testSignal2->axis);
+	*/
+	
+	/*
+	Signal * testSignal3 = findKthSignal(N, 4, astNodeStrings);
+	printf("%s%s %i \n", "kth signal is: ", testSignal3->identifier, testSignal3->axis);
 	*/
 
 }
