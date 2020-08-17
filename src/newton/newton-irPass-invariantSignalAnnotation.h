@@ -35,4 +35,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void    irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[]);
+void    irPassInvariantSignalAnnotation(State * N);

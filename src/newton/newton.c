@@ -176,7 +176,7 @@ processNewtonFile(State *  N, char *  filename)
 	}
 	if (N->irPasses & kNewtonIrPassInvariantSignalAnnotation)
 	{
-		irPassInvariantSignalAnnotation(N, gNewtonAstNodeStrings);
+		irPassInvariantSignalAnnotation(N);
 	}
 	/*
 	 *	Dot backend.

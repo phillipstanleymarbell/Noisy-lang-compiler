@@ -63,11 +63,16 @@
 
 
 /*
+ *	TODO: Add support for associating a sensor with a Signal.
+ */
+
+
+/*
  *	Function to find the kth instance of a signal struct
  *	with a particular identifier in the AST.
  */
 Signal *
-findKthSignalByIdentifier(State * N, char * identifier, char* astNodeStrings[], int kth)
+findKthSignalByIdentifier(State * N, char * identifier, int kth)
 {
 	Signal * signal = NULL;
 	Invariant * invariant = N->invariantList;
@@ -95,9 +100,9 @@ findKthSignalByIdentifier(State * N, char * identifier, char* astNodeStrings[], 
 			{
 				break;
 			}
-			
+
 		}
-		
+
 		if(signal != NULL)
 		{
 			break;
@@ -121,12 +126,12 @@ findKthSignalByIdentifier(State * N, char * identifier, char* astNodeStrings[], 
  *	Function to find the first instance of a signal by identifier and axis.
  */
 Signal *
-findSignalByIdentifierAndAxis(State * N, char * identifier, int axis, char* astNodeStrings[])
+findSignalByIdentifierAndAxis(State * N, char * identifier, int axis)
 {
 	Signal * signal = NULL;
 
 	int i = 0;
-	signal = findKthSignalByIdentifier(N, identifier, astNodeStrings, i);
+	signal = findKthSignalByIdentifier(N, identifier, i);
 	while(signal != NULL)
 	{
 		if(signal->axis == axis)
@@ -135,24 +140,13 @@ findSignalByIdentifierAndAxis(State * N, char * identifier, int axis, char* astN
 		} else {
 			i++;
 		}
-		signal = findKthSignalByIdentifier(N, identifier, astNodeStrings, i);
+		signal = findKthSignalByIdentifier(N, identifier, i);
 	}
 
 	if(signal == NULL)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "%s%s %s%i \n", "No signal found with identifier: ", identifier, "and axis: ", axis);
 	}
-	
-	return signal;
-}
-
-/*
- *	TODO: Implement below function.
- */
-Signal *
-findKthSignalByIdentifierAndAxis(State * N, char * identifier, int axis, int kth, char* astNodeStrings[])
-{
-	Signal * signal = NULL;
 
 	return signal;
 }
@@ -164,7 +158,7 @@ findKthSignalByIdentifierAndAxis(State * N, char * identifier, int axis, int kth
  *	identifier.
  */
 Signal *
-findKthSignalByInvariantExpressionIdentifier(State * N, char * identifier, char* astNodeStrings[], int kth)
+findKthSignalByInvariantExpressionIdentifier(State * N, char * identifier, int kth)
 {
 	Signal * signal = NULL;
 	Invariant * invariant = N->invariantList;
@@ -174,7 +168,6 @@ findKthSignalByInvariantExpressionIdentifier(State * N, char * identifier, char*
 		IrNode * parameterList = invariant->parameterList;
 		int nth = 0;
 		IrNode * parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
-		//signal = parameter->signal;
 		while(parameter != NULL)
 		{
 			if(strcmp(parameter->signal->invariantExpressionIdentifier, identifier) == 0)
@@ -193,8 +186,6 @@ findKthSignalByInvariantExpressionIdentifier(State * N, char * identifier, char*
 			{
 				break;
 			}
-			
-			//signal = parameter->signal;
 		}
 		
 		if(signal != NULL)
@@ -205,12 +196,13 @@ findKthSignalByInvariantExpressionIdentifier(State * N, char * identifier, char*
 		}
 	}
 
+	/*
 	if(signal == NULL)
 	{
 		//printf("%s%s \n", "No signal found with identifier: ", identifier);
 		flexprint(N->Fe, N->Fm, N->Fperr, "%s%s \n", "No signal found with invaraint expression identifier: ", identifier);
 	}
-
+	*/
 	invariant = N->invariantList;
 	return signal;
 }
@@ -220,12 +212,12 @@ findKthSignalByInvariantExpressionIdentifier(State * N, char * identifier, char*
  *	Function to find the first instance of a signal by invariant expression identifier and axis.
  */
 Signal *
-findSignalByInvariantExpressionIdentifierAndAxis(State * N, char * identifier, int axis, char* astNodeStrings[])
+findSignalByInvariantExpressionIdentifierAndAxis(State * N, char * identifier, int axis)
 {
 	Signal * signal = NULL;
 
 	int i = 0;
-	signal = findKthSignalByInvariantExpressionIdentifier(N, identifier, astNodeStrings, i);
+	signal = findKthSignalByInvariantExpressionIdentifier(N, identifier, i);
 	while(signal != NULL)
 	{
 		if(signal->axis == axis)
@@ -234,7 +226,7 @@ findSignalByInvariantExpressionIdentifierAndAxis(State * N, char * identifier, i
 		} else {
 			i++;
 		}
-		signal = findKthSignalByInvariantExpressionIdentifier(N, identifier, astNodeStrings, i);
+		signal = findKthSignalByInvariantExpressionIdentifier(N, identifier, i);
 	}
 
 	if(signal == NULL)
@@ -247,24 +239,12 @@ findSignalByInvariantExpressionIdentifierAndAxis(State * N, char * identifier, i
 
 
 /*
- *	TODO: Implement the below function.
- */
-Signal *
-findKthSignalByInvariantExpressionIdentifierAndAxis(State * N, char * identifier, int axis, int kth, char* astNodeStrings[])
-{
-	Signal * signal = NULL;
-
-	return signal;
-}
-
-
-/*
- *	Function to get the signal axis of a signal referred
+ *	Function to get the Signal axis of a Signal referred
  *	to with a particular invariant expression identifier
  *	within an invariant definition.
  */
 int
-getSignalAxis(State * N, Invariant * invariant, char * invariantExpressionIdentifier, char* astNodeStrings[])
+getSignalAxis(State * N, Invariant * invariant, char * invariantExpressionIdentifier)
 {
 	int axis = 0;
 	IrNode * parameterList = invariant->parameterList;
@@ -297,7 +277,7 @@ getSignalAxis(State * N, Invariant * invariant, char * invariantExpressionIdenti
  *	a particular identifier.
  */
 IrNode *
-findSignalBaseNodeByIdentifier(State * N, char * identifier, char* astNodeStrings[])
+findSignalBaseNodeByIdentifier(State * N, char * identifier)
 {
 	IrNode * signalBaseNode = NULL;
 
@@ -324,7 +304,7 @@ findSignalBaseNodeByIdentifier(State * N, char * identifier, char* astNodeString
  *	its identifier. Returns NULL if no constant is found.
  */
 IrNode *
-findConstantByIdentifier(State * N, char * identifier, char* astNodeStrings[])
+findConstantByIdentifier(State * N, char * identifier)
 {
 	IrNode * constantDefinition = NULL;
 
@@ -345,8 +325,8 @@ findConstantByIdentifier(State * N, char * identifier, char* astNodeStrings[])
  *  Loop through parameterList and attach a signal to each parameter node.
  *  Also add the baseNode and identifier to each signal.
  */
-int
-attachSignalsToParameterNodes(State * N, char* astNodeStrings[])
+void
+attachSignalsToParameterNodes(State * N)
 {
 	Invariant * invariant = N->invariantList;
 	if(invariant == NULL)
@@ -372,15 +352,11 @@ attachSignalsToParameterNodes(State * N, char* astNodeStrings[])
 		 	 */
 
 
-			//	Signal * signal = (Signal *) calloc(1, sizeof(Signal));
 			char * identifier = parameter->irRightChild->tokenString;
 			char * invariantExpressionIdentifier = parameter->irLeftChild->tokenString;
-			parameter->signal->baseNode = findSignalBaseNodeByIdentifier(N, identifier, astNodeStrings);
+			parameter->signal->baseNode = findSignalBaseNodeByIdentifier(N, identifier);
 			parameter->signal->identifier = identifier;
 			parameter->signal->invariantExpressionIdentifier = invariantExpressionIdentifier;
-
-
-			//	parameter->signal = signal;
 
 			nth++;
 			parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
@@ -390,7 +366,6 @@ attachSignalsToParameterNodes(State * N, char* astNodeStrings[])
 	//	Reset invariant to head.
 	invariant = N->invariantList;
 
-	return 0;
 }
 
 
@@ -399,11 +374,11 @@ attachSignalsToParameterNodes(State * N, char* astNodeStrings[])
  *	of the Signal struct.
  */
 Signal *
-copySignal(State * N, Signal * signal, char* astNodeStrings[])
+copySignal(State * N, Signal * signal)
 {
 	Signal * copyOfSignal = (Signal *) calloc(1, sizeof(Signal));
 
-	Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis, astNodeStrings);
+	Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis);
 	copyOfSignal->baseNode = originSignal->baseNode;
 	copyOfSignal->identifier = originSignal->identifier;
 	copyOfSignal->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
@@ -419,7 +394,7 @@ copySignal(State * N, Signal * signal, char* astNodeStrings[])
  *	Function for making a copy of a relatedSignalList.
  */
 Signal *
-copySignalList(State * N, Signal * signal, char* astNodeStrings[])
+copySignalList(State * N, Signal * signal)
 {
 	while(signal->relatedSignalListPrev != NULL)
 	{
@@ -433,7 +408,7 @@ copySignalList(State * N, Signal * signal, char* astNodeStrings[])
 			{
 				if(length == 0)
 				{
-					Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis, astNodeStrings);
+					Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis);
 
 					currentSignal->baseNode = originSignal->baseNode;
 					currentSignal->identifier = originSignal->identifier;
@@ -444,7 +419,7 @@ copySignalList(State * N, Signal * signal, char* astNodeStrings[])
 					length++;
 				} else {
 
-					Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis, astNodeStrings);
+					Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis);
 					Signal * nextSignal = (Signal *) calloc(1, sizeof(Signal));
 					nextSignal->baseNode = originSignal->baseNode;
 					nextSignal->identifier = originSignal->identifier;
@@ -468,9 +443,7 @@ copySignalList(State * N, Signal * signal, char* astNodeStrings[])
 				}
 				
 				signal = signal->relatedSignalListNext;
-				
-				
-				
+
 			}
 
 	while(currentSignal->relatedSignalListPrev != NULL)
@@ -488,7 +461,7 @@ copySignalList(State * N, Signal * signal, char* astNodeStrings[])
  *	in a relatedSignalList. Returns 1 if present, 0 otherwise.
  */
 int
-checkIfSignalPresentInList(State * N, Signal * signalList, Signal * signal, char*astNodeStrings[])
+checkIfSignalPresentInList(State * N, Signal * signalList, Signal * signal)
 {
 	int val = 0;
 	while(signalList != NULL)
@@ -512,7 +485,7 @@ checkIfSignalPresentInList(State * N, Signal * signalList, Signal * signal, char
  *	Function to remove duplicates for a relatedSignalList.
  */
 Signal *
-removeDuplicates(State * N, Signal * signalList, char* astNodeStrings[])
+removeDuplicates(State * N, Signal * signalList)
 {
 	Signal * newSignalList = NULL;
 	Signal * nextSignal = NULL;
@@ -523,16 +496,16 @@ removeDuplicates(State * N, Signal * signalList, char* astNodeStrings[])
 	{
 		if(count == 0)
 		{
-			newSignalList = copySignal(N, signalList, astNodeStrings);
+			newSignalList = copySignal(N, signalList);
 			count++;
 		} else {
-			Signal * newSignalListCopy = copySignalList(N, newSignalList, astNodeStrings);
-			int check = checkIfSignalPresentInList(N, newSignalListCopy, signalList, astNodeStrings);
+			Signal * newSignalListCopy = copySignalList(N, newSignalList);
+			int check = checkIfSignalPresentInList(N, newSignalListCopy, signalList);
 			if(check == 1)
 			{
 				
 			} else {
-				nextSignal = copySignal(N, signalList, astNodeStrings);
+				nextSignal = copySignal(N, signalList);
 				newSignalList->relatedSignalListNext = nextSignal;
 				nextSignal->relatedSignalListPrev = newSignalList;
 				newSignalList = nextSignal;
@@ -560,8 +533,8 @@ removeDuplicates(State * N, Signal * signalList, char* astNodeStrings[])
  *	which occur together with a particular signal in
  *	an invariant constraint.
  */
-int
-annotateSignalsInvariantConstraints(State * N, char* astNodeStrings[])
+void
+annotateSignalsInvariantConstraints(State * N)
 {
 	Invariant * invariant = N->invariantList;
 
@@ -589,24 +562,32 @@ annotateSignalsInvariantConstraints(State * N, char* astNodeStrings[])
 			
 			char * invariantExpressionIdentifier = identifierNode->tokenString;
 
-			
-			IrNode * constantDefinition = findConstantByIdentifier(N, invariantExpressionIdentifier, astNodeStrings);
-			if(constantDefinition != NULL)
+
+			Signal * tempSignal = findKthSignalByInvariantExpressionIdentifier(N, invariantExpressionIdentifier, 0);
+			while(tempSignal == NULL)
 			{
 				nth++;
 				identifierNode = findNthIrNodeOfType(N, constraint, kNewtonIrNodeType_Tidentifier, nth);
+				if(identifierNode == NULL)
+				{
+					break;
+				}
 				invariantExpressionIdentifier = identifierNode->tokenString;
+				tempSignal = findKthSignalByInvariantExpressionIdentifier(N, invariantExpressionIdentifier, 0);
+			}
+			if(identifierNode == NULL)
+			{
+
 			}
 			
 			
 			Signal * signal = (Signal *) calloc(1, sizeof(Signal));
 			signal->invariantExpressionIdentifier = invariantExpressionIdentifier;
 
-			int axis = getSignalAxis(N, invariant, invariantExpressionIdentifier, astNodeStrings);
-			Signal * baseSignal = findSignalByInvariantExpressionIdentifierAndAxis(N, invariantExpressionIdentifier, axis, astNodeStrings);
+			int axis = getSignalAxis(N, invariant, invariantExpressionIdentifier);
+			Signal * baseSignal = findSignalByInvariantExpressionIdentifierAndAxis(N, invariantExpressionIdentifier, axis);
 			
-			
-
+		
 			signal->baseNode = baseSignal->baseNode;
 			signal->identifier = baseSignal->identifier;
 			signal->axis = baseSignal->axis;
@@ -620,20 +601,34 @@ annotateSignalsInvariantConstraints(State * N, char* astNodeStrings[])
 
 				invariantExpressionIdentifier = identifierNode->tokenString;
 
-				IrNode * constantDefinition = findConstantByIdentifier(N, invariantExpressionIdentifier, astNodeStrings);
-				if(constantDefinition != NULL)
+
+				tempSignal = findKthSignalByInvariantExpressionIdentifier(N, invariantExpressionIdentifier, 0);
+				while(tempSignal == NULL)
 				{
 					nth++;
 					identifierNode = findNthIrNodeOfType(N, constraint, kNewtonIrNodeType_Tidentifier, nth);
+					if(identifierNode == NULL)
+					{
+						break;
+					}
+					invariantExpressionIdentifier = identifierNode->tokenString;
+					tempSignal = findKthSignalByInvariantExpressionIdentifier(N, invariantExpressionIdentifier, 0);
+				}
+
+				if(identifierNode == NULL)
+				{
+					kth++;
+					constraint = findNthIrNodeOfType(N, constraintList, kNewtonIrNodeType_Pconstraint, kth);
 					continue;
 				}
+				
 			
 				Signal * nextSignal = (Signal *) calloc(1, sizeof(Signal));
 			
 				nextSignal->invariantExpressionIdentifier = invariantExpressionIdentifier;
 
-				axis = getSignalAxis(N, invariant, invariantExpressionIdentifier, astNodeStrings);
-				Signal * baseSignal = findSignalByInvariantExpressionIdentifierAndAxis(N, invariantExpressionIdentifier, axis, astNodeStrings);
+				axis = getSignalAxis(N, invariant, invariantExpressionIdentifier);
+				Signal * baseSignal = findSignalByInvariantExpressionIdentifierAndAxis(N, invariantExpressionIdentifier, axis);
 				nextSignal->baseNode = baseSignal->baseNode;
 				nextSignal->identifier = baseSignal->identifier;
 				nextSignal->axis = baseSignal->axis;
@@ -657,14 +652,13 @@ annotateSignalsInvariantConstraints(State * N, char* astNodeStrings[])
 			Signal * headSignalCopy = (Signal *) calloc(1, sizeof(Signal));
 			
 			
-			
 			int length = 0;
 
 			while(headSignal != NULL)
 			{
 				if(length == 0)
 				{
-					Signal * originSignal = findSignalByIdentifierAndAxis(N, headSignal->identifier, headSignal->axis, astNodeStrings);
+					Signal * originSignal = findSignalByIdentifierAndAxis(N, headSignal->identifier, headSignal->axis);
 
 					headSignalCopy->identifier = originSignal->identifier;
 					headSignalCopy->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
@@ -673,7 +667,7 @@ annotateSignalsInvariantConstraints(State * N, char* astNodeStrings[])
 					length++;
 				} else {
 
-					Signal * originSignal = findSignalByIdentifierAndAxis(N, headSignal->identifier, headSignal->axis, astNodeStrings);
+					Signal * originSignal = findSignalByIdentifierAndAxis(N, headSignal->identifier, headSignal->axis);
 					Signal * headSignalCopyNext = (Signal *) calloc(1, sizeof(Signal));
 					headSignalCopyNext->identifier = originSignal->identifier;
 					headSignalCopyNext->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
@@ -696,8 +690,6 @@ annotateSignalsInvariantConstraints(State * N, char* astNodeStrings[])
 				
 				headSignal = headSignal->relatedSignalListNext;
 				
-				
-				
 			}
 			
 
@@ -714,10 +706,10 @@ annotateSignalsInvariantConstraints(State * N, char* astNodeStrings[])
 
 			while(headSignal != NULL)
 			{
-				Signal * baseSignal = findSignalByIdentifierAndAxis(N, headSignal->identifier, headSignal->axis, astNodeStrings);
+				Signal * baseSignal = findSignalByIdentifierAndAxis(N, headSignal->identifier, headSignal->axis);
 				if(baseSignal->relatedSignalList == NULL)
 				{
-					baseSignal->relatedSignalList = copySignalList(N, headSignalCopy, astNodeStrings);
+					baseSignal->relatedSignalList = copySignalList(N, headSignalCopy);
 				} else {
 					baseSignal = baseSignal->relatedSignalList;
 					while(baseSignal != NULL)
@@ -728,7 +720,7 @@ annotateSignalsInvariantConstraints(State * N, char* astNodeStrings[])
 						}
 						baseSignal = baseSignal->relatedSignalListNext;
 					}
-					baseSignal->relatedSignalListNext = copySignalList(N, headSignalCopy, astNodeStrings);
+					baseSignal->relatedSignalListNext = copySignalList(N, headSignalCopy);
 				}
 				if(headSignal->relatedSignalListNext == NULL)
 				{
@@ -747,8 +739,6 @@ annotateSignalsInvariantConstraints(State * N, char* astNodeStrings[])
 		}
 		invariant = invariant->next;
 	}
-
-	return 0;
 }
 
 
@@ -756,7 +746,7 @@ annotateSignalsInvariantConstraints(State * N, char* astNodeStrings[])
  *	Function to find the kth signal in the AST.
  */
 Signal *
-findKthSignal(State * N, int kth, char* astNodeStrings[])
+findKthSignal(State * N, int kth)
 {
 	Signal * signal = NULL;
 	int count = 0;
@@ -800,28 +790,28 @@ findKthSignal(State * N, int kth, char* astNodeStrings[])
  *	and axis in the AST.
  */
 void
-copyRelatedSignalsToAllSignals(State * N, char* astNodeStrings[])
+copyRelatedSignalsToAllSignals(State * N)
 {
 	int kth = 0;
-	Signal * signal = findKthSignal(N, kth, astNodeStrings);
+	Signal * signal = findKthSignal(N, kth);
 	while(signal != NULL)
 	{
-		Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis, astNodeStrings);
-		signal->relatedSignalList = copySignalList(N, originSignal->relatedSignalList, astNodeStrings);
+		Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis);
+		signal->relatedSignalList = copySignalList(N, originSignal->relatedSignalList);
 		kth++;
-		signal = findKthSignal(N, kth, astNodeStrings);
+		signal = findKthSignal(N, kth);
 	}
 }
 
 void
-irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
+irPassInvariantSignalAnnotation(State * N)
 {
 
     /*
      *  Loop through parameterList and attach a signal to each parameter node.
      *  Also add the baseNode and identifier to each signal.
      */
-	attachSignalsToParameterNodes(N, astNodeStrings);
+	attachSignalsToParameterNodes(N);
 
 
 	/*
@@ -829,7 +819,7 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 	 *	expression, and add them as relatedSignalList to all signals in the expression.
 	 *	Check for duplicates in the relatedSignalList.
 	 */
-	annotateSignalsInvariantConstraints(N, astNodeStrings);
+	annotateSignalsInvariantConstraints(N);
 
 
 	/*
@@ -838,7 +828,7 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 	 *	to every other instance of a Signal with the same identifier
 	 *	and axis in the AST.
  	 */
-	copyRelatedSignalsToAllSignals(N, astNodeStrings);
+	copyRelatedSignalsToAllSignals(N);
 
 
 
@@ -848,17 +838,17 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 
 	
 	char * identifier = "distance";
-	//int axis = 0;
+	int axis = 0;
 
-	printf("%s %s \n", "The related signals are the following for the signal with identifier:", identifier);
+	printf("%s %s %s%i \n", "The related signals are the following for the signal with identifier:", identifier, "and axis: ", axis);
 	
-	//Signal * testSignal = findSignalByIdentifierAndAxis(N, identifier, axis, astNodeStrings);
-	Signal * testSignal = findKthSignalByIdentifier(N, identifier, astNodeStrings, 0);
-	printf("%i \n", testSignal->axis);
+	Signal * testSignal = findSignalByIdentifierAndAxis(N, identifier, axis);
+	//Signal * testSignal = findKthSignalByIdentifier(N, identifier, 0);
+	//printf("%i \n", testSignal->axis);
 	
 
 	testSignal = testSignal->relatedSignalList;
-	testSignal = removeDuplicates(N, testSignal, astNodeStrings);
+	testSignal = removeDuplicates(N, testSignal);
 	printf("%s %i \n", testSignal->identifier, testSignal->axis);
 	
 	while(testSignal->relatedSignalListNext != NULL)
@@ -866,16 +856,6 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 		testSignal = testSignal->relatedSignalListNext;
 		printf("%s %i \n", testSignal->identifier, testSignal->axis);
 	}
-
-	/*
-	Signal * testSignal2 = findSignalByInvariantExpressionIdentifierAndAxis(N, "t", 1, astNodeStrings);
-	printf("%s%s \n", "Identifier: ", testSignal2->identifier);
-	printf("%s%i \n", "Axis: ", testSignal2->axis);
-	*/
 	
-	/*
-	Signal * testSignal3 = findKthSignal(N, 4, astNodeStrings);
-	printf("%s%s %i \n", "kth signal is: ", testSignal3->identifier, testSignal3->axis);
-	*/
 
 }
