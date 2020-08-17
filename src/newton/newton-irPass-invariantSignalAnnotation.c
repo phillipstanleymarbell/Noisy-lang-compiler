@@ -758,7 +758,7 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 	printf("%s %s \n", "The related signals are the following for the signal with identifier:", identifier);
 	
 	Signal * testSignal = findSignalByIdentifier(N, identifier, astNodeStrings);
-
+	printf("%i \n", testSignal->axis);
 	
 
 	testSignal = testSignal->relatedSignalList;
@@ -770,6 +770,8 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 		testSignal = testSignal->relatedSignalListNext;
 		printf("%s \n", testSignal->identifier);
 	}
+
+
 	
 
 }
