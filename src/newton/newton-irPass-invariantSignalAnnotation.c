@@ -309,15 +309,15 @@ attachSignalsToParameterNodes(State * N, char* astNodeStrings[])
 		 	 */
 
 
-			Signal * signal = (Signal *) calloc(1, sizeof(Signal));
+			//	Signal * signal = (Signal *) calloc(1, sizeof(Signal));
 			char * identifier = parameter->irRightChild->tokenString;
 			char * invariantExpressionIdentifier = parameter->irLeftChild->tokenString;
-			signal->baseNode = findSignalBaseNodeByIdentifier(N, identifier, astNodeStrings);
-			signal->identifier = identifier;
-			signal->invariantExpressionIdentifier = invariantExpressionIdentifier;
+			parameter->signal->baseNode = findSignalBaseNodeByIdentifier(N, identifier, astNodeStrings);
+			parameter->signal->identifier = identifier;
+			parameter->signal->invariantExpressionIdentifier = invariantExpressionIdentifier;
 
 
-			parameter->signal = signal;
+			//	parameter->signal = signal;
 
 			nth++;
 			parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
@@ -753,7 +753,7 @@ irPassInvariantSignalAnnotation(State * N, char* astNodeStrings[])
 	 */
 
 	
-	char * identifier = "frequency";
+	char * identifier = "time";
 
 	printf("%s %s \n", "The related signals are the following for the signal with identifier:", identifier);
 	

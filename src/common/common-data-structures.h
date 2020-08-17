@@ -875,6 +875,7 @@ struct Signal {
     IrNode * 		baseNode;				//	The baseSignalDefinition IrNode.
     char * 			identifier;				//	The signal identifier.
 	char *			invariantExpressionIdentifier;	//Identifier used in invariant expressions.
+	double			axis;					//	The axis of the multi axis signal that the signal corresponds to. Default value is zero.
     char * 			sensorIdentifier;		//	Identifier of the sensor associated to a signal.
     int 			physicalGroupNumber;	//  Conveys information about the physical origin of the signal. (e.g. The I2C bus number of a sensor connected to Ipsa).
     Signal * 		relatedSignalList;		//	List of signals that should be co-sampled with this signal.
