@@ -649,60 +649,8 @@ annotateSignalsInvariantConstraints(State * N)
 			}
 			
 			
-			Signal * headSignalCopy = (Signal *) calloc(1, sizeof(Signal));
+			Signal * headSignalCopy = copySignalList(N, headSignal);
 			
-			
-			int length = 0;
-
-			while(headSignal != NULL)
-			{
-				if(length == 0)
-				{
-					Signal * originSignal = findSignalByIdentifierAndAxis(N, headSignal->identifier, headSignal->axis);
-
-					headSignalCopy->identifier = originSignal->identifier;
-					headSignalCopy->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
-					headSignalCopy->baseNode = originSignal->baseNode;
-					headSignalCopy->axis = originSignal->axis;
-					length++;
-				} else {
-
-					Signal * originSignal = findSignalByIdentifierAndAxis(N, headSignal->identifier, headSignal->axis);
-					Signal * headSignalCopyNext = (Signal *) calloc(1, sizeof(Signal));
-					headSignalCopyNext->identifier = originSignal->identifier;
-					headSignalCopyNext->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
-					headSignalCopyNext->baseNode = originSignal->baseNode;
-					headSignalCopyNext->axis = originSignal->axis;
-
-
-					headSignalCopyNext->relatedSignalListPrev = headSignalCopy;
-					headSignalCopy->relatedSignalListNext = headSignalCopyNext;
-				
-					headSignalCopy = headSignalCopyNext;
-					length++;
-				}
-				
-				
-				if(headSignal->relatedSignalListNext == NULL)
-				{
-					break;
-				}
-				
-				headSignal = headSignal->relatedSignalListNext;
-				
-			}
-			
-
-			while(headSignal->relatedSignalListPrev != NULL)
-			{
-				headSignal = headSignal->relatedSignalListPrev;
-			}
-
-			while(headSignalCopy->relatedSignalListPrev != NULL)
-			{
-				headSignalCopy = headSignalCopy->relatedSignalListPrev;
-			}
-
 
 			while(headSignal != NULL)
 			{
@@ -836,7 +784,7 @@ irPassInvariantSignalAnnotation(State * N)
 	 *	Code for debugging.
 	 */
 
-	
+	/*
 	char * identifier = "distance";
 	int axis = 0;
 
@@ -856,6 +804,6 @@ irPassInvariantSignalAnnotation(State * N)
 		testSignal = testSignal->relatedSignalListNext;
 		printf("%s %i \n", testSignal->identifier, testSignal->axis);
 	}
-	
+	*/
 
 }
