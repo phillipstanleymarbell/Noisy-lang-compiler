@@ -3,7 +3,7 @@ include "NewtonBaseSignals.nt"
 mu : constant = 0.000078 (kg / m);
 
 
-OscillatingString: invariant(t: force, L: distance, f: frequency) =
+OscillatingString: invariant(t: force[1], L: distance, f: frequency) =
 {
 	f ** 2 ~ (t / mu) / (4 * L ** 2)
 }
