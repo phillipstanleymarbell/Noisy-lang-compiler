@@ -180,7 +180,7 @@ processNewtonFile(State *  N, char *  filename)
 		irPassInvariantSignalAnnotation(N);
 	if (N->irPasses & kNewtonIrPassPiGroupsSignalAnnotation)
 	{
-		irPassPiGroupsSignalAnnotation(N, gNewtonAstNodeStrings);
+		irPassPiGroupsSignalAnnotation(N);
 	}
 	/*
 	 *	Dot backend.

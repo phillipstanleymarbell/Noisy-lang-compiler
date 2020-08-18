@@ -57,6 +57,11 @@
 
 
 /*
+ *	TODO: Add support for associating a Signal with a sensor.
+ */
+
+
+/*
  *	Function to find the kth instance of a signal struct
  *	with a particular identifier in the AST.
  */
@@ -586,12 +591,10 @@ Signal *
 findNthSignalFromInvariant(State * N, Invariant * invariant, int nth)
 {
 	Signal * signal = NULL;
-    //	char * signalIdentifier = NULL;
     IrNode * parameterList = invariant->parameterList;
     
     IrNode * parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
 	signal = parameter->signal;
-    //	signalIdentifier = parameter->irRightChild->tokenString;
 
     return signal;
 }
@@ -725,10 +728,12 @@ annotateSignalsPiGroups(State * N)
 
 
 void
-irPassPiGroupsSignalAnnotation(State * N, char* astNodeStrings[])
+irPassPiGroupsSignalAnnotation(State * N)
 {
 
+
     attachSignalsToParameterNodes(N);
+
 
     /*
      *
@@ -739,119 +744,37 @@ irPassPiGroupsSignalAnnotation(State * N, char* astNodeStrings[])
     annotateSignalsPiGroups(N);
 
 
+	/*
+	 *	Copy the relatedSignalsList for the first instance
+	 *	of each Signal with a particular identifier and axis
+	 *	to every other instance of a Signal with the same identifier
+	 *	and axis in the AST.
+	 */
 	copyRelatedSignalsToAllSignals(N);
 
 
 	/*
-	 *	Below code is for testing purposes.
+	 *	Below code is for testing purposes. Prints out the relatedSignalList of all Signals.
 	 */
-
-	char * identifier = "force";
-	int axis = 0;
-
-	printf("%s %s %s %i \n", "The related signals are the following for the signal with identifier:", identifier, "and axis:", axis);
-	
-	Signal * testSignal = findSignalByIdentifierAndAxis(N, identifier, axis);
-
-	
-
-	testSignal = testSignal->relatedSignalList;
-	testSignal = removeDuplicates(N, testSignal);
-	printf("%s %i \n", testSignal->identifier, testSignal->axis);
-	while(testSignal->relatedSignalListNext != NULL)
+	/*
+	int i = 0;
+	Signal * testSignal = findKthSignal(N, i);
+	char * identifier;
+	int axis;
+	while(testSignal != NULL)
 	{
-		testSignal = testSignal->relatedSignalListNext;
-		printf("%s %i \n", testSignal->identifier, testSignal->axis);
+		identifier = testSignal->identifier;
+		axis = testSignal->axis;
+		printf("%s %s %s %i \n", "The related signals are the following for the signal with identifier:", identifier, "and axis:", axis);
+		testSignal = testSignal->relatedSignalList;
+		testSignal = removeDuplicates(N, testSignal);
+		while(testSignal->relatedSignalListNext != NULL)
+		{
+			testSignal = testSignal->relatedSignalListNext;
+			printf("%s %i \n", testSignal->identifier, testSignal->axis);
+		}
+		i++;
+		testSignal = findKthSignal(N, i);
 	}
-
-	identifier = "distance";
-	axis = 0;
-
-	printf("%s %s %s %i \n", "The related signals are the following for the signal with identifier:", identifier, "and axis:", axis);
-	
-	testSignal = findSignalByIdentifierAndAxis(N, identifier, axis);
-
-	
-
-	testSignal = testSignal->relatedSignalList;
-	testSignal = removeDuplicates(N, testSignal);
-	printf("%s %i \n", testSignal->identifier, testSignal->axis);
-	while(testSignal->relatedSignalListNext != NULL)
-	{
-		testSignal = testSignal->relatedSignalListNext;
-		printf("%s %i \n", testSignal->identifier, testSignal->axis);
-	}
-
-	identifier = "muDimension";
-	axis = 0;
-
-	printf("%s %s %s %i \n", "The related signals are the following for the signal with identifier:", identifier, "and axis:", axis);
-	
-	testSignal = findSignalByIdentifierAndAxis(N, identifier, axis);
-
-	
-
-	testSignal = testSignal->relatedSignalList;
-	testSignal = removeDuplicates(N, testSignal);
-	printf("%s %i \n", testSignal->identifier, testSignal->axis);
-	while(testSignal->relatedSignalListNext != NULL)
-	{
-		testSignal = testSignal->relatedSignalListNext;
-		printf("%s %i \n", testSignal->identifier, testSignal->axis);
-	}
-
-	identifier = "frequency";
-	axis = 0;
-
-	printf("%s %s %s %i \n", "The related signals are the following for the signal with identifier:", identifier, "and axis:", axis);
-	
-	testSignal = findSignalByIdentifierAndAxis(N, identifier, axis);
-
-	
-
-	testSignal = testSignal->relatedSignalList;
-	testSignal = removeDuplicates(N, testSignal);
-	printf("%s %i \n", testSignal->identifier, testSignal->axis);
-	while(testSignal->relatedSignalListNext != NULL)
-	{
-		testSignal = testSignal->relatedSignalListNext;
-		printf("%s %i \n", testSignal->identifier, testSignal->axis);
-	}
-
-	identifier = "rhoDimension";
-	axis = 0;
-
-	printf("%s %s %s %i \n", "The related signals are the following for the signal with identifier:", identifier, "and axis:", axis);
-	
-	testSignal = findSignalByIdentifierAndAxis(N, identifier, axis);
-
-	
-
-	testSignal = testSignal->relatedSignalList;
-	testSignal = removeDuplicates(N, testSignal);
-	printf("%s %i \n", testSignal->identifier, testSignal->axis);
-	while(testSignal->relatedSignalListNext != NULL)
-	{
-		testSignal = testSignal->relatedSignalListNext;
-		printf("%s %i \n", testSignal->identifier, testSignal->axis);
-	}
-
-	identifier = "temperature";
-	axis = 0;
-
-	printf("%s %s %s %i \n", "The related signals are the following for the signal with identifier:", identifier, "and axis:", axis);
-	
-	testSignal = findSignalByIdentifierAndAxis(N, identifier, axis);
-
-	
-
-	testSignal = testSignal->relatedSignalList;
-	testSignal = removeDuplicates(N, testSignal);
-	printf("%s %i \n", testSignal->identifier, testSignal->axis);
-	while(testSignal->relatedSignalListNext != NULL)
-	{
-		testSignal = testSignal->relatedSignalListNext;
-		printf("%s %i \n", testSignal->identifier, testSignal->axis);
-	}
-
+	*/
 }

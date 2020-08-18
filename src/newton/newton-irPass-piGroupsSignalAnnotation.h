@@ -29,4 +29,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void    irPassPiGroupsSignalAnnotation(State * N, char* astNodeStrings[]);
+void    irPassPiGroupsSignalAnnotation(State * N);
