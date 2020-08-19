@@ -36,3 +36,19 @@
 */
 
 void    irPassInvariantSignalAnnotation(State * N);
+
+Signal *	findKthSignalByIdentifier(State * N, char * identifier, int kth);
+Signal *	findSignalByIdentifierAndAxis(State * N, char * identifier, int axis);
+Signal *	findKthSignalByInvariantExpressionIdentifier(State * N, char * identifier, int kth);
+Signal *	findSignalByInvariantExpressionIdentifierAndAxis(State * N, char * identifier, int axis);
+int			getSignalAxis(State * N, Invariant * invariant, char * invariantExpressionIdentifier);
+IrNode *	findSignalBaseNodeByIdentifier(State * N, char * identifier);
+IrNode *	findConstantByIdentifier(State * N, char * identifier);
+void		attachSignalsToParameterNodes(State * N);
+Signal *	copySignal(State * N, Signal * signal);
+Signal *	copySignalList(State * N, Signal * signal);
+bool		checkIfSignalPresentInList(State * N, Signal * signalList, Signal * signal);
+void		freeAllSignalsInList(State * N, Signal * signalList);
+Signal *	removeDuplicates(State * N, Signal * signalList);
+Signal *	findKthSignal(State * N, int kth);
+void		copyRelatedSignalsToAllSignals(State * N);

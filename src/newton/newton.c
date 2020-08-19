@@ -178,6 +178,7 @@ processNewtonFile(State *  N, char *  filename)
 	if (N->irPasses & kNewtonIrPassInvariantSignalAnnotation)
 	{
 		irPassInvariantSignalAnnotation(N);
+	}
 	if (N->irPasses & kNewtonIrPassPiGroupsSignalAnnotation)
 	{
 		irPassPiGroupsSignalAnnotation(N);
