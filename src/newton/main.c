@@ -111,7 +111,6 @@ main(int argc, char *argv[])
 			{"process", required_argument, 0, 421},
 			{"measurement", required_argument, 0, 422},
 			{"auto-diff", no_argument, 0, 423},
-			{"debug", no_argument, 0, 499},
 			{0,			0,			0,	0}
 		};
 
@@ -397,14 +396,6 @@ main(int argc, char *argv[])
 			case 423:
 			{
 				N->autodiff = true;
-				break;
-			}
-
-			case 499:
-			{
-				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
-				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
-				N->irPasses |= kNewtonIrPassPiGroupsSignalAnnotation;
 				break;
 			}
 

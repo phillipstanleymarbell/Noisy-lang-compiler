@@ -768,6 +768,12 @@ copyRelatedSignalsToAllSignals(State * N)
 	while(signal != NULL)
 	{
 		Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis);
+		if(originSignal->relatedSignalList == NULL)
+		{
+			kth++;
+			signal = findKthSignal(N, kth);
+			continue;
+		}
 		signal->relatedSignalList = copySignalList(N, originSignal->relatedSignalList);
 		signal->relatedSignalList = removeDuplicates(N, signal->relatedSignalList);
 		kth++;
@@ -784,7 +790,6 @@ irPassInvariantSignalAnnotation(State * N)
      *  Also add the baseNode and identifier to each signal.
      */
 	attachSignalsToParameterNodes(N);
-
 
 	/*
 	 *	Look at each invariant expression, generate a list of signals used in the

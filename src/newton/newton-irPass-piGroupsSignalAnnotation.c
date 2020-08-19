@@ -129,8 +129,14 @@ annotateSignalsPiGroups(State * N)
 
    while(invariant)
    {
-        for(int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
+	   	/*
+		 *	Look through all kernels.
+		 */
+    	for(int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
         {
+			/*
+			 *	Loop through all dimensionless groups in a kernel.
+			 */
             for(int pi = 0; pi < invariant->kernelColumnCount; pi++)
             {
                 char parameterIndexList[invariant->dimensionalMatrixColumnCount];
@@ -138,10 +144,13 @@ annotateSignalsPiGroups(State * N)
 
                 getPiGroupParameterIndices(invariant, countKernel, pi, parameterIndexList, &numberOfParametersWithNonZeroPower);
 
-                 int count = 0;
-                 Signal * newSignal;
+				/*
+				 *	Create a list of Signals which appear in a particular dimensionless group.
+				 */
+                int count = 0;
+                Signal * newSignal;
 
-                for(int i = 0; i < numberOfParametersWithNonZeroPower; i++)
+            	for(int i = 0; i < numberOfParametersWithNonZeroPower; i++)
                 {
                     int index = parameterIndexList[i];
                     Signal * nthSignal = findNthSignalFromInvariant(N, invariant, index);
@@ -166,6 +175,10 @@ annotateSignalsPiGroups(State * N)
                 {
                     newSignal = newSignal->relatedSignalListPrev;
                 }
+				/*
+				 *	Add the list of Signals appearing together in a dimensionless group
+				 *	to all the relatedSignalLists of the Signals appearing in that group.
+				 */
                 while(newSignal != NULL)
                 {
                     Signal * baseSignal = findSignalByIdentifierAndAxis(N, newSignal->identifier, newSignal->axis);
@@ -194,7 +207,10 @@ annotateSignalsPiGroups(State * N)
                 {
                     newSignal = newSignal->relatedSignalListPrev;
                 }
-
+				/*
+				 *	This code is for debugging purposes.
+				 */
+				/*
                 printf("%s %i %s %i \n", "Signals contained in Kernel:", countKernel, "and Pi group:", pi);
                 printf("%s \n", newSignal->identifier);
                 while(newSignal->relatedSignalListNext != NULL)
@@ -202,6 +218,7 @@ annotateSignalsPiGroups(State * N)
                     newSignal = newSignal->relatedSignalListNext;
                     printf("%s \n", newSignal->identifier);
                 }
+				*/
 
 				freeAllSignalsInList(N, newSignal);
             }
@@ -216,9 +233,6 @@ annotateSignalsPiGroups(State * N)
 void
 irPassPiGroupsSignalAnnotation(State * N)
 {
-
-
-    attachSignalsToParameterNodes(N);
 
 
     /*
@@ -242,7 +256,7 @@ irPassPiGroupsSignalAnnotation(State * N)
 	/*
 	 *	Below code is for testing purposes. Prints out the relatedSignalList of all Signals.
 	 */
-	
+	/*
 	int i = 0;
 	Signal * testSignal = findKthSignal(N, i);
 	char * identifier;
@@ -269,5 +283,5 @@ irPassPiGroupsSignalAnnotation(State * N)
 		i++;
 		testSignal = findKthSignal(N, i);
 	}
-	
+	*/
 }

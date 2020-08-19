@@ -12,7 +12,7 @@
       Hyper-Threading Technology: Enabled
 
 changeset: 976:972e0082beb6fa87a13fa4ad832b85249487cfe3
-char kNewtonVersion[] = "0.3-alpha-976 (972e0082beb6fa87a13fa4ad832b85249487cfe3) (build 08-19-2020-14:16-oliver@macbook-pro-Darwin-19.5.0-x86_64)";
+char kNewtonVersion[] = "0.3-alpha-976 (972e0082beb6fa87a13fa4ad832b85249487cfe3) (build 08-19-2020-14:17-oliver@macbook-pro-Darwin-19.5.0-x86_64)";
 
 ./src/noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s
 
