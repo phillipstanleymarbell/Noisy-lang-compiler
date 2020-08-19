@@ -576,7 +576,13 @@ copyRelatedSignalsToAllSignals(State * N)
 	while(signal != NULL)
 	{
 		Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis);
-		signal->relatedSignalList = copySignalList(N, originSignal->relatedSignalList);
+		if(originSignal->relatedSignalList != NULL)
+		{
+			signal->relatedSignalList = copySignalList(N, originSignal->relatedSignalList);
+		} else {
+			signal->relatedSignalList = NULL;
+		}
+		
 		kth++;
 		signal = findKthSignal(N, kth);
 	}
@@ -756,7 +762,7 @@ irPassPiGroupsSignalAnnotation(State * N)
 	/*
 	 *	Below code is for testing purposes. Prints out the relatedSignalList of all Signals.
 	 */
-	/*
+	
 	int i = 0;
 	Signal * testSignal = findKthSignal(N, i);
 	char * identifier;
@@ -766,8 +772,15 @@ irPassPiGroupsSignalAnnotation(State * N)
 		identifier = testSignal->identifier;
 		axis = testSignal->axis;
 		printf("%s %s %s %i \n", "The related signals are the following for the signal with identifier:", identifier, "and axis:", axis);
+		if(testSignal->relatedSignalList == NULL)
+		{
+			i++;
+			testSignal = findKthSignal(N, i);
+			continue;
+		}
 		testSignal = testSignal->relatedSignalList;
 		testSignal = removeDuplicates(N, testSignal);
+		printf("%s %i \n", testSignal->identifier, testSignal->axis);
 		while(testSignal->relatedSignalListNext != NULL)
 		{
 			testSignal = testSignal->relatedSignalListNext;
@@ -776,5 +789,5 @@ irPassPiGroupsSignalAnnotation(State * N)
 		i++;
 		testSignal = findKthSignal(N, i);
 	}
-	*/
+	
 }
