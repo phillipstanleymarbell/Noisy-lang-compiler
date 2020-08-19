@@ -400,7 +400,7 @@ copySignalList(State * N, Signal * signal)
 	{
 		signal = signal->relatedSignalListPrev;
 	}
-	Signal * currentSignal = (Signal *) calloc(1, sizeof(Signal));
+	Signal * currentSignal = NULL;
 
 	int length = 0;
 
@@ -410,23 +410,13 @@ copySignalList(State * N, Signal * signal)
 				{
 					Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis);
 
-					currentSignal->baseNode = originSignal->baseNode;
-					currentSignal->identifier = originSignal->identifier;
-					currentSignal->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
-					currentSignal->axis = originSignal->axis;
-					currentSignal->sensorIdentifier = originSignal->sensorIdentifier;
-					currentSignal->physicalGroupNumber = originSignal->physicalGroupNumber;
+					currentSignal = copySignal(N, originSignal);
 					length++;
 				} else {
 
 					Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis);
-					Signal * nextSignal = (Signal *) calloc(1, sizeof(Signal));
-					nextSignal->baseNode = originSignal->baseNode;
-					nextSignal->identifier = originSignal->identifier;
-					nextSignal->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
-					nextSignal->axis = originSignal->axis;
-					nextSignal->sensorIdentifier = originSignal->sensorIdentifier;
-					nextSignal->physicalGroupNumber = originSignal->physicalGroupNumber;
+					Signal * nextSignal = NULL;
+					nextSignal = copySignal(N, originSignal);
 
 
 					nextSignal->relatedSignalListPrev = currentSignal;
@@ -460,15 +450,14 @@ copySignalList(State * N, Signal * signal)
  *	Function to check if a particular signal is present
  *	in a relatedSignalList. Returns 1 if present, 0 otherwise.
  */
-int
+bool
 checkIfSignalPresentInList(State * N, Signal * signalList, Signal * signal)
 {
-	int val = 0;
 	while(signalList != NULL)
 	{
 		if(strcmp(signalList->identifier, signal->identifier) == 0 && signalList->axis == signal->axis)
 		{
-			val = 1;
+			return true;
 		}
 		if(signalList->relatedSignalListNext == NULL)
 		{
@@ -477,9 +466,28 @@ checkIfSignalPresentInList(State * N, Signal * signalList, Signal * signal)
 		signalList = signalList->relatedSignalListNext;
 	}
 
-	return val;
+	return false;
 }
 
+
+/*
+ *	Function to free all Signal structs in
+ *	a list.
+ */
+void
+freeAllSignalsInList(State * N, Signal * signalList)
+{
+	while(signalList->relatedSignalListPrev != NULL)
+	{
+		signalList = signalList->relatedSignalListPrev;
+	}
+	while(signalList->relatedSignalListNext != NULL)
+	{
+		signalList = signalList->relatedSignalListNext;
+		free(signalList->relatedSignalListPrev);
+	}
+	free(signalList);
+}
 
 /*
  *	Function to remove duplicates for a relatedSignalList.
@@ -491,26 +499,25 @@ removeDuplicates(State * N, Signal * signalList)
 	Signal * nextSignal = NULL;
 
 	int count = 0;
+	newSignalList = copySignal(N, signalList);
+	count++;
+	signalList = signalList->relatedSignalListNext;
 
 	while(signalList != NULL)
 	{
-		if(count == 0)
+		Signal * newSignalListCopy = copySignalList(N, newSignalList);
+		bool check = checkIfSignalPresentInList(N, newSignalListCopy, signalList);
+		if(check)
 		{
-			newSignalList = copySignal(N, signalList);
-			count++;
+			
 		} else {
-			Signal * newSignalListCopy = copySignalList(N, newSignalList);
-			int check = checkIfSignalPresentInList(N, newSignalListCopy, signalList);
-			if(check == 1)
-			{
-				
-			} else {
-				nextSignal = copySignal(N, signalList);
-				newSignalList->relatedSignalListNext = nextSignal;
-				nextSignal->relatedSignalListPrev = newSignalList;
-				newSignalList = nextSignal;
-			}
+			nextSignal = copySignal(N, signalList);
+			newSignalList->relatedSignalListNext = nextSignal;
+			nextSignal->relatedSignalListPrev = newSignalList;
+			newSignalList = nextSignal;
 		}
+		freeAllSignalsInList(N, newSignalListCopy);
+		
 		if(signalList->relatedSignalListNext == NULL)
 		{
 			break;
@@ -555,14 +562,22 @@ annotateSignalsInvariantConstraints(State * N)
 			{
 				break;
 			}
-
+			
+			/*
+			 *	For every constraint in the Newton description, find each IrNode of type identifier.
+			 */
 
 			int nth = 0;
 			IrNode * identifierNode = findNthIrNodeOfType(N, constraint, kNewtonIrNodeType_Tidentifier, nth);
 			
 			char * invariantExpressionIdentifier = identifierNode->tokenString;
 
-
+			/*
+			 *	Check if there is a signal corresponding to this identifier. If there isn't,
+			 *	then it means that the identifier corresponds to something other than a Signal (ie a constant),
+			 *	and is of no interest to us here. Continue progressing through the identifiers in the constraint
+			 *	until we find one which has a corresponding Signal.
+			 */
 			Signal * tempSignal = findKthSignalByInvariantExpressionIdentifier(N, invariantExpressionIdentifier, 0);
 			while(tempSignal == NULL)
 			{
@@ -580,7 +595,9 @@ annotateSignalsInvariantConstraints(State * N)
 
 			}
 			
-			
+			/*
+			 *	Create a new Signal corresponding to the identifier.
+			 */
 			Signal * signal = (Signal *) calloc(1, sizeof(Signal));
 			signal->invariantExpressionIdentifier = invariantExpressionIdentifier;
 
@@ -595,7 +612,11 @@ annotateSignalsInvariantConstraints(State * N)
 
 			nth++;
 			identifierNode = findNthIrNodeOfType(N, constraint, kNewtonIrNodeType_Tidentifier, nth);
-	
+
+			/*
+			 *	Loop through all the identifiers in a constraint, and repeat the above for all of them.
+			 *	The end product is the headSignal, which is a list of Signals included in a constraint.
+			 */
 			while(identifierNode != NULL)
 			{
 
@@ -651,7 +672,10 @@ annotateSignalsInvariantConstraints(State * N)
 			
 			Signal * headSignalCopy = copySignalList(N, headSignal);
 			
-
+			/*
+			 *	The loop below adds the headSignal (ie list of Signals in a constraint) to the
+			 *	relatedSignalList of all the Signals included in the headSignal through headSignal->relatedSignalListNext.
+			 */
 			while(headSignal != NULL)
 			{
 				Signal * baseSignal = findSignalByIdentifierAndAxis(N, headSignal->identifier, headSignal->axis);
@@ -677,10 +701,9 @@ annotateSignalsInvariantConstraints(State * N)
 				headSignal = headSignal->relatedSignalListNext;
 			}
 
-			while(headSignal->relatedSignalListPrev != NULL)
-			{
-				headSignal = headSignal->relatedSignalListPrev;
-			}
+			freeAllSignalsInList(N, headSignal);
+			freeAllSignalsInList(N, headSignalCopy);
+			
 
 			kth++;
 			constraint = findNthIrNodeOfType(N, constraintList, kNewtonIrNodeType_Pconstraint, kth);
@@ -746,6 +769,7 @@ copyRelatedSignalsToAllSignals(State * N)
 	{
 		Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis);
 		signal->relatedSignalList = copySignalList(N, originSignal->relatedSignalList);
+		signal->relatedSignalList = removeDuplicates(N, signal->relatedSignalList);
 		kth++;
 		signal = findKthSignal(N, kth);
 	}
@@ -796,7 +820,7 @@ irPassInvariantSignalAnnotation(State * N)
 	
 
 	testSignal = testSignal->relatedSignalList;
-	testSignal = removeDuplicates(N, testSignal);
+	//testSignal = removeDuplicates(N, testSignal);
 	printf("%s %i \n", testSignal->identifier, testSignal->axis);
 	
 	while(testSignal->relatedSignalListNext != NULL)

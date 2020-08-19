@@ -286,8 +286,8 @@ examples: $(EXAMPLES) target
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Cyclotron.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/DroppedBall.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Electricity.nt
-	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/GpsWalking.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/HotSphere.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/GpsWalking.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Kepler.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/JetEngine.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/MotorWheelChair.nt
