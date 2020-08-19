@@ -1,0 +1,18 @@
+
+    Hardware Overview:
+
+      Model Name: MacBook Pro
+      Model Identifier: MacBookPro16,2
+      Processor Name: Quad-Core Intel Core i5
+      Processor Speed: 2 GHz
+      Number of Processors: 1
+      Total Number of Cores: 4
+      L2 Cache (per Core): 512 KB
+      L3 Cache: 6 MB
+      Hyper-Threading Technology: Enabled
+
+changeset: 952:b66336c33feb3fe6bff4826169db30df789d9217
+
+./src/noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s
+
+./src/newton/newton-darwin-EN -v 0 -eP applications/newton/invariants/ViolinWithTemperatureDependence-pigroups.nt

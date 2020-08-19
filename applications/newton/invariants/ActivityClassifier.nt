@@ -55,7 +55,7 @@ SamplingTime		: constant = 5E-4 s;
 
 accelerationAndGyro : invariant(
 	x	: multiAxisAcceleration[0], 
-	y	: multiAxisAcceleration[1], 
+	y	: multiAxisAcceleration[1],
 	z	: multiAxisAcceleration[2], 
 	row	: multiAxisAngularVelocity[0], 
 	pitch	: multiAxisAngularVelocity[1], 
