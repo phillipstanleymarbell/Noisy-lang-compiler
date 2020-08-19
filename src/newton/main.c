@@ -113,8 +113,7 @@ main(int argc, char *argv[])
 			{"auto-diff", no_argument, 0, 423},
 			{"kernelNumber", required_argument, 0, 494},
 			{"piNumber", required_argument, 0, 495},
-			{"ipsa", no_argument, 0, 489},
-			{"ipsa", required_argument, 0, 489},
+			{"ipsa", optional_argument, 0, 489},
 			{0,			0,			0,	0}
 		};
 
@@ -421,6 +420,7 @@ main(int argc, char *argv[])
 			{
 				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
+				N->irPasses |= kNewtonIrPassInvariantSignalAnnotation;
 				N->irBackends |= kNewtonIrBackendIpsa;
 				N->outputIpsaFilePath = optarg;
 				break;

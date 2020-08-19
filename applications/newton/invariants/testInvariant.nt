@@ -1,0 +1,26 @@
+include "NewtonBaseSignals.nt"
+
+mu : constant = 0.000078 (kg / m);
+
+
+testInvariant: invariant(t1: temperature[1], t2: temperature[2]) =
+{
+	t1 <-> t2
+}
+
+#OscillatingString: invariant(t: force, L: distance, f: frequency) =
+#{
+#	f ** 2 ~ (t / mu) / (4 * L ** 2)
+#}
+
+#OscillatingString2: invariant(t: force, d: distance, Ti: time, f: frequency, z: speed) =
+#{
+#	Ti ** 2 ~ (d / mu) / (4 * t ** 2)
+#}
+
+#OscillatingString2: invariant(t: force, L: distance, Ti: time, f: frequency, z: speed, ma: mass, acc: acceleration) =
+#{
+#	Ti == (L / z),
+#	t == (ma * acc),
+#	f <-> Ti * t
+#}

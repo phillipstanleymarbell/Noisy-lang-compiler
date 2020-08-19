@@ -35,4 +35,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void irPassIpsaBackend(State *  N, IrNode * noisyIrRoot, char* astNodeStrings[]);
+void irPassIpsaBackend(State *  N, char* astNodeStrings[]);
