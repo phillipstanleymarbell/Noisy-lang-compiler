@@ -114,6 +114,9 @@ main(int argc, char *argv[])
 			{"kernelNumber", required_argument, 0, 494},
 			{"piNumber", required_argument, 0, 495},
 			{"ipsa", optional_argument, 0, 489},
+			{"kernelNumber", required_argument, 0, 490},
+			{"physicalGroup1", required_argument, 0, 491},
+			{"physicalGroup2", required_argument, 0, 492},
 			{0,			0,			0,	0}
 		};
 
@@ -425,6 +428,25 @@ main(int argc, char *argv[])
 				N->outputIpsaFilePath = optarg;
 				break;
 				
+			}
+
+			case 490:
+			{
+				
+				N->kernelNumber = atoi(optarg);
+				break;
+			}
+
+			case 491:
+			{
+				N->physicalGroup1 = optarg;
+				break;
+			}
+
+			case 492:
+			{
+				N->physicalGroup2 = optarg;
+				break;
 			}
 
 			case '?':

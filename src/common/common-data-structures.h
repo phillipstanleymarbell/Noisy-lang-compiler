@@ -1203,6 +1203,19 @@ typedef struct
 	char *			estimatorProcessModel;
 	char *			estimatorMeasurementModel;
 	bool			autodiff;
+	
+	/*
+	 *	Kernel number to allow the user to choose which kernel should be
+	 *	used to generate relatedSignalLists. Used in the Pi Group Signal Annotation pass.
+	 */
+	int				kernelNumber;
+
+	/*
+	 *	Variables for storing lists of identifiers attached
+	 *	to a physical group number.
+	 */
+	char *			physicalGroup1;
+	char *			physicalGroup2;
 
 	/*
 	 *	Variables to keep track of the kernel number and pi number
