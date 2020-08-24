@@ -361,7 +361,7 @@ attachSignalsToParameterNodes(State * N)
 			 *	TODO: Add correct physicalGroupNumber and sensor identifier.
 			 */
 			char * sensorIdentifier = "testSensor";
-			parameter->signal->physicalGroupNumber = 1;
+			parameter->signal->physicalGroupNumber = 2;
 			parameter->signal->sensorIdentifier = sensorIdentifier;
 
 			nth++;
