@@ -357,6 +357,12 @@ attachSignalsToParameterNodes(State * N)
 			parameter->signal->baseNode = findSignalBaseNodeByIdentifier(N, identifier);
 			parameter->signal->identifier = identifier;
 			parameter->signal->invariantExpressionIdentifier = invariantExpressionIdentifier;
+			/*
+			 *	TODO: Add correct physicalGroupNumber and sensor identifier.
+			 */
+			char * sensorIdentifier = "testSensor";
+			parameter->signal->physicalGroupNumber = 1;
+			parameter->signal->sensorIdentifier = sensorIdentifier;
 
 			nth++;
 			parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
@@ -387,6 +393,26 @@ copySignal(State * N, Signal * signal)
 	copyOfSignal->physicalGroupNumber = originSignal->physicalGroupNumber;
 
 	return copyOfSignal;
+}
+
+
+/*
+ *	Function for making a shallow copy of an instance
+ *	of the Signal struct.
+ */
+void
+shallowCopySignal(State * N, Signal * signal, Signal * copyOfSignal)
+{
+	
+	Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis);
+	copyOfSignal->baseNode = originSignal->baseNode;
+	copyOfSignal->identifier = originSignal->identifier;
+	copyOfSignal->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
+	copyOfSignal->axis = originSignal->axis;
+	copyOfSignal->sensorIdentifier = originSignal->sensorIdentifier;
+	copyOfSignal->physicalGroupNumber = originSignal->physicalGroupNumber;
+	copyOfSignal->dimensionIndex = originSignal->dimensionIndex;
+
 }
 
 

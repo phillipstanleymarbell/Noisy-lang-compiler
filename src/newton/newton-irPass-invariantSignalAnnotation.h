@@ -52,3 +52,4 @@ void		freeAllSignalsInList(State * N, Signal * signalList);
 Signal *	removeDuplicates(State * N, Signal * signalList);
 Signal *	findKthSignal(State * N, int kth);
 void		copyRelatedSignalsToAllSignals(State * N);
+void		shallowCopySignal(State * N, Signal * signal, Signal * copyOfSignal);

@@ -2,6 +2,27 @@ include "NewtonBaseSignals.nt"
 
 mu : constant = 0.000078 (kg / m);
 
+testSensor: sensor (
+			testSensorTemperature: temperature
+			) =
+
+{
+	interface testSensorTemperature == i2c (address: 16r77)
+	{
+		#
+		#	write to temperature value in register address 16rF4
+		#
+		write 16r2E, 16rF4;
+		
+		#
+		#	Get MSB and LSB of Temp data...
+		#
+		out_t_msb = read 16rF6;
+		out_t_lsb = read 16rF7;
+		#bmp180Temperature = (out_t_msb << 8) | (out_t_Lsb);
+	}
+}
+
 
 testInvariant: invariant(t1: temperature[1], t2: temperature[2]) =
 {
