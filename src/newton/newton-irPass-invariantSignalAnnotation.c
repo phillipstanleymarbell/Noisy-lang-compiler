@@ -418,7 +418,7 @@ attachSignalsToParameterNodes(State * N)
 			/*
 			 *	TODO: Add correct physicalGroupNumber and sensor identifier.
 			 */
-			char * sensorIdentifier = "testSensor";
+			char * sensorIdentifier = "BMX055";
 			parameter->signal->physicalGroupNumber = 1;
 			parameter->signal->sensorIdentifier = sensorIdentifier;
 
@@ -934,7 +934,7 @@ irPassInvariantSignalAnnotation(State * N)
 	 *	TODO: Remove the two lines below preceding the call to updatePhysicalGroupNumbers when associating sensors with Signals has been implemented.
 	 */
 	Signal * testSignal = findSignalByIdentifierAndAxis(N, "temperature", 2);
-    testSignal->sensorIdentifier = "otherTestSensor";
+    testSignal->sensorIdentifier = "BME680";
 	updatePhysicalGroupNumbers(N);
 
 

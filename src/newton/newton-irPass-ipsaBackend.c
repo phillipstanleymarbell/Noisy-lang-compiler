@@ -1080,7 +1080,7 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
      *  The below loop implements the Scheduling Algorithm described in
      *  the "Ipsa Compiler" report. Please see Issue X for more details.
      */
-    for(int k=0; k<4; k++)
+    for(int k=0; k<1; k++)
     {
         if(physicalGroup1 != NULL && physicalGroup2 == NULL)
         {
@@ -1458,6 +1458,22 @@ irPassIpsaBackend(State * N, char* astNodeStrings[])
     }
     
     createFinalInstructions(N, astNodeStrings, jumpToInstruction, &instructionIndex);
+
+    /*
+     *  Print the dimension indices of all Signals, for reference.
+     */
+    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s \n", "/*");
+
+    int n = 0;
+    Signal * tempSignal = findKthSignal(N, n);
+    while(tempSignal != NULL)
+    {
+        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%s%s%i%s%s%i \n", " * Dimension index for ", tempSignal->identifier, "[", tempSignal->axis, "] ", "is ", tempSignal->dimensionIndex);
+        n++;
+        tempSignal = findKthSignal(N, n);
+    }
+
+    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s \n", " */");
 
 
     /*
