@@ -53,3 +53,4 @@ Signal *	removeDuplicates(State * N, Signal * signalList);
 Signal *	findKthSignal(State * N, int kth);
 void		copyRelatedSignalsToAllSignals(State * N);
 void		shallowCopySignal(State * N, Signal * signal, Signal * copyOfSignal);
+Signal *	findKthSignalBySensorIdentifier(State * N, char * sensorIdentifier, int kth);

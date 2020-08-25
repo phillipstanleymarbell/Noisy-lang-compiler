@@ -239,6 +239,64 @@ findSignalByInvariantExpressionIdentifierAndAxis(State * N, char * identifier, i
 
 
 /*
+ *	Function to find a Signal by its sensorIdentifier and axis.
+ */
+Signal *
+findKthSignalBySensorIdentifier(State * N, char * sensorIdentifier, int kth)
+{
+	Signal * signal = NULL;
+	Invariant * invariant = N->invariantList;
+	int count = 0;
+	while(invariant)
+	{
+		IrNode * parameterList = invariant->parameterList;
+		int nth = 0;
+		IrNode * parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
+		while(parameter != NULL)
+		{
+			if(strcmp(parameter->signal->sensorIdentifier, sensorIdentifier) == 0)
+			{
+				if(count == kth)
+				{
+					signal = parameter->signal;
+					break;
+				} else {
+					count++;
+				}
+			}
+			nth++;
+			parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
+			if(parameter == NULL)
+			{
+				break;
+			}
+
+		}
+
+		if(signal != NULL)
+		{
+			break;
+		} else {
+			invariant = invariant->next;
+		}
+	}
+
+	/*
+	if(signal == NULL)
+	{
+		//printf("%s%s \n", "No signal found with identifier: ", identifier);
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s%s \n", "No signal found with sensor identifier: ", sensorIdentifier);
+	}
+	*/
+	
+
+	invariant = N->invariantList;
+
+	return signal;
+}
+
+
+/*
  *	Function to get the Signal axis of a Signal referred
  *	to with a particular invariant expression identifier
  *	within an invariant definition.
@@ -361,7 +419,7 @@ attachSignalsToParameterNodes(State * N)
 			 *	TODO: Add correct physicalGroupNumber and sensor identifier.
 			 */
 			char * sensorIdentifier = "testSensor";
-			parameter->signal->physicalGroupNumber = 2;
+			parameter->signal->physicalGroupNumber = 1;
 			parameter->signal->sensorIdentifier = sensorIdentifier;
 
 			nth++;
@@ -391,6 +449,7 @@ copySignal(State * N, Signal * signal)
 	copyOfSignal->axis = originSignal->axis;
 	copyOfSignal->sensorIdentifier = originSignal->sensorIdentifier;
 	copyOfSignal->physicalGroupNumber = originSignal->physicalGroupNumber;
+	copyOfSignal->dimensionIndex = originSignal->dimensionIndex;
 
 	return copyOfSignal;
 }
@@ -557,6 +616,57 @@ removeDuplicates(State * N, Signal * signalList)
 	}
 
 	return newSignalList;
+}
+
+
+void
+updatePhysicalGroupNumbers(State * N)
+{
+
+    //TODO: Fix this function. (Hint: look at kth)
+    char * group1 = N->physicalGroup1;
+    char * group2 = N->physicalGroup2;
+
+    Signal * signal;
+
+    char * token1;
+    token1 = strtok (group1,",");
+    while (token1 != NULL)
+    {
+        int kth = 0;
+        while(true)
+        {
+            signal = findKthSignalBySensorIdentifier(N, token1, kth);
+            if(signal == NULL)
+            {
+                break;
+            }
+            signal->physicalGroupNumber = 1;
+            break;
+            kth++;
+        }
+        
+        token1 = strtok (NULL, ",");
+    }
+
+    char * token2;
+    token2 = strtok (group2,",");
+    while (token2 != NULL)
+    {
+        int kth = 0;
+        while(true)
+        {
+            signal = findKthSignalBySensorIdentifier(N, token2, kth);
+            if(signal == NULL)
+            {
+                break;
+            }
+            signal->physicalGroupNumber = 2;
+            kth++;
+        }
+
+        token2 = strtok (NULL, ",");
+    }
 }
 
 
@@ -811,11 +921,21 @@ void
 irPassInvariantSignalAnnotation(State * N)
 {
 
+	
+
     /*
      *  Loop through parameterList and attach a signal to each parameter node.
      *  Also add the baseNode and identifier to each signal.
      */
 	attachSignalsToParameterNodes(N);
+
+	/*
+	 *	TODO: Remove the two lines below preceding the call to updatePhysicalGroupNumbers when associating sensors with Signals has been implemented.
+	 */
+	Signal * testSignal = findSignalByIdentifierAndAxis(N, "temperature", 2);
+    testSignal->sensorIdentifier = "otherTestSensor";
+	updatePhysicalGroupNumbers(N);
+
 
 	/*
 	 *	Look at each invariant expression, generate a list of signals used in the
