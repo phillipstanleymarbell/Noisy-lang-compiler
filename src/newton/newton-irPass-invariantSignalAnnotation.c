@@ -619,6 +619,9 @@ removeDuplicates(State * N, Signal * signalList)
 }
 
 
+/*
+ *	Updates signal->physicalGroupNumber based on user input.
+ */
 void
 updatePhysicalGroupNumbers(State * N)
 {
@@ -920,8 +923,6 @@ copyRelatedSignalsToAllSignals(State * N)
 void
 irPassInvariantSignalAnnotation(State * N)
 {
-
-	
 
     /*
      *  Loop through parameterList and attach a signal to each parameter node.

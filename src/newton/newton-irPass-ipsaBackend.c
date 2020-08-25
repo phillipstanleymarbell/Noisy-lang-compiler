@@ -73,198 +73,12 @@
 #include "newton-irPass-invariantSignalAnnotation.h"
 
 /*
- *  TODO: Add support for I2C write instructions.
  *  TODO: Add support for identifying sensor from signal definition.
- *  TODO: Add support for dimension index list.
  */
 
 
 /* 
- *  Function searches AST and returns a sensor definition node
- *  with a matching identifier, generally corresponding to the
- *  name of the sensor (e.g. 'BMP180').
- */
-
-IrNode * findSensorDefinitionByIdentifier(char * identifier, State * N, IrNode * noisyIrRoot)
-{
-   int nth;
-   IrNode * sensorDefinition = NULL;
-   for (nth=0; nth<10; nth++)
-   {
-       sensorDefinition = findNthIrNodeOfType(N, noisyIrRoot, kNewtonIrNodeType_PsensorDefinition, nth);
-       
-       if (!strcmp(sensorDefinition->irLeftChild->tokenString, identifier))
-       {
-           break;
-       }
-       else
-       {
-
-       }
-   }
-
-   if (sensorDefinition == NULL)
-   {
-       flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: No matching sensor found.\n");
-   }
-
-   return sensorDefinition;
-    
-}
-
-
-/* 
- *  Function finds and returns a sensor parameter name corresponding
- *  to a parameter identifier. For example, for the BMP180, the 
- *  parameter identifier 'temperature' would return 'bmp180temperature'.
- */
-
-char * findSensorParameterNameByParameterIdentifierAndAxis(char * identifier, int axis, State * N, IrNode * sensorDefinition)
-{
-    char * sensorParameterName = NULL;
-
-    int nth;
-    IrNode * parameter;
-    for (nth=0; nth<10; nth++)
-    {
-        parameter = findNthIrNodeOfType(N, sensorDefinition, kNewtonIrNodeType_Pparameter, nth);
-        if (strcmp(parameter->irRightChild->tokenString, identifier) == 0 && parameter->signal->axis == axis)
-        {
-            sensorParameterName = parameter->irLeftChild->tokenString;
-            break;
-        }
-    }
-
-    if (sensorParameterName == NULL)
-    {
-        flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: No matching sensor parameter found.\n");
-    }
-    
-    return sensorParameterName;
-
-}
-
-
-/* 
- *  Function searches AST from the sensor definition root node
- *  and returns a sensor interface definition which matches the
- *  sensor parameter name used as the identifier.
- */
-
-IrNode * findSensorInterface(char * identifier, State * N, IrNode * sensorDefinition)
-{
-    
-    IrNode * sensorInterfaceStatement = NULL;
-    int nth;
-    for (nth=0; nth<10; nth++)
-    {
-        sensorInterfaceStatement = findNthIrNodeOfType(N, sensorDefinition, kNewtonIrNodeType_PsensorInterfaceStatement, nth);
-
-        if (!strcmp(sensorInterfaceStatement->irLeftChild->tokenString, identifier))
-        {
-            break;
-        }
-    }
-
-    if (sensorInterfaceStatement == NULL)
-    {
-        flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: No matching sensor interface found.\n");
-    }
-
-    return sensorInterfaceStatement;
-    
-}
-
-
-/* 
- *  Function finds and returns the I2C address associated with
- *  a given sensor interface statement node.
- */
-
-int64_t findI2CAddress(State * N, IrNode * sensorInterfaceStatement, char* astNodeStrings[])
-{
-    int64_t i2cAddress = 0;
-    
-    IrNode * sensorInterfaceType = findNthIrNodeOfType(N, sensorInterfaceStatement, kNewtonIrNodeType_PsensorInterfaceType, 0);
-    if (sensorInterfaceType->irLeftChild->type == kNewtonIrNodeType_Ti2c)
-    {
-
-        IrNode * integerConst = findNthIrNodeOfType(N, sensorInterfaceStatement->irRightChild, kNewtonIrNodeType_TintegerConst, 0);
-
-        //printf("%s \n", astNodeStrings[sensorInterfaceStatement->irRightChild->irRightChild->type]);
-
-        i2cAddress = integerConst->token->integerConst;
-        //i2cAddress = sensorInterfaceStatement->irRightChild->irLeftChild->irRightChild->irRightChild->irLeftChild->irLeftChild->irRightChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->token->integerConst;
-        //printf("%lld \n", i2cAddress);
-        
-    }
-    else if (sensorInterfaceType->irLeftChild->type == kNewtonIrNodeType_Tspi)
-    {
-        flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: Currently unsupported sensor interface type (SPI).\n");
-    }
-    else
-    {
-        flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: Unrecognized sensor interface type.\n");
-    }
-
-    return i2cAddress;
-}
-
-
-/* 
- *  Function generates a list of I2C read and write commands
- *  with associated register address and write values for
- *  a given sensor interface statement node. '0' corresponds
- *  to a read command, '1' corresponds to a write command.
- */
-
-int generateRWList(State * N, IrNode * sensorInterfaceStatement, char* astNodeStrings[], int *numberOfSensorInterfaceCommands, int64_t registerAddressList[10], int64_t writeValueList[10], char *rwList)
-{
-    int nth;
-    for (nth=0; nth<10; nth++)
-    {
-        IrNode * sensorInterfaceCommand = findNthIrNodeOfType(N, sensorInterfaceStatement, kNewtonIrNodeType_PsensorInterfaceCommand, nth);
-        if (sensorInterfaceCommand == NULL)
-        {
-            break;
-        }
-        IrNode * readRegisterCommand = findNthIrNodeOfType(N, sensorInterfaceCommand, kNewtonIrNodeType_PreadRegisterCommand, 0);
-        IrNode * writeRegisterCommand = findNthIrNodeOfType(N, sensorInterfaceCommand, kNewtonIrNodeType_PwriteRegisterCommand, 0);
-        if (readRegisterCommand != NULL)
-        {
-            rwList[nth] = 0;
-            IrNode * integerConst = findNthIrNodeOfType(N, readRegisterCommand, kNewtonIrNodeType_TintegerConst, 0);
-
-            registerAddressList[nth] = integerConst->token->integerConst;
-            writeValueList[nth] = 1;
-            *numberOfSensorInterfaceCommands = *numberOfSensorInterfaceCommands + 1;
-        }
-        else if (writeRegisterCommand != NULL)
-        {
-            rwList[nth] = 1;
-            
-            /*
-             *  TODO: Need to take care of searching AST for writeRegisterAddress and writeValue.
-             */
-            IrNode * value = findNthIrNodeOfType(N, writeRegisterCommand, kNewtonIrNodeType_TintegerConst, 0);
-            IrNode * registerAddr = findNthIrNodeOfType(N, writeRegisterCommand, kNewtonIrNodeType_TintegerConst, 1);
-            registerAddressList[nth] = registerAddr->token->integerConst;
-            writeValueList[nth] = value->token->integerConst;
-            *numberOfSensorInterfaceCommands = *numberOfSensorInterfaceCommands + 1;
-            
-        }
-        else
-        {
-            flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: No I2C read or write command found.\n");
-        }
-        
-    }
-
-    return 0;
-}
-
-
-/* 
+ *  TODO: Replace this with a function in the style of the two below it.
  *  Function to convert decimal to a binary representation.
  */
 long long convertDecimalToBinary(int64_t n) {
@@ -281,242 +95,10 @@ long long convertDecimalToBinary(int64_t n) {
 
 
 /*
- *  Function to create an Ipsa I2C read instruction
- *  and write it to the "instruction_list.v" file.
+ *  Function to convert from decimal
+ *  to a 15-bit binary representation
+ *  for printing.
  */
-
-int create_read_instruction(int * instructionIndex, int64_t i2cAddr, int64_t regAddr, int64_t dimIndex, State * N, int physicalGroupNumber) {
-    
-    int64_t i2cAddrB = convertDecimalToBinary(i2cAddr);
-    int64_t regAddrB = convertDecimalToBinary(regAddr);
-    int64_t dimIndexB = convertDecimalToBinary(dimIndex);
-    if(physicalGroupNumber == 1)
-    {
-        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%08lld%s%08lld%s%05lld%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000101_", i2cAddrB, "_" , regAddrB, "_00000001_", dimIndexB, "_00000000_00000000_00000000_00000_000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_001;");
-    }
-    else if(physicalGroupNumber == 2)
-    {
-        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%08lld%s%08lld%s%05lld%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000101_00000000_00000000_00000000_00000_", i2cAddrB, "_" , regAddrB, "_00000001_", dimIndexB, "_000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_010;");
-    }
-    
-
-    return 0;
-}
-
-
-/*
- *  Function to create an Ipsa I2C write instruction
- *  and write it to the "instruction_list.v" file.
- */
-
-int create_write_instruction(int * instructionIndex, int64_t i2cAddr, int64_t regAddr, int64_t immediate, State * N, int physicalGroupNumber) {
-    
-
-    int64_t i2cAddrB = convertDecimalToBinary(i2cAddr);
-    int64_t regAddrB = convertDecimalToBinary(regAddr);
-    int64_t immediateB = convertDecimalToBinary(immediate);
-    
-    if(physicalGroupNumber == 1)
-    {
-        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%08lld%s%08lld%s%08lld%s%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000100_", i2cAddrB, "_" , regAddrB, "_", immediateB, "_", "00000_00000000_00000000_00000000_00000_000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_001;");
-    }
-    else if(physicalGroupNumber == 2)
-    {
-        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%08lld%s%08lld%s%08lld%s%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000100_00000000_00000000_00000000_00000_", i2cAddrB, "_" , regAddrB, "_", immediateB, "_", "00000_000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_010;");
-    }
-    
-
-    return 0;
-}
-
-
-/*
- *  Function to create an "intstruction_list.v" file for Ipsa.
- */
-
-int ipsa_create_instructions(char *rwList, int64_t i2cAddr, int64_t regAddrList[10], int64_t immediateList[10], int64_t dimIndex, int *numberOfSensorInterfaceCommands, State * N, int * instructionIndex, int physicalGroupNumber){
-
-    int i;
-
-    int i2cInterfaceSelect = 1;
-
-    for (i=0; i<*numberOfSensorInterfaceCommands; i++) {
-        /*
-        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%i%s \n", "instr_mem_reg[", *instructionIndex,"] = 32'b010_00000000000000010000000000000;");
-        *instructionIndex = *instructionIndex + 1;
-        */
-        if (rwList[i] == 0){
-            int64_t regAddr; 
-            regAddr = regAddrList[i];
-            create_read_instruction(instructionIndex, i2cAddr, regAddr, dimIndex, N, i2cInterfaceSelect);
-            *instructionIndex = *instructionIndex + 1;
-        }
-        else if (rwList[i] == 1){
-            int64_t regAddr; 
-            regAddr = regAddrList[i];
-            int64_t immediate;
-            immediate = immediateList[i];
-            create_write_instruction(instructionIndex, i2cAddr, regAddr, immediate, N, i2cInterfaceSelect);
-            *instructionIndex = *instructionIndex + 1;
-        }
-        else {
-
-        }
-    }
-    
-    return 0;
-}
-
-int ipsa_create_read_instructions(char *rwList, int64_t i2cAddr, int64_t regAddrList[10], int64_t immediateList[10], int64_t dimIndex, int *numberOfSensorInterfaceCommands, State * N, int * instructionIndex, int physicalGroupNumber){
-
-    int i;
-
-    for (i=0; i<*numberOfSensorInterfaceCommands; i++) {
-        /*
-        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%i%s \n", "instr_mem_reg[", *instructionIndex,"] = 32'b010_00000000000000010000000000000;");
-        *instructionIndex = *instructionIndex + 1;
-        */
-        if (rwList[i] == 0){
-            int64_t regAddr; 
-            regAddr = regAddrList[i];
-            create_read_instruction(instructionIndex, i2cAddr, regAddr, dimIndex, N, physicalGroupNumber);
-            *instructionIndex = *instructionIndex + 1;
-        }
-        else if (rwList[i] == 1){
-            /*
-            int64_t regAddr; 
-            regAddr = regAddrList[i];
-            int64_t immediate;
-            immediate = immediateList[i];
-            create_write_instruction(instructionIndex, i2cAddr, regAddr, immediate, N, i2cInterfaceSelect);
-            *instructionIndex = *instructionIndex + 1;
-            */
-        }
-        else {
-
-        }
-    }
-    
-    return 0;
-}
-
-
-int ipsa_create_write_instructions(char *rwList, int64_t i2cAddr, int64_t regAddrList[10], int64_t immediateList[10], int64_t dimIndex, int *numberOfSensorInterfaceCommands, State * N, int * instructionIndex, int physicalGroupNumber){
-
-    int i;
-
-
-    for (i=0; i<*numberOfSensorInterfaceCommands; i++) {
-        /*
-        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%i%s \n", "instr_mem_reg[", *instructionIndex,"] = 32'b010_00000000000000010000000000000;");
-        *instructionIndex = *instructionIndex + 1;
-        */
-        if (rwList[i] == 0){
-            /*
-            int64_t regAddr; 
-            regAddr = regAddrList[i];
-            create_read_instruction(instructionIndex, i2cAddr, regAddr, dimIndex, N, i2cInterfaceSelect);
-            *instructionIndex = *instructionIndex + 1;
-            */
-        }
-        else if (rwList[i] == 1){
-            int64_t regAddr; 
-            regAddr = regAddrList[i];
-            int64_t immediate;
-            immediate = immediateList[i];
-            create_write_instruction(instructionIndex, i2cAddr, regAddr, immediate, N, physicalGroupNumber);
-            *instructionIndex = *instructionIndex + 1;
-        }
-        else {
-
-        }
-    }
-    
-    return 0;
-}
-
-/*
- *  TODO: Write new functions to parallel those above, but for the case that we want to create
- *  instructions for both I2C1 and I2C2. Or modify the ones above? I think the latter is probably
- *  a better option.
- */
-
-/*
- *  Function to create parallel Ipsa I2C read instructions
- *  and write it to the "instruction_list.v" file.
- */
-int create_parallel_read_instruction(int * instructionIndex, int64_t i2cAddr1, int64_t regAddr1, int64_t dimIndex1, int physicalGroupNumber1, int64_t i2cAddr2, int64_t regAddr2, int64_t dimIndex2, int physicalGroupNumber2, State * N) {
-    
-    int64_t i2cAddrB1 = convertDecimalToBinary(i2cAddr1);
-    int64_t regAddrB1 = convertDecimalToBinary(regAddr1);
-    int64_t dimIndexB1 = convertDecimalToBinary(dimIndex1);
-    int64_t i2cAddrB2 = convertDecimalToBinary(i2cAddr2);
-    int64_t regAddrB2 = convertDecimalToBinary(regAddr2);
-    int64_t dimIndexB2 = convertDecimalToBinary(dimIndex2);
-
-    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%08lld%s%08lld%s%05lld%s%08lld%s%08lld%s%05lld%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000101_", i2cAddrB1, "_" , regAddrB1, "_00000001_", dimIndexB1, "_", i2cAddrB2, "_" , regAddrB2, "_00000001_", dimIndexB2, "_000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_011;");
-    
-    return 0;
-}
-
-
-/*
- *  Function to create parallel Ipsa I2C write instructions
- *  and write it to the "instruction_list.v" file.
- */
-int create_parallel_write_instruction(int * instructionIndex, int64_t i2cAddr1, int64_t regAddr1, int64_t immediate1, int physicalGroupNumber1, int64_t i2cAddr2, int64_t regAddr2, int64_t immediate2, int physicalGroupNumber2, State * N) {
-    
-
-    int64_t i2cAddrB1 = convertDecimalToBinary(i2cAddr1);
-    int64_t regAddrB1 = convertDecimalToBinary(regAddr1);
-    int64_t immediateB1 = convertDecimalToBinary(immediate1);
-    int64_t i2cAddrB2 = convertDecimalToBinary(i2cAddr2);
-    int64_t regAddrB2 = convertDecimalToBinary(regAddr2);
-    int64_t immediateB2 = convertDecimalToBinary(immediate2);
-
-    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%08lld%s%08lld%s%08lld%s%08lld%s%08lld%s%08lld%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000100_", i2cAddrB1, "_" , regAddrB1, "_", immediateB1, "_00000_", i2cAddrB2, "_" , regAddrB2, "_", immediateB2, "_00000_000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_011;");
-    
-    return 0;
-}
-
-
-
-/*
- *  Ipsa backend function.
- */
-/*
-void irPassIpsaBackend(State *  N, IrNode * noisyIrRoot, char* astNodeStrings[])
-{
-*/
-    /*
-     *  Print buffer contents to file.
-     */
-    /*
-    FILE *instructionListFile;
-
-    instructionListFile = fopen(N->outputIpsaFilePath,"w");
-
-    if(instructionListFile == NULL)
-    {
-        flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: Unable to open file.\n");
-        exit(1);             
-    }
-
-    fprintf(instructionListFile, "%s", N->Fpipsa->circbuf);
-
-    fclose(instructionListFile);
-    
-
-
-    //system("mv instruction_list.v ../../../Ipsa-core/verilog/toplevel/Instruction_Mem_Examples");
-
-    //printf("%s \n", "Ipsa instruction list generated, Ipsa now ready for synthesis.");
-    
-}
-*/
-
-
-
 void
 convert(int64_t decimal, char binary[16])
 {
@@ -533,6 +115,12 @@ convert(int64_t decimal, char binary[16])
     }
 }
 
+
+/*
+ *  Function to convert from decimal
+ *  to a 49-bit binary representation
+ *  for printing.
+ */
 void
 convert50(int64_t decimal, char binary[50])
 {
@@ -550,55 +138,9 @@ convert50(int64_t decimal, char binary[50])
 }
 
 
-int
-createSetupInstructions(State * N, int numberOfSignals, int *instructionIndex)
-{
-    int jumpToInstruction = 0;
-
-    time_t t = time(NULL);
-    struct tm *tm = localtime(&t);
-    char s[64];
-    assert(strftime(s, sizeof(s), "%c", tm));
-
-    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s %s %s \n", "/* This instruction list was generated by the Ipsa backend of the Newton compiler on", s, "*/");
-    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s \n", "initial begin");
-    //  Initial Barrier Instruction.
-    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%i%s \n", "instr_mem_reg[", *instructionIndex,"] = 128'b00000010_00000000000000000000000000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000010_00000000_000;");
-    *instructionIndex = *instructionIndex + 1;
-    jumpToInstruction++;
-
-    /*
-     *  TODO: Look into more flexible memory allocation for Ipsa.
-     */
-
-    int64_t totalMemorySize = 32767;
-    int64_t memoryChunkSize = totalMemorySize / numberOfSignals;
-
-    //printf("%llu \n", memoryChunkSize);
-
-    int64_t memoryStart = 0;
-    int64_t memoryEnd = memoryStart + memoryChunkSize;
-    char memoryStartB[16];
-    char memoryEndB[16];
-
-    for(int dimIndex=1; dimIndex<=numberOfSignals; dimIndex++)
-    {
-        convert(memoryStart, memoryStartB);
-        convert(memoryEnd, memoryEndB);
-        Signal * signal = findKthSignal(N, dimIndex - 1);
-        signal->dimensionIndex = dimIndex;
-        int64_t dimIndexB = convertDecimalToBinary(dimIndex);
-        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%i%s%s%s%05llu%s%s%s \n", "instr_mem_reg[", *instructionIndex,"] = 128'b00000001_0000_", memoryStartB,"_00001_", dimIndexB,"_", memoryEndB,"_0_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_000;");
-        *instructionIndex = *instructionIndex + 1;
-        jumpToInstruction++;
-        memoryStart = memoryEnd + 1;
-        memoryEnd = memoryStart + memoryChunkSize;
-    }
-
-    return jumpToInstruction;
-    
-}
-
+/*
+ *  Function returns the number of Signals in the AST. (Used)
+ */
 int
 countAllSignals(State * N)
 {
@@ -619,6 +161,9 @@ countAllSignals(State * N)
 }
 
 
+/*
+ *  Function returns the number of Signals in a list. (Used)
+ */
 int
 countSignalsInList(State * N, Signal * signalList)
 {
@@ -651,6 +196,9 @@ countSignalsInList(State * N, Signal * signalList)
 }
 
 
+/*
+ *  Function returns a pointer to the kth Signal in a list.
+ */
 Signal *
 getKthSignalFromList(State * N, Signal * signalList, int kth)
 {
@@ -678,6 +226,10 @@ getKthSignalFromList(State * N, Signal * signalList, int kth)
 }
 
 
+/*
+ *  Function returns a copy of a list of Signals
+ *  where the order of the Signals has been randomized. (Used)
+ */
 Signal *
 randomizeSignalList(State * N, Signal * signalList)
 {
@@ -693,7 +245,9 @@ randomizeSignalList(State * N, Signal * signalList)
         int position = 0;
         while(check)
         {
-            //  TODO: Look into better random number generation. Random number generation slows down execution significantly.
+            /*
+             *  TODO: Look into better random number generation. Random number generation slows down execution significantly.
+             */
             srand(time(NULL));
             position = rand() % numberOfSignals;
             bool check2 = false;
@@ -737,9 +291,198 @@ randomizeSignalList(State * N, Signal * signalList)
 }
 
 
-void 
-createWriteI2CInstructionsForSignal(State * N, Signal * signal, char* astNodeStrings[], int * instructionIndex)
+/* 
+ *  Function searches AST and returns a sensor definition node
+ *  with a matching identifier, generally corresponding to the
+ *  name of the sensor (e.g. 'BMP180').
+ */
+IrNode *
+findSensorDefinitionByIdentifier(char * identifier, State * N, IrNode * newtonIrRoot)
 {
+   int nth;
+   IrNode * sensorDefinition = NULL;
+   for (nth=0; nth<10; nth++)
+   {
+       sensorDefinition = findNthIrNodeOfType(N, newtonIrRoot, kNewtonIrNodeType_PsensorDefinition, nth);
+       
+       if (!strcmp(sensorDefinition->irLeftChild->tokenString, identifier))
+       {
+           break;
+       }
+       else
+       {
+
+       }
+   }
+
+   if (sensorDefinition == NULL)
+   {
+       flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: No matching sensor found.\n");
+   }
+
+   return sensorDefinition;
+    
+}
+
+
+/* 
+ *  Function finds and returns a sensor parameter name corresponding
+ *  to a parameter identifier. For example, for the BMP180, the 
+ *  parameter identifier 'temperature' would return 'bmp180temperature'.
+ */
+char *
+findSensorParameterNameByParameterIdentifierAndAxis(char * identifier, int axis, State * N, IrNode * sensorDefinition)
+{
+    char * sensorParameterName = NULL;
+
+    int nth;
+    IrNode * parameter;
+    for (nth=0; nth<10; nth++)
+    {
+        parameter = findNthIrNodeOfType(N, sensorDefinition, kNewtonIrNodeType_Pparameter, nth);
+        if (strcmp(parameter->irRightChild->tokenString, identifier) == 0 && parameter->signal->axis == axis)
+        {
+            sensorParameterName = parameter->irLeftChild->tokenString;
+            break;
+        }
+    }
+
+    if (sensorParameterName == NULL)
+    {
+        flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: No matching sensor parameter found.\n");
+    }
+    
+    return sensorParameterName;
+
+}
+
+
+/* 
+ *  Function searches AST from the sensor definition root node
+ *  and returns a sensor interface definition which matches the
+ *  sensor parameter name used as the identifier.
+ */
+IrNode *
+findSensorInterface(char * identifier, State * N, IrNode * sensorDefinition)
+{
+    
+    IrNode * sensorInterfaceStatement = NULL;
+    int nth;
+    for (nth=0; nth<10; nth++)
+    {
+        sensorInterfaceStatement = findNthIrNodeOfType(N, sensorDefinition, kNewtonIrNodeType_PsensorInterfaceStatement, nth);
+
+        if (!strcmp(sensorInterfaceStatement->irLeftChild->tokenString, identifier))
+        {
+            break;
+        }
+    }
+
+    if (sensorInterfaceStatement == NULL)
+    {
+        flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: No matching sensor interface found.\n");
+    }
+
+    return sensorInterfaceStatement;
+    
+}
+
+
+/* 
+ *  Function finds and returns the I2C address associated with
+ *  a given sensor interface statement node.
+ */
+int64_t
+findI2CAddress(State * N, IrNode * sensorInterfaceStatement, char* astNodeStrings[])
+{
+    int64_t i2cAddress = 0;
+    
+    IrNode * sensorInterfaceType = findNthIrNodeOfType(N, sensorInterfaceStatement, kNewtonIrNodeType_PsensorInterfaceType, 0);
+    if (sensorInterfaceType->irLeftChild->type == kNewtonIrNodeType_Ti2c)
+    {
+
+        IrNode * integerConst = findNthIrNodeOfType(N, sensorInterfaceStatement->irRightChild, kNewtonIrNodeType_TintegerConst, 0);
+
+        //printf("%s \n", astNodeStrings[sensorInterfaceStatement->irRightChild->irRightChild->type]);
+
+        i2cAddress = integerConst->token->integerConst;
+        //i2cAddress = sensorInterfaceStatement->irRightChild->irLeftChild->irRightChild->irRightChild->irLeftChild->irLeftChild->irRightChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->irLeftChild->token->integerConst;
+        //printf("%lld \n", i2cAddress);
+        
+    }
+    else if (sensorInterfaceType->irLeftChild->type == kNewtonIrNodeType_Tspi)
+    {
+        flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: Currently unsupported sensor interface type (SPI).\n");
+    }
+    else
+    {
+        flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: Unrecognized sensor interface type.\n");
+    }
+
+    return i2cAddress;
+}
+
+
+/* 
+ *  Function generates a list of I2C read and write commands
+ *  with associated register address and write values for
+ *  a given sensor interface statement node. '0' corresponds
+ *  to a read command, '1' corresponds to a write command.
+ */
+void
+generateRWList(State * N, IrNode * sensorInterfaceStatement, char* astNodeStrings[], int *numberOfSensorInterfaceCommands, int64_t registerAddressList[10], int64_t writeValueList[10], char *rwList)
+{
+    int nth;
+    /*
+     *  TODO: Would be better to use a "while" loop here.
+     */
+    for (nth=0; nth<10; nth++)
+    {
+        IrNode * sensorInterfaceCommand = findNthIrNodeOfType(N, sensorInterfaceStatement, kNewtonIrNodeType_PsensorInterfaceCommand, nth);
+        if (sensorInterfaceCommand == NULL)
+        {
+            break;
+        }
+        IrNode * readRegisterCommand = findNthIrNodeOfType(N, sensorInterfaceCommand, kNewtonIrNodeType_PreadRegisterCommand, 0);
+        IrNode * writeRegisterCommand = findNthIrNodeOfType(N, sensorInterfaceCommand, kNewtonIrNodeType_PwriteRegisterCommand, 0);
+        if (readRegisterCommand != NULL)
+        {
+            rwList[nth] = 0;
+            IrNode * integerConst = findNthIrNodeOfType(N, readRegisterCommand, kNewtonIrNodeType_TintegerConst, 0);
+
+            registerAddressList[nth] = integerConst->token->integerConst;
+            writeValueList[nth] = 1;
+            *numberOfSensorInterfaceCommands = *numberOfSensorInterfaceCommands + 1;
+        }
+        else if (writeRegisterCommand != NULL)
+        {
+            rwList[nth] = 1;
+
+            IrNode * value = findNthIrNodeOfType(N, writeRegisterCommand, kNewtonIrNodeType_TintegerConst, 0);
+            IrNode * registerAddr = findNthIrNodeOfType(N, writeRegisterCommand, kNewtonIrNodeType_TintegerConst, 1);
+            registerAddressList[nth] = registerAddr->token->integerConst;
+            writeValueList[nth] = value->token->integerConst;
+            *numberOfSensorInterfaceCommands = *numberOfSensorInterfaceCommands + 1;
+            
+        }
+        else
+        {
+            flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: No I2C read or write command found.\n");
+        }
+        
+    }
+}
+
+
+/*
+ *  Checks if the interface description for the sensor associated to a Signal
+ *  contains only "read" instructions. If the answer is yes, returns true.
+ */
+bool
+checkIfReadsOnlyForSignal(State * N, Signal * signal, char* astNodeStrings[])
+{
+    bool readsOnly = true;
+    
     int numberOfSensorInterfaceCommands = 0;
     int64_t registerAddressList[10];
     int64_t writeValueList[10];
@@ -747,54 +490,122 @@ createWriteI2CInstructionsForSignal(State * N, Signal * signal, char* astNodeStr
     
     IrNode * sensorDef = findSensorDefinitionByIdentifier(signal->sensorIdentifier, N, N->newtonIrRoot);
     
-    
-    //  Need to change to take into account axis.
     char * sensorParameterName = findSensorParameterNameByParameterIdentifierAndAxis(signal->identifier, signal->axis, N, sensorDef);
 
     IrNode * sensorInterfaceStatement = findSensorInterface(sensorParameterName, N, sensorDef);
     
-    
-    int64_t i2cAddress = findI2CAddress(N, sensorInterfaceStatement, astNodeStrings);
-
-    
     char rwList[10];
     generateRWList(N, sensorInterfaceStatement, astNodeStrings, &numberOfSensorInterfaceCommands, registerAddressList, writeValueList, rwList);
-    
 
-    ipsa_create_write_instructions(rwList, i2cAddress, registerAddressList, writeValueList, signal->dimensionIndex, &numberOfSensorInterfaceCommands, N, instructionIndex, signal->physicalGroupNumber);
+    for(int i=0; i<10; i++)
+    {
+        if(rwList[i] == 1)
+        {
+            readsOnly = false;
+            break;
+        }
+    }
 
+
+    return readsOnly;
 }
 
 
-void 
-createReadI2CInstructionsForSignal(State * N, Signal * signal, char* astNodeStrings[], int * instructionIndex)
+/*
+ *  Sorts a list of Signals such that the Signals whose sensor interface description
+ *  contains only "read" instructions are placed first, then all other Signals are added.
+ */
+Signal *
+sortSignalsByI2CReadInstruction(State * N, Signal * signalList, char* astNodeStrings[])
 {
-    int numberOfSensorInterfaceCommands = 0;
-    int64_t registerAddressList[10];
-    int64_t writeValueList[10];
+    Signal * sortedSignals = NULL;
+    Signal * nextSignal = NULL;
 
-    
-    IrNode * sensorDef = findSensorDefinitionByIdentifier(signal->sensorIdentifier, N, N->newtonIrRoot);
-    
-    
-    //  Need to change to take into account axis.
-    char * sensorParameterName = findSensorParameterNameByParameterIdentifierAndAxis(signal->identifier, signal->axis, N, sensorDef);
+    /*
+     *  Generate the RWList for the each Signal, check if it consists of only reads, if yes, add to the list, if no, skip it.
+     */
+    while(signalList->relatedSignalListPrev != NULL)
+    {
+        signalList = signalList->relatedSignalListPrev;
+    }
 
-    IrNode * sensorInterfaceStatement = findSensorInterface(sensorParameterName, N, sensorDef);
-    
-    
-    int64_t i2cAddress = findI2CAddress(N, sensorInterfaceStatement, astNodeStrings);
+    int count = 0;
+    while(signalList != NULL)
+    {
+        bool readsOnly = checkIfReadsOnlyForSignal(N, signalList, astNodeStrings);
+        if(readsOnly)
+        {
+            if(count == 0)
+            {
+                sortedSignals = (Signal *) calloc(1, sizeof(Signal));
+                shallowCopySignal(N, signalList, sortedSignals);
+                count++;
+            } else {
+                nextSignal = (Signal *) calloc(1, sizeof(Signal));
+                shallowCopySignal(N, signalList, nextSignal);
+                nextSignal->relatedSignalListPrev = sortedSignals;
+                sortedSignals->relatedSignalListNext = nextSignal;
+                sortedSignals = nextSignal;
+            }
+        }
 
+        if(signalList->relatedSignalListNext == NULL)
+        {
+            break;
+        }
+        signalList = signalList->relatedSignalListNext;
+    }
+
+
+    while(signalList->relatedSignalListPrev != NULL)
+    {
+        signalList = signalList->relatedSignalListPrev;
+    }
+
+
+    while(signalList != NULL)
+    {
+        if(count == 0)
+        {
+            sortedSignals = (Signal *) calloc(1, sizeof(Signal));
+            shallowCopySignal(N, signalList, sortedSignals);
+            count++;
+        } else {
+            nextSignal = (Signal *) calloc(1, sizeof(Signal));
+            shallowCopySignal(N, signalList, nextSignal);
+            sortedSignals->relatedSignalListNext = nextSignal;
+            nextSignal->relatedSignalListPrev = sortedSignals;
+            sortedSignals = nextSignal;
+        }
+
+        if(signalList->relatedSignalListNext == NULL)
+        {
+            break;
+        }
+        signalList = signalList->relatedSignalListNext;
+    }
     
-    char rwList[10];
-    generateRWList(N, sensorInterfaceStatement, astNodeStrings, &numberOfSensorInterfaceCommands, registerAddressList, writeValueList, rwList);
+    while(sortedSignals->relatedSignalListPrev != NULL)
+    {
+        sortedSignals = sortedSignals->relatedSignalListPrev;
+    }
     
 
-    ipsa_create_read_instructions(rwList, i2cAddress, registerAddressList, writeValueList, signal->dimensionIndex, &numberOfSensorInterfaceCommands, N, instructionIndex, signal->physicalGroupNumber);
+    Signal * fullySortedSignals = removeDuplicates(N, sortedSignals);
 
+
+    return fullySortedSignals;
 }
 
 
+/* 
+ *  Function generates a list of I2C read and write commands
+ *  with associated register address and write values for
+ *  a given sensor interface statement node. '0' corresponds
+ *  to a read command, '1' corresponds to a write command.
+ *  This creates two parallel lists for two input lists of Signals
+ *  of the information needed to construct Ipsa instructions.
+ */
 void
 generateRWListsForSignalLists(State * N, Signal * signalList1, Signal * signalList2, char* astNodeStrings[], int * instructionIndex, int64_t i2cAddressList1[100], int64_t registerAddressList1[100], int64_t writeValueList1[100], char *rwList1, int64_t i2cAddressList2[100], int64_t registerAddressList2[100], int64_t writeValueList2[100], char *rwList2, int *numberOfSensorInterfaceCommands1, int *numberOfSensorInterfaceCommands2, int *numberOfWriteCommands1, int *numberOfWriteCommands2, int physicalGroupNumberList1[100], int physicalGroupNumberList2[100], int64_t dimIndexList1[100], int64_t dimIndexList2[100])
 {
@@ -925,19 +736,234 @@ generateRWListsForSignalLists(State * N, Signal * signalList1, Signal * signalLi
 }
 
 
+/*
+ *  Function to create an Ipsa I2C read instruction
+ *  and write it to the "instruction_list.v" file.
+ */
 void
-createFinalInstructions(State * N, char* astNodeStrings[], int jumpToInstruction, int * instructionIndex)
-{
-    int64_t jumpToInstructionB = convertDecimalToBinary(jumpToInstruction);
-    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%0120lld%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000110_", jumpToInstructionB, ";");
-    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s \n", "end");
+createReadInstruction(int * instructionIndex, int64_t i2cAddr, int64_t regAddr, int64_t dimIndex, State * N, int physicalGroupNumber) {
+    
+    int64_t i2cAddrB = convertDecimalToBinary(i2cAddr);
+    int64_t regAddrB = convertDecimalToBinary(regAddr);
+    int64_t dimIndexB = convertDecimalToBinary(dimIndex);
+    if(physicalGroupNumber == 1)
+    {
+        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%08lld%s%08lld%s%05lld%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000101_", i2cAddrB, "_" , regAddrB, "_00000001_", dimIndexB, "_00000000_00000000_00000000_00000_000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_001;");
+    }
+    else if(physicalGroupNumber == 2)
+    {
+        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%08lld%s%08lld%s%05lld%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000101_00000000_00000000_00000000_00000_", i2cAddrB, "_" , regAddrB, "_00000001_", dimIndexB, "_000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_010;");
+    }
 }
 
-bool
-checkIfReadsOnlyForSignal(State * N, Signal * signal, char* astNodeStrings[])
-{
-    bool readsOnly = true;
+
+/*
+ *  Function to create an Ipsa I2C write instruction
+ *  and write it to the "instruction_list.v" file.
+ */
+void
+createWriteInstruction(int * instructionIndex, int64_t i2cAddr, int64_t regAddr, int64_t immediate, State * N, int physicalGroupNumber) {
     
+
+    int64_t i2cAddrB = convertDecimalToBinary(i2cAddr);
+    int64_t regAddrB = convertDecimalToBinary(regAddr);
+    int64_t immediateB = convertDecimalToBinary(immediate);
+    
+    if(physicalGroupNumber == 1)
+    {
+        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%08lld%s%08lld%s%08lld%s%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000100_", i2cAddrB, "_" , regAddrB, "_", immediateB, "_", "00000_00000000_00000000_00000000_00000_000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_001;");
+    }
+    else if(physicalGroupNumber == 2)
+    {
+        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%08lld%s%08lld%s%08lld%s%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000100_00000000_00000000_00000000_00000_", i2cAddrB, "_" , regAddrB, "_", immediateB, "_", "00000_000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_010;");
+    }
+}
+
+/*
+ *  Prepares and makes calls to createReadInstruction() to
+ *  create a list of I2C read instructions when only one Ipsa
+ *  I2C interface is in use.
+ */
+void
+prepareReadInstructions(char *rwList, int64_t i2cAddr, int64_t regAddrList[10], int64_t immediateList[10], int64_t dimIndex, int *numberOfSensorInterfaceCommands, State * N, int * instructionIndex, int physicalGroupNumber){
+
+    int i;
+
+    for (i=0; i<*numberOfSensorInterfaceCommands; i++) {
+
+        if (rwList[i] == 0){
+            int64_t regAddr; 
+            regAddr = regAddrList[i];
+            createReadInstruction(instructionIndex, i2cAddr, regAddr, dimIndex, N, physicalGroupNumber);
+            *instructionIndex = *instructionIndex + 1;
+        }
+
+    }
+}
+
+
+/*
+ *  Prepares and makes calls to createWriteInstruction() to 
+ *  create a list of I2C write instructions when only one Ipsa
+ *  I2C interface is in use.
+ */
+void
+prepareWriteInstructions(char *rwList, int64_t i2cAddr, int64_t regAddrList[10], int64_t immediateList[10], int64_t dimIndex, int *numberOfSensorInterfaceCommands, State * N, int * instructionIndex, int physicalGroupNumber){
+
+    int i;
+
+
+    for (i=0; i<*numberOfSensorInterfaceCommands; i++) {
+
+        if (rwList[i] == 1){
+            int64_t regAddr; 
+            regAddr = regAddrList[i];
+            int64_t immediate;
+            immediate = immediateList[i];
+            createWriteInstruction(instructionIndex, i2cAddr, regAddr, immediate, N, physicalGroupNumber);
+            *instructionIndex = *instructionIndex + 1;
+        }
+
+    }
+}
+
+
+/*
+ *  Function to create parallel Ipsa I2C read instructions
+ *  when both I2C interfaces are used with read instruction
+ *  simultaneously.
+ */
+void
+createParallelReadInstruction(int * instructionIndex, int64_t i2cAddr1, int64_t regAddr1, int64_t dimIndex1, int physicalGroupNumber1, int64_t i2cAddr2, int64_t regAddr2, int64_t dimIndex2, int physicalGroupNumber2, State * N) {
+    
+    int64_t i2cAddrB1 = convertDecimalToBinary(i2cAddr1);
+    int64_t regAddrB1 = convertDecimalToBinary(regAddr1);
+    int64_t dimIndexB1 = convertDecimalToBinary(dimIndex1);
+    int64_t i2cAddrB2 = convertDecimalToBinary(i2cAddr2);
+    int64_t regAddrB2 = convertDecimalToBinary(regAddr2);
+    int64_t dimIndexB2 = convertDecimalToBinary(dimIndex2);
+
+    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%08lld%s%08lld%s%05lld%s%08lld%s%08lld%s%05lld%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000101_", i2cAddrB1, "_" , regAddrB1, "_00000001_", dimIndexB1, "_", i2cAddrB2, "_" , regAddrB2, "_00000001_", dimIndexB2, "_000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_011;");
+
+}
+
+
+/*
+ *  Function to create parallel Ipsa I2C write instructions
+ *  when both I2C interfaces are used with a write instruction
+ *  simultaneously.
+ */
+void
+createParallelWriteInstruction(int * instructionIndex, int64_t i2cAddr1, int64_t regAddr1, int64_t immediate1, int physicalGroupNumber1, int64_t i2cAddr2, int64_t regAddr2, int64_t immediate2, int physicalGroupNumber2, State * N) {
+    
+
+    int64_t i2cAddrB1 = convertDecimalToBinary(i2cAddr1);
+    int64_t regAddrB1 = convertDecimalToBinary(regAddr1);
+    int64_t immediateB1 = convertDecimalToBinary(immediate1);
+    int64_t i2cAddrB2 = convertDecimalToBinary(i2cAddr2);
+    int64_t regAddrB2 = convertDecimalToBinary(regAddr2);
+    int64_t immediateB2 = convertDecimalToBinary(immediate2);
+
+    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%08lld%s%08lld%s%08lld%s%08lld%s%08lld%s%08lld%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000100_", i2cAddrB1, "_" , regAddrB1, "_", immediateB1, "_00000_", i2cAddrB2, "_" , regAddrB2, "_", immediateB2, "_00000_000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_011;");
+}
+
+
+/*
+ *  Function to create "config" instructions for Ipsa.
+ *  At the moment, Ipsa's memory is split into equal sized chunks
+ *  for each Signal/sensor measurement. In the future, this division
+ *  of memory could be done more dynamically by taking into account
+ *  how much memory is needed by a Signal relative to other Signals.
+ *  The function returns the instruction index that the jump instruction
+ *  at the end of the Ipsa instruction list should jump to. (Used)
+ */
+int
+createSetupInstructions(State * N, int numberOfSignals, int *instructionIndex)
+{
+    int jumpToInstruction = 0;
+
+    time_t t = time(NULL);
+    struct tm *tm = localtime(&t);
+    char s[64];
+    assert(strftime(s, sizeof(s), "%c", tm));
+
+    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s %s %s \n", "/* This instruction list was generated by the Ipsa backend of the Newton compiler on", s, "*/");
+    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s \n", "initial begin");
+    /*
+     *  Initial Barrier Instruction.
+     */
+    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%i%s \n", "instr_mem_reg[", *instructionIndex,"] = 128'b00000010_00000000000000000000000000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000010_00000000_000;");
+    *instructionIndex = *instructionIndex + 1;
+    jumpToInstruction++;
+
+    /*
+     *  TODO: Look into more flexible memory allocation for Ipsa.
+     */
+
+    int64_t totalMemorySize = 32767;
+    int64_t memoryChunkSize = totalMemorySize / numberOfSignals;
+
+    int64_t memoryStart = 0;
+    int64_t memoryEnd = memoryStart + memoryChunkSize;
+    char memoryStartB[16];
+    char memoryEndB[16];
+
+    for(int dimIndex=1; dimIndex<=numberOfSignals; dimIndex++)
+    {
+        convert(memoryStart, memoryStartB);
+        convert(memoryEnd, memoryEndB);
+        Signal * signal = findKthSignal(N, dimIndex - 1);
+        signal->dimensionIndex = dimIndex;
+        int64_t dimIndexB = convertDecimalToBinary(dimIndex);
+        flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%i%s%s%s%05llu%s%s%s \n", "instr_mem_reg[", *instructionIndex,"] = 128'b00000001_0000_", memoryStartB,"_00001_", dimIndexB,"_", memoryEndB,"_0_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_00000000_000;");
+        *instructionIndex = *instructionIndex + 1;
+        jumpToInstruction++;
+        memoryStart = memoryEnd + 1;
+        memoryEnd = memoryStart + memoryChunkSize;
+    }
+
+    return jumpToInstruction;
+    
+}
+
+
+/*
+ *  Function creates Ipsa I2C write instructions for
+ *  a given Signal. Only used in case where I2C write
+ *  instructions are not given in parallel.
+ */
+void 
+createWriteI2CInstructionsForSignal(State * N, Signal * signal, char* astNodeStrings[], int * instructionIndex)
+{
+    int numberOfSensorInterfaceCommands = 0;
+    int64_t registerAddressList[10];
+    int64_t writeValueList[10];
+
+    
+    IrNode * sensorDef = findSensorDefinitionByIdentifier(signal->sensorIdentifier, N, N->newtonIrRoot);
+    
+    char * sensorParameterName = findSensorParameterNameByParameterIdentifierAndAxis(signal->identifier, signal->axis, N, sensorDef);
+
+    IrNode * sensorInterfaceStatement = findSensorInterface(sensorParameterName, N, sensorDef);
+    
+    int64_t i2cAddress = findI2CAddress(N, sensorInterfaceStatement, astNodeStrings);
+
+    char rwList[10];
+    generateRWList(N, sensorInterfaceStatement, astNodeStrings, &numberOfSensorInterfaceCommands, registerAddressList, writeValueList, rwList);
+    
+    prepareWriteInstructions(rwList, i2cAddress, registerAddressList, writeValueList, signal->dimensionIndex, &numberOfSensorInterfaceCommands, N, instructionIndex, signal->physicalGroupNumber);
+
+}
+
+
+/*
+ *  Function creates Ipsa I2C read instructions for
+ *  a given Signal. Only used in case where I2C write
+ *  instructions are not given in parallel.
+ */
+void 
+createReadI2CInstructionsForSignal(State * N, Signal * signal, char* astNodeStrings[], int * instructionIndex)
+{
     int numberOfSensorInterfaceCommands = 0;
     int64_t registerAddressList[10];
     int64_t writeValueList[10];
@@ -952,107 +978,23 @@ checkIfReadsOnlyForSignal(State * N, Signal * signal, char* astNodeStrings[])
     IrNode * sensorInterfaceStatement = findSensorInterface(sensorParameterName, N, sensorDef);
     
     
-    //int64_t i2cAddress = findI2CAddress(N, sensorInterfaceStatement, astNodeStrings);
+    int64_t i2cAddress = findI2CAddress(N, sensorInterfaceStatement, astNodeStrings);
 
     
     char rwList[10];
     generateRWList(N, sensorInterfaceStatement, astNodeStrings, &numberOfSensorInterfaceCommands, registerAddressList, writeValueList, rwList);
+    
 
-    for(int i=0; i<10; i++)
-    {
-        if(rwList[i] == 1)
-        {
-            readsOnly = false;
-            break;
-        }
-    }
+    prepareReadInstructions(rwList, i2cAddress, registerAddressList, writeValueList, signal->dimensionIndex, &numberOfSensorInterfaceCommands, N, instructionIndex, signal->physicalGroupNumber);
 
-
-    return readsOnly;
 }
 
 
-Signal *
-sortSignalsByI2CReadInstruction(State * N, Signal * signalList, char* astNodeStrings[])
-{
-    Signal * sortedSignals = NULL;
-    Signal * nextSignal = NULL;
-
-    //  Generate the RWList for the each Signal, check if it consists of only reads, if yes, add to the list, if no, skip it.
-    while(signalList->relatedSignalListPrev != NULL)
-    {
-        signalList = signalList->relatedSignalListPrev;
-    }
-
-    int count = 0;
-    while(signalList != NULL)
-    {
-        bool readsOnly = checkIfReadsOnlyForSignal(N, signalList, astNodeStrings);
-        if(readsOnly)
-        {
-            if(count == 0)
-            {
-                sortedSignals = (Signal *) calloc(1, sizeof(Signal));
-                shallowCopySignal(N, signalList, sortedSignals);
-                count++;
-            } else {
-                nextSignal = (Signal *) calloc(1, sizeof(Signal));
-                shallowCopySignal(N, signalList, nextSignal);
-                nextSignal->relatedSignalListPrev = sortedSignals;
-                sortedSignals->relatedSignalListNext = nextSignal;
-                sortedSignals = nextSignal;
-            }
-        }
-
-        if(signalList->relatedSignalListNext == NULL)
-        {
-            break;
-        }
-        signalList = signalList->relatedSignalListNext;
-    }
-
-
-    while(signalList->relatedSignalListPrev != NULL)
-    {
-        signalList = signalList->relatedSignalListPrev;
-    }
-
-
-    while(signalList != NULL)
-    {
-        if(count == 0)
-        {
-            sortedSignals = (Signal *) calloc(1, sizeof(Signal));
-            shallowCopySignal(N, signalList, sortedSignals);
-            count++;
-        } else {
-            nextSignal = (Signal *) calloc(1, sizeof(Signal));
-            shallowCopySignal(N, signalList, nextSignal);
-            sortedSignals->relatedSignalListNext = nextSignal;
-            nextSignal->relatedSignalListPrev = sortedSignals;
-            sortedSignals = nextSignal;
-        }
-
-        if(signalList->relatedSignalListNext == NULL)
-        {
-            break;
-        }
-        signalList = signalList->relatedSignalListNext;
-    }
-    
-    while(sortedSignals->relatedSignalListPrev != NULL)
-    {
-        sortedSignals = sortedSignals->relatedSignalListPrev;
-    }
-    
-
-    Signal * fullySortedSignals = removeDuplicates(N, sortedSignals);
-
-
-    return fullySortedSignals;
-}
-
-
+/*
+ *  Function takes a Signal as input. For all Signals on the relatedSignalList
+ *  of the input Signal, Ipsa instructions are created to gather a sensor reading
+ *  for each of these Signals.
+ */
 void
 createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, char* astNodeStrings[])
 {
@@ -1064,6 +1006,10 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
     int count1 = 0;
     int count2 = 0;
 
+    /*
+     *  The Signals in the related Signal list are placed in physicalGroup1
+     *  or physicalGroup2 depending on which Ipsa I2C bus they are on.
+     */
     while(relatedSignalList != NULL)
     {
         if(relatedSignalList->physicalGroupNumber == 1)
@@ -1130,7 +1076,10 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
 
 
     
-    
+    /*
+     *  The below loop implements the Scheduling Algorithm described in
+     *  the "Ipsa Compiler" report. Please see Issue X for more details.
+     */
     for(int k=0; k<4; k++)
     {
         if(physicalGroup1 != NULL && physicalGroup2 == NULL)
@@ -1151,8 +1100,6 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
             {
                 randomGroup1 = randomGroup1->relatedSignalListPrev;
             }
-
-            //  TODO: Create new ordering of Signals where Signals with only "read" instructions are placed first.
         
             Signal * readGroup1 = sortSignalsByI2CReadInstruction(N, randomGroup1, astNodeStrings);
 
@@ -1184,6 +1131,9 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
             binaryDelay[49] = '\0';
             flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%s%s%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000010_", "00000000000000000000000000000000000000000000000000000000000000000000000_", binaryDelay, ";");
             *instructionIndex = *instructionIndex + 1;
+
+            freeAllSignalsInList(N, randomGroup1);
+            freeAllSignalsInList(N, readGroup1);
         
         }
         else if(physicalGroup1 == NULL && physicalGroup2 != NULL)
@@ -1236,6 +1186,9 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
             flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%s%s%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000010_", "00000000000000000000000000000000000000000000000000000000000000000000000_", binaryDelay, ";");
             *instructionIndex = *instructionIndex + 1;
 
+            freeAllSignalsInList(N, randomGroup2);
+            freeAllSignalsInList(N, readGroup2);
+
         }
         else if(physicalGroup1 != NULL && physicalGroup2 != NULL)
         {
@@ -1243,6 +1196,10 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
             Signal * randomGroup1 = randomizeSignalList(N, physicalGroup1);
             Signal * randomGroup2 = randomizeSignalList(N, physicalGroup2);
 
+            /*
+             *  TODO: The below is not very elegant nor very easily generalizable in my opinion,
+             *  it would be nice to find a neater way of doing this.
+             */
             int numberOfSensorInterfaceCommands1 = 0;
             int numberOfSensorInterfaceCommands2 = 0;
             int numberOfWriteCommands1 = 0;
@@ -1263,24 +1220,20 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
 
             generateRWListsForSignalLists(N, randomGroup1, randomGroup2, astNodeStrings, instructionIndex, i2cAddressList1, registerAddressList1, writeValueList1, rwList1, i2cAddressList2, registerAddressList2, writeValueList2, rwList2, &numberOfSensorInterfaceCommands1, &numberOfSensorInterfaceCommands2, &numberOfWriteCommands1, &numberOfWriteCommands2, physicalGroupNumberList1, physicalGroupNumberList2, dimIndexList1, dimIndexList2);
 
-            int secondaryStartPosition = 0;
             int j = 0;
             int shorterLength = 0;
             int difference = 0;
             if(numberOfWriteCommands1 > numberOfWriteCommands2)
             {
-                secondaryStartPosition = ((numberOfWriteCommands1 + 1) / 2) - (numberOfWriteCommands2 / 2) - 1;
                 j = numberOfWriteCommands1;
                 shorterLength = numberOfWriteCommands2;
                 difference = numberOfWriteCommands1 - numberOfWriteCommands2;
 
             } else if(numberOfWriteCommands1 < numberOfWriteCommands2) {
-                secondaryStartPosition = ((numberOfWriteCommands2 + 1) / 2) - (numberOfWriteCommands1 / 2) - 1;
                 j = numberOfWriteCommands2;
                 shorterLength = numberOfWriteCommands1;
                 difference = numberOfWriteCommands2 - numberOfWriteCommands1;
             } else {
-                secondaryStartPosition = 0;
                 shorterLength = numberOfWriteCommands1;
                 j = numberOfWriteCommands1;
                 difference = 0;
@@ -1300,18 +1253,18 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
             {
                 if(rwList1[i] == 1 && rwList2[i] == 1)
                 {
-                    create_parallel_write_instruction(instructionIndex, i2cAddressList1[i], registerAddressList1[i], writeValueList1[i], physicalGroupNumberList1[i], i2cAddressList2[i], registerAddressList2[i], writeValueList2[i], physicalGroupNumberList2[i], N);
+                    createParallelWriteInstruction(instructionIndex, i2cAddressList1[i], registerAddressList1[i], writeValueList1[i], physicalGroupNumberList1[i], i2cAddressList2[i], registerAddressList2[i], writeValueList2[i], physicalGroupNumberList2[i], N);
                     *instructionIndex = *instructionIndex + 1;
 
                 }
                 else if(rwList1[i] == 1 && rwList2[i] != 1)
                 {
-                    create_write_instruction(instructionIndex, i2cAddressList1[i], registerAddressList1[i], writeValueList1[i], N, physicalGroupNumberList1[i]);
+                    createWriteInstruction(instructionIndex, i2cAddressList1[i], registerAddressList1[i], writeValueList1[i], N, physicalGroupNumberList1[i]);
                     *instructionIndex = *instructionIndex + 1;
                 }
                 else if(rwList2[i] == 1 && rwList1[i] != 1)
                 {
-                    create_write_instruction(instructionIndex, i2cAddressList2[i], registerAddressList2[i], writeValueList2[i], N, physicalGroupNumberList2[i]);
+                    createWriteInstruction(instructionIndex, i2cAddressList2[i], registerAddressList2[i], writeValueList2[i], N, physicalGroupNumberList2[i]);
                     *instructionIndex = *instructionIndex + 1;
                 }
             
@@ -1350,7 +1303,7 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
                     {
                         if(rwList1[i+difference] == 0 && rwList2[i] == 0)
                         {
-                            create_parallel_read_instruction(instructionIndex, i2cAddressList1[i+difference], registerAddressList1[i+difference], dimIndexList1[i+difference], physicalGroupNumberList1[i+difference], i2cAddressList2[i], registerAddressList2[i], dimIndexList2[i], physicalGroupNumberList2[i], N);
+                            createParallelReadInstruction(instructionIndex, i2cAddressList1[i+difference], registerAddressList1[i+difference], dimIndexList1[i+difference], physicalGroupNumberList1[i+difference], i2cAddressList2[i], registerAddressList2[i], dimIndexList2[i], physicalGroupNumberList2[i], N);
                             *instructionIndex = *instructionIndex + 1;
                         }
                     
@@ -1359,7 +1312,7 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
                     {
                         if(rwList1[i+difference])
                         {
-                            create_read_instruction(instructionIndex, i2cAddressList1[i+difference], registerAddressList1[i+difference], dimIndexList1[i+difference], N, physicalGroupNumberList1[i+difference]);
+                            createReadInstruction(instructionIndex, i2cAddressList1[i+difference], registerAddressList1[i+difference], dimIndexList1[i+difference], N, physicalGroupNumberList1[i+difference]);
                             *instructionIndex = *instructionIndex + 1;
                         }
                     }
@@ -1370,7 +1323,7 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
                     {
                         if(rwList1[i] == 0 && rwList2[i+difference] == 0)
                         {
-                            create_parallel_read_instruction(instructionIndex, i2cAddressList1[i], registerAddressList1[i], dimIndexList1[i], physicalGroupNumberList1[i], i2cAddressList2[i+difference], registerAddressList2[i+difference], dimIndexList2[i+difference], physicalGroupNumberList2[i+difference], N);
+                            createParallelReadInstruction(instructionIndex, i2cAddressList1[i], registerAddressList1[i], dimIndexList1[i], physicalGroupNumberList1[i], i2cAddressList2[i+difference], registerAddressList2[i+difference], dimIndexList2[i+difference], physicalGroupNumberList2[i+difference], N);
                             *instructionIndex = *instructionIndex + 1;
                         }
                     
@@ -1379,7 +1332,7 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
                     {
                         if(rwList2[i+difference] == 0)
                         {
-                            create_read_instruction(instructionIndex, i2cAddressList2[i+difference], registerAddressList2[i+difference], dimIndexList2[i+difference], N, physicalGroupNumberList2[i+difference]);
+                            createReadInstruction(instructionIndex, i2cAddressList2[i+difference], registerAddressList2[i+difference], dimIndexList2[i+difference], N, physicalGroupNumberList2[i+difference]);
                             *instructionIndex = *instructionIndex + 1;
                         }
                     }
@@ -1392,14 +1345,14 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
                         {
                             if(rwList1[i+difference] == 0 && rwList2[i] == 0)
                             {
-                                create_parallel_read_instruction(instructionIndex, i2cAddressList1[i+difference], registerAddressList1[i+difference], dimIndexList1[i+difference], physicalGroupNumberList1[i+difference], i2cAddressList2[i], registerAddressList2[i], dimIndexList2[i], physicalGroupNumberList2[i], N);
+                                createParallelReadInstruction(instructionIndex, i2cAddressList1[i+difference], registerAddressList1[i+difference], dimIndexList1[i+difference], physicalGroupNumberList1[i+difference], i2cAddressList2[i], registerAddressList2[i], dimIndexList2[i], physicalGroupNumberList2[i], N);
                                 *instructionIndex = *instructionIndex + 1;
                             }
                     
                         } else {
                             if(rwList2[i] == 0)
                             {
-                                create_read_instruction(instructionIndex, i2cAddressList2[i], registerAddressList2[i], dimIndexList2[i], N, physicalGroupNumberList2[i]);
+                                createReadInstruction(instructionIndex, i2cAddressList2[i], registerAddressList2[i], dimIndexList2[i], N, physicalGroupNumberList2[i]);
                                 *instructionIndex = *instructionIndex + 1;
                             }
                         
@@ -1411,14 +1364,14 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
                         {
                             if(rwList1[i] == 0 && rwList2[i+difference] == 0)
                             {
-                                create_parallel_read_instruction(instructionIndex, i2cAddressList1[i], registerAddressList1[i], dimIndexList1[i], physicalGroupNumberList1[i], i2cAddressList2[i+difference], registerAddressList2[i+difference], dimIndexList2[i+difference], physicalGroupNumberList2[i+difference], N);
+                                createParallelReadInstruction(instructionIndex, i2cAddressList1[i], registerAddressList1[i], dimIndexList1[i], physicalGroupNumberList1[i], i2cAddressList2[i+difference], registerAddressList2[i+difference], dimIndexList2[i+difference], physicalGroupNumberList2[i+difference], N);
                                 *instructionIndex = *instructionIndex + 1;
                             }
                     
                         } else {
                             if(rwList1[i] == 0)
                             {
-                                create_read_instruction(instructionIndex, i2cAddressList1[i], registerAddressList1[i], dimIndexList1[i], N, physicalGroupNumberList1[i]);
+                                createReadInstruction(instructionIndex, i2cAddressList1[i], registerAddressList1[i], dimIndexList1[i], N, physicalGroupNumberList1[i]);
                                 *instructionIndex = *instructionIndex + 1;
                             }
                         
@@ -1426,7 +1379,7 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
                     } else {
                         if(rwList1[i] == 0 && rwList2[i] == 0)
                         {
-                            create_parallel_read_instruction(instructionIndex, i2cAddressList1[i], registerAddressList1[i], dimIndexList1[i], physicalGroupNumberList1[i], i2cAddressList2[i], registerAddressList2[i], dimIndexList2[i], physicalGroupNumberList2[i], N);
+                            createParallelReadInstruction(instructionIndex, i2cAddressList1[i], registerAddressList1[i], dimIndexList1[i], physicalGroupNumberList1[i], i2cAddressList2[i], registerAddressList2[i], dimIndexList2[i], physicalGroupNumberList2[i], N);
                             *instructionIndex = *instructionIndex;
                         }
                     
@@ -1441,14 +1394,42 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
             binaryDelay[49] = '\0';
             flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%s%s%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000010_", "00000000000000000000000000000000000000000000000000000000000000000000000_", binaryDelay, ";");
             *instructionIndex = *instructionIndex + 1;
-        
 
+            freeAllSignalsInList(N, randomGroup1);
+            freeAllSignalsInList(N, randomGroup2);
  
         }
     }
+    if(physicalGroup1 != NULL)
+    {
+        freeAllSignalsInList(N, physicalGroup1);
+    }
+    if(physicalGroup2 != NULL)
+    {
+        freeAllSignalsInList(N, physicalGroup2);
+    }
+    
+    
 }
 
 
+/*
+ *  Prints a final "jump" instruction to the instruction list,
+ *  to jump to the instruction index where sensor readings were
+ *  first starting to be taken.
+ */
+void
+createFinalInstructions(State * N, char* astNodeStrings[], int jumpToInstruction, int * instructionIndex)
+{
+    int64_t jumpToInstructionB = convertDecimalToBinary(jumpToInstruction);
+    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s%d%s%0120lld%s \n", "instr_mem_reg[", *instructionIndex, "] = 128'b00000110_", jumpToInstructionB, ";");
+    flexprint(N->Fe, N->Fm, N->Fpipsa, "%s \n", "end");
+}
+
+
+/*
+ *  Ipsa backend function.
+ */
 void
 irPassIpsaBackend(State * N, char* astNodeStrings[])
 {
@@ -1459,7 +1440,15 @@ irPassIpsaBackend(State * N, char* astNodeStrings[])
     Signal * signal = findKthSignal(N, kth);
 
     /*
-     *  TODO: The loop below will most likely not handle duplicate Signals well. (ie Signals which are the same, but exist as duplicates in multiple places on the AST) Look into this.
+     *  TODO: The loop below will most likely not handle duplicate Signals well. 
+     *  (ie Signals which are the same, but exist as duplicates in multiple places on the AST) Look into this.
+     */
+
+    /*
+     *  Loop through the relatedSignalLists of all Signals in the AST.
+     *  createInstructionsForSignal() gets the relatedSignalList of a Signal,
+     *  and creates Ipsa instructions to read sensor measurements for all the
+     *  related Signals.
      */
     while(signal != NULL)
     {
@@ -1468,6 +1457,26 @@ irPassIpsaBackend(State * N, char* astNodeStrings[])
         signal = findKthSignal(N, kth);
     }
     
-    createFinalInstructions(N, astNodeStrings, jumpToInstruction, &instructionIndex); 
-    
+    createFinalInstructions(N, astNodeStrings, jumpToInstruction, &instructionIndex);
+
+
+    /*
+     *  Print Ipsa buffer contents to file. The file path including the name
+     *  of the path must be specified by the user as the argument to the Ipsa
+     *  backend.
+     */
+    FILE *instructionListFile;
+
+    instructionListFile = fopen(N->outputIpsaFilePath,"w");
+
+    if(instructionListFile == NULL)
+    {
+        flexprint(N->Fe, N->Fm, N->Fperr, "ERROR: Unable to open file.\n");
+        exit(1);             
+    }
+
+    fprintf(instructionListFile, "%s", N->Fpipsa->circbuf);
+
+    fclose(instructionListFile);
+
 }
