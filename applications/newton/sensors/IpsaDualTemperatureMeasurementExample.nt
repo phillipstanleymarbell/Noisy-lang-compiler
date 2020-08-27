@@ -12,7 +12,6 @@ BMX055: sensor (
 	}
 }
 
-
 BME680: sensor (
 			bme680Temperature: temperature[2]
 			) =
