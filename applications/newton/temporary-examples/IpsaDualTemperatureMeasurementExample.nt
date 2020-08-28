@@ -1,6 +1,5 @@
 include "NewtonBaseSignals.nt"
 
-mu : constant = 0.000078 (kg / m);
 
 BMX055: sensor (
 			bmx055Temperature: temperature[1]
