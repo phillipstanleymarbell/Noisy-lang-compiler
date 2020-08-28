@@ -134,11 +134,20 @@ annotateSignalsPiGroups(State * N)
 		 */
     	for(int countKernel = 0; countKernel < invariant->numberOfUniqueKernels; countKernel++)
         {
+			if(N->enableKernelSelect && countKernel != N->kernelNumber)
+			{
+				continue;
+			}
 			/*
 			 *	Loop through all dimensionless groups in a kernel.
 			 */
             for(int pi = 0; pi < invariant->kernelColumnCount; pi++)
             {
+				if(N->enablePiSelect && pi != N->piNumber)
+				{
+					continue;
+				}
+
                 char parameterIndexList[invariant->dimensionalMatrixColumnCount];
                 int numberOfParametersWithNonZeroPower = 0;
 

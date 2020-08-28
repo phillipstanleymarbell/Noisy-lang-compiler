@@ -1201,6 +1201,15 @@ typedef struct
 	char *			estimatorMeasurementModel;
 	bool			autodiff;
 
+	/*
+	 *	Variables to keep track of the kernel number and pi number
+	 *	specified by the user for Pi Groups Signal Annotation.
+	 */
+	int				kernelNumber;
+	int				piNumber;
+	bool			enableKernelSelect;
+	bool			enablePiSelect;
+
 	CommonMode		mode;
 	uint64_t		verbosityLevel;
 	uint64_t		dotDetailLevel;
