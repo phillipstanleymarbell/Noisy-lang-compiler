@@ -1206,12 +1206,6 @@ typedef struct
 	bool			autodiff;
 	
 	/*
-	 *	Kernel number to allow the user to choose which kernel should be
-	 *	used to generate relatedSignalLists. Used in the Pi Group Signal Annotation pass.
-	 */
-	int				kernelNumber;
-
-	/*
 	 *	Variables for storing lists of identifiers attached
 	 *	to a physical group number.
 	 */

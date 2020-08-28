@@ -430,13 +430,6 @@ main(int argc, char *argv[])
 				
 			}
 
-			case 490:
-			{
-				
-				N->kernelNumber = atoi(optarg);
-				break;
-			}
-
 			case 491:
 			{
 				N->physicalGroup1 = optarg;
