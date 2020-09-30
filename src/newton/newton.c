@@ -74,6 +74,7 @@
 #include "newton-irPass-smtBackend.h"
 #include "newton-irPass-estimatorSynthesisBackend.h"
 #include "newton-irPass-invariantSignalAnnotation.h"
+#include "newton-irPass-piGroupsSignalAnnotation.h"
 #include "newton-irPass-dimensionalMatrixAnnotation.h"
 #include "newton-irPass-dimensionalMatrixPiGroups.h"
 #include "newton-irPass-dimensionalMatrixPrinter.h"
@@ -177,6 +178,10 @@ processNewtonFile(State *  N, char *  filename)
 	if (N->irPasses & kNewtonIrPassInvariantSignalAnnotation)
 	{
 		irPassInvariantSignalAnnotation(N);
+	}
+	if (N->irPasses & kNewtonIrPassPiGroupsSignalAnnotation)
+	{
+		irPassPiGroupsSignalAnnotation(N);
 	}
 	/*
 	 *	Dot backend.

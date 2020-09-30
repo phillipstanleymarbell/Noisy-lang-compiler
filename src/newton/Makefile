@@ -60,6 +60,7 @@ SOURCES		=\
 		newton-irPass-RTLBackend.c\
 		newton-irPass-estimatorSynthesisBackend.c\
 		newton-irPass-invariantSignalAnnotation.c\
+		newton-irPass-piGroupsSignalAnnotation.c\
 		newton-irPass-dimensionalMatrixAnnotation.c\
 		newton-irPass-dimensionalMatrixPiGroups.c\
 		newton-irPass-dimensionalMatrixPrinter.c\
@@ -104,6 +105,7 @@ OBJS		=\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
+		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPiGroups.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
@@ -139,6 +141,7 @@ CGIOBJS		=\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
+		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPiGroups.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
@@ -173,6 +176,7 @@ LIBNEWTONOBJS =\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
+		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPiGroups.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
@@ -205,6 +209,7 @@ HEADERS		=\
 		newton-irPass-smtBackend.h\
 		newton-irPass-estimatorSynthesisBackend.h\
 		newton-irPass-invariantSignalAnnotation.h\
+		newton-irPass-piGroupsSignalAnnotation.h\
 		newton-irPass-dimensionalMatrixAnnotation.h\
 		newton-irPass-dimensionalMatrixPiGroups.h\
 		newton-irPass-dimensionalMatrixPrinter.h\

@@ -1,26 +1,20 @@
 /*
 	Authored 2020. Oliver Gustafsson.
-
 	All rights reserved.
-
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions
 	are met:
-
 	*	Redistributions of source code must retain the above
 		copyright notice, this list of conditions and the following
 		disclaimer.
-
 	*	Redistributions in binary form must reproduce the above
 		copyright notice, this list of conditions and the following
 		disclaimer in the documentation and/or other materials
 		provided with the distribution.
-
 	*	Neither the name of the author nor the names of its
 		contributors may be used to endorse or promote products
 		derived from this software without specific prior written
 		permission.
-
 	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -35,20 +29,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-void    irPassInvariantSignalAnnotation(State * N);
-
-Signal *	findKthSignalByIdentifier(State * N, char * identifier, int kth);
-Signal *	findSignalByIdentifierAndAxis(State * N, char * identifier, int axis);
-Signal *	findKthSignalByInvariantExpressionIdentifier(State * N, char * identifier, int kth);
-Signal *	findSignalByInvariantExpressionIdentifierAndAxis(State * N, char * identifier, int axis);
-int			getSignalAxis(State * N, Invariant * invariant, char * invariantExpressionIdentifier);
-IrNode *	findSignalBaseNodeByIdentifier(State * N, char * identifier);
-IrNode *	findConstantByIdentifier(State * N, char * identifier);
-void		attachSignalsToParameterNodes(State * N);
-Signal *	copySignal(State * N, Signal * signal);
-Signal *	copySignalList(State * N, Signal * signal);
-bool		checkIfSignalPresentInList(State * N, Signal * signalList, Signal * signal);
-void		freeAllSignalsInList(State * N, Signal * signalList);
-Signal *	removeDuplicates(State * N, Signal * signalList);
-Signal *	findKthSignal(State * N, int kth);
-void		copyRelatedSignalsToAllSignals(State * N);
+void    irPassPiGroupsSignalAnnotation(State * N);

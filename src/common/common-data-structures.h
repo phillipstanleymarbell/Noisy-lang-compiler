@@ -702,6 +702,8 @@ typedef enum
 	kNewtonIrPassDimensionalMatrixKernelPrinterFromBody	= (1 << 8),
 	KNewtonIrPassDimensionalMatrixConstantPi		= (1 << 9),
 	kNewtonIrPassInvariantSignalAnnotation			= (1 << 10),
+
+	kNewtonIrPassPiGroupsSignalAnnotation			= (1 << 11),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -1198,6 +1200,15 @@ typedef struct
 	char *			estimatorProcessModel;
 	char *			estimatorMeasurementModel;
 	bool			autodiff;
+
+	/*
+	 *	Variables to keep track of the kernel number and pi number
+	 *	specified by the user for Pi Groups Signal Annotation.
+	 */
+	int				kernelNumber;
+	int				piNumber;
+	bool			enableKernelSelect;
+	bool			enablePiSelect;
 
 	CommonMode		mode;
 	uint64_t		verbosityLevel;
