@@ -60,11 +60,8 @@ SOURCES		=\
 		newton-irPass-RTLBackend.c\
 		newton-irPass-estimatorSynthesisBackend.c\
 		newton-irPass-invariantSignalAnnotation.c\
-<<<<<<< HEAD
 		newton-irPass-piGroupsSignalAnnotation.c\
-=======
 		newton-irPass-ipsaBackend.c\
->>>>>>> ed6c9db... Created new backend for generating Ipsa bitstream, currently code searches AST to find and store parameters relevant to Ipsa in the Newton description.
 		newton-irPass-dimensionalMatrixAnnotation.c\
 		newton-irPass-dimensionalMatrixPiGroups.c\
 		newton-irPass-dimensionalMatrixPrinter.c\
@@ -109,11 +106,8 @@ OBJS		=\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
-<<<<<<< HEAD
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
-=======
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
->>>>>>> ed6c9db... Created new backend for generating Ipsa bitstream, currently code searches AST to find and store parameters relevant to Ipsa in the Newton description.
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPiGroups.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
@@ -149,12 +143,9 @@ CGIOBJS		=\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
-<<<<<<< HEAD
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
-=======
 		newton-irPass-estimatorSynthesisBackend/$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
->>>>>>> ed6c9db... Created new backend for generating Ipsa bitstream, currently code searches AST to find and store parameters relevant to Ipsa in the Newton description.
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPiGroups.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
@@ -189,11 +180,8 @@ LIBNEWTONOBJS =\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
-<<<<<<< HEAD
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
-=======
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
->>>>>>> ed6c9db... Created new backend for generating Ipsa bitstream, currently code searches AST to find and store parameters relevant to Ipsa in the Newton description.
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPiGroups.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
@@ -226,11 +214,8 @@ HEADERS		=\
 		newton-irPass-smtBackend.h\
 		newton-irPass-estimatorSynthesisBackend.h\
 		newton-irPass-invariantSignalAnnotation.h\
-<<<<<<< HEAD
 		newton-irPass-piGroupsSignalAnnotation.h\
-=======
 		newton-irPass-ipsaBackend.h\
->>>>>>> ed6c9db... Created new backend for generating Ipsa bitstream, currently code searches AST to find and store parameters relevant to Ipsa in the Newton description.
 		newton-irPass-dimensionalMatrixAnnotation.h\
 		newton-irPass-dimensionalMatrixPiGroups.h\
 		newton-irPass-dimensionalMatrixPrinter.h\
@@ -338,7 +323,7 @@ examples: $(EXAMPLES) target
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/PipeWithDynamicViscosity-pigroups.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/PipeWithKinematicViscosity-pigroups.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Projectile-pigroups.nt
-#	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Violin-pigroups.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Violin-pigroups.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/ViolinWithTemperatureDependence-pigroups.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Waves-pigroups.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/temporary-examples/IpsaDualTemperatureMeasurementExample.nt

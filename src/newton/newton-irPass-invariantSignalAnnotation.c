@@ -961,24 +961,24 @@ irPassInvariantSignalAnnotation(State * N)
 	 */
 
 	/*
-	char * identifier = "distance";
-	int axis = 0;
+	char * identifier = "temperature";
+	int axis = 1;
 
 	printf("%s %s %s%i \n", "The related signals are the following for the signal with identifier:", identifier, "and axis: ", axis);
 	
-	Signal * testSignal = findSignalByIdentifierAndAxis(N, identifier, axis);
+	Signal * testSignal2 = findSignalByIdentifierAndAxis(N, identifier, axis);
 	//Signal * testSignal = findKthSignalByIdentifier(N, identifier, 0);
 	//printf("%i \n", testSignal->axis);
 	
 
-	testSignal = testSignal->relatedSignalList;
-	//testSignal = removeDuplicates(N, testSignal);
-	printf("%s %i \n", testSignal->identifier, testSignal->axis);
+	testSignal2 = testSignal2->relatedSignalList;
+	//testSignal2 = removeDuplicates(N, testSignal2);
+	printf("%s %i \n", testSignal2->identifier, testSignal2->axis);
 	
-	while(testSignal->relatedSignalListNext != NULL)
+	while(testSignal2->relatedSignalListNext != NULL)
 	{
-		testSignal = testSignal->relatedSignalListNext;
-		printf("%s %i \n", testSignal->identifier, testSignal->axis);
+		testSignal2 = testSignal2->relatedSignalListNext;
+		printf("%s %i \n", testSignal2->identifier, testSignal2->axis);
 	}
 	*/
 
