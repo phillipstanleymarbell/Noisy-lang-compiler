@@ -980,7 +980,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 		IrNode * hMatrixIrNodes[measureDimension][stateDimension];
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble hMatrix[MEASURE_DIMENSION][STATE_DIMENSION] = \n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\t{ ");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t{\n");
 		int hRow = 0;
 		for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; hRow++, constraintXSeq = constraintXSeq->irRightChild)
 		{
@@ -989,7 +989,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			 *	RHSExpression = constraintlist-> constraint -> right hand side -> bypass comparison -> quantity expression
 			 */
 			IrNode *  RHSExpressionXSeq = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
-			flexprint(N->Fe, N->Fm, N->Fpc, "{ ");
+			flexprint(N->Fe, N->Fm, N->Fpc, "\t\t{ ");
 			for (int hColumn = 0; hColumn < stateDimension; hColumn++)
 			{
 				hMatrixIrNodes[hRow][hColumn] = irPassEstimatorSynthesisIsolateSymbolFactors(N, RHSExpressionXSeq, measureInvariantStateVariableSymbols[hColumn]);
@@ -1302,7 +1302,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	// flexprint(N->Fe, N->Fm, N->Fpc, "int noOfValues = 1 + STATE_DIMENSION + MEASURE_DIMENSION;\n");
 	// flexprint(N->Fe, N->Fm, N->Fpc, "int nread;\n");
 	// flexprint(N->Fe, N->Fm, N->Fpc, "size_t nlen = 0;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tchar *  line;\n");
+	// flexprint(N->Fe, N->Fm, N->Fpc, "\tchar *  line;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tCoreState cs;\n");
@@ -1339,7 +1339,12 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tfilterInit(&cs, initState, initCov);\n");
 
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble dt;\n");
+	// flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble dt;\n");
+	for (int i = 0; i < stateExtraParams; i++)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble %s;\n", stateExtraParamSymbols[i]->identifier);
+	}
+	
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble prevtime = time;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble measure[MEASURE_DIMENSION];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\twhile (scanf(\"%%lf\", &time) > 0)\n");
