@@ -1200,6 +1200,8 @@ typedef struct
 	char *			estimatorProcessModel;
 	char *			estimatorMeasurementModel;
 	bool			autodiff;
+	char*			estimatorOutputVariableType;
+	char*			estimatorOutputVariableFormat;
 
 	/*
 	 *	Variables to keep track of the kernel number and pi number
