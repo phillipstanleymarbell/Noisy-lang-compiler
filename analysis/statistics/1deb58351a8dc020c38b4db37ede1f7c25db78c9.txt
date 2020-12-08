@@ -1,6 +1,6 @@
 
 changeset: 985:1deb58351a8dc020c38b4db37ede1f7c25db78c9
-char kNewtonVersion[] = "0.3-alpha-985 (1deb58351a8dc020c38b4db37ede1f7c25db78c9) (build 12-08-2020-18:08-angelospl@angelospl-Linux-5.4.0-56-generic-x86_64)";
+char kNewtonVersion[] = "0.3-alpha-985 (1deb58351a8dc020c38b4db37ede1f7c25db78c9) (build 12-08-2020-20:19-angelospl@angelospl-Linux-5.4.0-56-generic-x86_64)";
 
 ./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s
 

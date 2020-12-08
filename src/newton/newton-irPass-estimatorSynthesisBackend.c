@@ -492,20 +492,20 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "typedef struct CoreState	CoreState;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "struct CoreState \n{\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tState\n\t */\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble S[STATE_DIMENSION];\n\tmatrix *\tSm;\n\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s S[STATE_DIMENSION];\n\tmatrix *\tSm;\n\n",N->estimatorOutputVariableType);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tState covariance matrix\n\t */\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble P[STATE_DIMENSION][STATE_DIMENSION];\n\tmatrix *\tPm;\n\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s P[STATE_DIMENSION][STATE_DIMENSION];\n\tmatrix *\tPm;\n\n",N->estimatorOutputVariableType);
 	// TODO: Populate covariance matrix?
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tProcess noise matrix\n\t */\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble Q[STATE_DIMENSION][STATE_DIMENSION];\n\tmatrix *\tQm;\n\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s Q[STATE_DIMENSION][STATE_DIMENSION];\n\tmatrix *\tQm;\n\n",N->estimatorOutputVariableType);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tProcess noise matrix\n\t */\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble R[MEASURE_DIMENSION][MEASURE_DIMENSION];\n\tmatrix *\tRm;\n\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s R[MEASURE_DIMENSION][MEASURE_DIMENSION];\n\tmatrix *\tRm;\n\n",N->estimatorOutputVariableType);
 	flexprint(N->Fe, N->Fm, N->Fpc, "};\n\n");
 
 	/*
 	 *	GENERATE INIT FUNCTION
 	 */
-	flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterInit (CoreState * cState, double S0[STATE_DIMENSION], double P0[STATE_DIMENSION][STATE_DIMENSION]) \n{\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterInit (CoreState * cState, %1$s S0[STATE_DIMENSION], %1$s P0[STATE_DIMENSION][STATE_DIMENSION]) \n{\n",N->estimatorOutputVariableType);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (int i = %s; i < STATE_DIMENSION; i++)\n", stateVariableNames[0]);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t{\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tcState->S[i] = S0[i];\n");
@@ -581,7 +581,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterPredict (CoreState *  cState");
 		for (int i = 0; i < stateExtraParams; i++)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, ", double %s", stateExtraParamSymbols[i]->identifier);
+			flexprint(N->Fe, N->Fm, N->Fpc, ", %s %s",N->estimatorOutputVariableType ,stateExtraParamSymbols[i]->identifier);
 		}
 		flexprint(N->Fe, N->Fm, N->Fpc, ")\n{\n");
 		/*	If linear:
@@ -589,7 +589,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		 */
 		IrNode * fMatrixIrNodes[stateDimension][stateDimension];
 		int fRow = 0;
-		flexprint(N->Fe, N->Fm, N->Fpc, "double fMatrix[STATE_DIMENSION][STATE_DIMENSION] = \n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "%s fMatrix[STATE_DIMENSION][STATE_DIMENSION] = \n",N->estimatorOutputVariableType);
 		flexprint(N->Fe, N->Fm, N->Fpc, "{ ");
 		for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; fRow++, constraintXSeq = constraintXSeq->irRightChild)
 		{
@@ -678,7 +678,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		int functionLastArg[stateDimension];
 		for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; counter++, constraintXSeq = constraintXSeq->irRightChild)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "double\nprocess_%s ", stateVariableNames[counter]);
+			flexprint(N->Fe, N->Fm, N->Fpc, "%s\nprocess_%s ", N->estimatorOutputVariableType,stateVariableNames[counter]);
 			flexprint(N->Fe, N->Fm, N->Fpc, "(");
 
 			int lastArg = 0;
@@ -696,7 +696,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			{
 				if (relationMatrix[counter][currArg] == true)
 				{
-					flexprint(N->Fe, N->Fm, N->Fpc, "double %s", parameterVariableSymbols[currArg]->identifier);
+					flexprint(N->Fe, N->Fm, N->Fpc, "%s %s", N->estimatorOutputVariableType, parameterVariableSymbols[currArg]->identifier);
 					if (currArg != lastArg || N->autodiff == true)
 					{
 						flexprint(N->Fe, N->Fm, N->Fpc, ", ");
@@ -706,7 +706,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			if (N->autodiff == true)
 			{
 				IrNode *  RHSExpression = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
-				flexprint(N->Fe, N->Fm, N->Fpc, "double Ji[STATE_DIMENSION])\n{\n");
+				flexprint(N->Fe, N->Fm, N->Fpc, "%s Ji[STATE_DIMENSION])\n{\n",N->estimatorOutputVariableType);
 
 				autoDiffGenBody(N, RHSExpression, stateVariableNames, stateVariableSymbols, stateDimension);
 
@@ -723,17 +723,17 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 				{
 					if (relationMatrix[counter][currDeriv] == true)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "double\nd_process_%s_d%s ", stateVariableNames[counter], stateVariableSymbols[currDeriv]->identifier);
+						flexprint(N->Fe, N->Fm, N->Fpc, "%s\nd_process_%s_d%s ", N->estimatorOutputVariableType, stateVariableNames[counter], stateVariableSymbols[currDeriv]->identifier);
 						flexprint(N->Fe, N->Fm, N->Fpc, "(");
 						for (currArg = 0; currArg < processParameterLength; currArg++)
 						{
 							if (relationMatrix[counter][currArg] == true)
 							{
-								flexprint(N->Fe, N->Fm, N->Fpc, "double %s, ", parameterVariableSymbols[currArg]->identifier);
+								flexprint(N->Fe, N->Fm, N->Fpc, "%s %s, ", N->estimatorOutputVariableType, parameterVariableSymbols[currArg]->identifier);
 							}
 						}
-						flexprint(N->Fe, N->Fm, N->Fpc, "double h)\n{\n");
-						flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble calculatedValue = 0.0;\n");
+						flexprint(N->Fe, N->Fm, N->Fpc, "%s h)\n{\n", N->estimatorOutputVariableType);
+						flexprint(N->Fe, N->Fm, N->Fpc, "\t%s calculatedValue = 0.0;\n",N->estimatorOutputVariableType);
 
 						flexprint(N->Fe, N->Fm, N->Fpc, "\tcalculatedValue = (( process_%s(", stateVariableNames[counter]);
 
@@ -783,16 +783,16 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterPredict (CoreState *  cState");
 		for (int i = 0; i < stateExtraParams; i++)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, ", double %s", stateExtraParamSymbols[i]->identifier);
+			flexprint(N->Fe, N->Fm, N->Fpc, ", %s %s", N->estimatorOutputVariableType, stateExtraParamSymbols[i]->identifier);
 		}
 		flexprint(N->Fe, N->Fm, N->Fpc, ")\n{\n");
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble newState[STATE_DIMENSION];\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble fMatrix[STATE_DIMENSION][STATE_DIMENSION] = {0};\n\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t%s newState[STATE_DIMENSION];\n", N->estimatorOutputVariableType);
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t%s fMatrix[STATE_DIMENSION][STATE_DIMENSION] = {0};\n\n", N->estimatorOutputVariableType);
 
 		for (int i = 0; i < stateDimension; i++)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble %s = cState->S[%s];\n", stateVariableSymbols[i]->identifier, stateVariableNames[i]);
+			flexprint(N->Fe, N->Fm, N->Fpc, "\t%s %s = cState->S[%s];\n", N->estimatorOutputVariableType, stateVariableSymbols[i]->identifier, stateVariableNames[i]);
 		}
 
 
@@ -828,7 +828,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			/*
 			 *	Generate calculation of Jacobian of f() with standard diff
 			 */
-			flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble h = 0.0005;\n");
+			flexprint(N->Fe, N->Fm, N->Fpc, "\t%s h = 0.0005;\n",N->estimatorOutputVariableType);
 			for (int i = 0; i < stateDimension; i++)
 			{
 				for (int j = 0; j < stateDimension; j++)
@@ -862,13 +862,13 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	if (linearProcess)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  FSm = multiplyMatrix(&Fm, cState->Sm);\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  sn = FSm->data;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  sn = FSm->data;\n", N->estimatorOutputVariableType);
 	}
 	else
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  sn = &newState[0];\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  sn = &newState[0];\n", N->estimatorOutputVariableType);
 	}
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  s = &cState->S[0];\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  s = &cState->S[0];\n",N->estimatorOutputVariableType);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n\tfor (int i = 0; i < STATE_DIMENSION; i++)\n\t{\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\t*s = *sn;\n\t\ts++;\n\t\tsn++;\n\t}\n\n");
 	/*
@@ -879,9 +879,9 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  FPFm_T = multiplyMatrix(FPm, Fm_T);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  p = cState->Pm->data;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  fpf = FPFm_T->data;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  q = cState->Qm->data;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  p = cState->Pm->data;\n", N->estimatorOutputVariableType);
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  fpf = FPFm_T->data;\n", N->estimatorOutputVariableType);
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  q = cState->Qm->data;\n", N->estimatorOutputVariableType);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n\tfor (int i = 0; i < STATE_DIMENSION*STATE_DIMENSION; i++)\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t{\n\t\t*p = *fpf + *q;\n\t\tp++;\n\t\tfpf++;\n\t\tq++;\n\t}\n");
 
@@ -971,15 +971,15 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		 *	If linear:
 		 *	Deduce measurement matrix H
 		 */
-		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterUpdate (CoreState *  cState, double Z[MEASURE_DIMENSION]");
+		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterUpdate (CoreState *  cState, %s Z[MEASURE_DIMENSION]",N->estimatorOutputVariableType);
 		for (int i = 0; i < measureExtraParams; i++)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, ", double %s", measureExtraParamSymbols[i]->identifier);
+			flexprint(N->Fe, N->Fm, N->Fpc, ", %s %s", N->estimatorOutputVariableType ,measureExtraParamSymbols[i]->identifier);
 		}
 		flexprint(N->Fe, N->Fm, N->Fpc, ")\n{\n");
 
 		IrNode * hMatrixIrNodes[measureDimension][stateDimension];
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble hMatrix[MEASURE_DIMENSION][STATE_DIMENSION] = \n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t%s hMatrix[MEASURE_DIMENSION][STATE_DIMENSION] = \n", N->estimatorOutputVariableType);
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t{\n");
 		int hRow = 0;
 		for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; hRow++, constraintXSeq = constraintXSeq->irRightChild)
@@ -1049,7 +1049,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		int functionLastArg[measureDimension];
 		for (constraintXSeq = measureInvariant->constraints; constraintXSeq != NULL; counter++, constraintXSeq = constraintXSeq->irRightChild)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble\nmeasure_%s ", measureVariableNames[counter]);
+			flexprint(N->Fe, N->Fm, N->Fpc, "\t%s\nmeasure_%s ", N->estimatorOutputVariableType ,measureVariableNames[counter]);
 			flexprint(N->Fe, N->Fm, N->Fpc, "(");
 
 			int lastArg = 0;
@@ -1067,7 +1067,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			{
 				if (relationMatrix[counter][currArg] == true)
 				{
-					flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble %s", measureInvariantStateVariableSymbols[currArg]->identifier);
+					flexprint(N->Fe, N->Fm, N->Fpc, "\t%s %s", N->estimatorOutputVariableType ,measureInvariantStateVariableSymbols[currArg]->identifier);
 					if (currArg != functionLastArg[counter])
 					{
 						flexprint(N->Fe, N->Fm, N->Fpc, ", ");
@@ -1078,7 +1078,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			if (N->autodiff == true)
 			{
 				IrNode *  RHSExpression = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
-				flexprint(N->Fe, N->Fm, N->Fpc, ", double Ji[STATE_DIMENSION])\n{\n");
+				flexprint(N->Fe, N->Fm, N->Fpc, ", %s Ji[STATE_DIMENSION])\n{\n", N->estimatorOutputVariableType);
 
 				autoDiffGenBody(N, RHSExpression, stateVariableNames, stateVariableSymbols, stateDimension);
 
@@ -1097,17 +1097,17 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 				{
 					if (relationMatrix[counter][currDeriv] == true)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble\nd_measure_%s_d%s ", measureVariableNames[counter], stateVariableSymbols[currDeriv]->identifier);
+						flexprint(N->Fe, N->Fm, N->Fpc, "\t%s\nd_measure_%s_d%s ", N->estimatorOutputVariableType ,measureVariableNames[counter], stateVariableSymbols[currDeriv]->identifier);
 						flexprint(N->Fe, N->Fm, N->Fpc, "(");
 						for (int currArg = 0; currArg < stateDimension; currArg++)
 						{
 							if (relationMatrix[counter][currArg] == true)
 							{
-								flexprint(N->Fe, N->Fm, N->Fpc, "double %s, ", measureInvariantStateVariableSymbols[currArg]->identifier);
+								flexprint(N->Fe, N->Fm, N->Fpc, "%s %s, ", N->estimatorOutputVariableType, measureInvariantStateVariableSymbols[currArg]->identifier);
 							}
 						}
-						flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble h)\n{\n");
-						flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble calculatedValue = 0.0;\n");
+						flexprint(N->Fe, N->Fm, N->Fpc, "\t%s h)\n{\n", N->estimatorOutputVariableType);
+						flexprint(N->Fe, N->Fm, N->Fpc, "\t%s calculatedValue = 0.0;\n", N->estimatorOutputVariableType);
 
 						flexprint(N->Fe, N->Fm, N->Fpc, "\tcalculatedValue = ((");
 						flexprint(N->Fe, N->Fm, N->Fpc, "measure_%s(", measureVariableNames[counter]);
@@ -1151,20 +1151,20 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			}
 		}
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterUpdate (CoreState *  cState, double Z[MEASURE_DIMENSION]");
+		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterUpdate (CoreState *  cState, %s Z[MEASURE_DIMENSION]",N->estimatorOutputVariableType);
 		for (int i = 0; i < measureExtraParams; i++)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, ", double %s", measureExtraParamSymbols[i]->identifier);
+			flexprint(N->Fe, N->Fm, N->Fpc, ", %s %s", N->estimatorOutputVariableType ,measureExtraParamSymbols[i]->identifier);
 		}
 		flexprint(N->Fe, N->Fm, N->Fpc, ")\n{\n");
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble HS[MEASURE_DIMENSION];\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble hMatrix[MEASURE_DIMENSION][STATE_DIMENSION] = {0};\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t%s HS[MEASURE_DIMENSION];\n", N->estimatorOutputVariableType);
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t%s hMatrix[MEASURE_DIMENSION][STATE_DIMENSION] = {0};\n", N->estimatorOutputVariableType);
 
 		flexprint(N->Fe, N->Fm, N->Fpc, "\n{\n");
 		for (int i = 0; i < stateDimension; i++)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble %s = cState->S[%s];\n", measureInvariantStateVariableSymbols[i]->identifier, stateVariableNames[i]);
+			flexprint(N->Fe, N->Fm, N->Fpc, "\t%s %s = cState->S[%s];\n", N->estimatorOutputVariableType, measureInvariantStateVariableSymbols[i]->identifier, stateVariableNames[i]);
 		}
 
 		counter = 0;
@@ -1197,7 +1197,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			/*
 			 *	Generate calculation of Jacobian of h()
 			 */
-			flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble h = 0.0005;\n");
+			flexprint(N->Fe, N->Fm, N->Fpc, "\t%s h = 0.0005;\n",N->estimatorOutputVariableType);
 
 			for (int i = 0; i < measureDimension; i++)
 			{
@@ -1239,8 +1239,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  PHm_T = multiplyMatrix(cState->Pm, Hm_T);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  HPHm_T = multiplyMatrix(&Hm, PHm_T);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  hph = HPHm_T->data;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  r = cState->Rm->data;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  hph = HPHm_T->data;\n", N->estimatorOutputVariableType);
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  r = cState->Rm->data;\n", N->estimatorOutputVariableType);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n\tfor (int i = 0; i < MEASURE_DIMENSION * MEASURE_DIMENSION; i++)\n\t{\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\t*hph += *r;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\thph++;\n");
@@ -1255,16 +1255,16 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	if (linearMeasurement)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  HSm = multiplyMatrix(&Hm, cState->Sm);\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  hs = HSm->data;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  hs = HSm->data;\n", N->estimatorOutputVariableType);
 	}
 	else
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix HSm_s = { .height = MEASURE_DIMENSION, .width = 1, .data = &HS[0] };\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  HSm = &HSm_s;\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  hs = &HS[0];\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  hs = &HS[0];\n", N->estimatorOutputVariableType);
 	}
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  z = &Z[0];\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  z = &Z[0];\n", N->estimatorOutputVariableType);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n\tfor (int i = 0; i < MEASURE_DIMENSION; i++)\n\t{\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\t*hs = *z - *hs;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\ths++;\n");
@@ -1272,8 +1272,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  KgZHS = multiplyMatrix(Kg, HSm);\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  s = &cState->S[0];\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  kgzhs = KgZHS->data;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  s = &cState->S[0];\n", N->estimatorOutputVariableType);
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  kgzhs = KgZHS->data;\n", N->estimatorOutputVariableType);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n\tfor (int i = 0; i < STATE_DIMENSION; i++)\n\t{\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\t*s += *kgzhs;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\ts++;\n");
@@ -1283,8 +1283,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t// P <- P - KgHP\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  HPm = multiplyMatrix(&Hm, cState->Pm);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  KgHPm = multiplyMatrix(Kg, HPm);\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  p = &cState->P[0][0];\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  kghp = KgHPm->data;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  p = &cState->P[0][0];\n", N->estimatorOutputVariableType);
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s *  kghp = KgHPm->data;\n", N->estimatorOutputVariableType);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n\tfor (int i = 0; i < STATE_DIMENSION*STATE_DIMENSION; i++)\n\t{\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\t*p -= *kghp;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tp++;\n");
@@ -1307,8 +1307,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tCoreState cs;\n");
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble initState[STATE_DIMENSION];\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble time = 0;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s initState[STATE_DIMENSION];\n", N->estimatorOutputVariableType);
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s time = 0;\n", N->estimatorOutputVariableType);
 	// flexprint(N->Fe, N->Fm, N->Fpc, "//scanf(\"%%lf\", &time);\n");
 	for (int i = 0; i < stateDimension; i++)
 	{
@@ -1317,7 +1317,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble initCov[STATE_DIMENSION][STATE_DIMENSION] = {");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s initCov[STATE_DIMENSION][STATE_DIMENSION] = {", N->estimatorOutputVariableType);
 	for (int i = 0; i < stateDimension; i++)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "{");
@@ -1342,12 +1342,12 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	// flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble dt;\n");
 	for (int i = 0; i < stateExtraParams; i++)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble %s;\n", stateExtraParamSymbols[i]->identifier);
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t%s %s;\n", N->estimatorOutputVariableType, stateExtraParamSymbols[i]->identifier);
 	}
 	
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble prevtime = time;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble measure[MEASURE_DIMENSION];\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\twhile (scanf(\"%%lf\", &time) > 0)\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s prevtime = time;\n", N->estimatorOutputVariableType);
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t%s measure[MEASURE_DIMENSION];\n", N->estimatorOutputVariableType);
+	flexprint(N->Fe, N->Fm, N->Fpc, "\twhile (scanf(\"%s\", &time) > 0)\n",N->estimatorOutputVariableFormat);
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t{\n");
 	for (int i = 0; i < stateDimension; i++)
 	{
@@ -1355,7 +1355,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	}
 	for (int i = 0; i < measureDimension; i++)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tscanf(\",%%lf\", &measure[%d]);\n", i);
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tscanf(\",%s\", &measure[%d]);\n", N->estimatorOutputVariableFormat,i);
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tdt = time-prevtime;\n\n");
@@ -1366,10 +1366,10 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, ", %s", stateExtraParamSymbols[i]->identifier);
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, ");\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\"Predict: %%lf\", time);\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\"Predict: %s\", time);\n", N->estimatorOutputVariableFormat);
 	for (int i = 0; i < stateDimension; i++)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\", %%lf\", cs.S[%s]);\n", stateVariableNames[i]);
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\", %s\", cs.S[%s]);\n", N->estimatorOutputVariableFormat,  stateVariableNames[i]);
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\"\\n\");\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
@@ -1380,10 +1380,10 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, ");\n");
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\"Update: %%lf\", time);\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\"Update: %s\", time);\n", N->estimatorOutputVariableFormat);
 	for (int i = 0; i < stateDimension; i++)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\", %%lf\", cs.S[%s]);\n", stateVariableNames[i]);
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\", %s\", cs.S[%s]);\n", N->estimatorOutputVariableFormat, stateVariableNames[i]);
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\"\\n\");\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
@@ -1405,6 +1405,14 @@ irPassEstimatorSynthesisBackend(State *  N)
 
 	FILE *	apiFile;
 
+	int needed = snprintf(NULL, 0, "double") + 1;
+	N->estimatorOutputVariableType = malloc(needed);
+	snprintf(N->estimatorOutputVariableType, needed, "double");
+
+	needed = snprintf(NULL, 0, "%%lf") + 1;
+	N->estimatorOutputVariableFormat = malloc(needed);
+	snprintf(N->estimatorOutputVariableFormat, needed, "%%lf");
+	
 	irPassEstimatorSynthesisProcessInvariantList(N);
 
 	if (N->outputEstimatorSynthesisFilePath)
