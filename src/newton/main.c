@@ -111,6 +111,7 @@ main(int argc, char *argv[])
 			{"process", required_argument, 0, 421},
 			{"measurement", required_argument, 0, 422},
 			{"auto-diff", no_argument, 0, 423},
+			{"estimator-float",no_argument,0,424},
 			{"kernelNumber", required_argument, 0, 494},
 			{"piNumber", required_argument, 0, 495},
 			{0,			0,			0,	0}
@@ -401,6 +402,12 @@ main(int argc, char *argv[])
 				break;
 			}
 
+			case 424: 
+			{
+				N->estimatorFloat = true;
+				break;
+			}
+
 			case 494:
 			{
 				N->kernelNumber = atoi(optarg);
@@ -510,6 +517,7 @@ usage(State *  N)
 						"                | (--estimator-synthesis=<path to output file>)              \n"
 						"                | (--process=<process invariant identifier>)                 \n"
 						"                | (--measurement=<measurement invariant identifier>)         \n"
+						"                | (--estimator-float)					      \n"
 						"                | (--auto-diff)                                      ]       \n"
 						"                                                                             \n"
 						"              <filenames>\n\n", kNewtonL10N);

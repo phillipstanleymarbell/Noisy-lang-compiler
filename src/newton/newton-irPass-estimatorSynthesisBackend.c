@@ -1405,13 +1405,26 @@ irPassEstimatorSynthesisBackend(State *  N)
 
 	FILE *	apiFile;
 
-	int needed = snprintf(NULL, 0, "double") + 1;
-	N->estimatorOutputVariableType = malloc(needed);
-	snprintf(N->estimatorOutputVariableType, needed, "double");
+	if (N->estimatorFloat == true) 
+	{
+		int needed = snprintf(NULL, 0, "float") + 1;
+		N->estimatorOutputVariableType = malloc(needed);
+		snprintf(N->estimatorOutputVariableType, needed, "float");
 
-	needed = snprintf(NULL, 0, "%%lf") + 1;
-	N->estimatorOutputVariableFormat = malloc(needed);
-	snprintf(N->estimatorOutputVariableFormat, needed, "%%lf");
+		needed = snprintf(NULL, 0, "%%f") + 1;
+		N->estimatorOutputVariableFormat = malloc(needed);
+		snprintf(N->estimatorOutputVariableFormat, needed, "%%f");
+	}
+	else 
+	{
+		int needed = snprintf(NULL, 0, "double") + 1;
+		N->estimatorOutputVariableType = malloc(needed);
+		snprintf(N->estimatorOutputVariableType, needed, "double");
+
+		needed = snprintf(NULL, 0, "%%lf") + 1;
+		N->estimatorOutputVariableFormat = malloc(needed);
+		snprintf(N->estimatorOutputVariableFormat, needed, "%%lf");
+	}
 	
 	irPassEstimatorSynthesisProcessInvariantList(N);
 

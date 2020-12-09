@@ -1200,6 +1200,7 @@ typedef struct
 	char *			estimatorProcessModel;
 	char *			estimatorMeasurementModel;
 	bool			autodiff;
+	bool 			estimatorFloat;
 	char*			estimatorOutputVariableType;
 	char*			estimatorOutputVariableFormat;
 
