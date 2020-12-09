@@ -177,7 +177,7 @@ autoDiffGenSSA(State *  N, IrNode *  root)
 	{
 		case kNewtonIrNodeType_Pquantity:
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "double %s = %s;\n", root->tokenString, irPassCNodeToStr(N, root->irLeftChild));
+			flexprint(N->Fe, N->Fm, N->Fpc, "%s %s = %s;\n", N->estimatorOutputVariableType,root->tokenString, irPassCNodeToStr(N, root->irLeftChild));
 			break;
 		}
 
@@ -186,17 +186,17 @@ autoDiffGenSSA(State *  N, IrNode *  root)
 			if (R(root) && RL(root)->type == kNewtonIrNodeType_PexponentiationOperator)
 			{
 				autoDiffGenSSA(N, L(root));
-				flexprint(N->Fe, N->Fm, N->Fpc, "double %s = pow(%s, %f);\n", root->tokenString, root->irLeftChild->tokenString, RRL(root)->value);
+				flexprint(N->Fe, N->Fm, N->Fpc, "%s %s = pow(%s, %f);\n", N->estimatorOutputVariableType,root->tokenString, root->irLeftChild->tokenString, RRL(root)->value);
 			}
 			else if (root->irLeftChild->type == kNewtonIrNodeType_Ptranscendental)
 			{
 				autoDiffGenSSA(N, RL(root));
-				flexprint(N->Fe, N->Fm, N->Fpc, "double %s = %s(%s);\n", root->tokenString, irPassCNodeToStr(N, LL(root)), RL(root)->tokenString);
+				flexprint(N->Fe, N->Fm, N->Fpc, "%s %s = %s(%s);\n", N->estimatorOutputVariableType,root->tokenString, irPassCNodeToStr(N, LL(root)), RL(root)->tokenString);
 			}
 			else
 			{
 				autoDiffGenSSA(N, root->irLeftChild);
-				flexprint(N->Fe, N->Fm, N->Fpc, "double %s = %s;\n", root->tokenString, root->irLeftChild->tokenString);
+				flexprint(N->Fe, N->Fm, N->Fpc, "%s %s = %s;\n", N->estimatorOutputVariableType,root->tokenString, root->irLeftChild->tokenString);
 			}
 			break;
 		}
@@ -211,7 +211,7 @@ autoDiffGenSSA(State *  N, IrNode *  root)
 				autoDiffGenSSA(N, currXSeq->irLeftChild);
 			}
 
-			flexprint(N->Fe, N->Fm, N->Fpc, "double %s = ", root->tokenString);
+			flexprint(N->Fe, N->Fm, N->Fpc, "%s %s = ", N->estimatorOutputVariableType,root->tokenString);
 			if (root->irLeftChild->type == kNewtonIrNodeType_PunaryOp)
 			{
 				/*
@@ -268,12 +268,12 @@ autoDiffGenReverseSSA(State *  N, IrNode *  root)
 		{
 			IrNode *  currXSeq = NULL;
 
-			flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s;\n\n", root->irLeftChild->tokenString, root->tokenString);
+			flexprint(N->Fe, N->Fm, N->Fpc, "%s g%s = g%s;\n\n", N->estimatorOutputVariableType,root->irLeftChild->tokenString, root->tokenString);
 			autoDiffGenReverseSSA(N, root->irLeftChild);
 			flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 			for (currXSeq = root->irRightChild; currXSeq != NULL; currXSeq = currXSeq->irRightChild->irRightChild)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = %sg%s;\n", currXSeq->irRightChild->irLeftChild->tokenString,
+				flexprint(N->Fe, N->Fm, N->Fpc, "%s g%s = %sg%s;\n", N->estimatorOutputVariableType,currXSeq->irRightChild->irLeftChild->tokenString,
 																		 irPassCNodeToStr(N, currXSeq->irLeftChild->irLeftChild),
 																		 root->tokenString);
 				autoDiffGenReverseSSA(N, currXSeq->irRightChild->irLeftChild);
@@ -302,7 +302,7 @@ autoDiffGenReverseSSA(State *  N, IrNode *  root)
 					continue;
 				}
 
-				flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = ", currXSeq->irLeftChild->tokenString);
+				flexprint(N->Fe, N->Fm, N->Fpc, "%s g%s = ", N->estimatorOutputVariableType,currXSeq->irLeftChild->tokenString);
 				if (startsWithUnaryOp == true)
 				{
 					flexprint(N->Fe, N->Fm, N->Fpc, "%s", irPassCNodeToStr(N, LL(root)));
@@ -356,12 +356,12 @@ autoDiffGenReverseSSA(State *  N, IrNode *  root)
 		{
 			if (R(root) && RL(root)->type == kNewtonIrNodeType_PexponentiationOperator)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "double g%1$s = g%2$s * %3$f * pow(%1$s, %4$f);\n", L(root)->tokenString, root->tokenString, RRL(root)->value, RRL(root)->value - 1);
+				flexprint(N->Fe, N->Fm, N->Fpc, "%s g%1$s = g%2$s * %3$f * pow(%1$s, %4$f);\n", N->estimatorOutputVariableType,L(root)->tokenString, root->tokenString, RRL(root)->value, RRL(root)->value - 1);
 				autoDiffGenReverseSSA(N, root->irLeftChild);
 			}
 			else if (root->irLeftChild->type == kNewtonIrNodeType_Ptranscendental)
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s * ", RL(root)->tokenString, root->tokenString);
+				flexprint(N->Fe, N->Fm, N->Fpc, "%s g%s = g%s * ", N->estimatorOutputVariableType,RL(root)->tokenString, root->tokenString);
 				switch (LL(root)->type)
 				{
 					case kNewtonIrNodeType_Tsin:
@@ -450,7 +450,7 @@ autoDiffGenReverseSSA(State *  N, IrNode *  root)
 			}
 			else
 			{
-				flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = g%s;\n", root->irLeftChild->tokenString, root->tokenString);
+				flexprint(N->Fe, N->Fm, N->Fpc, "%s g%s = g%s;\n", N->estimatorOutputVariableType,root->irLeftChild->tokenString, root->tokenString);
 				autoDiffGenReverseSSA(N, root->irLeftChild);
 			}
 
@@ -529,7 +529,7 @@ autoDiffGenBody(State *  N, IrNode *  expressionXSeq, char ** wrtNames, Symbol *
 	flexprint(N->Fe, N->Fm, N->Fpc, "// W.R.T Symbols\n");
 	for (int i = 0; i < wrtSymbolsLength; i++)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = 0;\n", wrtSymbols[i]->identifier);
+		flexprint(N->Fe, N->Fm, N->Fpc, "%s g%s = 0;\n", N->estimatorOutputVariableType,wrtSymbols[i]->identifier);
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n// Rest of Symbols from expression\n");
@@ -550,11 +550,11 @@ autoDiffGenBody(State *  N, IrNode *  expressionXSeq, char ** wrtNames, Symbol *
 			continue;
 		}
 
-		flexprint(N->Fe, N->Fm, N->Fpc, "double g%s = 0;\n", currSymbolNode->symbol->identifier);
+		flexprint(N->Fe, N->Fm, N->Fpc, "%s g%s = 0;\n", N->estimatorOutputVariableType,currSymbolNode->symbol->identifier);
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n// ---\n");
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "\ndouble gad_ = 1;\n\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n%s gad_ = 1;\n\n", N->estimatorOutputVariableType);
 	autoDiffGenExpression(N, expressionXSeq, "ad_");
 
 	for (int i = 0; i < wrtSymbolsLength; i++)
