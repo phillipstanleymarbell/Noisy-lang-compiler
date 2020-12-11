@@ -391,8 +391,14 @@ irPassCGenFunctionBody(State *  N, IrNode *  constraint, bool isLeft)
 	/*
 	 *	Declare
 	 */
-	flexprint(N->Fe, N->Fm, N->Fpc, "{\n\tdouble calculatedValue = 0.0;\n");
-
+	if (N->estimatorFloat == true)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "{\n\t%s calculatedValue = 0.0;\n",N->estimatorOutputVariableType);
+	}
+	else
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "{\n\tdouble calculatedValue = 0.0;\n");	
+	}
 	/*
 	 *	Calculation
 	 */
@@ -461,11 +467,11 @@ irPassCGenFunctionName(State *  N, IrNode *  constraints, int countFunction)
 
 	if (irPassCIsConstraintHumanWritten(N, constraints))
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "double\nhumanWrittenConstraintRHS%d", countFunction);
+		flexprint(N->Fe, N->Fm, N->Fpc, "%s\nhumanWrittenConstraintRHS%d", N->estimatorOutputVariableType,countFunction);
 	}
 	else
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "double\n%sRHS%d",
+		flexprint(N->Fe, N->Fm, N->Fpc, "%s\n%sRHS%d", N->estimatorOutputVariableType,
 				constraints->irLeftChild->irLeftChild->irLeftChild->irLeftChild->tokenString, countFunction);
 	}
 }

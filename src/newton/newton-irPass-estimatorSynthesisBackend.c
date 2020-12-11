@@ -733,7 +733,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 							}
 						}
 						flexprint(N->Fe, N->Fm, N->Fpc, "%s h)\n{\n", N->estimatorOutputVariableType);
-						flexprint(N->Fe, N->Fm, N->Fpc, "\t%s calculatedValue = 0.0;\n",N->estimatorOutputVariableType);
+						flexprint(N->Fe, N->Fm, N->Fpc, "\t%s calculatedValue = 0.0;\n", N->estimatorOutputVariableType);
 
 						flexprint(N->Fe, N->Fm, N->Fpc, "\tcalculatedValue = (( process_%s(", stateVariableNames[counter]);
 
