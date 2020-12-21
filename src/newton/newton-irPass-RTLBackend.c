@@ -374,7 +374,7 @@ irPassRTLSearchAndCreateArgList(State *  N, IrNode *  root, IrNodeType expectedT
 
 
 /* FIXME check if mallocs and copies fail */
-void irPassRTLAddMultChain (multChain **multChainHead, char *parameterName, int power) 
+void irPassRTLAddMultChain(multChain **multChainHead, char *parameterName, int power) 
 {
 	multChain *tmpChainNode=NULL;
 	int i;
@@ -527,7 +527,9 @@ irPassRTLProcessInvariantList(State *  N)
 				if (targetInvariant->nullSpace[targetKernel][tmpPosition[row]][col] != 0) 
 				{
 					fractionValues[index] = irPassRTLGetFraction(targetInvariant->nullSpace[targetKernel][tmpPosition[row]][col]);
-				} else {
+				} 
+				else 
+				{
 					fractionValues[index] = 1; /* Won't affect LCM calculation */
 				}
 				index++;
@@ -572,64 +574,95 @@ irPassRTLProcessInvariantList(State *  N)
 				{
 					integerPower = (int) (fractionsLCM * targetInvariant->nullSpace[targetKernel][tmpPosition[row]][col]);
 
-					if (integerPower >= 0) { /* Can there be a zero? */
+					if (integerPower >= 0) 
+					{ /* Can there be a zero? */
 						dividendMultiplications += integerPower;
 						irPassRTLAddMultChain (&dividendMultChainHead, argumentsList[row], integerPower);
-					} else {
+					} 
+					else 
+					{
 						divisorMultiplications += -integerPower; /* FIXME what happens in case of fraction? */
 						irPassRTLAddMultChain (&divisorMultChainHead, argumentsList[row], -integerPower);
 					}
 				}
 			}
 		
-			/* One less multiplication than the sum of powers */
+			/* 	If there is positive number of multiplications either on nominator 					*/
+			/*	or denominator, then they are one less multiplication than the sum of powers		*/
+			/*	If there are no multiplications to perform either in the nominator or denominator,	*/
+			/*	then dividendMultiplications and divisorMultiplications are set to -1.				*/			
 			dividendMultiplications--;
+			
 			divisorMultiplications--;
-
+						
 			/*
 			 *	Print declarations of intermediate dividend multiplication wires
 			 */
-			if (dividendMultiplications == 0) {
+			if (dividendMultiplications <= 0) 
+			{
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\treg oc_dividend_Pi_%d;\n", col);
 				
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\tinitial oc_dividend_Pi_%d = 1'b1;\n", col);
-			} else if (dividendMultiplications == 1) {
+			} 
+			else if (dividendMultiplications == 1) 
+			{
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_dividend_Pi_%d;\n", col);
-			} else if (dividendMultiplications > 1) {
+			} 
+			else if (dividendMultiplications > 1) 
+			{
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_dividend_Pi_%d;\n", col);
 
-				for (index=1; index < dividendMultiplications; index++) {
+				for (index=1; index < dividendMultiplications; index++) 
+				{
 					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire [N-1:0]mult_res_dividend_inter_Pi_%d_%d;\n", col, index);
 					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_dividend_Pi_%d_%d;\n", col, index);
 				}
-			} else {
+			} 
+			else 
+			{
 				/* FIXME if negative */	
 			}
 
 			/*
 			 *	Print declarations of intermediate divisor multiplication wires
 			 */
-			if (divisorMultiplications == 0) {
+			if (divisorMultiplications <= 0) 
+			{
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\treg oc_divisor_Pi_%d;\n", col);
 
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\n\tinitial oc_divisor_Pi_%d = 1'b1;\n", col);
-			} else if (divisorMultiplications == 1) {
+			} 
+			else if (divisorMultiplications == 1) 
+			{
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_divisor_Pi_%d;\n", col);
-			} else if (divisorMultiplications > 1) {
+			} 
+			else if (divisorMultiplications > 1) 
+			{
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_divisor_Pi_%d;\n", col);
 
-				for (index=1; index < divisorMultiplications; index++) {
+				for (index=1; index < divisorMultiplications; index++) 
+				{
 					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire [N-1:0] mult_res_divisor_inter_Pi_%d_%d;\n", col, index);	
 					flexprint(N->Fe, N->Fm, N->Fprtl, "\twire oc_divisor_Pi_%d_%d;\n", col, index);
 				}
-			} else {
+			} 
+			else 
+			{
 				/* FIXME if negative */	
 			}
 			
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\n\t/* ----- Dividend ----- */\n");
-			if (dividendMultiplications == 0 ) {
+
+			if (dividendMultiplications < 0) 
+			{
+				flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign dividend_Pi_%d = N'b1;\n", col);	
+			} 
+			else if (dividendMultiplications == 0) 
+			{
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign dividend_Pi_%d = %s_sig;\n", col, dividendMultChainHead->operandName);	
-			} else if (dividendMultiplications == 1 ) {
+			} 
+			else if (dividendMultiplications == 1 ) 
+			{
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\t%s mul_inst_dividend_Pi_%d (\n\t\t.i_multiplicand(%s_sig),\n", 
 					multiplierVersion, col, dividendMultChainHead->operandName);
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.i_multiplier(%s_sig),\n", dividendMultChainHead->next->operandName);
@@ -639,7 +672,9 @@ irPassRTLProcessInvariantList(State *  N)
 					\n\t\t.o_result_out(dividend_Pi_%d),\
 					\n\t\t.o_complete(oc_dividend_Pi_%d),\
 					\n\t\t.o_overflow(of_Pi_%d));\n\n", col, col, col);
-			} else {
+			} 
+			else 
+			{
 				index = 1;
 
 				/* First multiplication with two straightforward operands */
@@ -656,8 +691,8 @@ irPassRTLProcessInvariantList(State *  N)
 				dividendMultChainHead = dividendMultChainHead->next->next;
 				index++;
 
-				while (dividendMultChainHead->next != NULL) {
-				
+				while (dividendMultChainHead->next != NULL) 
+				{
 					flexprint(N->Fe, N->Fm, N->Fprtl, 
 						"\t%s mul_inst_dividend_Pi_%d_%d (\n\t\t.i_multiplicand(mult_res_dividend_inter_Pi_%d_%d),\n", multiplierVersion, col, index, col, index-1);
 					flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.i_multiplier(%s_sig),\n", dividendMultChainHead->operandName);
@@ -683,9 +718,16 @@ irPassRTLProcessInvariantList(State *  N)
 			}
 
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\n\t/* ----- Divisor ----- */\n");
-			if (divisorMultiplications == 0 ) {
+			if (divisorMultiplications < 0) 
+			{
+				flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign divisor_Pi_%d = N'b1;\n", col);	
+			}
+			else if (divisorMultiplications == 0) 
+			{
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\tassign divisor_Pi_%d = %s_sig;\n", col, divisorMultChainHead->operandName);	
-			} else if (divisorMultiplications == 1 ) {
+			} 
+			else if (divisorMultiplications == 1) 
+			{
 				flexprint(N->Fe, N->Fm, N->Fprtl, 
 					"\t%s mul_inst_divisor_Pi_%d (\n\t\t.i_multiplicand(%s_sig),\n", multiplierVersion, col, divisorMultChainHead->operandName);
 				flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.i_multiplier(%s_sig),\n", divisorMultChainHead->next->operandName);
@@ -695,7 +737,9 @@ irPassRTLProcessInvariantList(State *  N)
 					\n\t\t.o_result_out(divisor_Pi_%d),\
 					\n\t\t.o_complete(oc_divisor_Pi_%d),\
 					\n\t\t.o_overflow(of_Pi_%d)\n\t);\n\n", col, col, col);
-			} else {
+			} 
+			else 
+			{
 				index = 1;
 
 				/* First multiplication with two straightforward operands */
@@ -712,8 +756,8 @@ irPassRTLProcessInvariantList(State *  N)
 				divisorMultChainHead = divisorMultChainHead->next->next;
 				index++;
 
-				while (divisorMultChainHead->next != NULL) {
-				
+				while (divisorMultChainHead->next != NULL) 
+				{
 					flexprint(N->Fe, N->Fm, N->Fprtl, 
 						"\t%s mul_inst_divisor_Pi_%d_%d (\n\t\t.i_multiplicand(mult_res_divisor_inter_Pi_%d_%d),\n", multiplierVersion, col, index, col, index-1);
 					flexprint(N->Fe, N->Fm, N->Fprtl, "\t\t.i_multiplier(%s_sig),\n", divisorMultChainHead->operandName);
@@ -736,7 +780,7 @@ irPassRTLProcessInvariantList(State *  N)
 					"\t\t.i_clk(i_clk),\
 					\n\t\t.o_result_out(divisor_Pi_%d),\
 					\n\t\t.o_complete(oc_divisor_Pi_%d),\
-					\n\t\t.o_overflow(of_Pi_%d)\n\t);\n\n", col, index, col, index, col);
+					\n\t\t.o_overflow(of_Pi_%d)\n\t);\n\n", col, col, col);
 			}
 
 			flexprint(N->Fe, N->Fm, N->Fprtl, "\n\t/* ----- Division enabling ----- */\n");
