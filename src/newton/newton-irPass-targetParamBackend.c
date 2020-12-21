@@ -227,6 +227,9 @@ irPassTargetParamDimensionalMatrixKernelPrinter(State *  N)
 					}
 					//flexprint(N->Fe, N->Fm, N->Fpinfo, ")\n\n");
 					flexprint(N->Fe, N->Fm, N->Fpinfo, "\n\n");
+
+					/*	Stop the first time that a target parameter appear in only dimensionless product	*/
+					break;
 				} else {
 					//flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\t\tTargeParam NO\n\n");
 				}
@@ -246,24 +249,5 @@ irPassTargetParamDimensionalMatrixKernelPrinter(State *  N)
 void
 irPassTargetParamBackend(State *  N)
 {
-	//FILE *	cFile;
-
-	//irPassTargetParamProcessInvariantList(N);
 	irPassTargetParamDimensionalMatrixKernelPrinter(N);
-
-	/*
-	if (N->outputCFilePath)
-	{
-		cFile = fopen(N->outputCFilePath, "w");
-
-		if (cFile == NULL)
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "\n%s: %s.\n", Eopen, N->outputCFilePath);
-			consolePrintBuffers(N);
-		}
-
-		fprintf(cFile, "%s", N->Fpc->circbuf);
-		fclose(cFile);
-	}
-	*/
 }
