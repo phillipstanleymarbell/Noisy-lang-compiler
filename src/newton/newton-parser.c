@@ -2491,9 +2491,24 @@ newtonParseConstraint(State *  N, Scope *  currentScope)
 
 	if (inFirst(N, kNewtonIrNodeType_Pconstraint, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
-		addLeafWithChainingSeq(N, node, newtonParseCompareOp(N, currentScope));
-		addLeafWithChainingSeq(N, node, newtonParseQuantityExpression(N, currentScope));
+		if (lexPeek(N,2)->type == kNewtonIrNodeType_TleftParen && lexPeek(N,1)->type == kNewtonIrNodeType_Tidentifier)
+		{
+			// newtonParseIdentifier(N,currentScope);
+			// TODO;
+			/*  
+			*	Parse identifier. Look at the correct scopes.
+			*	We may also have to look at the symbol table update
+			*	when defining a new invariant.
+			*/
+			addLeaf(N,node,newtonParseIdentifier(N,currentScope));
+			addLeafWithChainingSeq(N,node,newtonParseCallParameterTuple(N,currentScope));
+		}
+		else 
+		{
+			addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
+			addLeafWithChainingSeq(N, node, newtonParseCompareOp(N, currentScope));
+			addLeafWithChainingSeq(N, node, newtonParseQuantityExpression(N, currentScope));
+		}
 
 		/*
 		 *	TODO; with the Newton grammar update, there are actually two cases to handle here.
@@ -2519,6 +2534,46 @@ newtonParseConstraint(State *  N, Scope *  currentScope)
 	return node;
 }
 
+/*
+ *	Grammar production:
+ *
+ *		callParameterTuple		::=	"(" identifier {"," identifier} ")" .
+ */
+IrNode*
+newtonParseCallParameterTuple(State * N, Scope * currentScope)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+	
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PcallParameterTuple,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */
+					);
+	
+	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
+
+	// int	parameterNumber = 0;
+	addLeaf(N, node, newtonParseIdentifier(N,currentScope));
+
+	while (peekCheck(N, 1, kNewtonIrNodeType_Tcomma))
+	{
+		newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
+		addLeafWithChainingSeq(N, node, newtonParseIdentifier(N, currentScope));
+	}
+	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
+
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PcallParameterTuple, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PcallParameterTuple, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PcallParameterTuple);
+	}
+	*/
+	return node;
+}	
 
 
 /*
