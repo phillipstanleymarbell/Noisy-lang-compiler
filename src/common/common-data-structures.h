@@ -635,6 +635,7 @@ typedef enum
 	kNewtonIrNodeType_PquantityFactor,
 	kNewtonIrNodeType_PquantityTerm,
 	kNewtonIrNodeType_PquantityExpression,
+	kNewtonIrNodeType_PcallParameterTuple,
 	kNewtonIrNodeType_Pconstraint,
 	kNewtonIrNodeType_PconstraintList,
 	kNewtonIrNodeType_Pparameter,
