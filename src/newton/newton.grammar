@@ -59,7 +59,8 @@ subdimensionTuple		::=	"(" identifier ":" numericExpression "to" numericExpressi
 parameterTuple			::=	"(" parameter {"," parameter} ")" .
 parameter			::=	identifier ":" (identifier | numericExpression) {"[" integerConst "]"} .
 constraintList			::=	[constraint] {"," constraint} .
-constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
+constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier callParameterTuple .
+callParameterTuple		::=	"(" identifier {"," identifier} ")" .
 quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
 quantityTerm			::=	[unaryOp] quantityFactor {highPrecedenceQuantityOperator quantityFactor} .
 

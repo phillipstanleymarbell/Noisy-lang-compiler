@@ -114,6 +114,11 @@ production kNewtonIrNodeType_PconstraintList:		firstset = {
 production kNewtonIrNodeType_Pconstraint:		firstset = {
 									firstset(kNewtonIrNodeType_PquantityExpression),
 								}
+--//		callParameterTuple		::=	"(" identifier {"," identifier} ")" .
+production kNewtonIrNodeType_PcallParameterTuple:	firstset = {
+									kNewtonIrNodeType_TleftParen,
+								}
+
 
 --//		quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
 production kNewtonIrNodeType_PquantityExpression:	firstset = {
@@ -580,7 +585,10 @@ production kNewtonIrNodeType_Pconstraint:		followset = {
 									kNewtonIrNodeType_Tcomma,
 									followset(kNewtonIrNodeType_PconstraintList),
 								}
-
+--//		callParameterTuple		::=	"(" identifier {"," identifier} ")" .
+production kNewtonIrNodeType_PcallParameterTuple:	followset = {
+									followset(kNewtonIrNodeType_Pconstraint),
+								}
 --//		quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
 production kNewtonIrNodeType_PquantityExpression:	followset = {
 									kNewtonIrNodeType_Tsemicolon,

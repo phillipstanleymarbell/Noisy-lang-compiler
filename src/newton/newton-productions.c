@@ -60,6 +60,7 @@ const char *	gProductionDescriptions[kCommonIrNodeTypeMax] =
 	[kNewtonIrNodeType_PcomparisonOperator]		= "comparison operator",
 	[kNewtonIrNodeType_PconstantDefinition]		= "constant definition",
 	[kNewtonIrNodeType_Pconstraint]			= "constraint",
+	[kNewtonIrNodeType_PcallParameterTuple]		= "call parameter tuple",
 	[kNewtonIrNodeType_PconstraintList]		= "constraint list",
 	[kNewtonIrNodeType_PdelayCommand]		= "delay command",
 	[kNewtonIrNodeType_PderivationStatement]	= "derivation statement",
