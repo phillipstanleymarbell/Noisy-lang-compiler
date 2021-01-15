@@ -79,7 +79,7 @@ extern const char	EraisingPhysicsQuantityToNonIntegerExponent[];
  *	These are mostly passed in eSemantics()
  */
 extern const char	Eundeclared[];
-
+extern const char	Iundeclared[];
 
 
 /*
