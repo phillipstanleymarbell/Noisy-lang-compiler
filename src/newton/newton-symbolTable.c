@@ -269,6 +269,25 @@ newtonAddInvariant(State *  N, Invariant *  invariant)
 	}
 }
 
+/*
+*	Takes State N and string invariantName and returns the Invariant *
+*	of the invariant with that name.
+*/
+Invariant *
+newtonGetInvariant(State * N,char * invariantName)
+{
+	Invariant * head = N->invariantList;
+	
+	while (head != NULL)
+	{
+		if (!strcmp(head->identifier,invariantName))
+		{
+			return head;
+		}
+		head=head->next;
+	}
+	return NULL;
+}
 
 void
 newtonPhysicsIncrementExponent(State *  N, Physics *  source, Dimension *  added)
