@@ -2476,7 +2476,7 @@ newtonParseHighPrecedenceQuantityOperator(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
+ *		constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier callParameterTuple .
  */
 IrNode *
 newtonParseConstraint(State *  N, Scope *  currentScope)
@@ -2500,7 +2500,7 @@ newtonParseConstraint(State *  N, Scope *  currentScope)
 			*	We may also have to look at the symbol table update
 			*	when defining a new invariant.
 			*/
-			addLeaf(N,node,newtonParseIdentifier(N,currentScope));
+			addLeaf(N,node,newtonParseInvariantIdentifierUsageTerminal(N,currentScope));
 			addLeafWithChainingSeq(N,node,newtonParseCallParameterTuple(N,currentScope));
 		}
 		else 
@@ -2533,6 +2533,59 @@ newtonParseConstraint(State *  N, Scope *  currentScope)
 
 	return node;
 }
+
+/*
+*	Takes state and the current scope, creates an identifier irNode
+*	similar to the newtonParseIdentifierUsageTerminal, checks if the called
+*	invariant exists and then returns the created node.
+*/
+IrNode*
+newtonParseInvariantIdentifierUsageTerminal(State * N,Scope * currentScope)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+	if (!peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeType_Tidentifier, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
+
+		return NULL;
+	}
+
+	Token *		t = lexGet(N, gNewtonTokenDescriptions);
+	IrNode *	n = genIrNode(N,	t->type,
+						NULL /* left child */,
+						NULL /* right child */,
+						t->sourceInfo /* source info */
+					);
+
+	n->token = t;
+	n->tokenString = t->identifier;
+	assert(!strcmp(n->token->identifier, n->tokenString));
+
+	Invariant * invariantSearchResult = newtonGetInvariant(N,n->tokenString);
+	if (invariantSearchResult == NULL)
+	{
+		char *	details;
+
+		asprintf(&details, "%s: \"%s\"\n", Iundeclared, t->identifier);
+		newtonParserSemanticError(N, kNewtonIrNodeType_Tidentifier, details);
+		free(details);
+
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
+	}
+	
+	if (currentScope->parent != NULL)
+	{
+		Symbol * symbolSearchResult = commonSymbolTableSymbolForIdentifier(N, currentScope->parent, t->identifier);
+		
+		n->symbol = symbolSearchResult;
+	}
+	/*
+	*	TODO; check what happens if ever this check fails
+	*/
+	return n;
+}
+
 
 /*
  *	Grammar production:
@@ -4049,6 +4102,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 
 	Physics *   physicsSearchResult;
 	Symbol * symbolSearchResult;
+
 
 	if ((physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, t->identifier)) == NULL)
 	{

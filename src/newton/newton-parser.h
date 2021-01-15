@@ -69,6 +69,7 @@ IrNode *		newtonParseInteger(State *  N, Scope *  currentScope);
 IrNode *		newtonParseInteger(State * N, Scope *  currentScope);
 IrNode *		newtonParseInvariant(State *  N, Scope *  currentScope);
 IrNode *		newtonParseInvariant(State * N, Scope *  currentScope);
+IrNode *		newtonParseInvariantIdentifierUsageTerminal(State * N,Scope * currentScope);
 IrNode *		newtonParseLanguageSetting(State * N, Scope *  currentScope);
 IrNode *		newtonParseLowPrecedenceBinaryOp(State *  N, Scope *  currentScope);
 IrNode *		newtonParseLowPrecedenceOperator(State * N, Scope *  currentScope);
