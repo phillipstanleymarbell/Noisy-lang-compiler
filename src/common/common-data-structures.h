@@ -940,6 +940,12 @@ struct IrNode
 	Signal *		signal;
 
 	/*
+	*	Used for type checking invariant parameters during invriant call.
+	*	an in
+	*/
+	Invariant *		invariant;
+	
+	/*
 	 *	Only if this node belongs to a ParseNumericExpression subtree
 	 */
 	double			value;
