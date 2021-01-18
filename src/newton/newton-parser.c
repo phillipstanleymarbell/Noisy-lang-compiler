@@ -2500,8 +2500,9 @@ newtonParseConstraint(State *  N, Scope *  currentScope)
 			*	We may also have to look at the symbol table update
 			*	when defining a new invariant.
 			*/
-			addLeaf(N,node,newtonParseInvariantIdentifierUsageTerminal(N,currentScope));
-			addLeafWithChainingSeq(N,node,newtonParseCallParameterTuple(N,currentScope));
+			IrNode * invariantNode = newtonParseInvariantIdentifierUsageTerminal(N,currentScope);
+			addLeaf(N,node,invariantNode);
+			addLeafWithChainingSeq(N,node,newtonParseCallParameterTuple(N,currentScope,invariantNode->invariant));
 		}
 		else 
 		{
@@ -2579,6 +2580,7 @@ newtonParseInvariantIdentifierUsageTerminal(State * N,Scope * currentScope)
 		Symbol * symbolSearchResult = commonSymbolTableSymbolForIdentifier(N, currentScope->parent, t->identifier);
 		
 		n->symbol = symbolSearchResult;
+		n->invariant = invariantSearchResult;
 	}
 	/*
 	*	TODO; check what happens if ever this check fails
@@ -2593,7 +2595,7 @@ newtonParseInvariantIdentifierUsageTerminal(State * N,Scope * currentScope)
  *		callParameterTuple		::=	"(" identifier {"," identifier} ")" .
  */
 IrNode*
-newtonParseCallParameterTuple(State * N, Scope * currentScope)
+newtonParseCallParameterTuple(State * N, Scope * currentScope, Invariant * invariant)
 {
 	TimeStampTraceMacro(kNewtonTimeStampKey);
 	
@@ -2606,13 +2608,53 @@ newtonParseCallParameterTuple(State * N, Scope * currentScope)
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
 
 	// int	parameterNumber = 0;
-	addLeaf(N, node, newtonParseIdentifier(N,currentScope));
+	/*
+	*	The tree structure of the parameter list is having each parameter in left irNode
+	*	and having an xseq irNode on the right. Each parameter contains its physics.
+	*/
+	IrNode *  parameterIndex = invariant->parameterList;
+	IrNode * expectedNode = parameterIndex->irLeftChild;
+	
+	assert(expectedNode->physics != NULL);
+	
+	IrNode *  newIdentifierNode = newtonParseIdentifierUsageTerminal(N,kNewtonIrNodeType_Tidentifier,currentScope);
+
+	addLeaf(N,node,newtonParseCallParameterSemantics(N,newIdentifierNode,expectedNode));
 
 	while (peekCheck(N, 1, kNewtonIrNodeType_Tcomma))
 	{
 		newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
-		addLeafWithChainingSeq(N, node, newtonParseIdentifier(N, currentScope));
+		
+		/*
+		*	Access the next parameter from the invariant's parameter list and
+		*	ensure that its physics are defined.
+		*/
+		parameterIndex = parameterIndex->irRightChild;
+		
+		/*
+		*	Call with more parameters than expected.
+		*/
+		if (parameterIndex == NULL) {
+			flexprint(N->Fe, N->Fm, N->Fperr,"Calling \"%s\" invariant with more parameters than expected.\n",invariant->identifier);
+			newtonParserSemanticError(N, kNewtonIrNodeType_PcallParameterTuple, (char *)EsemanticsA);
+			newtonParserErrorRecovery(N, kNewtonIrNodeType_PcallParameterTuple);
+		}
+		expectedNode = parameterIndex->irLeftChild;
+		assert(expectedNode->physics != NULL);
+		
+		newIdentifierNode = newtonParseIdentifierUsageTerminal(N,kNewtonIrNodeType_Tidentifier,currentScope);
+		
+		addLeafWithChainingSeq(N, node, newtonParseCallParameterSemantics(N,newIdentifierNode,expectedNode));
 	}
+	/*
+	*	Call with less parameters than expected.
+	*/
+	if (parameterIndex->irRightChild != NULL) {
+		flexprint(N->Fe, N->Fm, N->Fperr,"Calling \"%s\" invariant with less parameters than expected.\n",invariant->identifier);
+		newtonParserSemanticError(N, kNewtonIrNodeType_PcallParameterTuple, (char *)EsemanticsA);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PcallParameterTuple);
+	}
+
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
 
 	/*
@@ -2627,6 +2669,24 @@ newtonParseCallParameterTuple(State * N, Scope * currentScope)
 	*/
 	return node;
 }	
+
+
+IrNode *
+newtonParseCallParameterSemantics(State * N, IrNode * callParameter, IrNode * expectedParameter)
+{
+	if (!areTwoPhysicsEquivalent(N,callParameter->physics,expectedParameter->physics))
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "Call Parameter:\n");
+		printDimensionsOfNode(N, callParameter, N->Fperr);
+		flexprint(N->Fe, N->Fm, N->Fperr, "Expected type:\n");
+		printDimensionsOfNode(N, expectedParameter, N->Fperr);
+
+		newtonParserSemanticError(N, kNewtonIrNodeType_PcallParameterTuple, (char *)EexpressionPhysicsMismatch);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PcallParameterTuple);
+	}
+
+	return callParameter;
+}
 
 
 /*
