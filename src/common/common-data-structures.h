@@ -940,8 +940,7 @@ struct IrNode
 	Signal *		signal;
 
 	/*
-	*	Used for type checking invariant parameters during invriant call.
-	*	an in
+	*	Used for type checking invariant parameters during invariant call.
 	*/
 	Invariant *		invariant;
 	
