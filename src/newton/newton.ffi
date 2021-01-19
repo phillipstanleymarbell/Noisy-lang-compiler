@@ -110,15 +110,31 @@ production kNewtonIrNodeType_PconstraintList:		firstset = {
 									firstset(kNewtonIrNodeType_Pconstraint),
 								}
 
---//		constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
+--//		constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple | piecewiseConstraint.
 production kNewtonIrNodeType_Pconstraint:		firstset = {
 									firstset(kNewtonIrNodeType_PquantityExpression),
+									firstset(kNewtonIrNodeType_PpiecewiseConstraint),
 								}
 --//		callParameterTuple		::=	"(" identifier {"," identifier} ")" .
 production kNewtonIrNodeType_PcallParameterTuple:	firstset = {
 									kNewtonIrNodeType_TleftParen,
 								}
 
+--//		piecewiseConstraint		::=	"piecewise" "{" caseList "}" .
+production kNewtonIrNodeType_PpiecewiseConstraint:	firstset = {
+									kNewtonIrNodeType_Tpiecewise,
+								}
+
+--//		caseStatementList		::=	caseStatement {"," caseStatement} .
+production kNewtonIrNodeType_PcaseStatementList:	firstset = {
+									firstset(kNewtonIrNodeType_PcaseStatement),
+								}
+
+--//		caseStatement			::=	("case" constraint | "otherwise" )"->" "{" constraintList "}" .
+production kNewtonIrNodeType_PcaseStatement:		firstset = {
+								kNewtonIrNodeType_Tcase,
+								kNewtonIrNodeType_Totherwise,
+							}
 
 --//		quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
 production kNewtonIrNodeType_PquantityExpression:	firstset = {
@@ -584,11 +600,29 @@ production kNewtonIrNodeType_PconstraintList:		followset = {
 production kNewtonIrNodeType_Pconstraint:		followset = {
 									kNewtonIrNodeType_Tcomma,
 									followset(kNewtonIrNodeType_PconstraintList),
+									kNewtonIrNodeType_TrightArrow,
 								}
+
 --//		callParameterTuple		::=	"(" identifier {"," identifier} ")" .
 production kNewtonIrNodeType_PcallParameterTuple:	followset = {
 									followset(kNewtonIrNodeType_Pconstraint),
 								}
+--//		piecewiseConstraint		::=	"piecewise" "{" caseList "}" .
+production kNewtonIrNodeType_PpiecewiseConstraint:	followset = {
+									followset(kNewtonIrNodeType_Pconstraint),
+								}
+
+--//		caseStatementList		::=	caseStatement {"," caseStatement} .
+production kNewtonIrNodeType_PcaseStatementList:	followset = {
+									kNewtonIrNodeType_TrightBrace,	
+								}
+
+--//		caseStatement			::=	("case" constraint | "otherwise" )"->" "{" constraintList "}" .
+production kNewtonIrNodeType_PcaseStatement:		followset = {
+									followset(kNewtonIrNodeType_PcaseStatementList),
+									kNewtonIrNodeType_Tcomma,
+							}
+
 --//		quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
 production kNewtonIrNodeType_PquantityExpression:	followset = {
 									kNewtonIrNodeType_Tsemicolon,
@@ -1142,9 +1176,14 @@ token	kNewtonIrNodeType_TbitwiseOr:			followset = {
 									}
 token	kNewtonIrNodeType_Tpercent:			followset = {
 									}
-
-
-
+token kNewtonIrNodeType_TrightArrow:			followset = {
+									}
+token kNewtonIrNodeType_Tpiecewise:			followset = {
+									}
+token kNewtonIrNodeType_Tcase:				followset = {
+									}
+token kNewtonIrNodeType_Totherwise:			followset = {
+									}
 token	kNewtonIrNodeType_TintegerConst:		followset = {
 									}
 token	kNewtonIrNodeType_TrealConst:			followset = {

@@ -8,6 +8,7 @@ reservedIdentifiers		::=	":" | "," | "@" | "o<" | "~" | "<" | "<=" | ">" | ">=" 
 					| "dot" | "cross" | "derivative" | "integral" | "interface"
 					| "i2c" | "spi" | "analog" | "write" | "read" | "delay" | "range"
 					| "erasuretoken" | "uncertainty" | "accuracy" | "precision"
+					| "piecewise" | "case" | "otherwise"
 					| "GaussianDistribution" | "LaplacianDistribution" | "StudentTDistribution" | "BernoulliDistribution" | "BinomialDistribution" 
 					| "PoissonDistribution" | "NegativeBinomialDistribution" | "BetaBinomialDistribution" | "ExponentialDistribution"
 					| "GammaDistribution" | "MultinomialDistribution" | "BetaDistribution" | "LogitNormalDistribution" | "DirichletDistribution"
@@ -15,7 +16,7 @@ reservedIdentifiers		::=	":" | "," | "@" | "o<" | "~" | "<" | "<=" | ">" | ">=" 
 					| "WeibullDistribution" | "ErlangDistribution" | "MaxwellDistribution" | "FermiDiracDistribution" | "FisherZDistribution" 
 					| "LogSeriesDistribution" | "GumbelDistribution" | "RayleighDistribution" | "GibratDistribution" | "PearsonIIIDistribution"
 					| "ExtremeValueDistribution"| "FDistribution" | "XiDistribution" | "XiSquaredDistribution" | "to" | "bits" | "><"
-					| "dimensionless" | "include" | "(" | ")" | "{" | "}" | ";" | ".." .
+					| "dimensionless" | "include" | "(" | ")" | "{" | "}" | ";" | ".." | "->" .
 
 zeroToNine			=	"0-9" .
 oneToNine			=	"1-9" .
@@ -59,8 +60,11 @@ subdimensionTuple		::=	"(" identifier ":" numericExpression "to" numericExpressi
 parameterTuple			::=	"(" parameter {"," parameter} ")" .
 parameter			::=	identifier ":" (identifier | numericExpression) {"[" integerConst "]"} .
 constraintList			::=	[constraint] {"," constraint} .
-constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier callParameterTuple .
+constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier callParameterTuple | piecewiseConstraint .
 callParameterTuple		::=	"(" identifier {"," identifier} ")" .
+piecewiseConstraint		::=	"piecewise" "{" caseStatementList "}" .
+caseStatementList		::=	caseStatement {"," caseStatement} .
+caseStatement			::=	("case" constraint | "otherwise" )"->" "{" constraintList "}" .
 quantityExpression		::=	quantityTerm {lowPrecedenceOperator quantityTerm} .
 quantityTerm			::=	[unaryOp] quantityFactor {highPrecedenceQuantityOperator quantityFactor} .
 
