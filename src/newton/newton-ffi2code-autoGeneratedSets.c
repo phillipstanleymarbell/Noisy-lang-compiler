@@ -668,10 +668,18 @@ int    gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNewtonIrNodeType_TrealConst,
                                                                                                                     kNewtonIrNodeTypeMax
                                                                                                },
-                                               [kNewtonIrNodeType_PcallParameterTuple           ]            = {
-                                                                                                                    kNewtonIrNodeType_TleftParen, 
+                                               [kNewtonIrNodeType_PcaseStatement                ]            = {
+                                                                                                                    kNewtonIrNodeType_Tcase,
+                                                                                                                    kNewtonIrNodeType_Totherwise,
                                                                                                                     kNewtonIrNodeTypeMax
                                                                                                },
+                                               [kNewtonIrNodeType_PcaseStatementList            ]            = {
+                                                                                                                    kNewtonIrNodeType_Tcase,
+                                                                                                                    kNewtonIrNodeType_Totherwise,
+                                                                                                                    kNewtonIrNodeTypeMax
+                                                                                               },
+                                               [kNewtonIrNodeType_PpiecewiseConstraint          ]            = {kNewtonIrNodeType_Tpiecewise, kNewtonIrNodeTypeMax},
+                                               [kNewtonIrNodeType_PcallParameterTuple           ]            = {kNewtonIrNodeType_TleftParen, kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_Pconstraint                   ]            = {
                                                                                                                     kNewtonIrNodeType_Tplus,
                                                                                                                     kNewtonIrNodeType_Tminus,
@@ -745,6 +753,7 @@ int    gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNewtonIrNodeType_Tidentifier,
                                                                                                                     kNewtonIrNodeType_TintegerConst,
                                                                                                                     kNewtonIrNodeType_TrealConst,
+                                                                                                                    kNewtonIrNodeType_Tpiecewise,
                                                                                                                     kNewtonIrNodeTypeMax
                                                                                                },
                                                [kNewtonIrNodeType_PconstraintList               ]            = {
@@ -820,6 +829,7 @@ int    gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNewtonIrNodeType_Tidentifier,
                                                                                                                     kNewtonIrNodeType_TintegerConst,
                                                                                                                     kNewtonIrNodeType_TrealConst,
+                                                                                                                    kNewtonIrNodeType_Tpiecewise,
                                                                                                                     kNewtonIrNodeTypeMax
                                                                                                },
                                                [kNewtonIrNodeType_Pparameter                    ]            = {kNewtonIrNodeType_Tidentifier, kNewtonIrNodeTypeMax},
@@ -920,6 +930,7 @@ int    gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                [kNewtonIrNodeType_TatSign                       ]            = {kNewtonIrNodeType_TatSign, kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_Tbits                         ]            = {kNewtonIrNodeType_Tbits, kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_TbitwiseOr                    ]            = {kNewtonIrNodeType_TbitwiseOr, kNewtonIrNodeTypeMax},
+                                               [kNewtonIrNodeType_Tcase                         ]            = {kNewtonIrNodeType_Tcase,kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_Tcolon                        ]            = {kNewtonIrNodeType_Tcolon, kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_Tcomma                        ]            = {kNewtonIrNodeType_Tcomma, kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_Tconstant                     ]            = {kNewtonIrNodeType_Tconstant, kNewtonIrNodeTypeMax},
@@ -958,7 +969,9 @@ int    gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                [kNewtonIrNodeType_Tname                         ]            = {kNewtonIrNodeType_Tname, kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_Tnil                          ]            = {kNewtonIrNodeType_Tnil, kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_Tnone                         ]            = {kNewtonIrNodeType_Tnone, kNewtonIrNodeTypeMax},
+                                               [kNewtonIrNodeType_Totherwise                    ]            = {kNewtonIrNodeType_Totherwise,kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_Tpercent                      ]            = {kNewtonIrNodeType_Tpercent, kNewtonIrNodeTypeMax},
+                                               [kNewtonIrNodeType_Tpiecewise                    ]            = {kNewtonIrNodeType_Tpiecewise,kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_Tplus                         ]            = {kNewtonIrNodeType_Tplus, kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_TplusPlus                     ]            = {kNewtonIrNodeType_TplusPlus, kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_Tprecision                    ]            = {kNewtonIrNodeType_Tprecision, kNewtonIrNodeTypeMax},
@@ -966,6 +979,7 @@ int    gNewtonFirsts[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                [kNewtonIrNodeType_Tread                         ]            = {kNewtonIrNodeType_Tread, kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_TrealConst                    ]            = {kNewtonIrNodeType_TrealConst, kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_Trelated                      ]            = {kNewtonIrNodeType_Trelated, kNewtonIrNodeTypeMax},
+                                               [kNewtonIrNodeType_TrightArrow                   ]            = {kNewtonIrNodeType_TrightArrow,kNewtonIrNodeTypeMax},   
                                                [kNewtonIrNodeType_TrightBrace                   ]            = {kNewtonIrNodeType_TrightBrace, kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_TrightBracket                 ]            = {kNewtonIrNodeType_TrightBracket, kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_TrightParen                   ]            = {kNewtonIrNodeType_TrightParen, kNewtonIrNodeTypeMax},
@@ -1774,6 +1788,7 @@ int    gNewtonFollows[kNewtonIrNodeTypeMax][kNewtonIrNodeTypeMax]  = {
                                                                                                                     kNewtonIrNodeType_Trelated,
                                                                                                                     kNewtonIrNodeType_Tcomma,
                                                                                                                     kNewtonIrNodeType_TrightBrace,
+                                                                                                                    kNewtonIrNodeType_TrightArrow,
                                                                                                                     kNewtonIrNodeType_TrightParen,
                                                                                                                     kNewtonIrNodeType_Texponentiation,
                                                                                                                     kNewtonIrNodeTypeMax
@@ -1797,6 +1812,7 @@ int    gNewtonFollows[kNewtonIrNodeTypeMax][kNewtonIrNodeTypeMax]  = {
                                                                                                                     kNewtonIrNodeType_Trelated,
                                                                                                                     kNewtonIrNodeType_Tcomma,
                                                                                                                     kNewtonIrNodeType_TrightBrace,
+                                                                                                                    kNewtonIrNodeType_TrightArrow,
                                                                                                                     kNewtonIrNodeType_TrightParen,
                                                                                                                     kNewtonIrNodeTypeMax
                                                                                                },
@@ -1814,6 +1830,7 @@ int    gNewtonFollows[kNewtonIrNodeTypeMax][kNewtonIrNodeTypeMax]  = {
                                                                                                                     kNewtonIrNodeType_Trelated,
                                                                                                                     kNewtonIrNodeType_Tcomma,
                                                                                                                     kNewtonIrNodeType_TrightBrace,
+                                                                                                                    kNewtonIrNodeType_TrightArrow,
                                                                                                                     kNewtonIrNodeType_TrightParen,
                                                                                                                     kNewtonIrNodeTypeMax
                                                                                                },
@@ -1829,17 +1846,32 @@ int    gNewtonFollows[kNewtonIrNodeTypeMax][kNewtonIrNodeTypeMax]  = {
                                                                                                                     kNewtonIrNodeType_Trelated,
                                                                                                                     kNewtonIrNodeType_Tcomma,
                                                                                                                     kNewtonIrNodeType_TrightBrace,
+                                                                                                                    kNewtonIrNodeType_TrightArrow,
                                                                                                                     kNewtonIrNodeType_TrightParen,
+                                                                                                                    kNewtonIrNodeTypeMax
+                                                                                               },
+                                               [kNewtonIrNodeType_PcaseStatement                ]            = {
+                                                                                                                    kNewtonIrNodeType_TrightBrace,
+                                                                                                                    kNewtonIrNodeType_Tcomma,
+                                                                                                                    kNewtonIrNodeTypeMax
+                                                                                               },
+                                               [kNewtonIrNodeType_PcaseStatementList            ]            = {kNewtonIrNodeType_TrightBrace, kNewtonIrNodeTypeMax},
+                                               [kNewtonIrNodeType_PpiecewiseConstraint          ]            = {
+                                                                                                                    kNewtonIrNodeType_Tcomma,
+                                                                                                                    kNewtonIrNodeType_TrightBrace,
+                                                                                                                    kNewtonIrNodeType_TrightArrow,
                                                                                                                     kNewtonIrNodeTypeMax
                                                                                                },
                                                [kNewtonIrNodeType_PcallParameterTuple           ]            = {
                                                                                                                     kNewtonIrNodeType_Tcomma,
                                                                                                                     kNewtonIrNodeType_TrightBrace,
+                                                                                                                    kNewtonIrNodeType_TrightArrow,
                                                                                                                     kNewtonIrNodeTypeMax
                                                                                                },
                                                [kNewtonIrNodeType_Pconstraint                   ]            = {
                                                                                                                     kNewtonIrNodeType_Tcomma,
                                                                                                                     kNewtonIrNodeType_TrightBrace,
+                                                                                                                    kNewtonIrNodeType_TrightArrow,
                                                                                                                     kNewtonIrNodeTypeMax
                                                                                                },
                                                [kNewtonIrNodeType_PconstraintList               ]            = {kNewtonIrNodeType_TrightBrace, kNewtonIrNodeTypeMax},
@@ -1852,6 +1884,7 @@ int    gNewtonFollows[kNewtonIrNodeTypeMax][kNewtonIrNodeTypeMax]  = {
                                                                                                                     kNewtonIrNodeType_Tequals,
                                                                                                                     kNewtonIrNodeType_Tcomma,
                                                                                                                     kNewtonIrNodeType_TrightBrace,
+                                                                                                                    kNewtonIrNodeType_TrightArrow,
                                                                                                                     kNewtonIrNodeType_TleftBrace,
                                                                                                                     kNewtonIrNodeTypeMax
                                                                                                },
@@ -1909,6 +1942,10 @@ int    gNewtonFollows[kNewtonIrNodeTypeMax][kNewtonIrNodeTypeMax]  = {
                                                [kNewtonIrNodeType_TstringConst                  ]            = {kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_TrealConst                    ]            = {kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_TintegerConst                 ]            = {kNewtonIrNodeTypeMax},
+                                               [kNewtonIrNodeType_Totherwise                    ]            = {kNewtonIrNodeTypeMax},
+                                               [kNewtonIrNodeType_Tcase                         ]            = {kNewtonIrNodeTypeMax},
+                                               [kNewtonIrNodeType_Tpiecewise                    ]            = {kNewtonIrNodeTypeMax},
+                                               [kNewtonIrNodeType_TrightArrow                   ]            = {kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_Tpercent                      ]            = {kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_TbitwiseOr                    ]            = {kNewtonIrNodeTypeMax},
                                                [kNewtonIrNodeType_TrightBracket                 ]            = {kNewtonIrNodeTypeMax},
@@ -2083,6 +2120,9 @@ char	*gNewtonAstNodeStrings[kNewtonIrNodeTypeMax]	= {
                                                [               kNewtonIrNodeType_PquantityFactor]            = "kNewtonIrNodeType_PquantityFactor",
                                                [                 kNewtonIrNodeType_PquantityTerm]            = "kNewtonIrNodeType_PquantityTerm",
                                                [           kNewtonIrNodeType_PquantityExpression]            = "kNewtonIrNodeType_PquantityExpression",
+                                               [                kNewtonIrNodeType_PcaseStatement]            = "kNewtonIrNodeType_PcaseStatement",
+                                               [            kNewtonIrNodeType_PcaseStatementList]            = "kNewtonIrNodeType_PcaseStatementList",
+                                               [          kNewtonIrNodeType_PpiecewiseConstraint]            = "kNewtonIrNodeType_PpiecewiseConstraint",
                                                [           kNewtonIrNodeType_PcallParameterTuple]            = "kNewtonIrNodeType_PcallParameterTuple",
                                                [                   kNewtonIrNodeType_Pconstraint]            = "kNewtonIrNodeType_Pconstraint",
                                                [               kNewtonIrNodeType_PconstraintList]            = "kNewtonIrNodeType_PconstraintList",
@@ -2106,6 +2146,10 @@ char	*gNewtonAstNodeStrings[kNewtonIrNodeTypeMax]	= {
                                                [                  kNewtonIrNodeType_TstringConst]            = "kNewtonIrNodeType_TstringConst",
                                                [                    kNewtonIrNodeType_TrealConst]            = "kNewtonIrNodeType_TrealConst",
                                                [                 kNewtonIrNodeType_TintegerConst]            = "kNewtonIrNodeType_TintegerConst",
+                                               [                    kNewtonIrNodeType_Totherwise]            = "kNewtonIrNodeType_Totherwise",
+                                               [                         kNewtonIrNodeType_Tcase]            = "kNewtonIrNodeType_Tcase",
+                                               [                    kNewtonIrNodeType_Tpiecewise]            = "kNewtonIrNodeType_Tpiecewise",
+                                               [                   kNewtonIrNodeType_TrightArrow]            = "kNewtonIrNodeType_TrightArrow",
                                                [                      kNewtonIrNodeType_Tpercent]            = "kNewtonIrNodeType_Tpercent",
                                                [                    kNewtonIrNodeType_TbitwiseOr]            = "kNewtonIrNodeType_TbitwiseOr",
                                                [                 kNewtonIrNodeType_TrightBracket]            = "kNewtonIrNodeType_TrightBracket",
