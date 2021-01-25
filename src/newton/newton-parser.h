@@ -88,6 +88,7 @@ IrNode *		newtonParseParameter(State * N, Scope *  currentScope, int parameterNu
 IrNode *		newtonParseParameterTuple(State *  N, Scope *  currentScope);
 IrNode *		newtonParseParameterTuple(State * N, Scope *  currentScope);
 IrNode *		newtonParseParameterValueList(State * N, Scope *  currentScope);
+IrNode *		newtonParsePiecewiseConstraint(State * N, Scope * currentScope);
 IrNode *		newtonParsePrecisionStatement(State * N, Scope *  currentScope);
 IrNode *		newtonParseQuantity(State * N, Scope *  currentScope);
 IrNode *		newtonParseQuantityExpression(State *  N, Scope *  currentScope);

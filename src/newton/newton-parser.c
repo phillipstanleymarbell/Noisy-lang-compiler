@@ -2477,7 +2477,7 @@ newtonParseHighPrecedenceQuantityOperator(State *  N, Scope *  currentScope)
  *	Grammar production:
  *
  *		constraint			::=	quantityExpression comparisonOperator quantityExpression 
- *							| identifier callParameterTuple | "piecewise" "{" caseStatementList "}" .
+ *							| identifier callParameterTuple | piecewiseConstraint .
  */
 IrNode *
 newtonParseConstraint(State *  N, Scope *  currentScope)
@@ -2505,15 +2505,9 @@ newtonParseConstraint(State *  N, Scope *  currentScope)
 		else if (lexPeek(N,1)->type == kNewtonIrNodeType_Tpiecewise)
 		{
 			/*
-			*	constraint ::= "piecewise" "{" caseStatementList "}"
-			*
-			*	NOTE :	We add the piecewise terminal token in the AST, because maybe it can be used
-			*		in a future IR pass.
+			*	constraint ::= piecewiseConstraint .
 			*/
-			addLeaf(N,node,newtonParseTerminal(N,kNewtonIrNodeType_Tpiecewise,currentScope));
-			newtonParseTerminal(N,kNewtonIrNodeType_TleftBrace,currentScope);
-			addLeafWithChainingSeq(N,node, newtonParseCaseStatementList(N,currentScope));
-			newtonParseTerminal(N,kNewtonIrNodeType_TrightBrace,currentScope);
+			addLeaf(N,node, newtonParsePiecewiseConstraint(N,currentScope));
 		}
 		
 		else 
@@ -2697,6 +2691,30 @@ newtonParseCallParameterSemantics(State * N, IrNode * callParameter, IrNode * ex
 	}
 
 	return callParameter;
+}
+
+/*
+*	Grammar production:
+*
+*		piecewiseConstraint		::= "piecewise" "{" caseStatementList "}" .		
+*/
+IrNode *
+newtonParsePiecewiseConstraint(State * N, Scope * currentScope)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PpiecewiseConstraint,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */
+					);
+	
+	newtonParseTerminal(N,kNewtonIrNodeType_Tpiecewise,currentScope);
+	newtonParseTerminal(N,kNewtonIrNodeType_TleftBrace,currentScope);
+	addLeaf(N,node, newtonParseCaseStatementList(N,currentScope));
+	newtonParseTerminal(N,kNewtonIrNodeType_TrightBrace,currentScope);
+
+	return node;
 }
 
 /*
