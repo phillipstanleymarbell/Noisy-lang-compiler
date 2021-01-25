@@ -942,6 +942,34 @@ checkPlusMinus(State *  N, IrNodeType plusOrMinusTokenType)
 	TimeStampTraceMacro(kNewtonTimeStampKey);
 
 	/*
+	*	kNewtonIrNodeType_TrightArrow = "->":
+	*	
+	*		If the current character is '-' and the next is '>' create the rightArrow token.
+	*/
+	if (N->lineLength >=2 && N->lineBuffer[N->columnNumber+1] == '>' && N->lineBuffer[N->columnNumber] == '-')
+	{
+		finishToken(N);
+
+		gobble(N,2);
+		
+		IrNodeType type = kNewtonIrNodeType_TrightArrow;
+
+		Token *		newToken = lexAllocateToken(N,		type	/* type		*/,
+									NULL	/* identifier	*/,
+									0	/* integerConst	*/,
+									0.0	/* realConst	*/,
+									NULL	/* stringConst	*/,
+									NULL	/* sourceInfo	*/);
+
+		/*
+		 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+		 */
+		done(N, newToken);
+
+		return ;
+	}
+
+	/*
 	 *	If the previous two characters were a number and 'e' or 'E', keep eating chars until the first non-number.
 	 */
 	if ((N->lineLength > 2) && isdigit(N->lineBuffer[N->columnNumber-2]) && ((N->lineBuffer[N->columnNumber-1] == 'e') || (N->lineBuffer[N->columnNumber-1] == 'E')))
