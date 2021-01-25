@@ -45,6 +45,8 @@ IrNode *		newtonParseArithmeticCommand(State * N, Scope *  currentScope);
 IrNode *		newtonParseBaseSignal(State *  N, Scope *  currentScope);
 IrNode * 		newtonParseCallParameterSemantics(State * N, IrNode * callParameter, IrNode * expectedParameter);
 IrNode *		newtonParseCallParameterTuple(State * N, Scope * currentScope,Invariant * invariant);
+IrNode *		newtonParseCaseStatement(State * N, Scope * currentScope);
+IrNode *		newtonParseCaseStatementList(State * N, Scope * currentScope);
 IrNode *		newtonParseCompareOp(State *  N, Scope *  currentScope);
 IrNode *		newtonParseConstant(State *  N, Scope *  currentScope);
 IrNode *		newtonParseConstant(State * N, Scope *  currentScope);
