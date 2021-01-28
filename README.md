@@ -109,6 +109,10 @@ For example, to compile a Newton description to LaTeX:
 ```sh
 	./newton-darwin-EN ../../applications/newton/invariants/Waves-pigroups.nt -x
 ```
+For example, to execute the state estimator synthesis backend and get the synthesize C source code for the Pendulum.nt input:
+```sh
+	./newton-darwin-EN --estimator-synthesis=<full-path-to-output-file.c> --process=pendulum_ideaL_process --measure=pendulum_measure ../../applications/newton/invariants/Pendulum.nt
+```
 
 ## The Noisy compiler
 The Noisy compiler takes Noisy programs and compiles them to either Noisy Bytecode (the Noisy IR serialized via Google's Protocol Buffers), or renders the IR and symbol table using GraphViz/Dot for debugging.

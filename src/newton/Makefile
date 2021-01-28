@@ -59,6 +59,8 @@ SOURCES		=\
 		newton-irPass-targetParamBackend.c\
 		newton-irPass-RTLBackend.c\
 		newton-irPass-estimatorSynthesisBackend.c\
+		newton-irPass-invariantSignalAnnotation.c\
+		newton-irPass-piGroupsSignalAnnotation.c\
 		newton-irPass-dimensionalMatrixAnnotation.c\
 		newton-irPass-dimensionalMatrixPiGroups.c\
 		newton-irPass-dimensionalMatrixPrinter.c\
@@ -102,6 +104,8 @@ OBJS		=\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
+		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
+		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPiGroups.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
@@ -136,6 +140,8 @@ CGIOBJS		=\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
+		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
+		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPiGroups.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
@@ -169,6 +175,8 @@ LIBNEWTONOBJS =\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
+		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
+		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPiGroups.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
@@ -200,6 +208,8 @@ HEADERS		=\
 		newton-irPass-dotBackend.h\
 		newton-irPass-smtBackend.h\
 		newton-irPass-estimatorSynthesisBackend.h\
+		newton-irPass-invariantSignalAnnotation.h\
+		newton-irPass-piGroupsSignalAnnotation.h\
 		newton-irPass-dimensionalMatrixAnnotation.h\
 		newton-irPass-dimensionalMatrixPiGroups.h\
 		newton-irPass-dimensionalMatrixPrinter.h\
@@ -281,8 +291,8 @@ examples: $(EXAMPLES) target
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Cyclotron.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/DroppedBall.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Electricity.nt
-	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/GpsWalking.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/HotSphere.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/GpsWalking.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Kepler.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/JetEngine.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/MotorWheelChair.nt

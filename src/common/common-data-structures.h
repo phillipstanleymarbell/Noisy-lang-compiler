@@ -701,6 +701,9 @@ typedef enum
 	kNewtonIrPassDimensionalMatrixAnnotationByBody          = (1 << 7),
 	kNewtonIrPassDimensionalMatrixKernelPrinterFromBody	= (1 << 8),
 	KNewtonIrPassDimensionalMatrixConstantPi		= (1 << 9),
+	kNewtonIrPassInvariantSignalAnnotation			= (1 << 10),
+
+	kNewtonIrPassPiGroupsSignalAnnotation			= (1 << 11),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -829,6 +832,7 @@ typedef struct Dimension	Dimension;
 typedef struct Physics		Physics;
 typedef struct IntegralList	IntegralList;
 typedef struct Invariant	Invariant;
+typedef struct Signal		Signal;
 
 struct Dimension
 {
@@ -867,6 +871,18 @@ struct Invariant
 	int ** 			numberOfConstPiArray;		//	Saves the number of constant Pi in each kernel
 
 	Invariant *		next;
+};
+
+struct Signal {
+    IrNode * 		baseNode;				//	The baseSignalDefinition IrNode.
+    char * 			identifier;				//	The signal identifier.
+	char *			invariantExpressionIdentifier;	//Identifier used in invariant expressions.
+	int				axis;					//	The axis of the multi axis signal that the signal corresponds to. Default value is zero.
+    char * 			sensorIdentifier;		//	Identifier of the sensor associated to a signal.
+    int 			physicalGroupNumber;	//  Conveys information about the physical origin of the signal. (e.g. The I2C bus number of a sensor connected to Ipsa).
+    Signal * 		relatedSignalList;		//	List of signals that should be co-sampled with this signal.
+	Signal *		relatedSignalListNext;	//	Move to the next element of the relatedSignalList.
+	Signal *		relatedSignalListPrev;	//	Move to the previous element of the relatedSignalList.
 };
 
 struct Physics
@@ -916,6 +932,11 @@ struct IrNode
 	 *	Used for evaluating dimensions in expressions
 	 */
 	Physics *		physics;
+
+	/*
+	 *	Used for connecting invariant parameters to signals.
+	 */
+	Signal *		signal;
 
 	/*
 	 *	Only if this node belongs to a ParseNumericExpression subtree
@@ -1179,6 +1200,15 @@ typedef struct
 	char *			estimatorProcessModel;
 	char *			estimatorMeasurementModel;
 	bool			autodiff;
+
+	/*
+	 *	Variables to keep track of the kernel number and pi number
+	 *	specified by the user for Pi Groups Signal Annotation.
+	 */
+	int				kernelNumber;
+	int				piNumber;
+	bool			enableKernelSelect;
+	bool			enablePiSelect;
 
 	CommonMode		mode;
 	uint64_t		verbosityLevel;

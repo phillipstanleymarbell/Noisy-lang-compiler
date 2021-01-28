@@ -111,6 +111,8 @@ main(int argc, char *argv[])
 			{"process", required_argument, 0, 421},
 			{"measurement", required_argument, 0, 422},
 			{"auto-diff", no_argument, 0, 423},
+			{"kernelNumber", required_argument, 0, 494},
+			{"piNumber", required_argument, 0, 495},
 			{0,			0,			0,	0}
 		};
 
@@ -396,6 +398,20 @@ main(int argc, char *argv[])
 			case 423:
 			{
 				N->autodiff = true;
+				break;
+			}
+
+			case 494:
+			{
+				N->kernelNumber = atoi(optarg);
+				N->enableKernelSelect = true;
+				break;
+			}
+
+			case 495:
+			{
+				N->piNumber = atoi(optarg);
+				N->enablePiSelect = true;
 				break;
 			}
 

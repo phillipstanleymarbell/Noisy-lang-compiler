@@ -539,7 +539,7 @@ scope2id(State *  N, Scope *  scope)
 
 	int length = snprintf(tmp, kCommonMaxBufferLength, "%"PRIu64"_%"PRIu64"_%"PRIu64"_%"PRIu64"",
 			scope->begin->lineNumber, scope->begin->columnNumber,
-			scope->end->lineNumber, scope->end->columnNumber);
+			scope->end->lineNumber, scope->end->columnNumber) + 1;
 
 	buf = (char *)malloc(length);
 
@@ -570,7 +570,7 @@ scope2id2(State *  N, Scope *  scope)
 	int length = snprintf(tmp, kCommonMaxBufferLength, "%s:%"PRIu64",%"PRIu64" \\nto\\n %s:%"PRIu64",%"PRIu64"",
 		scope->begin->fileName, scope->begin->lineNumber, 
 		scope->begin->columnNumber,  scope->begin->fileName,
-		scope->end->lineNumber, scope->end->columnNumber);
+		scope->end->lineNumber, scope->end->columnNumber) + 1;
 
 	buf = (char *)malloc(length);
 
@@ -600,7 +600,7 @@ symbol2id(State *  N, Symbol *  symbol)
 	char *	buf, tmp[kCommonMaxBufferLength];
 
 	int length = snprintf(tmp, kCommonMaxBufferLength, "%"PRIu64"_%"PRIu64"",
-		symbol->sourceInfo->lineNumber, symbol->sourceInfo->columnNumber);
+		symbol->sourceInfo->lineNumber, symbol->sourceInfo->columnNumber) + 1;
 
 	buf = (char *)malloc(length);
 

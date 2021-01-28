@@ -562,6 +562,9 @@ newtonParseParameter(State *  N, Scope *  currentScope, int parameterNumber)
 	addLeaf(N, node, newtonParseIdentifier(N, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
 
+	Signal * signal = (Signal *) calloc(1, sizeof(Signal));
+	signal->axis = 0;
+
 	if (peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
 	{
 		IrNode *	physicsName = newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
@@ -571,13 +574,15 @@ newtonParseParameter(State *  N, Scope *  currentScope, int parameterNumber)
 		{
 			// newtonParseTerminal(N, kNewtonIrNodeType_TatSign, currentScope);
 			newtonParseTerminal(N, kNewtonIrNodeType_TleftBracket, currentScope);
+			IrNode * integerConst = newtonParseTerminal(N, kNewtonIrNodeType_TintegerConst, currentScope);
+			signal->axis = integerConst->value;
 
 			newtonParseResetPhysicsWithCorrectSubindex(
 					N,
 					physicsName,
 					currentScope,
 					physicsName->token->identifier,
-					newtonParseTerminal(N, kNewtonIrNodeType_TintegerConst, currentScope)->value
+					integerConst->value
 					);
 
 			newtonParseTerminal(N, kNewtonIrNodeType_TrightBracket, currentScope);
@@ -585,6 +590,7 @@ newtonParseParameter(State *  N, Scope *  currentScope, int parameterNumber)
 
 
 			node->physics = physicsName->physics;
+			node->signal = signal;
 	}
 	else
 	{
