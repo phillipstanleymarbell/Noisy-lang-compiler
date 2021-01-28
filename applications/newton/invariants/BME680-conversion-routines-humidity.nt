@@ -1,0 +1,181 @@
+#
+#	Authored 2020, Phillip Stanley-Marbell.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description: Signals in the BME680 conversion routines from Bosch.
+#
+#	https://github.com/BoschSensortec/BME680_driver/blob/9014031fa00a5cc1eea1498c4cd1f94ec4b8ab11/bme680.c#L928
+#
+#	static uint32_t calc_humidity(uint16_t hum_adc, const struct bme680_dev *dev)
+#	{
+#		int32_t var1;
+#		int32_t var2;
+#		int32_t var3;
+#		int32_t var4;
+#		int32_t var5;
+#		int32_t var6;
+#		int32_t temp_scaled;
+#		int32_t calc_hum;
+#	
+#		temp_scaled = (((int32_t) dev->calib.t_fine * 5) + 128) >> 8;
+#		var1 = (int32_t) (hum_adc - ((int32_t) ((int32_t) dev->calib.par_h1 * 16)))
+#			- (((temp_scaled * (int32_t) dev->calib.par_h3) / ((int32_t) 100)) >> 1);
+#		var2 = ((int32_t) dev->calib.par_h2
+#			* (((temp_scaled * (int32_t) dev->calib.par_h4) / ((int32_t) 100))
+#				+ (((temp_scaled * ((temp_scaled * (int32_t) dev->calib.par_h5) / ((int32_t) 100))) >> 6)
+#					/ ((int32_t) 100)) + (int32_t) (1 << 14))) >> 10;
+#		var3 = var1 * var2;
+#		var4 = (int32_t) dev->calib.par_h6 << 7;
+#		var4 = ((var4) + ((temp_scaled * (int32_t) dev->calib.par_h7) / ((int32_t) 100))) >> 4;
+#		var5 = ((var3 >> 14) * (var3 >> 14)) >> 10;
+#		var6 = (var4 * var5) >> 1;
+#		calc_hum = (((var3 + var6) >> 10) * ((int32_t) 1000)) >> 12;
+#	
+#		if (calc_hum > 100000) /* Cap at 100%rH */
+#			calc_hum = 100000;
+#		else if (calc_hum < 0)
+#			calc_hum = 0;
+#	
+#		return (uint32_t) calc_hum;
+#	}
+#
+#
+#	To make the above code dimensionally plausible, we need to change the final statement assigning calc_temp from
+#
+#		temp_scaled = (((int32_t) dev->calib.t_fine * 5) + 128) >> 8;
+#
+#	to:
+#
+#		temp_scaled = (((int32_t) dev->calib.t_fine * 5) + 128)*unitHavingConstant1 >> 8;
+#
+#	and
+#		var2 = ((int32_t) dev->calib.par_h2
+#			* (((temp_scaled * (int32_t) dev->calib.par_h4) / ((int32_t) 100))
+#				+ (((temp_scaled * ((temp_scaled * (int32_t) dev->calib.par_h5) / ((int32_t) 100))) >> 6)
+#					/ ((int32_t) 100)) + (int32_t) (1 << 14))) >> 10;
+#
+#	to:
+#		var2 = ((int32_t) dev->calib.par_h2
+#			* (((temp_scaled * (int32_t) dev->calib.par_h4) / ((int32_t) 100))
+#				+ (((temp_scaled * ((temp_scaled * (int32_t) dev->calib.par_h5) / ((int32_t) 100))) >> 6)
+#					/ ((int32_t) 100)) + (int32_t) (1 << 14)*unitHavingConstant2)) >> 10;
+#
+#	Where unitHavingConstant1 has dimensions temperature/voltage^2 and unitHavingConstant2 has dimensions temperature^2,
+#
+
+include "NewtonBaseSignals.nt"
+
+voltage : signal =
+{
+	name = "Volt" English;
+	symbol = V;
+	derivation = Watt / Ampere;
+}
+
+VoltagePerTemperatureDimension : signal =
+{
+	derivation = voltage/temperature;
+}
+
+temperaturePerVoltageSquaredDimension : signal =
+{
+	derivation = temperature/voltage**2;
+}
+
+relativeHumidityPerTemperature : signal =
+{
+	derivation = relativeHumidity/temperature;
+}
+
+relativeHumidityPerVoltage : signal =
+{
+	derivation = relativeHumidity/voltage;
+}
+
+unitless : signal =
+{
+	name		= "none" English;
+	symbol		= x;
+	derivation	= dimensionless;
+}
+
+VoltageSquaredDimension : signal =
+{
+	derivation	= voltage**2;
+}
+
+temperatureSquaredDimension : signal =
+{
+	derivation = temperature**2;
+}
+
+relativeHumidityPerVoltageTemperatureSquaredDimension : signal =
+{
+	derivation = relativeHumidity/(voltage*temperature**2);
+}
+
+calcHumidityInvariant: invariant(
+					hum_adc			: voltage,
+					calib_t_fine		: VoltageSquaredDimension,
+					calib_par_h1		: voltage,
+					calib_par_h2		: relativeHumidityPerVoltageTemperatureSquaredDimension,
+					calib_par_h3		: VoltagePerTemperatureDimension,
+					calib_par_h4		: temperature,
+					calib_par_h5		: unitless,
+					calib_par_h6		: relativeHumidity,
+					calib_par_h7		: relativeHumidityPerTemperature,
+					var1			: voltage,
+					var2			: relativeHumidityPerVoltage,
+					var3			: relativeHumidity,
+					var4			: relativeHumidity,
+					var5			: relativeHumidity,
+					var6			: relativeHumidity,
+					temp_scaled		: temperature,					
+					unitHavingConstant1	: temperaturePerVoltageSquaredDimension,
+					unitHavingConstant2	: temperatureSquaredDimension,
+					calc_hum		: relativeHumidity
+				) =
+{
+	temp_scaled	~ calib_t_fine * unitHavingConstant1,
+	var1		~ hum_adc - calib_par_h1 - temp_scaled * calib_par_h3,
+	var2		~ calib_par_h2 * ((temp_scaled * calib_par_h4) + temp_scaled * temp_scaled * calib_par_h5 + unitHavingConstant2),
+	var3		~ var1 * var2,
+	var4		~ calib_par_h6,
+	var4		~ var4 + (temp_scaled * calib_par_h7),
+	var5		~ var3 * var3,
+	var6		~ var4 * var5,
+	calc_hum	~ var3 + var6
+}

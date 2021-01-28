@@ -1,0 +1,125 @@
+#
+#	Authored 2020, Phillip Stanley-Marbell.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description: Signals in the BME680 conversion routines from Bosch.
+#
+#	https://github.com/BoschSensortec/BME680_driver/blob/9014031fa00a5cc1eea1498c4cd1f94ec4b8ab11/bme680.c#L867
+#
+#	static int16_t calc_temperature(uint32_t temp_adc, struct bme680_dev *dev)
+#	{
+#		int64_t var1;
+#		int64_t var2;
+#		int64_t var3;
+#		int16_t calc_temp;
+#	
+#		var1 = ((int32_t) temp_adc >> 3) - ((int32_t) dev->calib.par_t1 << 1);
+#		var2 = (var1 * (int32_t) dev->calib.par_t2) >> 11;
+#		var3 = ((var1 >> 1) * (var1 >> 1)) >> 12;
+#		var3 = ((var3) * ((int32_t) dev->calib.par_t3 << 4)) >> 14;
+#		dev->calib.t_fine = (int32_t) (var2 + var3);
+#		calc_temp = (int16_t) (((dev->calib.t_fine * 5) + 128) >> 8);
+#	
+#		return calc_temp;
+#	}
+#
+#	To make the above code dimensionally plausible, we need to change the final statement assigning calc_temp from
+#
+#		calc_temp = (int16_t) (((dev->calib.t_fine * 5) + 128) >> 8);
+#
+#	to:
+#
+#		calc_temp = (int16_t) (((dev->calib.t_fine * 5 * unitHavingConstant1) + 128 * unitHavingConstant2) >> 8);
+#
+#	Where unitHavingConstant1 has dimensions temperature/voltage^2 and unitHavingConstant2 has dimensions temperature
+#	
+include "NewtonBaseSignals.nt"
+
+voltage : signal =
+{
+	name		= "Volt" English;
+	symbol		= V;
+	derivation	= Watt / Ampere;
+}
+
+VoltageSquaredDimension : signal =
+{
+	derivation	= voltage**2;
+}
+
+temperaturePerVoltageSquaredDimension : signal =
+{
+	derivation	= temperature/voltage**2;
+}
+
+unitless : signal =
+{
+	name		= "none" English;
+	symbol		= x;
+	derivation	= dimensionless;
+}
+
+calcTempInvariant: invariant(
+				temp_adc		: voltage,
+				var1			: voltage,
+				var2			: VoltageSquaredDimension,
+				var3			: VoltageSquaredDimension,
+				calib_par_t1		: voltage,
+				calib_par_t2		: voltage,
+				calib_par_t3		: unitless,
+				calib_t_fine		: VoltageSquaredDimension,
+				unitHavingConstant1	: temperaturePerVoltageSquaredDimension,
+				calc_temp		: temperature
+			) =
+{
+	var1		~ temp_adc - calib_par_t1,
+	var2		~ var1 * calib_par_t2,
+	var3		~ var1 * var1,
+	var3		~ var3 * calib_par_t3,
+	calib_t_fine	~ var2 + var3,
+
+	#
+	#	This is the original expression implied by the Bosch code:
+	#
+	# calc_temp	~ (calib_t_fine + 128);
+
+	#
+	#	This is the required expression to make it dimensionally-consistent
+	#	(we can ignore the additional implicit constant needed to make '128'
+	#	into a temperature)
+	#
+	calc_temp	~ calib_t_fine * unitHavingConstant1
+}

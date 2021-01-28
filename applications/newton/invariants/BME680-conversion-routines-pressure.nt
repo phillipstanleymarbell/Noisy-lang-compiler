@@ -1,0 +1,222 @@
+#
+#	Authored 2020, Phillip Stanley-Marbell.
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+#
+#	Description: Signals in the BME680 conversion routines from Bosch.
+#
+#	https://github.com/BoschSensortec/BME680_driver/blob/9014031fa00a5cc1eea1498c4cd1f94ec4b8ab11/bme680.c#L887
+#
+#	static uint32_t calc_pressure(uint32_t pres_adc, const struct bme680_dev *dev)
+#	{
+#		int32_t var1;
+#		int32_t var2;
+#		int32_t var3;
+#		int32_t pressure_comp;
+#	
+#		var1 = (((int32_t)dev->calib.t_fine) >> 1) - 64000;
+#		var2 = ((((var1 >> 2) * (var1 >> 2)) >> 11) *
+#			(int32_t)dev->calib.par_p6) >> 2;
+#		var2 = var2 + ((var1 * (int32_t)dev->calib.par_p5) << 1);
+#		var2 = (var2 >> 2) + ((int32_t)dev->calib.par_p4 << 16);
+#		var1 = (((((var1 >> 2) * (var1 >> 2)) >> 13) *
+#			((int32_t)dev->calib.par_p3 << 5)) >> 3) +
+#			(((int32_t)dev->calib.par_p2 * var1) >> 1);
+#		var1 = var1 >> 18;
+#		var1 = ((32768 + var1) * (int32_t)dev->calib.par_p1) >> 15;
+#		pressure_comp = 1048576 - pres_adc;
+#		pressure_comp = (int32_t)((pressure_comp - (var2 >> 12)) * ((uint32_t)3125));
+#		if (pressure_comp >= BME680_MAX_OVERFLOW_VAL)
+#			pressure_comp = ((pressure_comp / var1) << 1);
+#		else
+#			pressure_comp = ((pressure_comp << 1) / var1);
+#		var1 = ((int32_t)dev->calib.par_p9 * (int32_t)(((pressure_comp >> 3) *
+#			(pressure_comp >> 3)) >> 13)) >> 12;
+#		var2 = ((int32_t)(pressure_comp >> 2) *
+#			(int32_t)dev->calib.par_p8) >> 13;
+#		var3 = ((int32_t)(pressure_comp >> 8) * (int32_t)(pressure_comp >> 8) *
+#			(int32_t)(pressure_comp >> 8) *
+#			(int32_t)dev->calib.par_p10) >> 17;
+#	
+#		pressure_comp = (int32_t)(pressure_comp) + ((var1 + var2 + var3 +
+#			((int32_t)dev->calib.par_p7 << 7)) >> 4);
+#	
+#		return (uint32_t)pressure_comp;
+#	
+#	}
+#
+#	To make the above code dimensionally plausible, we need to change the final statement assigning calc_temp from
+#
+#		pressure_comp = 1048576 - pres_adc;
+#
+#	to:
+#
+#		pressure_comp = (1048576 * unitHavingConstant1) - (pres_adc * unitHavingConstant2);
+#
+#	and
+#		pressure_comp = (int32_t)((pressure_comp - (var2 >> 12)) * ((uint32_t)3125));
+#
+#	to:
+#		pressure_comp = (int32_t)((pressure_comp - (unitHavingConstant3*var2 >> 12)) * ((uint32_t)3125));
+#
+#	and
+#		if (pressure_comp >= BME680_MAX_OVERFLOW_VAL)
+#			pressure_comp = ((pressure_comp / (var1/unitHavingConstant4)) << 1);
+#		else
+#			pressure_comp = ((pressure_comp << 1) / (var1/unitHavingConstant4));
+#
+#	and
+#		pressure_comp = (int32_t)(pressure_comp) + ((var1 + var2 + var3 + ((int32_t)dev->calib.par_p7 << 7)) >> 4);
+#
+#	with
+#		pressure_comp = (int32_t)(pressure_comp) + ((var1*unitHavingConstant5 + var2*unitHavingConstant6 + var3*unitHavingConstant7 + ((int32_t)dev->calib.par_p7 << 7)) >> 4);
+#
+#	Where unitHavingConstant1 has dimensions pressure, unitHavingConstant2 has dimensions pressure/volt,
+#	unitHavingConstant3 has dimensions pressure/volt^4, unitHavingConstant4 has dimensions,
+#	unitHavingConstant5 has dimensions pressure/volt^2, unitHavingConstant6 has dimensions pressure/volt^4
+#	and unitHavingConstant7 has dimensions 1/pressure^2
+#
+
+
+include "NewtonBaseSignals.nt"
+
+voltage : signal =
+{
+	name = "Volt" English;
+	symbol = V;
+	derivation = Watt / Ampere;
+}
+
+VoltageSquaredDimension : signal =
+{
+	derivation	= voltage**2;
+}
+
+VoltageQuartedDimension : signal =
+{
+	derivation	= voltage**4;
+}
+
+unitless : signal =
+{
+	name		= "none" English;
+	symbol		= x;
+	derivation	= dimensionless;
+}
+
+pressurePerVoltageDimension : signal =
+{
+	derivation = pressure/voltage;
+}
+
+pressurePerVoltageQuartedDimension : signal =
+{
+	derivation = pressure/(voltage**4);
+}
+
+pressureCubedDimension : signal =
+{
+	derivation = pressure**3;
+}
+
+VoltageQuartedPerPressureDimension : signal =
+{
+	derivation	= (voltage**4)/pressure;
+}
+
+VoltageSquaredPerPressureSquaredDimension : signal =
+{
+	derivation	= (voltage**2)/(pressure**2);
+}
+
+PressurePerVoltageSquaredDimension : signal =
+{
+	derivation	= pressure/(voltage**2);
+}
+
+PressurePerVoltageQuartedDimension : signal =
+{
+	derivation	= pressure/(voltage**4);
+}
+
+OneOverPressureSquaredDimension : signal =
+{
+	derivation	= 1/(pressure**2);
+}
+
+calcPressureInvariant: invariant(
+					pressure_adc		: voltage,
+					var1			: VoltageSquaredDimension,
+					var2			: VoltageQuartedDimension,
+					var3			: pressureCubedDimension,
+					calib_par_p1		: unitless,
+					calib_par_p2		: VoltageSquaredDimension,
+					calib_par_p3		: unitless,
+					calib_par_p4		: VoltageQuartedDimension,
+					calib_par_p5		: VoltageSquaredDimension,
+					calib_par_p6		: unitless,
+					calib_par_p7		: pressure,
+					calib_par_p8		: VoltageQuartedPerPressureDimension,
+					calib_par_p9		: VoltageSquaredPerPressureSquaredDimension,
+					calib_par_p10		: unitless,
+					calib_t_fine		: VoltageSquaredDimension,
+					unitHavingConstant2	: pressurePerVoltageDimension,
+					unitHavingConstant3	: pressurePerVoltageQuartedDimension,
+					unitHavingConstant4	: VoltageSquaredDimension,
+					unitHavingConstant5	: PressurePerVoltageSquaredDimension,
+					unitHavingConstant6	: PressurePerVoltageQuartedDimension,
+					unitHavingConstant7	: OneOverPressureSquaredDimension,
+					pressure_comp		: pressure
+				) =
+{
+	var1		~ calib_t_fine,
+	var2		~ var1 * var1 * calib_par_p6,
+	var2		~ var2 + (var1 * calib_par_p5),
+	var2		~ var2 + calib_par_p4,
+	var1		~ var1 * var1 * calib_par_p3 + calib_par_p2 * var1,
+	var1		~ var1 * calib_par_p1,
+
+	#
+	#	We can ignore the implicit unitHavingConstant1 needed to make the '1048576'
+	#	in the original code into a pressure.
+	#
+	pressure_comp	~ (pressure_adc * unitHavingConstant2),
+	pressure_comp	~ pressure_comp - unitHavingConstant3 * var2,
+	pressure_comp	~ pressure_comp / (var1 / unitHavingConstant4),
+	var1		~ calib_par_p9 * pressure_comp * pressure_comp,
+	var2		~ (pressure_comp * calib_par_p8),
+	var3		~ pressure_comp * pressure_comp * pressure_comp * calib_par_p10,
+	pressure_comp	~ pressure_comp + ((var1*unitHavingConstant5) + (var2*unitHavingConstant6) + (var3*unitHavingConstant7) + calib_par_p7)
+}
