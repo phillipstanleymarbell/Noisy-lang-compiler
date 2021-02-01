@@ -35,4 +35,12 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+typedef struct ConstraintNode
+{
+	IrNode * constraint;			
+	struct 	ConstraintNode * next;
+} ConstraintNode;
+
+typedef ConstraintNode * ConstraintList;
+
 void    irPassEstimatorSynthesisBackend(State *  N);
