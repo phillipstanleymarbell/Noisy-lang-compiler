@@ -54,7 +54,7 @@ typedef struct estimatorSynthesisState
 	char **		stateVariableNames;
 	Symbol **	stateVariableSymbols;
 	double *	stateVariableUncertainties;
-	Symbol *	stateExtraParamSymbols;
+	Symbol **	stateExtraParamSymbols;
 	char **		measureVariableNames;
 	Symbol **	measureVariableSymbols;
 	double *	measureVariableUncertainties;
