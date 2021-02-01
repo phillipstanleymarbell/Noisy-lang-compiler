@@ -210,13 +210,13 @@ irPassEstimatorSynthesisExpressionLinear(State *  N, IrNode *  expressionXSeq) {
 }
 
 bool
-irPassEstimatorSynthesisInvariantLinear(State *  N, Invariant *  invariant)
+irPassEstimatorSynthesisInvariantLinear(State *  N, ConstraintList listHead)
 {
 	bool stillLinear = true;
-	for (IrNode *  constraintXSeq = invariant->constraints; stillLinear && (constraintXSeq != NULL); constraintXSeq = constraintXSeq->irRightChild)
+	for (ConstraintList  iter = listHead; stillLinear && (iter != NULL); iter=iter->next)
 	{
-		stillLinear = stillLinear && irPassEstimatorSynthesisExpressionLinear(N, L(constraintXSeq));
-		stillLinear = stillLinear && irPassEstimatorSynthesisExpressionLinear(N, LRRL(constraintXSeq));
+		stillLinear = stillLinear && irPassEstimatorSynthesisExpressionLinear(N, iter->constraint);
+		stillLinear = stillLinear && irPassEstimatorSynthesisExpressionLinear(N, RRL(iter->constraint));
 	}
 	return stillLinear;
 }
@@ -469,6 +469,47 @@ irPassEstimatorSynthesisCountMeasureDimensions(estimatorSynthesisState * E,State
 }
 
 void
+irPassEstimatorSynthesisCountExtraParams(estimatorSynthesisState * E,State * N,IrNode * parameterList)
+{
+	E->stateExtraParamSymbols = (Symbol**) malloc(E->stateExtraParams * sizeof(Symbol*));
+	int counter = 0;
+	IrNode * constraintXSeq;
+
+	for (constraintXSeq = parameterList; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
+	{
+		Symbol *	parameterSymbol = LL(constraintXSeq)->symbol;
+		bool		isStateVariable = false;
+
+		for (int i = 0; i < E->stateDimension; i++)
+		{
+			if (parameterSymbol == E->stateVariableSymbols[i])
+			{
+				isStateVariable = true;
+				break;
+			}
+		}
+
+		if (isStateVariable)
+		{
+			continue;
+		}
+
+		if (counter >= E->stateExtraParams)
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, "Process invariant identifiers that are state variables appear to be less than constraints. This should not be able to happen. Please contact the developers or open an bug issue.\n");
+			/*
+			 *	The reason this should not be able to happen at this stage is because
+			 *	it probably is a variable usage before declaration, which is caught in earlier passes.
+			 */
+			fatal(N, Efatal);
+		}
+
+		E->stateExtraParamSymbols[counter] = parameterSymbol;
+		counter++;
+	}
+}
+
+void
 irPassEstimatorSynthesisProcessInvariantList(State *  N)
 {
 	/*
@@ -529,7 +570,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	}
 	
 	/*
-	 *	Find state vector dimension (N)
+	 *	Find state vector dimension (N) and book-keep process symbols.
 	 */
 
 	irPassEstimatorSynthesisCountStateDimensions(E,N,processConstraintList);
@@ -552,50 +593,18 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	}
 	
 	/*
-	 *	Find measurement vector dimension (Z)
+	 *	Find measurement vector dimension (Z) and book-keep measurements' symbols.
 	 */
 
 	irPassEstimatorSynthesisCountMeasureDimensions(E,N,measureConstraintList);
 	
 	E->measureExtraParams = E->measureParams - E->stateDimension - E->measureDimension;
 
+	/*
+	 *	Find and book-keep extra params of process/
+	 */
+	irPassEstimatorSynthesisCountExtraParams(E,N,processInvariant->parameterList);
 	
-	Symbol *	stateExtraParamSymbols[E->stateExtraParams];
-	int counter = 0;
-	for (constraintXSeq = processInvariant->parameterList; constraintXSeq != NULL; constraintXSeq = constraintXSeq->irRightChild)
-	{
-		Symbol *	parameterSymbol = LL(constraintXSeq)->symbol;
-		bool		isStateVariable = false;
-
-		for (int i = 0; i < E->stateDimension; i++)
-		{
-			if (parameterSymbol == E->stateVariableSymbols[i])
-			{
-				isStateVariable = true;
-				break;
-			}
-		}
-
-		if (isStateVariable)
-		{
-			continue;
-		}
-
-		if (counter >= E->stateExtraParams)
-		{
-			flexprint(N->Fe, N->Fm, N->Fperr, "Process invariant identifiers that are state variables appear to be less than constraints. This should not be able to happen. Please contact the developers or open an bug issue.\n");
-			/*
-			 *	The reason this should not be able to happen at this stage is because
-			 *	it probably is a variable usage before declaration, which is caught in earlier passes.
-			 */
-			fatal(N, Efatal);
-		}
-
-		stateExtraParamSymbols[counter] = parameterSymbol;
-		counter++;
-	}
-
-
 	/*
 	 *	Generate state indexing enumerator
 	 */
@@ -704,14 +713,14 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	/*
 	 *	Determine linearity of process model
 	 */
-	bool linearProcess = irPassEstimatorSynthesisInvariantLinear(N, processInvariant);;
+	bool linearProcess = irPassEstimatorSynthesisInvariantLinear(N, processConstraintList);;
 
 	if (linearProcess == true)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterPredict (CoreState *  cState");
 		for (int i = 0; i < E->stateExtraParams; i++)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, ", double %s", stateExtraParamSymbols[i]->identifier);
+			flexprint(N->Fe, N->Fm, N->Fpc, ", double %s", E->stateExtraParamSymbols[i]->identifier);
 		}
 		flexprint(N->Fe, N->Fm, N->Fpc, ")\n{\n");
 		/*	If linear:
@@ -768,7 +777,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		 *	Book-keep process parameter list symbols
 		 */
 		Symbol *  parameterVariableSymbols[processParameterLength];
-		counter = 0;
+		int counter = 0;
 		for (constraintXSeq = processInvariant->parameterList; constraintXSeq != NULL; counter++, constraintXSeq = constraintXSeq->irRightChild)
 		{
 			parameterVariableSymbols[counter] = constraintXSeq->irLeftChild->irLeftChild->symbol;
@@ -919,7 +928,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "void\nfilterPredict (CoreState *  cState");
 		for (int i = 0; i < E->stateExtraParams; i++)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, ", double %s", stateExtraParamSymbols[i]->identifier);
+			flexprint(N->Fe, N->Fm, N->Fpc, ", double %s", E->stateExtraParamSymbols[i]->identifier);
 		}
 		flexprint(N->Fe, N->Fm, N->Fpc, ")\n{\n");
 
@@ -1037,7 +1046,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	 *	Declared Measurement Invariant Symbols that correspond to state variables.
 	 */
 	Symbol * measureInvariantStateVariableSymbols[E->stateDimension];
-	counter = 0;
+	int counter = 0;
 	for (IrNode * parameterXSeq = measureInvariant->parameterList; parameterXSeq != NULL; parameterXSeq = parameterXSeq->irRightChild)
 	{
 		IrNode *  parameterIdentifier = parameterXSeq->irLeftChild->irLeftChild;
@@ -1099,7 +1108,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	/*
 	 *	Determine linearity of measurement model
 	 */
-	bool linearMeasurement = irPassEstimatorSynthesisInvariantLinear(N, measureInvariant);
+	bool linearMeasurement = irPassEstimatorSynthesisInvariantLinear(N, measureConstraintList);
 
 	if (linearMeasurement == true)
 	{
@@ -1478,7 +1487,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	// flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble dt;\n");
 	for (int i = 0; i < E->stateExtraParams; i++)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble %s;\n", stateExtraParamSymbols[i]->identifier);
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble %s;\n", E->stateExtraParamSymbols[i]->identifier);
 	}
 	
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble prevtime = time;\n");
@@ -1499,7 +1508,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tfilterPredict (&cs");
 	for (int i = 0; i < E->stateExtraParams; i++)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, ", %s", stateExtraParamSymbols[i]->identifier);
+		flexprint(N->Fe, N->Fm, N->Fpc, ", %s", E->stateExtraParamSymbols[i]->identifier);
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, ");\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tprintf(\"Predict: %%lf\", time);\n");
