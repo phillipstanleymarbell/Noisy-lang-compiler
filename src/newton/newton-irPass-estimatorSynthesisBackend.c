@@ -81,6 +81,7 @@
 #include "newton-symbolTable.h"
 #include "newton-irPass-cBackend.h"
 #include "newton-irPass-autoDiff.h"
+#include "newton-irPass-estimatorSynthesisBackend.h"
 
 Invariant *
 findInvariantByIdentifier(State *  N, const char *  identifier)
@@ -220,6 +221,72 @@ irPassEstimatorSynthesisInvariantLinear(State *  N, Invariant *  invariant)
 	return stillLinear;
 }
 
+/*
+*	Helper function that uses in-order traversal of the AST, starting from the kNewtonIrNodeType_PconstraintList node
+*	of an invariant and inserts all the constraints of the invariant in a simply linked list. The new elements
+*	are appended to the list.
+*	Input : currentNode (at the first call a kNewtonIrNodeType_PconstraintList node is expected),
+*		the head of the simply linked list.
+*	Return:	The list that contains all the constraints of the invariant.
+*/
+ConstraintList
+irPassEstimatorSynthesisCreateConstraintList(IrNode * currentNode,ConstraintList listHead)
+{
+	if (currentNode == NULL)
+	{
+		return listHead;
+	}
+	switch (currentNode->type)
+	{
+	case kNewtonIrNodeType_PconstraintList:
+	case kNoisyIrNodeType_Xseq:
+		listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irLeftChild,listHead);
+		listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irRightChild,listHead);
+		break;
+	case kNewtonIrNodeType_Pconstraint:
+		if (currentNode->irLeftChild->type == kNewtonIrNodeType_PpiecewiseConstraint)
+		{
+			;
+		}
+		else
+		{
+			if (listHead == NULL)
+			{
+				listHead = (ConstraintList)malloc(sizeof(ConstraintNode));
+				listHead->constraint = currentNode;
+			}
+			else
+			{
+				ConstraintList iter;
+				for (iter = listHead; iter->next != NULL; iter = iter->next);
+				iter->next = (ConstraintList)malloc(sizeof(ConstraintNode));
+				iter->next->constraint = currentNode;
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	
+	return listHead;
+}
+
+/*
+*	Helper function that takes a ConstraintList and frees its memory.
+*	NOTE : It does not free the memory of the IrNodes(so we expect nothing to go wrong), 
+*	only the structs created for the constraintList.
+*/
+void
+irPassEstimatorSynthesisFreeConstraintList(ConstraintList listHead)
+{
+	ConstraintList del;
+	while (listHead != NULL)
+	{
+		del = listHead;
+		listHead = listHead->next;
+		free(del);
+	}
+}
 
 /*
  *	Detect symbol appearance in expression.
@@ -674,9 +741,14 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		 *	Generate single state variable prediction functions.
 		 *  This is: f_1(s1,s2, ... s_j), ... f_i(x,y, ... s_j)
 		 */
+
+		ConstraintList constraintList, iter;
+		constraintList = irPassEstimatorSynthesisCreateConstraintList(processInvariant->constraints,NULL);
+
+
 		counter = 0;
 		int functionLastArg[stateDimension];
-		for (constraintXSeq = processInvariant->constraints; constraintXSeq != NULL; counter++, constraintXSeq = constraintXSeq->irRightChild)
+		for (iter = constraintList; iter != NULL; counter++, iter = iter->next)
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, "double\nprocess_%s ", stateVariableNames[counter]);
 			flexprint(N->Fe, N->Fm, N->Fpc, "(");
@@ -705,7 +777,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			}
 			if (N->autodiff == true)
 			{
-				IrNode *  RHSExpression = constraintXSeq->irLeftChild->irRightChild->irRightChild->irLeftChild;
+				IrNode *  RHSExpression = iter->constraint->irRightChild->irRightChild->irLeftChild;
 				flexprint(N->Fe, N->Fm, N->Fpc, "double Ji[STATE_DIMENSION])\n{\n");
 
 				autoDiffGenBody(N, RHSExpression, stateVariableNames, stateVariableSymbols, stateDimension);
@@ -715,7 +787,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			else
 			{
 				flexprint(N->Fe, N->Fm, N->Fpc, ")\n");
-				irPassCGenFunctionBody(N, constraintXSeq->irLeftChild, false);
+				irPassCGenFunctionBody(N, iter->constraint, false);
 				/*
 				 *	Generate partial derivatives
 				 */
@@ -776,6 +848,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 				}
 			}
 		}
+
+		irPassEstimatorSynthesisFreeConstraintList(constraintList);
 
 		/*
 		 *	Generate predict function
