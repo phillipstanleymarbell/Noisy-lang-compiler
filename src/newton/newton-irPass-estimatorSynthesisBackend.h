@@ -43,4 +43,22 @@ typedef struct ConstraintNode
 
 typedef ConstraintNode * ConstraintList;
 
+typedef struct estimatorSynthesisState
+{
+	int		processParams;
+	int		stateExtraParams;
+	int 		stateDimension;
+	int		measureParams;
+	int		measureExtraParams;
+	int		measureDimension;
+	char **		stateVariableNames;
+	Symbol **	stateVariableSymbols;
+	double *	stateVariableUncertainties;
+	Symbol *	stateExtraParamSymbols;
+	char **		measureVariableNames;
+	Symbol **	measureVariableSymbols;
+	double *	measureVariableUncertainties;
+} estimatorSynthesisState;
+
+
 void    irPassEstimatorSynthesisBackend(State *  N);
