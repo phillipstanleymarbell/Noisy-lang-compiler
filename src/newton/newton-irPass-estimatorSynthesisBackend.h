@@ -37,7 +37,8 @@
 
 typedef struct ConstraintNode
 {
-	IrNode * constraint;			
+	IrNode * constraint;
+	int	stateVariableId;		
 	struct 	ConstraintNode * next;
 } ConstraintNode;
 
@@ -51,13 +52,19 @@ typedef struct estimatorSynthesisState
 	int		measureParams;
 	int		measureExtraParams;
 	int		measureDimension;
+	int		processConstraints;
+	ConstraintList	processConstraintList;
 	char **		stateVariableNames;
 	Symbol **	stateVariableSymbols;
 	double *	stateVariableUncertainties;
 	Symbol **	stateExtraParamSymbols;
+	Symbol **  	parameterVariableSymbols;
+	ConstraintList	measureConstraintList;
 	char **		measureVariableNames;
 	Symbol **	measureVariableSymbols;
 	double *	measureVariableUncertainties;
+	bool **		relationMatrix;
+	int *		functionLastArg;
 } estimatorSynthesisState;
 
 
