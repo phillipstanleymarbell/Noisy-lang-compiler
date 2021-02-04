@@ -214,11 +214,15 @@ irPassCNodeToStr(State *  N, IrNode *  node)
 		case kNewtonIrNodeType_Ttan:
 		case kNewtonIrNodeType_Tcos:
 		case kNewtonIrNodeType_Tsin:
+		case kNewtonIrNodeType_Tgt:
+		case kNewtonIrNodeType_Tge:
+		case kNewtonIrNodeType_Tlt:
+		case kNewtonIrNodeType_Tle:
+		case kNewtonIrNodeType_Tequals:
 		{			
 			output = strdup(gNewtonTokenDescriptions[node->type]);
 			break;
 		}
-
 		default:
 		{
 			fatal(N, EtokenInSMT);
