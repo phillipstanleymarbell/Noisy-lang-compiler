@@ -260,6 +260,7 @@ irPassEstimatorSynthesisCreateConstraintList(IrNode * currentNode,ConstraintList
 			{
 				listHead = (ConstraintList)malloc(sizeof(ConstraintNode));
 				listHead->constraint = currentNode;
+				listHead->caseId = caseId;
 			}
 			else
 			{
@@ -276,7 +277,7 @@ irPassEstimatorSynthesisCreateConstraintList(IrNode * currentNode,ConstraintList
 		listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irRightChild,listHead);
 		break;
 		/*
-		*	Skips the constraint that acts as a condition.
+		*	Skips the condition constraint.
 		*/
 	default:
 		break;
@@ -780,7 +781,6 @@ irPassEstimatorSynthesisGenerateUpdate(estimatorSynthesisState * E,State * N,IrN
 
 	
 }
-
 
 void
 irPassEstimatorSynthesisProcessInvariantList(State *  N)
@@ -1414,7 +1414,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		E->measureFunctionLastArg = (int*) malloc(E->measureDimension * sizeof(int));
 		for (ConstraintList iter = E->measureConstraintList; iter != NULL; counter++, iter=iter->next)
 		{
-			flexprint(N->Fe, N->Fm, N->Fpc, "double\nmeasure_%s_%d ", E->measureVariableNames[counter],iter->caseId);
+			flexprint(N->Fe, N->Fm, N->Fpc, "double\nmeasure_%s_%d ", E->measureVariableNames[iter->stateVariableId],iter->caseId);
 			flexprint(N->Fe, N->Fm, N->Fpc, "(");
 
 			int lastArg = 0;
