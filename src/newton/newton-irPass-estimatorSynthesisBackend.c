@@ -606,12 +606,14 @@ irPassEstimatorSynthesisGeneratePredict(estimatorSynthesisState * E,State * N,Ir
 				*/
 				for (int j = 0; j < E->stateDimension; j++)
 				{
-					flexprint(N->Fe, N->Fm, N->Fpc, "%sfMatrix[%d][%d] = ", irPassEstimatorSynthesisGetIndentation(indent),iter->stateVariableId, j);
 
 					if (E->relationMatrix[counter][j] == false)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "0;\n");
 						continue;
+					}
+					else
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "%sfMatrix[%d][%d] = ", irPassEstimatorSynthesisGetIndentation(indent),iter->stateVariableId, j);
 					}
 
 					flexprint(N->Fe, N->Fm, N->Fpc, "d_process_%s_%d_d%s(",E->stateVariableNames[iter->stateVariableId], iter->caseId,E->stateVariableSymbols[j]->identifier);
@@ -728,12 +730,13 @@ irPassEstimatorSynthesisGenerateUpdate(estimatorSynthesisState * E,State * N,IrN
 				*/
 				for (int j = 0; j < E->stateDimension; j++)
 				{
-					flexprint(N->Fe, N->Fm, N->Fpc, "%shMatrix[%d][%d] = ", irPassEstimatorSynthesisGetIndentation(indent),iter->stateVariableId, j);
-
 					if (E->measureRelationMatrix[counter][j] == false)
 					{
-						flexprint(N->Fe, N->Fm, N->Fpc, "0;\n");
 						continue;
+					}
+					else
+					{
+						flexprint(N->Fe, N->Fm, N->Fpc, "%shMatrix[%d][%d] = ", irPassEstimatorSynthesisGetIndentation(indent),iter->stateVariableId, j);
 					}
 
 					flexprint(N->Fe, N->Fm, N->Fpc, "d_measure_%s_%d_d%s ", E->measureVariableNames[iter->stateVariableId], iter->caseId,E->stateVariableSymbols[j]->identifier);
