@@ -383,6 +383,10 @@ irPassEstimatorSynthesisIsolateSymbolFactors(State *  N, IrNode *  ExpressionXSe
 	return symbolFactors;
 }
 
+/*
+*	Traverses the process constraint list and counts the state dimensions(Ν). Also
+*	stores all the necessary information regarding LHS symbols, names and uncertainties.
+*/
 void
 irPassEstimatorSynthesisCountStateDimensions(estimatorSynthesisState * E,State * N)
 {
@@ -434,6 +438,10 @@ irPassEstimatorSynthesisCountStateDimensions(estimatorSynthesisState * E,State *
 	}
 }
 
+/*
+*	Traverses the measure constraint list and counts the measure dimensions(Z). Also
+*	stores all the necessary information regarding LHS symbols, names and uncertainties.	
+*/
 void
 irPassEstimatorSynthesisCountMeasureDimensions(estimatorSynthesisState * E,State * N,ConstraintList listHead)
 {
@@ -486,6 +494,9 @@ irPassEstimatorSynthesisCountMeasureDimensions(estimatorSynthesisState * E,State
 	}
 }
 
+/*
+*	Counts the parameters of process model that are not state variables and stores their symbols.
+*/
 void
 irPassEstimatorSynthesisCountExtraParams(estimatorSynthesisState * E,State * N,IrNode * parameterList)
 {
@@ -527,6 +538,11 @@ irPassEstimatorSynthesisCountExtraParams(estimatorSynthesisState * E,State * N,I
 	}
 }
 
+/*
+*	Helper function that calculates the indendation for pretty printing the if statements.
+*	Takes as argument the ammount of tabs expected to be printed.
+*	Returns a string with the correct ammount of tabs needed.
+*/
 char *
 irPassEstimatorSynthesisGetIndentation(int indent)
 {
@@ -539,6 +555,10 @@ irPassEstimatorSynthesisGetIndentation(int indent)
 	return str;
 }
 
+/*
+*	Recursive walk of the AST that generates the predict function code.
+*	Needs to start from the process invariant's constraint list.
+*/
 void
 irPassEstimatorSynthesisGeneratePredict(estimatorSynthesisState * E,State * N,IrNode * currentNode)
 {
@@ -663,6 +683,10 @@ irPassEstimatorSynthesisGeneratePredict(estimatorSynthesisState * E,State * N,Ir
 	return ;
 }
 
+/*
+*	Recursive walk of the AST that generates the update function code.
+*	Needs to start from the measure invariant's constraint list.
+*/
 void
 irPassEstimatorSynthesisGenerateUpdate(estimatorSynthesisState * E,State * N,IrNode * currentNode)
 {
