@@ -93,15 +93,13 @@ process_2 : invariant ( x : distance,
 measure : invariant ( # State 
                      x : distance,
                      y : distance,
-                     vx : speed,
-                     vy : speed,
-                     theta : angularDisplacement,
                      omega : angularVelocity,
                      # Measure
                      odom_x : distance,
                      odom_y : distance,
                      gyro_z: angularVelocity,
-                     dt  : time) =
+		     dt: time
+                     ) =
 {
     odom_x ~ x,
     odom_y ~ y,
