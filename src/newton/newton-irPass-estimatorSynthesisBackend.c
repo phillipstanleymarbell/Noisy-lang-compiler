@@ -291,7 +291,7 @@ irPassEstimatorSynthesisCreateConstraintList(IrNode * currentNode,ConstraintList
 *	NOTE : It does not free the memory of the IrNodes(so we expect nothing to go wrong), 
 *	only the structs created for the constraintList.
 */
-void
+ConstraintList
 irPassEstimatorSynthesisFreeConstraintList(ConstraintList listHead)
 {
 	ConstraintList del;
@@ -301,6 +301,7 @@ irPassEstimatorSynthesisFreeConstraintList(ConstraintList listHead)
 		listHead = listHead->next;
 		free(del);
 	}
+	return listHead;
 }
 
 /*
@@ -447,11 +448,11 @@ irPassEstimatorSynthesisCountMeasureDimensions(estimatorSynthesisState * E,State
 {
 	ConstraintList iter;
 	/*
-	*	Allocate memory for the stateVariable names and symbols arrays and initialize them.
+	*	Allocate memory for the measure variable names and symbols arrays and initialize them.
 	*/
-	E->measureVariableNames = (char**) malloc(E->processParams*sizeof(char*));
-	E->measureVariableSymbols = (Symbol**) malloc(E->processParams*sizeof(Symbol*));
-	E->measureVariableUncertainties = (double *)malloc(E->processParams*(sizeof(double)));
+	E->measureVariableNames = (char**) malloc(E->measureParams*sizeof(char*));
+	E->measureVariableSymbols = (Symbol**) malloc(E->measureParams*sizeof(Symbol*));
+	E->measureVariableUncertainties = (double *)malloc(E->measureParams*(sizeof(double)));
 
 	for (int i = 0; i < E->measureParams; i++)
 	{
@@ -1736,8 +1737,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\treturn 0;\n}\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n/*\n *\tEnd of the generated .c file\n */\n");
 
-	irPassEstimatorSynthesisFreeConstraintList(E->processConstraintList);
-	irPassEstimatorSynthesisFreeConstraintList(E->measureConstraintList);
+	E->processConstraintList =  irPassEstimatorSynthesisFreeConstraintList(E->processConstraintList);
+	E->measureConstraintList = irPassEstimatorSynthesisFreeConstraintList(E->measureConstraintList);
 }
 
 void
