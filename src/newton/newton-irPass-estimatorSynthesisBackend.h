@@ -35,43 +35,4 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-typedef struct ConstraintNode
-{
-	IrNode * constraint;
-	int	stateVariableId;
-	int	caseId;
-	struct 	ConstraintNode * next;
-} ConstraintNode;
-
-typedef ConstraintNode * ConstraintList;
-
-typedef struct estimatorSynthesisState
-{
-	int		processParams;
-	int		stateExtraParams;
-	int 		stateDimension;
-	int		measureParams;
-	int		measureExtraParams;
-	int		measureDimension;
-	int		processConstraints;
-	int		measureConstraints;
-	ConstraintList	processConstraintList;
-	char **		stateVariableNames;
-	Symbol **	stateVariableSymbols;
-	double *	stateVariableUncertainties;
-	Symbol **	stateExtraParamSymbols;
-	Symbol **  	parameterVariableSymbols;
-	ConstraintList	measureConstraintList;
-	char **		measureVariableNames;
-	Symbol **	measureVariableSymbols;
-	double *	measureVariableUncertainties;
-	Symbol **	measureInvariantStateVariableSymbols;
-	Symbol **	measureExtraParamSymbols;
-	bool **		relationMatrix;
-	bool **		measureRelationMatrix;
-	int *		functionLastArg;
-	int *		measureFunctionLastArg;
-} estimatorSynthesisState;
-
-
 void    irPassEstimatorSynthesisBackend(State *  N);
