@@ -853,6 +853,66 @@ irPassEstimatorSynthesisGenerateUpdate(estimatorSynthesisState * E,State * N,IrN
 }
 
 void
+irPassEstimatorSynthesisFreeState(estimatorSynthesisState * E)
+{
+	for(int i = 0; i < E->processParams; i++)
+	{
+		if (!strcmp(E->stateVariableNames[i],""))
+		{
+			continue;
+		}
+		free(E->stateVariableNames[i]);
+	}
+	free(E->stateVariableNames);
+
+	free(E->stateVariableSymbols);
+	free(E->stateVariableUncertainties);
+	free(E->stateExtraParamSymbols);
+	free(E->parameterVariableSymbols);
+
+	for(int i = 0; i < E->measureParams; i++)
+	{
+		if (!strcmp(E->measureVariableNames[i],""))
+		{
+			continue;
+		}
+		free(E->measureVariableNames[i]);
+	}
+	free(E->measureVariableNames);
+
+	free(E->measureVariableSymbols);
+	free(E->measureVariableUncertainties);
+	free(E->measureInvariantStateVariableSymbols);
+	free(E->measureExtraParamSymbols);
+
+	if (E->relationMatrix != NULL)
+	{
+		for (int i = 0; i < E->processConstraints;i++)
+		{
+			free(E->relationMatrix[i]);
+		}
+		free(E->relationMatrix);
+		free(E->functionLastArg);
+	}
+
+
+	if (E->measureRelationMatrix != NULL)
+	{
+		for (int i = 0; i < E->measureConstraints;i++)
+		{
+			free(E->measureRelationMatrix[i]);
+		}
+		free(E->measureRelationMatrix);
+		free(E->measureFunctionLastArg);
+	}
+	
+
+	E->processConstraintList =  irPassEstimatorSynthesisFreeConstraintList(E->processConstraintList);
+	E->measureConstraintList = irPassEstimatorSynthesisFreeConstraintList(E->measureConstraintList);
+	
+}
+
+void
 irPassEstimatorSynthesisProcessInvariantList(State *  N)
 {
 	/*
@@ -1154,7 +1214,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 		counter = 0;
 
-		E->functionLastArg = (int*) malloc(E->stateDimension * sizeof(int));
+		E->functionLastArg = (int*) malloc(E->processConstraints * sizeof(int));
 		for (ConstraintList iter = E->processConstraintList; iter != NULL; counter++, iter = iter->next)
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, "double\nprocess_%s_%d ", E->stateVariableNames[iter->stateVariableId],iter->caseId);
@@ -1481,7 +1541,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		 *  This is: h_1(s1,s2, ... s_j), ... h_i(x,y, ... s_j)
 		 */
 		counter = 0;
-		E->measureFunctionLastArg = (int*) malloc(E->measureDimension * sizeof(int));
+		E->measureFunctionLastArg = (int*) malloc(E->measureConstraints * sizeof(int));
 		for (ConstraintList iter = E->measureConstraintList; iter != NULL; counter++, iter=iter->next)
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, "double\nmeasure_%s_%d ", E->measureVariableNames[iter->stateVariableId],iter->caseId);
@@ -1779,8 +1839,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\treturn 0;\n}\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n/*\n *\tEnd of the generated .c file\n */\n");
 
-	E->processConstraintList =  irPassEstimatorSynthesisFreeConstraintList(E->processConstraintList);
-	E->measureConstraintList = irPassEstimatorSynthesisFreeConstraintList(E->measureConstraintList);
+	irPassEstimatorSynthesisFreeState(E);
+	free(E);
 }
 
 void
