@@ -309,7 +309,7 @@ processFile(State *  N, char *  fileName)
 	/*
 	 *	Run passes requested in the command line flags.
 	 */
-	runPasses(N);
+	//runPasses(N);
 
 
 	/*
