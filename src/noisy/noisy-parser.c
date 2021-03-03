@@ -7839,12 +7839,12 @@ noisyParserSyntaxAndSemanticPre(State *  N, IrNodeType currentlyParsingTokenOrPr
 	const char *  string1, const char *  string2, const char *  string3, const char *  string4)
 {
 	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n");
-	if (N->mode & kNoisyModeCGI)
+	if (N->mode & kCommonModeCGI)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "<b>");
 	}
 
-	if (N->mode & kNoisyModeCGI)
+	if (N->mode & kCommonModeCGI)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "\n\t%s, line %d position %d, %s %s\"",
 						string1,
@@ -7883,7 +7883,7 @@ noisyParserSyntaxAndSemanticPre(State *  N, IrNodeType currentlyParsingTokenOrPr
 void
 noisyParserSyntaxAndSemanticPost(State *  N)
 {
-	if (N->mode & kNoisyModeCGI)
+	if (N->mode & kCommonModeCGI)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "%s</b>", kNoisyErrorDetailHtmlTagClose);
 	}

@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 	int			jumpParameter;
 	State *		N;
 
-	N = init(kNoisyModeDefault);
+	N = init(kCommonModeDefault);
 	
 	if (N == NULL)
 	{
@@ -170,8 +170,8 @@ main(int argc, char *argv[])
 
 			case 't':
 			{
-				N->mode |= kNoisyModeCallTracing;
-				N->mode |= kNoisyModeCallStatistics;
+				N->mode |= kCommonModeCallTracing;
+				N->mode |= kCommonModeCallStatistics;
 				timestampsInit(N);
 
 				break;
@@ -179,7 +179,7 @@ main(int argc, char *argv[])
 
 			case 's':
 			{
-				N->mode |= kNoisyModeCallStatistics;
+				N->mode |= kCommonModeCallStatistics;
 				timestampsInit(N);
 
 				break;
@@ -282,7 +282,7 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	if (!(N->mode & kNoisyModeCGI))
+	if (!(N->mode & kCommonModeCGI))
 	{
 		consolePrintBuffers(N);
 	}
@@ -335,12 +335,12 @@ processFile(State *  N, char *  fileName)
 	}
 
 
-	if (N->mode & kNoisyModeCallTracing)
+	if (N->mode & kCommonModeCallTracing)
 	{
 		timeStampDumpTimeline(N);
 	}
 
-	if (N->mode & kNoisyModeCallStatistics)
+	if (N->mode & kCommonModeCallStatistics)
 	{
 		uint64_t	irNodeCount = 0, symbolTableNodeCount = 0;
 

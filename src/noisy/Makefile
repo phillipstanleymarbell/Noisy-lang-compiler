@@ -6,7 +6,7 @@ PRECOMMITHOOK = precommitStatisticsHook-$(OSTYPE).sh
 COMMONPATH	= ../common
 EXAMPLESPATH	= ../../applications/noisy
 
-COMPILERVARIANT	= clang
+COMPILERVARIANT	= gcc
 
 SYSNAME		= Noisy
 SYSNAMELOWER	= noisy

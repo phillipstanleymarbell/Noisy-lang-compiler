@@ -362,7 +362,7 @@ main(void)
 	sigaction(SIGVTALRM, &sa, NULL);
 
 
-	noisyCgiState = init(kNoisyModeDefault|kNoisyModeCallStatistics/* | kNoisyModeCallTracing */|kNoisyModeCGI);
+	noisyCgiState = init(kNoisyModeDefault|kNoisyModeCallStatistics/* | kNoisyModeCallTracing */|kCommonModeCGI);
 	timestampsInit(noisyCgiState);
 
 

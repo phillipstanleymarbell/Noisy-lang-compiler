@@ -746,6 +746,16 @@ typedef enum
 } NewtonIrBackends;
 
 
+typedef enum
+{
+	kNoisyIrBackendDot				= (1 << 0),
+	kNoisyIrBackendProtobuf				= (1 << 1),
+
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNoisyIrBackendMax,
+} NoisyIrBackends;
 
 typedef enum
 {
