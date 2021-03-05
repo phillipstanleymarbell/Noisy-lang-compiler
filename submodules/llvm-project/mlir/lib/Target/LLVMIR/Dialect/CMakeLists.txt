@@ -1,7 +1,0 @@
-add_subdirectory(LLVMArmNeon)
-add_subdirectory(LLVMArmSVE)
-add_subdirectory(LLVMAVX512)
-add_subdirectory(LLVMIR)
-add_subdirectory(NVVM)
-add_subdirectory(OpenMP)
-add_subdirectory(ROCDL)
