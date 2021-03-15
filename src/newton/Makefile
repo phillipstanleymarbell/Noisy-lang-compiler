@@ -61,6 +61,7 @@ SOURCES		=\
 		newton-irPass-estimatorSynthesisBackend.c\
 		newton-irPass-invariantSignalAnnotation.c\
 		newton-irPass-piGroupsSignalAnnotation.c\
+		newton-irPass-ipsaBackend.c\
 		newton-irPass-dimensionalMatrixAnnotation.c\
 		newton-irPass-dimensionalMatrixPiGroups.c\
 		newton-irPass-dimensionalMatrixPrinter.c\
@@ -106,6 +107,7 @@ OBJS		=\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
+		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPiGroups.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
@@ -142,6 +144,8 @@ CGIOBJS		=\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
+		newton-irPass-estimatorSynthesisBackend/$(OBJECTEXTENSION)\
+		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPiGroups.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
@@ -177,6 +181,7 @@ LIBNEWTONOBJS =\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
+		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPiGroups.$(OBJECTEXTENSION)\
 		newton-irPass-dimensionalMatrixPrinter.$(OBJECTEXTENSION)\
@@ -210,6 +215,7 @@ HEADERS		=\
 		newton-irPass-estimatorSynthesisBackend.h\
 		newton-irPass-invariantSignalAnnotation.h\
 		newton-irPass-piGroupsSignalAnnotation.h\
+		newton-irPass-ipsaBackend.h\
 		newton-irPass-dimensionalMatrixAnnotation.h\
 		newton-irPass-dimensionalMatrixPiGroups.h\
 		newton-irPass-dimensionalMatrixPrinter.h\
@@ -291,8 +297,8 @@ examples: $(EXAMPLES) target
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Cyclotron.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/DroppedBall.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Electricity.nt
-	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/HotSphere.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/GpsWalking.nt
+	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/HotSphere.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/Kepler.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/JetEngine.nt
 	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/MotorWheelChair.nt
@@ -324,6 +330,7 @@ examples: $(EXAMPLES) target
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/BeamAlternative-pigroups.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/WeatherBalloon.nt
 #	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/invariants/SelectiveLaserMelting.nt
+#	./$(TARGET) $(EXAMPLES_NEWTON_FLAGS) $(EXAMPLESPATH)/temporary-examples/IpsaDualTemperatureMeasurementExample.nt
 
 
 installcgi: cgi

@@ -261,6 +261,21 @@ init(CommonMode mode)
 	}
 
 	/*
+	 *	Used to hold Ipsa backend output
+	 */
+	N->Fpipsa = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
+	if (N->Fpipsa == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	N->Fpipsa->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
+	if (N->Fpipsa->circbuf == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	/*
 	 *	Used during lexing
 	 */
 	N->currentToken = calloc(kCommonMaxBufferLength, sizeof(char));
@@ -423,6 +438,17 @@ consolePrintBuffers(State *  N)
 	if (N && N->Fprtl && strlen(N->Fprtl->circbuf))
 	{
 		fprintf(stdout, "\nRTL Backend output:\n---------------------\n%s", N->Fprtl->circbuf);
+		
+		if (N->mode & kCommonModeCGI)
+		{
+			fflush(stdout);
+		}
+		
+	}
+
+	if (N && N->Fpipsa && strlen(N->Fpipsa->circbuf))
+	{
+		fprintf(stdout, "\nIpsa Backend output:\n---------------------\n%s", N->Fpipsa->circbuf);
 		
 		if (N->mode & kCommonModeCGI)
 		{

@@ -1,0 +1,44 @@
+include "NewtonBaseSignals.nt"
+
+
+BMX055: sensor (
+			bmx055Temperature: temperature[1]
+			) =
+{
+	interface bmx055Temperature == i2c (address: 16r18)
+	{
+		temp = read 16r08;
+	}
+}
+
+BME680: sensor (
+			bme680Temperature: temperature[2]
+			) =
+
+{
+	interface bme680Temperature == i2c (address: 16r77)
+	{
+		#
+		#    Syntax: write value, registerAddress;
+		# 
+
+		write 16r01, 16r72;
+        write 16r54, 16r74;
+        write 16r59, 16r64;
+        write 16r01, 16r5A;
+        write 16r00, 16r71;
+        write 16r10, 16r71;
+        write 16r55, 16r74;
+		
+		#
+		#	Get MSB and LSB of Temp data...
+		#
+		temp_lsb = read 16r23;
+	}
+}
+
+
+testInvariant: invariant(t1: temperature[1], t2: temperature[2]) =
+{
+	t1 <-> t2
+}

@@ -1,10 +1,4 @@
 
-<<<<<<< HEAD
-changeset: 942:9c0adf4c957c651fedad21ed3291dbedf7b5e552
-char kNewtonVersion[] = "0.3-alpha-942 (9c0adf4c957c651fedad21ed3291dbedf7b5e552) (build 07-08-2020-14:06-koma@Quinjet-Linux-5.7.6-arch1-1-x86_64)";
-\n./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s
-\n./src/newton/newton-linux-EN -v 0 -eP applications/newton/invariants/ViolinWithTemperatureDependence-pigroups.nt
-=======
     Hardware Overview:
 
       Model Name: MacBook Pro
@@ -17,13 +11,12 @@ char kNewtonVersion[] = "0.3-alpha-942 (9c0adf4c957c651fedad21ed3291dbedf7b5e552
       L3 Cache: 6 MB
       Hyper-Threading Technology: Enabled
 
-changeset: 942:9c0adf4c957c651fedad21ed3291dbedf7b5e552
-char kNewtonVersion[] = "0.3-alpha-942 (9c0adf4c957c651fedad21ed3291dbedf7b5e552) (build 07-10-2020-19:15-oliver@MacBook-Pro-Darwin-19.5.0-x86_64)";
+changeset: 945:d9dbef7b6667e951a662c9f9ccb4dfc36d189cf2
+char kNewtonVersion[] = "0.3-alpha-945 (d9dbef7b6667e951a662c9f9ccb4dfc36d189cf2) (build 07-14-2020-18:23-oliver@MacBook-Pro-Darwin-19.5.0-x86_64)";
 
 ./src/noisy/noisy-darwin-EN -O0 applications/noisy/helloWorld.n -s
 
 ./src/newton/newton-darwin-EN -v 0 -eP applications/newton/invariants/ViolinWithTemperatureDependence-pigroups.nt
->>>>>>> b41f187... Now generates Ipsa instruction_list.v and places in Ipsa-core directory. Still needs support for I2C write interface and signal sensor identification.
 
 Informational Report:
 ---------------------

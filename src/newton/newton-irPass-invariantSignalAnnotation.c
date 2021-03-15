@@ -239,6 +239,64 @@ findSignalByInvariantExpressionIdentifierAndAxis(State * N, char * identifier, i
 
 
 /*
+ *	Function to find a Signal by its sensorIdentifier and axis.
+ */
+Signal *
+findKthSignalBySensorIdentifier(State * N, char * sensorIdentifier, int kth)
+{
+	Signal * signal = NULL;
+	Invariant * invariant = N->invariantList;
+	int count = 0;
+	while(invariant)
+	{
+		IrNode * parameterList = invariant->parameterList;
+		int nth = 0;
+		IrNode * parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
+		while(parameter != NULL)
+		{
+			if(strcmp(parameter->signal->sensorIdentifier, sensorIdentifier) == 0)
+			{
+				if(count == kth)
+				{
+					signal = parameter->signal;
+					break;
+				} else {
+					count++;
+				}
+			}
+			nth++;
+			parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
+			if(parameter == NULL)
+			{
+				break;
+			}
+
+		}
+
+		if(signal != NULL)
+		{
+			break;
+		} else {
+			invariant = invariant->next;
+		}
+	}
+
+	/*
+	if(signal == NULL)
+	{
+		//printf("%s%s \n", "No signal found with identifier: ", identifier);
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s%s \n", "No signal found with sensor identifier: ", sensorIdentifier);
+	}
+	*/
+	
+
+	invariant = N->invariantList;
+
+	return signal;
+}
+
+
+/*
  *	Function to get the Signal axis of a Signal referred
  *	to with a particular invariant expression identifier
  *	within an invariant definition.
@@ -357,6 +415,12 @@ attachSignalsToParameterNodes(State * N)
 			parameter->signal->baseNode = findSignalBaseNodeByIdentifier(N, identifier);
 			parameter->signal->identifier = identifier;
 			parameter->signal->invariantExpressionIdentifier = invariantExpressionIdentifier;
+			/*
+			 *	TODO: Add correct physicalGroupNumber and sensor identifier.
+			 */
+			char * sensorIdentifier = "BMX055";
+			parameter->signal->physicalGroupNumber = 1;
+			parameter->signal->sensorIdentifier = sensorIdentifier;
 
 			nth++;
 			parameter = findNthIrNodeOfType(N, parameterList, kNewtonIrNodeType_Pparameter, nth);
@@ -385,8 +449,29 @@ copySignal(State * N, Signal * signal)
 	copyOfSignal->axis = originSignal->axis;
 	copyOfSignal->sensorIdentifier = originSignal->sensorIdentifier;
 	copyOfSignal->physicalGroupNumber = originSignal->physicalGroupNumber;
+	copyOfSignal->dimensionIndex = originSignal->dimensionIndex;
 
 	return copyOfSignal;
+}
+
+
+/*
+ *	Function for making a shallow copy of an instance
+ *	of the Signal struct.
+ */
+void
+shallowCopySignal(State * N, Signal * signal, Signal * copyOfSignal)
+{
+	
+	Signal * originSignal = findSignalByIdentifierAndAxis(N, signal->identifier, signal->axis);
+	copyOfSignal->baseNode = originSignal->baseNode;
+	copyOfSignal->identifier = originSignal->identifier;
+	copyOfSignal->invariantExpressionIdentifier = originSignal->invariantExpressionIdentifier;
+	copyOfSignal->axis = originSignal->axis;
+	copyOfSignal->sensorIdentifier = originSignal->sensorIdentifier;
+	copyOfSignal->physicalGroupNumber = originSignal->physicalGroupNumber;
+	copyOfSignal->dimensionIndex = originSignal->dimensionIndex;
+
 }
 
 
@@ -531,6 +616,60 @@ removeDuplicates(State * N, Signal * signalList)
 	}
 
 	return newSignalList;
+}
+
+
+/*
+ *	Updates signal->physicalGroupNumber based on user input.
+ */
+void
+updatePhysicalGroupNumbers(State * N)
+{
+
+    //TODO: Fix this function. (Hint: look at kth)
+    char * group1 = N->physicalGroup1;
+    char * group2 = N->physicalGroup2;
+
+    Signal * signal;
+
+    char * token1;
+    token1 = strtok (group1,",");
+    while (token1 != NULL)
+    {
+        int kth = 0;
+        while(true)
+        {
+            signal = findKthSignalBySensorIdentifier(N, token1, kth);
+            if(signal == NULL)
+            {
+                break;
+            }
+            signal->physicalGroupNumber = 1;
+            break;
+            kth++;
+        }
+        
+        token1 = strtok (NULL, ",");
+    }
+
+    char * token2;
+    token2 = strtok (group2,",");
+    while (token2 != NULL)
+    {
+        int kth = 0;
+        while(true)
+        {
+            signal = findKthSignalBySensorIdentifier(N, token2, kth);
+            if(signal == NULL)
+            {
+                break;
+            }
+            signal->physicalGroupNumber = 2;
+            kth++;
+        }
+
+        token2 = strtok (NULL, ",");
+    }
 }
 
 
@@ -792,6 +931,14 @@ irPassInvariantSignalAnnotation(State * N)
 	attachSignalsToParameterNodes(N);
 
 	/*
+	 *	TODO: Remove the two lines below preceding the call to updatePhysicalGroupNumbers when associating sensors with Signals has been implemented.
+	 */
+	Signal * testSignal = findSignalByIdentifierAndAxis(N, "temperature", 2);
+    testSignal->sensorIdentifier = "BME680";
+	updatePhysicalGroupNumbers(N);
+
+
+	/*
 	 *	Look at each invariant expression, generate a list of signals used in the
 	 *	expression, and add them as relatedSignalList to all signals in the expression.
 	 *	Check for duplicates in the relatedSignalList.
@@ -814,24 +961,24 @@ irPassInvariantSignalAnnotation(State * N)
 	 */
 
 	/*
-	char * identifier = "distance";
-	int axis = 0;
+	char * identifier = "temperature";
+	int axis = 1;
 
 	printf("%s %s %s%i \n", "The related signals are the following for the signal with identifier:", identifier, "and axis: ", axis);
 	
-	Signal * testSignal = findSignalByIdentifierAndAxis(N, identifier, axis);
+	Signal * testSignal2 = findSignalByIdentifierAndAxis(N, identifier, axis);
 	//Signal * testSignal = findKthSignalByIdentifier(N, identifier, 0);
 	//printf("%i \n", testSignal->axis);
 	
 
-	testSignal = testSignal->relatedSignalList;
-	//testSignal = removeDuplicates(N, testSignal);
-	printf("%s %i \n", testSignal->identifier, testSignal->axis);
+	testSignal2 = testSignal2->relatedSignalList;
+	//testSignal2 = removeDuplicates(N, testSignal2);
+	printf("%s %i \n", testSignal2->identifier, testSignal2->axis);
 	
-	while(testSignal->relatedSignalListNext != NULL)
+	while(testSignal2->relatedSignalListNext != NULL)
 	{
-		testSignal = testSignal->relatedSignalListNext;
-		printf("%s %i \n", testSignal->identifier, testSignal->axis);
+		testSignal2 = testSignal2->relatedSignalListNext;
+		printf("%s %i \n", testSignal2->identifier, testSignal2->axis);
 	}
 	*/
 

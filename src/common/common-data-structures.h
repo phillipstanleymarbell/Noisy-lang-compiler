@@ -746,6 +746,7 @@ typedef enum
 	 */
 	kNewtonIrBackendLatex				= (1 << 5),
 	kNewtonIrBackendEstimatorSynthesis	= (1 << 6),
+	kNewtonIrBackendIpsa				= (1 << 7),
 
 	/*
 	 *	Code depends on this bringing up the rear.
@@ -898,6 +899,7 @@ struct Signal {
 	int				axis;					//	The axis of the multi axis signal that the signal corresponds to. Default value is zero.
     char * 			sensorIdentifier;		//	Identifier of the sensor associated to a signal.
     int 			physicalGroupNumber;	//  Conveys information about the physical origin of the signal. (e.g. The I2C bus number of a sensor connected to Ipsa).
+	int				dimensionIndex;			//	Conveys information about the dimension of the signal. Currently used for storing the dimension index for Ipsa.
     Signal * 		relatedSignalList;		//	List of signals that should be co-sampled with this signal.
 	Signal *		relatedSignalListNext;	//	Move to the next element of the relatedSignalList.
 	Signal *		relatedSignalListPrev;	//	Move to the previous element of the relatedSignalList.
@@ -1156,6 +1158,7 @@ typedef struct
 	FlexPrintBuf *		Fpc;
 	FlexPrintBuf *		Fprtl;
 	FlexPrintBuf *		Fpmathjax;
+	FlexPrintBuf *		Fpipsa;
 
 	/*
 	 *	The output file of the last render. TODO: Not very happy
@@ -1216,6 +1219,7 @@ typedef struct
 	char *			outputCFilePath;
 	char *			outputRTLFilePath;
 	char *			outputEstimatorSynthesisFilePath;
+	char *			outputIpsaFilePath;
 	
 	/*
 	 *	Invariant identifiers specified for State Estimator Synthesis
@@ -1223,6 +1227,13 @@ typedef struct
 	char *			estimatorProcessModel;
 	char *			estimatorMeasurementModel;
 	bool			autodiff;
+	
+	/*
+	 *	Variables for storing lists of identifiers attached
+	 *	to a physical group number.
+	 */
+	char *			physicalGroup1;
+	char *			physicalGroup2;
 
 	/*
 	 *	Variables to keep track of the kernel number and pi number
