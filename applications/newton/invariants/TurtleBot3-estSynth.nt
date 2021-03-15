@@ -69,30 +69,37 @@ process_2 : invariant ( x : distance,
                         vr  : speed,    # Right wheel speed
                         vl  : speed     # Left wheel speed
                         ) =
-{   # ONLY IF ROBOT HAS EITHER vl == vr OR vl == - vr !!!!
-    # if vl == vr:
-    x ~ x + vx*dt,
-    y ~ y + vy*dt, # Only translational movement, no strafing on differential robots
-    vx ~ (vr + vl)/2 * cos(theta),
-    vy ~ (vr + vl)/2 * sin(theta),
-    # else if vl == -vr:
-    theta ~ theta +  omega*dt,
-    omega ~ (vr - vl)/l
-    # not sure if this will work
+{
+	piecewise {
+	    case vl * vr > 0 -> {
+		x ~ x + vx*dt,
+		y ~ y + vy*dt,
+		vx ~ (vr + vl)/2 * cos(theta),
+		vy ~ (vr + vl)/2 * sin(theta),
+		theta ~ theta,
+		omega ~ 0
+	    },
+	    otherwise -> {
+		x ~ x,
+		y ~ y,
+		vx ~ 0,
+		vy ~ 0,
+		theta ~ theta +  omega*dt,
+    		omega ~ (vr - vl)/l
+	    }
+    }
 }
 
 measure : invariant ( # State 
                      x : distance,
                      y : distance,
-                     vx : speed,
-                     vy : speed,
-                     theta : angularDisplacement,
                      omega : angularVelocity,
                      # Measure
                      odom_x : distance,
                      odom_y : distance,
                      gyro_z: angularVelocity,
-                     dt  : time) =
+		     dt: time
+                     ) =
 {
     odom_x ~ x,
     odom_y ~ y,

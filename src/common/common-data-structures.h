@@ -444,6 +444,10 @@ typedef enum
 	kNewtonIrNodeType_TstringConst,
 	kNewtonIrNodeType_TrealConst,
 	kNewtonIrNodeType_TintegerConst,
+	kNewtonIrNodeType_Totherwise,
+	kNewtonIrNodeType_Tcase,
+	kNewtonIrNodeType_Tpiecewise,
+	kNewtonIrNodeType_TrightArrow,
 	kNewtonIrNodeType_Tpercent,
 	kNewtonIrNodeType_TbitwiseOr,
 	kNewtonIrNodeType_TrightBracket,
@@ -635,6 +639,10 @@ typedef enum
 	kNewtonIrNodeType_PquantityFactor,
 	kNewtonIrNodeType_PquantityTerm,
 	kNewtonIrNodeType_PquantityExpression,
+	kNewtonIrNodeType_PcaseStatement,
+	kNewtonIrNodeType_PcaseStatementList,
+	kNewtonIrNodeType_PpiecewiseConstraint,
+	kNewtonIrNodeType_PcallParameterTuple,
 	kNewtonIrNodeType_Pconstraint,
 	kNewtonIrNodeType_PconstraintList,
 	kNewtonIrNodeType_Pparameter,
@@ -948,6 +956,11 @@ struct IrNode
 	 */
 	Signal *		signal;
 
+	/*
+	*	Used for type checking invariant parameters during invariant call.
+	*/
+	Invariant *		invariant;
+	
 	/*
 	 *	Only if this node belongs to a ParseNumericExpression subtree
 	 */

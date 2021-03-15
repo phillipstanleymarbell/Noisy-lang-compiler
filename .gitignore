@@ -39,6 +39,7 @@
 
 # Misc
 .DS_Store
+.vscode
 
 # Noisy specific
 src/noisy/version.c

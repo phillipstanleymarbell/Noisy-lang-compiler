@@ -2476,7 +2476,8 @@ newtonParseHighPrecedenceQuantityOperator(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		constraint			::=	quantityExpression comparisonOperator quantityExpression | identifier parameterTuple .
+ *		constraint			::=	quantityExpression comparisonOperator quantityExpression 
+ *							| identifier callParameterTuple | piecewiseConstraint .
  */
 IrNode *
 newtonParseConstraint(State *  N, Scope *  currentScope)
@@ -2491,13 +2492,33 @@ newtonParseConstraint(State *  N, Scope *  currentScope)
 
 	if (inFirst(N, kNewtonIrNodeType_Pconstraint, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
-		addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
-		addLeafWithChainingSeq(N, node, newtonParseCompareOp(N, currentScope));
-		addLeafWithChainingSeq(N, node, newtonParseQuantityExpression(N, currentScope));
-
-		/*
-		 *	TODO; with the Newton grammar update, there are actually two cases to handle here.
-		 */
+		
+		if (lexPeek(N,2)->type == kNewtonIrNodeType_TleftParen && lexPeek(N,1)->type == kNewtonIrNodeType_Tidentifier)
+		{
+			/*
+			*	constraint ::= identifier callParameterTuple
+			*/
+			IrNode * invariantNode = newtonParseInvariantIdentifierUsageTerminal(N,currentScope);
+			addLeaf(N,node,invariantNode);
+			addLeafWithChainingSeq(N,node,newtonParseCallParameterTuple(N,currentScope,invariantNode->invariant));
+		}
+		else if (lexPeek(N,1)->type == kNewtonIrNodeType_Tpiecewise)
+		{
+			/*
+			*	constraint ::= piecewiseConstraint .
+			*/
+			addLeaf(N,node, newtonParsePiecewiseConstraint(N,currentScope));
+		}
+		
+		else 
+		{
+			/*
+			*	constraint ::= quantityExpression comparisonOperator quantityExpression
+			*/
+			addLeaf(N, node, newtonParseQuantityExpression(N, currentScope));
+			addLeafWithChainingSeq(N, node, newtonParseCompareOp(N, currentScope));
+			addLeafWithChainingSeq(N, node, newtonParseQuantityExpression(N, currentScope));
+		}
 	}
 	else
 	{
@@ -2519,7 +2540,280 @@ newtonParseConstraint(State *  N, Scope *  currentScope)
 	return node;
 }
 
+/*
+*	Takes state and the current scope, creates an identifier irNode
+*	similar to the newtonParseIdentifierUsageTerminal, checks if the called
+*	invariant exists and then returns the created node.
+*/
+IrNode*
+newtonParseInvariantIdentifierUsageTerminal(State * N,Scope * currentScope)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+	if (!peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeType_Tidentifier, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
 
+		return NULL;
+	}
+
+	Token *		t = lexGet(N, gNewtonTokenDescriptions);
+	IrNode *	n = genIrNode(N,	t->type,
+						NULL /* left child */,
+						NULL /* right child */,
+						t->sourceInfo /* source info */
+					);
+
+	n->token = t;
+	n->tokenString = t->identifier;
+	assert(!strcmp(n->token->identifier, n->tokenString));
+
+	Invariant * invariantSearchResult = newtonGetInvariant(N,n->tokenString);
+	if (invariantSearchResult == NULL)
+	{
+		char *	details;
+
+		asprintf(&details, "%s: \"%s\"\n", Iundeclared, t->identifier);
+		newtonParserSemanticError(N, kNewtonIrNodeType_Tidentifier, details);
+		free(details);
+
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
+	}
+	
+	if (currentScope->parent != NULL)
+	{
+		Symbol * symbolSearchResult = commonSymbolTableSymbolForIdentifier(N, currentScope->parent, t->identifier);
+		
+		n->symbol = symbolSearchResult;
+		n->invariant = invariantSearchResult;
+	}
+	/*
+	*	TODO; check what happens if ever this check fails
+	*/
+	return n;
+}
+
+
+/*
+ *	Grammar production:
+ *
+ *		callParameterTuple		::=	"(" identifier {"," identifier} ")" .
+ */
+IrNode*
+newtonParseCallParameterTuple(State * N, Scope * currentScope, Invariant * invariant)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+	
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PcallParameterTuple,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */
+					);
+	
+	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
+
+	// int	parameterNumber = 0;
+	/*
+	*	The tree structure of the parameter list is having each parameter in left irNode
+	*	and having an xseq irNode on the right. Each parameter contains its physics.
+	*/
+	IrNode *  parameterIndex = invariant->parameterList;
+	IrNode * expectedNode = parameterIndex->irLeftChild;
+	
+	assert(expectedNode->physics != NULL);
+	
+	IrNode *  newIdentifierNode = newtonParseIdentifierUsageTerminal(N,kNewtonIrNodeType_Tidentifier,currentScope);
+
+	addLeaf(N,node,newtonParseCallParameterSemantics(N,newIdentifierNode,expectedNode));
+
+	while (peekCheck(N, 1, kNewtonIrNodeType_Tcomma))
+	{
+		newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
+		
+		/*
+		*	Access the next parameter from the invariant's parameter list and
+		*	ensure that its physics are defined.
+		*/
+		parameterIndex = parameterIndex->irRightChild;
+		
+		/*
+		*	Call with more parameters than expected.
+		*/
+		if (parameterIndex == NULL) {
+			flexprint(N->Fe, N->Fm, N->Fperr,"Calling \"%s\" invariant with more parameters than expected.\n",invariant->identifier);
+			newtonParserSemanticError(N, kNewtonIrNodeType_PcallParameterTuple, (char *)EsemanticsA);
+			newtonParserErrorRecovery(N, kNewtonIrNodeType_PcallParameterTuple);
+		}
+		expectedNode = parameterIndex->irLeftChild;
+		assert(expectedNode->physics != NULL);
+		
+		newIdentifierNode = newtonParseIdentifierUsageTerminal(N,kNewtonIrNodeType_Tidentifier,currentScope);
+		
+		addLeafWithChainingSeq(N, node, newtonParseCallParameterSemantics(N,newIdentifierNode,expectedNode));
+	}
+	/*
+	*	Call with less parameters than expected.
+	*/
+	if (parameterIndex->irRightChild != NULL) {
+		flexprint(N->Fe, N->Fm, N->Fperr,"Calling \"%s\" invariant with less parameters than expected.\n",invariant->identifier);
+		newtonParserSemanticError(N, kNewtonIrNodeType_PcallParameterTuple, (char *)EsemanticsA);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PcallParameterTuple);
+	}
+
+	newtonParseTerminal(N, kNewtonIrNodeType_TrightParen, currentScope);
+
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PcallParameterTuple, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PcallParameterTuple, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PcallParameterTuple);
+	}
+	*/
+	return node;
+}	
+
+
+IrNode *
+newtonParseCallParameterSemantics(State * N, IrNode * callParameter, IrNode * expectedParameter)
+{
+	if (!areTwoPhysicsEquivalent(N,callParameter->physics,expectedParameter->physics))
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "Call Parameter:\n");
+		printDimensionsOfNode(N, callParameter, N->Fperr);
+		flexprint(N->Fe, N->Fm, N->Fperr, "Expected type:\n");
+		printDimensionsOfNode(N, expectedParameter, N->Fperr);
+
+		newtonParserSemanticError(N, kNewtonIrNodeType_PcallParameterTuple, (char *)EexpressionPhysicsMismatch);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PcallParameterTuple);
+	}
+
+	return callParameter;
+}
+
+/*
+*	Grammar production:
+*
+*		piecewiseConstraint		::= "piecewise" "{" caseStatementList "}" .		
+*/
+IrNode *
+newtonParsePiecewiseConstraint(State * N, Scope * currentScope)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PpiecewiseConstraint,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */
+					);
+	
+	newtonParseTerminal(N,kNewtonIrNodeType_Tpiecewise,currentScope);
+	newtonParseTerminal(N,kNewtonIrNodeType_TleftBrace,currentScope);
+	addLeaf(N,node, newtonParseCaseStatementList(N,currentScope));
+	newtonParseTerminal(N,kNewtonIrNodeType_TrightBrace,currentScope);
+
+	return node;
+}
+
+/*
+*	Grammar production:
+*
+*		caseStatementList		::=	caseStatement {"," caseStatement } .
+*/
+IrNode *
+newtonParseCaseStatementList(State * N, Scope * currentScope)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PcaseStatementList,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */
+					);
+	if (inFirst(N, kNewtonIrNodeType_PcaseStatementList, gNewtonFirsts, kNewtonIrNodeTypeMax))
+	{
+		addLeaf(N,node, newtonParseCaseStatement(N,currentScope));
+
+		while(peekCheck(N,1,kNewtonIrNodeType_Tcomma))
+		{
+			newtonParseTerminal(N,kNewtonIrNodeType_Tcomma,currentScope);
+			addLeafWithChainingSeq(N,node,newtonParseCaseStatement(N,currentScope));
+		}
+	}
+	else
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PcaseStatementList, kNewtonIrNodeTypeMax, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PcaseStatementList);
+	}
+
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PcaseStatementList, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PcaseStatementList, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PcaseStatementList);
+	}
+	*/
+
+	return node;
+}
+
+/*
+*	Grammar production :
+*
+*		caseStatement			::= ("case" constraint | "otherwise") "->" "{" constraintList "}" .
+*/
+IrNode *
+newtonParseCaseStatement(State * N, Scope * currentScope)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
+	IrNode *	node = genIrNode(N,	kNewtonIrNodeType_PcaseStatement,
+						NULL /* left child */,
+						NULL /* right child */,
+						lexPeek(N, 1)->sourceInfo /* source info */
+					);
+
+	if (inFirst(N,kNewtonIrNodeType_PcaseStatement,gNewtonFirsts,kNewtonIrNodeTypeMax))
+	{
+		if (lexPeek(N,1)->type == kNewtonIrNodeType_Tcase)
+		{
+			newtonParseTerminal(N,kNewtonIrNodeType_Tcase,currentScope);
+			addLeaf(N,node, newtonParseConstraint(N,currentScope));
+		}
+		else if (lexPeek(N,1)->type == kNewtonIrNodeType_Totherwise)
+		{
+			addLeaf(N,node, newtonParseTerminal(N,kNewtonIrNodeType_Totherwise,currentScope));
+		}
+
+		newtonParseTerminal(N,kNewtonIrNodeType_TrightArrow,currentScope);
+		newtonParseTerminal(N,kNewtonIrNodeType_TleftBrace,currentScope);
+		addLeafWithChainingSeq(N,node, newtonParseConstraintList(N,currentScope));
+		newtonParseTerminal(N,kNewtonIrNodeType_TrightBrace,currentScope);
+	}
+	else
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PcaseStatement, kNewtonIrNodeTypeMax, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PcaseStatement);
+	}
+
+	/*
+	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
+	 */
+	/*
+	if (!inFollow(N, kNewtonIrNodeType_PcaseStatement, gNewtonFollows, kNewtonIrNodeTypeMax))
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_PcaseStatement, kNewtonIrNodeTypeMax, gNewtonFollows);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_PcaseStatement);
+	}
+	*/
+
+	return node;
+}
 
 /*
  *	Grammar production:
@@ -3994,6 +4288,7 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 
 	Physics *   physicsSearchResult;
 	Symbol * symbolSearchResult;
+
 
 	if ((physicsSearchResult = newtonPhysicsTablePhysicsForIdentifier(N, scope, t->identifier)) == NULL)
 	{

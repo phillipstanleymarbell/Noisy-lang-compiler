@@ -79,7 +79,7 @@ const char	EraisingPhysicsQuantityToNonIntegerExponent[] = "Raising a dimension 
  *	These are mostly passed in eSemantics()
  */
 const char	Eundeclared[]				= "Variable use before declaration";
-
+const char	Iundeclared[]				= "Invariant use before declaration";
 
 
 /*
