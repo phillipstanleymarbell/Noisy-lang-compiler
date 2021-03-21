@@ -112,28 +112,28 @@ bmx055: sensor (
 	#
 	#	Range of Acceleration can be found in Table 2 on page 11.
 	#
-	range bmx055xAcceleration == [-16*mj, 16*mj],
-	range bmx055yAcceleration == [-16*mj, 16*mj],
-	range bmx055zAcceleration == [-16*mj, 16*mj],
+	range bmx055xAcceleration == [-16 mjf, 16 mjf],
+	range bmx055yAcceleration == [-16 mjf, 16 mjf],
+	range bmx055zAcceleration == [-16 mjf, 16 mjf],
 
 	#
 	#	Range of Temperature can be found in Table 2 on page 11.
 	#
-	range Temperature == [233.15*K, 358.15*K],
+	range bmx055Temperature == [233.15 K, 358.15 K],
 
 	#
 	#	Range of Magnetic Field Density can be found in Table 4 on page 17.
 	#
-	range bmx055xMagneticFluxDensity == [-1300*uT, 1300*uT],
-	range bmx055yMagneticFluxDensity == [-1300*uT, 1300*uT],
-	range bmx055zMagneticFluxDensity == [-2500*uT, 2500*uT],
+	range bmx055xMagneto == [-1300 uT, 1300 uT],
+	range bmx055yMagneto == [-1300 uT, 1300 uT],
+	range bmx055zMagneto == [-2500 uT, 2500 uT],
 
 	#
 	#	Range of Angular Rate can be found in Table 3 on page 14.
 	#
-	range bmx055xAngularRate == [0*aj, 2000*aj],
-	range bmx055yAngularRate == [0*aj, 2000*aj],
-	range bmx055zAngularRate == [0*aj, 2000*aj],
+	range bmx055xAngularRate == [0 ajf, 2000 ajf],
+	range bmx055yAngularRate == [0 ajf, 2000 ajf],
+	range bmx055zAngularRate == [0 ajf, 2000 ajf],
 
 	#
 	#	The operation sequence needed to get a sample
@@ -190,7 +190,8 @@ bmx055: sensor (
 		#	
 		#	Get Temp data...
 		#
-		bmx055Temperature = read 16r08;
+		bmxTemp = read 16r08;
+		bmx055Temperature = bmxTemp;
 	},
 
 	#
@@ -198,7 +199,7 @@ bmx055: sensor (
 	#
 	#	Register address of Magnetometer can be found in document 10.2 on page 130.
 	#
-	interface bmx055xMagneticFluxDensity == i2c (address: 16r10)
+	interface bmx055xMagneto == i2c (address: 16r10)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -207,10 +208,10 @@ bmx055: sensor (
 		#
 		xMagnetoHigh = read 16r43;
 		xMagnetoLow = read 16r42;
-		bmx055xMagneticFluxDensity = (xMagnetoHigh << 5) | (xMagnetoLow >> 3);
+		bmx055xMagneto = (xMagnetoHigh << 5) | (xMagnetoLow >> 3);
 	},
 
-	interface bmx055yMagneticFluxDensity == i2c (address: 16r10)
+	interface bmx055yMagneto == i2c (address: 16r10)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -219,10 +220,10 @@ bmx055: sensor (
 		#
 		yMagnetoHigh = read 16r45;
 		yMagnetoLow = read 16r44;
-		bmx055yMagneticFluxDensity = (yMagnetoHigh << 5) | (yMagnetoLow >> 3);
+		bmx055yMagneto = (yMagnetoHigh << 5) | (yMagnetoLow >> 3);
 	},
 
-	interface bmx055bmx055zMagneticFluxDensity == i2c (address: 16r10)
+	interface bmx055zMagneto == i2c (address: 16r10)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -231,7 +232,7 @@ bmx055: sensor (
 		#
 		zMagnetoHigh = read 16r47;
 		zMagnetoLow = read 16r46;
-		bmx055zMagneticFluxDensity = (zMagnetoHigh << 7) | (zMagnetoLow >> 1);
+		bmx055zMagneto = (zMagnetoHigh << 7) | (zMagnetoLow >> 1);
 	},
 
 	#
@@ -280,7 +281,7 @@ bmx055: sensor (
 	#
 	#	Unsure about the function that describes the relationship between the following variables, so leave them as they are.
 	#
-	uncertainty bmx055xAcceleration == Gaussian(bmx055xAcceleration, kBMX055xAccelerationStdev)*g,
+	uncertainty bmx055xAcceleration == Gaussian(bmx055xAcceleration kBMX055xAccelerationStdev)*g,
 	uncertainty bmx055yAcceleration == Gaussian(bmx055yAcceleration, kBMX055yAccelerationStdev)*g,
 	uncertainty bmx055zAcceleration == Gaussian(bmx055zAcceleration, kBMX055zAccelerationStdev)*g,
 	uncertainty bmx055Temperature == Gaussian(bmx055Temperature, kBMX055TemperatureStdev)*g,
@@ -296,18 +297,18 @@ bmx055: sensor (
 	#
 	#	When this token is returned by the sensor, it denotes invalid sensed value / erasure in communication with sensor.
 	#
-	erasuretoken bmx055xAcceleration == kBMX055xAccelerationErasureToken,
-	erasuretoken bmx055yAcceleration == kBMX055yAccelerationErasureToken,
-	erasuretoken bmx055zAcceleration == kBMX055zAccelerationErasureToken,
-	erasuretoken bmx055Temperature == kBMX055TemperatureErasureToken,
+	erasureToken bmx055xAcceleration == kBMX055xAccelerationErasureToken,
+	erasureToken bmx055yAcceleration == kBMX055yAccelerationErasureToken,
+	erasureToken bmx055zAcceleration == kBMX055zAccelerationErasureToken,
+	erasureToken bmx055Temperature == kBMX055TemperatureErasureToken,
 
-	erasuretoken bmx055xMagneticFluxDensity == kBMX055xMagneticFluxDensityErasureToken,
-	erasuretoken bmx055yMagneticFluxDensity == kBMX055yMagneticFluxDensityErasureToken,
-	erasuretoken bmx055zMagneticFluxDensity == kBMX055zMagneticFluxDensityErasureToken,
+	erasureToken bmx055xMagneticFluxDensity == kBMX055xMagneticFluxDensityErasureToken,
+	erasureToken bmx055yMagneticFluxDensity == kBMX055yMagneticFluxDensityErasureToken,
+	erasureToken bmx055zMagneticFluxDensity == kBMX055zMagneticFluxDensityErasureToken,
 
-	erasuretoken bmx055xAngularRate == kBMX055xAngularRateErasureToken,
-	erasuretoken bmx055yAngularRate == kBMX055yAngularRateErasureToken,
-	erasuretoken bmx055zAngularRate == kBMX055zAngularRateErasureToken,
+	erasureToken bmx055xAngularRate == kBMX055xAngularRateErasureToken,
+	erasureToken bmx055yAngularRate == kBMX055yAngularRateErasureToken,
+	erasureToken bmx055zAngularRate == kBMX055zAngularRateErasureToken,
 
 	#
 	#	Precision settings list for the sensor. This is a list of (precision, cost) pairs.
