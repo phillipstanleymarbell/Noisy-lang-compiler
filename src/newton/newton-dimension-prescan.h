@@ -42,5 +42,6 @@ void		newtonDimensionPassParseStatement(State *  N, Scope *  currentScope);
 void		newtonDimensionPassParseBaseSignal(State *  N, Scope *  currentScope);
 void		newtonDimensionPassParseSubindexTuple(State *  N, Scope *  currentScope);
 void		newtonDimensionPassParseSubindex(State *  N, Scope *  currentScope);
+void		newtonDimensionPassParseSignalSensor(State * N, Scope * currentScope);
 IrNode *	newtonDimensionPassParseName(State *  N, Scope *  currentScope);
 IrNode *	newtonDimensionPassParseSymbol(State *  N, Scope *  currentScope);

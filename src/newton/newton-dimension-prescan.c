@@ -247,7 +247,7 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 	{
 		// IrNode *	signalSensor = NULL;
 		// signalSensor = 
-		newtonParseSignalSensor(N, currentScope);
+		newtonDimensionPassParseSignalSensor(N, currentScope);
 	}
 
 	/*
@@ -320,6 +320,15 @@ newtonDimensionPassParseBaseSignal(State * N, Scope * currentScope)
 	}
 	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, currentScope);
+}
+
+void
+newtonDimensionPassParseSignalSensor(State * N, Scope * currentScope)
+{
+	newtonParseTerminal(N, kNewtonIrNodeType_Tsensor, currentScope);
+	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
+	newtonParseIdentifier(N, currentScope);
+	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 }
 
 IrNode *
