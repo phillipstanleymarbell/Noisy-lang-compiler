@@ -1,0 +1,7 @@
+include "../../applications/newton/sensors/BMX055.nt"
+
+mySignal : signal =
+{
+        sensor = bmx055;
+        derivation = temperature;
+}
