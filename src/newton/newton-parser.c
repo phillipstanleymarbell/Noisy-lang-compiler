@@ -3380,7 +3380,7 @@ newtonParseArithmeticCommand(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
-	addLeaf(N, node, newtonParseIdentifierDefinitionTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+	addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
 	addLeaf(N, node, newtonParseExpression(N, currentScope));
 
@@ -3808,6 +3808,8 @@ newtonParseTerm(State *  N, Scope *  currentScope)
 	{
 		addLeaf(N, node, newtonParseUnaryOp(N, currentScope));
 	}
+	
+	addLeafWithChainingSeq(N, node, newtonParseFactor(N, currentScope));
 
 	if (peekCheck(N, 1, kNewtonIrNodeType_TplusPlus))
 	{
@@ -3817,6 +3819,7 @@ newtonParseTerm(State *  N, Scope *  currentScope)
 	{
 		addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TminusMinus, currentScope));
 	}
+
 
 	while (inFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
@@ -4335,8 +4338,15 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 	}
 
 	n->symbol = symbolSearchResult;
-	n->physics = deepCopyPhysicsNode(N, physicsSearchResult);
-	assert(n->physics->dimensions != NULL);
+	/*
+	*	The following check is added to avoid a segmentation fault when running bug-511.nt.
+	*	TODO: Fix it and refactor.
+	*/
+	if (physicsSearchResult !=NULL)
+	{
+		n->physics = deepCopyPhysicsNode(N, physicsSearchResult);
+		assert(n->physics->dimensions != NULL);
+	}
 
 /*
 fprintf(stderr, "In identifier use of [%s], physics dimensions exponents are:\n", t->identifier);
