@@ -803,6 +803,11 @@ checkGt(State *  N)
 		gobble(N, 2);
 		type = kNewtonIrNodeType_Tge;
 	}
+	else if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '>')
+	{
+		gobble(N, 2);
+		type = kNewtonIrNodeType_TrightShift;
+	}
 	else
 	{
 		gobble(N, 1);
@@ -844,6 +849,11 @@ checkLt(State *  N)
 	{
 		gobble(N, 2);
 		type = kNewtonIrNodeType_Tle;
+	}
+	else if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '<')
+	{
+		gobble(N,2);
+		type = kNewtonIrNodeType_TleftShift;
 	}
 	else
 	{
