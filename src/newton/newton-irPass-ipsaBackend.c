@@ -1248,6 +1248,14 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
                 parallel = true;
             }
         
+            /*
+            *   Dummy code : Needs removing!
+            *   Fixes set but unused warning for parallel and shorterLength.   
+            */
+            if (parallel && shorterLength == 0)
+            {
+                ;
+            }
 
             for(int i=0; i<j; i++)
             {
