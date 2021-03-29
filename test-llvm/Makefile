@@ -1,6 +1,6 @@
-CC= ../submodules/llvm-project/build/bin/clang
+CC= clang
 CFLAGS=-g `llvm-config --cflags` 
-LD=../submodules/llvm-project/build/bin/clang++
+LD=clang++
 LDFLAGS=`llvm-config --cxxflags --ldflags --libs core executionengine mcjit interpreter analysis native bitwriter target --system-libs` 
 
 all: sum
