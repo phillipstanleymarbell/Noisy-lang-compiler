@@ -7,7 +7,7 @@ reservedIdentifiers		::=	":" | "," | "@" | "o<" | "~" | "<" | "<=" | ">" | ">=" 
 					| "sensor" | "name" | "symbol" | "derivation" | "none"
 					| "dot" | "cross" | "derivative" | "integral" | "interface"
 					| "i2c" | "spi" | "analog" | "write" | "read" | "delay" | "range"
-					| "erasuretoken" | "uncertainty" | "accuracy" | "precision"
+					| "erasureToken" | "uncertainty" | "accuracy" | "precision"
 					| "piecewise" | "case" | "otherwise"
 					| "GaussianDistribution" | "LaplacianDistribution" | "StudentTDistribution" | "BernoulliDistribution" | "BinomialDistribution" 
 					| "PoissonDistribution" | "NegativeBinomialDistribution" | "BetaBinomialDistribution" | "ExponentialDistribution"
@@ -40,7 +40,7 @@ identifier			::=	(idchar-except-zeroToNine) {idchar} .
  *		constantDefinition	::=	identifier ":" "constant" "=" numericTerm [unitExpression] ";" .
  *
  *	the language requires the constant value to be a `factor` (a single constant
- *	or a term/expression in parentesis):
+ *	or a term/expression in parenthesis):
  *
  *		constantDefinition	::=	identifier ":" "constant" "=" numericFactor [unitFactor] ";" .
  */
@@ -119,7 +119,7 @@ delayCommand			::=	"delay" numericExpression .
 arithmeticCommand		::=	identifier "=" expression .
 rangeStatement			::=	"range" identifier "==" "[" numericFactor [unitFactor] "," numericFactor [unitFactor] "]" .
 uncertaintyStatement		::=	"uncertainty" identifier "==" factor [unitFactor] .
-erasureValueStatement		::=	"erasuretoken" identifier "==" numericFactor [unitFactor] .
+erasureValueStatement		::=	"erasureToken" identifier "==" numericFactor [unitFactor] .
 accuracyStatement		::=	"accuracy" identifier "==" numericConstTupleList .
 precisionStatement		::=	"precision" identifier "==" numericConstTupleList .
 numericConstTupleList		::=	"{" numericConstTuple {"," numericConstTuple} "}" .
