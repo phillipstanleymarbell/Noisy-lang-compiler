@@ -80,6 +80,7 @@ extern const char	EraisingPhysicsQuantityToNonIntegerExponent[];
  */
 extern const char	Eundeclared[];
 extern const char	Iundeclared[];
+extern const char	Sundeclared[];
 
 
 /*

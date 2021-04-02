@@ -80,7 +80,7 @@ const char	EraisingPhysicsQuantityToNonIntegerExponent[] = "Raising a dimension 
  */
 const char	Eundeclared[]				= "Variable use before declaration";
 const char	Iundeclared[]				= "Invariant use before declaration";
-
+const char	Sundeclared[]				= "Sensor use before declaration";
 
 /*
  *	HTML-format errors for CGI version
