@@ -1278,11 +1278,51 @@ newtonParseSignalSensor(State * N, Scope *  currentScope)
 
 	addLeaf(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tsensor, currentScope));
 	addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope));
-	addLeafWithChainingSeq(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+	addLeafWithChainingSeq(N, node, newtonParseSensorIdentifierUsageTerminal(N, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tsemicolon, currentScope);
 
 	return node;
 }
+
+IrNode *
+newtonParseSensorIdentifierUsageTerminal(State * N,Scope * currentScope)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+	
+	if (!peekCheck(N, 1, kNewtonIrNodeType_Tidentifier))
+	{
+		newtonParserSyntaxError(N, kNewtonIrNodeType_Tidentifier, kNewtonIrNodeType_Tidentifier, gNewtonFirsts);
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
+
+		return NULL;
+	}
+
+	Token *		t = lexGet(N, gNewtonTokenDescriptions);
+	IrNode *	n = genIrNode(N,	t->type,
+						NULL /* left child */,
+						NULL /* right child */,
+						t->sourceInfo /* source info */
+					);
+
+	n->token = t;
+	n->tokenString = t->identifier;
+	assert(!strcmp(n->token->identifier, n->tokenString));
+
+	Sensor * sensorSearchResult = newtonGetSensor(N,n->tokenString);
+	if (sensorSearchResult == NULL)
+	{
+		char *	details;
+
+		asprintf(&details, "%s: \"%s\"\n", Sundeclared, t->identifier);
+		newtonParserSemanticError(N, kNewtonIrNodeType_Tidentifier, details);
+		free(details);
+
+		newtonParserErrorRecovery(N, kNewtonIrNodeType_Tidentifier);
+	}
+	
+	return n;
+}
+
 
 /*
  *	Grammar production:
@@ -2881,7 +2921,13 @@ newtonParseSensorDefinition(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
-	addLeaf(N, node, newtonParseIdentifierDefinitionTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+	Sensor * sensor = (Sensor *) calloc(1, sizeof(Sensor));
+	IrNode * identifierNode = newtonParseIdentifierDefinitionTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope);
+
+	sensor->identifier = identifierNode->tokenString;
+	sensor->scope = currentScope;
+
+	addLeaf(N, node,identifierNode );
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
 
 	/*
@@ -2897,10 +2943,15 @@ newtonParseSensorDefinition(State *  N, Scope *  currentScope)
 
 	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, newScope);
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftBrace, newScope);
-	addLeafWithChainingSeq(N, node, newtonParseSensorPropertyList(N, newScope));
+	IrNode * propertyList = newtonParseSensorPropertyList(N, newScope);
+	addLeafWithChainingSeq(N, node, propertyList);
 
 	IrNode *	scopeEnd	= newtonParseTerminal(N, kNewtonIrNodeType_TrightBrace, newScope);
 	commonSymbolTableCloseScope(N, newScope, scopeEnd);
+
+	sensor->parameterList = parameterList;
+	sensor->propertyList = propertyList;
+	newtonAddSensor(N,sensor);
 
 	/*
 	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
