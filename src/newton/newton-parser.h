@@ -102,6 +102,7 @@ IrNode *		newtonParseReadRegisterCommand(State * N, Scope *  currentScope);
 IrNode *		newtonParseRule(State *  N, Scope *  currentScope);
 IrNode *		newtonParseRuleList(State *  N, Scope *  currentScope);
 IrNode *		newtonParseSensorDefinition(State * N, Scope *  currentScope);
+IrNode *		newtonParseSensorIdentifierUsageTerminal(State * N, Scope * currentScope);
 IrNode *		newtonParseSensorInterfaceCommand(State * N, Scope *  currentScope);
 IrNode *		newtonParseSensorInterfaceCommandList(State * N, Scope *  currentScope);
 IrNode *		newtonParseSensorInterfaceStatement(State * N, Scope *  currentScope);
