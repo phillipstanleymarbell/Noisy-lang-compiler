@@ -852,6 +852,7 @@ typedef struct Physics		Physics;
 typedef struct IntegralList	IntegralList;
 typedef struct Invariant	Invariant;
 typedef struct Signal		Signal;
+typedef struct Sensor		Sensor;
 
 struct Dimension
 {
@@ -892,17 +893,29 @@ struct Invariant
 	Invariant *		next;
 };
 
-struct Signal {
-    IrNode * 		baseNode;				//	The baseSignalDefinition IrNode.
-    char * 			identifier;				//	The signal identifier.
-	char *			invariantExpressionIdentifier;	//Identifier used in invariant expressions.
-	int				axis;					//	The axis of the multi axis signal that the signal corresponds to. Default value is zero.
-    char * 			sensorIdentifier;		//	Identifier of the sensor associated to a signal.
-    int 			physicalGroupNumber;	//  Conveys information about the physical origin of the signal. (e.g. The I2C bus number of a sensor connected to Ipsa).
-	int				dimensionIndex;			//	Conveys information about the dimension of the signal. Currently used for storing the dimension index for Ipsa.
-    Signal * 		relatedSignalList;		//	List of signals that should be co-sampled with this signal.
-	Signal *		relatedSignalListNext;	//	Move to the next element of the relatedSignalList.
-	Signal *		relatedSignalListPrev;	//	Move to the previous element of the relatedSignalList.
+struct Signal
+{
+    	IrNode * 		baseNode;			//	The baseSignalDefinition IrNode.
+    	char * 			identifier;			//	The signal identifier.
+	char *			invariantExpressionIdentifier;	//	Identifier used in invariant expressions.
+	int			axis;				//	The axis of the multi axis signal that the signal corresponds to. Default value is zero.
+    	char * 			sensorIdentifier;		//	Identifier of the sensor associated to a signal.
+    	int 			physicalGroupNumber;		//	Conveys information about the physical origin of the signal. (e.g. The I2C bus number of a sensor connected to Ipsa).
+	int			dimensionIndex;			//	Conveys information about the dimension of the signal. Currently used for storing the dimension index for Ipsa.
+	Signal * 		relatedSignalList;		//	List of signals that should be co-sampled with this signal.
+	Signal *		relatedSignalListNext;		//	Move to the next element of the relatedSignalList.
+	Signal *		relatedSignalListPrev;		//	Move to the previous element of the relatedSignalList.
+};
+
+struct Sensor
+{
+	char *			identifier;
+	Scope *			scope;
+	SourceInfo *		sourceInfo;
+	IrNode *		parameterList;			//	This is just bunch of IrNode's in Xseq
+	IrNode *		propertyList;
+
+	Sensor *		next;				//	Used to create a Sensor List.
 };
 
 struct Physics
@@ -1259,7 +1272,11 @@ typedef struct
 	 *	Global index of which prime numbers we have used for the dimension id's
 	 */
 	int		primeNumbersIndex;
-	Invariant * invariantList;
+	/*
+	*	Useful lists.
+	*/
+	Invariant * 	invariantList;
+	Sensor *	sensorList;
 } State;
 
 
