@@ -57,5 +57,7 @@ void		newtonPhysicsAddExponentsRecursively(State *  N, Physics *  baseNode, IrNo
 void		newtonPhysicsSubtractExponents(State *  N, Physics *  left, Physics *  right);
 void		newtonPhysicsMultiplyExponents(State *  N, Physics *  source, double multiplier);
 void		newtonAddInvariant(State *  N, Invariant *  invariant);
+void		newtonAddSensor(State * N, Sensor * sensor);
 Invariant *	newtonGetInvariant(State * N, char * invariantName);
+Sensor *	newtonGetSensor(State * N, char * sensorName);
 bool		areTwoPhysicsEquivalent(State *  N, Physics *  left, Physics *  right);

@@ -87,6 +87,27 @@ getTailInvariant(State *  N, Invariant *  head)
 	}
 }
 
+static Sensor *
+getTailSensor(State *  N, Sensor *  head)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
+	if (head == NULL)
+	{
+		return NULL;
+	}
+	else
+	{
+		Sensor *	current = head;
+		
+		while (current->next != NULL)
+		{
+			current = current->next;
+		}
+		return current;
+	}
+}
+
 
 static Dimension *
 copyDimensionNode(State *  N, Dimension *  list)
@@ -281,6 +302,45 @@ newtonGetInvariant(State * N,char * invariantName)
 	while (head != NULL)
 	{
 		if (!strcmp(head->identifier,invariantName))
+		{
+			return head;
+		}
+		head=head->next;
+	}
+	return NULL;
+}
+
+/*
+*	Takes a sensor data structure and appends it to the sensorList of the state N.
+*/
+void
+newtonAddSensor(State * N, Sensor * sensor)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
+	Sensor *	tail;
+	if ((tail = getTailSensor(N, N->sensorList)) == NULL)
+	{
+		N->sensorList = sensor;
+	}
+	else
+	{
+		tail->next = sensor;
+	}
+}
+
+/*
+*	Takes State N and string sensorName and returns the Sensor *
+*	of the sensor with that name.
+*/
+Sensor *
+newtonGetSensor(State * N,char * sensorName)
+{
+	Sensor * head = N->sensorList;
+	
+	while (head != NULL)
+	{
+		if (!strcmp(head->identifier,sensorName))
 		{
 			return head;
 		}
