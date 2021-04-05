@@ -16,9 +16,11 @@ include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 PLATFORM_CFLAGS	+= -Wno-gnu-designator
 MAKEFLAGS	+= #-j -c
 EXAMPLES_NEWTON_FLAGS = #-O 1#--verbose 1
+LLVMCFLAGS	+= `llvm-config --cflags`
+LLVMLDFLAGS	+= `llvm-config --cxxflags --ldflags --libs core --system-libs`
 
-CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
-LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
+CCFLAGS		= $(PLATFORM_DBGFLAGS) $(LLVMCFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS) 
+LDFLAGS 	= $(PLATFORM_DBGFLAGS) $(LLVMLDFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
 
 LIBNOISY	= Noisy
 NOISY_L10N	= EN
@@ -52,6 +54,7 @@ SOURCES		=\
 		noisy-irPass-dotBackend.c\
 		noisy-irPass-protobufBackend.c\
 		noisy-timeStamps.c\
+		noisy-codeGeneration.c\
 
 #
 #	Clang seems to be unable to do LTO unless we have all the objects
@@ -73,6 +76,7 @@ OBJS		=\
 		noisy-irHelpers.$(OBJECTEXTENSION)\
 		noisy-irPass-dotBackend.$(OBJECTEXTENSION)\
 		noisy-irPass-protobufBackend.$(OBJECTEXTENSION)\
+		noisy-codeGeneration.$(OBJECTEXTENSION)\
 
 
 #
@@ -95,6 +99,7 @@ CGIOBJS		=\
 		noisy-irHelpers.$(OBJECTEXTENSION)\
 		noisy-irPass-dotBackend.$(OBJECTEXTENSION)\
 		noisy-irPass-protobufBackend.$(OBJECTEXTENSION)\
+		# noisy-codeGeneration.$(OBJECTEXTENSION)\
 
 
 LIBNOISYOBJS =\
@@ -111,6 +116,7 @@ LIBNOISYOBJS =\
 		noisy-irHelpers.$(OBJECTEXTENSION)\
 		noisy-irPass-dotBackend.$(OBJECTEXTENSION)\
 		noisy-irPass-protobufBackend.$(OBJECTEXTENSION)\
+		# noisy-codeGeneration.$(OBJECTEXTENSION)\
 
 
 HEADERS		=\
@@ -123,6 +129,7 @@ HEADERS		=\
 		noisy-irHelpers.h\
 		noisy-irPass-dotBackend.h\
 		noisy-irPass-protobufBackend.h\
+		noisy-codeGeneration.h\
 
 
 
