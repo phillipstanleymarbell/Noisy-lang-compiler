@@ -14,6 +14,7 @@
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
 #include "noisy-codeGeneration.h"
+#include "common-irHelpers.h"
 #include <llvm-c/Core.h>
 
 
@@ -24,18 +25,75 @@ typedef struct {
 } CodeGenState;
 
 
+void
+noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleTypeNameDeclNode)
+{
+        
+        if (R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PconstantDecl)
+        {
+                IrNode * noisyConstantDeclNode = RL(noisyModuleTypeNameDeclNode);
+                LLVMValueRef constValue;
+                LLVMValueRef globalValue;
 
+                if (noisyConstantDeclNode->type == kNoisyIrNodeType_TintegerConst)
+                {
+                        constValue = LLVMConstInt(LLVMInt64Type(),noisyConstantDeclNode->token->integerConst,true);
+                        globalValue = LLVMAddGlobal (S->theModule, LLVMInt64Type(),  L(noisyModuleTypeNameDeclNode)->tokenString);
+                }
+                else if (noisyConstantDeclNode->type == kNoisyIrNodeType_TrealConst)
+                {
+                        constValue = LLVMConstReal(LLVMDoubleType(),noisyConstantDeclNode->token->realConst);
+                        globalValue = LLVMAddGlobal (S->theModule, LLVMDoubleType(),  L(noisyModuleTypeNameDeclNode)->tokenString);
+                }
+                else if (noisyConstantDeclNode->type == kNoisyIrNodeType_TboolConst)
+                {
+                        constValue = LLVMConstInt(LLVMInt1Type(),noisyConstantDeclNode->token->integerConst,false);
+                        globalValue = LLVMAddGlobal (S->theModule, LLVMInt1Type(),  L(noisyModuleTypeNameDeclNode)->tokenString);
+                }
+                LLVMSetInitializer (globalValue ,constValue);
+                LLVMSetGlobalConstant (globalValue, true);
+
+        }
+        
+}
+
+void
+noisyTypeParameterListCodeGen(State * N, CodeGenState * S,IrNode * noisyTypeParameterListNode)
+{
+        ;
+}
+
+void
+noisyModuleDeclBodyCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleDeclBodyNode)
+{
+        for (IrNode * currentNode = noisyModuleDeclBodyNode; currentNode != NULL; currentNode = currentNode->irRightChild)
+        {
+                noisyModuleTypeNameDeclCodeGen(N, S, currentNode->irLeftChild);
+        }
+}
 
 void
 noisyModuleDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleDeclNode)
 {
+        /*
+        *       The first module declaration gives its name to the LLVM module we are going to create.
+        */
         static int firstTime = 1;
         if (firstTime)
         {
                 S->theModule = LLVMModuleCreateWithNameInContext(noisyModuleDeclNode->irLeftChild->symbol->identifier,S->theContext);
                 firstTime = 0;
         }
+        /*
+        *       TODO: Add code for multiple Module declarations.
+        */
 
+        IrNode * noisyTypeParameterListNode = RL(noisyModuleDeclNode);
+        IrNode * noisyModuleDeclBodyNode = RR(noisyModuleDeclNode);
+
+        noisyTypeParameterListCodeGen(N, S, noisyTypeParameterListNode);
+        noisyModuleDeclBodyCodeGen(N, S, noisyModuleDeclBodyNode);
+        
 
 }
 
@@ -83,6 +141,8 @@ noisyCodeGen(State * N)
         /*
         *       We need to dispose LLVM structures in order to avoid leaking memory. Free code gen state.
         */
+
+        flexprint(N->Fe,N->Fm,N->Fpg,LLVMPrintModuleToString(S->theModule));
         LLVMDisposeModule(S->theModule);
         LLVMDisposeBuilder(S->theBuilder);
         LLVMContextDispose(S->theContext);
