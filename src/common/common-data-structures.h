@@ -1205,7 +1205,11 @@ typedef struct
 	FlexPrintBuf *		Fpinfo;
 	FlexPrintBuf *		Fpsmt2;
 	FlexPrintBuf *		Fpc;
+<<<<<<< HEAD
 	FlexPrintBuf *		Fph;
+=======
+	FlexPrintBuf *		Fpg;
+>>>>>>> 56645ef6f... Add Fpg buffer to the state for the code generation
 	FlexPrintBuf *		Fprtl;
 	FlexPrintBuf *		Fpmathjax;
 	FlexPrintBuf *		Fpipsa;
