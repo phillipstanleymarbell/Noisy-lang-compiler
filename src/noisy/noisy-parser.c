@@ -936,7 +936,7 @@ noisyParseIdentifierOrNilList(State *  N, Scope *  currentScope, bool isDefiniti
  *
  *	Generated AST subtree:
  *
- *		node		= kNoisyIrNodeType_Tidentifier
+ *		node		= kNoisyIrNodeType_PidentifierList
  *		node.left	= kNoisyIrNodeType_Tidentifier
  *		node.right	= Xseq of kNoisyIrNodeType_Tidentifier
  */
@@ -986,15 +986,14 @@ noisyParseIdentifierList(State *  N, Scope *  currentScope)
  *
  *	Generated AST subtree:
  *
- *		node		= kNoisyIrNodeType_PbasicType | kNoisyIrNodeType_PanonAggregateType | kNoisyIrNodeType_PtypeName
- *		node.left	= kNoisyIrNodeType_Ptolerance | NULL
- *		node.right	= Xseq of kNoisyIrNodeType_Ptolerance | NULL
+ *		node		= kNoisyIrNodeType_PtypeExpr
+ *		node.left	= kNoisyIrNodeType_PbasicType | kNoisyIrNodeType_PanonAggregateType | kNoisyIrNodeType_PtypeName
+ *		node.right	=  Xseq of kNoisyIrNodeType_PtypeAnnoteList | NULL
  */
 IrNode *
 noisyParseTypeExpr(State *  N, Scope *  currentScope)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseTypeExpr);
-
 
 	IrNode *	n = genIrNode(N, 	kNoisyIrNodeType_PtypeExpr,
 						NULL /* left child */,
@@ -1011,18 +1010,12 @@ noisyParseTypeExpr(State *  N, Scope *  currentScope)
 			return n;
 		}
 
-		noisyParseTerminal(N, kNoisyIrNodeType_Tand);
-		addLeaf(N, n, noisyParseTolerance(N, currentScope));
-
-		/*
-		 *	Could also have done
-		 *		while (!inFollow(N, kNoisyIrNodeType_PtypeExpr, gNoisyFollows, kNoisyIrNodeTypeMax))
-		 */
-		while (peekCheck(N, 1, kNoisyIrNodeType_Tand))
+		if (peekCheck(N,1,kNoisyIrNodeType_Tand))
 		{
 			noisyParseTerminal(N, kNoisyIrNodeType_Tand);
-			addLeafWithChainingSeq(N, n, noisyParseTolerance(N, currentScope));
+			addLeafWithChainingSeq(N, n, noisyParseTypeAnnoteList(N, currentScope));
 		}
+		
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PanonAggregateType, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
