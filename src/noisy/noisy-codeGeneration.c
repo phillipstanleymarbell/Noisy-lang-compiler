@@ -54,13 +54,28 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
                 LLVMSetGlobalConstant (globalValue, true);
 
         }
+        else if (R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PtypeDecl 
+                || R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PtypeAnnoteDecl )
+        {
+                /*
+                *       Type declarations and type annotations declarations are handled by the parser and
+                *       the Noisy's type system and do not generate code.
+                */
+                return ;
+        }
+        else if (R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PfunctionDecl)
+        {
+                
+        }
         
 }
 
 void
 noisyTypeParameterListCodeGen(State * N, CodeGenState * S,IrNode * noisyTypeParameterListNode)
 {
-        ;
+        /*
+        *       TODO!
+        */
 }
 
 void
@@ -100,7 +115,9 @@ noisyModuleDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleDeclNode)
 void 
 noisyFunctionDefnCodeGen(State * N, IrNode * noisyFunctionDefnNode)
 {
-        ;
+        /*
+        *       TODO!
+        */
 }
 
 
