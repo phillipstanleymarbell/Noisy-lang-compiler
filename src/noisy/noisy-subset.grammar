@@ -96,8 +96,8 @@ latencyTolerance	::=	"tau" "(" realConst "," realConst ")" .
 basicType		::=	"bool" | integerType | realType | "string" .
 integerType		::=	"nat4" | "nat8" | "nat16" | "nat32" | "nat64" | "nat128"
 				| "int4" | "int8" | "int16" | "int32" | "int64" | "int128" .
-realType		::=	"float4" | "float8" | "float16" | "float32" | "float64" | "float128" | fixedType .
-numericType		::=	integerType | realType | fixedType | rationalType .
+realType		::=	"float4" | "float8" | "float16" | "float32" | "float64" | "float128" .
+numericType		::=	integerType | realType .
 anonAggregateType	::=	arrayType .
 arrayType		::=	"array" "[" integerConst "]" {"[" integerConst "]"} "of" typeExpr ["rawmem" "@" intParamOrConst] .
 numericConst		=	integerConst | realConst .
