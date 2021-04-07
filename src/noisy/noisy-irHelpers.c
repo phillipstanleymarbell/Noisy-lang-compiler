@@ -131,14 +131,28 @@ assignTypes(State *  N, IrNode *  node, IrNode *  typeExpression)
 	{
 		fatal(N, EassignTypeSanity);
 	}
-//XXX FIXME XXX
-return;
 
 	/*
 	 *	Walk subtree identifierList, set each node->symbol.typeExpr = typeExpr
 	 */
-	node->symbol->typeTree = typeExpression;
+	if (node->type == kNoisyIrNodeType_Tidentifier)
+	{
+		node->symbol->typeTree = typeExpression;
+	}
+	else if (node->type == kNoisyIrNodeType_PidentifierList)
+	{
+		for (IrNode * currentNode = node; currentNode != NULL; currentNode = currentNode->irRightChild)
+		{
+			currentNode->irLeftChild->symbol->typeTree = typeExpression;
+		}
+	}
 
+	/*
+	*	TODO: It needs fixing for PidentifierOrNilList and PqualifiedIdentifier. It works for
+	*	identifier and identifierList.
+	*/
+
+	return ;
 	/*
 	 *	Might be only one ident, or only two, or a whole Xseq of them
 	 */
