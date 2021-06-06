@@ -13,6 +13,7 @@
 #include "common-errors.h"
 #include "common-timeStamps.h"
 #include "common-data-structures.h"
+#include "common-symbolTable.h"
 #include "noisy-codeGeneration.h"
 #include "common-irHelpers.h"
 #include <llvm-c/Core.h>
@@ -24,6 +25,78 @@ typedef struct {
          LLVMModuleRef  theModule;
 } CodeGenState;
 
+
+
+LLVMTypeRef 
+getLLVMTypeFromNoisyType(State *N, IrNode * basicType)
+{
+        LLVMTypeRef llvmType;
+        if (L(basicType)->type == kNoisyIrNodeType_Tbool)
+        {
+                llvmType = LLVMInt1Type();
+        }
+        else if (L(basicType)->type == kNoisyIrNodeType_PintegerType)
+        {
+                /*
+                *       LLVM does not make distintion on signed and unsigned values on its typesystem.
+                *       However it can differentiate between them during the operations (e.g signed addition).
+                */
+                switch (LL(basicType)->type)
+                {
+                case kNoisyIrNodeType_Tint4:
+                case kNoisyIrNodeType_Tnat4:
+                        llvmType = LLVMIntType(4);
+                        break;
+                case kNoisyIrNodeType_Tint8:
+                case kNoisyIrNodeType_Tnat8:
+                        llvmType = LLVMInt8Type();
+                        break;
+                case kNoisyIrNodeType_Tint16:
+                case kNoisyIrNodeType_Tnat16:
+                        llvmType = LLVMInt16Type();
+                        break;
+                case kNoisyIrNodeType_Tint32:
+                case kNoisyIrNodeType_Tnat32:
+                        llvmType = LLVMInt32Type();
+                        break;
+                case kNoisyIrNodeType_Tint64:
+                case kNoisyIrNodeType_Tnat64:
+                        llvmType = LLVMInt64Type();
+                        break;
+                case kNoisyIrNodeType_Tint128:
+                case kNoisyIrNodeType_Tnat128:
+                        llvmType = LLVMInt128Type();
+                        break;
+                default:
+                        break;
+                }
+        }
+        else if (L(basicType)->type == kNoisyIrNodeType_PrealType)
+        {
+                switch (LL(basicType)->type)
+                {
+                case kNoisyIrNodeType_Tfloat16:
+                        llvmType = LLVMHalfType();
+                        break;
+                case kNoisyIrNodeType_Tfloat32:
+                        llvmType = LLVMFloatType();
+                        break;
+                case kNoisyIrNodeType_Tfloat64:
+                        llvmType = LLVMDoubleType();
+                        break;
+                case kNoisyIrNodeType_Tfloat128:
+                        llvmType = LLVMFP128Type();
+                        break;
+                default:
+                        break;
+                }
+        }        
+        else if(L(basicType)->type == kNoisyIrNodeType_Tstring)
+        {
+                llvmType = LLVMPointerType(LLVMInt8Type(),0);
+        }
+        return llvmType;
+}
 
 void
 noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleTypeNameDeclNode)
@@ -65,7 +138,87 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
         }
         else if (R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PfunctionDecl)
         {
+                 // bool typeIsComplete = true;
+
+                IrNode * inputSignature = RL(noisyModuleTypeNameDeclNode);
+                IrNode * outputSignature = RR(noisyModuleTypeNameDeclNode);
+
+                int parameterCount = 0;
+
+                if (LL(inputSignature)->type != kNoisyIrNodeType_Tnil)
+                {
+                        for  (IrNode * iter = LR(inputSignature); iter != NULL; iter = R(iter))
+                        {
+                                parameterCount++;
+                        }
+                        /*
+                        *       We need to save parameterCount so we can allocate memory for the
+                        *       parameters of the generated function.
+                        */
+
+                }
+                /*
+                *       If type == nil then parameterCount = 0
+                */
+
+                Symbol * functionSymbol = commonSymbolTableSymbolForIdentifier(N, NULL, L(noisyModuleTypeNameDeclNode)->tokenString);
+                functionSymbol->parameterNum = parameterCount;
+
+                LLVMTypeRef * paramArray = (LLVMTypeRef *) malloc(functionSymbol->parameterNum * sizeof(LLVMTypeRef));
+        
+                if (LL(inputSignature)->type != kNoisyIrNodeType_Tnil)
+                {
+                        int paramIndex = 0;
+                        for  (IrNode * iter = LR(inputSignature); iter != NULL; iter = R(iter))
+                        {
+                                if (LL(iter)->type == kNoisyIrNodeType_PbasicType)
+                                {
+                                        LLVMTypeRef paramType = getLLVMTypeFromNoisyType(N,LL(iter));
+                                        if (paramType == NULL)
+                                        {
+                                             flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
+                                        }
+                                        paramArray[paramIndex] = paramType;
+                                        paramIndex++; 
+                                } 
+                                else
+                                {
+                                        flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
+                                }
+                        }
+                }
+
+                IrNode * outputBasicType;
+                LLVMTypeRef returnType;
+                if (L(outputSignature)->type != kNewtonIrNodeType_Tnil)
+                {
+                        outputBasicType = LRL(outputSignature)->irLeftChild;
+                        if (outputBasicType->type == kNoisyIrNodeType_PbasicType)
+                        {
+                                returnType = getLLVMTypeFromNoisyType(N,outputBasicType);
+                        }
+                        
+                }
+                else
+                {
+                        returnType = LLVMVoidType();
+                }
+
+                if (returnType == NULL)
+                {
+                        flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
+                }
+                else
+                {
+                        LLVMTypeRef funcType = LLVMFunctionType(returnType,paramArray,functionSymbol->parameterNum,0);
+                        LLVMAddFunction(S->theModule,functionSymbol->identifier,funcType);
+                }
                 
+
+                /*
+                *       TODO; Maybe deallocation happens elsewhere.
+                */
+                free(paramArray);
         }
         
 }
@@ -151,7 +304,7 @@ noisyCodeGen(State * N)
         */
         CodeGenState * S = (CodeGenState *)malloc(sizeof(CodeGenState));
         S->theContext = LLVMContextCreate();
-        S->theBuilder = LLVMCreateBuilderInContext(S->theContext);
+        S->theBuilder = LLVMCreateBuilderInContext(S->theContext);        
 
         noisyProgramCodeGen(N,S,N->noisyIrRoot);
 
