@@ -176,7 +176,8 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
                                         LLVMTypeRef paramType = getLLVMTypeFromNoisyType(N,LL(iter));
                                         if (paramType == NULL)
                                         {
-                                             flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
+                                                flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
+                                                fatal(N,"Code generation Error\n");
                                         }
                                         paramArray[paramIndex] = paramType;
                                         paramIndex++; 
@@ -184,13 +185,14 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
                                 else
                                 {
                                         flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
+                                        fatal(N,"Code generation Error\n");
                                 }
                         }
                 }
 
                 IrNode * outputBasicType;
                 LLVMTypeRef returnType;
-                if (L(outputSignature)->type != kNewtonIrNodeType_Tnil)
+                if (LL(outputSignature)->type != kNoisyIrNodeType_Tnil)
                 {
                         outputBasicType = LRL(outputSignature)->irLeftChild;
                         if (outputBasicType->type == kNoisyIrNodeType_PbasicType)
@@ -207,6 +209,7 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
                 if (returnType == NULL)
                 {
                         flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
+                        fatal(N,"Code generation Error\n");
                 }
                 else
                 {
@@ -279,7 +282,7 @@ noisyProgramCodeGen(State * N, CodeGenState * S,IrNode * noisyProgramNode)
 {
         noisyModuleDeclCodeGen(N, S, noisyProgramNode->irLeftChild);
 
-        for (IrNode * currentNode = noisyProgramNode; currentNode->irRightChild != NULL; currentNode = currentNode->irRightChild)
+        for (IrNode * currentNode = R(noisyProgramNode); currentNode != NULL; currentNode = currentNode->irRightChild)
         {
                 if (currentNode->irLeftChild->type == kNoisyIrNodeType_PmoduleDecl)
                 {
