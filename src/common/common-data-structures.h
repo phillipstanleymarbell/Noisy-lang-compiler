@@ -1136,6 +1136,12 @@ struct Symbol
 	int 			symbolType;
 
 	/*
+	*	Number of parameters. Used only for functions and Noisy
+	*	code generation.
+	*/
+	int			parameterNum;
+
+	/*
 	 *	Scope within which sym appears
 	 */
 	Scope *			scope;
@@ -1153,7 +1159,7 @@ struct Symbol
 	/*
 	 *	If an I_CONST, its value.
 	 */
-	int				intConst;
+	int			intConst;
 	double			realConst;
 	char *			stringConst;
 	
