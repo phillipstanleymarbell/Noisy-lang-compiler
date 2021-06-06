@@ -1854,8 +1854,8 @@ production	kNoisyIrNodeType_PsetCmpOp:			followset = {
 --//
 --//
 token	kNoisyIrNodeType_Tarray:				followset = {
-										firstset(kNoisyIrNodeType_TleftBracket),
-										firstset(kNoisyIrNodeType_Tof),
+										kNoisyIrNodeType_TleftBracket,
+										kNoisyIrNodeType_Tof,
 									}
 
 token	kNoisyIrNodeType_Tat:					followset = {
@@ -2195,6 +2195,7 @@ token	kNoisyIrNodeType_TleftBracket:				followset = {
 
 token	kNoisyIrNodeType_TrightBracket:				followset = {
 										kNoisyIrNodeType_Tof,
+										kNoisyIrNodeType_TleftBracket,
 										followset(kNoisyIrNodeType_PfieldSelect),
 									}
 

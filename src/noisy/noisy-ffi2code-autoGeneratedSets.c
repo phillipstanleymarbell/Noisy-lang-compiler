@@ -11877,6 +11877,7 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                },
                                                [kNoisyIrNodeType_TrightBracket                  ]            = {
                                                                                                                     kNoisyIrNodeType_Tof,
+                                                                                                                    kNoisyIrNodeType_TleftBracket,
                                                                                                                     kNoisyIrNodeType_Tcomma,
                                                                                                                     kNoisyIrNodeType_Tsemicolon,
                                                                                                                     kNoisyIrNodeType_TplusPlus,
@@ -14827,6 +14828,11 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeType_TrealConst,
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
+                                                [kNoisyIrNodeType_Tarray                        ]            = {
+                                                                                                                    kNoisyIrNodeType_TleftBracket,
+                                                                                                                    kNoisyIrNodeType_Tof,
+                                                                                                                    kNoisyIrNodeTypeMax
+                                                                                                                },
                                                [kNoisyIrNodeType_Tpath                          ]            = {
                                                                                                                     kNoisyIrNodeType_Tidentifier,
                                                                                                                     kNoisyIrNodeTypeMax
