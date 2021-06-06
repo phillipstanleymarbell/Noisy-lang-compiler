@@ -28,7 +28,7 @@ typedef struct {
 
 
 LLVMTypeRef 
-getLLVMTypeFromNoisyType(State *N, IrNode * basicType)
+getLLVMTypeFromNoisyType(IrNode * basicType)
 {
         LLVMTypeRef llvmType;
         if (L(basicType)->type == kNoisyIrNodeType_Tbool)
@@ -96,6 +96,19 @@ getLLVMTypeFromNoisyType(State *N, IrNode * basicType)
                 llvmType = LLVMPointerType(LLVMInt8Type(),0);
         }
         return llvmType;
+}
+
+LLVMTypeRef createArrayType(IrNode * arrayTypeNode)
+{
+        if (L(arrayTypeNode)->type == kNoisyIrNodeType_PtypeExpr)
+        {
+                return getLLVMTypeFromNoisyType(LL(arrayTypeNode));
+        }
+        int arrayLength = arrayTypeNode->irLeftChild->token->integerConst;
+        
+        LLVMTypeRef elementType = createArrayType(R(arrayTypeNode));
+
+        return LLVMArrayType (elementType, arrayLength);
 }
 
 void
@@ -173,20 +186,34 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
                         {
                                 if (LL(iter)->type == kNoisyIrNodeType_PbasicType)
                                 {
-                                        LLVMTypeRef paramType = getLLVMTypeFromNoisyType(N,LL(iter));
+                                        LLVMTypeRef paramType = getLLVMTypeFromNoisyType(LL(iter));
                                         if (paramType == NULL)
                                         {
                                                 flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
                                                 fatal(N,"Code generation Error\n");
                                         }
                                         paramArray[paramIndex] = paramType;
-                                        paramIndex++; 
-                                } 
+                                        
+                                }
+                                else if (LL(iter)->type == kNoisyIrNodeType_PanonAggregateType)
+                                {
+                                        IrNode * arrayType = LLL(iter);
+                                        if (arrayType->type == kNoisyIrNodeType_ParrayType)
+                                        {
+                                               paramArray[paramIndex] = createArrayType(arrayType); 
+                                        }
+                                        else
+                                        {
+                                                flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
+                                                fatal(N,"Code generation Error\n");
+                                        }
+                                }
                                 else
                                 {
                                         flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
                                         fatal(N,"Code generation Error\n");
                                 }
+                                paramIndex++; 
                         }
                 }
 
@@ -197,7 +224,7 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
                         outputBasicType = LRL(outputSignature)->irLeftChild;
                         if (outputBasicType->type == kNoisyIrNodeType_PbasicType)
                         {
-                                returnType = getLLVMTypeFromNoisyType(N,outputBasicType);
+                                returnType = getLLVMTypeFromNoisyType(outputBasicType);
                         }
                         
                 }
