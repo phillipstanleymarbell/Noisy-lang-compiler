@@ -1461,7 +1461,7 @@ production	kNoisyIrNodeType_Pexpression:			followset = {
 										followset(kNoisyIrNodeType_PassignmentStatement)
 										kNoisyIrNodeType_TrightParens,
 										kNoisyIrNodeType_Tsemicolon,
-										kNoisyIrNodeType_Tcomma,
+										kNoisyIrNodeType_TrightBracket,
 										kNoisyIrNodeType_Tcolon,
 									}
 
