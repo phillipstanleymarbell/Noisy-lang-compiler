@@ -25,6 +25,7 @@ typedef struct {
          LLVMModuleRef  theModule;
 } CodeGenState;
 
+LLVMTypeRef getLLVMTypeFromTypeExpr(State *, IrNode *);
 
 /*
 *       Takes a basicType IrNode and returns the LLVMTypeRef type.
@@ -107,25 +108,85 @@ getLLVMTypeFromNoisyType(IrNode * basicType)
 *       Arrays are passed as arguments by reference like C.
 */
 LLVMTypeRef
-getLLVMArrayTypeFromNoisy(IrNode * arrayTypeNode)
+getLLVMArrayTypeFromNoisy(State * N,IrNode * arrayTypeNode,int firstTime)
 {
-        static int firstTime = 1;
         if (firstTime == 1)
         {
-                firstTime = 0;
-                return LLVMPointerType(getLLVMArrayTypeFromNoisy(R(arrayTypeNode)),0) ;
+                return LLVMPointerType(getLLVMArrayTypeFromNoisy(N,R(arrayTypeNode),0),0) ;
         }
 
         if (L(arrayTypeNode)->type == kNoisyIrNodeType_PtypeExpr)
         {
-                return getLLVMTypeFromNoisyType(LL(arrayTypeNode));
+                return getLLVMTypeFromTypeExpr(N,L(arrayTypeNode));
         }
 
         int arrayLength = L(arrayTypeNode)->token->integerConst;
         
-        LLVMTypeRef elementType = getLLVMArrayTypeFromNoisy(R(arrayTypeNode));
+        LLVMTypeRef elementType = getLLVMArrayTypeFromNoisy(N,R(arrayTypeNode),0);
 
         return LLVMArrayType (elementType, arrayLength);
+}
+
+/*
+*       Takes the state N (needed for symbolTable search) and a typeNameNode
+*       and returns the corresponding LLVMTypeRef.
+*/
+LLVMTypeRef
+getLLVMTypeFromTypeSymbol(State * N,IrNode * typeNameNode)
+{
+        Symbol * typeSymbol = commonSymbolTableSymbolForIdentifier(N,NULL,L(typeNameNode)->tokenString);
+
+        IrNode * typeTree = typeSymbol->typeTree;
+
+        if (RL(typeTree)->type == kNoisyIrNodeType_PbasicType)
+        {
+                return getLLVMTypeFromNoisyType(RL(typeTree));
+        }
+        else if (RL(typeTree)->type == kNoisyIrNodeType_PanonAggregateType)
+        {
+                return getLLVMArrayTypeFromNoisy(N,RL(typeTree),1);
+        }
+        else if (RL(typeTree)->type == kNoisyIrNodeType_PtypeName)
+        {
+                return getLLVMTypeFromTypeSymbol(N,RL(typeTree));
+        }
+        else
+        {
+                return NULL;
+        }
+}
+
+/*
+*       Takes the state N and a TypeExpr node and returns the corresponding
+*       LLVMTypeRef. If it fails returns NULL.
+*/
+LLVMTypeRef
+getLLVMTypeFromTypeExpr(State * N, IrNode * typeExpr)
+{
+        if (L(typeExpr)->type == kNoisyIrNodeType_PbasicType)
+        {
+                return getLLVMTypeFromNoisyType(L(typeExpr));
+        }
+        else if (L(typeExpr)->type == kNoisyIrNodeType_PanonAggregateType)
+        {
+                IrNode * arrayType = LL(typeExpr);
+                if (arrayType->type == kNoisyIrNodeType_ParrayType)
+                {
+                        return getLLVMArrayTypeFromNoisy(N,arrayType,1);
+                }
+                /*
+                *       Lists and other non aggregate types are not supported
+                */
+                else
+                {
+                        return NULL;
+                }
+        }
+        else if (L(typeExpr)->type == kNoisyIrNodeType_PtypeName)
+        {
+                return getLLVMTypeFromTypeSymbol(N,L(typeExpr));
+        }
+        return NULL;
 }
 
 void
@@ -185,7 +246,6 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
                         *       We need to save parameterCount so we can allocate memory for the
                         *       parameters of the generated function.
                         */
-
                 }
                 /*
                 *       If type == nil then parameterCount = 0
@@ -201,66 +261,48 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
                         int paramIndex = 0;
                         for  (IrNode * iter = LR(inputSignature); iter != NULL; iter = R(iter))
                         {
-                                if (LL(iter)->type == kNoisyIrNodeType_PbasicType)
+                                LLVMTypeRef llvmType = getLLVMTypeFromTypeExpr(N,L(iter));
+                                if (llvmType != NULL)
                                 {
-                                        LLVMTypeRef paramType = getLLVMTypeFromNoisyType(LL(iter));
-                                        if (paramType == NULL)
-                                        {
-                                                flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
-                                                fatal(N,"Code generation Error\n");
-                                        }
-                                        paramArray[paramIndex] = paramType;
-                                        
-                                }
-                                else if (LL(iter)->type == kNoisyIrNodeType_PanonAggregateType)
-                                {
-                                        IrNode * arrayType = LLL(iter);
-                                        if (arrayType->type == kNoisyIrNodeType_ParrayType)
-                                        {
-                                               paramArray[paramIndex] = getLLVMArrayTypeFromNoisy(arrayType); 
-                                        }
-                                        else
-                                        {
-                                                flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
-                                                fatal(N,"Code generation Error\n");
-                                        }
+                                        paramArray[paramIndex] = llvmType;
                                 }
                                 else
                                 {
                                         flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
                                         fatal(N,"Code generation Error\n");
                                 }
+
                                 paramIndex++; 
                         }
                 }
 
+
                 IrNode * outputBasicType;
                 LLVMTypeRef returnType;
+                /*
+                *       Currently we only permit one return argument for functions
+                *       just like the C convention.
+                */
                 if (LL(outputSignature)->type != kNoisyIrNodeType_Tnil)
                 {
-                        outputBasicType = LRL(outputSignature)->irLeftChild;
-                        if (outputBasicType->type == kNoisyIrNodeType_PbasicType)
-                        {
-                                returnType = getLLVMTypeFromNoisyType(outputBasicType);
-                        }
-                        
+                        outputBasicType = LRL(outputSignature);
+                        returnType = getLLVMTypeFromTypeExpr(N,outputBasicType);
                 }
                 else
                 {
                         returnType = LLVMVoidType();
                 }
 
-                if (returnType == NULL)
-                {
-                        flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
-                        fatal(N,"Code generation Error\n");
-                }
-                else
+                if (returnType != NULL)
                 {
                         LLVMTypeRef funcType = LLVMFunctionType(returnType,paramArray,functionSymbol->parameterNum,0);
                         LLVMAddFunction(S->theModule,functionSymbol->identifier,funcType);
                 }
-                
+                else
+                {
+                        flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");
+                        fatal(N,"Code generation Error\n");
+                }
 
                 /*
                 *       TODO; Maybe deallocation happens elsewhere.
