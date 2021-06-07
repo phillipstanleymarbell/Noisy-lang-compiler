@@ -26,7 +26,10 @@ typedef struct {
 } CodeGenState;
 
 
-
+/*
+*       Takes a basicType IrNode and returns the LLVMTypeRef type.
+*       Assumes that basicType->type == kNoisyIrNodeType_PbasicType.
+*/
 LLVMTypeRef 
 getLLVMTypeFromNoisyType(IrNode * basicType)
 {
@@ -98,15 +101,29 @@ getLLVMTypeFromNoisyType(IrNode * basicType)
         return llvmType;
 }
 
-LLVMTypeRef createArrayType(IrNode * arrayTypeNode)
+/*
+*       Takes an arrayType IrNode and returns the corresponding LLVMTypeRef type
+*       Assumes that arrayTypeNode->type == kNoisyIrNodeType_ParrayType.
+*       Arrays are passed as arguments by reference like C.
+*/
+LLVMTypeRef
+getLLVMArrayTypeFromNoisy(IrNode * arrayTypeNode)
 {
+        static int firstTime = 1;
+        if (firstTime == 1)
+        {
+                firstTime = 0;
+                return LLVMPointerType(getLLVMArrayTypeFromNoisy(R(arrayTypeNode)),0) ;
+        }
+
         if (L(arrayTypeNode)->type == kNoisyIrNodeType_PtypeExpr)
         {
                 return getLLVMTypeFromNoisyType(LL(arrayTypeNode));
         }
-        int arrayLength = arrayTypeNode->irLeftChild->token->integerConst;
+
+        int arrayLength = L(arrayTypeNode)->token->integerConst;
         
-        LLVMTypeRef elementType = createArrayType(R(arrayTypeNode));
+        LLVMTypeRef elementType = getLLVMArrayTypeFromNoisy(R(arrayTypeNode));
 
         return LLVMArrayType (elementType, arrayLength);
 }
@@ -200,7 +217,7 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
                                         IrNode * arrayType = LLL(iter);
                                         if (arrayType->type == kNoisyIrNodeType_ParrayType)
                                         {
-                                               paramArray[paramIndex] = createArrayType(arrayType); 
+                                               paramArray[paramIndex] = getLLVMArrayTypeFromNoisy(arrayType); 
                                         }
                                         else
                                         {
