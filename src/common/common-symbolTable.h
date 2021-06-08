@@ -35,22 +35,7 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-typedef enum
-{
-	kNoisySymbolTypeTypeError,
-	kNoisySymbolTypeProgtype,
-	kNoisySymbolTypeConstantDeclaration,
-	kNoisySymbolTypeTypeDeclaration,
-	kNoisySymbolTypeNamegenDeclaration,
-	kNoisySymbolTypeVariableDeclaration,
-	kNoisySymbolTypeNamegenDefinition,
-	kNoisySymbolTypeUse,
 
-	/*
-	 *	Code depends on this bringing up the rear.
-	 */
-	kNoisySymbolTypeMax,
-} NoisySymbolType;
 
 
 Scope *		commonSymbolTableAllocScope(State *  N);
