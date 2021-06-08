@@ -92,6 +92,7 @@ getLLVMTypeFromNoisyType(IrNode * basicType)
                         llvmType = LLVMFP128Type();
                         break;
                 default:
+                        llvmType = NULL;
                         break;
                 }
         }        
@@ -135,6 +136,12 @@ LLVMTypeRef
 getLLVMTypeFromTypeSymbol(State * N,IrNode * typeNameNode)
 {
         Symbol * typeSymbol = commonSymbolTableSymbolForIdentifier(N,NULL,L(typeNameNode)->tokenString);
+
+        if (typeSymbol == NULL)
+        {
+                typeSymbol = commonSymbolTableSymbolForIdentifier(N,N->noisyIrTopScope,L(typeNameNode)->tokenString);
+                return NULL;
+        }
 
         IrNode * typeTree = typeSymbol->typeTree;
 
@@ -189,6 +196,37 @@ getLLVMTypeFromTypeExpr(State * N, IrNode * typeExpr)
         return NULL;
 }
 
+/*
+*       If we have templated function declaration, code generation is skipped.
+*       We should invoke code generation with the load operator.
+*/
+bool
+isTypeExprComplete(State * N,IrNode * typeExpr)
+{
+
+        if (L(typeExpr)->type == kNoisyIrNodeType_PbasicType)
+        {
+                return true;
+        }
+        else if (L(typeExpr)->type == kNoisyIrNodeType_PtypeName)
+        {
+                Symbol * typeSymbol = commonSymbolTableSymbolForIdentifier(N,N->noisyIrTopScope,LL(typeExpr)->tokenString);
+                if (typeSymbol->symbolType == kNoisySymbolTypeModuleParameter)
+                {
+                        return false;
+                }
+        }
+        else if (L(typeExpr)->type == kNoisyIrNodeType_PanonAggregateType)
+        {
+                if (LL(typeExpr)->type == kNoisyIrNodeType_ParrayType)
+                {
+                        return isTypeExprComplete(N,LRL(typeExpr->irLeftChild));
+                }
+                return false;
+        }
+        return false;
+}
+
 void
 noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleTypeNameDeclNode)
 {
@@ -229,8 +267,6 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
         }
         else if (R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PfunctionDecl)
         {
-                 // bool typeIsComplete = true;
-
                 IrNode * inputSignature = RL(noisyModuleTypeNameDeclNode);
                 IrNode * outputSignature = RR(noisyModuleTypeNameDeclNode);
 
@@ -238,18 +274,32 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
 
                 if (LL(inputSignature)->type != kNoisyIrNodeType_Tnil)
                 {
-                        for  (IrNode * iter = LR(inputSignature); iter != NULL; iter = R(iter))
+                        for  (IrNode * iter = L(inputSignature); iter != NULL; iter = RR(iter))
                         {
                                 parameterCount++;
+
+                                if (!isTypeExprComplete(N,RL(iter)))
+                                {
+                                        return ;
+                                }
                         }
                         /*
                         *       We need to save parameterCount so we can allocate memory for the
-                        *       parameters of the generated function.
+                        *       parameters of the generated function.z
                         */
                 }
                 /*
                 *       If type == nil then parameterCount = 0
                 */
+
+                /*
+                *       If we have templated function declaration, code generation is skipped.
+                *       We should invoke code generation with the load operator.
+                */
+                if (!isTypeExprComplete(N,LRL(outputSignature)))
+                {
+                        return ;
+                }
 
                 Symbol * functionSymbol = commonSymbolTableSymbolForIdentifier(N, NULL, L(noisyModuleTypeNameDeclNode)->tokenString);
                 functionSymbol->parameterNum = parameterCount;
@@ -259,9 +309,9 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
                 if (LL(inputSignature)->type != kNoisyIrNodeType_Tnil)
                 {
                         int paramIndex = 0;
-                        for  (IrNode * iter = LR(inputSignature); iter != NULL; iter = R(iter))
+                        for  (IrNode * iter = L(inputSignature); iter != NULL; iter = RR(iter))
                         {
-                                LLVMTypeRef llvmType = getLLVMTypeFromTypeExpr(N,L(iter));
+                                LLVMTypeRef llvmType = getLLVMTypeFromTypeExpr(N,RL(iter));
                                 if (llvmType != NULL)
                                 {
                                         paramArray[paramIndex] = llvmType;
