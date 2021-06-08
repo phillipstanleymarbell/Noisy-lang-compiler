@@ -186,6 +186,9 @@ noisyParseModuleDecl(State *  N, Scope *  scope)
 
 
 	IrNode *	identifier = noisyParseIdentifierDefinitionTerminal(N, scope);
+
+	identifier->symbol->symbolType = kNoisySymbolTypeModule;
+
 	addLeaf(N, n, identifier);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tmodule);
@@ -293,10 +296,12 @@ noisyParseModuleTypeNameDecl(State *  N, Scope *  scope)
 	if (inFirst(N, kNoisyIrNodeType_PconstantDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		typeExpr = noisyParseConstantDecl(N, scope);
+		identifier->symbol->symbolType = kNoisySymbolTypeConstantDeclaration;
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PtypeDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		typeExpr = noisyParseTypeDecl(N, scope);
+		identifier->symbol->symbolType = kNoisySymbolTypeTypeDeclaration;
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PtypeAnnoteDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
@@ -305,6 +310,7 @@ noisyParseModuleTypeNameDecl(State *  N, Scope *  scope)
 	else if (inFirst(N, kNoisyIrNodeType_PfunctionDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		typeExpr = noisyParseFunctionDecl(N, scope);
+		identifier->symbol->symbolType = kNoisySymbolTypeNamegenDeclaration;
 	}
 	else if (inFirst(N, kNoisyIrNodeType_PprobdefDecl, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
@@ -3057,14 +3063,19 @@ noisyParseTypeParameterList(State *  N, Scope *  currentScope)
 
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
+		IrNode * identifier = noisyParseIdentifierDefinitionTerminal(N, currentScope);
+		identifier->symbol->symbolType = kNoisySymbolTypeModuleParameter;
+		addLeaf(N, n, identifier);
+
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 		noisyParseTerminal(N, kNoisyIrNodeType_Ttype);
 
 		while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 		{
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
-			addLeafWithChainingSeq(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
+			IrNode * identifier = noisyParseIdentifierDefinitionTerminal(N, currentScope);
+			identifier->symbol->symbolType = kNoisySymbolTypeModuleParameter;
+			addLeafWithChainingSeq(N, n, identifier);
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
 			noisyParseTerminal(N, kNoisyIrNodeType_Ttype);
 		}
@@ -3121,6 +3132,7 @@ noisyParseFunctionDefn(State *  N, Scope *  scope)
 		identifier = noisyParseIdentifierDefinitionTerminal(N, scope);
 	}
 
+	identifier->symbol->symbolType = kNoisySymbolTypeNamegenDefinition;
 	addLeaf(N, n, identifier);
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
