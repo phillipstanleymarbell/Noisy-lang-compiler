@@ -215,6 +215,10 @@ isTypeExprComplete(State * N,IrNode * typeExpr)
                 {
                         return false;
                 }
+                else
+                {
+                        return isTypeExprComplete(N,typeSymbol->typeTree->irRightChild);
+                }
         }
         else if (L(typeExpr)->type == kNoisyIrNodeType_PanonAggregateType)
         {
@@ -226,6 +230,104 @@ isTypeExprComplete(State * N,IrNode * typeExpr)
         }
         return false;
 }
+
+
+LLVMValueRef
+noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNode * inputSignature, IrNode * outputSignature)
+{
+        int parameterCount = 0;
+
+        if (L(inputSignature)->type != kNoisyIrNodeType_Tnil)
+        {
+                for  (IrNode * iter = inputSignature; iter != NULL; iter = RR(iter))
+                {
+                        parameterCount++;
+
+                        if (!isTypeExprComplete(N,RL(iter)))
+                        {
+                                return NULL;;
+                        }
+                }
+                /*
+                *       We need to save parameterCount so we can allocate memory for the
+                *       parameters of the generated function.z
+                */
+        }
+        /*
+        *       If type == nil then parameterCount = 0
+        */
+
+        /*
+        *       If we have templated function declaration, code generation is skipped.
+        *       We should invoke code generation with the load operator.
+        */
+        if (!isTypeExprComplete(N,RL(outputSignature)))
+        {
+                return NULL;
+        }
+
+        Symbol * functionSymbol = commonSymbolTableSymbolForIdentifier(N, N->moduleScopes, functionName);
+        functionSymbol->parameterNum = parameterCount;
+
+        LLVMTypeRef * paramArray = (LLVMTypeRef *) malloc(functionSymbol->parameterNum * sizeof(LLVMTypeRef));
+
+        if (L(inputSignature)->type != kNoisyIrNodeType_Tnil)
+        {
+                int paramIndex = 0;
+                for  (IrNode * iter = inputSignature; iter != NULL; iter = RR(iter))
+                {
+                        LLVMTypeRef llvmType = getLLVMTypeFromTypeExpr(N,RL(iter));
+                        if (llvmType != NULL)
+                        {
+                                paramArray[paramIndex] = llvmType;
+                        }
+                        else
+                        {
+                                flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");
+                                fatal(N,"Code generation Error\n");
+                        }
+
+                        paramIndex++;
+                }
+        }
+
+
+        IrNode * outputBasicType;
+        LLVMTypeRef returnType;
+        /*
+        *       Currently we only permit one return argument for functions
+        *       just like the C convention.
+        */
+        if (L(outputSignature)->type != kNoisyIrNodeType_Tnil)
+        {
+                outputBasicType = RL(outputSignature);
+                returnType = getLLVMTypeFromTypeExpr(N,outputBasicType);
+        }
+        else
+        {
+                returnType = LLVMVoidType();
+        }
+
+        LLVMValueRef func;
+
+        if (returnType != NULL)
+        {
+                LLVMTypeRef funcType = LLVMFunctionType(returnType,paramArray,functionSymbol->parameterNum,0);
+                func =  LLVMAddFunction(S->theModule,functionSymbol->identifier,funcType);
+        }
+        else
+        {
+                flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");
+                fatal(N,"Code generation Error\n");
+        }
+
+        /*
+        *       TODO; Maybe deallocation happens elsewhere.
+        */
+        free(paramArray);
+        return func;
+}
+
 
 void
 noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleTypeNameDeclNode)
@@ -267,99 +369,10 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
         }
         else if (R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PfunctionDecl)
         {
-                IrNode * inputSignature = RL(noisyModuleTypeNameDeclNode);
-                IrNode * outputSignature = RR(noisyModuleTypeNameDeclNode);
-
-                int parameterCount = 0;
-
-                if (LL(inputSignature)->type != kNoisyIrNodeType_Tnil)
-                {
-                        for  (IrNode * iter = L(inputSignature); iter != NULL; iter = RR(iter))
-                        {
-                                parameterCount++;
-
-                                if (!isTypeExprComplete(N,RL(iter)))
-                                {
-                                        return ;
-                                }
-                        }
-                        /*
-                        *       We need to save parameterCount so we can allocate memory for the
-                        *       parameters of the generated function.z
-                        */
-                }
-                /*
-                *       If type == nil then parameterCount = 0
-                */
-
-                /*
-                *       If we have templated function declaration, code generation is skipped.
-                *       We should invoke code generation with the load operator.
-                */
-                if (!isTypeExprComplete(N,LRL(outputSignature)))
-                {
-                        return ;
-                }
-
-                Symbol * functionSymbol = commonSymbolTableSymbolForIdentifier(N, NULL, L(noisyModuleTypeNameDeclNode)->tokenString);
-                functionSymbol->parameterNum = parameterCount;
-
-                LLVMTypeRef * paramArray = (LLVMTypeRef *) malloc(functionSymbol->parameterNum * sizeof(LLVMTypeRef));
-        
-                if (LL(inputSignature)->type != kNoisyIrNodeType_Tnil)
-                {
-                        int paramIndex = 0;
-                        for  (IrNode * iter = L(inputSignature); iter != NULL; iter = RR(iter))
-                        {
-                                LLVMTypeRef llvmType = getLLVMTypeFromTypeExpr(N,RL(iter));
-                                if (llvmType != NULL)
-                                {
-                                        paramArray[paramIndex] = llvmType;
-                                }
-                                else
-                                {
-                                        flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");   
-                                        fatal(N,"Code generation Error\n");
-                                }
-
-                                paramIndex++; 
-                        }
-                }
-
-
-                IrNode * outputBasicType;
-                LLVMTypeRef returnType;
-                /*
-                *       Currently we only permit one return argument for functions
-                *       just like the C convention.
-                */
-                if (LL(outputSignature)->type != kNoisyIrNodeType_Tnil)
-                {
-                        outputBasicType = LRL(outputSignature);
-                        returnType = getLLVMTypeFromTypeExpr(N,outputBasicType);
-                }
-                else
-                {
-                        returnType = LLVMVoidType();
-                }
-
-                if (returnType != NULL)
-                {
-                        LLVMTypeRef funcType = LLVMFunctionType(returnType,paramArray,functionSymbol->parameterNum,0);
-                        LLVMAddFunction(S->theModule,functionSymbol->identifier,funcType);
-                }
-                else
-                {
-                        flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that type is not supported");
-                        fatal(N,"Code generation Error\n");
-                }
-
-                /*
-                *       TODO; Maybe deallocation happens elsewhere.
-                */
-                free(paramArray);
+                IrNode * inputSignature = RLL(noisyModuleTypeNameDeclNode);
+                IrNode * outputSignature = RRL(noisyModuleTypeNameDeclNode);
+                noisyDeclareFunction(N,S,L(noisyModuleTypeNameDeclNode)->tokenString,inputSignature,outputSignature);
         }
-        
 }
 
 void
@@ -405,11 +418,28 @@ noisyModuleDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleDeclNode)
 }
 
 void 
-noisyFunctionDefnCodeGen(State * N, IrNode * noisyFunctionDefnNode)
+noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnNode)
 {
+        LLVMValueRef func = LLVMGetNamedFunction(S->theModule,L(noisyFunctionDefnNode)->tokenString);
         /*
-        *       TODO!
+        *       Declare local function
         */
+        if (func == NULL)
+        {
+                func = noisyDeclareFunction(N,S,noisyFunctionDefnNode->irLeftChild->tokenString,RL(noisyFunctionDefnNode),RRL(noisyFunctionDefnNode));
+                if (func == NULL)
+                {
+                        /*
+                        *       If func depends on Module parameters we skip its definition until its loaded.
+                        */
+                        return ;
+                }
+        }
+
+        LLVMBasicBlockRef funcEntry = LLVMAppendBasicBlock(func, "entry");
+        LLVMBuilderRef builder = LLVMCreateBuilder();
+        LLVMPositionBuilderAtEnd(builder, funcEntry);
+        LLVMDisposeBuilder(builder);
 }
 
 
@@ -426,7 +456,7 @@ noisyProgramCodeGen(State * N, CodeGenState * S,IrNode * noisyProgramNode)
                 }
                 else if (currentNode->irLeftChild->type == kNoisyIrNodeType_PfunctionDefn)
                 {
-                        noisyFunctionDefnCodeGen(N, currentNode->irLeftChild);
+                        noisyFunctionDefnCodeGen(N,S,currentNode->irLeftChild);
                 }
                 else
                 {
