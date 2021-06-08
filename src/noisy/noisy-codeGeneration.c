@@ -26,6 +26,7 @@ typedef struct {
 } CodeGenState;
 
 LLVMTypeRef getLLVMTypeFromTypeExpr(State *, IrNode *);
+void noisyStatementListCodeGen(State * N, CodeGenState * S,IrNode * statementListNode);
 
 /*
 *       Takes a basicType IrNode and returns the LLVMTypeRef type.
@@ -328,7 +329,6 @@ noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNod
         return func;
 }
 
-
 void
 noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleTypeNameDeclNode)
 {
@@ -393,7 +393,7 @@ noisyModuleDeclBodyCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleDeclB
 }
 
 void
-noisyModuleDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleDeclNode)
+noisyModuleDeclCodeGen(State * N, CodeGenState * S, IrNode * noisyModuleDeclNode)
 {
         /*
         *       The first module declaration gives its name to the LLVM module we are going to create.
@@ -417,6 +417,87 @@ noisyModuleDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleDeclNode)
 
 }
 
+void
+noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * assignmentNode)
+{
+        ;
+}
+
+void
+noisyMatchStatementCodeGen(State * N,CodeGenState * S, IrNode * matchNode)
+{
+
+}
+
+void
+noisyIterateStatementCodeGen(State * N,CodeGenState * S, IrNode * iterateNode)
+{
+
+}
+
+void
+noisySequenceStatementCodeGen(State * N,CodeGenState * S, IrNode * sequenceNode)
+{
+
+}
+
+void
+noisyOperatorToleranceDeclCodeGen(State * N,CodeGenState * S, IrNode * toleranceDeclNode)
+{
+
+}
+
+void
+noisyReturnStatementCodeGen(State * N,CodeGenState * S, IrNode * returnNode)
+{
+
+}
+
+void
+noisyStatementCodeGen(State * N, CodeGenState * S, IrNode * noisyStatementNode)
+{
+        switch (L(noisyStatementNode)->type)
+        {
+        case kNoisyIrNodeType_PassignmentStatement:
+                noisyAssignmentStatementCodeGen(N,S,L(noisyStatementNode));
+                break;
+        case kNoisyIrNodeType_PmatchStatement:
+                noisyMatchStatementCodeGen(N,S,L(noisyStatementNode));
+                break;
+        case kNoisyIrNodeType_PiterateStatement:
+                noisyIterateStatementCodeGen(N,S,L(noisyStatementNode));
+                break;
+        case kNoisyIrNodeType_PsequenceStatement:
+                noisySequenceStatementCodeGen(N,S,L(noisyStatementNode));
+                break;
+        case kNoisyIrNodeType_PscopedStatementList:
+                noisyStatementListCodeGen(N,S,LL(noisyStatementNode));
+                break;
+        case kNoisyIrNodeType_PoperatorToleranceDecl:
+                noisyOperatorToleranceDeclCodeGen(N,S,L(noisyStatementNode));
+                break;
+        case kNoisyIrNodeType_PreturnStatement:
+                noisyReturnStatementCodeGen(N,S,L(noisyStatementNode));
+                break;
+        default:
+                flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that statement is not supported");
+                fatal(N,"Code generation Error\n");
+                break;
+        }        
+}
+
+void
+noisyStatementListCodeGen(State * N, CodeGenState * S,IrNode * statementListNode)
+{
+        for (IrNode * iter = statementListNode; iter != NULL; iter=R(iter))
+        {
+                if (L(iter) != NULL)
+                {
+                        noisyStatementCodeGen(N,S,L(iter));
+                }
+        }
+}
+
 void 
 noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnNode)
 {
@@ -437,9 +518,9 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
         }
 
         LLVMBasicBlockRef funcEntry = LLVMAppendBasicBlock(func, "entry");
-        LLVMBuilderRef builder = LLVMCreateBuilder();
-        LLVMPositionBuilderAtEnd(builder, funcEntry);
-        LLVMDisposeBuilder(builder);
+        LLVMPositionBuilderAtEnd(S->theBuilder, funcEntry);
+
+        noisyStatementListCodeGen(N,S,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild);
 }
 
 
