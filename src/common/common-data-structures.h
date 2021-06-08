@@ -1119,6 +1119,26 @@ struct Scope
 	IrNodeColor		nodeColor;
 };
 
+typedef enum
+{
+	kNoisySymbolTypeTypeError,
+	kNoisySymbolTypeProgtype,
+	kNoisySymbolTypeConstantDeclaration,
+	kNoisySymbolTypeTypeDeclaration,
+	kNoisySymbolTypeNamegenDeclaration,
+	kNoisySymbolTypeVariableDeclaration,
+	kNoisySymbolTypeNamegenDefinition,
+	kNoisySymbolTypeUse,
+	kNoisySymbolTypeModule,
+	kNoisySymbolTypeModuleParameter,
+	kNoisySymbolTypeParameter,
+
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNoisySymbolTypeMax,
+} NoisySymbolType;
+
 
 struct Symbol
 {
@@ -1133,7 +1153,7 @@ struct Symbol
 	/*
 	 *	Declaration, type definition, use, etc. (kNoisySymbolTypeXXX)
 	 */
-	int 			symbolType;
+	NoisySymbolType 	symbolType;
 
 	/*
 	*	Number of parameters. Used only for functions and Noisy
