@@ -59,6 +59,7 @@
 #include "noisy-irPass-dotBackend.h"
 #include "noisy-irPass-protobufBackend.h"
 #include "noisy-codeGeneration.h"
+#include "noisy-typeCheck.h"
 
 static void		usage(State *  N);
 static void		processFile(State *  N, char *  filename);
@@ -320,6 +321,9 @@ processFile(State *  N, char *  fileName)
 	/*
 	*	Actual code generation takes place.
 	*/
+
+	noisyTypeCheck(N);
+
 	noisyCodeGen(N);
 
 	/*

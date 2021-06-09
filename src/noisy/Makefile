@@ -54,6 +54,7 @@ SOURCES		=\
 		noisy-irPass-dotBackend.c\
 		noisy-irPass-protobufBackend.c\
 		noisy-timeStamps.c\
+		noisy-typeCheck.c\
 		noisy-codeGeneration.c\
 
 #
@@ -76,6 +77,7 @@ OBJS		=\
 		noisy-irHelpers.$(OBJECTEXTENSION)\
 		noisy-irPass-dotBackend.$(OBJECTEXTENSION)\
 		noisy-irPass-protobufBackend.$(OBJECTEXTENSION)\
+		noisy-typeCheck.$(OBJECTEXTENSION)\
 		noisy-codeGeneration.$(OBJECTEXTENSION)\
 
 
