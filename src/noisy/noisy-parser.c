@@ -62,6 +62,7 @@
 #include "common-irHelpers.h"
 #include "noisy-irHelpers.h"
 #include "common-firstAndFollow.h"
+#include "noisy-typeCheck.h"
 
 
 
@@ -3133,6 +3134,7 @@ noisyParseFunctionDefn(State *  N, Scope *  scope)
 	}
 
 	identifier->symbol->symbolType = kNoisySymbolTypeNamegenDefinition;
+	identifier->symbol->isTypeComplete = true;
 	addLeaf(N, n, identifier);
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
@@ -3152,8 +3154,23 @@ noisyParseFunctionDefn(State *  N, Scope *  scope)
 	 *	main AST with new links, so we make copies.
 	 */
 	
-	IrNode *	typeTree = shallowCopyIrNode(N, t1);
+	IrNode * typeTree = calloc(1,sizeof(IrNode));
+	addLeaf(N, typeTree, shallowCopyIrNode(N, t1));
 	addLeaf(N, typeTree, shallowCopyIrNode(N, t2));
+
+	/*
+	*	If the function is previously declared check if type of declaration and definition match.
+	*/
+	if (identifier->symbol->typeTree != NULL)
+	{
+		if (!noisySignatureIsMatching(N,typeTree->irLeftChild,LL(identifier->symbol->typeTree))
+		|| !noisySignatureIsMatching(N,typeTree->irRightChild,RL(identifier->symbol->typeTree)))
+		{
+			noisyParserSemanticError(N,kNoisyIrNodeType_PfunctionDefn,"Declaration and definition types don't match");
+			noisyParserErrorRecovery(N, kNoisyIrNodeType_PfunctionDefn);
+		}
+	}
+
 	identifier->symbol->typeTree = typeTree;
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tassign);
