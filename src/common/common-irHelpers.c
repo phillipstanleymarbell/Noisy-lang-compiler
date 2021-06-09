@@ -69,8 +69,8 @@ shallowCopyIrNode(State *  N, IrNode *  original)
 	}
 
 	memcpy(clone, original, sizeof(IrNode));
-	clone->irLeftChild = NULL;
-	clone->irRightChild = NULL;
+	// clone->irLeftChild = NULL;
+	// clone->irRightChild = NULL;
 
 	return clone;
 }
