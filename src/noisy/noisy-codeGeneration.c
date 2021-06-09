@@ -197,78 +197,16 @@ getLLVMTypeFromTypeExpr(State * N, IrNode * typeExpr)
         return NULL;
 }
 
-/*
-*       If we have templated function declaration, code generation is skipped.
-*       We should invoke code generation with the load operator.
-*/
-bool
-isTypeExprComplete(State * N,IrNode * typeExpr)
-{
-
-        if (L(typeExpr)->type == kNoisyIrNodeType_PbasicType)
-        {
-                return true;
-        }
-        else if (L(typeExpr)->type == kNoisyIrNodeType_PtypeName)
-        {
-                Symbol * typeSymbol = commonSymbolTableSymbolForIdentifier(N,N->noisyIrTopScope,LL(typeExpr)->tokenString);
-                if (typeSymbol->symbolType == kNoisySymbolTypeModuleParameter)
-                {
-                        return false;
-                }
-                else
-                {
-                        return isTypeExprComplete(N,typeSymbol->typeTree->irRightChild);
-                }
-        }
-        else if (L(typeExpr)->type == kNoisyIrNodeType_PanonAggregateType)
-        {
-                if (LL(typeExpr)->type == kNoisyIrNodeType_ParrayType)
-                {
-                        return isTypeExprComplete(N,LRL(typeExpr->irLeftChild));
-                }
-                return false;
-        }
-        return false;
-}
-
 
 LLVMValueRef
 noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNode * inputSignature, IrNode * outputSignature)
 {
-        int parameterCount = 0;
+        Symbol * functionSymbol = commonSymbolTableSymbolForIdentifier(N, N->moduleScopes, functionName);
 
-        if (L(inputSignature)->type != kNoisyIrNodeType_Tnil)
-        {
-                for  (IrNode * iter = inputSignature; iter != NULL; iter = RR(iter))
-                {
-                        parameterCount++;
-
-                        if (!isTypeExprComplete(N,RL(iter)))
-                        {
-                                return NULL;;
-                        }
-                }
-                /*
-                *       We need to save parameterCount so we can allocate memory for the
-                *       parameters of the generated function.z
-                */
-        }
-        /*
-        *       If type == nil then parameterCount = 0
-        */
-
-        /*
-        *       If we have templated function declaration, code generation is skipped.
-        *       We should invoke code generation with the load operator.
-        */
-        if (!isTypeExprComplete(N,RL(outputSignature)))
+        if (!functionSymbol->isTypeComplete)
         {
                 return NULL;
         }
-
-        Symbol * functionSymbol = commonSymbolTableSymbolForIdentifier(N, N->moduleScopes, functionName);
-        functionSymbol->parameterNum = parameterCount;
 
         LLVMTypeRef * paramArray = (LLVMTypeRef *) malloc(functionSymbol->parameterNum * sizeof(LLVMTypeRef));
 
