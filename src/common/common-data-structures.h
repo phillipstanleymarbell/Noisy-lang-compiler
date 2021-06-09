@@ -1160,6 +1160,7 @@ struct Symbol
 	*	code generation.
 	*/
 	int			parameterNum;
+	bool			isTypeComplete;
 
 	/*
 	 *	Scope within which sym appears
