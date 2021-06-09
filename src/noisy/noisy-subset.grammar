@@ -58,8 +58,8 @@ moduleDeclBody		=	{moduleTypeNameDecl ";"} .
 /*
  *	Types
  */
-moduleTypeNameDecl	::=	identifier ":" (constantDecl | typeDecl | typeAnnoteDecl | functionDecl) .
-constantDecl		=	"const" (integerConst | realConst | boolConst) .
+moduleTypeNameDecl	::=	identifier ":" (constantDecl | typeDecl | typeAnnoteDecl | functionDecl) .     
+constantDecl		=	"const" (integerConst | realConst | boolConst) . 				 
 typeDecl		=	("type" typeExpr) .
 typeAnnoteDecl		::=	"typeannote" typeAnnoteList .
 valfnSignature		=	identifier ":" "valfn" .
@@ -147,7 +147,7 @@ qualifiedIdentifier	=	identifier {fieldSelect} .
 typeMinExpr		::=	"typemin" "(" numericType ")" .
 typeMaxExpr		::=	"typemax" "(" numericType ")" .
 namegenInvokeShorthand	=	identifier "(" [identifier ":" expression {","  identifier ":" expression}] ")" .
-fieldSelect		::=	("." identifier) | ("[" expression [":" expression] "]") .
+fieldSelect		::=	("[" expression [":" expression] "]") .
 highPrecedenceBinaryOp	::=	"*" | "/" | "%" | "&" | "^" | "::" | "lowpass" | "highpass" | "dotproduct"
 				| "crossproduct" | "centralmoment" | highPrecedenceBinaryBoolOp .
 lowPrecedenceBinaryOp	::=	"+" | "-" | ">>" | "<<" | "|"  | cmpOp | lowPrecedenceBinaryBoolOp .
