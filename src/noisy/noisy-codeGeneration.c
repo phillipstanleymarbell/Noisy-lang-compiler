@@ -16,6 +16,7 @@
 #include "common-symbolTable.h"
 #include "noisy-codeGeneration.h"
 #include "common-irHelpers.h"
+#include "noisy-typeCheck.h"
 #include <llvm-c/Core.h>
 
 
@@ -28,175 +29,69 @@ typedef struct {
 LLVMTypeRef getLLVMTypeFromTypeExpr(State *, IrNode *);
 void noisyStatementListCodeGen(State * N, CodeGenState * S,IrNode * statementListNode);
 
-/*
-*       Takes a basicType IrNode and returns the LLVMTypeRef type.
-*       Assumes that basicType->type == kNoisyIrNodeType_PbasicType.
-*/
-LLVMTypeRef 
-getLLVMTypeFromNoisyType(IrNode * basicType)
+LLVMTypeRef
+getLLVMTypeFromNoisyType(NoisyType noisyType)
 {
         LLVMTypeRef llvmType;
-        if (L(basicType)->type == kNoisyIrNodeType_Tbool)
+        NoisyType basicTypeHelper;
+        switch (noisyType.basicType)
         {
+        case noisyBool:
                 llvmType = LLVMInt1Type();
-        }
-        else if (L(basicType)->type == kNoisyIrNodeType_PintegerType)
-        {
-                /*
-                *       LLVM does not make distintion on signed and unsigned values on its typesystem.
-                *       However it can differentiate between them during the operations (e.g signed addition).
-                */
-                switch (LL(basicType)->type)
-                {
-                case kNoisyIrNodeType_Tint4:
-                case kNoisyIrNodeType_Tnat4:
-                        llvmType = LLVMIntType(4);
-                        break;
-                case kNoisyIrNodeType_Tint8:
-                case kNoisyIrNodeType_Tnat8:
-                        llvmType = LLVMInt8Type();
-                        break;
-                case kNoisyIrNodeType_Tint16:
-                case kNoisyIrNodeType_Tnat16:
-                        llvmType = LLVMInt16Type();
-                        break;
-                case kNoisyIrNodeType_Tint32:
-                case kNoisyIrNodeType_Tnat32:
-                        llvmType = LLVMInt32Type();
-                        break;
-                case kNoisyIrNodeType_Tint64:
-                case kNoisyIrNodeType_Tnat64:
-                        llvmType = LLVMInt64Type();
-                        break;
-                case kNoisyIrNodeType_Tint128:
-                case kNoisyIrNodeType_Tnat128:
-                        llvmType = LLVMInt128Type();
-                        break;
-                default:
-                        break;
-                }
-        }
-        else if (L(basicType)->type == kNoisyIrNodeType_PrealType)
-        {
-                switch (LL(basicType)->type)
-                {
-                case kNoisyIrNodeType_Tfloat16:
-                        llvmType = LLVMHalfType();
-                        break;
-                case kNoisyIrNodeType_Tfloat32:
-                        llvmType = LLVMFloatType();
-                        break;
-                case kNoisyIrNodeType_Tfloat64:
-                        llvmType = LLVMDoubleType();
-                        break;
-                case kNoisyIrNodeType_Tfloat128:
-                        llvmType = LLVMFP128Type();
-                        break;
-                default:
-                        llvmType = NULL;
-                        break;
-                }
-        }        
-        else if(L(basicType)->type == kNoisyIrNodeType_Tstring)
-        {
+                break;
+        case noisyInt4:
+        case noisyNat4:
+                llvmType = LLVMIntType(4);
+                break;
+        case noisyInt8:
+        case noisyNat8:
+                llvmType = LLVMInt8Type();
+                break;
+        case noisyInt16:
+        case noisyNat16:
+                llvmType = LLVMInt16Type();
+                break;
+        case noisyInt32:
+        case noisyNat32:
+                llvmType = LLVMInt32Type();
+                break;
+        case noisyInt64:
+        case noisyNat64:
+                llvmType = LLVMInt64Type();
+                break;
+        case noisyInt128:
+        case noisyNat128:
+                llvmType = LLVMInt128Type();
+                break;
+        case noisyFloat16:
+                llvmType = LLVMHalfType();
+                break;
+        case noisyFloat32:
+                llvmType = LLVMFloatType();
+                break;
+        case noisyFloat64:
+                llvmType = LLVMDoubleType();
+                break;
+        case noisyFloat128:
+                llvmType = LLVMFP128Type();
+                break;
+        case noisyString:
                 llvmType = LLVMPointerType(LLVMInt8Type(),0);
+                break;
+        case noisyArrayType:
+                basicTypeHelper.basicType = noisyType.arrayType;
+                llvmType = getLLVMTypeFromNoisyType(basicTypeHelper);
+                for (int i = noisyType.dimensions-1; i >= 1; i--)
+                {
+                        llvmType = LLVMArrayType(llvmType,noisyType.sizeOfDimension[i]);
+                }
+                llvmType = LLVMPointerType(llvmType,0);
+                break;
+        default:
+                break;
         }
         return llvmType;
 }
-
-/*
-*       Takes an arrayType IrNode and returns the corresponding LLVMTypeRef type
-*       Assumes that arrayTypeNode->type == kNoisyIrNodeType_ParrayType.
-*       Arrays are passed as arguments by reference like C.
-*/
-LLVMTypeRef
-getLLVMArrayTypeFromNoisy(State * N,IrNode * arrayTypeNode,int firstTime)
-{
-        if (firstTime == 1)
-        {
-                return LLVMPointerType(getLLVMArrayTypeFromNoisy(N,R(arrayTypeNode),0),0) ;
-        }
-
-        if (L(arrayTypeNode)->type == kNoisyIrNodeType_PtypeExpr)
-        {
-                return getLLVMTypeFromTypeExpr(N,L(arrayTypeNode));
-        }
-
-        int arrayLength = L(arrayTypeNode)->token->integerConst;
-        
-        LLVMTypeRef elementType = getLLVMArrayTypeFromNoisy(N,R(arrayTypeNode),0);
-
-        return LLVMArrayType (elementType, arrayLength);
-}
-
-/*
-*       Takes the state N (needed for symbolTable search) and a typeNameNode
-*       and returns the corresponding LLVMTypeRef.
-*/
-LLVMTypeRef
-getLLVMTypeFromTypeSymbol(State * N,IrNode * typeNameNode)
-{
-        Symbol * typeSymbol = commonSymbolTableSymbolForIdentifier(N,NULL,L(typeNameNode)->tokenString);
-
-        if (typeSymbol == NULL)
-        {
-                typeSymbol = commonSymbolTableSymbolForIdentifier(N,N->noisyIrTopScope,L(typeNameNode)->tokenString);
-                return NULL;
-        }
-
-        IrNode * typeTree = typeSymbol->typeTree;
-
-        if (RL(typeTree)->type == kNoisyIrNodeType_PbasicType)
-        {
-                return getLLVMTypeFromNoisyType(RL(typeTree));
-        }
-        else if (RL(typeTree)->type == kNoisyIrNodeType_PanonAggregateType)
-        {
-                return getLLVMArrayTypeFromNoisy(N,RL(typeTree),1);
-        }
-        else if (RL(typeTree)->type == kNoisyIrNodeType_PtypeName)
-        {
-                return getLLVMTypeFromTypeSymbol(N,RL(typeTree));
-        }
-        else
-        {
-                return NULL;
-        }
-}
-
-/*
-*       Takes the state N and a TypeExpr node and returns the corresponding
-*       LLVMTypeRef. If it fails returns NULL.
-*/
-LLVMTypeRef
-getLLVMTypeFromTypeExpr(State * N, IrNode * typeExpr)
-{
-        if (L(typeExpr)->type == kNoisyIrNodeType_PbasicType)
-        {
-                return getLLVMTypeFromNoisyType(L(typeExpr));
-        }
-        else if (L(typeExpr)->type == kNoisyIrNodeType_PanonAggregateType)
-        {
-                IrNode * arrayType = LL(typeExpr);
-                if (arrayType->type == kNoisyIrNodeType_ParrayType)
-                {
-                        return getLLVMArrayTypeFromNoisy(N,arrayType,1);
-                }
-                /*
-                *       Lists and other non aggregate types are not supported
-                */
-                else
-                {
-                        return NULL;
-                }
-        }
-        else if (L(typeExpr)->type == kNoisyIrNodeType_PtypeName)
-        {
-                return getLLVMTypeFromTypeSymbol(N,L(typeExpr));
-        }
-        return NULL;
-}
-
 
 LLVMValueRef
 noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNode * inputSignature, IrNode * outputSignature)
@@ -215,7 +110,9 @@ noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNod
                 int paramIndex = 0;
                 for  (IrNode * iter = inputSignature; iter != NULL; iter = RR(iter))
                 {
-                        LLVMTypeRef llvmType = getLLVMTypeFromTypeExpr(N,RL(iter));
+                        NoisyType typ = getNoisyTypeFromTypeExpr(N,RL(iter));
+                        LLVMTypeRef llvmType = getLLVMTypeFromNoisyType(typ);
+                        deallocateNoisyType(&typ);
                         if (llvmType != NULL)
                         {
                                 paramArray[paramIndex] = llvmType;
@@ -240,7 +137,9 @@ noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNod
         if (L(outputSignature)->type != kNoisyIrNodeType_Tnil)
         {
                 outputBasicType = RL(outputSignature);
-                returnType = getLLVMTypeFromTypeExpr(N,outputBasicType);
+                NoisyType typ = getNoisyTypeFromTypeExpr(N,outputBasicType);
+                returnType = getLLVMTypeFromNoisyType(typ);
+                deallocateNoisyType(&typ);
         }
         else
         {
