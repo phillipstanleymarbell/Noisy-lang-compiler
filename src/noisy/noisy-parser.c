@@ -3172,6 +3172,10 @@ noisyParseFunctionDefn(State *  N, Scope *  scope)
 	}
 
 	identifier->symbol->typeTree = typeTree;
+	/*
+	*	Function scopes have names so we can search them.
+	*/
+	currentScope->identifier = identifier->symbol->identifier;
 
 	noisyParseTerminal(N, kNoisyIrNodeType_Tassign);
 	IrNode *	scopeEnd = noisyParseScopedStatementList(N, currentScope);
@@ -3371,9 +3375,12 @@ noisyParseSignature(State *  N, Scope *  currentScope)
 	noisyParseTerminal(N, kNoisyIrNodeType_TleftParens);
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
-		addLeaf(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
+		IrNode * identifierNode = noisyParseIdentifierDefinitionTerminal(N, currentScope);
+		addLeaf(N, n, identifierNode);
 		noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
-		addLeafWithChainingSeq(N, n, noisyParseTypeExpr(N, currentScope));
+		IrNode * typeTree = noisyParseTypeExpr(N, currentScope);
+		addLeafWithChainingSeq(N, n, typeTree);
+		identifierNode->symbol->typeTree = typeTree;
 
 		while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 		{
@@ -4862,6 +4869,16 @@ noisyParseTerm(State *  N, Scope *  currentScope)
 	}
 
 	addLeaf(N, n, noisyParseFactor(N, currentScope));
+
+	if (peekCheck(N, 1, kNoisyIrNodeType_TplusPlus))
+	{
+		addLeafWithChainingSeq(N, n, noisyParseTerminal(N,kNoisyIrNodeType_TplusPlus));
+	}
+	else if (peekCheck(N, 1, kNoisyIrNodeType_TminusMinus))
+	{
+		addLeafWithChainingSeq(N, n, noisyParseTerminal(N,kNoisyIrNodeType_TminusMinus));
+	}
+
 	while (inFirst(N, kNoisyIrNodeType_PhighPrecedenceBinaryOp, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		addLeafWithChainingSeq(N, n, noisyParseHighPrecedenceBinaryOp(N));
