@@ -2213,6 +2213,8 @@ int    gNoisyFollows[kCommonIrNodeTypeMax][kCommonIrNodeTypeMax]  = {
                                                                                                                     kNoisyIrNodeType_Timplies,
                                                                                                                     kNoisyIrNodeType_Tsemicolon,
                                                                                                                     kNoisyIrNodeType_TrightBracket,
+                                                                                                                    kNoisyIrNodeType_Tdot,
+                                                                                                                    kNoisyIrNodeType_TleftBracket,
                                                                                                                     kNoisyIrNodeTypeMax
                                                                                                },
                                                [kNoisyIrNodeType_PtupleValue                    ]            = {

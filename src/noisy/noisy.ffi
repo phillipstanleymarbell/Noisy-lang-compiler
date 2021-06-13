@@ -1560,6 +1560,7 @@ production	kNoisyIrNodeType_PtupleValue:			followset = {
 production	kNoisyIrNodeType_PfieldSelect:			followset = {
 										followset(kNoisyIrNodeType_PidentifierOrNil),
 										followset(kNoisyIrNodeType_Pfactor),
+										firstset(kNoisyIrNodeType_PfieldSelect)
 									}
 
 --//		highPrecedenceBinaryOp	::=	"*" | "/" | "%" | "&" | "^" | "::" | "lowpass" | "highpass" | "dotproduct"
