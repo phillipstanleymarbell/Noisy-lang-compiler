@@ -17,7 +17,7 @@
 #include "common-irHelpers.h"
 #include "noisy-typeCheck.h"
 
-
+NoisyType getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * currentScope);
 
 
 /*
@@ -34,6 +34,9 @@ isTypeExprComplete(State * N,IrNode * typeExpr)
         }
         else if (L(typeExpr)->type == kNoisyIrNodeType_PtypeName)
         {
+                /*
+                *       TODO; Scope here needs fixing. Typenames need to be resolved.
+                */
                 Symbol * typeSymbol = commonSymbolTableSymbolForIdentifier(N,N->noisyIrTopScope,LL(typeExpr)->tokenString);
                 if (typeSymbol->symbolType == kNoisySymbolTypeModuleParameter)
                 {
@@ -62,6 +65,91 @@ isTypeExprComplete(State * N,IrNode * typeExpr)
         }
         return false;
 }
+
+void
+noisyInitNoisyType(NoisyType * typ)
+{
+        typ->basicType = noisyInitType;
+        typ->dimensions = 0;
+        typ->sizeOfDimension = NULL;
+        typ->arrayType = noisyInitType;
+}
+
+bool
+noisyTypeEquals(NoisyType typ1, NoisyType typ2)
+{
+        if (typ1.basicType == typ2.basicType)
+        {
+                if (typ1.basicType == noisyArrayType)
+                {
+                        if (typ1.arrayType == typ2.arrayType)
+                        {
+                                if (typ1.dimensions == typ2.dimensions)
+                                {
+                                        for (int i = 0; i < typ1.dimensions; i++)
+                                        {
+                                                if (typ1.sizeOfDimension[i] != typ2.sizeOfDimension[i])
+                                                {
+                                                        return false;
+                                                }
+                                        }
+                                        return true;
+                                }
+                                return false;
+                        }
+                        return false;
+                }
+                return true;
+        }
+        return false;
+}
+
+bool
+noisyIsOfType(NoisyType typ1,NoisyBasicType typeSuperSet)
+{
+        if (typeSuperSet == noisyIntegerConstType)
+        {
+                switch (typ1.basicType)
+                {
+                case noisyInt4:
+                case noisyInt8:
+                case noisyInt16:
+                case noisyInt32:
+                case noisyInt64:
+                case noisyInt128:
+                case noisyIntegerConstType:
+                case noisyNat4:
+                case noisyNat8:
+                case noisyNat16:
+                case noisyNat32:
+                case noisyNat64:
+                case noisyNat128:
+                        return true;
+                        break;
+                default:
+                        return false;
+                        break;
+                }
+        }
+        else if (typeSuperSet == noisyRealConstType)
+        {
+                switch (typ1.basicType)
+                {
+                case noisyFloat16:
+                case noisyFloat32:
+                case noisyFloat64:
+                case noisyFloat128:
+                case noisyRealConstType:
+                        return true;
+                        break;
+                default:
+                        return false;
+                        break;
+                }
+        }
+        return false;
+}
+
 
 NoisyType
 getNoisyTypeFromBasicType(IrNode * basicType)
@@ -260,33 +348,186 @@ getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
         return noisyType;
 }
 
-bool
-noisyTypeEquals(NoisyType typ1, NoisyType typ2)
+NoisyType
+getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope)
 {
-        if (typ1.basicType == typ2.basicType)
+        NoisyType factorType;
+
+        if (L(noisyFactorNode)->type == kNoisyIrNodeType_TintegerConst)
         {
-                if (typ1.basicType == noisyArrayType)
-                {
-                        if (typ1.arrayType == typ2.arrayType)
-                        {
-                                if (typ1.dimensions == typ2.dimensions)
-                                {
-                                        for (int i = 0; i < typ1.dimensions; i++)
-                                        {
-                                                if (typ1.sizeOfDimension[i] != typ2.sizeOfDimension[i])
-                                                {
-                                                        return false;
-                                                }
-                                        }
-                                        return true;
-                                }
-                                return false;
-                        }
-                        return false;
-                }
-                return true;
+                factorType.basicType = noisyIntegerConstType;
         }
-        return false;
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_TrealConst)
+        {
+                factorType.basicType = noisyRealConstType;
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_TstringConst)
+        {
+                factorType.basicType = noisyString;
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_TboolConst)
+        {
+                factorType.basicType = noisyBool;
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PqualifiedIdentifier)
+        {
+                Symbol * identifierSymbol = commonSymbolTableSymbolForIdentifier(N, currentScope, LL(noisyFactorNode)->tokenString);
+
+                if (identifierSymbol == NULL)
+                {
+                        factorType.basicType = noisyTypeError;
+                }
+
+                factorType = getNoisyTypeFromTypeExpr(N,identifierSymbol->typeTree);
+                if (factorType.basicType == noisyArrayType)
+                {
+                        int dims = 0;
+                        for (IrNode * iter = LR(noisyFactorNode); iter != NULL; iter = R(iter))
+                        {
+                                if (! noisyIsOfType(getNoisyTypeFromExpression(N,LR(iter),currentScope), noisyIntegerConstType))
+                                {
+                                        factorType.basicType = noisyTypeError;
+                                }
+                                dims++;
+                        }
+
+                        if (dims != factorType.dimensions)
+                        {
+                                factorType.basicType = noisyTypeError;
+                        }
+                        /*
+                        *       If there are no type errors on array indexing we the arrayType of the array.
+                        *       e.g. when we index an array of int32 the factor we return has type int32.
+                        */
+                        if (factorType.basicType != noisyTypeError)
+                        {
+                                factorType.basicType = factorType.arrayType;
+                        }
+                }
+                else
+                {
+                        if (LR(noisyFactorNode) != NULL)
+                        {
+                                factorType.basicType = noisyTypeError;
+                        }
+                }
+        }
+        return factorType;
+}
+
+
+NoisyType
+noisyUnaryOpTypeCheck(IrNode * noisyUnaryOpNode,NoisyType factorType)
+{
+        NoisyType returnType;
+
+        if (L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tplus ||
+            L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tminus)
+        {
+                switch (factorType.basicType)
+                {
+                case noisyBool:
+                case noisyString:
+                case noisyInitType:
+                case noisyArrayType:
+                case noisyTypeError:
+                        returnType.basicType = noisyTypeError;
+                        break;
+                default:
+                        returnType = factorType;
+                        break;
+                }
+        }
+        /*
+        *       "~" and "<-" operator we do not type check so far.
+        */
+        else
+        {
+                returnType = factorType;
+        }
+        return returnType;
+}
+
+/*
+*       TODO; Not completed.
+*/
+NoisyType
+getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
+{
+        NoisyType basicType,factorType, unaryType;
+        IrNode * factorNode = NULL;
+        IrNode * unaryOpNode = NULL;
+        noisyInitNoisyType(&basicType);
+        noisyInitNoisyType(&unaryType);
+
+
+        if (L(noisyTermNode)->type == kNoisyIrNodeType_PbasicType)
+        {
+                basicType = getNoisyTypeFromBasicType(noisyTermNode->irLeftChild);
+        }
+
+        if (L(noisyTermNode)->type == kNoisyIrNodeType_Pfactor)
+        {
+                factorNode = L(noisyTermNode);
+        }
+        else if (RL(noisyTermNode)->type == kNoisyIrNodeType_Pfactor)
+        {
+                factorNode = RL(noisyTermNode);
+                if (L(noisyTermNode)->type == kNoisyIrNodeType_PunaryOp)
+                {
+                        unaryOpNode = L(noisyTermNode);
+                }
+        }
+        else if (RR(noisyTermNode)->type == kNoisyIrNodeType_Pfactor)
+        {
+
+                factorNode = RR(noisyTermNode);
+                if (RL(noisyTermNode)->type == kNoisyIrNodeType_PunaryOp)
+                {
+                        unaryOpNode = RL(noisyTermNode);
+                }
+        }
+
+        factorType = getNoisyTypeFromFactor(N,factorNode,currentScope);
+        if (unaryOpNode != NULL)
+        {
+                unaryType = noisyUnaryOpTypeCheck(unaryOpNode,factorType);
+        }
+
+        if (unaryType.basicType != noisyInitType)
+        {
+                factorType = unaryType;
+        }
+
+        if (basicType.basicType != noisyInitType)
+        {
+                if (!noisyTypeEquals(basicType,factorType))
+                {
+                        factorType.basicType = noisyTypeError;
+                }
+        }
+
+        /*
+        *       We need to check highprecedencebinaryoperator and possible second factor.
+        */
+
+        return factorType;
+}
+
+/*
+*       TODO; Not completed.
+*/
+NoisyType
+getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * currentScope)
+{
+        NoisyType typ1;
+
+        if (L(noisyExpressionNode)->type == kNoisyIrNodeType_Pterm)
+        {
+                typ1 = getNoisyTypeFromTerm(N,L(noisyExpressionNode), currentScope);
+        }
+
+        return typ1;
 }
 
 /*
@@ -294,9 +535,9 @@ noisyTypeEquals(NoisyType typ1, NoisyType typ2)
 *       for the code generation.
 */
 void
-noisyDeclareFunctionTypeCheck(State * N, const char * functionName,IrNode * inputSignature, IrNode * outputSignature)
+noisyDeclareFunctionTypeCheck(State * N, const char * functionName,IrNode * inputSignature, IrNode * outputSignature,Scope * currentScope)
 {
-        Symbol * functionSymbol = commonSymbolTableSymbolForIdentifier(N, N->moduleScopes, functionName);
+        Symbol * functionSymbol = commonSymbolTableSymbolForIdentifier(N, currentScope, functionName);
 
         int parameterCount = 0;
 
@@ -325,7 +566,7 @@ noisyDeclareFunctionTypeCheck(State * N, const char * functionName,IrNode * inpu
 
 
 void
-noisyModuleTypeNameDeclTypeCheck(State * N, IrNode * noisyModuleTypeNameDeclNode)
+noisyModuleTypeNameDeclTypeCheck(State * N, IrNode * noisyModuleTypeNameDeclNode, Scope * currentScope)
 {
         /*
         *       We do not need to typecheck constant definitions.
@@ -343,16 +584,16 @@ noisyModuleTypeNameDeclTypeCheck(State * N, IrNode * noisyModuleTypeNameDeclNode
         {
                 IrNode * inputSignature = RLL(noisyModuleTypeNameDeclNode);
                 IrNode * outputSignature = RRL(noisyModuleTypeNameDeclNode);
-                noisyDeclareFunctionTypeCheck(N,L(noisyModuleTypeNameDeclNode)->tokenString,inputSignature,outputSignature);
+                noisyDeclareFunctionTypeCheck(N,L(noisyModuleTypeNameDeclNode)->tokenString,inputSignature,outputSignature,currentScope);
         }
 }
 
 void
-noisyModuleDeclBodyTypeCheck(State * N, IrNode * noisyModuleDeclBodyNode)
+noisyModuleDeclBodyTypeCheck(State * N, IrNode * noisyModuleDeclBodyNode,Scope * currentScope)
 {
         for (IrNode * currentNode = noisyModuleDeclBodyNode; currentNode != NULL; currentNode = currentNode->irRightChild)
         {
-                noisyModuleTypeNameDeclTypeCheck(N, currentNode->irLeftChild);
+                noisyModuleTypeNameDeclTypeCheck(N, currentNode->irLeftChild,currentScope);
         }
 }
 
@@ -436,21 +677,25 @@ noisySignatureIsMatching(State * N, IrNode * definitionSignature, IrNode * decla
         return true;
 }
 
-
+/*
+*       TODO; Not completed.
+*/
 void
-noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNode)
+noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNode, Scope * currentScope)
 {
         /*
         *       If type is xseq it means that noisyAssignmentNode is not a declaration but an actual assignment.
         */
         if (R(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_Xseq)
         {
+                NoisyType lValuetype, rValueType;
+                rValueType = getNoisyTypeFromExpression(N,RRL(noisyAssignmentStatementNode),currentScope);
                 for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
                 {
                         if (LL(iter)->type == kNoisyIrNodeType_Tnil)
                         {
                                 /*
-                                *       We do not need to type check an assignment to nil.
+                                *       We do not need to type check lValueType of an assignment to nil.
                                 */
                         }
                         else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
@@ -458,10 +703,10 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                 /*
                                 *       TODO; Get type from expression and compare with typeExpr.
                                 */
-                                NoisyType typ1 = getNoisyTypeFromTypeExpr(N,LLL(iter)->symbol->typeTree);
-                                if (typ1.basicType == noisyTypeError)
+                                lValuetype = getNoisyTypeFromTypeExpr(N,LLL(iter)->symbol->typeTree);
+                                if (lValuetype.basicType == noisyTypeError || rValueType.basicType == noisyTypeError)
                                 {
-                                        deallocateNoisyType(&typ1);
+                                        deallocateNoisyType(&lValuetype);
                                         return;
                                 }
                         }
@@ -470,12 +715,12 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 }
 
 void
-noisyStatementTypeCheck(State * N, IrNode * noisyStatementNode)
+noisyStatementTypeCheck(State * N, IrNode * noisyStatementNode, Scope * currentScope)
 {
         switch (L(noisyStatementNode)->type)
         {
         case kNoisyIrNodeType_PassignmentStatement:
-                noisyAssignmentStatementTypeCheck(N,L(noisyStatementNode));
+                noisyAssignmentStatementTypeCheck(N,L(noisyStatementNode), currentScope);
                 break;
         // case kNoisyIrNodeType_PmatchStatement:
         //         noisyMatchStatementTypeCheck(N,S,L(noisyStatementNode));
@@ -503,61 +748,62 @@ noisyStatementTypeCheck(State * N, IrNode * noisyStatementNode)
 }
 
 void
-noisyStatementListTypeCheck(State * N, IrNode * statementListNode)
+noisyStatementListTypeCheck(State * N, IrNode * statementListNode, Scope * currentScope)
 {
         for (IrNode * iter = statementListNode; iter != NULL; iter=R(iter))
         {
                 if (L(iter) != NULL)
                 {
-                        noisyStatementTypeCheck(N,L(iter));
+                        noisyStatementTypeCheck(N,L(iter),currentScope);
                 }
         }
 }
 
 
 void
-noisyFunctionDefnTypeCheck(State * N,IrNode * noisyFunctionDefnNode)
+noisyFunctionDefnTypeCheck(State * N,IrNode * noisyFunctionDefnNode,Scope * currentScope)
 {
         Symbol * functionSymbol = commonSymbolTableSymbolForIdentifier(N, N->moduleScopes, noisyFunctionDefnNode->irLeftChild->tokenString);
 
         noisySignatureIsMatching(N, RL(noisyFunctionDefnNode),L(functionSymbol->typeTree));
         noisySignatureIsMatching(N, RRL(noisyFunctionDefnNode),R(functionSymbol->typeTree));        
 
-
         /*
         *       For local functions we need to typeCheck their declaration.
         *       We cannot skip this step because this function initializes parameterNum and isComplete variables
         *       for function symbols.
+        *       If we have a local definition of a function its scope is the TopScope.
         */
-        if (functionSymbol == NULL)
+
+        if (functionSymbol->scope == N->noisyIrTopScope)
         {
-                noisyDeclareFunctionTypeCheck(N,noisyFunctionDefnNode->irLeftChild->tokenString,RL(noisyFunctionDefnNode),RRL(noisyFunctionDefnNode));
+                noisyDeclareFunctionTypeCheck(N,noisyFunctionDefnNode->irLeftChild->tokenString,RL(noisyFunctionDefnNode),RRL(noisyFunctionDefnNode),currentScope);
         }
 
-        noisyStatementListTypeCheck(N,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild);
+        noisyStatementListTypeCheck(N,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild,commonSymbolTableGetScopeWithName(N,currentScope,functionSymbol->identifier));
 }
 
 void
-noisyModuleDeclTypeCheck(State * N, IrNode * noisyModuleDeclNode)
+noisyModuleDeclTypeCheck(State * N, IrNode * noisyModuleDeclNode,Scope * currentScope)
 {
         /*
         *       We do not need to typecheck module parameters.
         */
-        noisyModuleDeclBodyTypeCheck(N, RR(noisyModuleDeclNode));
+        noisyModuleDeclBodyTypeCheck(N, RR(noisyModuleDeclNode),currentScope);
 }
 
 void
-noisyProgramTypeCheck(State * N,IrNode * noisyProgramNode)
+noisyProgramTypeCheck(State * N,IrNode * noisyProgramNode,Scope * currentScope)
 {
         for (IrNode * currentNode = noisyProgramNode; currentNode != NULL; currentNode = currentNode->irRightChild)
         {
                 if (currentNode->irLeftChild->type == kNoisyIrNodeType_PmoduleDecl)
                 {
-                        noisyModuleDeclTypeCheck(N, currentNode->irLeftChild);
+                        noisyModuleDeclTypeCheck(N, currentNode->irLeftChild,N->moduleScopes);
                 }
                 else if (currentNode->irLeftChild->type == kNoisyIrNodeType_PfunctionDefn)
                 {
-                        noisyFunctionDefnTypeCheck(N,currentNode->irLeftChild);
+                        noisyFunctionDefnTypeCheck(N,currentNode->irLeftChild,currentScope->firstChild);
                 }
         }
 }
@@ -565,5 +811,5 @@ noisyProgramTypeCheck(State * N,IrNode * noisyProgramNode)
 void
 noisyTypeCheck(State * N)
 {
-        noisyProgramTypeCheck(N,N->noisyIrRoot);
+        noisyProgramTypeCheck(N,N->noisyIrRoot,N->noisyIrTopScope);
 }
