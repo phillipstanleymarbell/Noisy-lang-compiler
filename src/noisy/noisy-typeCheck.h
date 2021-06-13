@@ -4,6 +4,7 @@ bool noisySignatureIsMatching(State * N, IrNode * definitionSignature, IrNode * 
 
 typedef enum
 {
+        noisyInitType,
         noisyBool,
         noisyInt4,
         noisyInt8,
@@ -11,6 +12,7 @@ typedef enum
         noisyInt32,
         noisyInt64,
         noisyInt128,
+        noisyIntegerConstType,
         noisyNat4,
         noisyNat8,
         noisyNat16,
@@ -21,6 +23,7 @@ typedef enum
         noisyFloat32,
         noisyFloat64,
         noisyFloat128,
+        noisyRealConstType,
         noisyString,
         noisyArrayType,
         noisyTypeError
