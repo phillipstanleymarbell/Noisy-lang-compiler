@@ -133,9 +133,7 @@ guardedExpressionList	=	{expression "=>" expression} .
  *	Expressions
  */
 expression		::=	(term {lowPrecedenceBinaryOp term}) | anonAggrCastExpr
-				| loadExpr | quantizeExpression | sampleExpression .
-quantizeExpression	::=	identifier "quantize" expression .
-sampleExpression	::=	identifier "sample" expression .
+				| loadExpr .
 arrayCastExpr		::=	"array" (("of" idxInitList) | ("[" integerConst "]" "of" starInitList)) .
 anonAggrCastExpr	::=     arrayCastExpr .
 chanEventExpr		::=	("erasures" | "distortions" | "latency") "of" identifier cmpOp expression .
