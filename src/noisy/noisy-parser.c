@@ -2444,15 +2444,15 @@ noisyParseNumericType(State *  N, Scope *  currentScope)
 	{
 		addLeaf(N, n, noisyParseIntegerType(N, currentScope));
 	}
-	if (inFirst(N, kNoisyIrNodeType_PrealType, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	else if (inFirst(N, kNoisyIrNodeType_PrealType, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		addLeaf(N, n, noisyParseRealType(N, currentScope));
 	}
-	if (inFirst(N, kNoisyIrNodeType_PfixedType, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	else if (inFirst(N, kNoisyIrNodeType_PfixedType, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		addLeaf(N, n, noisyParseFixedType(N));
 	}
-	if (inFirst(N, kNoisyIrNodeType_PrationalType, gNoisyFirsts, kNoisyIrNodeTypeMax))
+	else if (inFirst(N, kNoisyIrNodeType_PrationalType, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
 		addLeaf(N, n, noisyParseRationalType(N, currentScope));
 	}
@@ -3607,14 +3607,28 @@ noisyParseAssignmentStatement(State *  N, Scope *  currentScope)
 	/*
 	 *	Scan ahead until the next ';' to see if there is a ':', in which case this is a definition.
 	 */
-	for (int lookAhead = 1; !peekCheck(N, lookAhead, kNoisyIrNodeType_Tsemicolon); lookAhead++)
+	for (int lookAhead = 1; true; lookAhead++)
 	{
 		if (peekCheck(N, lookAhead, kNoisyIrNodeType_Tcolon) || peekCheck(N, lookAhead, kNoisyIrNodeType_TcolonAssign))
 		{
 			isDefinition = true;
 			break;
 		}
+		if (peekCheck(N, lookAhead-1,kNoisyIrNodeType_Tassign)
+		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TorAssign)
+		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TandAssign)
+		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TxorAssign)
+		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TplusAssign)
+		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TminusAssign)
+		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TasteriskAssign)
+		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TdivideAssign)
+		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TpercentAssign)
+		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TplusAssign))
+		{
+			break;
+		}
 	}
+	
 
 	if (inFirst(N, kNoisyIrNodeType_PidentifierOrNilList, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
@@ -4998,11 +5012,11 @@ noisyParseFactor(State *  N, Scope *  currentScope)
 	{
 		addLeaf(N, n, noisyParseTerminal(N, kNoisyIrNodeType_TboolConst));
 	}
-	else if (peekCheck(N, 1, kNoisyIrNodeType_PtypeMinExpr))
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Ttypemin))
 	{
 		addLeaf(N, n, noisyParseTypeMinExpr(N, currentScope));
 	}
-	else if (peekCheck(N, 1, kNoisyIrNodeType_PtypeMaxExpr))
+	else if (peekCheck(N, 1, kNoisyIrNodeType_Ttypemax))
 	{
 		addLeaf(N, n, noisyParseTypeMaxExpr(N, currentScope));
 	}
