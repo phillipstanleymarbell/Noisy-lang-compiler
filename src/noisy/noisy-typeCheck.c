@@ -16,6 +16,7 @@
 #include "common-symbolTable.h"
 #include "common-irHelpers.h"
 #include "noisy-typeCheck.h"
+#include "noisy-parser.h"
 
 NoisyType getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * currentScope);
 
@@ -146,6 +147,10 @@ noisyIsOfType(NoisyType typ1,NoisyBasicType typeSuperSet)
                         return false;
                         break;
                 }
+        }
+        else if (typeSuperSet == noisyArithType)
+        {
+                return noisyIsOfType(typ1,noisyIntegerConstType) || noisyIsOfType(typ1,noisyRealConstType);
         }
         return false;
 }
@@ -285,6 +290,9 @@ getNoisyTypeFromTypeSymbol(State * N,IrNode * typeNameNode)
 
         if (typeSymbol == NULL)
         {
+                /*
+                *       Type symbol does not exist error?
+                */
                 typeSymbol = commonSymbolTableSymbolForIdentifier(N,N->noisyIrTopScope,L(typeNameNode)->tokenString);
                 noisyType.basicType = noisyTypeError;
                 return noisyType;
@@ -335,6 +343,9 @@ getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
                 */
                 else
                 {
+                        /*
+                        *       Not supported types error.
+                        */
                         noisyType.basicType = noisyTypeError;
                         return noisyType;
                 }
@@ -348,6 +359,10 @@ getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
         return noisyType;
 }
 
+/*
+*       Takes a noisyFactor IrNode and a the currentScope and returns the NoisyType of the factor.
+*       If every type check is correct returns the type else it returns noisyTypeError.
+*/
 NoisyType
 getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope)
 {
@@ -386,6 +401,9 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                         {
                                 if (! noisyIsOfType(getNoisyTypeFromExpression(N,LR(iter),currentScope), noisyIntegerConstType))
                                 {
+                                        /*
+                                        *       Indexes are not integers error.
+                                        */
                                         factorType.basicType = noisyTypeError;
                                 }
                                 dims++;
@@ -393,6 +411,9 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 
                         if (dims != factorType.dimensions)
                         {
+                                /*
+                                *       Indexing dimension error.
+                                */
                                 factorType.basicType = noisyTypeError;
                         }
                         /*
@@ -431,6 +452,9 @@ noisyUnaryOpTypeCheck(IrNode * noisyUnaryOpNode,NoisyType factorType)
                 case noisyInitType:
                 case noisyArrayType:
                 case noisyTypeError:
+                        /*
+                        *       Unary operator and operand type mismatch.
+                        */
                         returnType.basicType = noisyTypeError;
                         break;
                 default:
@@ -507,9 +531,65 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                 }
         }
 
-        /*
-        *       We need to check highprecedencebinaryoperator and possible second factor.
-        */
+        if (R(noisyTermNode) != NULL)
+        {
+                if (RL(noisyTermNode)->type == kNoisyIrNodeType_TplusPlus || RL(noisyTermNode)->type == kNoisyIrNodeType_TminusMinus)
+                {
+                        factorNode = R(factorNode);
+                }
+        }
+
+
+        for (IrNode * iter = R(noisyTermNode); iter != NULL; iter = RR(iter))
+        {
+                NoisyType factorIterType;
+
+                factorIterType = getNoisyTypeFromFactor(N,RL(iter),currentScope);
+
+                if (!noisyTypeEquals(factorIterType,factorType))
+                {
+                        /*
+                        *       Operands type mismatch.
+                        */
+                        factorType.basicType = noisyTypeError;
+                        deallocateNoisyType(&factorIterType);
+                        break;
+                }
+
+                if (LL(iter)->type == kNoisyIrNodeType_Tasterisk
+                || LL(iter)->type == kNoisyIrNodeType_Tdivide
+                || LL(iter)->type == kNoisyIrNodeType_Tpercent
+                || LL(iter)->type == kNoisyIrNodeType_TarithmeticAnd)
+                {
+                        if (!noisyIsOfType(factorType,noisyArithType))
+                        {
+                                /*
+                                *       Operator and operand mismatch.
+                                */
+                                factorType.basicType = noisyTypeError;
+                                deallocateNoisyType(&factorIterType);
+                                break;
+
+                        }
+                }
+                else if (LL(iter)->type == kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp)
+                {
+                        NoisyType boolType = {noisyBool,0,0};
+                        if (!noisyTypeEquals(factorType,boolType))
+                        {
+                                /*
+                                *       Operator and operand mismatch.
+                                */
+                                factorType.basicType = noisyTypeError;
+                        }
+                }
+                else
+                {
+                        factorType.basicType = noisyTypeError;
+                }
+                deallocateNoisyType(&factorIterType);
+
+        }
 
         return factorType;
 }
@@ -707,7 +787,8 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                 if (lValuetype.basicType == noisyTypeError || rValueType.basicType == noisyTypeError)
                                 {
                                         deallocateNoisyType(&lValuetype);
-                                        return;
+                                        flexprint(N->Fe, N->Fm, N->Fperr,"Type Error!\n");
+			                noisyParserErrorRecovery(N, kNoisyIrNodeType_PassignmentStatement);
                                 }
                         }
                 }
