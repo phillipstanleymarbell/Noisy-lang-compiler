@@ -616,7 +616,9 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                 int paramCount = 0;
 
                 IrNode * inputSignature = L(functionNameSymbol->typeTree);
-
+                /*
+                *       Check if inputSignature is nil. Else typeCheck every argument.
+                */
                 if (L(inputSignature)->type == kNoisyIrNodeType_Tnil)
                 {
                         if (LR(noisyFactorNode) == NULL)
@@ -663,7 +665,9 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 
                 IrNode * outputSignature = R(functionNameSymbol->typeTree);
 
-                
+                /*
+                *       TypeCheck output signature. The type returned is the return type of the function.
+                */
                 if (L(outputSignature)->type ==kNoisyIrNodeType_Tnil)
                 {
                         factorType.basicType = noisyNilType;
@@ -690,7 +694,9 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
         return factorType;
 }
 
-
+/*
+*       TODO; Need to add boolean binary op.
+*/
 NoisyType
 noisyUnaryOpTypeCheck(IrNode * noisyUnaryOpNode,NoisyType factorType)
 {
@@ -727,7 +733,8 @@ noisyUnaryOpTypeCheck(IrNode * noisyUnaryOpNode,NoisyType factorType)
 }
 
 /*
-*       TODO; Not completed.
+*       Takes a noisyTerNode typechecks it and everything is correct it returns the NoisyType of the term.
+*       TODO; Might need more work.
 */
 NoisyType
 getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
@@ -793,7 +800,9 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                 }
         }
 
-
+        /*
+        *       TODO; Need to revisit typecheck on operators.
+        */
         for (IrNode * iter = R(noisyTermNode); iter != NULL; iter = RR(iter))
         {
                 NoisyType factorIterType;
@@ -810,8 +819,6 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                         asprintf(&details, "Operands type mismatch\n");
                         noisySemanticError(N,factorNode,details);
                         noisySemanticErrorRecovery(N);
-                        // factorType.basicType = noisyTypeError;
-                        // deallocateNoisyType(&factorIterType);
                         break;
                 }
 
@@ -830,8 +837,6 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                                 asprintf(&details, "Operator and operands type mismatch\n");
                                 noisySemanticError(N,factorNode,details);
                                 noisySemanticErrorRecovery(N);
-                                // factorType.basicType = noisyTypeError;
-                                // deallocateNoisyType(&factorIterType);
                                 break;
 
                         }
@@ -849,7 +854,6 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                                 asprintf(&details, "Operator and operands type mismatch\n");
                                 noisySemanticError(N,factorNode,details);
                                 noisySemanticErrorRecovery(N);
-                                // factorType.basicType = noisyTypeError;
                         }
                 }
                 else
@@ -862,7 +866,6 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                         asprintf(&details, "Unsupported binary operator\n");
                         noisySemanticError(N,factorNode,details);
                         noisySemanticErrorRecovery(N);
-                        // factorType.basicType = noisyTypeError;
                 }
                 deallocateNoisyType(&factorIterType);
 
@@ -872,19 +875,118 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 }
 
 /*
-*       TODO; Not completed.
+*       TODO; Might not be completed.
 */
 NoisyType
 getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * currentScope)
 {
-        NoisyType typ1;
+        NoisyType typ1,returnType;
+        noisyInitNoisyType(&returnType);
 
         if (L(noisyExpressionNode)->type == kNoisyIrNodeType_Pterm)
         {
                 typ1 = getNoisyTypeFromTerm(N,L(noisyExpressionNode), currentScope);
+
+                returnType = typ1;
+
+                for (IrNode * iter = R(noisyExpressionNode); iter != NULL; iter = RR(iter))
+                {
+                        IrNode * operatorNode = L(iter);
+                        IrNode * termNode = RL(iter);
+
+                        NoisyType termTyp = getNoisyTypeFromTerm(N,termNode,currentScope);
+
+                        if (noisyTypeEquals(returnType,termTyp))
+                        {
+                                switch (L(operatorNode)->type)
+                                {
+                                case kNoisyIrNodeType_Tplus:
+                                case kNoisyIrNodeType_Tminus:
+                                case kNoisyIrNodeType_TrightShift:
+                                case kNoisyIrNodeType_TleftShift:
+                                case kNoisyIrNodeType_TbitwiseOr:
+                                        if (!noisyIsOfType(returnType,noisyArithType))
+                                        {
+                                                char *	details;
+
+                                                asprintf(&details, "Operator \"%s\" and operands type mismatch\n",L(operatorNode)->tokenString);
+                                                noisySemanticError(N,L(noisyExpressionNode),details);
+                                                noisySemanticErrorRecovery(N);        
+                                        }
+                                        /*
+                                        *       returnType = typ1;
+                                        */
+                                        break;
+                                case kNoisyIrNodeType_PcmpOp:
+                                        if (LL(operatorNode)->type == kNoisyIrNodeType_Tequals
+                                        || LL(operatorNode)->type == kNoisyIrNodeType_TnotEqual)
+                                        {
+                                                if (returnType.basicType == noisyArrayType)
+                                                {
+                                                        char *	details;
+
+                                                        asprintf(&details, "Operator \"%s\" and operands type mismatch\n",LL(operatorNode)->tokenString);
+                                                        noisySemanticError(N,L(noisyExpressionNode),details);
+                                                        noisySemanticErrorRecovery(N);
+                                                }
+                                        }
+                                        else if (LL(operatorNode)->type == kNoisyIrNodeType_TgreaterThan
+                                                || LL(operatorNode)-> type == kNoisyIrNodeType_TgreaterThanEqual
+                                                || LL(operatorNode)-> type == kNoisyIrNodeType_TlessThan
+                                                || LL(operatorNode)-> type == kNoisyIrNodeType_TlessThanEqual)
+                                        {
+                                                if (noisyIsOfType(returnType,noisyArithType))
+                                                {
+                                                        returnType.basicType = noisyBool; 
+                                                }
+                                                else
+                                                {
+                                                        char *	details;
+
+                                                        asprintf(&details, "Operator \"%s\" and operands type mismatch\n",LL(operatorNode)->tokenString);
+                                                        noisySemanticError(N,L(noisyExpressionNode),details);
+                                                        noisySemanticErrorRecovery(N);  
+                                                }
+                                                       
+                                        }
+                                        else
+                                        {
+                                                char *	details;
+
+                                                asprintf(&details, "Unsupported CmpOp \"%s\"\n",L(operatorNode)->tokenString);
+                                                noisySemanticError(N,L(noisyExpressionNode),details);
+                                                noisySemanticErrorRecovery(N);
+                                        }
+                                        break;
+                                case kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp:
+                                        if (returnType.basicType != noisyBool)
+                                        {
+                                                char *	details;
+
+                                                        asprintf(&details, "Operator \"%s\" and operands type mismatch\n",L(operatorNode)->tokenString);
+                                                        noisySemanticError(N,L(noisyExpressionNode),details);
+                                                        noisySemanticErrorRecovery(N);
+                                        }
+                                        break;
+                                default:
+                                        break;
+                                }
+                        }
+                        else
+                        {
+                                /*
+                                *       Operands type mismatch error.
+                                */
+                                char *	details;
+
+                                asprintf(&details, "Operands type mismatch\n");
+                                noisySemanticError(N,L(noisyExpressionNode),details);
+                                noisySemanticErrorRecovery(N);
+                        }
+                }
         }
 
-        return typ1;
+        return returnType;
 }
 
 /*
@@ -1057,15 +1159,14 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                         }
                         else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
                         {
-                                /*
-                                *       TODO; Get type from expression and compare with typeExpr.
-                                */
                                 lValuetype = getNoisyTypeFromTypeExpr(N,LLL(iter)->symbol->typeTree);
-                                if (lValuetype.basicType == noisyTypeError || rValueType.basicType == noisyTypeError)
+                                if (!noisyTypeEquals(lValuetype,rValueType))
                                 {
-                                        deallocateNoisyType(&lValuetype);
-                                        flexprint(N->Fe, N->Fm, N->Fperr,"Type Error!\n");
-			                noisySemanticErrorRecovery(N);
+                                        char *	details;
+
+                                        asprintf(&details, "Type mismatch on assignment\n");
+                                        noisySemanticError(N,LL(iter),details);
+                                        noisySemanticErrorRecovery(N);
                                 }
                         }
                 }
