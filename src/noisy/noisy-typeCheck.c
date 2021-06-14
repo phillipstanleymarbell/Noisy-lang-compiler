@@ -16,11 +16,110 @@
 #include "common-symbolTable.h"
 #include "common-irHelpers.h"
 #include "noisy-typeCheck.h"
-#include "noisy-parser.h"
 
 NoisyType getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * currentScope);
+bool noisyIsOfType(NoisyType typ1,NoisyBasicType typeSuperSet);
 
 
+
+extern char *		gNoisyProductionDescriptions[];
+extern const char *	gNoisyTokenDescriptions[];
+
+static char		kNoisyErrorTokenHtmlTagOpen[]	= "<span style=\"background-color:#FFCC00; color:#FF0000;\">";
+static char		kNoisyErrorTokenHtmlTagClose[]	= "</span>";
+static char		kNoisyErrorDetailHtmlTagOpen[]	= "<span style=\"background-color:#A9E9FF; color:#000000;\">";
+static char		kNoisyErrorDetailHtmlTagClose[]	= "</span>";
+
+
+void
+noisySemanticErrorPre(State *  N, IrNode * currentlyParsingNode,
+	const char *  string1, const char *  string2, const char *  string3, const char *  string4)
+{
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n");
+	if (N->mode & kCommonModeCGI)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "<b>");
+	}
+
+	if (N->mode & kCommonModeCGI)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "\n\t%s, line %d position %d, %s ",
+						string1,
+						currentlyParsingNode->sourceInfo->lineNumber,
+						currentlyParsingNode->sourceInfo->columnNumber,
+						kNoisyErrorTokenHtmlTagOpen);
+		flexprint(N->Fe, N->Fm, N->Fperr, " %s %s %s.<br><br>%s%s",
+			kNoisyErrorTokenHtmlTagClose,
+			string2,
+			(currentlyParsingNode->type > kNoisyIrNodeType_TMax ?
+				gNoisyProductionDescriptions[currentlyParsingNode->type] :
+				gNoisyTokenDescriptions[currentlyParsingNode->type]),
+			kNoisyErrorDetailHtmlTagOpen,
+			string3);
+	}
+	else
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "\n\t%s, %s line %d position %d,",
+						string1,
+						currentlyParsingNode->sourceInfo->fileName,
+						currentlyParsingNode->sourceInfo->lineNumber,
+						currentlyParsingNode->sourceInfo->columnNumber);
+		flexprint(N->Fe, N->Fm, N->Fperr, " %s %s.\n\n\t%s",
+			string2,
+			(currentlyParsingNode->type > kNoisyIrNodeType_TMax ?
+				gNoisyProductionDescriptions[currentlyParsingNode->type] :
+				gNoisyTokenDescriptions[currentlyParsingNode->type]),
+			string3);
+	}	
+}
+
+void
+noisySemanticErrorPost(State *  N)
+{
+	if (N->mode & kCommonModeCGI)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "%s</b>", kNoisyErrorDetailHtmlTagClose);
+	}
+
+	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n\n");	
+}
+
+
+void
+noisySemanticError(State *  N, IrNode * currentlyParsingNode, char *  details)
+{
+	noisySemanticErrorPre(N, currentlyParsingNode, EsemanticsA, EsemanticsB, details, EsemanticsD);
+	noisySemanticErrorPost(N);
+}
+
+
+void
+noisySemanticErrorRecovery(State *  N)
+{
+	TimeStampTraceMacro(kNoisyTimeStampKeyParserErrorRecovery);
+
+	if (N->verbosityLevel & kCommonVerbosityDebugParser)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "In noisySemanticErrorRecovery(), about to discard tokens...\n");
+	}
+
+	if ((N != NULL) && (N->jmpbufIsValid))
+	{
+		//fprintf(stderr, "doing longjmp");
+
+		/*
+		 *	See issue #291.
+		 */
+		longjmp(N->jmpbuf, 0);
+	}
+
+	/*
+	 *	Not reached if N->jmpbufIsValid
+	 */
+	consolePrintBuffers(N);
+
+	exit(EXIT_SUCCESS);
+}
 /*
 *       If we have templated function declaration, returns false.
 *       We should invoke code generation with the load operator.
@@ -102,6 +201,22 @@ noisyTypeEquals(NoisyType typ1, NoisyType typ2)
                 }
                 return true;
         }
+        else if (typ1.basicType == noisyIntegerConstType)
+        {
+                return noisyIsOfType(typ2,noisyIntegerConstType);
+        }
+        else if (typ2.basicType == noisyIntegerConstType)
+        {
+                return noisyIsOfType(typ1,noisyIntegerConstType);        
+        }
+        else if (typ1.basicType == noisyRealConstType)
+        {
+                return noisyIsOfType(typ2,noisyRealConstType);          
+        }
+        else if (typ2.basicType == noisyRealConstType)
+        {
+                return noisyIsOfType(typ1,noisyRealConstType);          
+        }
         return false;
 }
 
@@ -160,6 +275,10 @@ NoisyType
 getNoisyTypeFromBasicType(IrNode * basicType)
 {
         NoisyType noisyType;
+        noisyType.arrayType = noisyInitType;
+        noisyType.dimensions = 0;
+        noisyType.sizeOfDimension = NULL;
+
         if (L(basicType)->type == kNoisyIrNodeType_Tbool)
         {
                 noisyType.basicType = noisyBool;
@@ -346,8 +465,13 @@ getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
                         /*
                         *       Not supported types error.
                         */
-                        noisyType.basicType = noisyTypeError;
-                        return noisyType;
+                       char *	details;
+
+                        asprintf(&details, "Unsupported non Aggregate Type\n");
+                        noisySemanticError(N,L(typeExpr),details);
+                        noisySemanticErrorRecovery(N);
+                        // noisyType.basicType = noisyTypeError;
+                        // return noisyType;
                 }
         }
         else if (L(typeExpr)->type == kNoisyIrNodeType_PtypeName)
@@ -358,6 +482,32 @@ getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
         noisyType.basicType = noisyTypeError;
         return noisyType;
 }
+
+/*
+*       Takes an argument name, an expression and an inputSIgnature of a function. Checks if the argument name and type matches
+*       with one of the signature's arguments. In that case it returns true. Otherwise, it returns false.
+*/
+bool
+noisyArgumentMatchesSignature(State * N, IrNode * argName,IrNode * expr,IrNode * inputSignature, Scope * currentScope)
+{
+        for (IrNode * iter = inputSignature; iter != NULL; iter = RR(iter))
+        {
+                if (!strcmp(L(iter)->tokenString,argName->tokenString))
+                {
+                        if (noisyTypeEquals(getNoisyTypeFromTypeExpr(N,RL(iter)),getNoisyTypeFromExpression(N,expr,currentScope)))
+                        {
+                                return true;
+                        }
+                }
+        }
+        /*
+        *       If we search all arguments and they dont match then we return false.
+        */
+        return false;               
+}
+
+
+
 
 /*
 *       Takes a noisyFactor IrNode and a the currentScope and returns the NoisyType of the factor.
@@ -404,26 +554,39 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                                         /*
                                         *       Indexes are not integers error.
                                         */
-                                        factorType.basicType = noisyTypeError;
+                                        char *	details;
+
+                                        asprintf(&details, "Indexing \"%s\" array with a non-integer expression\n",identifierSymbol->identifier);
+                                        noisySemanticError(N,iter,details);
+                                        noisySemanticErrorRecovery(N);
+                                        // factorType.basicType = noisyTypeError;
                                 }
                                 dims++;
                         }
 
                         if (dims != factorType.dimensions)
                         {
-                                /*
-                                *       Indexing dimension error.
-                                */
-                                factorType.basicType = noisyTypeError;
+                                factorType.dimensions -= dims;
                         }
                         /*
                         *       If there are no type errors on array indexing we the arrayType of the array.
                         *       e.g. when we index an array of int32 the factor we return has type int32.
                         */
-                        if (factorType.basicType != noisyTypeError)
+                        if (factorType.dimensions == 0)
                         {
                                 factorType.basicType = factorType.arrayType;
                         }
+                        else if (factorType.dimensions < 0 )
+                        {
+                                /*
+                                *       Indexing dimension error.
+                                */
+                                char *	details;
+
+                                asprintf(&details, "Dimensions of array \"%s\" dont match\n",identifierSymbol->identifier);
+                                noisySemanticError(N,noisyFactorNode,details);
+                                noisySemanticErrorRecovery(N);
+                        }     
                 }
                 else
                 {
@@ -432,6 +595,97 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                                 factorType.basicType = noisyTypeError;
                         }
                 }
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PnamegenInvokeShorthand)
+        {
+                /*
+                *       We search for functionName in the top scope (local functions) and if it fails it searches on the module scope.
+                */
+                Symbol * functionNameSymbol = commonSymbolTableSymbolForIdentifier(N, N->noisyIrTopScope, LL(noisyFactorNode)->tokenString);   
+
+                if (functionNameSymbol == NULL)
+                {
+                        char * details;
+
+                        asprintf(&details, "Unknown namegen invocation \"%s\"\n",LL(noisyFactorNode)->tokenString);
+                        noisySemanticError(N,noisyFactorNode,details);
+                        noisySemanticErrorRecovery(N);        
+                }
+
+                bool paramCorrect = true;
+                int paramCount = 0;
+
+                IrNode * inputSignature = L(functionNameSymbol->typeTree);
+
+                if (L(inputSignature)->type == kNoisyIrNodeType_Tnil)
+                {
+                        if (LR(noisyFactorNode) == NULL)
+                        {
+                                factorType.basicType = noisyNilType;        
+                        }
+                        else
+                        {
+                                char * details;
+                                asprintf(&details, "Using arguments for nil function \"%s\"\n",functionNameSymbol->identifier);
+                                noisySemanticError(N,noisyFactorNode,details);
+                                noisySemanticErrorRecovery(N);
+                        }
+                }
+                else
+                {
+                        for (IrNode * iter = LR(noisyFactorNode); iter != NULL; iter = RR(iter))
+                        {
+                                IrNode * argName = L(iter);
+                                IrNode * expr = RL(iter);
+
+                                paramCount++;
+                                paramCorrect = paramCorrect && noisyArgumentMatchesSignature(N,argName,expr,inputSignature,currentScope);
+
+                                if (!paramCorrect)
+                                {
+                                        char * details;
+                                        asprintf(&details, "Argument error for argument \"%s\"\n",argName->tokenString);
+                                        noisySemanticError(N,noisyFactorNode,details);
+                                        noisySemanticErrorRecovery(N);
+                                }
+
+                        }
+
+                        if (paramCount != functionNameSymbol->parameterNum)
+                        {
+                                char * details;
+                                asprintf(&details, "Wrong number of arguments for function \"%s\"\n",functionNameSymbol->identifier);
+                                noisySemanticError(N,noisyFactorNode,details);
+                                noisySemanticErrorRecovery(N);
+                        }
+                }
+                
+
+                IrNode * outputSignature = R(functionNameSymbol->typeTree);
+
+                
+                if (L(outputSignature)->type ==kNoisyIrNodeType_Tnil)
+                {
+                        factorType.basicType = noisyNilType;
+                }
+                else
+                {
+                        factorType = getNoisyTypeFromTypeExpr(N,RL(outputSignature));        
+                }
+                
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_Pexpression)
+        {
+                factorType = getNoisyTypeFromExpression(N,L(noisyFactorNode),currentScope);
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PtypeMinExpr
+                || L(noisyFactorNode)->type == kNoisyIrNodeType_PtypeMaxExpr)
+        {
+                factorType = getNoisyTypeFromBasicType(LL(noisyFactorNode));
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_Tnil)
+        {
+                factorType.basicType = noisyNilType;
         }
         return factorType;
 }
@@ -551,8 +805,13 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                         /*
                         *       Operands type mismatch.
                         */
-                        factorType.basicType = noisyTypeError;
-                        deallocateNoisyType(&factorIterType);
+                        char *	details;
+
+                        asprintf(&details, "Operands type mismatch\n");
+                        noisySemanticError(N,factorNode,details);
+                        noisySemanticErrorRecovery(N);
+                        // factorType.basicType = noisyTypeError;
+                        // deallocateNoisyType(&factorIterType);
                         break;
                 }
 
@@ -566,8 +825,13 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                                 /*
                                 *       Operator and operand mismatch.
                                 */
-                                factorType.basicType = noisyTypeError;
-                                deallocateNoisyType(&factorIterType);
+                               char *	details;
+
+                                asprintf(&details, "Operator and operands type mismatch\n");
+                                noisySemanticError(N,factorNode,details);
+                                noisySemanticErrorRecovery(N);
+                                // factorType.basicType = noisyTypeError;
+                                // deallocateNoisyType(&factorIterType);
                                 break;
 
                         }
@@ -580,12 +844,25 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                                 /*
                                 *       Operator and operand mismatch.
                                 */
-                                factorType.basicType = noisyTypeError;
+                                char *	details;
+
+                                asprintf(&details, "Operator and operands type mismatch\n");
+                                noisySemanticError(N,factorNode,details);
+                                noisySemanticErrorRecovery(N);
+                                // factorType.basicType = noisyTypeError;
                         }
                 }
                 else
                 {
-                        factorType.basicType = noisyTypeError;
+                        /*
+                        *       Unsupported operators
+                        */
+                        char *	details;
+
+                        asprintf(&details, "Unsupported binary operator\n");
+                        noisySemanticError(N,factorNode,details);
+                        noisySemanticErrorRecovery(N);
+                        // factorType.basicType = noisyTypeError;
                 }
                 deallocateNoisyType(&factorIterType);
 
@@ -788,7 +1065,7 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                 {
                                         deallocateNoisyType(&lValuetype);
                                         flexprint(N->Fe, N->Fm, N->Fperr,"Type Error!\n");
-			                noisyParserErrorRecovery(N, kNoisyIrNodeType_PassignmentStatement);
+			                noisySemanticErrorRecovery(N);
                                 }
                         }
                 }
