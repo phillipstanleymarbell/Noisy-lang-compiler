@@ -146,11 +146,12 @@ typeMinExpr		::=	"typemin" "(" numericType ")" .
 typeMaxExpr		::=	"typemax" "(" numericType ")" .
 namegenInvokeShorthand	=	identifier "(" [identifier ":" expression {","  identifier ":" expression}] ")" .
 fieldSelect		::=	("[" expression [":" expression] "]") .
-highPrecedenceBinaryOp	::=	"*" | "/" | "%" | "&" | "^" | "::" | "lowpass" | "highpass" | "dotproduct"
-				| "crossproduct" | "centralmoment" | highPrecedenceBinaryBoolOp .
+highPrecedenceBinaryOp	::=	"*" | "/" | "%" | "&" | highPrecedenceBinaryBoolOp .
 lowPrecedenceBinaryOp	::=	"+" | "-" | ">>" | "<<" | "|"  | cmpOp | lowPrecedenceBinaryBoolOp .
 cmpOp			::=	"==" | "!=" | ">" | "<" | "<=" | ">=" | ">=<" .
 unaryOp			::=	"~" | "-"  | "+" | "<-"  | "head" | "tail" | "tailtip"| "length" | "sort" | "uncertainty"
 				| "tintegral" | "tderivative" | "timebase" | "sigfigs" | "samples" | "reverse"
 				\| "fourier" | "cardinality" | "frequencies" | "magnitudes" | unaryBoolOp .
+lowPrecedenceBinaryBoolOp	::=	"||" .
+highPrecedenceBinaryBoolOp	::=	"&&" | "^" .
 
