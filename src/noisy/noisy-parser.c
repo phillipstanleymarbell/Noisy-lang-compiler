@@ -3605,7 +3605,7 @@ noisyParseAssignmentStatement(State *  N, Scope *  currentScope)
 	bool		isDefinition = false;
 
 	/*
-	 *	Scan ahead until the next ';' to see if there is a ':', in which case this is a definition.
+	 *	Scan ahead until the next assign operator to see if there is a ':', in which case this is a definition.
 	 */
 	for (int lookAhead = 1; true; lookAhead++)
 	{
@@ -3623,12 +3623,16 @@ noisyParseAssignmentStatement(State *  N, Scope *  currentScope)
 		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TasteriskAssign)
 		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TdivideAssign)
 		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TpercentAssign)
-		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TplusAssign))
+		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TplusAssign)
+		|| peekCheck(N, lookAhead-1,kNoisyIrNodeType_TchannelOperatorAssign))
+		/*
+		*	TODO; It needs more here (all the assigns).
+		*/
 		{
 			break;
 		}
 	}
-	
+
 
 	if (inFirst(N, kNoisyIrNodeType_PidentifierOrNilList, gNoisyFirsts, kNoisyIrNodeTypeMax))
 	{
