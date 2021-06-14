@@ -564,10 +564,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                                 dims++;
                         }
 
-                        if (dims != factorType.dimensions)
-                        {
-                                factorType.dimensions -= dims;
-                        }
+                        factorType.dimensions -= dims;
                         /*
                         *       If there are no type errors on array indexing we the arrayType of the array.
                         *       e.g. when we index an array of int32 the factor we return has type int32.
@@ -646,7 +643,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                                 if (!paramCorrect)
                                 {
                                         char * details;
-                                        asprintf(&details, "Argument error for argument \"%s\"\n",argName->tokenString);
+                                        asprintf(&details, "Argument type mismatch for argument \"%s\"\n",argName->tokenString);
                                         noisySemanticError(N,noisyFactorNode,details);
                                         noisySemanticErrorRecovery(N);
                                 }
