@@ -2058,6 +2058,7 @@ token	kNoisyIrNodeType_TminusAssign:				followset = {
 									}
 
 token	kNoisyIrNodeType_TminusMinus:				followset = {
+										followset(kNoisyIrNodeType_Pterm),
 										firstset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 									}
 
@@ -2095,6 +2096,7 @@ token	kNoisyIrNodeType_TplusAssign:				followset = {
 									}
 
 token	kNoisyIrNodeType_TplusPlus:				followset = {
+										followset(kNoisyIrNodeType_Pterm),
 										firstset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 									}
 
