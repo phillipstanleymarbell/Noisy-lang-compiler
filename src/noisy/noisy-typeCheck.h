@@ -26,6 +26,7 @@ typedef enum
         noisyRealConstType,
         noisyString,
         noisyArrayType,
+        noisyArithType,
         noisyTypeError
 } NoisyBasicType;
 
