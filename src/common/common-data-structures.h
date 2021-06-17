@@ -847,6 +847,36 @@ typedef enum
 	kCommonPostFileWriteActionMax,
 } PostFileWriteAction;
 
+typedef enum
+{
+        noisyInitType,
+        noisyBool,
+        noisyInt4,
+        noisyInt8,
+        noisyInt16,
+        noisyInt32,
+        noisyInt64,
+        noisyInt128,
+        noisyIntegerConstType,
+        noisyNat4,
+        noisyNat8,
+        noisyNat16,
+        noisyNat32,
+        noisyNat64,
+        noisyNat128,
+        noisyFloat16,
+        noisyFloat32,
+        noisyFloat64,
+        noisyFloat128,
+        noisyRealConstType,
+        noisyString,
+        noisyArrayType,
+        noisyArithType,
+        noisyNilType,
+        noisyTypeError
+} NoisyBasicType;
+
+
 
 typedef struct Scope		Scope;
 typedef struct Symbol		Symbol;
@@ -858,8 +888,23 @@ typedef struct Physics		Physics;
 typedef struct IntegralList	IntegralList;
 typedef struct Invariant	Invariant;
 typedef struct Signal		Signal;
+<<<<<<< HEAD
 typedef struct Sensor		Sensor;
 typedef struct Modality		Modality;
+=======
+typedef struct NoisyType	NoisyType;
+
+struct NoisyType
+{
+        NoisyBasicType basicType;
+        int dimensions;
+        NoisyBasicType arrayType;
+        int * sizeOfDimension;
+};
+
+
+
+>>>>>>> 1aa380097... Move noisyType to the common data-structure
 
 struct Dimension
 {
@@ -1154,6 +1199,7 @@ struct Symbol
 	 *	Declaration, type definition, use, etc. (kNoisySymbolTypeXXX)
 	 */
 	NoisySymbolType 	symbolType;
+	NoisyType		noisyType;
 
 	/*
 	*	Number of parameters. Used only for functions and Noisy
