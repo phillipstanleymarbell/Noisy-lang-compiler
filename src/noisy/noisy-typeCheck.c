@@ -19,6 +19,7 @@
 
 NoisyType getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * currentScope);
 bool noisyIsOfType(NoisyType typ1,NoisyBasicType typeSuperSet);
+void noisyStatementListTypeCheck(State * N, IrNode * statementListNode, Scope * currentScope);
 
 
 
@@ -470,8 +471,6 @@ getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
                         asprintf(&details, "Unsupported non Aggregate Type\n");
                         noisySemanticError(N,L(typeExpr),details);
                         noisySemanticErrorRecovery(N);
-                        // noisyType.basicType = noisyTypeError;
-                        // return noisyType;
                 }
         }
         else if (L(typeExpr)->type == kNoisyIrNodeType_PtypeName)
@@ -692,35 +691,50 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 }
 
 /*
-*       TODO; Need to add boolean binary op.
+*       Take a unaryOp node and a factorType and type checks if the operator can be
+*       applied on the specific factorType.
 */
 NoisyType
-noisyUnaryOpTypeCheck(IrNode * noisyUnaryOpNode,NoisyType factorType)
+noisyUnaryOpTypeCheck(State * N,IrNode * noisyUnaryOpNode,NoisyType factorType)
 {
-        NoisyType returnType;
+        NoisyType returnType = factorType;
 
         if (L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tplus ||
-            L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tminus)
+            L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tminus ||
+            L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Ttilde)
         {
-                switch (factorType.basicType)
+                if (!noisyIsOfType(factorType,noisyArithType))
                 {
-                case noisyBool:
-                case noisyString:
-                case noisyInitType:
-                case noisyArrayType:
-                case noisyTypeError:
-                        /*
-                        *       Unary operator and operand type mismatch.
-                        */
-                        returnType.basicType = noisyTypeError;
-                        break;
-                default:
-                        returnType = factorType;
-                        break;
+                        char * details;
+                        asprintf(&details, "Unary operator and operand mismatch \"%s\"\n",L(noisyUnaryOpNode)->tokenString);
+                        noisySemanticError(N,noisyUnaryOpNode,details);
+                        noisySemanticErrorRecovery(N);
+                }
+        }
+        else if (L(noisyUnaryOpNode)->type == kNoisyIrNodeType_PunaryBoolOp)
+        {
+                if (factorType.basicType != noisyBool)
+                {
+                        char * details;
+                        asprintf(&details, "Unary operator and operand mismatch \"%s\"\n",LL(noisyUnaryOpNode)->tokenString);
+                        noisySemanticError(N,noisyUnaryOpNode,details);
+                        noisySemanticErrorRecovery(N);
+                }
+        }
+        else if (L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tlength
+                || L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tsort
+                || L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Treverse)
+        {
+                if (factorType.basicType != noisyArrayType || factorType.basicType != noisyString)
+                {
+                        char * details;
+                        asprintf(&details, "Unary operator and operand mismatch \"%s\"\n",L(noisyUnaryOpNode)->tokenString);
+                        noisySemanticError(N,noisyUnaryOpNode,details);
+                        noisySemanticErrorRecovery(N);
                 }
         }
         /*
-        *       "~" and "<-" operator we do not type check so far.
+        *       "<-" operator we do not type check so far.
         */
         else
         {
@@ -773,7 +787,7 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
         factorType = getNoisyTypeFromFactor(N,factorNode,currentScope);
         if (unaryOpNode != NULL)
         {
-                unaryType = noisyUnaryOpTypeCheck(unaryOpNode,factorType);
+                unaryType = noisyUnaryOpTypeCheck(N,unaryOpNode,factorType);
         }
 
         if (unaryType.basicType != noisyInitType)
@@ -797,9 +811,6 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                 }
         }
 
-        /*
-        *       TODO; Need to revisit typecheck on operators.
-        */
         for (IrNode * iter = R(noisyTermNode); iter != NULL; iter = RR(iter))
         {
                 NoisyType factorIterType;
@@ -902,7 +913,8 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                 case kNoisyIrNodeType_TrightShift:
                                 case kNoisyIrNodeType_TleftShift:
                                 case kNoisyIrNodeType_TbitwiseOr:
-                                        if (!noisyIsOfType(returnType,noisyArithType))
+                                        if (!noisyIsOfType(returnType,noisyArithType)
+                                        || (L(operatorNode)->type != kNoisyIrNodeType_Tplus || returnType.basicType != noisyArrayType))
                                         {
                                                 char *	details;
 
@@ -981,6 +993,134 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                 noisySemanticErrorRecovery(N);
                         }
                 }
+        }
+        else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PanonAggrCastExpr)
+        {
+                if (LL(noisyExpressionNode)->type == kNoisyIrNodeType_ParrayCastExpr)
+                {
+                        returnType.basicType = noisyArrayType;
+                        if (LLL(noisyExpressionNode)->type == kNoisyIrNodeType_PinitList)
+                        {
+                                int sizeOfDim = 0;
+
+                                NoisyType elemType;
+                                noisyInitNoisyType(&elemType);
+                                for (IrNode * iter = LLL(noisyExpressionNode); iter != NULL; iter = R(iter))
+                                {
+                                        if (elemType.basicType == noisyInitType)
+                                        {
+                                               elemType = getNoisyTypeFromExpression(N,LL(iter),currentScope);
+                                        }
+                                        else
+                                        {
+                                                if (!noisyTypeEquals(elemType,getNoisyTypeFromExpression(N,LL(iter),currentScope)))
+                                                {
+                                                        /*
+                                                        *       Elements type dont match in array.
+                                                        */
+                                                        char *	details;
+
+                                                        asprintf(&details, "Elements of arrayInitList don't match\n");
+                                                        noisySemanticError(N,L(iter),details);
+                                                        noisySemanticErrorRecovery(N);
+                                                }
+                                        }
+
+                                        sizeOfDim++;
+                                }
+
+                                if (elemType.basicType != noisyArrayType)
+                                {
+                                        returnType.dimensions = 1;
+                                        returnType.sizeOfDimension = (int*) calloc(1,sizeof(int));
+                                        returnType.sizeOfDimension[0] = sizeOfDim;
+                                        returnType.arrayType = elemType.basicType;
+                                }
+                                else
+                                {
+                                        returnType.dimensions = elemType.dimensions + 1;
+                                        returnType.sizeOfDimension = (int*) calloc(returnType.dimensions,sizeof(int));
+                                        int i;
+                                        for (i = 0; i < elemType.dimensions; i++)
+                                        {
+                                                returnType.sizeOfDimension[i] = elemType.sizeOfDimension[i];
+                                        }
+                                        returnType.sizeOfDimension[i] = sizeOfDim;
+                                        returnType.arrayType = elemType.arrayType;
+                                }
+                        }
+                        else if (LLL(noisyExpressionNode)->type == kNoisyIrNodeType_TintegerConst)
+                        {
+                                int sizeOfDim = LLL(noisyExpressionNode)->token->integerConst;
+
+                                NoisyType elemType;
+                                noisyInitNoisyType(&elemType);
+
+                                for (IrNode * iter = LLR(noisyExpressionNode); iter != NULL; iter = R(iter))
+                                {
+                                        IrNode * exprNode = LL(iter);
+                                        if (L(iter)->type == kNoisyIrNodeType_Tasterisk)
+                                        {
+                                                exprNode = RLL(iter);
+                                        }
+                                        if (elemType.basicType == noisyInitType)
+                                        {
+                                               elemType = getNoisyTypeFromExpression(N,exprNode,currentScope);
+                                        }
+                                        else
+                                        {
+                                                if (!noisyTypeEquals(elemType,getNoisyTypeFromExpression(N,exprNode,currentScope)))
+                                                {
+                                                        /*
+                                                        *       Elements type dont match in array.
+                                                        */
+                                                        char *	details;
+
+                                                        asprintf(&details, "Elements of arrayInitList don't match\n");
+                                                        noisySemanticError(N,L(iter),details);
+                                                        noisySemanticErrorRecovery(N);
+                                                }
+                                        }
+                                }
+
+                                if (elemType.basicType != noisyArrayType)
+                                {
+                                        returnType.dimensions = 1;
+                                        returnType.sizeOfDimension = (int*) calloc(1,sizeof(int));
+                                        returnType.sizeOfDimension[0] = sizeOfDim;
+                                        returnType.arrayType = elemType.basicType;
+                                }
+                                else
+                                {
+                                        returnType.dimensions = elemType.dimensions + 1;
+                                        returnType.sizeOfDimension = (int*) calloc(returnType.dimensions,sizeof(int));
+                                        int i;
+                                        for (i = 0; i < elemType.dimensions; i++)
+                                        {
+                                                returnType.sizeOfDimension[i] = elemType.sizeOfDimension[i];
+                                        }
+                                        returnType.sizeOfDimension[i] = sizeOfDim;
+                                        returnType.arrayType = elemType.arrayType;
+                                }
+                        }
+                }
+                else
+                {
+                        /*
+                        *       Unsupported expression.
+                        */
+                        char *	details;
+
+                        asprintf(&details, "This non aggregate cast expression is not supported\n");
+                        noisySemanticError(N,LL(noisyExpressionNode),details);
+                        noisySemanticErrorRecovery(N);
+                }
+        }
+        else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PloadExpr)
+        {
+                /*
+                *       TODO; Add load expr.
+                */
         }
 
         return returnType;
@@ -1141,35 +1281,127 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 {
         /*
         *       If type is xseq it means that noisyAssignmentNode is not a declaration but an actual assignment.
+        *       If it is declaration then R(noisyAssignmentStatementNode)->type ==  kNoisyIrNodeType_PtypeEpxr.
         */
         if (R(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_Xseq)
         {
-                NoisyType lValuetype, rValueType;
-                rValueType = getNoisyTypeFromExpression(N,RRL(noisyAssignmentStatementNode),currentScope);
-                for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
+                if (RLL(noisyAssignmentStatementNode)->type != kNoisyIrNodeType_TcolonAssign)
                 {
-                        if (LL(iter)->type == kNoisyIrNodeType_Tnil)
+                        NoisyType lValuetype, rValueType;
+                        rValueType = getNoisyTypeFromExpression(N,RRL(noisyAssignmentStatementNode),currentScope);
+                        for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
                         {
-                                /*
-                                *       We do not need to type check lValueType of an assignment to nil.
-                                */
+                                if (LL(iter)->type == kNoisyIrNodeType_Tnil)
+                                {
+                                        /*
+                                        *       We do not need to type check lValueType of an assignment to nil.
+                                        */
+                                }
+                                else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
+                                {
+                                        lValuetype = getNoisyTypeFromTypeExpr(N,LLL(iter)->symbol->typeTree);
+                                        if (noisyTypeEquals(lValuetype,rValueType))
+                                        {
+                                                if (RLL(noisyAssignmentStatementNode)->type != kNoisyIrNodeType_Tassign
+                                                && RLL(noisyAssignmentStatementNode)->type != kNoisyIrNodeType_TchannelOperatorAssign)
+                                                {
+                                                        /*
+                                                        *       For  "^=", "|=", "&=", "%=", "/=", "*=", "-=", "+=", ">>=", "<<=" 
+                                                        *       operators, values need to have arithmetic type.
+                                                        */
+                                                        if (!noisyIsOfType(lValuetype,noisyArithType))
+                                                        {
+                                                                char *	details;
+
+                                                                asprintf(&details, "Type operator and operand mismatch on assignment\n");
+                                                                noisySemanticError(N,LL(iter),details);
+                                                                noisySemanticErrorRecovery(N);
+                                                        }
+                                                }
+                                        }
+                                        else
+                                        {
+                                                char *	details;
+
+                                                asprintf(&details, "Type mismatch on assignment\n");
+                                                noisySemanticError(N,LL(iter),details);
+                                                noisySemanticErrorRecovery(N);
+                                        }
+                                        LLL(iter)->symbol->noisyType = lValuetype;
+                                }
                         }
-                        else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
+                }
+                else
+                {
+                        NoisyType rValueType = getNoisyTypeFromExpression(N,RRL(noisyAssignmentStatementNode),currentScope);
+                        for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
                         {
-                                lValuetype = getNoisyTypeFromTypeExpr(N,LLL(iter)->symbol->typeTree);
-                                if (!noisyTypeEquals(lValuetype,rValueType))
+                                if (LL(iter)->type == kNoisyIrNodeType_Tnil)
                                 {
                                         char *	details;
 
-                                        asprintf(&details, "Type mismatch on assignment\n");
+                                        asprintf(&details, "We cannot assign type to nil\n");
                                         noisySemanticError(N,LL(iter),details);
                                         noisySemanticErrorRecovery(N);
+                                }
+                                else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
+                                {
+                                        LLL(iter)->symbol->noisyType = rValueType;
                                 }
                         }
                 }
         }
+        else
+        {
+                NoisyType typeExprType = getNoisyTypeFromTypeExpr(N,R(noisyAssignmentStatementNode));
+                for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
+                        {
+                                if (LL(iter)->type == kNoisyIrNodeType_Tnil)
+                                {
+                                        char *	details;
+
+                                        asprintf(&details, "We cannot assign type to nil\n");
+                                        noisySemanticError(N,LL(iter),details);
+                                        noisySemanticErrorRecovery(N);
+                                }
+                                else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
+                                {
+                                        LLL(iter)->symbol->noisyType = typeExprType;
+                                }
+                        }
+        }
 }
 
+
+
+
+void
+noisyMatchStatementTypeCheck(State * N,IrNode * noisyMatchStatementNode,Scope * currentScope)
+{
+        Scope * nextScope = currentScope->firstChild->firstChild;
+        for (IrNode * iter = R(noisyMatchStatementNode); iter != NULL; iter = RR(iter))
+        {
+                NoisyType exprType = getNoisyTypeFromExpression(N,L(iter),currentScope);
+
+                if (exprType.basicType != noisyBool)
+                {
+                        char *	details;
+
+                        asprintf(&details, "Not boolean expression on a match statement\n");
+                        noisySemanticError(N,L(iter),details);
+                        noisySemanticErrorRecovery(N);
+                }
+                /*
+                *       For scoped statementLists we move the scopes and we parse the statementList.
+                */
+                noisyStatementListTypeCheck(N,RLL(iter),nextScope);
+                nextScope = nextScope->next;
+        }
+}
+
+/*
+*       TODO; Check scopings.
+*/
 void
 noisyStatementTypeCheck(State * N, IrNode * noisyStatementNode, Scope * currentScope)
 {
@@ -1178,9 +1410,9 @@ noisyStatementTypeCheck(State * N, IrNode * noisyStatementNode, Scope * currentS
         case kNoisyIrNodeType_PassignmentStatement:
                 noisyAssignmentStatementTypeCheck(N,L(noisyStatementNode), currentScope);
                 break;
-        // case kNoisyIrNodeType_PmatchStatement:
-        //         noisyMatchStatementTypeCheck(N,S,L(noisyStatementNode));
-        //         break;
+        case kNoisyIrNodeType_PmatchStatement:
+                noisyMatchStatementTypeCheck(N,L(noisyStatementNode),currentScope);
+                break;
         // case kNoisyIrNodeType_PiterateStatement:
         //         noisyIterateStatementTypeCheck(N,S,L(noisyStatementNode));
         //         break;
@@ -1236,7 +1468,7 @@ noisyFunctionDefnTypeCheck(State * N,IrNode * noisyFunctionDefnNode,Scope * curr
                 noisyDeclareFunctionTypeCheck(N,noisyFunctionDefnNode->irLeftChild->tokenString,RL(noisyFunctionDefnNode),RRL(noisyFunctionDefnNode),currentScope);
         }
 
-        noisyStatementListTypeCheck(N,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild,commonSymbolTableGetScopeWithName(N,currentScope,functionSymbol->identifier));
+        noisyStatementListTypeCheck(N,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild,commonSymbolTableGetScopeWithName(N,currentScope,functionSymbol->identifier)->firstChild);
 }
 
 void
