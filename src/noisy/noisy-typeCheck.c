@@ -542,7 +542,15 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                         factorType.basicType = noisyTypeError;
                 }
 
-                factorType = getNoisyTypeFromTypeExpr(N,identifierSymbol->typeTree);
+                if (identifierSymbol->typeTree != NULL)
+                {
+                        factorType = getNoisyTypeFromTypeExpr(N,identifierSymbol->typeTree);
+                }
+                else
+                {
+                        factorType = identifierSymbol->noisyType;
+                }
+                
                 if (factorType.basicType == noisyArrayType)
                 {
                         int dims = 0;
@@ -914,7 +922,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                 case kNoisyIrNodeType_TleftShift:
                                 case kNoisyIrNodeType_TbitwiseOr:
                                         if (!noisyIsOfType(returnType,noisyArithType)
-                                        || (L(operatorNode)->type != kNoisyIrNodeType_Tplus || returnType.basicType != noisyArrayType))
+                                        || (L(operatorNode)->type != kNoisyIrNodeType_Tplus && returnType.basicType == noisyArrayType))
                                         {
                                                 char *	details;
 
@@ -1299,7 +1307,14 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                 }
                                 else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
                                 {
-                                        lValuetype = getNoisyTypeFromTypeExpr(N,LLL(iter)->symbol->typeTree);
+                                        if (LLL(iter)->symbol->typeTree != NULL){
+                                                lValuetype = getNoisyTypeFromTypeExpr(N,LLL(iter)->symbol->typeTree);
+                                        }
+                                        else
+                                        {
+                                                lValuetype = LLL(iter)->symbol->noisyType;
+                                        }
+                                        
                                         if (noisyTypeEquals(lValuetype,rValueType))
                                         {
                                                 if (RLL(noisyAssignmentStatementNode)->type != kNoisyIrNodeType_Tassign
@@ -1372,15 +1387,15 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
         }
 }
 
-
-
-
 void
-noisyMatchStatementTypeCheck(State * N,IrNode * noisyMatchStatementNode,Scope * currentScope)
+noisyGuardedStatementTypeCheck(State * N, IrNode * noisyGuardedStatementNode, Scope * currentScope)
 {
-        Scope * nextScope = currentScope->firstChild->firstChild;
-        for (IrNode * iter = R(noisyMatchStatementNode); iter != NULL; iter = RR(iter))
+        Scope * nextScope = currentScope;
+        for (IrNode * iter = noisyGuardedStatementNode; iter != NULL; iter = RR(iter))
         {
+                /*
+                *       TODO; ChanEvent.
+                */
                 NoisyType exprType = getNoisyTypeFromExpression(N,L(iter),currentScope);
 
                 if (exprType.basicType != noisyBool)
@@ -1396,7 +1411,43 @@ noisyMatchStatementTypeCheck(State * N,IrNode * noisyMatchStatementNode,Scope * 
                 */
                 noisyStatementListTypeCheck(N,RLL(iter),nextScope);
                 nextScope = nextScope->next;
+        }        
+}
+
+
+void
+noisyMatchStatementTypeCheck(State * N,IrNode * noisyMatchStatementNode,Scope * currentScope)
+{
+        noisyGuardedStatementTypeCheck(N,R(noisyMatchStatementNode),currentScope->firstChild->firstChild);
+}
+
+void
+noisyIterateStatementTypeCheck(State * N, IrNode * noisyIterateStatementNode, Scope * currentScope)
+{
+        noisyGuardedStatementTypeCheck(N,R(noisyIterateStatementNode),currentScope->firstChild->firstChild);
+}
+
+void
+noisyOrderingHeadTypeCheck(State * N,IrNode * orderingHeadNode,Scope * currentScope)
+{
+        noisyAssignmentStatementTypeCheck(N,L(orderingHeadNode),currentScope);
+        NoisyType exprType = getNoisyTypeFromExpression(N,RL(orderingHeadNode),currentScope);
+        if (exprType.basicType != noisyBool)
+        {
+                char *	details;
+
+                asprintf(&details, "Not boolean expression on the termination condition of a sequence statement\n");
+                noisySemanticError(N,RL(orderingHeadNode),details);
+                noisySemanticErrorRecovery(N);
         }
+        noisyAssignmentStatementTypeCheck(N,RRL(orderingHeadNode),currentScope);
+}
+
+void
+noisySequenceStatementTypeCheck(State * N,IrNode * noisySequenceStatementNode,Scope * currentScope)
+{
+        noisyOrderingHeadTypeCheck(N,L(noisySequenceStatementNode),currentScope->firstChild);
+        noisyStatementListTypeCheck(N,LL(noisySequenceStatementNode),currentScope->firstChild);
 }
 
 /*
@@ -1413,12 +1464,12 @@ noisyStatementTypeCheck(State * N, IrNode * noisyStatementNode, Scope * currentS
         case kNoisyIrNodeType_PmatchStatement:
                 noisyMatchStatementTypeCheck(N,L(noisyStatementNode),currentScope);
                 break;
-        // case kNoisyIrNodeType_PiterateStatement:
-        //         noisyIterateStatementTypeCheck(N,S,L(noisyStatementNode));
-        //         break;
-        // case kNoisyIrNodeType_PsequenceStatement:
-        //         noisySequenceStatementTypeCheck(N,S,L(noisyStatementNode));
-        //         break;
+        case kNoisyIrNodeType_PiterateStatement:
+                noisyIterateStatementTypeCheck(N,L(noisyStatementNode), currentScope);
+                break;
+        case kNoisyIrNodeType_PsequenceStatement:
+                noisySequenceStatementTypeCheck(N,L(noisyStatementNode),currentScope);
+                break;
         // case kNoisyIrNodeType_PscopedStatementList:
         //         noisyStatementListTypeCheck(N,S,LL(noisyStatementNode));
         //         break;
