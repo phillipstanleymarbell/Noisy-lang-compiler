@@ -7860,6 +7860,14 @@ noisyParseIdentifierDefinitionTerminal(State *  N, Scope *  scope)
 	/*
 	 *	NOTE: commonSymbolTableAddOrLookupSymbolForToken(N, scope, t) adds token 't' to scope 'scope'
 	 */
+	Symbol * searchSym = commonSymbolTableSymbolForIdentifier(N,scope,n->tokenString);
+
+	if (searchSym != NULL && searchSym->scope == scope)
+	{
+		noisyParserSemanticError(N,kNoisyIrNodeType_Tidentifier,"Duplicate definiton of variable");
+		noisyParserErrorRecovery(N, kNoisyIrNodeType_Tidentifier);
+	}
+
 	Symbol *	sym = commonSymbolTableAddOrLookupSymbolForToken(N, scope, t);
 
 	/*
