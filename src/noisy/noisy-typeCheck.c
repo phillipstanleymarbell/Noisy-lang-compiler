@@ -1447,8 +1447,42 @@ void
 noisySequenceStatementTypeCheck(State * N,IrNode * noisySequenceStatementNode,Scope * currentScope)
 {
         noisyOrderingHeadTypeCheck(N,L(noisySequenceStatementNode),currentScope->firstChild);
-        noisyStatementListTypeCheck(N,LL(noisySequenceStatementNode),currentScope->firstChild);
+        noisyStatementListTypeCheck(N,RL(noisySequenceStatementNode),currentScope->firstChild);
 }
+
+void
+noisyReturnStatementTypeCheck(State * N,IrNode * noisyReturnStatementNode,Scope * currentScope)
+{
+        /*
+        *       This should work for multiple return variables but currently we support only one returnType.
+        */
+        for (IrNode * iter = L(noisyReturnStatementNode); iter != NULL; iter = RR(iter))
+        {
+                Symbol * argSymbol = commonSymbolTableSymbolForIdentifier(N,currentScope,L(iter)->tokenString);
+                if (argSymbol == NULL || argSymbol->symbolType != kNoisySymbolTypeReturnParameter)
+                {
+                        char *	details;
+
+                        asprintf(&details, "Unknown return variable\n");
+                        noisySemanticError(N,L(iter),details);
+                        noisySemanticErrorRecovery(N);
+                }
+                /*
+                *       Since arguments have type in their signature we assume that the typeTree exists.
+                */
+                NoisyType argType = getNoisyTypeFromTypeExpr(N,argSymbol->typeTree);
+                NoisyType exprType = getNoisyTypeFromExpression(N,RL(iter),currentScope);
+                if (!noisyTypeEquals(argType,exprType))
+                {
+                        char *	details;
+
+                        asprintf(&details, "Return expression and variable mismatch\n");
+                        noisySemanticError(N,RL(iter),details);
+                        noisySemanticErrorRecovery(N);
+                }
+        }
+}
+
 
 /*
 *       TODO; Check scopings.
@@ -1470,18 +1504,18 @@ noisyStatementTypeCheck(State * N, IrNode * noisyStatementNode, Scope * currentS
         case kNoisyIrNodeType_PsequenceStatement:
                 noisySequenceStatementTypeCheck(N,L(noisyStatementNode),currentScope);
                 break;
-        // case kNoisyIrNodeType_PscopedStatementList:
-        //         noisyStatementListTypeCheck(N,S,LL(noisyStatementNode));
-        //         break;
+        case kNoisyIrNodeType_PscopedStatementList:
+                noisyStatementListTypeCheck(N,LL(noisyStatementNode),currentScope);
+                break;
         // case kNoisyIrNodeType_PoperatorToleranceDecl:
         //         noisyOperatorToleranceDeclTypeCheck(N,S,L(noisyStatementNode));
         //         break;
-        // case kNoisyIrNodeType_PreturnStatement:
-        //         noisyReturnStatementTypeCheck(N,S,L(noisyStatementNode));
-        //         break;
+        case kNoisyIrNodeType_PreturnStatement:
+                noisyReturnStatementTypeCheck(N,L(noisyStatementNode),currentScope);
+                break;
         default:
-                // flexprint(N->Fe, N->Fm, N->Fperr, "Code generation for that statement is not supported");
-                // fatal(N,"Code generation Error\n");
+                noisySemanticError(N,L(noisyStatementNode),"This statement is not supported!\n");
+                noisySemanticErrorRecovery(N);
                 break;
         }
 }
@@ -1489,11 +1523,20 @@ noisyStatementTypeCheck(State * N, IrNode * noisyStatementNode, Scope * currentS
 void
 noisyStatementListTypeCheck(State * N, IrNode * statementListNode, Scope * currentScope)
 {
+        Scope * nextScope = currentScope;
         for (IrNode * iter = statementListNode; iter != NULL; iter=R(iter))
         {
                 if (L(iter) != NULL)
                 {
-                        noisyStatementTypeCheck(N,L(iter),currentScope);
+                        if (LL(iter)->type == kNoisyIrNodeType_PscopedStatementList)
+                        {
+                                noisyStatementTypeCheck(N,L(iter),nextScope);
+                                nextScope = currentScope->next;
+                        }
+                        else
+                        {
+                                noisyStatementTypeCheck(N,L(iter),currentScope);
+                        }
                 }
         }
 }
