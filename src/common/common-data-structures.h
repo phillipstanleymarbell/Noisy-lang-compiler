@@ -1177,6 +1177,7 @@ typedef enum
 	kNoisySymbolTypeModule,
 	kNoisySymbolTypeModuleParameter,
 	kNoisySymbolTypeParameter,
+	kNoisySymbolTypeReturnParameter,
 
 	/*
 	 *	Code depends on this bringing up the rear.

@@ -747,7 +747,7 @@ noisyParseReadTypeSignature(State *  N, Scope *  scope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	addLeaf(N, n, noisyParseSignature(N, scope));
+	addLeaf(N, n, noisyParseSignature(N, scope,true));
 
 	if (!inFollow(N, kNoisyIrNodeType_PreadTypeSignature, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -783,7 +783,7 @@ noisyParseWriteTypeSignature(State *  N, Scope *  scope)
 						lexPeek(N, 1)->sourceInfo /* source info */);
 
 
-	addLeaf(N, n, noisyParseSignature(N, scope));
+	addLeaf(N, n, noisyParseSignature(N, scope,false));
 
 	if (!inFollow(N, kNoisyIrNodeType_PwriteTypeSignature, gNoisyFollows, kNoisyIrNodeTypeMax))
 	{
@@ -821,8 +821,10 @@ noisyParsePredicateFnDecl(State *  N, Scope *  scope)
 
 	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_Tpredicate);
 	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
-
-	IrNode *	scopeEnd = noisyParseSignature(N, currentScope);
+	/*
+	*	TODO; This parse signature may be wrong!
+	*/
+	IrNode *	scopeEnd = noisyParseSignature(N, currentScope,false);
 
 	addLeaf(N, n, scopeEnd);
 	commonSymbolTableCloseScope(N, currentScope, scopeEnd);
@@ -3142,10 +3144,10 @@ noisyParseFunctionDefn(State *  N, Scope *  scope)
 	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_Tfunction);
 	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
 
-	IrNode *	t1 = noisyParseSignature(N, currentScope);
+	IrNode *	t1 = noisyParseSignature(N, currentScope,false);
 	addLeafWithChainingSeq(N, n, t1);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tarrow);
-	IrNode *	t2 = noisyParseSignature(N, currentScope);
+	IrNode *	t2 = noisyParseSignature(N, currentScope,true);
 	addLeafWithChainingSeq(N, n, t2);
 
 	/*
@@ -3240,10 +3242,10 @@ noisyParseProblemDefn(State *  N, Scope *  scope)
 	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_Tprobdef);
 	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
 
-	IrNode *	t1 = noisyParseSignature(N, currentScope);
+	IrNode *	t1 = noisyParseSignature(N, currentScope,false);
 	addLeafWithChainingSeq(N, n, t1);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tarrow);
-	IrNode *	t2 = noisyParseSignature(N, currentScope);
+	IrNode *	t2 = noisyParseSignature(N, currentScope,true);
 	addLeafWithChainingSeq(N, n, t2);
 
 	/*
@@ -3317,10 +3319,10 @@ noisyParsePredicateFnDefn(State *  N, Scope *  scope)
 	IrNode *	scopeBegin	= noisyParseTerminal(N, kNoisyIrNodeType_Tpredicate);
 	Scope *		currentScope	= commonSymbolTableOpenScope(N, scope, scopeBegin);
 
-	IrNode *	t1 = noisyParseSignature(N, currentScope);
+	IrNode *	t1 = noisyParseSignature(N, currentScope,false);
 	addLeafWithChainingSeq(N, n, t1);
 	noisyParseTerminal(N, kNoisyIrNodeType_Tarrow);
-	IrNode *	t2 = noisyParseSignature(N, currentScope);
+	IrNode *	t2 = noisyParseSignature(N, currentScope,true);
 	addLeafWithChainingSeq(N, n, t2);
 
 	/*
@@ -3361,7 +3363,7 @@ noisyParsePredicateFnDefn(State *  N, Scope *  scope)
  *		node.right	= kNoisyIrNodeType_PtypeExpr with Xseq of kNoisyIrNodeType_T_identifier and kNoisyIrNodeType_PtypeExpr
  */
 IrNode *
-noisyParseSignature(State *  N, Scope *  currentScope)
+noisyParseSignature(State *  N, Scope *  currentScope,bool isReturn)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParseSignature);
 
@@ -3381,6 +3383,14 @@ noisyParseSignature(State *  N, Scope *  currentScope)
 		IrNode * typeTree = noisyParseTypeExpr(N, currentScope);
 		addLeafWithChainingSeq(N, n, typeTree);
 		identifierNode->symbol->typeTree = typeTree;
+		if (isReturn)
+		{
+			identifierNode->symbol->symbolType = kNoisySymbolTypeReturnParameter;
+		}
+		else
+		{
+			identifierNode->symbol->symbolType = kNoisySymbolTypeParameter;
+		}
 
 		while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 		{
