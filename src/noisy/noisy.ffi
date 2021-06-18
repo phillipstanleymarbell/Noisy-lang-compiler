@@ -1386,6 +1386,7 @@ production	kNoisyIrNodeType_Pstatement:			followset = {
 --//		assignmentStatement	::=	identifierOrNilList ((":" (constantDecl | typeDecl | typeExpr)) | (assignOp expression))
 --//						| "(" identifierOrNilList ")" assignOp expression .
 production	kNoisyIrNodeType_PassignmentStatement:		followset = {
+										kNoisyIrNodeType_TrightParens,
 										kNoisyIrNodeType_Tsemicolon,
 									}
 
