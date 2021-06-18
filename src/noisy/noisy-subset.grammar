@@ -123,11 +123,9 @@ assignOp		::=	"=" | "^=" | "|=" | "&=" | "%=" | "/=" | "*=" | "-=" | "+=" | ">>=
 				| "<<=" | "<-=" | ":=" .
 matchStatement		::=	("match" | "matchseq") "{" guardedStatementList "}" .
 iterateStatement	::=	"iterate" "{" guardedStatementList "}" .
-sequenceStatement	::=	"sequence" (orderingHead | setHead) scopedStatementList .
-setHead			=	"(" identifier "in" expression ")" .
+sequenceStatement	::=	"sequence" orderingHead scopedStatementList .
 orderingHead		=	"(" assignmentStatement ";" expression ";" assignmentStatement ")" .
 guardedStatementList	=	{(expression | chanEventExpr) "=>" scopedStatementList} .
-guardedExpressionList	=	{expression "=>" expression} .
 
 /*
  *	Expressions
