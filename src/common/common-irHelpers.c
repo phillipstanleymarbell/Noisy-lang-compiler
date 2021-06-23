@@ -75,6 +75,40 @@ shallowCopyIrNode(State *  N, IrNode *  original)
 	return clone;
 }
 
+IrNode *	deepCopyIrNode(State * N,IrNode * original)
+{
+	IrNode *	clone = calloc(1, sizeof(IrNode));
+	if (clone == NULL)
+	{
+		fatal(N, Emalloc);
+	}
+	memcpy(clone,original,sizeof(IrNode));
+
+
+	if (original->symbol != NULL)
+	{
+		Symbol * symbolClone = calloc(1,sizeof(Symbol));
+
+		if (symbolClone == NULL)
+		{
+			fatal(N, Emalloc);
+		}
+
+		memcpy(symbolClone,original->symbol,sizeof(Symbol));
+
+		clone->symbol = symbolClone;
+	}
+
+	if (original->irLeftChild != NULL)
+	{
+		clone->irLeftChild = deepCopyIrNode(N,original->irLeftChild);
+	}
+	if (original->irRightChild)
+	{
+		clone->irRightChild = deepCopyIrNode(N,original->irRightChild);
+	}
+	return clone;
+}
 
 IrNode *
 genIrNode(State *  N, IrNodeType type, IrNode *  irLeftChild, IrNode *  irRightChild, SourceInfo *  sourceInfo)
