@@ -271,6 +271,37 @@ noisyIsOfType(NoisyType typ1,NoisyBasicType typeSuperSet)
         return false;
 }
 
+/*
+*       Takes two NoisyTypes arguments, compares their basicType
+*       and returns the most specific type. For example if we have
+*       a noisyIntegerConst and a noisyInt32 it returns the noisyInt32 type.
+*/
+NoisyType
+noisyGetMoreSpecificType(NoisyType typ1, NoisyType typ2)
+{
+        return typ1.basicType < typ2.basicType ? typ1 : typ2;
+}
+
+/*
+*       Takes to NoisyTypes and checks if we can convert from type fromType to type
+*       toType.
+*/
+bool
+noisyCanTypeCast(NoisyType fromType,NoisyType toType)
+{
+        /*
+        *       We can convert from integers to other integers and from integers to floats.
+        *       We do not permit any other type casts.
+        */
+        if (fromType.basicType > noisyBool && fromType.basicType <= noisyIntegerConstType)
+        {
+                if (toType.basicType > noisyBool && toType.basicType <= noisyRealConstType)
+                {
+                        return true;
+                }
+        }
+        return false;
+}
 
 NoisyType
 getNoisyTypeFromBasicType(IrNode * basicType)
@@ -519,9 +550,6 @@ noisyArgumentMatchesSignature(State * N, IrNode * argName,IrNode * expr,IrNode *
         */
         return false;               
 }
-
-
-
 
 /*
 *       Takes a noisyFactor IrNode and a the currentScope and returns the NoisyType of the factor.
@@ -785,16 +813,21 @@ noisyUnaryOpTypeCheck(State * N,IrNode * noisyUnaryOpNode,NoisyType factorType)
 NoisyType
 getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 {
-        NoisyType basicType,factorType, unaryType;
+        NoisyType basicType,factorType;
         IrNode * factorNode = NULL;
         IrNode * unaryOpNode = NULL;
         noisyInitNoisyType(&basicType);
-        noisyInitNoisyType(&unaryType);
 
+        /*
+        *       This flag is needed because the form of the tree is different based on wheter a prefix exists
+        *       on the term expression.
+        */
+        bool prefixExists = false;
 
         if (L(noisyTermNode)->type == kNoisyIrNodeType_PbasicType)
         {
                 basicType = getNoisyTypeFromBasicType(noisyTermNode->irLeftChild);
+                prefixExists = true;
         }
 
         if (L(noisyTermNode)->type == kNoisyIrNodeType_Pfactor)
@@ -807,6 +840,7 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                 if (L(noisyTermNode)->type == kNoisyIrNodeType_PunaryOp)
                 {
                         unaryOpNode = L(noisyTermNode);
+                        prefixExists = true;
                 }
         }
         else if (RR(noisyTermNode)->type == kNoisyIrNodeType_Pfactor)
@@ -816,27 +850,12 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                 if (RL(noisyTermNode)->type == kNoisyIrNodeType_PunaryOp)
                 {
                         unaryOpNode = RL(noisyTermNode);
+                        prefixExists = true;
                 }
         }
 
         factorType = getNoisyTypeFromFactor(N,factorNode,currentScope);
-        if (unaryOpNode != NULL)
-        {
-                unaryType = noisyUnaryOpTypeCheck(N,unaryOpNode,factorType);
-        }
 
-        if (unaryType.basicType != noisyInitType)
-        {
-                factorType = unaryType;
-        }
-
-        if (basicType.basicType != noisyInitType)
-        {
-                if (!noisyTypeEquals(basicType,factorType))
-                {
-                        factorType.basicType = noisyTypeError;
-                }
-        }
 
         if (R(noisyTermNode) != NULL)
         {
@@ -846,7 +865,7 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                 }
         }
 
-        for (IrNode * iter = R(noisyTermNode); iter != NULL; iter = RR(iter))
+        for (IrNode * iter = prefixExists ? R(factorNode) : R(noisyTermNode) ; iter != NULL; iter = RR(iter))
         {
                 NoisyType factorIterType;
 
@@ -919,6 +938,31 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 
                         asprintf(&details, "Unsupported binary operator\n");
                         noisySemanticError(N,factorNode,details);
+                        noisySemanticErrorRecovery(N);
+                }
+                factorType = noisyGetMoreSpecificType(factorType,factorIterType);
+        }
+
+        if (unaryOpNode != NULL)
+        {
+                factorType = noisyUnaryOpTypeCheck(N,unaryOpNode,factorType);
+        }
+
+        if (basicType.basicType != noisyInitType)
+        {
+                /*
+                *       The basic type, typecasts the factor expression.
+                */
+                if (noisyCanTypeCast(factorType,basicType))
+                {
+                        factorType = basicType;
+                }
+                else
+                {
+                        char *	details;
+
+                        asprintf(&details, "Cannot convert types!\n");
+                        noisySemanticError(N,noisyTermNode,details);
                         noisySemanticErrorRecovery(N);
                 }
         }
@@ -1044,6 +1088,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                 noisySemanticError(N,L(noisyExpressionNode),details);
                                 noisySemanticErrorRecovery(N);
                         }
+                        returnType = noisyGetMoreSpecificType(returnType,termTyp);
                 }
         }
         else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PanonAggrCastExpr)
