@@ -901,7 +901,7 @@ struct NoisyType
         int dimensions;
         NoisyBasicType arrayType;
 	Symbol * functionDefinition;
-        int * sizeOfDimension;
+        int sizeOfDimension[128];
 };
 
 
