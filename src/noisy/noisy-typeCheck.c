@@ -173,7 +173,6 @@ noisyInitNoisyType(NoisyType * typ)
 {
         typ->basicType = noisyInitType;
         typ->dimensions = 0;
-        typ->sizeOfDimension = NULL;
         typ->arrayType = noisyInitType;
 }
 
@@ -279,7 +278,6 @@ getNoisyTypeFromBasicType(IrNode * basicType)
         NoisyType noisyType;
         noisyType.arrayType = noisyInitType;
         noisyType.dimensions = 0;
-        noisyType.sizeOfDimension = NULL;
 
         if (L(basicType)->type == kNoisyIrNodeType_Tbool)
         {
@@ -384,7 +382,6 @@ getNoisyTypeFromArrayNode(State * N,IrNode * arrayTypeNode)
                 }
         }
 
-        noisyType.sizeOfDimension = calloc(noisyType.dimensions,sizeof(int));
 
         int i = 0;
         for (IrNode * iter = arrayTypeNode; iter != NULL; iter = R(iter))
@@ -924,8 +921,6 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                         noisySemanticError(N,factorNode,details);
                         noisySemanticErrorRecovery(N);
                 }
-                deallocateNoisyType(&factorIterType);
-
         }
 
         return factorType;
@@ -1089,14 +1084,12 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                 if (elemType.basicType != noisyArrayType)
                                 {
                                         returnType.dimensions = 1;
-                                        returnType.sizeOfDimension = (int*) calloc(1,sizeof(int));
                                         returnType.sizeOfDimension[0] = sizeOfDim;
                                         returnType.arrayType = elemType.basicType;
                                 }
                                 else
                                 {
                                         returnType.dimensions = elemType.dimensions + 1;
-                                        returnType.sizeOfDimension = (int*) calloc(returnType.dimensions,sizeof(int));
                                         int i;
                                         for (i = 0; i < elemType.dimensions; i++)
                                         {
@@ -1143,14 +1136,12 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                 if (elemType.basicType != noisyArrayType)
                                 {
                                         returnType.dimensions = 1;
-                                        returnType.sizeOfDimension = (int*) calloc(1,sizeof(int));
                                         returnType.sizeOfDimension[0] = sizeOfDim;
                                         returnType.arrayType = elemType.basicType;
                                 }
                                 else
                                 {
                                         returnType.dimensions = elemType.dimensions + 1;
-                                        returnType.sizeOfDimension = (int*) calloc(returnType.dimensions,sizeof(int));
                                         int i;
                                         for (i = 0; i < elemType.dimensions; i++)
                                         {
@@ -1243,13 +1234,16 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                         typeParameterListNodeIter = R(typeParameterListNodeIter);
                 }
 
-                if (L(typeParameterListNodeIter) != NULL)
+                if (typeParameterListNodeIter != NULL)
                 {
-                        char *	details;
+                        if (typeParameterListNodeIter->irLeftChild != NULL)
+                        {
+                                char *	details;
 
-                        asprintf(&details, "Type parameters mismatch when loading from module \"%s\"\n",moduleSymbol->identifier);
-                        noisySemanticError(N,moduleNameIrNode,details);
-                        noisySemanticErrorRecovery(N);
+                                asprintf(&details, "Type parameters mismatch when loading from module \"%s\"\n",moduleSymbol->identifier);
+                                noisySemanticError(N,moduleNameIrNode,details);
+                                noisySemanticErrorRecovery(N);
+                        }
                 }
 
                 Symbol * funcSymbol = NULL;
@@ -1410,21 +1404,6 @@ noisyModuleDeclBodyTypeCheck(State * N, IrNode * noisyModuleDeclBodyNode,Scope *
 }
 
 
-/*
-*       We need this for every noisyType that we return so we can deallocate its sizeOfDimension array.
-*       Otherwise we create garbage. Unfortunately we need accompany each final call of getNoisyType
-*       with that function.
-*/
-void
-deallocateNoisyType(NoisyType * typ)
-{
-        if (typ->basicType == noisyArrayType)
-        {
-                free(typ->sizeOfDimension);
-        }
-        return ;
-}
-
 bool
 noisyMatchTypeExpr(State * N,IrNode * typeExpr1, IrNode * typeExpr2)
 {
@@ -1432,8 +1411,6 @@ noisyMatchTypeExpr(State * N,IrNode * typeExpr1, IrNode * typeExpr2)
         typ1 = getNoisyTypeFromTypeExpr(N,typeExpr1);
         typ2 = getNoisyTypeFromTypeExpr(N,typeExpr2);
         bool res = noisyTypeEquals(typ1,typ2);
-        deallocateNoisyType(&typ1);
-        deallocateNoisyType(&typ2);
         return res;
 }
 

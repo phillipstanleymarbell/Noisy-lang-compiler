@@ -112,7 +112,6 @@ noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNod
                 {
                         NoisyType typ = getNoisyTypeFromTypeExpr(N,RL(iter));
                         LLVMTypeRef llvmType = getLLVMTypeFromNoisyType(typ);
-                        deallocateNoisyType(&typ);
                         if (llvmType != NULL)
                         {
                                 paramArray[paramIndex] = llvmType;
@@ -139,7 +138,6 @@ noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNod
                 outputBasicType = RL(outputSignature);
                 NoisyType typ = getNoisyTypeFromTypeExpr(N,outputBasicType);
                 returnType = getLLVMTypeFromNoisyType(typ);
-                deallocateNoisyType(&typ);
         }
         else
         {
