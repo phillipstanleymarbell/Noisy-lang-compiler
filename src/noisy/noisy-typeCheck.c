@@ -796,9 +796,21 @@ noisyUnaryOpTypeCheck(State * N,IrNode * noisyUnaryOpNode,NoisyType factorType)
                         noisySemanticErrorRecovery(N);
                 }
         }
-        /*
-        *       "<-" operator we do not type check so far.
-        */
+        else if (L(noisyUnaryOpNode)->type == kNoisyIrNodeType_TchannelOperator)
+        {
+                if (factorType.basicType != noisyNamegenType)
+                {
+                        char * details;
+                        asprintf(&details, "Cannot read from a non channel factor!\n");
+                        noisySemanticError(N,noisyUnaryOpNode,details);
+                        noisySemanticErrorRecovery(N);
+                }
+                /*
+                *       After applying the channel operator on a namegen, the return value has the type of the
+                *       namegen's return value.
+                */
+                returnType = getNoisyTypeFromTypeExpr(N,RRL(factorType.functionDefinition->typeTree));
+        }
         else
         {
                 returnType = factorType;
@@ -819,7 +831,7 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
         noisyInitNoisyType(&basicType);
 
         /*
-        *       This flag is needed because the form of the tree is different based on wheter a prefix exists
+        *       This flag is needed because the form of the tree is different based on whether a prefix exists
         *       on the term expression.
         */
         bool prefixExists = false;
@@ -971,7 +983,7 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 }
 
 /*
-*       TODO; Might not be completed.
+*       Takes a noisyExpressionNode and returns its NoisyType after typeChecking it.
 */
 NoisyType
 getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * currentScope)
@@ -1562,6 +1574,33 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                                                 noisySemanticError(N,LL(iter),details);
                                                                 noisySemanticErrorRecovery(N);
                                                         }
+                                                }
+                                        }
+                                        else if (RLL(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_TchannelOperatorAssign)
+                                        {
+                                                if (lValuetype.basicType != noisyNamegenType)
+                                                {
+                                                        char *	details;
+
+                                                        asprintf(&details, "Cannot write to a non channel!\n");
+                                                        noisySemanticError(N,LL(iter),details);
+                                                        noisySemanticErrorRecovery(N);
+                                                }
+                                                if (lValuetype.functionDefinition->parameterNum != 1)
+                                                {
+                                                        char *	details;
+
+                                                        asprintf(&details, "Cannot write to channel with multiple or zero inputs!\n");
+                                                        noisySemanticError(N,LL(iter),details);
+                                                        noisySemanticErrorRecovery(N);
+                                                }
+                                                if (!noisyTypeEquals(getNoisyTypeFromTypeExpr(N,LRL(lValuetype.functionDefinition->typeTree)),rValueType))
+                                                {
+                                                        char *	details;
+
+                                                        asprintf(&details, "Channel and value type mismatch!\n");
+                                                        noisySemanticError(N,LL(iter),details);
+                                                        noisySemanticErrorRecovery(N);
                                                 }
                                         }
                                         else
