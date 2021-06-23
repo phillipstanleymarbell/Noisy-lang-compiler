@@ -99,6 +99,7 @@ integerType		::=	"nat4" | "nat8" | "nat16" | "nat32" | "nat64" | "nat128"
 realType		::=	"float4" | "float8" | "float16" | "float32" | "float64" | "float128" .
 numericType		::=	integerType | realType .
 anonAggregateType	::=	arrayType .
+tupleType		::=	"(" typeExpr {"," typeExpr} ")" .
 arrayType		::=	"array" "[" integerConst "]" {"[" integerConst "]"} "of" typeExpr ["rawmem" "@" intParamOrConst] .
 numericConst		=	integerConst | realConst .
 initList		=	"{" expression {"," expression} "}" .
@@ -134,7 +135,7 @@ expression		::=	(term {lowPrecedenceBinaryOp term}) | anonAggrCastExpr | loadExp
 arrayCastExpr		::=	"array" (("of" idxInitList) | ("[" integerConst "]" "of" starInitList)) .
 anonAggrCastExpr	::=     arrayCastExpr .
 chanEventExpr		::=	("erasures" | "distortions" | "latency") "of" identifier cmpOp expression .
-loadExpr		::=	"load" identifier ["->" identifier]  (stringConst | "(" "path" typeName ")") .
+loadExpr		::=	"load" identifier ["->" identifier] [tupleType] (stringConst | "(" "path" typeName ")") .
 term			::=	[basicType] [unaryOp] factor ["++" | "--"] {highPrecedenceBinaryOp factor} .
 factor			::=	qualifiedIdentifier | integerConst | realConst | stringConst | boolConst
 				| "(" expression ")" | namegenInvokeShorthand | typeMinExpr | typeMaxExpr | "nil" .
