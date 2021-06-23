@@ -20,6 +20,7 @@
 NoisyType getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * currentScope);
 bool noisyIsOfType(NoisyType typ1,NoisyBasicType typeSuperSet);
 void noisyStatementListTypeCheck(State * N, IrNode * statementListNode, Scope * currentScope);
+void noisyFunctionDefnTypeCheck(State * N,IrNode * noisyFunctionDefnNode,Scope * currentScope);
 
 
 
@@ -406,7 +407,8 @@ NoisyType
 getNoisyTypeFromTypeSymbol(State * N,IrNode * typeNameNode)
 {
         NoisyType noisyType;
-        Symbol * typeSymbol = commonSymbolTableSymbolForIdentifier(N,NULL,L(typeNameNode)->tokenString);
+        // Symbol * typeSymbol = commonSymbolTableSymbolForIdentifier(N,N->noisyIrTopScope,L(typeNameNode)->tokenString);
+        Symbol * typeSymbol = typeNameNode->symbol;
 
         if (typeSymbol == NULL)
         {
@@ -419,6 +421,21 @@ getNoisyTypeFromTypeSymbol(State * N,IrNode * typeNameNode)
         }
 
         IrNode * typeTree = typeSymbol->typeTree;
+
+        if (typeTree == NULL)
+        {
+                noisyType.basicType = noisyTypeError;
+                return noisyType;
+        }
+
+        /*
+        *       This case is for loading a templated function. The symbols type tree should be a typeExpr
+        *       which we assign to it.
+        */
+        if (typeTree->type == kNoisyIrNodeType_PtypeExpr)
+        {
+                return getNoisyTypeFromTypeExpr(N,typeTree);
+        }
 
         if (RL(typeTree)->type == kNoisyIrNodeType_PbasicType)
         {
@@ -487,13 +504,14 @@ getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
 *       with one of the signature's arguments. In that case it returns true. Otherwise, it returns false.
 */
 bool
-noisyArgumentMatchesSignature(State * N, IrNode * argName,IrNode * expr,IrNode * inputSignature, Scope * currentScope)
+noisyArgumentMatchesSignature(State * N, IrNode * argName,IrNode * expr,IrNode * inputSignature, Scope * currentScope, bool isLoaded)
 {
         for (IrNode * iter = inputSignature; iter != NULL; iter = RR(iter))
         {
                 if (!strcmp(L(iter)->tokenString,argName->tokenString))
                 {
-                        if (noisyTypeEquals(getNoisyTypeFromTypeExpr(N,RL(iter)),getNoisyTypeFromExpression(N,expr,currentScope)))
+                        NoisyType typeExprType = getNoisyTypeFromTypeExpr(N,RL(iter));
+                        if (noisyTypeEquals(typeExprType,getNoisyTypeFromExpression(N,expr,currentScope)))
                         {
                                 return true;
                         }
@@ -606,20 +624,32 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                 *       We search for functionName in the top scope (local functions) and if it fails it searches on the module scope.
                 */
                 Symbol * functionNameSymbol = commonSymbolTableSymbolForIdentifier(N, N->noisyIrTopScope, LL(noisyFactorNode)->tokenString);   
+                bool loadedFunction = false;
 
                 if (functionNameSymbol == NULL)
                 {
-                        char * details;
+                        functionNameSymbol = commonSymbolTableSymbolForIdentifier(N,currentScope,LL(noisyFactorNode)->tokenString);
+                        if (functionNameSymbol->noisyType.basicType != noisyNamegenType)
+                        {
+                                char * details;
 
-                        asprintf(&details, "Unknown namegen invocation \"%s\"\n",LL(noisyFactorNode)->tokenString);
-                        noisySemanticError(N,noisyFactorNode,details);
-                        noisySemanticErrorRecovery(N);        
+                                asprintf(&details, "Unknown namegen invocation \"%s\"\n",LL(noisyFactorNode)->tokenString);
+                                noisySemanticError(N,noisyFactorNode,details);
+                                noisySemanticErrorRecovery(N);
+                        }
+                        else
+                        {
+                                loadedFunction = true;
+                                functionNameSymbol = functionNameSymbol->noisyType.functionDefinition;
+                        }
+
                 }
+
 
                 bool paramCorrect = true;
                 int paramCount = 0;
 
-                IrNode * inputSignature = L(functionNameSymbol->typeTree);
+                IrNode * inputSignature =L(functionNameSymbol->typeTree);
                 /*
                 *       Check if inputSignature is nil. Else typeCheck every argument.
                 */
@@ -645,7 +675,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                                 IrNode * expr = RL(iter);
 
                                 paramCount++;
-                                paramCorrect = paramCorrect && noisyArgumentMatchesSignature(N,argName,expr,inputSignature,currentScope);
+                                paramCorrect = paramCorrect && noisyArgumentMatchesSignature(N,argName,expr,inputSignature,currentScope,loadedFunction);
 
                                 if (!paramCorrect)
                                 {
@@ -774,9 +804,9 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
         {
                 factorNode = L(noisyTermNode);
         }
-        else if (RL(noisyTermNode)->type == kNoisyIrNodeType_Pfactor)
+        else if (R(noisyTermNode)->type == kNoisyIrNodeType_Pfactor)
         {
-                factorNode = RL(noisyTermNode);
+                factorNode = R(noisyTermNode);
                 if (L(noisyTermNode)->type == kNoisyIrNodeType_PunaryOp)
                 {
                         unaryOpNode = L(noisyTermNode);
@@ -840,7 +870,6 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 
                 if (LL(iter)->type == kNoisyIrNodeType_Tasterisk
                 || LL(iter)->type == kNoisyIrNodeType_Tdivide
-                || LL(iter)->type == kNoisyIrNodeType_Tpercent
                 || LL(iter)->type == kNoisyIrNodeType_TarithmeticAnd)
                 {
                         if (!noisyIsOfType(factorType,noisyArithType))
@@ -855,6 +884,18 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                                 noisySemanticErrorRecovery(N);
                                 break;
 
+                        }
+                }
+                else if (LL(iter)->type == kNoisyIrNodeType_Tpercent)
+                {
+                        if (!noisyIsOfType(factorType,noisyIntegerConstType))
+                        {
+                                char *	details;
+
+                                asprintf(&details, "Operator and operands type mismatch\n");
+                                noisySemanticError(N,factorNode,details);
+                                noisySemanticErrorRecovery(N);
+                                break;
                         }
                 }
                 else if (LL(iter)->type == kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp)
@@ -921,14 +962,22 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                 case kNoisyIrNodeType_TrightShift:
                                 case kNoisyIrNodeType_TleftShift:
                                 case kNoisyIrNodeType_TbitwiseOr:
-                                        if (!noisyIsOfType(returnType,noisyArithType)
-                                        || (L(operatorNode)->type != kNoisyIrNodeType_Tplus && returnType.basicType == noisyArrayType))
+                                        if (!noisyIsOfType(returnType,noisyArithType))
                                         {
-                                                char *	details;
+                                                if (L(operatorNode)->type == kNoisyIrNodeType_Tplus && returnType.basicType == noisyString)
+                                                {
+                                                        /*
+                                                        *       We use it for emphasis. "+" operator works for strings as well.
+                                                        */
+                                                }
+                                                else
+                                                {
+                                                        char *	details;
 
-                                                asprintf(&details, "Operator \"%s\" and operands type mismatch\n",L(operatorNode)->tokenString);
-                                                noisySemanticError(N,L(noisyExpressionNode),details);
-                                                noisySemanticErrorRecovery(N);        
+                                                        asprintf(&details, "Operator \"%s\" and operands type mismatch\n",L(operatorNode)->tokenString);
+                                                        noisySemanticError(N,L(noisyExpressionNode),details);
+                                                        noisySemanticErrorRecovery(N);
+                                                }
                                         }
                                         /*
                                         *       returnType = typ1;
@@ -964,7 +1013,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                                         noisySemanticError(N,L(noisyExpressionNode),details);
                                                         noisySemanticErrorRecovery(N);  
                                                 }
-                                                       
+
                                         }
                                         else
                                         {
@@ -1126,11 +1175,170 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
         }
         else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PloadExpr)
         {
-                /*
-                *       TODO; Add load expr.
-                */
-        }
+                static int loadCount = 0;
 
+                IrNode * moduleNameIrNode = LL(noisyExpressionNode);
+                IrNode * funcNameIrNode;
+                IrNode * tupleTypeNode;
+                // IrNode * typeNameNode;
+
+                if (LR(noisyExpressionNode)->type == kNoisyIrNodeType_Tidentifier)
+                {
+                        funcNameIrNode = LR(noisyExpressionNode);
+                        if (L(funcNameIrNode)->type == kNoisyIrNodeType_PtupleType)
+                        {
+                                tupleTypeNode = L(funcNameIrNode);
+                                // typeNameNode = RL(funcNameIrNode);
+                        }
+                        else
+                        {
+                                tupleTypeNode = NULL;
+                                // typeNameNode = L(funcNameIrNode);
+                        }
+
+                }
+                else
+                {
+                        funcNameIrNode = NULL;
+                        if (LRL(noisyExpressionNode)->type == kNoisyIrNodeType_PtupleType)
+                        {
+                                tupleTypeNode = LRL(noisyExpressionNode);
+                                // typeNameNode = LRR(noisyExpressionNode)->irLeftChild;
+                        }
+                        else
+                        {
+                                tupleTypeNode = NULL;
+                                // typeNameNode = LRL(noisyExpressionNode);
+                        }
+
+                }
+
+                Symbol * moduleSymbol = commonSymbolTableSymbolForIdentifier(N,N->moduleScopes,moduleNameIrNode->tokenString);
+
+                if (moduleSymbol == NULL || moduleSymbol->symbolType != kNoisySymbolTypeModule)
+                {
+                        char *	details;
+
+                        asprintf(&details, "Could not find a module named \"%s\"\n",moduleNameIrNode->tokenString);
+                        noisySemanticError(N,moduleNameIrNode,details);
+                        noisySemanticErrorRecovery(N);
+                }
+
+                IrNode * typeParameterListNodeIter = RL(moduleSymbol->typeTree->irParent->irParent);
+                for (IrNode * iter = (tupleTypeNode); iter != NULL; iter = R(iter))
+                {
+                        /*
+                        *       Assign the type expression to the module parameters.
+                        */
+                        if (typeParameterListNodeIter == NULL)
+                        {
+                                char *	details;
+
+                                asprintf(&details, "Type parameters mismatch when loading from module \"%s\"\n",moduleSymbol->identifier);
+                                noisySemanticError(N,moduleNameIrNode,details);
+                                noisySemanticErrorRecovery(N);
+                        }
+
+                        L(typeParameterListNodeIter)->symbol->typeTree = L(iter);
+                        typeParameterListNodeIter = R(typeParameterListNodeIter);
+                }
+
+                if (L(typeParameterListNodeIter) != NULL)
+                {
+                        char *	details;
+
+                        asprintf(&details, "Type parameters mismatch when loading from module \"%s\"\n",moduleSymbol->identifier);
+                        noisySemanticError(N,moduleNameIrNode,details);
+                        noisySemanticErrorRecovery(N);
+                }
+
+                Symbol * funcSymbol = NULL;
+                if (funcNameIrNode != NULL)
+                {
+                        funcSymbol = commonSymbolTableSymbolForIdentifier(N,moduleSymbol->scope->firstChild,funcNameIrNode->tokenString);
+                        if (funcSymbol == NULL
+                        || (funcSymbol->symbolType != kNoisySymbolTypeNamegenDeclaration
+                        && funcSymbol->symbolType != kNoisySymbolTypeNamegenDefinition) )
+                        {
+                                char *	details;
+
+                                asprintf(&details, "Could not find a function named \"%s\" in module \"%s\"\n",funcNameIrNode->tokenString,moduleNameIrNode->tokenString);
+                                noisySemanticError(N,moduleNameIrNode,details);
+                                noisySemanticErrorRecovery(N);
+                        }
+                        /*
+                        *       We use this for templated functions. Templated functions are not typeComplete. Therefore
+                        *       when we load them with a specific type they become typeComplete and then we can typeCheck them
+                        *       with noisyFunctionDefnTypeCheck.
+                        */
+                        if (!funcSymbol->isTypeComplete)
+                        {
+                                /*
+                                *       For templated functions we create a new symbol table entry. They have new name (their
+                                *       name with an "_integer" appended) as well as deep copies of the their tree regarding typeTree
+                                *       and function definition nodes. Before entering here we have assigned basic types to the module
+                                *       parameters. Then we typeCheck the function definition with the types assigned and then we deep
+                                *       copy the tree of the function so we can keep all the information we need. During the deepCopy
+                                *       we also copy the symbol nodes. This way we do minimal changes to the whole code for templated
+                                *       functions.
+                                *       TODO; Might need changes if we see that code generation does not have all the necessary information.
+                                */
+                                funcSymbol->isTypeComplete = true;
+                                noisyFunctionDefnTypeCheck(N,funcSymbol->functionDefinition,N->noisyIrTopScope->firstChild);
+
+                                Token * t = calloc(1,sizeof(Token));
+                                t->sourceInfo = funcSymbol->sourceInfo;
+                                t->type = kNoisySymbolTypeNamegenDefinition;
+                                asprintf(&t->identifier,"%s_%d",funcSymbol->identifier,loadCount);
+
+                                Symbol * newFunctionSym = commonSymbolTableAddOrLookupSymbolForToken(N,currentScope,t);
+                                newFunctionSym->functionDefinition = deepCopyIrNode(N,funcSymbol->functionDefinition);
+                                newFunctionSym->parameterNum = funcSymbol->parameterNum;
+                                newFunctionSym->isTypeComplete = funcSymbol->isTypeComplete;
+                                IrNode * newTypeTree = calloc(1,sizeof(IrNode));
+                                newTypeTree->irLeftChild = RL(newFunctionSym->functionDefinition);
+                                newTypeTree->irRightChild = RRL(newFunctionSym->functionDefinition);
+                                newFunctionSym->typeTree = newTypeTree;
+
+                                returnType.functionDefinition = newFunctionSym;
+                                funcSymbol->isTypeComplete = false;
+                        }
+                        else
+                        {
+                                /*
+                                *       If we dont have templated code we just pass the funcSymbol pointer.
+                                */
+                                returnType.functionDefinition = funcSymbol;
+                        }
+                }
+                else
+                {
+                        char *	details;
+
+                        asprintf(&details, "We do not support loadExpr with module names only.\n");
+                        noisySemanticError(N,moduleNameIrNode,details);
+                        noisySemanticErrorRecovery(N);
+                }
+
+                /*
+                *       If we actually changed a typeTre for type parameters of module we need to revert them back to their initial
+                *       stage.
+                */
+                if (tupleTypeNode != NULL)
+                {
+                        for (IrNode * typeParameterListNodeIter = RL(moduleSymbol->typeTree->irParent->irParent); typeParameterListNodeIter != NULL; typeParameterListNodeIter = R(typeParameterListNodeIter))
+                        {
+                                /*
+                                *       We need to revert what we did before for the next load expressions.
+                                *       Each load does not modify the module permanently but it specialises it and loads it.
+                                */
+                                L(typeParameterListNodeIter)->symbol->typeTree = NULL;
+                        }
+                }
+
+                returnType.basicType = noisyNamegenType;
+                loadCount++;
+        }
         return returnType;
 }
 
@@ -1282,7 +1490,7 @@ noisySignatureIsMatching(State * N, IrNode * definitionSignature, IrNode * decla
 }
 
 /*
-*       TODO; Not completed.
+*       TypeChecks an assignment statement.
 */
 void
 noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNode, Scope * currentScope)
@@ -1562,7 +1770,10 @@ noisyFunctionDefnTypeCheck(State * N,IrNode * noisyFunctionDefnNode,Scope * curr
                 noisyDeclareFunctionTypeCheck(N,noisyFunctionDefnNode->irLeftChild->tokenString,RL(noisyFunctionDefnNode),RRL(noisyFunctionDefnNode),currentScope);
         }
 
-        noisyStatementListTypeCheck(N,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild,commonSymbolTableGetScopeWithName(N,currentScope,functionSymbol->identifier)->firstChild);
+        if (functionSymbol->isTypeComplete)
+        {
+                noisyStatementListTypeCheck(N,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild,commonSymbolTableGetScopeWithName(N,currentScope,functionSymbol->identifier)->firstChild);
+        }
 }
 
 void

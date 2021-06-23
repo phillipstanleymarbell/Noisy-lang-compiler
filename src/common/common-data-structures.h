@@ -873,6 +873,7 @@ typedef enum
         noisyArrayType,
         noisyArithType,
         noisyNilType,
+	noisyNamegenType,
         noisyTypeError
 } NoisyBasicType;
 
@@ -899,6 +900,7 @@ struct NoisyType
         NoisyBasicType basicType;
         int dimensions;
         NoisyBasicType arrayType;
+	Symbol * functionDefinition;
         int * sizeOfDimension;
 };
 
@@ -1201,6 +1203,11 @@ struct Symbol
 	 */
 	NoisySymbolType 	symbolType;
 	NoisyType		noisyType;
+
+	/*
+	*	The IrNode where function definition starts. Used for loading functions.
+	*/
+	IrNode *		functionDefinition;
 
 	/*
 	*	Number of parameters. Used only for functions and Noisy

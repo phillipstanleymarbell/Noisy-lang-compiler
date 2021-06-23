@@ -3190,6 +3190,7 @@ noisyParseFunctionDefn(State *  N, Scope *  scope)
 		noisyParserErrorRecovery(N, kNoisyIrNodeType_PfunctionDefn);
 	}
 
+	identifier->symbol->functionDefinition = n;
 	return n;
 }
 
