@@ -1,0 +1,48 @@
+
+changeset: 1167:7d097468ddb529e184448234aba7aa51c23352e7
+char kNewtonVersion[] = "0.3-alpha-1167 (7d097468ddb529e184448234aba7aa51c23352e7) (build 06-23-2021-21:06-angelospl@angelospl-Linux-5.8.0-55-generic-x86_64)";
+
+./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s
+
+./src/newton/newton-linux-EN -v 0 -eP applications/newton/invariants/ViolinWithTemperatureDependence-pigroups.nt
+
+Informational Report:
+---------------------
+Invariant "ViolinWithTemperatureDependenceForPiGroups" has 2 unique kernels, each with 2 column(s)...
+
+	Kernel 0 is a valid kernel:
+
+		   1   1
+		-0.5  -0
+		   1   0
+		 0.5   0
+		   0  -1
+		  -0  -1
+
+
+		The ordering of parameters is:	P1 P0 P3 P2 P4 P5 
+
+			Pi group 0, Pi 0 is:	P0^(-0.5)  P1^( 1)  P2^(0.5)  P3^( 1)  P4^( 0)  P5^(-0)  
+
+			Pi group 0, Pi 1 is:	P0^(-0)  P1^( 1)  P2^( 0)  P3^( 0)  P4^(-1)  P5^(-1)  
+
+
+	Kernel 1 is a valid kernel:
+
+		   1   0
+		-0.5   1
+		   1  -2
+		 0.5  -1
+		  -0  -2
+		   0  -2
+
+
+		The ordering of parameters is:	P1 P0 P3 P2 P4 P5 
+
+			Pi group 1, Pi 0 is:	P0^(-0.5)  P1^( 1)  P2^(0.5)  P3^( 1)  P4^(-0)  P5^( 0)  
+
+			Pi group 1, Pi 1 is:	P0^( 1)  P1^( 0)  P2^(-1)  P3^(-2)  P4^(-2)  P5^(-2)  
+
+
+
+

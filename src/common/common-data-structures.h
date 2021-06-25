@@ -37,6 +37,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <llvm-c/Core.h>
+
 typedef enum
 {
 	kCommonVerbosityDebugLexer	=	(1 << 0),
@@ -1215,6 +1217,8 @@ struct Symbol
 	*/
 	int			parameterNum;
 	bool			isTypeComplete;
+	int			paramPosition;
+	LLVMValueRef		llvmPointer;
 
 	/*
 	 *	Scope within which sym appears
