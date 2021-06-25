@@ -588,6 +588,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                 if (identifierSymbol->typeTree != NULL)
                 {
                         factorType = getNoisyTypeFromTypeExpr(N,identifierSymbol->typeTree);
+                        identifierSymbol->noisyType = factorType;
                 }
                 else
                 {
@@ -1639,20 +1640,20 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
         {
                 NoisyType typeExprType = getNoisyTypeFromTypeExpr(N,R(noisyAssignmentStatementNode));
                 for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
+                {
+                        if (LL(iter)->type == kNoisyIrNodeType_Tnil)
                         {
-                                if (LL(iter)->type == kNoisyIrNodeType_Tnil)
-                                {
-                                        char *	details;
+                                char *	details;
 
-                                        asprintf(&details, "We cannot assign type to nil\n");
-                                        noisySemanticError(N,LL(iter),details);
-                                        noisySemanticErrorRecovery(N);
-                                }
-                                else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
-                                {
-                                        LLL(iter)->symbol->noisyType = typeExprType;
-                                }
+                                asprintf(&details, "We cannot assign type to nil\n");
+                                noisySemanticError(N,LL(iter),details);
+                                noisySemanticErrorRecovery(N);
                         }
+                        else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
+                        {
+                                LLL(iter)->symbol->noisyType = typeExprType;
+                        }
+                }
         }
 }
 
