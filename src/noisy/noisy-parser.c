@@ -3376,6 +3376,7 @@ noisyParseSignature(State *  N, Scope *  currentScope,bool isReturn)
 
 
 	noisyParseTerminal(N, kNoisyIrNodeType_TleftParens);
+	int paramPos = 0;
 	if (peekCheck(N, 1, kNoisyIrNodeType_Tidentifier))
 	{
 		IrNode * identifierNode = noisyParseIdentifierDefinitionTerminal(N, currentScope);
@@ -3384,6 +3385,7 @@ noisyParseSignature(State *  N, Scope *  currentScope,bool isReturn)
 		IrNode * typeTree = noisyParseTypeExpr(N, currentScope);
 		addLeafWithChainingSeq(N, n, typeTree);
 		identifierNode->symbol->typeTree = typeTree;
+		identifierNode->symbol->paramPosition = paramPos;
 		if (isReturn)
 		{
 			identifierNode->symbol->symbolType = kNoisySymbolTypeReturnParameter;
@@ -3395,10 +3397,23 @@ noisyParseSignature(State *  N, Scope *  currentScope,bool isReturn)
 
 		while (peekCheck(N, 1, kNoisyIrNodeType_Tcomma))
 		{
+			paramPos++;
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcomma);
-			addLeafWithChainingSeq(N, n, noisyParseIdentifierDefinitionTerminal(N, currentScope));
+			IrNode * identifierNode = noisyParseIdentifierDefinitionTerminal(N, currentScope);
+			addLeafWithChainingSeq(N, n, identifierNode);
 			noisyParseTerminal(N, kNoisyIrNodeType_Tcolon);
-			addLeafWithChainingSeq(N, n, noisyParseTypeExpr(N, currentScope));
+			IrNode * typeTree = noisyParseTypeExpr(N, currentScope);
+			addLeafWithChainingSeq(N, n, typeTree);
+			identifierNode->symbol->typeTree = typeTree;
+			identifierNode->symbol->paramPosition = paramPos;
+			if (isReturn)
+			{
+				identifierNode->symbol->symbolType = kNoisySymbolTypeReturnParameter;
+			}
+			else
+			{
+				identifierNode->symbol->symbolType = kNoisySymbolTypeParameter;
+			}
 		}
 	}
 	else if (peekCheck(N, 1, kNoisyIrNodeType_Tnil))
