@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <setjmp.h>
+#include<float.h>
 #include <string.h>
 #include <stdint.h>
 #include <assert.h>
@@ -24,10 +25,12 @@ typedef struct {
          LLVMContextRef theContext;
          LLVMBuilderRef theBuilder;
          LLVMModuleRef  theModule;
+         LLVMValueRef   currentFunction;
 } CodeGenState;
 
 LLVMTypeRef getLLVMTypeFromTypeExpr(State *, IrNode *);
 void noisyStatementListCodeGen(State * N, CodeGenState * S,IrNode * statementListNode);
+LLVMValueRef noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode);
 
 LLVMTypeRef
 getLLVMTypeFromNoisyType(NoisyType noisyType)
@@ -252,10 +255,280 @@ noisyModuleDeclCodeGen(State * N, CodeGenState * S, IrNode * noisyModuleDeclNode
 
 }
 
-void
-noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * assignmentNode)
+LLVMValueRef
+noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode, LLVMTypeRef nilType)
 {
-        ;
+        if (L(noisyFactorNode)->type == kNoisyIrNodeType_TintegerConst)
+        {
+                return LLVMConstInt(LLVMInt32Type(),L(noisyFactorNode)->token->integerConst,true);
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_TrealConst)
+        {
+                return LLVMConstReal(LLVMFloatType(), L(noisyFactorNode)->token->realConst);
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_TstringConst)
+        {
+                return LLVMConstStringInContext (S->theContext,L(noisyFactorNode)->token->stringConst,strlen(L(noisyFactorNode)->token->stringConst), false);
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_TboolConst)
+        {
+                return LLVMConstInt(LLVMInt1Type(),L(noisyFactorNode)->token->integerConst,false);
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PqualifiedIdentifier)
+        {
+                Symbol * identifierSymbol = LL(noisyFactorNode)->symbol;
+                if (identifierSymbol->symbolType == kNoisySymbolTypeParameter)
+                {
+                        return LLVMGetParam(S->currentFunction,identifierSymbol->paramPosition);
+                }
+                else if (identifierSymbol->noisyType.basicType != noisyArrayType && identifierSymbol->noisyType.basicType != noisyNamegenType)
+                {
+                        char * name;
+                        asprintf(&name,"val_%s",identifierSymbol->identifier);
+                        return LLVMBuildLoad2(S->theBuilder,getLLVMTypeFromNoisyType(identifierSymbol->noisyType),identifierSymbol->llvmPointer,name);
+                }
+                /*
+                *       TODO; ArrayType and NamegenType
+                */
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_Pexpression)
+        {
+                return noisyExpressionCodeGen(N,S,L(noisyFactorNode));
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PtypeMaxExpr)
+        {
+                NoisyType exprType = getNoisyTypeFromBasicType(LL(noisyFactorNode));
+                switch (exprType.basicType)
+                {
+                case noisyBool:
+                        return LLVMConstInt(LLVMInt1Type(),1,false);
+                        break;
+                case noisyInt4:
+                        return LLVMConstInt(LLVMIntType(4),7,true);
+                        break;
+                case noisyInt8:
+                        return LLVMConstInt(LLVMInt8Type(),127,true);
+                        break;
+                case noisyInt16:
+                        return LLVMConstInt(LLVMInt16Type(),32767,true);
+                        break;
+                case noisyInt32:
+                        return LLVMConstInt(LLVMInt32Type(),2147483647,true);
+                        break;
+                case noisyInt64:
+                        return LLVMConstInt(LLVMInt64Type(),9223372036854775807,true);
+                        break;
+                // case noisyInt128:
+                //         return LLVMConstInt(LLVMInt128Type(),0x7fffffffffffffffffffffffffffffff,true);
+                //         break;
+                case noisyNat4:
+                        return LLVMConstInt(LLVMIntType(4),15,false);
+                        break;
+                case noisyNat8:
+                        return LLVMConstInt(LLVMInt8Type(),255,false);
+                        break;
+                case noisyNat16:
+                        return LLVMConstInt(LLVMInt16Type(),65535,false);
+                        break;
+                case noisyNat32:
+                        return LLVMConstInt(LLVMInt32Type(),0xffffffff,false);
+                        break;
+                case noisyNat64:
+                        return LLVMConstInt(LLVMInt64Type(),0xffffffffffffffff,false);
+                        break;
+                // case noisyNat128:
+                //         return LLVMConstInt(LLVMInt128Type(),0xffffffffffffffffffffffffffffffffLL,false);
+                //         break;
+                case noisyFloat16:
+                        /*
+                        *       TODO; May be wrong for half float.
+                        */
+                        return LLVMConstReal(LLVMHalfType(),65.504f);
+                        break;
+                case noisyFloat32:
+                        return LLVMConstReal(LLVMFloatType(),FLT_MAX);
+                        break;
+                case noisyFloat64:
+                        return LLVMConstReal(LLVMDoubleType(),DBL_MAX);
+                        break;
+                case noisyFloat128:
+                        return LLVMConstReal(LLVMFP128Type(),LDBL_MAX);
+                        break;
+                default:
+                        break;
+                }
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PtypeMinExpr)
+        {
+                NoisyType exprType = getNoisyTypeFromBasicType(LL(noisyFactorNode));
+                switch (exprType.basicType)
+                {
+                case noisyBool:
+                        return LLVMConstInt(LLVMInt1Type(),0,false);
+                        break;
+                case noisyInt4:
+                        return LLVMConstInt(LLVMIntType(4),-7,true);
+                        break;
+                case noisyInt8:
+                        return LLVMConstInt(LLVMInt8Type(),-127,true);
+                        break;
+                case noisyInt16:
+                        return LLVMConstInt(LLVMInt16Type(),-32767,true);
+                        break;
+                case noisyInt32:
+                        return LLVMConstInt(LLVMInt32Type(),-2147483647,true);
+                        break;
+                case noisyInt64:
+                        return LLVMConstInt(LLVMInt64Type(),-9223372036854775807,true);
+                        break;
+                // case noisyInt128:
+                //         return LLVMConstInt(LLVMInt128Type(),0x10000000000000000000000000000000,true);
+                //         break;
+                case noisyNat4:
+                        return LLVMConstInt(LLVMIntType(4),0,false);
+                        break;
+                case noisyNat8:
+                        return LLVMConstInt(LLVMInt8Type(),0,false);
+                        break;
+                case noisyNat16:
+                        return LLVMConstInt(LLVMInt16Type(),0,false);
+                        break;
+                case noisyNat32:
+                        return LLVMConstInt(LLVMInt32Type(),0,false);
+                        break;
+                case noisyNat64:
+                        return LLVMConstInt(LLVMInt64Type(),0,false);
+                        break;
+                case noisyNat128:
+                        return LLVMConstInt(LLVMInt128Type(),0,false);
+                        break;
+                case noisyFloat16:
+                        /*
+                        *       TODO; May be wrong for half float.
+                        */
+                        return LLVMConstReal(LLVMHalfType(),-65.504f);
+                        break;
+                case noisyFloat32:
+                        return LLVMConstReal(LLVMFloatType(),FLT_MIN);
+                        break;
+                case noisyFloat64:
+                        return LLVMConstReal(LLVMDoubleType(),DBL_MIN);
+                        break;
+                case noisyFloat128:
+                        return LLVMConstReal(LLVMFP128Type(),LDBL_MIN);
+                        break;
+                default:
+                        break;
+                }
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_Tnil)
+        {
+                return LLVMConstNull(nilType);
+        }
+        return LLVMConstInt(LLVMInt32Type(),42,true);
+}
+
+LLVMValueRef
+noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
+{
+        IrNode * factorNode = NULL;
+        // IrNode * unaryOpNode = NULL;
+
+        /*
+        *       This flag is needed because the form of the tree is different based on whether a prefix exists
+        *       on the term expression.
+        */
+        // bool prefixExists = false;
+
+        if (L(noisyTermNode)->type == kNoisyIrNodeType_PbasicType)
+        {
+                // prefixExists = true;
+        }
+
+        if (L(noisyTermNode)->type == kNoisyIrNodeType_Pfactor)
+        {
+                factorNode = L(noisyTermNode);
+        }
+        else if (R(noisyTermNode)->type == kNoisyIrNodeType_Pfactor)
+        {
+                factorNode = R(noisyTermNode);
+                if (L(noisyTermNode)->type == kNoisyIrNodeType_PunaryOp)
+                {
+                        // unaryOpNode = L(noisyTermNode);
+                        // prefixExists = true;
+                }
+        }
+        else if (RR(noisyTermNode)->type == kNoisyIrNodeType_Pfactor)
+        {
+
+                factorNode = RR(noisyTermNode);
+                if (RL(noisyTermNode)->type == kNoisyIrNodeType_PunaryOp)
+                {
+                        // unaryOpNode = RL(noisyTermNode);
+                        // prefixExists = true;
+                }
+        }
+
+        /*
+        *       TODO; Change 3rd argument.
+        */
+        return noisyFactorCodeGen(N,S,factorNode,LLVMInt32Type());
+}
+
+
+LLVMValueRef
+noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
+{
+        if (L(noisyExpressionNode)->type == kNoisyIrNodeType_Pterm)
+        {
+                noisyTermCodeGen(N,S,L(noisyExpressionNode));
+        }
+        else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PanonAggrCastExpr)
+        {
+
+        }
+        else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PloadExpr)
+        {
+
+        }
+        return LLVMConstInt(LLVMInt32Type(),42,true);
+}
+
+void
+noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssignmentStatementNode)
+{
+        if (R(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_Xseq)
+        {
+                /*
+                *       If it is an actual assignment and not a declaration
+                */
+                if (RLL(noisyAssignmentStatementNode)->type != kNoisyIrNodeType_TcolonAssign)
+                {
+                        /*
+                        *      Eval expression. Store the result.
+                        */
+                        noisyExpressionCodeGen(N,S,RRL(noisyAssignmentStatementNode));
+                }
+        }
+        else
+        {
+                for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
+                {
+                        if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
+                        {
+                                Symbol * identifierSymbol = LLL(iter)->symbol;
+                                if (identifierSymbol->noisyType.basicType != noisyArrayType)
+                                {
+                                        char * name;
+                                        asprintf(&name,"var_%s",identifierSymbol->identifier);
+                                        identifierSymbol->llvmPointer = LLVMBuildAlloca(S->theBuilder,getLLVMTypeFromNoisyType(identifierSymbol->noisyType),name);
+                                }
+                                /*
+                                *       TODO; Add array allocation
+                                */
+                        }
+                }
+        }
 }
 
 void
@@ -351,7 +624,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
                         return ;
                 }
         }
-
+        S->currentFunction = func;
         LLVMBasicBlockRef funcEntry = LLVMAppendBasicBlock(func, "entry");
         LLVMPositionBuilderAtEnd(S->theBuilder, funcEntry);
 
