@@ -33,7 +33,7 @@ void noisyStatementListCodeGen(State * N, CodeGenState * S,IrNode * statementLis
 LLVMValueRef noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode);
 
 LLVMTypeRef
-getLLVMTypeFromNoisyType(NoisyType noisyType)
+getLLVMTypeFromNoisyType(NoisyType noisyType,bool byRef,int limit)
 {
         LLVMTypeRef llvmType;
         NoisyType basicTypeHelper;
@@ -55,6 +55,7 @@ getLLVMTypeFromNoisyType(NoisyType noisyType)
                 llvmType = LLVMInt16Type();
                 break;
         case noisyInt32:
+        case noisyIntegerConstType:
         case noisyNat32:
                 llvmType = LLVMInt32Type();
                 break;
@@ -70,6 +71,7 @@ getLLVMTypeFromNoisyType(NoisyType noisyType)
                 llvmType = LLVMHalfType();
                 break;
         case noisyFloat32:
+        case noisyRealConstType:
                 llvmType = LLVMFloatType();
                 break;
         case noisyFloat64:
@@ -82,13 +84,25 @@ getLLVMTypeFromNoisyType(NoisyType noisyType)
                 llvmType = LLVMPointerType(LLVMInt8Type(),0);
                 break;
         case noisyArrayType:
-                basicTypeHelper.basicType = noisyType.arrayType;
-                llvmType = getLLVMTypeFromNoisyType(basicTypeHelper);
-                for (int i = noisyType.dimensions-1; i >= 1; i--)
+                if (byRef)
                 {
-                        llvmType = LLVMArrayType(llvmType,noisyType.sizeOfDimension[i]);
+                        basicTypeHelper.basicType = noisyType.arrayType;
+                        llvmType = getLLVMTypeFromNoisyType(basicTypeHelper,false,0);
+                        for (int i = noisyType.dimensions-1; i >= 1+limit; i--)
+                        {
+                                llvmType = LLVMArrayType(llvmType,noisyType.sizeOfDimension[i]);
+                        }
+                        llvmType = LLVMPointerType(llvmType,0);
                 }
-                llvmType = LLVMPointerType(llvmType,0);
+                else
+                {
+                        basicTypeHelper.basicType = noisyType.arrayType;
+                        llvmType = getLLVMTypeFromNoisyType(basicTypeHelper,false,0);
+                        for (int i = noisyType.dimensions-1; i >= limit; i--)
+                        {
+                                llvmType = LLVMArrayType(llvmType,noisyType.sizeOfDimension[i]);
+                        }
+                }
                 break;
         default:
                 break;
@@ -114,7 +128,7 @@ noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNod
                 for  (IrNode * iter = inputSignature; iter != NULL; iter = RR(iter))
                 {
                         NoisyType typ = getNoisyTypeFromTypeExpr(N,RL(iter));
-                        LLVMTypeRef llvmType = getLLVMTypeFromNoisyType(typ);
+                        LLVMTypeRef llvmType = getLLVMTypeFromNoisyType(typ,true,0);
                         if (llvmType != NULL)
                         {
                                 paramArray[paramIndex] = llvmType;
@@ -140,7 +154,7 @@ noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNod
         {
                 outputBasicType = RL(outputSignature);
                 NoisyType typ = getNoisyTypeFromTypeExpr(N,outputBasicType);
-                returnType = getLLVMTypeFromNoisyType(typ);
+                returnType = getLLVMTypeFromNoisyType(typ,true,0);
         }
         else
         {
@@ -285,11 +299,78 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode, LLVMType
                 {
                         char * name;
                         asprintf(&name,"val_%s",identifierSymbol->identifier);
-                        return LLVMBuildLoad2(S->theBuilder,getLLVMTypeFromNoisyType(identifierSymbol->noisyType),identifierSymbol->llvmPointer,name);
+                        return LLVMBuildLoad2(S->theBuilder,getLLVMTypeFromNoisyType(identifierSymbol->noisyType,false,0),identifierSymbol->llvmPointer,name);
+                }
+                else if (identifierSymbol->noisyType.basicType == noisyArrayType)
+                {
+                        LLVMTypeRef arrayType;
+                        LLVMValueRef arrayPtr = identifierSymbol->llvmPointer;
+                        int lim = 0;
+                        for (IrNode * iter = LR(noisyFactorNode); iter != NULL; iter = R(iter))
+                        {
+                                LLVMValueRef idxValue = noisyExpressionCodeGen(N,S,LR(iter));
+                                LLVMValueRef idxValueList[] = {LLVMConstInt(LLVMInt32Type(),0,false) ,idxValue};
+                                idxValueList[1] = idxValue;
+                                arrayType = getLLVMTypeFromNoisyType(identifierSymbol->noisyType,false,lim);
+                                arrayPtr = LLVMBuildGEP2(S->theBuilder,arrayType,arrayPtr,idxValueList,2,"k_arrIdx");   
+                                lim++;
+                        }
+                        char * name;
+                        asprintf(&name,"val_%s",identifierSymbol->identifier);
+                        NoisyType retType;
+                        retType.basicType = identifierSymbol->noisyType.arrayType;
+                        return LLVMBuildLoad2(S->theBuilder,getLLVMTypeFromNoisyType(retType,false,0),arrayPtr,name);
                 }
                 /*
-                *       TODO; ArrayType and NamegenType
+                *       TODO; NamegenType.
                 */
+        }
+        else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PnamegenInvokeShorthand)
+        {
+                Symbol * functionSymbol = LL(noisyFactorNode)->symbol;
+                IrNode * inputSignature = L(functionSymbol->typeTree);
+                IrNode * outputSignature = R(functionSymbol->typeTree);
+
+                LLVMValueRef * args;
+                LLVMTypeRef * argTyp;
+                if (functionSymbol->parameterNum == 0)
+                {
+                        args = NULL;
+                        argTyp = NULL;
+                }
+                else
+                {
+                        args = calloc(functionSymbol->parameterNum,sizeof(LLVMValueRef));
+                        argTyp = calloc(functionSymbol->parameterNum,sizeof(LLVMTypeRef));
+
+                }
+                for (IrNode * iter = LR(noisyFactorNode); iter != NULL; iter = RR(iter))
+                {
+                        IrNode * argName = L(iter);
+                        IrNode * expr = RL(iter);
+
+                        int pos = 0;
+                        for (IrNode * iter2 = inputSignature; iter2 != NULL; iter2 = RR(iter2))
+                        {
+                                if (!strcmp(L(iter2)->tokenString,argName->tokenString))
+                                {
+                                        break;
+                                }
+                                pos++;
+                        }
+                        args[pos] = noisyExpressionCodeGen(N,S,expr);
+                }
+
+                int i = 0;
+                for (IrNode * iter2 = inputSignature; iter2 != NULL; iter2 = RR(iter2))
+                {
+                        argTyp[i] = getLLVMTypeFromNoisyType(L(iter2)->symbol->noisyType,false,0);
+                        i++;
+                }
+                LLVMTypeRef retType = getLLVMTypeFromNoisyType(outputSignature->irLeftChild->symbol->noisyType,false,0);
+                LLVMTypeRef funcType = LLVMFunctionType(retType,argTyp,i,false);
+
+                return LLVMBuildCall2(S->theBuilder,funcType,functionSymbol->llvmPointer,args,functionSymbol->parameterNum,"k_callFn");
         }
         else if (L(noisyFactorNode)->type == kNoisyIrNodeType_Pexpression)
         {
@@ -481,7 +562,7 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
 {
         if (L(noisyExpressionNode)->type == kNoisyIrNodeType_Pterm)
         {
-                noisyTermCodeGen(N,S,L(noisyExpressionNode));
+                return noisyTermCodeGen(N,S,L(noisyExpressionNode));
         }
         else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PanonAggrCastExpr)
         {
@@ -517,15 +598,12 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                         if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
                         {
                                 Symbol * identifierSymbol = LLL(iter)->symbol;
-                                if (identifierSymbol->noisyType.basicType != noisyArrayType)
+                                if (identifierSymbol->noisyType.basicType != noisyNamegenType)
                                 {
                                         char * name;
                                         asprintf(&name,"var_%s",identifierSymbol->identifier);
-                                        identifierSymbol->llvmPointer = LLVMBuildAlloca(S->theBuilder,getLLVMTypeFromNoisyType(identifierSymbol->noisyType),name);
+                                        identifierSymbol->llvmPointer = LLVMBuildAlloca(S->theBuilder,getLLVMTypeFromNoisyType(identifierSymbol->noisyType,false,0),name);
                                 }
-                                /*
-                                *       TODO; Add array allocation
-                                */
                         }
                 }
         }
@@ -625,6 +703,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
                 }
         }
         S->currentFunction = func;
+        L(noisyFunctionDefnNode)->symbol->llvmPointer = func;
         LLVMBasicBlockRef funcEntry = LLVMAppendBasicBlock(func, "entry");
         LLVMPositionBuilderAtEnd(S->theBuilder, funcEntry);
 
