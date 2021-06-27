@@ -541,6 +541,7 @@ noisyArgumentMatchesSignature(State * N, IrNode * argName,IrNode * expr,IrNode *
                         NoisyType typeExprType = getNoisyTypeFromTypeExpr(N,RL(iter));
                         if (noisyTypeEquals(typeExprType,getNoisyTypeFromExpression(N,expr,currentScope)))
                         {
+                                L(iter)->symbol->noisyType = typeExprType;
                                 return true;
                         }
                 }
@@ -734,7 +735,8 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                 }
                 else
                 {
-                        factorType = getNoisyTypeFromTypeExpr(N,RL(outputSignature));        
+                        factorType = getNoisyTypeFromTypeExpr(N,RL(outputSignature));
+                        L(outputSignature)->symbol->noisyType = factorType;
                 }
                 
         }
