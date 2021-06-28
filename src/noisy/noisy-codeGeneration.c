@@ -32,6 +32,23 @@ LLVMTypeRef getLLVMTypeFromTypeExpr(State *, IrNode *);
 void noisyStatementListCodeGen(State * N, CodeGenState * S,IrNode * statementListNode);
 LLVMValueRef noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode);
 
+NoisyType
+findConstantNoisyType(IrNode * constantNode)
+{
+        if (constantNode->noisyType.basicType > noisyInitType && constantNode->noisyType.basicType != noisyRealConstType && constantNode->noisyType.basicType != noisyIntegerConstType)
+        {
+                return constantNode->noisyType;
+        }
+        else if (constantNode->type == kNoisyIrNodeType_Pexpression)
+        {
+                return constantNode->noisyType;
+        }
+        else
+        {
+                return findConstantNoisyType(constantNode->irParent);
+        }
+}
+
 LLVMTypeRef
 getLLVMTypeFromNoisyType(NoisyType noisyType,bool byRef,int limit)
 {
@@ -274,11 +291,14 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode, LLVMType
 {
         if (L(noisyFactorNode)->type == kNoisyIrNodeType_TintegerConst)
         {
-                return LLVMConstInt(LLVMInt32Type(),L(noisyFactorNode)->token->integerConst,true);
+                /*
+                *       TODO; find a way to change integer and float constant type.
+                */
+                return LLVMConstInt(getLLVMTypeFromNoisyType(findConstantNoisyType(L(noisyFactorNode)),0,false),L(noisyFactorNode)->token->integerConst,true);
         }
         else if (L(noisyFactorNode)->type == kNoisyIrNodeType_TrealConst)
         {
-                return LLVMConstReal(LLVMFloatType(), L(noisyFactorNode)->token->realConst);
+                return LLVMConstReal(getLLVMTypeFromNoisyType(findConstantNoisyType(L(noisyFactorNode)),0,false), L(noisyFactorNode)->token->realConst);
         }
         else if (L(noisyFactorNode)->type == kNoisyIrNodeType_TstringConst)
         {
@@ -360,17 +380,22 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode, LLVMType
                         }
                         args[pos] = noisyExpressionCodeGen(N,S,expr);
                 }
-
                 int i = 0;
-                for (IrNode * iter2 = inputSignature; iter2 != NULL; iter2 = RR(iter2))
+                if (functionSymbol->parameterNum != 0)
                 {
-                        argTyp[i] = getLLVMTypeFromNoisyType(L(iter2)->symbol->noisyType,false,0);
-                        i++;
+                        for (IrNode * iter2 = inputSignature; iter2 != NULL; iter2 = RR(iter2))
+                        {
+                                argTyp[i] = getLLVMTypeFromNoisyType(L(iter2)->symbol->noisyType,false,0);
+                                i++;
+                        }
                 }
-                LLVMTypeRef retType = getLLVMTypeFromNoisyType(outputSignature->irLeftChild->symbol->noisyType,false,0);
+                LLVMTypeRef retType = (outputSignature->irLeftChild->type == kNoisyIrNodeType_Tnil) ? 
+                                                                                retType = LLVMVoidType()
+                                                                                : getLLVMTypeFromNoisyType(outputSignature->irLeftChild->symbol->noisyType,false,0);
+
                 LLVMTypeRef funcType = LLVMFunctionType(retType,argTyp,i,false);
 
-                return LLVMBuildCall2(S->theBuilder,funcType,functionSymbol->llvmPointer,args,functionSymbol->parameterNum,"k_callFn");
+                return LLVMBuildCall2(S->theBuilder,funcType,functionSymbol->llvmPointer,args,functionSymbol->parameterNum,"");
         }
         else if (L(noisyFactorNode)->type == kNoisyIrNodeType_Pexpression)
         {
@@ -506,24 +531,74 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode, LLVMType
         {
                 return LLVMConstNull(nilType);
         }
-        return LLVMConstInt(LLVMInt32Type(),42,true);
+        /*
+        *       TODO; We reach here when we call channel ops.
+        */
+        return LLVMConstNull(LLVMInt32Type());
 }
 
 LLVMValueRef
-noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
+noisyUnaryOpCodeGen(State * N, CodeGenState * S,IrNode * noisyUnaryOpNode, LLVMValueRef termVal, IrNode * noisyFactorNode)
+{
+        LLVMTypeRef factorType = getLLVMTypeFromNoisyType(findConstantNoisyType(noisyFactorNode),0,false);
+        switch (L(noisyUnaryOpNode)->type)
+        {
+        /*
+        *       case kNoisyIrNodeType_Tplus: Does not do anything.
+        */
+        case kNoisyIrNodeType_Tminus:
+                if (noisyIsOfType(noisyFactorNode->noisyType,noisyIntegerConstType))
+                {
+                        /*
+                        *       Complement of 2.
+                        */
+                        LLVMValueRef complOf1 = LLVMBuildXor(S->theBuilder,termVal,LLVMConstInt(factorType,1,false),"");
+                        return LLVMBuildAdd(S->theBuilder,complOf1,LLVMConstInt(factorType,1,true),"k_negRes");
+                }
+                else
+                {
+                        return LLVMBuildFNeg(S->theBuilder,termVal,"k_negRes");
+                }
+                break;
+        case kNoisyIrNodeType_Ttilde:
+                /*
+                *       We use term XOR 1 for bitwise negation.
+                */
+                return LLVMBuildXor(S->theBuilder,termVal,LLVMConstInt(factorType,1,false),"k_notRes");
+                break;
+        case kNoisyIrNodeType_PunaryBoolOp:
+                /*
+                *       We only have 1 unary boolean operator the "!"-negation operator.
+                */
+                return LLVMBuildXor(S->theBuilder,termVal,LLVMConstInt(LLVMInt1Type(),1,false),"k_notRes");
+                break;
+        default:
+                /*
+                *       TODO; length sort reverse (library calls probably) and channel operator
+                */
+                return termVal;
+                break;
+        }
+}
+
+
+LLVMValueRef
+noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode, LLVMTypeRef lvalType)
 {
         IrNode * factorNode = NULL;
-        // IrNode * unaryOpNode = NULL;
+        IrNode * unaryOpNode = NULL;
+        bool typeCast = false;
 
         /*
         *       This flag is needed because the form of the tree is different based on whether a prefix exists
         *       on the term expression.
         */
-        // bool prefixExists = false;
+        bool prefixExists = false;
 
         if (L(noisyTermNode)->type == kNoisyIrNodeType_PbasicType)
         {
-                // prefixExists = true;
+                typeCast = true;
+                prefixExists = true;
         }
 
         if (L(noisyTermNode)->type == kNoisyIrNodeType_Pfactor)
@@ -535,8 +610,8 @@ noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
                 factorNode = R(noisyTermNode);
                 if (L(noisyTermNode)->type == kNoisyIrNodeType_PunaryOp)
                 {
-                        // unaryOpNode = L(noisyTermNode);
-                        // prefixExists = true;
+                        unaryOpNode = L(noisyTermNode);
+                        prefixExists = true;
                 }
         }
         else if (RR(noisyTermNode)->type == kNoisyIrNodeType_Pfactor)
@@ -545,15 +620,103 @@ noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
                 factorNode = RR(noisyTermNode);
                 if (RL(noisyTermNode)->type == kNoisyIrNodeType_PunaryOp)
                 {
-                        // unaryOpNode = RL(noisyTermNode);
-                        // prefixExists = true;
+                        unaryOpNode = RL(noisyTermNode);
+                        prefixExists = true;
                 }
         }
 
         /*
         *       TODO; Change 3rd argument.
         */
-        return noisyFactorCodeGen(N,S,factorNode,LLVMInt32Type());
+        LLVMValueRef termVal = noisyFactorCodeGen(N,S,factorNode,lvalType);
+
+        for (IrNode * iter = prefixExists ? R(factorNode) : R(noisyTermNode) ; iter != NULL; iter = RR(iter))
+        {
+                LLVMValueRef factorIterVal = noisyFactorCodeGen(N,S,RL(iter),lvalType);
+
+                switch (LL(iter)->type)
+                {
+                case kNoisyIrNodeType_Tasterisk:
+                        if (noisyIsOfType(noisyTermNode->noisyType,noisyIntegerConstType))
+                        {
+                                termVal = LLVMBuildMul(S->theBuilder,termVal,factorIterVal,"k_mulRes");
+                        }
+                        else
+                        {
+                                termVal = LLVMBuildFMul(S->theBuilder,termVal,factorIterVal,"k_mulRes");
+                        }
+                        break;
+                case kNoisyIrNodeType_Tdivide:
+                        if (noisyIsOfType(noisyTermNode->noisyType,noisyIntegerConstType))
+                        {
+                                if (noisyIsSigned(noisyTermNode->noisyType))
+                                {
+                                        termVal = LLVMBuildSDiv(S->theBuilder,termVal,factorIterVal,"k_divRes");
+                                }
+                                else
+                                {
+                                        termVal = LLVMBuildUDiv(S->theBuilder,termVal,factorIterVal,"k_divRes");
+                                }
+                        }
+                        else
+                        {
+                                termVal = LLVMBuildFDiv(S->theBuilder,termVal,factorIterVal,"k_divRes"); 
+                        }
+                        break;
+                case kNoisyIrNodeType_Tpercent:
+                        if (noisyIsOfType(noisyTermNode->noisyType,noisyIntegerConstType))
+                        {
+                                if (noisyIsSigned(noisyTermNode->noisyType))
+                                {
+                                        termVal = LLVMBuildSRem(S->theBuilder,termVal,factorIterVal,"k_modRes");
+                                }
+                                else
+                                {
+                                        termVal = LLVMBuildURem(S->theBuilder,termVal,factorIterVal,"k_modRes");
+                                }
+                        }
+                        else
+                        {
+                                /*
+                                *       TODO; I think that type system does not permit us to use remainder for floats.
+                                */
+                                termVal = LLVMBuildFRem(S->theBuilder,termVal,factorIterVal,"k_modRes"); 
+                        }
+                        break;
+                case kNoisyIrNodeType_Tand:
+                        termVal = LLVMBuildAnd(S->theBuilder,termVal,factorIterVal,"k_andRes");
+                        break;
+                case kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp:
+                        switch (LLL(iter)->type)
+                        {
+                        case kNoisyIrNodeType_TlogicalAnd:
+                                termVal = LLVMBuildAnd(S->theBuilder,termVal,factorIterVal,"k_andRes");
+                                /* code */
+                                break;
+                        case kNoisyIrNodeType_Txor:
+                                termVal = LLVMBuildXor(S->theBuilder,termVal,factorIterVal,"k_xorRes");
+                                break;
+                        default:
+                                break;
+                        }
+                        break;
+                default:
+                        break;
+                }
+        }
+
+        if (unaryOpNode != NULL)
+        {
+                termVal = noisyUnaryOpCodeGen(N,S,unaryOpNode,termVal,factorNode);
+        }
+
+        if (typeCast)
+        {
+                /*
+                *       TODO; Add extensions and truncs typeCasts.
+                */
+        }
+        return termVal;
 }
 
 
@@ -562,7 +725,10 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
 {
         if (L(noisyExpressionNode)->type == kNoisyIrNodeType_Pterm)
         {
-                return noisyTermCodeGen(N,S,L(noisyExpressionNode));
+                /*
+                *       TODO; Change 3rd argument. It's dummy value.
+                */
+                return noisyTermCodeGen(N,S,L(noisyExpressionNode),LLVMInt32Type());
         }
         else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PanonAggrCastExpr)
         {
@@ -677,7 +843,7 @@ noisyStatementListCodeGen(State * N, CodeGenState * S,IrNode * statementListNode
 {
         for (IrNode * iter = statementListNode; iter != NULL; iter=R(iter))
         {
-                if (L(iter) != NULL)
+                if (L(iter) != NULL && LL(iter) != NULL)
                 {
                         noisyStatementCodeGen(N,S,L(iter));
                 }
