@@ -274,7 +274,7 @@ noisyIsOfType(NoisyType typ1,NoisyBasicType typeSuperSet)
 bool
 noisyIsSigned(NoisyType typ)
 {
-        return (typ.basicType > noisyInt128 && typ.basicType <= noisyIntegerConstType);
+        return (typ.basicType > noisyInitType && typ.basicType <= noisyInt128);
 }
 /*
 *       Takes two NoisyTypes arguments, compares their basicType
