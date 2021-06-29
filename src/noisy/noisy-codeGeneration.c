@@ -712,9 +712,136 @@ noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode, LLVMTypeRef 
 
         if (typeCast)
         {
-                /*
-                *       TODO; Add extensions and truncs typeCasts.
-                */
+                NoisyType factorType = factorNode->noisyType;
+                NoisyType termType = noisyTermNode->noisyType;
+                LLVMTypeRef destType = getLLVMTypeFromNoisyType(termType,false,0);
+                if (noisyIsOfType(factorType,noisyIntegerConstType))
+                {
+                        if (noisyIsOfType(termType,noisyIntegerConstType))
+                        {
+                                if (noisyIsSigned(factorType))
+                                {
+                                        if (noisyIsSigned(termType))
+                                        {
+                                                /*
+                                                *       Convert from signed to signed.
+                                                */
+                                                if (factorType.basicType <= termType.basicType)
+                                                {
+                                                        /*
+                                                        *       Convert from smaller to bigger signed integer.
+                                                        */
+                                                        termVal = LLVMBuildSExtOrBitCast(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                                }
+                                                else if (factorType.basicType > termType.basicType)
+                                                {
+                                                        /*
+                                                        *       Convert from bigger integer to smaller.
+                                                        */
+                                                        termVal = LLVMBuildTrunc(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                                }
+                                        }
+                                        else
+                                        {
+                                                /*
+                                                *       Convert from signed to unsigned.
+                                                *       This condition checks if the factorType has less or more bits than termType.
+                                                */
+                                                if (factorType.basicType + 6 < termType.basicType)
+                                                {
+                                                        termVal = LLVMBuildZExt(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                                }
+                                                else if (factorType.basicType + 6 > termType.basicType)
+                                                {
+                                                        /*
+                                                        *       Convert from bigger integer to smaller (from signed to unsigned)
+                                                        */
+                                                        termVal = LLVMBuildTrunc(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                                }
+                                        }
+                                }
+                                else
+                                {
+                                        if (noisyIsSigned(termType))
+                                        {
+                                                /*
+                                                *       Convert from unsigned to signed.
+                                                */
+                                                if (factorType.basicType - 6 < termType.basicType)
+                                                {
+                                                        /*
+                                                        *       Convert from smaller to bigger signed integer.
+                                                        */
+                                                        termVal = LLVMBuildSExtOrBitCast(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                                }
+                                                else if (factorType.basicType - 6 > termType.basicType)
+                                                {
+                                                        /*
+                                                        *       Convert from bigger integer to smaller.
+                                                        */
+                                                        termVal = LLVMBuildTrunc(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                                }
+                                        }
+                                        else
+                                        {
+                                                /*
+                                                *       Convert from unsigned to unsigned.
+                                                */
+                                                if (factorType.basicType <= termType.basicType)
+                                                {
+                                                        termVal = LLVMBuildZExtOrBitCast(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                                }
+                                                else if (factorType.basicType > termType.basicType)
+                                                {
+                                                        /*
+                                                        *       Convert from bigger integer to smaller (from unsigned to unsigned)
+                                                        */
+                                                        termVal = LLVMBuildTrunc(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                                }
+                                        }
+
+                                }
+                        }
+                        else if (noisyIsOfType(termType,noisyRealConstType))
+                        {
+                                /*
+                                *       Convert from integer to float
+                                */
+                                if (noisyIsSigned(factorType))
+                                {
+                                        termVal = LLVMBuildSIToFP(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                }
+                                else
+                                {
+                                        termVal = LLVMBuildUIToFP(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                }
+                        }
+                }
+                else if (noisyIsOfType(factorType,noisyRealConstType))
+                {
+                        if (noisyIsOfType(termType,noisyIntegerConstType))
+                        {
+                                if (noisyIsSigned(termType))
+                                {
+                                        termVal = LLVMBuildFPToSI(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                }
+                                else
+                                {
+                                        termVal = LLVMBuildFPToUI(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                }
+                        }
+                        else if (noisyIsOfType(termType,noisyRealConstType))
+                        {
+                                if (factorType.basicType < termType.basicType)
+                                {
+                                        termVal = LLVMBuildFPExt(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                }
+                                else
+                                {
+                                        termVal = LLVMBuildFPTrunc(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                }
+                        }
+                }
         }
         return termVal;
 }
