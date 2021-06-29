@@ -878,11 +878,11 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                         case kNoisyIrNodeType_Tminus:
                                 if (noisyIsOfType(termNode->noisyType,noisyIntegerConstType))
                                 {
-                                        exprVal = LLVMBuildSub(S->theBuilder,exprVal,termIterVal,"k_sumRes");
+                                        exprVal = LLVMBuildSub(S->theBuilder,exprVal,termIterVal,"k_subRes");
                                 }
                                 else
                                 {
-                                        exprVal = LLVMBuildFSub(S->theBuilder,exprVal,termIterVal,"k_sumRes");
+                                        exprVal = LLVMBuildFSub(S->theBuilder,exprVal,termIterVal,"k_subRes");
                                 }
                                 break;
                         case kNoisyIrNodeType_TrightShift:
@@ -916,7 +916,7 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                                 case kNoisyIrNodeType_TnotEqual:
                                         if (noisyIsOfType(termNode->noisyType,noisyRealConstType))
                                         {
-                                                exprVal = LLVMBuildFCmp(S->theBuilder,LLVMRealONE,exprVal,termIterVal,"k_equalRes");
+                                                exprVal = LLVMBuildFCmp(S->theBuilder,LLVMRealONE,exprVal,termIterVal,"k_notEqualRes");
                                         }
                                         else
                                         {
@@ -1021,23 +1021,149 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                 /*
                 *       If it is an actual assignment and not a declaration
                 */
-                if (RLL(noisyAssignmentStatementNode)->type != kNoisyIrNodeType_TcolonAssign)
+                /*
+                *      Eval expression. Store the result.
+                */
+                LLVMValueRef exprVal = noisyExpressionCodeGen(N,S,RRL(noisyAssignmentStatementNode));
+
+                for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
                 {
-                        /*
-                        *      Eval expression. Store the result.
-                        */
-                        LLVMValueRef exprVal = noisyExpressionCodeGen(N,S,RRL(noisyAssignmentStatementNode));
-                        for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
+                        if (LL(iter)->type == kNoisyIrNodeType_Tnil)
                         {
-                                if (LL(iter)->type == kNoisyIrNodeType_Tnil)
+                                /*
+                                *       When we assign to nil nothing happens(?).
+                                */
+                        }
+                        else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
+                        {
+                                Symbol * lvalSym = LLL(iter)->symbol;
+                                LLVMTypeRef lvalType;
+                                LLVMValueRef lvalVal;
+                                char * name;
+                                switch (RLL(noisyAssignmentStatementNode)->type)
                                 {
-                                        /*
-                                        *       When we assign to nil nothing happens(?).
-                                        */
+                                case kNoisyIrNodeType_TcolonAssign:
+                                        if (lvalSym->noisyType.basicType != noisyNamegenType)
+                                        {
+                                                char * name;
+                                                asprintf(&name,"var_%s",lvalSym->identifier);
+                                                lvalSym->llvmPointer = LLVMBuildAlloca(S->theBuilder,getLLVMTypeFromNoisyType(lvalSym->noisyType,false,0),name);
+                                        }
+                                        break;
+                                case kNoisyIrNodeType_TplusAssign:
+                                        asprintf(&name,"val_%s",lvalSym->identifier);
+                                        lvalType = getLLVMTypeFromNoisyType(lvalSym->noisyType,false,0);
+                                        lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalSym->llvmPointer,name);
+                                        if (noisyIsOfType(lvalSym->noisyType,noisyIntegerConstType))
+                                        {
+                                                exprVal = LLVMBuildAdd(S->theBuilder,lvalVal,exprVal,"k_sumRes");
+                                        }
+                                        else
+                                        {
+                                                exprVal = LLVMBuildFAdd(S->theBuilder,lvalVal,exprVal,"k_sumRes");
+                                        }
+                                        break;
+                                case kNoisyIrNodeType_TminusAssign:
+                                        asprintf(&name,"val_%s",lvalSym->identifier);
+                                        lvalType = getLLVMTypeFromNoisyType(lvalSym->noisyType,false,0);
+                                        lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalSym->llvmPointer,name);
+                                        if (noisyIsOfType(lvalSym->noisyType,noisyIntegerConstType))
+                                        {
+                                                exprVal = LLVMBuildSub(S->theBuilder,lvalVal,exprVal,"k_subRes");
+                                        }
+                                        else
+                                        {
+                                                exprVal = LLVMBuildFSub(S->theBuilder,lvalVal,exprVal,"k_subRes");
+                                        }
+                                        break;
+                                case kNoisyIrNodeType_TasteriskAssign:
+                                        asprintf(&name,"val_%s",lvalSym->identifier);
+                                        lvalType = getLLVMTypeFromNoisyType(lvalSym->noisyType,false,0);
+                                        lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalSym->llvmPointer,name);
+                                        if (noisyIsOfType(lvalSym->noisyType,noisyIntegerConstType))
+                                        {
+                                                exprVal = LLVMBuildMul(S->theBuilder,lvalVal,exprVal,"k_mulRes");
+                                        }
+                                        else
+                                        {
+                                                exprVal = LLVMBuildFMul(S->theBuilder,lvalVal,exprVal,"k_mulRes");
+                                        }
+                                        break;
+                                case kNoisyIrNodeType_TdivideAssign:
+                                        asprintf(&name,"val_%s",lvalSym->identifier);
+                                        lvalType = getLLVMTypeFromNoisyType(lvalSym->noisyType,false,0);
+                                        lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalSym->llvmPointer,name);
+                                        if (noisyIsOfType(lvalSym->noisyType,noisyIntegerConstType))
+                                        {
+                                                if (noisyIsSigned(lvalSym->noisyType))
+                                                {
+                                                        exprVal = LLVMBuildSDiv(S->theBuilder,lvalVal,exprVal,"k_divRes");
+                                                }
+                                                else
+                                                {
+                                                        exprVal = LLVMBuildUDiv(S->theBuilder,lvalVal,exprVal,"k_divRes");
+                                                }
+                                        }
+                                        else
+                                        {
+                                                exprVal = LLVMBuildFDiv(S->theBuilder,lvalVal,exprVal,"k_divRes");
+                                        }
+                                        break;
+                                case kNoisyIrNodeType_TpercentAssign:
+                                        asprintf(&name,"val_%s",lvalSym->identifier);
+                                        lvalType = getLLVMTypeFromNoisyType(lvalSym->noisyType,false,0);
+                                        lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalSym->llvmPointer,name);
+                                        if (noisyIsOfType(lvalSym->noisyType,noisyIntegerConstType))
+                                        {
+                                                if (noisyIsSigned(lvalSym->noisyType))
+                                                {
+                                                        exprVal = LLVMBuildSRem(S->theBuilder,lvalVal,exprVal,"k_modRes");
+                                                }
+                                                else
+                                                {
+                                                        exprVal = LLVMBuildURem(S->theBuilder,lvalVal,exprVal,"k_modRes");
+                                                }
+                                        }
+                                        break;
+                                case kNoisyIrNodeType_TorAssign:
+                                        asprintf(&name,"val_%s",lvalSym->identifier);
+                                        lvalType = getLLVMTypeFromNoisyType(lvalSym->noisyType,false,0);
+                                        lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalSym->llvmPointer,name);
+                                        exprVal = LLVMBuildOr(S->theBuilder,lvalVal,exprVal,"k_orRes");
+                                        break;
+                                case kNoisyIrNodeType_TandAssign:
+                                        asprintf(&name,"val_%s",lvalSym->identifier);
+                                        lvalType = getLLVMTypeFromNoisyType(lvalSym->noisyType,false,0);
+                                        lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalSym->llvmPointer,name);
+                                        exprVal = LLVMBuildAnd(S->theBuilder,lvalVal,exprVal,"k_andRes");
+                                        break;
+                                case kNoisyIrNodeType_TxorAssign:
+                                        asprintf(&name,"val_%s",lvalSym->identifier);
+                                        lvalType = getLLVMTypeFromNoisyType(lvalSym->noisyType,false,0);
+                                        lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalSym->llvmPointer,name);
+                                        exprVal = LLVMBuildXor(S->theBuilder,lvalVal,exprVal,"k_xorRes");
+                                        break;
+                                case kNoisyIrNodeType_TleftShiftAssign:
+                                        asprintf(&name,"val_%s",lvalSym->identifier);
+                                        lvalType = getLLVMTypeFromNoisyType(lvalSym->noisyType,false,0);
+                                        lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalSym->llvmPointer,name);
+                                        exprVal = LLVMBuildShl(S->theBuilder,lvalVal,exprVal,"k_lShiftRes");
+                                        break;
+                                case kNoisyIrNodeType_TrightShiftAssign:
+                                        asprintf(&name,"val_%s",lvalSym->identifier);
+                                        lvalType = getLLVMTypeFromNoisyType(lvalSym->noisyType,false,0);
+                                        lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalSym->llvmPointer,name);
+                                        exprVal = LLVMBuildLShr(S->theBuilder,lvalVal,exprVal,"k_lShiftRes");
+                                        break;
+                                /*
+                                *       TODO; Channel operator assign.
+                                */
+                                default:
+                                        break;
                                 }
-                                else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
+                                if (lvalSym->noisyType.basicType != noisyNamegenType && lvalSym->noisyType.basicType != noisyArrayType)
                                 {
-                                        LLVMBuildStore(S->theBuilder,exprVal,LLL(iter)->symbol->llvmPointer);
+                                        LLVMBuildStore(S->theBuilder,exprVal,lvalSym->llvmPointer);
                                 }
                         }
                 }
