@@ -1028,9 +1028,6 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                 {
                                 case kNoisyIrNodeType_Tplus:
                                 case kNoisyIrNodeType_Tminus:
-                                case kNoisyIrNodeType_TrightShift:
-                                case kNoisyIrNodeType_TleftShift:
-                                case kNoisyIrNodeType_TbitwiseOr:
                                         if (!noisyIsOfType(returnType,noisyArithType))
                                         {
                                                 if (L(operatorNode)->type == kNoisyIrNodeType_Tplus && returnType.basicType == noisyString)
@@ -1051,6 +1048,18 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                         /*
                                         *       returnType = typ1;
                                         */
+                                        break;
+                                case kNoisyIrNodeType_TrightShift:
+                                case kNoisyIrNodeType_TleftShift:
+                                case kNoisyIrNodeType_TbitwiseOr:
+                                        if (!noisyIsOfType(returnType,noisyIntegerConstType))
+                                        {
+                                                char *	details;
+
+                                                asprintf(&details, "Operator \"%s\" and operands type mismatch\n",L(operatorNode)->tokenString);
+                                                noisySemanticError(N,L(noisyExpressionNode),details);
+                                                noisySemanticErrorRecovery(N);
+                                        }
                                         break;
                                 case kNoisyIrNodeType_PcmpOp:
                                         if (LL(operatorNode)->type == kNoisyIrNodeType_Tequals
