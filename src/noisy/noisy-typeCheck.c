@@ -1572,8 +1572,9 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
         {
                 if (RLL(noisyAssignmentStatementNode)->type != kNoisyIrNodeType_TcolonAssign)
                 {
-                        NoisyType lValuetype, rValueType;
+                        NoisyType lValueType, rValueType, prevLVal;
                         rValueType = getNoisyTypeFromExpression(N,RRL(noisyAssignmentStatementNode),currentScope);
+                        bool firstTime = true;
                         for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
                         {
                                 if (LL(iter)->type == kNoisyIrNodeType_Tnil)
@@ -1584,36 +1585,67 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                 }
                                 else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
                                 {
+                                        prevLVal = lValueType;
                                         if (LLL(iter)->symbol->typeTree != NULL){
-                                                lValuetype = getNoisyTypeFromTypeExpr(N,LLL(iter)->symbol->typeTree);
+                                                lValueType = getNoisyTypeFromTypeExpr(N,LLL(iter)->symbol->typeTree);
                                         }
                                         else
                                         {
-                                                lValuetype = LLL(iter)->symbol->noisyType;
+                                                lValueType = LLL(iter)->symbol->noisyType;
                                         }
                                         
-                                        if (noisyTypeEquals(lValuetype,rValueType))
+                                        if (!firstTime && !noisyTypeEquals(lValueType,prevLVal))
+                                        {
+                                                char *	details;
+
+                                                asprintf(&details, "Cannot have different lvalue types on assignment\n");
+                                                noisySemanticError(N,LLL(iter),details);
+                                                noisySemanticErrorRecovery(N);
+                                        }
+                                        firstTime = false;
+                                        if (noisyTypeEquals(lValueType,rValueType))
                                         {
                                                 if (RLL(noisyAssignmentStatementNode)->type != kNoisyIrNodeType_Tassign
                                                 && RLL(noisyAssignmentStatementNode)->type != kNoisyIrNodeType_TchannelOperatorAssign)
                                                 {
-                                                        /*
-                                                        *       For  "^=", "|=", "&=", "%=", "/=", "*=", "-=", "+=", ">>=", "<<=" 
-                                                        *       operators, values need to have arithmetic type.
-                                                        */
-                                                        if (!noisyIsOfType(lValuetype,noisyArithType))
+                                                        if (RLL(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_TplusAssign
+                                                        || RLL(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_TminusAssign
+                                                        || RLL(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_TasteriskAssign
+                                                        || RLL(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_TdivideAssign)
                                                         {
-                                                                char *	details;
+                                                                /*
+                                                                *       For "/=", "*=", "-=", "+="
+                                                                *       operators, values need to have arithmetic type.
+                                                                */
+                                                                if (!noisyIsOfType(lValueType,noisyArithType))
+                                                                {
+                                                                        char *	details;
 
-                                                                asprintf(&details, "Type operator and operand mismatch on assignment\n");
-                                                                noisySemanticError(N,LL(iter),details);
-                                                                noisySemanticErrorRecovery(N);
+                                                                        asprintf(&details, "Type operator and operand mismatch on assignment\n");
+                                                                        noisySemanticError(N,LL(iter),details);
+                                                                        noisySemanticErrorRecovery(N);
+                                                                }
+                                                        }
+                                                        else
+                                                        {
+                                                                /*
+                                                                *       For "^=", "|=", "&=", "%=", ">>=", "<<=" 
+                                                                *       operators, values need to have integer type.
+                                                                */
+                                                                if (!noisyIsOfType(lValueType,noisyIntegerConstType))
+                                                                {
+                                                                        char *	details;
+
+                                                                        asprintf(&details, "Type operator and operand mismatch on assignment\n");
+                                                                        noisySemanticError(N,LL(iter),details);
+                                                                        noisySemanticErrorRecovery(N);
+                                                                }
                                                         }
                                                 }
                                         }
                                         else if (RLL(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_TchannelOperatorAssign)
                                         {
-                                                if (lValuetype.basicType != noisyNamegenType)
+                                                if (lValueType.basicType != noisyNamegenType)
                                                 {
                                                         char *	details;
 
@@ -1621,7 +1653,7 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                                         noisySemanticError(N,LL(iter),details);
                                                         noisySemanticErrorRecovery(N);
                                                 }
-                                                if (lValuetype.functionDefinition->parameterNum != 1)
+                                                if (lValueType.functionDefinition->parameterNum != 1)
                                                 {
                                                         char *	details;
 
@@ -1629,7 +1661,7 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                                         noisySemanticError(N,LL(iter),details);
                                                         noisySemanticErrorRecovery(N);
                                                 }
-                                                if (!noisyTypeEquals(getNoisyTypeFromTypeExpr(N,LRL(lValuetype.functionDefinition->typeTree)),rValueType))
+                                                if (!noisyTypeEquals(getNoisyTypeFromTypeExpr(N,LRL(lValueType.functionDefinition->typeTree)),rValueType))
                                                 {
                                                         char *	details;
 
@@ -1653,11 +1685,11 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                                 noisySemanticError(N,LL(iter),details);
                                                 noisySemanticErrorRecovery(N);
                                         }
-                                        LLL(iter)->symbol->noisyType = lValuetype;
+                                        LLL(iter)->symbol->noisyType = lValueType;
                                         /*
                                         *       We assign to the expression the noisyType so we can find the appropriate type for constants.
                                         */
-                                        RRL(noisyAssignmentStatementNode)->noisyType = lValuetype;
+                                        RRL(noisyAssignmentStatementNode)->noisyType = lValueType;
                                 }
                         }
                 }
