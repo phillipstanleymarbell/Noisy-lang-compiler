@@ -859,21 +859,21 @@ typedef enum
         noisyInt32,
         noisyInt64,
         noisyInt128,
-        noisyIntegerConstType,
         noisyNat4,
         noisyNat8,
         noisyNat16,
         noisyNat32,
         noisyNat64,
         noisyNat128,
+        noisyIntegerConstType,
         noisyFloat16,
         noisyFloat32,
         noisyFloat64,
         noisyFloat128,
         noisyRealConstType,
+        noisyArithType,
         noisyString,
         noisyArrayType,
-        noisyArithType,
         noisyNilType,
 	noisyNamegenType,
         noisyTypeError
@@ -1050,6 +1050,7 @@ struct IrNode
 	 *	Used for evaluating dimensions in expressions
 	 */
 	Physics *		physics;
+	NoisyType		noisyType;
 
 	/*
 	 *	Used for connecting invariant parameters to signals.
