@@ -1594,6 +1594,49 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                                 lValueType = LLL(iter)->symbol->noisyType;
                                         }
                                         
+
+                                        if (lValueType.basicType == noisyArrayType)
+                                        {
+                                                // arrayLvalType = lValueType;
+                                                int dims = 0;
+                                                for (IrNode * iter2 = LLR(iter); iter2 != NULL; iter2 = R(iter2))
+                                                {
+                                                        if (! noisyIsOfType(getNoisyTypeFromExpression(N,LR(iter2),currentScope), noisyIntegerConstType))
+                                                        {
+                                                                /*
+                                                                *       Indexes are not integers error.
+                                                                */
+                                                                char *	details;
+
+                                                                asprintf(&details, "Indexing \"%s\" array with a non-integer expression\n",LLL(iter)->symbol->identifier);
+                                                                noisySemanticError(N,iter,details);
+                                                                noisySemanticErrorRecovery(N);
+                                                                // factorType.basicType = noisyTypeError;
+                                                        }
+                                                        dims++;
+                                                }
+
+                                                lValueType.dimensions -= dims;
+                                                /*
+                                                *       If there are no type errors on array indexing we the arrayType of the array.
+                                                *       e.g. when we index an array of int32 the factor we return has type int32.
+                                                */
+                                                if (lValueType.dimensions == 0)
+                                                {
+                                                        lValueType.basicType = lValueType.arrayType;
+                                                }
+                                                else if (lValueType.dimensions < 0 )
+                                                {
+                                                        /*
+                                                        *       Indexing dimension error.
+                                                        */
+                                                        char *	details;
+
+                                                        asprintf(&details, "Dimensions of array \"%s\" dont match\n",LLL(iter)->symbol->identifier);
+                                                        noisySemanticError(N,LL(iter),details);
+                                                        noisySemanticErrorRecovery(N);
+                                                }
+                                        }
                                         if (!firstTime && !noisyTypeEquals(lValueType,prevLVal))
                                         {
                                                 char *	details;
@@ -1685,7 +1728,12 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                                 noisySemanticError(N,LL(iter),details);
                                                 noisySemanticErrorRecovery(N);
                                         }
-                                        LLL(iter)->symbol->noisyType = lValueType;
+                                        /*
+                                        *       We need to save the symbol type only on declarations of variables.
+                                        *       For assignments we only save the lvalType on the rval expression node
+                                        *       so we can use it as  a way to find integer and float constant types during code gen.
+                                        */
+
                                         /*
                                         *       We assign to the expression the noisyType so we can find the appropriate type for constants.
                                         */
