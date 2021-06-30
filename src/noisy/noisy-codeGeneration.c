@@ -198,6 +198,24 @@ noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNod
         return func;
 }
 
+LLVMValueRef
+noisyGetArrayPositionPointer(State * N,CodeGenState * S, Symbol * arraySym,IrNode * noisyQualifiedIdentifierNode)
+{
+        LLVMTypeRef arrayType;
+        LLVMValueRef arrayPtr = arraySym->llvmPointer;
+        int lim = 0;
+        for (IrNode * iter = R(noisyQualifiedIdentifierNode); iter != NULL; iter = R(iter))
+        {
+                LLVMValueRef idxValue = noisyExpressionCodeGen(N,S,LR(iter));
+                LLVMValueRef idxValueList[] = {LLVMConstInt(LLVMInt32Type(),0,false) ,idxValue};
+                idxValueList[1] = idxValue;
+                arrayType = getLLVMTypeFromNoisyType(arraySym->noisyType,false,lim);
+                arrayPtr = LLVMBuildGEP2(S->theBuilder,arrayType,arrayPtr,idxValueList,2,"k_arrIdx");
+                lim++;
+        }
+        return arrayPtr;
+}
+
 void
 noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleTypeNameDeclNode)
 {
@@ -323,18 +341,7 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                 }
                 else if (identifierSymbol->noisyType.basicType == noisyArrayType)
                 {
-                        LLVMTypeRef arrayType;
-                        LLVMValueRef arrayPtr = identifierSymbol->llvmPointer;
-                        int lim = 0;
-                        for (IrNode * iter = LR(noisyFactorNode); iter != NULL; iter = R(iter))
-                        {
-                                LLVMValueRef idxValue = noisyExpressionCodeGen(N,S,LR(iter));
-                                LLVMValueRef idxValueList[] = {LLVMConstInt(LLVMInt32Type(),0,false) ,idxValue};
-                                idxValueList[1] = idxValue;
-                                arrayType = getLLVMTypeFromNoisyType(identifierSymbol->noisyType,false,lim);
-                                arrayPtr = LLVMBuildGEP2(S->theBuilder,arrayType,arrayPtr,idxValueList,2,"k_arrIdx");   
-                                lim++;
-                        }
+                        LLVMValueRef arrayPtr = noisyGetArrayPositionPointer(N,S,identifierSymbol,L(noisyFactorNode));
                         char * name;
                         asprintf(&name,"val_%s",identifierSymbol->identifier);
                         NoisyType retType;
@@ -625,9 +632,6 @@ noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
                 }
         }
 
-        /*
-        *       TODO; Change 3rd argument.
-        */
         LLVMValueRef termVal = noisyFactorCodeGen(N,S,factorNode);
 
         for (IrNode * iter = prefixExists ? R(factorNode) : R(noisyTermNode) ; iter != NULL; iter = RR(iter))
@@ -1164,6 +1168,10 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 if (lvalSym->noisyType.basicType != noisyNamegenType && lvalSym->noisyType.basicType != noisyArrayType)
                                 {
                                         LLVMBuildStore(S->theBuilder,exprVal,lvalSym->llvmPointer);
+                                }
+                                else if (lvalSym->noisyType.basicType == noisyArrayType)
+                                {
+                                        LLVMBuildStore(S->theBuilder,exprVal,noisyGetArrayPositionPointer(N,S,lvalSym,LL(iter)));
                                 }
                         }
                 }
