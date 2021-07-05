@@ -1073,6 +1073,11 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                                         noisySemanticError(N,L(noisyExpressionNode),details);
                                                         noisySemanticErrorRecovery(N);
                                                 }
+                                                /*
+                                                *       This type assignment happens here so we can find constants' type.
+                                                */
+                                                RL(iter)->noisyType = returnType;
+                                                returnType.basicType = noisyBool;
                                         }
                                         else if (LL(operatorNode)->type == kNoisyIrNodeType_TgreaterThan
                                                 || LL(operatorNode)-> type == kNoisyIrNodeType_TgreaterThanEqual
@@ -1081,6 +1086,10 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                         {
                                                 if (noisyIsOfType(returnType,noisyArithType))
                                                 {
+                                                        /*
+                                                        *       This type assignment happens here so we can find constants' type.
+                                                        */
+                                                        RL(iter)->noisyType = returnType;
                                                         returnType.basicType = noisyBool; 
                                                 }
                                                 else
@@ -1806,7 +1815,7 @@ noisyGuardedStatementTypeCheck(State * N, IrNode * noisyGuardedStatementNode, Sc
                 */
                 noisyStatementListTypeCheck(N,RLL(iter),nextScope);
                 nextScope = nextScope->next;
-        }        
+        }
 }
 
 
