@@ -1027,66 +1027,77 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                                 int i = 0;
                                 for (IrNode * iter = LLL(noisyExpressionNode); iter != NULL; iter = R(iter))
                                 {
-                                        elemValArr[i] = noisyExpressionCodeGen(N,S,LL(iter));
-                                        i++;
+                                        LLVMValueRef exprVal = noisyExpressionCodeGen(N,S,LL(iter));
+
+                                        if (LLVMIsConstant(exprVal))
+                                        {
+                                                elemValArr[i] = exprVal;
+                                                i++;
+                                        }
+                                        else
+                                        {
+                                                char *	details;
+
+                                                asprintf(&details, "Expressions in array cast expression need to be constant\n");
+                                                noisySemanticError(N,LL(iter),details);
+                                                noisySemanticErrorRecovery(N);
+                                        }
                                 }
                                 LLVMValueRef constArrVal = LLVMConstArray(getLLVMTypeFromNoisyType(LLL(noisyExpressionNode)->irLeftChild->irLeftChild->noisyType,false,0),elemValArr,size);
                                 return constArrVal;
                         }
+                        else if (LLL(noisyExpressionNode)->type == kNoisyIrNodeType_TintegerConst)
+                        {
+                                int size = noisyExpressionNode->noisyType.sizeOfDimension[noisyExpressionNode->noisyType.dimensions-1];
+                                LLVMValueRef * elemValArr = calloc(size,sizeof(LLVMValueRef));
+
+                                int i = 0;
+                                IrNode * iter;
+                                for (iter = LLR(noisyExpressionNode); iter != NULL; iter = R(iter))
+                                {
+                                        if (L(iter)->type == kNoisyIrNodeType_Tasterisk)
+                                        {
+                                                break;
+                                        }
+
+                                        LLVMValueRef exprVal = noisyExpressionCodeGen(N,S,LL(iter));
+
+                                        if (LLVMIsConstant(exprVal))
+                                        {
+                                                elemValArr[i] = exprVal;
+                                                i++;
+                                        }
+                                        else
+                                        {
+                                                char *	details;
+
+                                                asprintf(&details, "Expressions in array cast expression need to be constant\n");
+                                                noisySemanticError(N,LL(iter),details);
+                                                noisySemanticErrorRecovery(N);
+                                        }
+                                }
+
+                                LLVMValueRef exprVal = noisyExpressionCodeGen(N,S,RLL(iter));
+                                if (LLVMIsConstant(exprVal))
+                                {
+                                        for (int j = i;j < size;j++)
+                                        {
+                                                elemValArr[j] = exprVal;
+                                        }
+                                }
+                                else
+                                {
+                                        char *	details;
+
+                                        asprintf(&details, "Expressions in array cast expression need to be constant\n");
+                                        noisySemanticError(N,LL(iter),details);
+                                        noisySemanticErrorRecovery(N);
+                                }
+
+                                LLVMValueRef constArrVal = LLVMConstArray(getLLVMTypeFromNoisyType(LLR(noisyExpressionNode)->irLeftChild->irLeftChild->noisyType,false,0),elemValArr,size);
+                                return constArrVal;
+                        }
                 }
-                //         else if (LLL(noisyExpressionNode)->type == kNoisyIrNodeType_TintegerConst)
-                //         {
-                //                 int sizeOfDim = LLL(noisyExpressionNode)->token->integerConst;
-
-                //                 NoisyType elemType;
-                //                 noisyInitNoisyType(&elemType);
-
-                //                 for (IrNode * iter = LLR(noisyExpressionNode); iter != NULL; iter = R(iter))
-                //                 {
-                //                         IrNode * exprNode = LL(iter);
-                //                         if (L(iter)->type == kNoisyIrNodeType_Tasterisk)
-                //                         {
-                //                                 exprNode = RLL(iter);
-                //                         }
-                //                         if (elemType.basicType == noisyInitType)
-                //                         {
-                //                                elemType = getNoisyTypeFromExpression(N,exprNode,currentScope);
-                //                         }
-                //                         else
-                //                         {
-                //                                 if (!noisyTypeEquals(elemType,getNoisyTypeFromExpression(N,exprNode,currentScope)))
-                //                                 {
-                //                                         /*
-                //                                         *       Elements type dont match in array.
-                //                                         */
-                //                                         char *	details;
-
-                //                                         asprintf(&details, "Elements of arrayInitList don't match\n");
-                //                                         noisySemanticError(N,L(iter),details);
-                //                                         noisySemanticErrorRecovery(N);
-                //                                 }
-                //                         }
-                //                 }
-
-                //                 if (elemType.basicType != noisyArrayType)
-                //                 {
-                //                         returnType.dimensions = 1;
-                //                         returnType.sizeOfDimension[0] = sizeOfDim;
-                //                         returnType.arrayType = elemType.basicType;
-                //                 }
-                //                 else
-                //                 {
-                //                         returnType.dimensions = elemType.dimensions + 1;
-                //                         int i;
-                //                         for (i = 0; i < elemType.dimensions; i++)
-                //                         {
-                //                                 returnType.sizeOfDimension[i] = elemType.sizeOfDimension[i];
-                //                         }
-                //                         returnType.sizeOfDimension[i] = sizeOfDim;
-                //                         returnType.arrayType = elemType.arrayType;
-                //                 }
-                //         }
-                // }
         }
         else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PloadExpr)
         {
