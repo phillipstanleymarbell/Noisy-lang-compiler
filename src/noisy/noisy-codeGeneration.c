@@ -35,13 +35,22 @@ LLVMValueRef noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyEx
 NoisyType
 findConstantNoisyType(IrNode * constantNode)
 {
-        if (constantNode->noisyType.basicType > noisyInitType && constantNode->noisyType.basicType != noisyRealConstType && constantNode->noisyType.basicType != noisyIntegerConstType)
+        if (constantNode->noisyType.basicType > noisyInitType
+        && constantNode->noisyType.basicType != noisyRealConstType
+        && constantNode->noisyType.basicType != noisyIntegerConstType
+        && constantNode->noisyType.basicType != noisyArrayType)
         {
                 return constantNode->noisyType;
         }
-        else if (constantNode->type == kNoisyIrNodeType_Pexpression)
+        else if (constantNode->noisyType.basicType == noisyArrayType)
         {
-                return constantNode->noisyType;
+                NoisyType retType;
+                retType.basicType = constantNode->noisyType.arrayType;
+                return retType;
+        }
+        else if (constantNode->type == kNoisyIrNodeType_PassignmentStatement)
+        {
+                return RRL(constantNode)->noisyType;
         }
         else
         {
@@ -228,7 +237,7 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
 
                 if (noisyConstantDeclNode->type == kNoisyIrNodeType_TintegerConst)
                 {
-                        constValue = LLVMConstInt(LLVMInt64Type(),noisyConstantDeclNode->token->integerConst,true);
+                        constValue = LLVMConstInt(LLVMInt64Type(),noisyConstantDeclNode->token->integerConst,false);
                         globalValue = LLVMAddGlobal (S->theModule, LLVMInt64Type(),  L(noisyModuleTypeNameDeclNode)->tokenString);
                 }
                 else if (noisyConstantDeclNode->type == kNoisyIrNodeType_TrealConst)
@@ -714,7 +723,7 @@ noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
                 termVal = noisyUnaryOpCodeGen(N,S,unaryOpNode,termVal,factorNode);
         }
 
-        if (typeCast)
+        if (typeCast && factorNode->noisyType.basicType != noisyIntegerConstType && factorNode->noisyType.basicType != noisyRealConstType)
         {
                 NoisyType factorType = factorNode->noisyType;
                 NoisyType termType = noisyTermNode->noisyType;
@@ -1008,7 +1017,76 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
         }
         else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PanonAggrCastExpr)
         {
+                if (LL(noisyExpressionNode)->type == kNoisyIrNodeType_ParrayCastExpr)
+                {
+                        if (LLL(noisyExpressionNode)->type == kNoisyIrNodeType_PinitList)
+                        {
+                                int size = noisyExpressionNode->noisyType.sizeOfDimension[noisyExpressionNode->noisyType.dimensions-1];
+                                LLVMValueRef * elemValArr = calloc(size,sizeof(LLVMValueRef));
 
+                                int i = 0;
+                                for (IrNode * iter = LLL(noisyExpressionNode); iter != NULL; iter = R(iter))
+                                {
+                                        elemValArr[i] = noisyExpressionCodeGen(N,S,LL(iter));
+                                        i++;
+                                }
+                                LLVMValueRef constArrVal = LLVMConstArray(getLLVMTypeFromNoisyType(LLL(noisyExpressionNode)->irLeftChild->irLeftChild->noisyType,false,0),elemValArr,size);
+                                return constArrVal;
+                        }
+                }
+                //         else if (LLL(noisyExpressionNode)->type == kNoisyIrNodeType_TintegerConst)
+                //         {
+                //                 int sizeOfDim = LLL(noisyExpressionNode)->token->integerConst;
+
+                //                 NoisyType elemType;
+                //                 noisyInitNoisyType(&elemType);
+
+                //                 for (IrNode * iter = LLR(noisyExpressionNode); iter != NULL; iter = R(iter))
+                //                 {
+                //                         IrNode * exprNode = LL(iter);
+                //                         if (L(iter)->type == kNoisyIrNodeType_Tasterisk)
+                //                         {
+                //                                 exprNode = RLL(iter);
+                //                         }
+                //                         if (elemType.basicType == noisyInitType)
+                //                         {
+                //                                elemType = getNoisyTypeFromExpression(N,exprNode,currentScope);
+                //                         }
+                //                         else
+                //                         {
+                //                                 if (!noisyTypeEquals(elemType,getNoisyTypeFromExpression(N,exprNode,currentScope)))
+                //                                 {
+                //                                         /*
+                //                                         *       Elements type dont match in array.
+                //                                         */
+                //                                         char *	details;
+
+                //                                         asprintf(&details, "Elements of arrayInitList don't match\n");
+                //                                         noisySemanticError(N,L(iter),details);
+                //                                         noisySemanticErrorRecovery(N);
+                //                                 }
+                //                         }
+                //                 }
+
+                //                 if (elemType.basicType != noisyArrayType)
+                //                 {
+                //                         returnType.dimensions = 1;
+                //                         returnType.sizeOfDimension[0] = sizeOfDim;
+                //                         returnType.arrayType = elemType.basicType;
+                //                 }
+                //                 else
+                //                 {
+                //                         returnType.dimensions = elemType.dimensions + 1;
+                //                         int i;
+                //                         for (i = 0; i < elemType.dimensions; i++)
+                //                         {
+                //                                 returnType.sizeOfDimension[i] = elemType.sizeOfDimension[i];
+                //                         }
+                //                         returnType.sizeOfDimension[i] = sizeOfDim;
+                //                         returnType.arrayType = elemType.arrayType;
+                //                 }
+                //         }
+                // }
         }
         else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PloadExpr)
         {
@@ -1165,13 +1243,41 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 default:
                                         break;
                                 }
-                                if (lvalSym->noisyType.basicType != noisyNamegenType && lvalSym->noisyType.basicType != noisyArrayType)
+
+                                if (RRL(noisyAssignmentStatementNode)->noisyType.basicType == noisyArrayType)
                                 {
-                                        LLVMBuildStore(S->theBuilder,exprVal,lvalSym->llvmPointer);
+                                        /*
+                                        *       When we have an array cast on the rval of an assignment.
+                                        */
+                                        LLVMValueRef oneVal[] = {LLVMConstInt(LLVMInt64Type(),1,false)};
+
+                                        /*
+                                        *       Solution on how to implement sizeof of a type
+                                        *       https://stackoverflow.com/questions/14608250/how-can-i-find-the-size-of-a-type
+                                        */
+
+                                        LLVMValueRef sizeOfExprVal = LLVMBuildGEP2(S->theBuilder,LLVMTypeOf(exprVal),LLVMConstPointerNull(LLVMPointerType(LLVMTypeOf(exprVal),0)),oneVal,1,"");
+
+                                        sizeOfExprVal = LLVMBuildPtrToInt(S->theBuilder,sizeOfExprVal,LLVMInt64Type(),"k_sizeOfT");
+
+                                        LLVMValueRef globalVar = LLVMAddGlobal(S->theModule,LLVMTypeOf(exprVal),"k_arrConst");
+                                        LLVMSetInitializer(globalVar,exprVal);
+                                        LLVMSetGlobalConstant(globalVar,true);
+
+                                        LLVMValueRef dstPtrVal = LLVMBuildBitCast(S->theBuilder,lvalSym->llvmPointer,LLVMPointerType(LLVMInt8Type(),0),"");
+
+                                        LLVMBuildMemCpy(S->theBuilder,dstPtrVal,0,globalVar,0,sizeOfExprVal); 
                                 }
                                 else if (lvalSym->noisyType.basicType == noisyArrayType)
                                 {
+                                        /*
+                                        *       When we have an array on lval of an assignment.
+                                        */
                                         LLVMBuildStore(S->theBuilder,exprVal,noisyGetArrayPositionPointer(N,S,lvalSym,LL(iter)));
+                                }
+                                else if (lvalSym->noisyType.basicType != noisyNamegenType)
+                                {
+                                        LLVMBuildStore(S->theBuilder,exprVal,lvalSym->llvmPointer);
                                 }
                         }
                 }
