@@ -1352,6 +1352,30 @@ noisyMatchStatementCodeGen(State * N,CodeGenState * S, IrNode * matchNode)
                 LLVMMoveBasicBlockAfter(afterBlock,prevThenBlock);
                 LLVMPositionBuilderAtEnd(S->theBuilder,afterBlock);
         }
+        else
+        {
+                /*
+                *       Match statement. Noisy spec defines that the order of evaluation of the guardedStatements is random.
+                *       However, in this implementation we evaluate them in the order they have been written by the programmer.
+                */
+                LLVMBasicBlockRef thenBlock,afterBlock;
+                for (IrNode * iter = R(matchNode); iter != NULL; iter = RR(iter))
+                {
+                        LLVMValueRef condVal = noisyExpressionCodeGen(N,S,L(iter));
+                        thenBlock = LLVMAppendBasicBlock(S->currentFunction,"k_then");
+                        afterBlock = LLVMAppendBasicBlock(S->currentFunction,"k_after");
+
+                        LLVMBuildCondBr(S->theBuilder,condVal,thenBlock,afterBlock);
+
+                        LLVMPositionBuilderAtEnd(S->theBuilder,thenBlock);
+                        noisyStatementListCodeGen(N,S,RLL(iter));
+                        LLVMBuildBr(S->theBuilder,afterBlock);
+
+                        LLVMPositionBuilderAtEnd(S->theBuilder,afterBlock);
+                }
+
+        }
+
 }
 
 void
