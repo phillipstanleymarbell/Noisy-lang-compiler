@@ -682,6 +682,10 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                 int paramCount = 0;
 
                 IrNode * inputSignature =L(functionNameSymbol->typeTree);
+                if (inputSignature->type == kNoisyIrNodeType_PwriteTypeSignature)
+                {
+                        inputSignature = L(inputSignature);
+                }
                 /*
                 *       Check if inputSignature is nil. Else typeCheck every argument.
                 */
@@ -730,6 +734,10 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                 
 
                 IrNode * outputSignature = R(functionNameSymbol->typeTree);
+                if (outputSignature->type == kNoisyIrNodeType_PreadTypeSignature)
+                {
+                        outputSignature = L(outputSignature);
+                }
 
                 /*
                 *       TypeCheck output signature. The type returned is the return type of the function.
@@ -1822,7 +1830,7 @@ noisyGuardedStatementTypeCheck(State * N, IrNode * noisyGuardedStatementNode, Sc
 void
 noisyMatchStatementTypeCheck(State * N,IrNode * noisyMatchStatementNode,Scope * currentScope)
 {
-        noisyGuardedStatementTypeCheck(N,R(noisyMatchStatementNode),currentScope->firstChild->firstChild);
+        noisyGuardedStatementTypeCheck(N,R(noisyMatchStatementNode),currentScope->firstChild);
 }
 
 void
