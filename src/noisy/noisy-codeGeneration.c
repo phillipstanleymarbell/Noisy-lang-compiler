@@ -19,6 +19,7 @@
 #include "common-irHelpers.h"
 #include "noisy-typeCheck.h"
 #include <llvm-c/Core.h>
+#include <llvm-c/BitWriter.h>
 
 
 typedef struct {
@@ -192,7 +193,14 @@ noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNod
         if (returnType != NULL)
         {
                 LLVMTypeRef funcType = LLVMFunctionType(returnType,paramArray,functionSymbol->parameterNum,0);
-                func =  LLVMAddFunction(S->theModule,functionSymbol->identifier,funcType);
+                if (!strcmp(functionSymbol->identifier,"init"))
+                {
+                        func =  LLVMAddFunction(S->theModule,"main",funcType);
+                }
+                else
+                {
+                        func =  LLVMAddFunction(S->theModule,functionSymbol->identifier,funcType);
+                }
         }
         else
         {
@@ -1321,17 +1329,17 @@ noisyMatchStatementCodeGen(State * N,CodeGenState * S, IrNode * matchNode)
         if (L(matchNode)->type == kNoisyIrNodeType_Tmatchseq)
         {
                 LLVMBasicBlockRef thenBlock;
-                LLVMBasicBlockRef afterBlock = LLVMAppendBasicBlock(S->currentFunction,"k_after");
+                LLVMBasicBlockRef afterBlock = LLVMAppendBasicBlock(S->currentFunction,"after");
                 LLVMBasicBlockRef elseBlock, prevThenBlock;
 
                 for (IrNode * iter = R(matchNode); iter != NULL; iter = RR(iter))
                 {
                         LLVMValueRef condVal = noisyExpressionCodeGen(N,S,L(iter));
 
-                        thenBlock = LLVMAppendBasicBlock(S->currentFunction,"k_then");
+                        thenBlock = LLVMAppendBasicBlock(S->currentFunction,"then");
                         if (RR(iter) != NULL)
                         {
-                                elseBlock = LLVMAppendBasicBlock(S->currentFunction,"k_else");
+                                elseBlock = LLVMAppendBasicBlock(S->currentFunction,"else");
                         }
                         else
                         {
@@ -1362,8 +1370,8 @@ noisyMatchStatementCodeGen(State * N,CodeGenState * S, IrNode * matchNode)
                 for (IrNode * iter = R(matchNode); iter != NULL; iter = RR(iter))
                 {
                         LLVMValueRef condVal = noisyExpressionCodeGen(N,S,L(iter));
-                        thenBlock = LLVMAppendBasicBlock(S->currentFunction,"k_then");
-                        afterBlock = LLVMAppendBasicBlock(S->currentFunction,"k_after");
+                        thenBlock = LLVMAppendBasicBlock(S->currentFunction,"then");
+                        afterBlock = LLVMAppendBasicBlock(S->currentFunction,"after");
 
                         LLVMBuildCondBr(S->theBuilder,condVal,thenBlock,afterBlock);
 
@@ -1381,14 +1389,14 @@ noisyMatchStatementCodeGen(State * N,CodeGenState * S, IrNode * matchNode)
 void
 noisyIterateStatementCodeGen(State * N,CodeGenState * S, IrNode * iterateNode)
 {
-        LLVMBasicBlockRef thenBlock,afterBlock,loopBlock;
-        loopBlock = LLVMAppendBasicBlock(S->currentFunction,"k_loop");
+        LLVMBasicBlockRef loopBlock = LLVMAppendBasicBlock(S->currentFunction,"loop");
+        LLVMBuildBr(S->theBuilder,loopBlock);
         LLVMPositionBuilderAtEnd(S->theBuilder,loopBlock);
         for (IrNode * iter = R(iterateNode); iter != NULL; iter = RR(iter))
         {
                 LLVMValueRef condVal = noisyExpressionCodeGen(N,S,L(iter));
-                thenBlock = LLVMAppendBasicBlock(S->currentFunction,"k_then");
-                afterBlock = LLVMAppendBasicBlock(S->currentFunction,"k_after");
+                LLVMBasicBlockRef thenBlock = LLVMAppendBasicBlock(S->currentFunction,"then");
+                LLVMBasicBlockRef afterBlock = LLVMAppendBasicBlock(S->currentFunction,"after");
 
                 LLVMBuildCondBr(S->theBuilder,condVal,thenBlock,afterBlock);
 
@@ -1403,13 +1411,30 @@ noisyIterateStatementCodeGen(State * N,CodeGenState * S, IrNode * iterateNode)
 void
 noisySequenceStatementCodeGen(State * N,CodeGenState * S, IrNode * sequenceNode)
 {
+        noisyAssignmentStatementCodeGen(N,S,LL(sequenceNode));
+        LLVMBasicBlockRef condBlock = LLVMAppendBasicBlock(S->currentFunction,"cond");
+        LLVMBasicBlockRef loopBlock = LLVMAppendBasicBlock(S->currentFunction,"loop");
+        LLVMBasicBlockRef afterBlock = LLVMAppendBasicBlock(S->currentFunction,"after");
+        LLVMBuildBr(S->theBuilder,condBlock);
 
+        LLVMPositionBuilderAtEnd(S->theBuilder,condBlock);
+        LLVMValueRef condVal = noisyExpressionCodeGen(N,S,LRL(sequenceNode));
+        LLVMBuildCondBr(S->theBuilder,condVal,loopBlock,afterBlock);
+
+        LLVMPositionBuilderAtEnd(S->theBuilder,loopBlock);
+        noisyStatementListCodeGen(N,S,RL(sequenceNode));
+        noisyAssignmentStatementCodeGen(N,S,LRR(sequenceNode)->irLeftChild);
+        LLVMBuildBr(S->theBuilder,condBlock);
+
+        LLVMPositionBuilderAtEnd(S->theBuilder,afterBlock);
 }
 
 void
 noisyOperatorToleranceDeclCodeGen(State * N,CodeGenState * S, IrNode * toleranceDeclNode)
 {
-
+        /*
+        *       We do not implement that.
+        */
 }
 
 void
@@ -1466,7 +1491,15 @@ noisyStatementListCodeGen(State * N, CodeGenState * S,IrNode * statementListNode
 void 
 noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnNode)
 {
-        LLVMValueRef func = LLVMGetNamedFunction(S->theModule,L(noisyFunctionDefnNode)->tokenString);
+        LLVMValueRef func;
+        if (!strcmp(L(noisyFunctionDefnNode)->tokenString,"init"))
+        {
+                func = LLVMGetNamedFunction(S->theModule,"main");
+        }
+        else
+        {
+                func = LLVMGetNamedFunction(S->theModule,L(noisyFunctionDefnNode)->tokenString);
+        }
         /*
         *       Declare local function
         */
@@ -1483,7 +1516,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
         }
         S->currentFunction = func;
         L(noisyFunctionDefnNode)->symbol->llvmPointer = func;
-        LLVMBasicBlockRef funcEntry = LLVMAppendBasicBlock(func, "k_entry");
+        LLVMBasicBlockRef funcEntry = LLVMAppendBasicBlock(func, "entry");
         LLVMPositionBuilderAtEnd(S->theBuilder, funcEntry);
 
         noisyStatementListCodeGen(N,S,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild);
@@ -1527,10 +1560,15 @@ noisyCodeGen(State * N)
         /*
         *       We need to dispose LLVM structures in order to avoid leaking memory. Free code gen state.
         */
+        char * fileName;
+        char * fileName2 = (char*)calloc(strlen(N->fileName)-1,sizeof(char));
+        strncpy(fileName2,N->fileName,strlen(N->fileName)-2);
+        // fileName2[strlen(N->fileName)-2]='\0';
+        asprintf(&fileName,"%s.bc",fileName2);
+        LLVMWriteBitcodeToFile(S->theModule,fileName);
 
-        flexprint(N->Fe,N->Fm,N->Fpg,LLVMPrintModuleToString(S->theModule));
-        LLVMDisposeModule(S->theModule);
         LLVMDisposeBuilder(S->theBuilder);
+        LLVMDisposeModule(S->theModule);
         LLVMContextDispose(S->theContext);
         free(S);
         return ;
