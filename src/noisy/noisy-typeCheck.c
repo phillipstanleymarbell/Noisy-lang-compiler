@@ -1884,6 +1884,7 @@ noisyReturnStatementTypeCheck(State * N,IrNode * noisyReturnStatementNode,Scope 
                         noisySemanticError(N,RL(iter),details);
                         noisySemanticErrorRecovery(N);
                 }
+                RL(iter)->noisyType = noisyGetMoreSpecificType(argType,exprType);
         }
 }
 

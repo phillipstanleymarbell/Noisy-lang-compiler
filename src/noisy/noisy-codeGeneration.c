@@ -22,10 +22,10 @@
 
 
 typedef struct {
-         LLVMContextRef theContext;
-         LLVMBuilderRef theBuilder;
-         LLVMModuleRef  theModule;
-         LLVMValueRef   currentFunction;
+        LLVMContextRef  theContext;
+        LLVMBuilderRef  theBuilder;
+        LLVMModuleRef   theModule;
+        LLVMValueRef    currentFunction;
 } CodeGenState;
 
 LLVMTypeRef getLLVMTypeFromTypeExpr(State *, IrNode *);
@@ -353,7 +353,7 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                         LLVMValueRef arrayPtr = noisyGetArrayPositionPointer(N,S,identifierSymbol,L(noisyFactorNode));
                         char * name;
                         asprintf(&name,"val_%s",identifierSymbol->identifier);
-                        NoisyType retType;
+                        NoisyType retType = identifierSymbol->noisyType;
                         retType.basicType = identifierSymbol->noisyType.arrayType;
                         return LLVMBuildLoad2(S->theBuilder,getLLVMTypeFromNoisyType(retType,false,0),arrayPtr,name);
                 }
@@ -1381,7 +1381,23 @@ noisyMatchStatementCodeGen(State * N,CodeGenState * S, IrNode * matchNode)
 void
 noisyIterateStatementCodeGen(State * N,CodeGenState * S, IrNode * iterateNode)
 {
+        LLVMBasicBlockRef thenBlock,afterBlock,loopBlock;
+        loopBlock = LLVMAppendBasicBlock(S->currentFunction,"k_loop");
+        LLVMPositionBuilderAtEnd(S->theBuilder,loopBlock);
+        for (IrNode * iter = R(iterateNode); iter != NULL; iter = RR(iter))
+        {
+                LLVMValueRef condVal = noisyExpressionCodeGen(N,S,L(iter));
+                thenBlock = LLVMAppendBasicBlock(S->currentFunction,"k_then");
+                afterBlock = LLVMAppendBasicBlock(S->currentFunction,"k_after");
 
+                LLVMBuildCondBr(S->theBuilder,condVal,thenBlock,afterBlock);
+
+                LLVMPositionBuilderAtEnd(S->theBuilder,thenBlock);
+                noisyStatementListCodeGen(N,S,RLL(iter));
+                LLVMBuildBr(S->theBuilder,loopBlock);
+
+                LLVMPositionBuilderAtEnd(S->theBuilder,afterBlock);
+        }
 }
 
 void
@@ -1399,7 +1415,7 @@ noisyOperatorToleranceDeclCodeGen(State * N,CodeGenState * S, IrNode * tolerance
 void
 noisyReturnStatementCodeGen(State * N,CodeGenState * S, IrNode * returnNode)
 {
-
+        LLVMBuildRet(S->theBuilder, noisyExpressionCodeGen(N,S,LRL(returnNode)));
 }
 
 void
@@ -1504,7 +1520,7 @@ noisyCodeGen(State * N)
         */
         CodeGenState * S = (CodeGenState *)malloc(sizeof(CodeGenState));
         S->theContext = LLVMContextCreate();
-        S->theBuilder = LLVMCreateBuilderInContext(S->theContext);        
+        S->theBuilder = LLVMCreateBuilderInContext(S->theContext);
 
         noisyProgramCodeGen(N,S,N->noisyIrRoot);
 
