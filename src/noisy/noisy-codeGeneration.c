@@ -211,6 +211,7 @@ noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNod
         /*
         *       TODO; Maybe deallocation happens elsewhere.
         */
+        functionSymbol->llvmPointer = func;
         free(paramArray);
         return func;
 }
@@ -374,6 +375,16 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                 Symbol * functionSymbol = LL(noisyFactorNode)->symbol;
                 IrNode * inputSignature = L(functionSymbol->typeTree);
                 IrNode * outputSignature = R(functionSymbol->typeTree);
+
+                if (inputSignature->type == kNoisyIrNodeType_PwriteTypeSignature)
+                {
+                        inputSignature = L(inputSignature);
+                }
+
+                if (outputSignature->type == kNoisyIrNodeType_PreadTypeSignature)
+                {
+                        outputSignature = L(outputSignature);
+                }
 
                 LLVMValueRef * args;
                 LLVMTypeRef * argTyp;
