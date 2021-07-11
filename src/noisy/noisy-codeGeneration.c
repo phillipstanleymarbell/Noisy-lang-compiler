@@ -32,6 +32,7 @@ typedef struct {
 LLVMTypeRef getLLVMTypeFromTypeExpr(State *, IrNode *);
 void noisyStatementListCodeGen(State * N, CodeGenState * S,IrNode * statementListNode);
 LLVMValueRef noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode);
+LLVMValueRef noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnNode);
 
 NoisyType
 findConstantNoisyType(IrNode * constantNode)
@@ -138,9 +139,9 @@ getLLVMTypeFromNoisyType(NoisyType noisyType,bool byRef,int limit)
 }
 
 LLVMValueRef
-noisyDeclareFunction(State * N, CodeGenState * S,const char * functionName,IrNode * inputSignature, IrNode * outputSignature)
+noisyDeclareFunction(State * N, CodeGenState * S,IrNode * funcNameNode,IrNode * inputSignature, IrNode * outputSignature)
 {
-        Symbol * functionSymbol = commonSymbolTableSymbolForIdentifier(N, N->moduleScopes, functionName);
+        Symbol * functionSymbol = funcNameNode->symbol;
 
         if (!functionSymbol->isTypeComplete)
         {
@@ -276,7 +277,7 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
         {
                 IrNode * inputSignature = RLL(noisyModuleTypeNameDeclNode);
                 IrNode * outputSignature = RRL(noisyModuleTypeNameDeclNode);
-                noisyDeclareFunction(N,S,L(noisyModuleTypeNameDeclNode)->tokenString,inputSignature,outputSignature);
+                noisyDeclareFunction(N,S,L(noisyModuleTypeNameDeclNode),inputSignature,outputSignature);
         }
 }
 
@@ -367,12 +368,17 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                         return LLVMBuildLoad2(S->theBuilder,getLLVMTypeFromNoisyType(retType,false,0),arrayPtr,name);
                 }
                 /*
-                *       TODO; NamegenType.
+                *       Noisy namegen type is handled on load expression and on namegen invoke shorthand.
+                *       TODO; Add channel implementation.
                 */
         }
         else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PnamegenInvokeShorthand)
         {
                 Symbol * functionSymbol = LL(noisyFactorNode)->symbol;
+                if (functionSymbol->noisyType.basicType == noisyNamegenType)
+                {
+                        functionSymbol = functionSymbol->noisyType.functionDefinition;
+                }
                 IrNode * inputSignature = L(functionSymbol->typeTree);
                 IrNode * outputSignature = R(functionSymbol->typeTree);
 
@@ -884,9 +890,6 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
 {
         if (L(noisyExpressionNode)->type == kNoisyIrNodeType_Pterm)
         {
-                /*
-                *       TODO; Change 3rd argument. It's dummy value.
-                */
                 LLVMValueRef exprVal =  noisyTermCodeGen(N,S,L(noisyExpressionNode));
 
                 for (IrNode * iter = R(noisyExpressionNode); iter != NULL; iter = RR(iter))
@@ -1124,8 +1127,19 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
         }
         else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PloadExpr)
         {
-
+                LLVMBasicBlockRef currentBlock = LLVMGetInsertBlock(S->theBuilder);
+                IrNode * funcDefn = noisyExpressionNode->noisyType.functionDefinition->functionDefinition;
+                L(funcDefn)->symbol->isTypeComplete = true;
+                LLVMValueRef prevFunc = S->currentFunction;
+                LLVMValueRef functionVal = noisyFunctionDefnCodeGen(N,S,noisyExpressionNode->noisyType.functionDefinition->functionDefinition);
+                L(funcDefn)->symbol->isTypeComplete = false;
+                S->currentFunction =  prevFunc;
+                LLVMPositionBuilderAtEnd(S->theBuilder,currentBlock);
+                return functionVal;
         }
+        /*
+        *       Unreachable.
+        */
         return LLVMConstInt(LLVMInt32Type(),42,true);
 }
 
@@ -1313,6 +1327,10 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 {
                                         LLVMBuildStore(S->theBuilder,exprVal,lvalSym->llvmPointer);
                                 }
+                                else
+                                {
+                                        lvalSym->llvmPointer = exprVal;
+                                }
                         }
                 }
         }
@@ -1499,7 +1517,7 @@ noisyStatementListCodeGen(State * N, CodeGenState * S,IrNode * statementListNode
         }
 }
 
-void 
+LLVMValueRef
 noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnNode)
 {
         LLVMValueRef func;
@@ -1516,13 +1534,13 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
         */
         if (func == NULL)
         {
-                func = noisyDeclareFunction(N,S,noisyFunctionDefnNode->irLeftChild->tokenString,RL(noisyFunctionDefnNode),RRL(noisyFunctionDefnNode));
+                func = noisyDeclareFunction(N,S,noisyFunctionDefnNode->irLeftChild,RL(noisyFunctionDefnNode),RRL(noisyFunctionDefnNode));
                 if (func == NULL)
                 {
                         /*
                         *       If func depends on Module parameters we skip its definition until its loaded.
                         */
-                        return ;
+                        return func;
                 }
         }
         S->currentFunction = func;
@@ -1531,6 +1549,14 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
         LLVMPositionBuilderAtEnd(S->theBuilder, funcEntry);
 
         noisyStatementListCodeGen(N,S,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild);
+        /*
+        *       If the functions returns void the final instruction should be the Ret Void.
+        */
+        if (RRL(noisyFunctionDefnNode)->irLeftChild->type == kNoisyIrNodeType_Tnil)
+        {
+                LLVMBuildRetVoid(S->theBuilder);
+        }
+        return func;
 }
 
 
