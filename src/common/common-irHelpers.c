@@ -35,7 +35,7 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -52,6 +52,7 @@
 #include "common-data-structures.h"
 #include "common-irHelpers.h"
 #include "common-lexers-helpers.h"
+#include "common-symbolTable.h"
 
 
 /*
@@ -75,7 +76,18 @@ shallowCopyIrNode(State *  N, IrNode *  original)
 	return clone;
 }
 
-IrNode *	deepCopyIrNode(State * N,IrNode * original)
+/*
+*	This implements a deepCopy of IrNodes. Deep copy creates a copy for each node of the tree
+*	and also for the nodes that are linked with a symbol from the symbol table, creates a copy
+*	of the symbol. The copies of the symbols are also inserted in the corresponding scopes of the
+*	symbol table but with different names so we can differentiate between the different
+*	symbol instances. LoadCount variable is used to create the distinction between the symbol names
+*	so they don't confilct. This deep copy technique is currently only used for templated functions.
+*	For those we create copies of the original templated Ir tree and then we parse the copy of the
+*	tree without alternating the original one.
+*/
+IrNode *
+deepCopyIrNode(State * N,IrNode * original,int loadCount)
 {
 	IrNode *	clone = calloc(1, sizeof(IrNode));
 	if (clone == NULL)
@@ -95,17 +107,35 @@ IrNode *	deepCopyIrNode(State * N,IrNode * original)
 		}
 
 		memcpy(symbolClone,original->symbol,sizeof(Symbol));
+		char * newSymbolName;
+		asprintf(&newSymbolName,"%s_%d",symbolClone->identifier,loadCount);
+		symbolClone->identifier = strdup(newSymbolName);
 
-		clone->symbol = symbolClone;
+		clone->symbol = commonSymbolTableSymbolForIdentifier(N,symbolClone->scope,newSymbolName);
+
+		if (clone->symbol != NULL)
+		{
+			free(symbolClone);
+		}
+		else
+		{
+			symbolClone->next = original->symbol->scope->firstSymbol;
+			original->symbol->scope->firstSymbol = symbolClone;
+			symbolClone->prev = NULL;
+			clone->symbol = symbolClone;
+		}
 	}
+
 
 	if (original->irLeftChild != NULL)
 	{
-		clone->irLeftChild = deepCopyIrNode(N,original->irLeftChild);
+		clone->irLeftChild = deepCopyIrNode(N,original->irLeftChild,loadCount);
+		clone->irLeftChild->irParent = clone;
 	}
 	if (original->irRightChild)
 	{
-		clone->irRightChild = deepCopyIrNode(N,original->irRightChild);
+		clone->irRightChild = deepCopyIrNode(N,original->irRightChild,loadCount);
+		clone->irRightChild->irParent = clone;
 	}
 	return clone;
 }
