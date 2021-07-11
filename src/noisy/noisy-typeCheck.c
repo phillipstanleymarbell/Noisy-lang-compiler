@@ -547,6 +547,7 @@ noisyArgumentMatchesSignature(State * N, IrNode * argName,IrNode * expr,IrNode *
                         if (noisyTypeEquals(typeExprType,getNoisyTypeFromExpression(N,expr,currentScope)))
                         {
                                 L(iter)->symbol->noisyType = typeExprType;
+                                expr->noisyType = typeExprType;
                                 return true;
                         }
                 }
@@ -584,7 +585,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
         }
         else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PqualifiedIdentifier)
         {
-                Symbol * identifierSymbol = commonSymbolTableSymbolForIdentifier(N, currentScope, LL(noisyFactorNode)->tokenString);
+                Symbol * identifierSymbol = LL(noisyFactorNode)->symbol;
 
                 if (identifierSymbol == NULL)
                 {
@@ -1379,15 +1380,15 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                 *       TODO; Might need changes if we see that code generation does not have all the necessary information.
                                 */
                                 funcSymbol->isTypeComplete = true;
-                                noisyFunctionDefnTypeCheck(N,funcSymbol->functionDefinition,N->noisyIrTopScope->firstChild);
 
                                 Token * t = calloc(1,sizeof(Token));
                                 t->sourceInfo = funcSymbol->sourceInfo;
                                 t->type = kNoisySymbolTypeNamegenDefinition;
                                 asprintf(&t->identifier,"%s_%d",funcSymbol->identifier,loadCount);
 
-                                Symbol * newFunctionSym = commonSymbolTableAddOrLookupSymbolForToken(N,currentScope,t);
-                                newFunctionSym->functionDefinition = deepCopyIrNode(N,funcSymbol->functionDefinition);
+                                Symbol * newFunctionSym = commonSymbolTableAddOrLookupSymbolForToken(N,N->noisyIrTopScope->firstChild,t);
+                                newFunctionSym->functionDefinition = deepCopyIrNode(N,funcSymbol->functionDefinition,loadCount);
+                                noisyFunctionDefnTypeCheck(N,newFunctionSym->functionDefinition,N->noisyIrTopScope->firstChild);
                                 newFunctionSym->parameterNum = funcSymbol->parameterNum;
                                 newFunctionSym->isTypeComplete = funcSymbol->isTypeComplete;
                                 IrNode * newTypeTree = calloc(1,sizeof(IrNode));
