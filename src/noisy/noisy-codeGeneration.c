@@ -223,13 +223,38 @@ noisyGetArrayPositionPointer(State * N,CodeGenState * S, Symbol * arraySym,IrNod
         LLVMTypeRef arrayType;
         LLVMValueRef arrayPtr = arraySym->llvmPointer;
         int lim = 0;
+        bool firstTime = true;
+        /*
+        *       Field select handling.
+        */
         for (IrNode * iter = R(noisyQualifiedIdentifierNode); iter != NULL; iter = R(iter))
         {
                 LLVMValueRef idxValue = noisyExpressionCodeGen(N,S,LR(iter));
                 LLVMValueRef idxValueList[] = {LLVMConstInt(LLVMInt32Type(),0,false) ,idxValue};
                 idxValueList[1] = idxValue;
                 arrayType = getLLVMTypeFromNoisyType(arraySym->noisyType,false,lim);
-                arrayPtr = LLVMBuildGEP2(S->theBuilder,arrayType,arrayPtr,idxValueList,2,"k_arrIdx");
+                if (firstTime && arraySym->symbolType == kNoisySymbolTypeParameter)
+                {
+                        arrayType = getLLVMTypeFromNoisyType(arraySym->noisyType,true,lim);
+                        LLVMValueRef loadArrayValue = LLVMBuildLoad2(S->theBuilder,arrayType,arrayPtr,"");
+                        idxValueList[0] = idxValueList[1];
+
+                        /*
+                        *       TODO; If we want to throw exception messages for out of bounds indexing, we can create a runtime library
+                        *       for different types of runtime errors and link it.
+                        */
+
+                        // LLVMValueRef boundCheckValue = LLVMBuildICmp(S->theBuilder,LLVMIntULT,idxValue,LLVMConstInt(LLVMInt32Type(),arraySym->noisyType.sizeOfDimension[lim],false),"k_boundCheck");
+                        arrayPtr = LLVMBuildGEP2(S->theBuilder,LLVMGetElementType(arrayType),loadArrayValue,idxValueList,1,"k_arrIdx");
+                        // arrayPtr = LLVMBuildSelect(S->theBuilder,boundCheckValue,arrayPtr,LLVMGetPoison(LLVMTypeOf(arrayPtr)),"k_safeGep");
+                        firstTime = false;
+                }
+                else
+                {
+                        // LLVMValueRef boundCheckValue = LLVMBuildICmp(S->theBuilder,LLVMIntULT,idxValue,LLVMConstInt(LLVMInt32Type(),arraySym->noisyType.sizeOfDimension[lim],false),"k_boundCheck");
+                        arrayPtr = LLVMBuildGEP2(S->theBuilder,arrayType,arrayPtr,idxValueList,2,"k_arrIdx");
+                        // arrayPtr = LLVMBuildSelect(S->theBuilder,boundCheckValue,arrayPtr,LLVMGetPoison(LLVMTypeOf(arrayPtr)),"k_safeGep");
+                }
                 lim++;
         }
         return arrayPtr;
@@ -350,9 +375,13 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                 Symbol * identifierSymbol = LL(noisyFactorNode)->symbol;
                 if (identifierSymbol->symbolType == kNoisySymbolTypeParameter)
                 {
-                        return LLVMGetParam(S->currentFunction,identifierSymbol->paramPosition);
+                        if (identifierSymbol->noisyType.basicType != noisyArrayType
+                        && identifierSymbol->noisyType.basicType != noisyString)
+                        {
+                                return LLVMGetParam(S->currentFunction,identifierSymbol->paramPosition);
+                        }
                 }
-                else if (identifierSymbol->noisyType.basicType != noisyArrayType && identifierSymbol->noisyType.basicType != noisyNamegenType)
+                if (identifierSymbol->noisyType.basicType != noisyArrayType && identifierSymbol->noisyType.basicType != noisyNamegenType)
                 {
                         char * name;
                         asprintf(&name,"val_%s",identifierSymbol->identifier);
@@ -365,7 +394,15 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                         asprintf(&name,"val_%s",identifierSymbol->identifier);
                         NoisyType retType = identifierSymbol->noisyType;
                         retType.basicType = identifierSymbol->noisyType.arrayType;
-                        return LLVMBuildLoad2(S->theBuilder,getLLVMTypeFromNoisyType(retType,false,0),arrayPtr,name);
+                        if (LR(noisyFactorNode) != NULL)
+                        {
+                                return LLVMBuildLoad2(S->theBuilder,getLLVMTypeFromNoisyType(retType,false,0),arrayPtr,name);
+                        }
+                        else
+                        {
+                                LLVMValueRef idxValueList[] = {LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)};
+                                return LLVMBuildGEP2(S->theBuilder,getLLVMTypeFromNoisyType(identifierSymbol->noisyType,false,0),arrayPtr,idxValueList,2,"k_arrayDecay");
+                        }
                 }
                 /*
                 *       Noisy namegen type is handled on load expression and on namegen invoke shorthand.
@@ -419,14 +456,39 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                                 }
                                 pos++;
                         }
-                        args[pos] = noisyExpressionCodeGen(N,S,expr);
+                        LLVMValueRef expressionValue = noisyExpressionCodeGen(N,S,expr);
+                        /*
+                        *       Passing an array as an argument of a function.
+                        */
+                        if (expr->noisyType.basicType == noisyArrayType)
+                        {
+                                /*
+                                *       When we pass an array as argument of a function we create a copy of the original array and we pass it by reference
+                                *       to the function. This way functions dont mutate the parameter arrays.
+                                *
+                                *       TODO; Maybe we need to allocate the copies on the heap and not on the stack because for every function call
+                                *       with arrays we double the space occupied in the stack.
+                                */
+                                LLVMValueRef copyArrayAddress = LLVMBuildAlloca(S->theBuilder,getLLVMTypeFromNoisyType(expr->noisyType,false,0),"k_copyArr");
+
+                                LLVMValueRef oneVal[] = {LLVMConstInt(LLVMInt64Type(),1,false)};
+                                LLVMTypeRef arrayType = getLLVMTypeFromNoisyType(expr->noisyType,false,0);
+                                LLVMValueRef sizeOfExprVal = LLVMBuildGEP2(S->theBuilder,arrayType,LLVMConstPointerNull(LLVMPointerType(arrayType,0)),oneVal,1,"");
+
+                                sizeOfExprVal = LLVMBuildPtrToInt(S->theBuilder,sizeOfExprVal,LLVMInt64Type(),"k_sizeOfT");
+                                expressionValue = LLVMBuildMemCpy(S->theBuilder,copyArrayAddress,0,expressionValue,0,sizeOfExprVal);
+
+                                LLVMValueRef idxValueList[] = {LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)};
+                                expressionValue = LLVMBuildGEP2(S->theBuilder,getLLVMTypeFromNoisyType(expr->noisyType,false,0),copyArrayAddress,idxValueList,2,"k_arrayDecay");
+                        }
+                        args[pos] = expressionValue;
                 }
                 int i = 0;
                 if (functionSymbol->parameterNum != 0)
                 {
                         for (IrNode * iter2 = inputSignature; iter2 != NULL; iter2 = RR(iter2))
                         {
-                                argTyp[i] = getLLVMTypeFromNoisyType(L(iter2)->symbol->noisyType,false,0);
+                                argTyp[i] = getLLVMTypeFromNoisyType(L(iter2)->symbol->noisyType,true,0);
                                 i++;
                         }
                 }
@@ -1469,7 +1531,8 @@ noisyOperatorToleranceDeclCodeGen(State * N,CodeGenState * S, IrNode * tolerance
 void
 noisyReturnStatementCodeGen(State * N,CodeGenState * S, IrNode * returnNode)
 {
-        LLVMBuildRet(S->theBuilder, noisyExpressionCodeGen(N,S,LRL(returnNode)));
+        LLVMValueRef expressionValue = noisyExpressionCodeGen(N,S,LRL(returnNode));
+        LLVMBuildRet(S->theBuilder,expressionValue);
 }
 
 void
@@ -1547,6 +1610,30 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
         L(noisyFunctionDefnNode)->symbol->llvmPointer = func;
         LLVMBasicBlockRef funcEntry = LLVMAppendBasicBlock(func, "entry");
         LLVMPositionBuilderAtEnd(S->theBuilder, funcEntry);
+
+        /*
+        *       Array arguments need the following processing before any other code generation.
+        */
+        for  (IrNode * iter = RL(L(noisyFunctionDefnNode)->symbol->functionDefinition); iter != NULL; iter = RR(iter))
+        {
+                Symbol * identifierSymbol;
+                if (L(iter)->type == kNoisyIrNodeType_Tnil)
+                {
+                       break;
+                }
+                else
+                {
+                        identifierSymbol = L(iter)->symbol;
+                }
+
+                if (identifierSymbol->noisyType.basicType == noisyArrayType)
+                {
+                        LLVMValueRef paramValue = LLVMGetParam(S->currentFunction,identifierSymbol->paramPosition);
+                        LLVMValueRef arrayAddrValue = LLVMBuildAlloca(S->theBuilder,LLVMTypeOf(paramValue),"k_arrAddr");
+                        LLVMBuildStore(S->theBuilder,paramValue,arrayAddrValue);
+                        identifierSymbol->llvmPointer = arrayAddrValue;
+                }
+        }
 
         noisyStatementListCodeGen(N,S,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild);
         /*
