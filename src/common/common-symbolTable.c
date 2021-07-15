@@ -129,7 +129,9 @@ commonSymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  i
 	{
 		Scope *	moduleScope = N->moduleScopes;
 
-		while (moduleScope != NULL)
+		// while (moduleScope != NULL)
+		// {
+		if (moduleScope != NULL)
 		{
 			Symbol *	moduleSym = moduleScope->firstSymbol;
 
@@ -141,9 +143,9 @@ commonSymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  i
 				}
 				moduleSym = moduleSym->next;
 			}
-
-			moduleScope = moduleScope->next;
 		}
+			// moduleScope = moduleScope->next;
+		// }
 
 		return NULL;
 	}
