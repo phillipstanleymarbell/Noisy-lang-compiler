@@ -815,12 +815,18 @@ noisyUnaryOpTypeCheck(State * N,IrNode * noisyUnaryOpNode,NoisyType factorType)
                 || L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tsort
                 || L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Treverse)
         {
-                if (factorType.basicType != noisyArrayType || factorType.basicType != noisyString)
+                if (factorType.basicType != noisyArrayType && factorType.basicType != noisyString)
                 {
                         char * details;
                         asprintf(&details, "Unary operator and operand mismatch \"%s\"\n",L(noisyUnaryOpNode)->tokenString);
                         noisySemanticError(N,noisyUnaryOpNode,details);
                         noisySemanticErrorRecovery(N);
+                }
+                if (L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tlength)
+                {
+                        NoisyType ret;
+                        ret.basicType = noisyIntegerConstType;
+                        returnType = ret;
                 }
         }
         else if (L(noisyUnaryOpNode)->type == kNoisyIrNodeType_TchannelOperator)
@@ -1245,11 +1251,11 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                 {
                                         returnType.dimensions = elemType.dimensions + 1;
                                         int i;
-                                        for (i = 0; i < elemType.dimensions; i++)
+                                        for (i = 1; i < returnType.dimensions; i++)
                                         {
-                                                returnType.sizeOfDimension[i] = elemType.sizeOfDimension[i];
+                                                returnType.sizeOfDimension[i] = elemType.sizeOfDimension[i-1];
                                         }
-                                        returnType.sizeOfDimension[i] = sizeOfDim;
+                                        returnType.sizeOfDimension[0] = sizeOfDim;
                                         returnType.arrayType = elemType.arrayType;
                                 }
                         }
@@ -1561,6 +1567,8 @@ noisySignatureIsMatching(State * N, IrNode * definitionSignature, IrNode * decla
                                 return false;
                         }
 
+                        L(iter)->symbol->noisyType = getNoisyTypeFromTypeExpr(N,RL(iter));
+                        L(declIter)->symbol->noisyType = getNoisyTypeFromTypeExpr(N,RL(iter));
                         declIter = RR(declIter);
                 }
 
