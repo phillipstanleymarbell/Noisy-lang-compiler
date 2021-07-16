@@ -107,6 +107,7 @@ main(int argc, char *argv[])
 			{"latex",		no_argument,		0,	'x'},
 			{"RTLcodegen",		required_argument,	0,	'l'},
 			{"targetParam",		required_argument,	0,	'T'},
+			{"llvm-ir", required_argument, 0, 'L'},
 			{"estimator-synthesis", required_argument, 0, 420},
 			{"process", required_argument, 0, 421},
 			{"measurement", required_argument, 0, 422},
@@ -119,7 +120,7 @@ main(int argc, char *argv[])
 			{0,			0,			0,	0}
 		};
 
-		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpicl:rePapg:xT:", options, &optionIndex);
+		c = getopt_long(argc, argv, "v:hVd:S:b:stO:mpicl:rePapg:xT:L:", options, &optionIndex);
 
 		if (c == -1)
 		{
@@ -401,6 +402,13 @@ main(int argc, char *argv[])
 			case 423:
 			{
 				N->autodiff = true;
+				break;
+			}
+
+			case 'L':
+			{
+				N->irPasses |= kNewtonIrPassLLVMIR;
+				N->llvmIR = optarg;
 				break;
 			}
 

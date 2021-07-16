@@ -37,7 +37,7 @@ CGI_TARGET	= newtoncgi-$(OSTYPE)-$(NEWTON_L10N)
 CCFLAGS		+= -c -std=gnu99 -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
 CXXFLAGS	+= -c -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
 
-WFLAGS		= -Wall -Werror
+WFLAGS		= -Wall #-Werror
 INCDIRS		= -I. -I$(LIBFLEXPATH) -I$(COMMONPATH) -I$(NOISYPATH) -I$(INCLUDEPATH) -I$(TREEROOT)/submodules/eigen
 LINKDIRS	= -L. -L$(LIBFLEXPATH) -L$(COMMONPATH) -lCommon-$(OSTYPE)-EN
 PROTOC		= protoc-c
@@ -59,6 +59,7 @@ SOURCES		=\
 		newton-irPass-targetParamBackend.c\
 		newton-irPass-RTLBackend.c\
 		newton-irPass-estimatorSynthesisBackend.c\
+		newton-irPass-LLVMIR.c\
 		newton-irPass-invariantSignalAnnotation.c\
 		newton-irPass-piGroupsSignalAnnotation.c\
 		newton-irPass-ipsaBackend.c\
@@ -105,6 +106,7 @@ OBJS		=\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
@@ -142,6 +144,7 @@ CGIOBJS		=\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend/$(OBJECTEXTENSION)\
@@ -179,6 +182,7 @@ LIBNEWTONOBJS =\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
@@ -213,6 +217,7 @@ HEADERS		=\
 		newton-irPass-dotBackend.h\
 		newton-irPass-smtBackend.h\
 		newton-irPass-estimatorSynthesisBackend.h\
+		newton-irPass-LLVMIR.h\
 		newton-irPass-invariantSignalAnnotation.h\
 		newton-irPass-piGroupsSignalAnnotation.h\
 		newton-irPass-ipsaBackend.h\
