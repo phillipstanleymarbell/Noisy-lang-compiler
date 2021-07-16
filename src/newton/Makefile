@@ -11,6 +11,8 @@ EXAMPLESPATH	= ../../applications/newton
 
 COMPILERVARIANT = gcc	#clang
 
+LLVM_CONFIG?=llvm-config-3.9
+
 SYSNAME		= Newton
 SYSNAMELOWER	= newton
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
@@ -23,6 +25,13 @@ EXAMPLES_NEWTON_FLAGS = -v 2 -p#--verbose 1
 CXXFLAGS	= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
+
+LDFLAGS+=$(shell $(LLVM_CONFIG) --ldflags)
+CXXFLAGS+=$(COMMON_FLAGS) $(shell $(LLVM_CONFIG) --cxxflags) -fno-rtti
+CPPFLAGS+=$(shell $(LLVM_CONFIG) --cppflags) -I$(SRC_DIR)
+LLVMLIBS=$(shell $(LLVM_CONFIG) --libs irreader support)
+SYSTEMLIBS=$(shell $(LLVM_CONFIG) --system-libs)
+
 
 LIBNEWTON	= Newton
 LIBCOMMON	= Common
@@ -264,11 +273,11 @@ lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a: $(LIBNEWTONOBJS) $(CONFIGPATH)/confi
 #			Executables
 #
 target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
-	$(LD) $(LINKDIRS) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -lm $(LINKDIRS) $(LDFLAGS) -o $(TARGET) -lstdc++
+	$(LD) $(LINKDIRS) $(LDFLAGS) $(OBJS) $(LLVMLIBS) $(SYSTEMLIBS) -lflex-$(OSTYPE) -lm $(LINKDIRS) $(LDFLAGS) -o $(TARGET) -lstdc++
 
 
 cgi:lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
-	$(LD) $(LINKDIRS) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) $(LINKDIRS) $(LDFLAGS) -o $(CGI_TARGET) -lstdc++
+	$(LD) $(LINKDIRS) $(LDFLAGS) $(CGIOBJS) $(LLVMLIBS) $(SYSTEMLIBS) -lflex-$(OSTYPE) $(LINKDIRS) $(LDFLAGS) -o $(CGI_TARGET) -lstdc++
 
 
 #

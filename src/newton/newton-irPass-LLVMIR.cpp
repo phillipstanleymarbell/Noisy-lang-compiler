@@ -61,10 +61,18 @@
 #include <inttypes.h>
 #include <math.h>
 
-#include <iostream>
-#include <string>
-#include <fstream>
-#include <streambuf>
+#include "llvm/IR/Metadata.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IRReader/IRReader.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/DebugInfoMetadata.h"
+
+using namespace llvm;
+
 
 extern "C"
 {
@@ -100,40 +108,10 @@ irPassLLVMIR(State *  N)
 		fatal(N, Esanity);
     }
 
-    flexprint(N->Fe, N->Fm, N->Fpinfo, "Working\n");
-	FILE *	irFile;
-	//char * buffer = 0;
-	//long length;
-
-	irFile = fopen(N->llvmIR, "rb");
-
-	if (irFile == NULL)
-	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "\n%s: %s.\n", Eopen, N->llvmIR);
-		consolePrintBuffers(N);
-	}
-
-	std::ifstream t(N->llvmIR);
-	std::string str((std::istreambuf_iterator<char>(t)),
-			                 std::istreambuf_iterator<char>());
-	std::cout << str << std::endl;
-
-	fclose (irFile);
-	std::cout << "Done\n";
-	//if (irFile)
-	//{
-	//	fseek (irFile, 0, SEEK_END);
-	//	length = ftell (irFile);
-	//	fseek (irFile, 0, SEEK_SET);
-	//	buffer = malloc (length);
-	//	if (buffer)
-	//	{
-	//		fread (buffer, 1, length, irFile);
-	//	}
-	//	fclose (irFile);
-	//}
-
-	//if (buffer)
-    //    flexprint(N->Fe, N->Fm, N->Fpinfo, buffer);
+	SMDiagnostic Err;
+	LLVMContext Context;
+	std::unique_ptr<Module> Mod(parseIRFile(N->llvmIR, Err, Context));
+	Mod->dump();
 }
+
 }
