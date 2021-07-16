@@ -62,6 +62,12 @@
 #include <math.h>
 
 #include <iostream>
+#include <string>
+#include <fstream>
+#include <streambuf>
+
+extern "C"
+{
 
 #include "flextypes.h"
 #include "flexerror.h"
@@ -85,9 +91,6 @@
 #include "newton-irPass-autoDiff.h"
 #include "newton-irPass-estimatorSynthesisBackend.h"
 
-
-extern "C"
-{
 void    
 irPassLLVMIR(State *  N)
 {
@@ -110,7 +113,13 @@ irPassLLVMIR(State *  N)
 		consolePrintBuffers(N);
 	}
 
+	std::ifstream t(N->llvmIR);
+	std::string str((std::istreambuf_iterator<char>(t)),
+			                 std::istreambuf_iterator<char>());
+	std::cout << str << std::endl;
+
 	fclose (irFile);
+	std::cout << "Done\n";
 	//if (irFile)
 	//{
 	//	fseek (irFile, 0, SEEK_END);
