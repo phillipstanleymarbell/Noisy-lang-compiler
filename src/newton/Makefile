@@ -59,7 +59,6 @@ SOURCES		=\
 		newton-irPass-targetParamBackend.c\
 		newton-irPass-RTLBackend.c\
 		newton-irPass-estimatorSynthesisBackend.c\
-		newton-irPass-LLVMIR.c\
 		newton-irPass-invariantSignalAnnotation.c\
 		newton-irPass-piGroupsSignalAnnotation.c\
 		newton-irPass-ipsaBackend.c\
@@ -81,6 +80,7 @@ SOURCES		=\
 		newton-timeStamps.c\
 		main.c\
 		newton-eigenLibraryInterface.cpp\
+		newton-irPass-LLVMIR.cpp\
 
 
 #
@@ -279,6 +279,10 @@ cgi:lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$
 	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
 newton-eigenLibraryInterface.$(OBJECTEXTENSION): newton-eigenLibraryInterface.cpp
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
+
+newton-irPass-LLVMIR.$(OBJECTEXTENSION): newton-irPass-LLVMIR.cpp
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
