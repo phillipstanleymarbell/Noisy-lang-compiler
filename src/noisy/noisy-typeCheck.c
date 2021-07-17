@@ -1728,41 +1728,44 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                                         {
                                                                 N->currentFunction->isChannel = true;
                                                         }
-                                                        else if (lValueType.basicType == noisyNamegenType)
-                                                        {
-                                                                /*
-                                                                *       Else if lval has noisyNamegenType it means we write to the input channel
-                                                                *       of a channel function.
-                                                                */
-                                                                if (lValueType.functionDefinition->parameterNum != 1)
-                                                                {
-                                                                        char *	details;
-
-                                                                        asprintf(&details, "Cannot write to channel with multiple or zero inputs!\n");
-                                                                        noisySemanticError(N,LL(iter),details);
-                                                                        noisySemanticErrorRecovery(N);
-                                                                }
-
-                                                                lvalSymbol->noisyType.functionDefinition->isChannel = true;
-                                                                expectedRvalType = getNoisyTypeFromTypeExpr(N,LRL(lValueType.functionDefinition->typeTree));
-                                                                if (!noisyTypeEquals(expectedRvalType,rValueType))
-                                                                {
-                                                                        char *	details;
-
-                                                                        asprintf(&details, "Channel and value type mismatch!\n");
-                                                                        noisySemanticError(N,LL(iter),details);
-                                                                        noisySemanticErrorRecovery(N);
-                                                                }
-                                                                expectedRvalType = noisyGetMoreSpecificType(expectedRvalType,rValueType);
-                                                        }
-                                                        else
+                                                }
+                                        }
+                                        else if (RLL(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_TchannelOperatorAssign)
+                                        {
+                                                if (lValueType.basicType == noisyNamegenType)
+                                                {
+                                                        /*
+                                                        *       Else if lval has noisyNamegenType it means we write to the input channel
+                                                        *       of a channel function.
+                                                        */
+                                                        if (lValueType.functionDefinition->parameterNum != 1)
                                                         {
                                                                 char *	details;
 
-                                                                asprintf(&details, "Cannot write to a non channel!\n");
+                                                                asprintf(&details, "Cannot write to channel with multiple or zero inputs!\n");
                                                                 noisySemanticError(N,LL(iter),details);
                                                                 noisySemanticErrorRecovery(N);
                                                         }
+
+                                                        lvalSymbol->noisyType.functionDefinition->isChannel = true;
+                                                        expectedRvalType = getNoisyTypeFromTypeExpr(N,LRL(lValueType.functionDefinition->typeTree));
+                                                        if (!noisyTypeEquals(expectedRvalType,rValueType))
+                                                        {
+                                                                char *	details;
+
+                                                                asprintf(&details, "Channel and value type mismatch!\n");
+                                                                noisySemanticError(N,LL(iter),details);
+                                                                noisySemanticErrorRecovery(N);
+                                                        }
+                                                        expectedRvalType = noisyGetMoreSpecificType(expectedRvalType,rValueType);
+                                                }
+                                                else
+                                                {
+                                                        char *	details;
+
+                                                        asprintf(&details, "Cannot write to a non channel!\n");
+                                                        noisySemanticError(N,LL(iter),details);
+                                                        noisySemanticErrorRecovery(N);
                                                 }
                                         }
                                         else if (rValueType.basicType == noisyNilType)
