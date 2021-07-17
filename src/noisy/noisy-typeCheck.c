@@ -1839,7 +1839,7 @@ noisyGuardedStatementTypeCheck(State * N, IrNode * noisyGuardedStatementNode, Sc
 void
 noisyMatchStatementTypeCheck(State * N,IrNode * noisyMatchStatementNode,Scope * currentScope)
 {
-        noisyGuardedStatementTypeCheck(N,R(noisyMatchStatementNode),currentScope->firstChild);
+        noisyGuardedStatementTypeCheck(N,R(noisyMatchStatementNode),currentScope->firstChild->firstChild);
 }
 
 void
