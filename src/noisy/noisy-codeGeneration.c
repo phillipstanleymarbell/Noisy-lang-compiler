@@ -1462,6 +1462,14 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
 
                                         LLVMValueRef srcArrayValue;
                                         LLVMValueRef dstPtrVal;
+                                        if (lvalSym->symbolType == kNoisySymbolTypeParameter)
+                                        {
+                                                dstPtrVal = LLVMBuildLoad2(S->theBuilder,getLLVMTypeFromNoisyType(S,lvalSym->noisyType,true,0),lvalSym->llvmPointer,"k_loadParam");
+                                        }
+                                        else
+                                        {
+                                                dstPtrVal = lvalSym->llvmPointer;
+                                        }
                                         if (RRL(noisyAssignmentStatementNode)->irLeftChild->type == kNoisyIrNodeType_PanonAggrCastExpr)
                                         {
                                                 sizeOfExprVal= LLVMBuildGEP2(S->theBuilder,LLVMTypeOf(exprVal),LLVMConstPointerNull(LLVMPointerType(LLVMTypeOf(exprVal),0)),oneVal,1,"");
@@ -1469,7 +1477,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                                 srcArrayValue = LLVMAddGlobal(S->theModule,LLVMTypeOf(exprVal),"k_arrConst");
                                                 LLVMSetInitializer(srcArrayValue,exprVal);
                                                 LLVMSetGlobalConstant(srcArrayValue,true);
-                                                dstPtrVal = LLVMBuildBitCast(S->theBuilder,lvalSym->llvmPointer,LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0),"");
+                                                dstPtrVal = LLVMBuildBitCast(S->theBuilder,dstPtrVal,LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0),"");
                                         }
                                         else
                                         {
@@ -1477,7 +1485,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                                 sizeOfExprVal= LLVMBuildGEP2(S->theBuilder,arrayType,LLVMConstPointerNull(LLVMPointerType(arrayType,0)),oneVal,1,"");
                                                 sizeOfExprVal = LLVMBuildPtrToInt(S->theBuilder,sizeOfExprVal,LLVMInt64TypeInContext(S->theContext),"k_sizeOfT");
                                                 srcArrayValue = exprVal;
-                                                dstPtrVal = lvalSym->llvmPointer;
+                                                dstPtrVal = dstPtrVal;
                                         }
 
                                         LLVMBuildMemCpy(S->theBuilder,dstPtrVal,0,srcArrayValue,0,sizeOfExprVal);
@@ -1545,7 +1553,26 @@ noisyMatchStatementCodeGen(State * N,CodeGenState * S, IrNode * matchNode)
                         LLVMBuildCondBr(S->theBuilder,condVal,thenBlock,elseBlock);
                         LLVMPositionBuilderAtEnd(S->theBuilder,thenBlock);
                         noisyStatementListCodeGen(N,S,RLL(iter));
-                        LLVMBuildBr(S->theBuilder,afterBlock);
+                        /*
+                        *       TODO; This is questionable. I added it so we can have a return statemnt inside statements that end with branc instruction.
+                        *       Probably it works.
+                        */
+                        LLVMValueRef terminatorValue = LLVMGetBasicBlockTerminator(LLVMGetInsertBlock(S->theBuilder));
+                        if (terminatorValue != NULL)
+                        {
+                                /*
+                                *       If we do not return then we add branch normally.
+                                */
+                                if (LLVMIsAReturnInst(terminatorValue) == NULL)
+                                {
+                                        LLVMBuildBr(S->theBuilder,afterBlock);
+                                }
+                        }
+                        else
+                        {
+                                LLVMBuildBr(S->theBuilder,afterBlock);
+                        }
+
                         if (RR(iter) != NULL)
                         {
                                 LLVMPositionBuilderAtEnd(S->theBuilder,elseBlock);
@@ -1572,11 +1599,25 @@ noisyMatchStatementCodeGen(State * N,CodeGenState * S, IrNode * matchNode)
 
                         LLVMPositionBuilderAtEnd(S->theBuilder,thenBlock);
                         noisyStatementListCodeGen(N,S,RLL(iter));
-                        LLVMBuildBr(S->theBuilder,afterBlock);
+
+                        LLVMValueRef terminatorValue = LLVMGetBasicBlockTerminator(LLVMGetInsertBlock(S->theBuilder));;
+                        if (terminatorValue != NULL)
+                        {
+                                /*
+                                *       If we do not return then we add branch normally.
+                                */
+                                if (LLVMIsAReturnInst(terminatorValue) == NULL)
+                                {
+                                        LLVMBuildBr(S->theBuilder,afterBlock);
+                                }
+                        }
+                        else
+                        {
+                                LLVMBuildBr(S->theBuilder,afterBlock);
+                        }
 
                         LLVMPositionBuilderAtEnd(S->theBuilder,afterBlock);
                 }
-
         }
 
 }
@@ -1619,7 +1660,22 @@ noisySequenceStatementCodeGen(State * N,CodeGenState * S, IrNode * sequenceNode)
         LLVMPositionBuilderAtEnd(S->theBuilder,loopBlock);
         noisyStatementListCodeGen(N,S,RL(sequenceNode));
         noisyAssignmentStatementCodeGen(N,S,LRR(sequenceNode)->irLeftChild);
-        LLVMBuildBr(S->theBuilder,condBlock);
+
+        LLVMValueRef terminatorValue = LLVMGetBasicBlockTerminator(LLVMGetInsertBlock(S->theBuilder));;
+        if (terminatorValue != NULL)
+        {
+                /*
+                *       If we do not return then we add branch normally.
+                */
+                if (LLVMIsAReturnInst(terminatorValue) == NULL)
+                {
+                        LLVMBuildBr(S->theBuilder,condBlock);
+                }
+        }
+        else
+        {
+                LLVMBuildBr(S->theBuilder,condBlock);
+        }
 
         LLVMPositionBuilderAtEnd(S->theBuilder,afterBlock);
 }
