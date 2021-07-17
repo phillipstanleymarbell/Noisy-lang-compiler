@@ -1218,6 +1218,7 @@ struct Symbol
 	*/
 	int			parameterNum;
 	bool			isTypeComplete;
+	bool			isChannel;
 	int			paramPosition;
 	LLVMValueRef		llvmPointer;
 
@@ -1348,6 +1349,7 @@ typedef struct
 	uint64_t		currentTokenLength;
 	Token *			tokenList;
 	Token *			lastToken;
+	Symbol *		currentFunction;
 
 	/*
 	 *	The root of the IR tree, and top scope
