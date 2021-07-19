@@ -1458,6 +1458,7 @@ noisyDeclareFunctionTypeCheck(State * N, const char * functionName,IrNode * inpu
         *       By default functions are not channels. We check if they use channel operators and then we decide they are channels.
         */
         functionSymbol->isChannel = false;
+        functionSymbol->isTypeComplete = false;
 
         int parameterCount = 0;
 
@@ -1480,12 +1481,12 @@ noisyDeclareFunctionTypeCheck(State * N, const char * functionName,IrNode * inpu
         */
 
         functionSymbol->parameterNum = parameterCount;
-
         if (parameterCount == 0)
         {
                 functionSymbol->isTypeComplete = true;
         }
-        else
+
+        if (L(outputSignature)->type != kNoisyIrNodeType_Tnil)
         {
                 functionSymbol->isTypeComplete = functionSymbol->isTypeComplete && isTypeExprComplete(N,RL(outputSignature));
         }
