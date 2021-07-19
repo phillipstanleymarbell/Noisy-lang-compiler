@@ -35,6 +35,83 @@ void noisyStatementListCodeGen(State * N, CodeGenState * S,IrNode * statementLis
 LLVMValueRef noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode);
 LLVMValueRef noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnNode);
 
+/*
+*       This functions declares all coroutine intrinsic functions so we can use them in our program.
+*/
+void
+noisyDeclareCoroutineIntrinsics(CodeGenState * S)
+{
+        /*
+        *       Declare token llvm.coro.id(i32,i8*,i8*,i8*)
+        */
+        LLVMTypeRef returnType = LLVMTokenTypeInContext(S->theContext);
+        LLVMTypeRef paramTypes[4];
+        int parameterNums = 4;
+        paramTypes[0] = LLVMInt32TypeInContext(S->theContext);
+        paramTypes[1] = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
+        paramTypes[2] = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
+        paramTypes[3] = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
+        LLVMTypeRef functionType = LLVMFunctionType(returnType,paramTypes,parameterNums,false);
+        LLVMAddFunction(S->theModule,"llvm.coro.id",functionType);
+
+        /*
+        *       Declare i1 @llvm.coro.alloc(token)
+        */
+        returnType = LLVMInt1TypeInContext(S->theContext);
+        parameterNums = 1;
+        paramTypes[0] = LLVMTokenTypeInContext(S->theContext);
+        functionType = LLVMFunctionType(returnType,paramTypes,parameterNums,false);
+        LLVMAddFunction(S->theModule,"llvm.coro.alloc",functionType);
+
+        /*
+        *       Declare i32 @llvm.coro.size.i32()
+        */
+       returnType = LLVMInt32TypeInContext(S->theContext);
+       parameterNums = 0;
+       functionType = LLVMFunctionType(returnType,paramTypes,parameterNums,false);
+       LLVMAddFunction(S->theModule,"llvm.coro.size.i32",functionType);
+
+       /*
+       *        Declare i8* @llvm.coro.begin(token,i8*)
+       */
+        returnType = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
+        parameterNums = 2;
+        paramTypes[0] = LLVMTokenTypeInContext(S->theContext);
+        paramTypes[1] = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
+        functionType = LLVMFunctionType(returnType,paramTypes,parameterNums,false);
+        LLVMAddFunction(S->theModule,"llvm.coro.begin",functionType);
+
+        /*
+        *        Declare i8  @llvm.coro.suspend(token, i1)
+        */
+        returnType = LLVMInt8TypeInContext(S->theContext);
+        parameterNums = 2;
+        paramTypes[0] = LLVMTokenTypeInContext(S->theContext);
+        paramTypes[1] = LLVMInt1TypeInContext(S->theContext);
+        functionType = LLVMFunctionType(returnType,paramTypes,parameterNums,false);
+        LLVMAddFunction(S->theModule,"llvm.coro.suspend",functionType);
+
+        /*
+        *        Declare i8* @llvm.coro.free(token, i8*)
+        */
+        returnType = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
+        parameterNums = 2;
+        paramTypes[0] = LLVMTokenTypeInContext(S->theContext);
+        paramTypes[1] = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
+        functionType = LLVMFunctionType(returnType,paramTypes,parameterNums,false);
+        LLVMAddFunction(S->theModule,"llvm.coro.free",functionType);
+
+        /*
+        *       Declare i1 @llvm.coro.end(i8*, i1)
+        */
+        returnType = LLVMInt1TypeInContext(S->theContext);
+        parameterNums = 2;
+        paramTypes[0] = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
+        paramTypes[1] = LLVMInt1TypeInContext(S->theContext);
+        functionType = LLVMFunctionType(returnType,paramTypes,parameterNums,false);
+        LLVMAddFunction(S->theModule,"llvm.coro.end",functionType);
+}
+
 NoisyType
 findConstantNoisyType(IrNode * constantNode)
 {
@@ -157,7 +234,14 @@ noisyDeclareFunction(State * N, CodeGenState * S,IrNode * funcNameNode,IrNode * 
         *       just like the C convention.
         */
         bool returnsArray = false;
-        if (L(outputSignature)->type != kNoisyIrNodeType_Tnil)
+        if (functionSymbol->isChannel)
+        {
+                /*
+                *       Coroutines return their coroutine frame which is an i8* value.
+                */
+                returnType = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
+        }
+        else if (L(outputSignature)->type != kNoisyIrNodeType_Tnil)
         {
                 outputBasicType = RL(outputSignature);
                 returnNoisyType = getNoisyTypeFromTypeExpr(N,outputBasicType);
@@ -173,6 +257,9 @@ noisyDeclareFunction(State * N, CodeGenState * S,IrNode * funcNameNode,IrNode * 
                 returnType = LLVMVoidTypeInContext(S->theContext);
         }
 
+        /*
+        *       TODO; Change parameter type for input channel of a function.
+        */
         int parameterNumber = functionSymbol->parameterNum;
         if (returnsArray)
         {
@@ -1281,14 +1368,18 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
         }
         else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PloadExpr)
         {
-                LLVMBasicBlockRef currentBlock = LLVMGetInsertBlock(S->theBuilder);
-                IrNode * funcDefn = noisyExpressionNode->noisyType.functionDefinition->functionDefinition;
-                L(funcDefn)->symbol->isTypeComplete = true;
-                LLVMValueRef prevFunc = S->currentFunction;
-                LLVMValueRef functionVal = noisyFunctionDefnCodeGen(N,S,noisyExpressionNode->noisyType.functionDefinition->functionDefinition);
-                L(funcDefn)->symbol->isTypeComplete = false;
-                S->currentFunction =  prevFunc;
-                LLVMPositionBuilderAtEnd(S->theBuilder,currentBlock);
+                LLVMValueRef functionVal = LLVMGetNamedFunction(S->theModule,LR(noisyExpressionNode)->symbol->identifier);
+                if (functionVal == NULL)
+                {
+                        LLVMBasicBlockRef currentBlock = LLVMGetInsertBlock(S->theBuilder);
+                        IrNode * funcDefn = noisyExpressionNode->noisyType.functionDefinition->functionDefinition;
+                        L(funcDefn)->symbol->isTypeComplete = true;
+                        LLVMValueRef prevFunc = S->currentFunction;
+                        functionVal = noisyFunctionDefnCodeGen(N,S,noisyExpressionNode->noisyType.functionDefinition->functionDefinition);
+                        L(funcDefn)->symbol->isTypeComplete = false;
+                        S->currentFunction =  prevFunc;
+                        LLVMPositionBuilderAtEnd(S->theBuilder,currentBlock);
+                }
                 return functionVal;
         }
         /*
@@ -1496,6 +1587,13 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                         *       When we have an array on lval of an assignment.
                                         */
                                         LLVMBuildStore(S->theBuilder,exprVal,noisyGetArrayPositionPointer(N,S,lvalSym,LL(iter)));
+                                }
+                                else if (lvalSym->symbolType == kNoisySymbolTypeReturnParameter)
+                                {
+                                        /*
+                                        *       TODO; This is placeholder to avoid segafault for fib.n. It needs to change when we implement channels.
+                                        */
+                                        ;
                                 }
                                 else if (lvalSym->noisyType.basicType != noisyNamegenType)
                                 {
@@ -1757,6 +1855,7 @@ LLVMValueRef
 noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnNode)
 {
         LLVMValueRef func;
+        static bool isCoroutineDeclared = false;
         if (!strcmp(L(noisyFunctionDefnNode)->tokenString,"init"))
         {
                 func = LLVMGetNamedFunction(S->theModule,"main");
@@ -1783,59 +1882,207 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
         L(noisyFunctionDefnNode)->symbol->llvmPointer = func;
         LLVMBasicBlockRef funcEntry = LLVMAppendBasicBlock(func, "entry");
         LLVMPositionBuilderAtEnd(S->theBuilder, funcEntry);
+        IrNode * outputSignature = RRL(noisyFunctionDefnNode);
 
-        /*
-        *       Array arguments need the following processing before any other code generation.
-        */
-        for  (IrNode * iter = RL(L(noisyFunctionDefnNode)->symbol->functionDefinition); iter != NULL; iter = RR(iter))
+        if (L(noisyFunctionDefnNode)->symbol->isChannel)
         {
-                Symbol * identifierSymbol;
-                if (L(iter)->type == kNoisyIrNodeType_Tnil)
+                /*
+                *       Coroutine Code Gen. For coroutines, we need to allocate memory for the coroutine frame and possible promise value,
+                *       before generating user code.
+                */
+                LLVMValueRef returnPromiseValue;
+                if (L(outputSignature)->type != kNoisyIrNodeType_Tnil)
                 {
-                       break;
+                        LLVMTypeRef returnType = getLLVMTypeFromNoisyType(S,L(outputSignature)->symbol->noisyType,false,0);
+                        returnPromiseValue = LLVMBuildAlloca(S->theBuilder,returnType,"k_retPromise");
+                        returnPromiseValue = LLVMBuildBitCast(S->theBuilder,returnPromiseValue,LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0),"k_retPromisev");
                 }
                 else
                 {
-                        identifierSymbol = L(iter)->symbol;
-                        // identifierSymbol->noisyType = getNoisyTypeFromTypeExpr(N,identifierSymbol->typeTree);
+                        returnPromiseValue = LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0));
                 }
 
-                if (identifierSymbol->noisyType.basicType == noisyArrayType)
+                if (!isCoroutineDeclared)
                 {
-                        LLVMValueRef paramValue = LLVMGetParam(S->currentFunction,identifierSymbol->paramPosition);
-                        LLVMValueRef arrayAddrValue = LLVMBuildAlloca(S->theBuilder,LLVMTypeOf(paramValue),"k_arrAddr");
-                        LLVMBuildStore(S->theBuilder,paramValue,arrayAddrValue);
-                        identifierSymbol->llvmPointer = arrayAddrValue;
+                        noisyDeclareCoroutineIntrinsics(S);
+                        isCoroutineDeclared = true;
                 }
-        }
+                /*
+                *       Create coro token.
+                */
+                LLVMValueRef args[4];
+                int argNum = 4;
+                args[0] = LLVMConstInt(LLVMInt32TypeInContext(S->theContext),0,false);
+                args[1] = returnPromiseValue;
+                args[2] = LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0));
+                args[3] = LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0));
+                LLVMValueRef callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.id");
+                LLVMValueRef coroToken = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"k_coroId");
 
-        IrNode * outputSignature = RRL(noisyFunctionDefnNode);
-        if (L(outputSignature)->type != kNoisyIrNodeType_Tnil)
-        {
-                Symbol * identifierSymbol = L(outputSignature)->symbol;
-                // identifierSymbol->noisyType = getNoisyTypeFromTypeExpr(N,identifierSymbol->typeTree);
-                if (identifierSymbol->noisyType.basicType == noisyArrayType)
+                /*
+                *       Check if dynamic memory allocation is needed for coro token.
+                */
+                args[0] = coroToken;
+                argNum = 1;
+                callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.alloc");
+                LLVMValueRef needDynAlloc = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"k_needDynAlloc");
+
+                LLVMBasicBlockRef dynAlloc = LLVMAppendBasicBlockInContext(S->theContext,S->currentFunction,"dynAlloc");
+                LLVMBasicBlockRef coroBegin = LLVMAppendBasicBlockInContext(S->theContext,S->currentFunction,"coroBegin");
+
+                LLVMBuildCondBr(S->theBuilder,needDynAlloc,dynAlloc,coroBegin);
+                LLVMPositionBuilderAtEnd(S->theBuilder,dynAlloc);
+
+                /*
+                *       If dynamic allocation is need then calculate the size needed, allocate the memory and branc to coro begin.
+                */
+                argNum = 0;
+                callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.size.i32");
+                LLVMValueRef size = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"k_size");
+
+                LLVMValueRef mallocedMem = LLVMBuildArrayMalloc(S->theBuilder,LLVMInt1TypeInContext(S->theContext),size,"k_alloc");
+                mallocedMem = LLVMBuildBitCast(S->theBuilder,mallocedMem,LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0),"");
+
+                LLVMBuildBr(S->theBuilder,coroBegin);
+                LLVMPositionBuilderAtEnd(S->theBuilder,coroBegin);
+
+                /*
+                *       At coro begin we have a phi node indicating if we malloc'ed memory or if it is stack allocated.
+                *       Then we call coro.begin that return the coro frame,essential for the coroutine handling.
+                *       After calling coro.begin we immediately call coro.suspend. The semantics should be that when the
+                *       users calls a loadExpr we allocate memory for the coroFrame. After that every time that the function
+                *       is invoked via a channel call we actually invoke the resume function of the coroutine.
+                */
+                LLVMValueRef allocPhi = LLVMBuildPhi(S->theBuilder,LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0),"k_allocPhi");
+                LLVMValueRef phiValues[2];
+                phiValues[0] = LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0));
+                phiValues[1] = mallocedMem;
+                LLVMBasicBlockRef blockList[2];
+                blockList[0] = funcEntry;
+                blockList[1] = dynAlloc;
+                LLVMAddIncoming(allocPhi,phiValues,blockList,2);
+
+                argNum = 2;
+                args[0] = coroToken;
+                args[1] = allocPhi;
+                callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.begin");
+                LLVMValueRef hdl = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"hdl");
+
+                argNum = 2;
+                args[0] = LLVMConstNull(LLVMTokenTypeInContext(S->theContext));
+                args[1] = LLVMConstInt(LLVMInt1TypeInContext(S->theContext),0,false);
+                callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.suspend");
+                LLVMValueRef suspend = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"sus");
+
+                LLVMBasicBlockRef suspendBB= LLVMAppendBasicBlockInContext(S->theContext,S->currentFunction,"suspend");
+                LLVMBasicBlockRef cleanupBB = LLVMInsertBasicBlockInContext(S->theContext,suspendBB,"cleanup");
+                LLVMBasicBlockRef userCodeBB = LLVMInsertBasicBlockInContext(S->theContext,cleanupBB,"usercode");
+
+                LLVMValueRef switchVal = LLVMBuildSwitch(S->theBuilder,suspend,suspendBB,2);
+                LLVMAddCase(switchVal,LLVMConstInt(LLVMInt8TypeInContext(S->theContext),0,false),userCodeBB);
+                LLVMAddCase(switchVal,LLVMConstInt(LLVMInt8TypeInContext(S->theContext),1,false),cleanupBB);
+
+                LLVMPositionBuilderAtEnd(S->theBuilder,cleanupBB);
+                /*
+                *       At cleanup we check if we need to deallocate the memory or if it is stack allocated.
+                */
+                argNum = 2;
+                args[0] = coroToken;
+                args[1] = hdl;
+                callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.free");
+                LLVMValueRef mem = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"k_mem");
+
+                LLVMBasicBlockRef dynFreeBB = LLVMInsertBasicBlockInContext(S->theContext,suspendBB,"dynFree");
+                LLVMValueRef needDynFree = LLVMBuildICmp(S->theBuilder,LLVMIntNE,mem,LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0)),"k_needDynFree");
+                LLVMBuildCondBr(S->theBuilder,needDynFree,dynFreeBB,suspendBB);
+
+                LLVMPositionBuilderAtEnd(S->theBuilder,dynFreeBB);
+
+                /*
+                *       On dynamic free we free the malloc'ed memory and we branc to suspend.
+                */
+                LLVMBuildFree(S->theBuilder,mem);
+                LLVMBuildBr(S->theBuilder,suspendBB);
+
+                LLVMPositionBuilderAtEnd(S->theBuilder,suspendBB);
+
+                /*
+                *       On suspend we destory the coroutine stack frame and we return.
+                */
+                argNum = 2;
+                args[0] = hdl;
+                args[1] = LLVMConstInt(LLVMInt1TypeInContext(S->theContext),0,false);
+                callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.end");
+                LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"sus");
+
+                LLVMBuildRet(S->theBuilder,hdl);
+
+                LLVMPositionBuilderAtEnd(S->theBuilder,userCodeBB);
+
+                noisyStatementListCodeGen(N,S,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild);
+
+                LLVMValueRef lastInst = LLVMGetLastInstruction(LLVMGetLastBasicBlock(S->currentFunction));
+                if (lastInst == NULL || LLVMIsATerminatorInst(lastInst) == NULL)
                 {
-                        LLVMValueRef paramValue = LLVMGetLastParam(S->currentFunction);
-                        LLVMValueRef arrayAddrValue = LLVMBuildAlloca(S->theBuilder,LLVMTypeOf(paramValue),"k_retAddr");
-                        LLVMBuildStore(S->theBuilder,paramValue,arrayAddrValue);
-                        identifierSymbol->llvmPointer = arrayAddrValue;
+                        LLVMBuildBr(S->theBuilder,cleanupBB);
+                }
+
+        }
+        else
+        {
+                /*
+                *       Normal function code generation.
+                */
+                /*
+                *       Array arguments need the following processing before any other code generation.
+                */
+                for  (IrNode * iter = RL(L(noisyFunctionDefnNode)->symbol->functionDefinition); iter != NULL; iter = RR(iter))
+                {
+                        Symbol * identifierSymbol;
+                        if (L(iter)->type == kNoisyIrNodeType_Tnil)
+                        {
+                        break;
+                        }
+                        else
+                        {
+                                identifierSymbol = L(iter)->symbol;
+                                // identifierSymbol->noisyType = getNoisyTypeFromTypeExpr(N,identifierSymbol->typeTree);
+                        }
+
+                        if (identifierSymbol->noisyType.basicType == noisyArrayType)
+                        {
+                                LLVMValueRef paramValue = LLVMGetParam(S->currentFunction,identifierSymbol->paramPosition);
+                                LLVMValueRef arrayAddrValue = LLVMBuildAlloca(S->theBuilder,LLVMTypeOf(paramValue),"k_arrAddr");
+                                LLVMBuildStore(S->theBuilder,paramValue,arrayAddrValue);
+                                identifierSymbol->llvmPointer = arrayAddrValue;
+                        }
+                }
+
+                if (L(outputSignature)->type != kNoisyIrNodeType_Tnil)
+                {
+                        Symbol * identifierSymbol = L(outputSignature)->symbol;
+                        if (identifierSymbol->noisyType.basicType == noisyArrayType)
+                        {
+                                LLVMValueRef paramValue = LLVMGetLastParam(S->currentFunction);
+                                LLVMValueRef arrayAddrValue = LLVMBuildAlloca(S->theBuilder,LLVMTypeOf(paramValue),"k_retAddr");
+                                LLVMBuildStore(S->theBuilder,paramValue,arrayAddrValue);
+                                identifierSymbol->llvmPointer = arrayAddrValue;
+                        }
+                }
+
+                noisyStatementListCodeGen(N,S,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild);
+                /*
+                *       If the functions returns void the final instruction should be the Ret Void.
+                */
+                if (L(outputSignature)->type == kNoisyIrNodeType_Tnil)
+                {
+                        LLVMBuildRetVoid(S->theBuilder);
                 }
         }
 
-
-        noisyStatementListCodeGen(N,S,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild);
-        /*
-        *       If the functions returns void the final instruction should be the Ret Void.
-        */
-        if (RRL(noisyFunctionDefnNode)->irLeftChild->type == kNoisyIrNodeType_Tnil)
-        {
-                LLVMBuildRetVoid(S->theBuilder);
-        }
         LLVMVerifyFunction(func,LLVMPrintMessageAction);
         return func;
 }
-
 
 void
 noisyProgramCodeGen(State * N, CodeGenState * S,IrNode * noisyProgramNode)
