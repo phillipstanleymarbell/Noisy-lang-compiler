@@ -373,7 +373,18 @@ noisyDeclareFunction(State * N, CodeGenState * S,IrNode * funcNameNode,IrNode * 
 
                         if (llvmType != NULL)
                         {
-                                paramArray[paramIndex] = llvmType;
+                                if (functionSymbol->isChannel)
+                                {
+                                        /*
+                                        *       The input channels of a channel function pass values by reference.
+                                        *       TODO; Check what happens with arrays.
+                                        */
+                                        paramArray[paramIndex] = LLVMPointerType(llvmType,0);
+                                }
+                                else
+                                {
+                                        paramArray[paramIndex] = llvmType;
+                                }
                         }
                         else
                         {
@@ -981,7 +992,27 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S,IrNode * noisyUnaryOpNode, LLVMV
                         LLVMValueRef promiseAddr = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"k_promiseAddrRaw");
                         promiseAddr = LLVMBuildBitCast(S->theBuilder,promiseAddr,LLVMPointerType(outputType,0),"k_promiseAddr");
                         return LLVMBuildLoad2(S->theBuilder,outputType,promiseAddr,"k_promiseVal");
+                }
+                else
+                {
+                        /*
+                        *       This case is when we read from input channel of a channel function.
+                        */
+                        LLVMValueRef readVal = LLVMBuildLoad2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(termVal)),termVal,"k_inputChanRead");
+                        int argNum = 2;
+                        LLVMValueRef args[2];
+                        args[0] = LLVMConstNull(LLVMTokenTypeInContext(S->theContext));
+                        args[1] = LLVMConstInt(LLVMInt1TypeInContext(S->theContext),0,false);
+                        LLVMValueRef funcCall = LLVMGetNamedFunction(S->theModule,"llvm.coro.suspend");
+                        LLVMValueRef suspend = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(funcCall)),funcCall,args,argNum,"");
+                        LLVMBasicBlockRef resumeBB = LLVMInsertBasicBlockInContext(S->theContext,LLVMGetNextBasicBlock(LLVMGetInsertBlock(S->theBuilder)),"coroResume");
 
+                        LLVMValueRef switchVal = LLVMBuildSwitch(S->theBuilder,suspend,S->suspendBB,2);
+                        LLVMAddCase(switchVal,LLVMConstInt(LLVMInt8TypeInContext(S->theContext),0,false),resumeBB);
+                        LLVMAddCase(switchVal,LLVMConstInt(LLVMInt8TypeInContext(S->theContext),1,false),S->cleanupBB);
+
+                        LLVMPositionBuilderAtEnd(S->theBuilder,resumeBB);
+                        return readVal;
                 }
                 return termVal;
                 break;
@@ -1519,11 +1550,25 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                 Symbol * funcSymbol = noisyExpressionNode->noisyType.functionDefinition;
                 if (funcSymbol->isChannel)
                 {
-                        if (funcSymbol->parameterNum == 0)
+                        IrNode * inputSignature = RL(funcSymbol->functionDefinition);
+                        LLVMValueRef * args = (LLVMValueRef *)malloc(funcSymbol->parameterNum * sizeof(LLVMValueRef));
+
+                        int i = 0;
+                        for (IrNode * iter = inputSignature; iter != NULL; iter = RR(iter))
                         {
-                                functionVal = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(functionVal)),functionVal,NULL,0,"k_hdl");
-                                S->frameList =  noisyAddFrameToList(S->frameList,functionVal);
+                                if (L(iter)->type == kNoisyIrNodeType_Tnil)
+                                {
+                                        break;
+                                }
+                                LLVMTypeRef argType = getLLVMTypeFromNoisyType(S,L(iter)->symbol->noisyType,false,0);
+                                LLVMValueRef inputChanAddr = LLVMBuildAlloca(S->theBuilder,argType,"k_inputChanAddr");
+                                args[i] = inputChanAddr;
+                                funcSymbol->inputChanAddress = inputChanAddr;
+                                i++;
                         }
+                        functionVal = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(functionVal)),functionVal,args,funcSymbol->parameterNum,"k_hdl");
+                        S->frameList =  noisyAddFrameToList(S->frameList,functionVal);
+                        free(args);
                 }
                 return functionVal;
         }
@@ -1696,6 +1741,17 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                                 LLVMAddCase(switchVal,LLVMConstInt(LLVMInt8TypeInContext(S->theContext),1,false),S->cleanupBB);
 
                                                 LLVMPositionBuilderAtEnd(S->theBuilder,resumeBB);
+                                                return;
+                                        }
+                                        else
+                                        {
+                                                LLVMValueRef inputChanAddress = lvalSym->noisyType.functionDefinition->inputChanAddress;
+                                                LLVMBuildStore(S->theBuilder,exprVal,inputChanAddress);
+                                                int argNum = 1;
+                                                LLVMValueRef args[1];
+                                                args[0] = lvalSym->llvmPointer;
+                                                LLVMValueRef callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.resume");
+                                                LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"");
                                                 return;
                                         }
                                         break;
@@ -2045,6 +2101,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
                 }
         }
         S->currentFunction = func;
+        N->currentFunction = L(noisyFunctionDefnNode)->symbol;
         L(noisyFunctionDefnNode)->symbol->llvmPointer = func;
         LLVMBasicBlockRef funcEntry = LLVMAppendBasicBlock(func, "entry");
         LLVMPositionBuilderAtEnd(S->theBuilder, funcEntry);

@@ -1221,6 +1221,7 @@ struct Symbol
 	bool			isChannel;
 	int			paramPosition;
 	LLVMValueRef		llvmPointer;
+	LLVMValueRef		inputChanAddress;
 
 	/*
 	 *	Scope within which sym appears

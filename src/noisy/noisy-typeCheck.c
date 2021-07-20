@@ -833,17 +833,37 @@ noisyUnaryOpTypeCheck(State * N,IrNode * noisyUnaryOpNode,NoisyType factorType)
         {
                 if (factorType.basicType != noisyNamegenType)
                 {
-                        char * details;
-                        asprintf(&details, "Cannot read from a non channel factor!\n");
-                        noisySemanticError(N,noisyUnaryOpNode,details);
-                        noisySemanticErrorRecovery(N);
+                        IrNode * qualifiedIdentifierNode = RL(noisyUnaryOpNode->irParent);
+                        if (qualifiedIdentifierNode->type == kNoisyIrNodeType_PqualifiedIdentifier)
+                        {
+                                if (qualifiedIdentifierNode->irLeftChild->symbol->symbolType != kNoisySymbolTypeParameter)
+                                {
+                                        char * details;
+                                        asprintf(&details, "Cannot read from a non channel factor!\n");
+                                        noisySemanticError(N,noisyUnaryOpNode,details);
+                                        noisySemanticErrorRecovery(N);
+                                }
+                                N->currentFunction->isChannel = true;
+                                returnType = qualifiedIdentifierNode->irLeftChild->symbol->noisyType;
+                        }
+                        else
+                        {
+                                char * details;
+                                asprintf(&details, "Cannot read from a non channel factor!\n");
+                                noisySemanticError(N,noisyUnaryOpNode,details);
+                                noisySemanticErrorRecovery(N);
+                        }
                 }
-                factorType.functionDefinition->isChannel = true;
+                else
+                {
+                        factorType.functionDefinition->isChannel = true;
+                        returnType = getNoisyTypeFromTypeExpr(N,RRL(factorType.functionDefinition->typeTree));
+                }
+
                 /*
                 *       After applying the channel operator on a namegen, the return value has the type of the
                 *       namegen's return value.
                 */
-                returnType = getNoisyTypeFromTypeExpr(N,RRL(factorType.functionDefinition->typeTree));
         }
         else
         {
