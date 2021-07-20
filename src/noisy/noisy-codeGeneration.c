@@ -21,14 +21,81 @@
 #include <llvm-c/Core.h>
 #include <llvm-c/BitWriter.h>
 #include <llvm-c/Analysis.h>
+#include <llvm-c/Transforms/Coroutines.h>
+#include <llvm-c/Transforms/InstCombine.h>
+#include <llvm-c/Transforms/PassManagerBuilder.h>
 
+
+
+typedef struct FrameListNode {
+        LLVMValueRef frameValue;
+        struct FrameListNode * next;
+} FrameListNode;
+
+typedef FrameListNode * FrameList;
 
 typedef struct {
-        LLVMContextRef  theContext;
-        LLVMBuilderRef  theBuilder;
-        LLVMModuleRef   theModule;
-        LLVMValueRef    currentFunction;
+        LLVMContextRef          theContext;
+        LLVMBuilderRef          theBuilder;
+        LLVMModuleRef           theModule;
+        LLVMValueRef            currentFunction;
+        LLVMPassManagerRef      thePassManager;
+        FrameList               frameList;
+        LLVMBasicBlockRef       suspendBB;
+        LLVMBasicBlockRef       cleanupBB;
 } CodeGenState;
+
+FrameList
+noisyAddFrameToList(FrameList list,LLVMValueRef frame)
+{
+        FrameListNode * newFrameNode = (FrameListNode*) malloc(sizeof(FrameListNode));
+        newFrameNode->frameValue = frame;
+        newFrameNode->next= list;
+        list = newFrameNode;
+        return list;
+}
+
+
+FrameList
+noisyRemoveFrameFromList(FrameList list)
+{
+        if (list == NULL)
+        {
+                return NULL;
+        }
+        else
+        {
+                FrameListNode * del = list;
+                list = del->next;
+                free(del);
+        }
+        return list;
+}
+
+LLVMValueRef
+noisyGetFrameFromList(FrameList list)
+{
+        if (list == NULL)
+        {
+                return NULL;
+        }
+        return list->frameValue;
+}
+
+void
+noisyDestroyCoroutineFrames(CodeGenState * S)
+{
+        while (S->frameList != NULL)
+        {
+                int argNum = 1;
+                LLVMValueRef args[1];
+                args[0] = noisyGetFrameFromList(S->frameList);
+                S->frameList = noisyRemoveFrameFromList(S->frameList);
+                LLVMValueRef callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.destroy");
+                LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"");
+        }
+}
+
 
 LLVMTypeRef getLLVMTypeFromTypeExpr(State *, IrNode *);
 void noisyStatementListCodeGen(State * N, CodeGenState * S,IrNode * statementListNode);
@@ -110,6 +177,35 @@ noisyDeclareCoroutineIntrinsics(CodeGenState * S)
         paramTypes[1] = LLVMInt1TypeInContext(S->theContext);
         functionType = LLVMFunctionType(returnType,paramTypes,parameterNums,false);
         LLVMAddFunction(S->theModule,"llvm.coro.end",functionType);
+
+        /*
+        *       Declare void @llvm.coro.resume(i8*)
+        */
+        returnType = LLVMVoidTypeInContext(S->theContext);
+        parameterNums = 1;
+        paramTypes[0] = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
+        functionType = LLVMFunctionType(returnType,paramTypes,parameterNums,false);
+        LLVMAddFunction(S->theModule,"llvm.coro.resume",functionType);
+
+        /*
+        *       Declare i8* @llvm.coro.promise(i8*, i32, i1)
+        */
+        returnType = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
+        parameterNums = 3;
+        paramTypes[0] = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
+        paramTypes[1] = LLVMInt32TypeInContext(S->theContext);
+        paramTypes[2] = LLVMInt1TypeInContext(S->theContext);
+        functionType = LLVMFunctionType(returnType,paramTypes,parameterNums,false);
+        LLVMAddFunction(S->theModule,"llvm.coro.promise",functionType);
+
+        /*
+        *       Declare void @llvm.coro.destroy(i8*)
+        */
+        returnType = LLVMVoidTypeInContext(S->theContext);
+        parameterNums = 1;
+        paramTypes[0] = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
+        functionType = LLVMFunctionType(returnType,paramTypes,parameterNums,false);
+        LLVMAddFunction(S->theModule,"llvm.coro.destroy",functionType);
 }
 
 NoisyType
@@ -533,6 +629,17 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                                 return LLVMBuildGEP2(S->theBuilder,getLLVMTypeFromNoisyType(S,identifierSymbol->noisyType,false,0),arrayPtr,idxValueList,2,"k_arrayDecay");
                         }
                 }
+                else if (identifierSymbol->noisyType.basicType == noisyNamegenType)
+                {
+                        Symbol * channelSymbol = identifierSymbol->noisyType.functionDefinition;
+                        if (channelSymbol->isChannel)
+                        {
+                                /*
+                                *       We return the coroutine stack frame.
+                                */
+                                return identifierSymbol->llvmPointer;
+                        }
+                }
                 /*
                 *       Noisy namegen type is handled on load expression and on namegen invoke shorthand.
                 *       TODO; Add channel implementation.
@@ -851,6 +958,32 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S,IrNode * noisyUnaryOpNode, LLVMV
                 break;
         case kNoisyIrNodeType_Tlength:
                 return LLVMConstInt(getLLVMTypeFromNoisyType(S,findConstantNoisyType(noisyFactorNode),false,0),factorNoisyType.sizeOfDimension[factorNoisyType.dimensions-1],false);
+                break;
+        case kNoisyIrNodeType_TchannelOperator:
+                /*
+                *       If the factor has noisyNamegen type it means we read from the output channel of a coroutine.
+                */
+                if (factorNoisyType.basicType == noisyNamegenType)
+                {
+                        int argNum = 1;
+                        LLVMValueRef args[3];
+                        args[0] = termVal;
+                        LLVMValueRef callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.resume");
+                        LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"");
+
+                        NoisyType outputNoisyType = RL(factorNoisyType.functionDefinition->typeTree)->symbol->noisyType;
+                        LLVMTypeRef outputType = getLLVMTypeFromNoisyType(S,outputNoisyType,false,0);
+                        argNum = 3;
+                        args[0] = termVal;
+                        args[1] = LLVMConstInt(LLVMInt32TypeInContext(S->theContext),0,false);
+                        args[2] = LLVMConstInt(LLVMInt1TypeInContext(S->theContext),0,false);
+                        callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.promise");
+                        LLVMValueRef promiseAddr = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"k_promiseAddrRaw");
+                        promiseAddr = LLVMBuildBitCast(S->theBuilder,promiseAddr,LLVMPointerType(outputType,0),"k_promiseAddr");
+                        return LLVMBuildLoad2(S->theBuilder,outputType,promiseAddr,"k_promiseVal");
+
+                }
+                return termVal;
                 break;
         default:
                 /*
@@ -1380,6 +1513,18 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                         S->currentFunction =  prevFunc;
                         LLVMPositionBuilderAtEnd(S->theBuilder,currentBlock);
                 }
+                /*
+                *       If we load a channel
+                */
+                Symbol * funcSymbol = noisyExpressionNode->noisyType.functionDefinition;
+                if (funcSymbol->isChannel)
+                {
+                        if (funcSymbol->parameterNum == 0)
+                        {
+                                functionVal = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(functionVal)),functionVal,NULL,0,"k_hdl");
+                                S->frameList =  noisyAddFrameToList(S->frameList,functionVal);
+                        }
+                }
                 return functionVal;
         }
         /*
@@ -1530,9 +1675,30 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                         lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalSym->llvmPointer,name);
                                         exprVal = LLVMBuildLShr(S->theBuilder,lvalVal,exprVal,"k_lShiftRes");
                                         break;
-                                /*
-                                *       TODO; Channel operator assign.
-                                */
+                                case kNoisyIrNodeType_TchannelOperatorAssign:
+                                        asprintf(&name,"val_%s",lvalSym->identifier);
+                                        /*
+                                        *       If we write to the ouptput channel of a coroutine.
+                                        */
+                                        if (lvalSym->symbolType == kNoisySymbolTypeReturnParameter)
+                                        {
+                                                LLVMBuildStore(S->theBuilder,exprVal,lvalSym->llvmPointer);
+                                                int argNum = 2;
+                                                LLVMValueRef args[2];
+                                                args[0] = LLVMConstNull(LLVMTokenTypeInContext(S->theContext));
+                                                args[1] = LLVMConstInt(LLVMInt1TypeInContext(S->theContext),0,false);
+                                                LLVMValueRef funcCall = LLVMGetNamedFunction(S->theModule,"llvm.coro.suspend");
+                                                LLVMValueRef suspend = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(funcCall)),funcCall,args,argNum,"");
+                                                LLVMBasicBlockRef resumeBB = LLVMInsertBasicBlockInContext(S->theContext,LLVMGetNextBasicBlock(LLVMGetInsertBlock(S->theBuilder)),"coroResume");
+
+                                                LLVMValueRef switchVal = LLVMBuildSwitch(S->theBuilder,suspend,S->suspendBB,2);
+                                                LLVMAddCase(switchVal,LLVMConstInt(LLVMInt8TypeInContext(S->theContext),0,false),resumeBB);
+                                                LLVMAddCase(switchVal,LLVMConstInt(LLVMInt8TypeInContext(S->theContext),1,false),S->cleanupBB);
+
+                                                LLVMPositionBuilderAtEnd(S->theBuilder,resumeBB);
+                                                return;
+                                        }
+                                        break;
                                 default:
                                         break;
                                 }
@@ -1713,7 +1879,6 @@ noisyMatchStatementCodeGen(State * N,CodeGenState * S, IrNode * matchNode)
                         {
                                 LLVMBuildBr(S->theBuilder,afterBlock);
                         }
-
                         LLVMPositionBuilderAtEnd(S->theBuilder,afterBlock);
                 }
         }
@@ -1789,6 +1954,7 @@ noisyOperatorToleranceDeclCodeGen(State * N,CodeGenState * S, IrNode * tolerance
 void
 noisyReturnStatementCodeGen(State * N,CodeGenState * S, IrNode * returnNode)
 {
+        noisyDestroyCoroutineFrames(S);
         LLVMValueRef expressionValue = noisyExpressionCodeGen(N,S,LRL(returnNode));
         if (LRL(returnNode)->noisyType.basicType == noisyArrayType)
         {
@@ -1895,6 +2061,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
                 {
                         LLVMTypeRef returnType = getLLVMTypeFromNoisyType(S,L(outputSignature)->symbol->noisyType,false,0);
                         returnPromiseValue = LLVMBuildAlloca(S->theBuilder,returnType,"k_retPromise");
+                        L(outputSignature)->symbol->llvmPointer = returnPromiseValue;
                         returnPromiseValue = LLVMBuildBitCast(S->theBuilder,returnPromiseValue,LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0),"k_retPromisev");
                 }
                 else
@@ -2018,9 +2185,13 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
                 LLVMBuildRet(S->theBuilder,hdl);
 
                 LLVMPositionBuilderAtEnd(S->theBuilder,userCodeBB);
+                S->cleanupBB = cleanupBB;
+                S->suspendBB = suspendBB;
 
                 noisyStatementListCodeGen(N,S,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild);
 
+                S->cleanupBB = NULL;
+                S->suspendBB = NULL;
                 LLVMValueRef lastInst = LLVMGetLastInstruction(LLVMGetLastBasicBlock(S->currentFunction));
                 if (lastInst == NULL || LLVMIsATerminatorInst(lastInst) == NULL)
                 {
@@ -2076,6 +2247,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
                 */
                 if (L(outputSignature)->type == kNoisyIrNodeType_Tnil)
                 {
+                        noisyDestroyCoroutineFrames(S);
                         LLVMBuildRetVoid(S->theBuilder);
                 }
         }
@@ -2115,8 +2287,16 @@ noisyCodeGen(State * N)
         CodeGenState * S = (CodeGenState *)malloc(sizeof(CodeGenState));
         S->theContext = LLVMContextCreate();
         S->theBuilder = LLVMCreateBuilderInContext(S->theContext);
+        S->thePassManager = LLVMCreatePassManager();
 
         noisyProgramCodeGen(N,S,N->noisyIrRoot);
+
+        // LLVMAddCoroEarlyPass(S->thePassManager);
+        // LLVMAddCoroSplitPass(S->thePassManager);
+        // LLVMAddCoroElidePass(S->thePassManager);
+        // LLVMAddCoroCleanupPass(S->thePassManager);
+
+        LLVMRunPassManager(S->thePassManager,S->theModule);
 
         /*
         *       We need to dispose LLVM structures in order to avoid leaking memory. Free code gen state.
@@ -2131,6 +2311,7 @@ noisyCodeGen(State * N)
         LLVMDisposeMessage(msg);
         LLVMWriteBitcodeToFile(S->theModule,fileName);
 
+        LLVMDisposePassManager(S->thePassManager);
         LLVMDisposeBuilder(S->theBuilder);
         LLVMDisposeModule(S->theModule);
         LLVMContextDispose(S->theContext);
