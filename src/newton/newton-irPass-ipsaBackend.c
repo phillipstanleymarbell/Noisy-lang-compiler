@@ -1221,32 +1221,33 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
             generateRWListsForSignalLists(N, randomGroup1, randomGroup2, astNodeStrings, instructionIndex, i2cAddressList1, registerAddressList1, writeValueList1, rwList1, i2cAddressList2, registerAddressList2, writeValueList2, rwList2, &numberOfSensorInterfaceCommands1, &numberOfSensorInterfaceCommands2, &numberOfWriteCommands1, &numberOfWriteCommands2, physicalGroupNumberList1, physicalGroupNumberList2, dimIndexList1, dimIndexList2);
 
             int j = 0;
-            int shorterLength = 0;
+            // int shorterLength = 0; // TODO: Check if variable is useful.
             int difference = 0;
             if(numberOfWriteCommands1 > numberOfWriteCommands2)
             {
                 j = numberOfWriteCommands1;
-                shorterLength = numberOfWriteCommands2;
+                // shorterLength = numberOfWriteCommands2;
                 difference = numberOfWriteCommands1 - numberOfWriteCommands2;
 
             } else if(numberOfWriteCommands1 < numberOfWriteCommands2) {
                 j = numberOfWriteCommands2;
-                shorterLength = numberOfWriteCommands1;
+                // shorterLength = numberOfWriteCommands1;
                 difference = numberOfWriteCommands2 - numberOfWriteCommands1;
             } else {
-                shorterLength = numberOfWriteCommands1;
+                // shorterLength = numberOfWriteCommands1;
                 j = numberOfWriteCommands1;
                 difference = 0;
             }
 
-            bool parallel = false;
+            // TODO: Check if code necessary.
+            // bool parallel = false;
 
-            if(numberOfWriteCommands1 == 0 || numberOfWriteCommands2 == 0)
-            {
-                parallel = false;
-            } else {
-                parallel = true;
-            }
+            // if(numberOfWriteCommands1 == 0 || numberOfWriteCommands2 == 0)
+            // {
+            //     parallel = false;
+            // } else {
+            //     parallel = true;
+            // }
         
 
             for(int i=0; i<j; i++)
