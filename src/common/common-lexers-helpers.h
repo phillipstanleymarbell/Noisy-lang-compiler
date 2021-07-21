@@ -62,9 +62,9 @@ Token *		lexAllocateToken(	State *  N, IrNodeType type,
 							double realConst, char * stringConst,
 							SourceInfo *  sourceInfo);
 void		lexPut(State *  N, Token *  newToken);
-Token *		lexGet(State *  N, const char *  tokenDescriptionArray[kNoisyIrNodeTypeMax]);
+Token *		lexGet(State *  N, const char *  tokenDescriptionArray[kCommonIrNodeTypeMax]);
 Token *		lexPeek(State *  N, int lookAhead);
 
-void		lexPrintToken(State *  N, Token *  t, const char *  tokenDescriptionArray[kNoisyIrNodeTypeMax]);
-void		lexDebugPrintToken(State *  N, Token *  t, const char *  tokenDescriptionArray[kNoisyIrNodeTypeMax]);
-void		lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenDescriptionArray[kNoisyIrNodeTypeMax]);
+void		lexPrintToken(State *  N, Token *  t, const char *  tokenDescriptionArray[kCommonIrNodeTypeMax]);
+void		lexDebugPrintToken(State *  N, Token *  t, const char *  tokenDescriptionArray[kCommonIrNodeTypeMax]);
+void		lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenDescriptionArray[kCommonIrNodeTypeMax]);
