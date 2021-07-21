@@ -67,4 +67,4 @@ Token *		lexPeek(State *  N, int lookAhead);
 
 void		lexPrintToken(State *  N, Token *  t, const char *  tokenDescriptionArray[kCommonIrNodeTypeMax]);
 void		lexDebugPrintToken(State *  N, Token *  t, const char *  tokenDescriptionArray[kCommonIrNodeTypeMax]);
-void		lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenDescriptionArray[kCommonIrNodeTypeMax]);
+void		lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *  tokenDescriptionArray[kCommonIrNodeTypeMax]);

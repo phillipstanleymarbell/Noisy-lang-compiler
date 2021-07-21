@@ -564,7 +564,7 @@ lexPut(State *  N, Token *  newToken)
 
 
 Token *
-lexGet(State *  N, const char *tokenDescriptionArray[kCommonIrNodeTypeMax])
+lexGet(State *  N, const char *  tokenDescriptionArray[kCommonIrNodeTypeMax])
 {
 	TimeStampTraceMacro(kCommonTimeStampKeyLexGet);
 
@@ -624,7 +624,7 @@ lexPeek(State *  N, int lookAhead)
 
 
 void
-lexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kCommonIrNodeTypeMax])
+lexPrintToken(State *  N, Token *  t, const char *  tokenDescriptionArray[kCommonIrNodeTypeMax])
 {
 	TimeStampTraceMacro(kCommonTimeStampKeyLexPrintToken);
 
@@ -674,7 +674,7 @@ lexPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kCommonI
 }
 
 void
-lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kCommonIrNodeTypeMax])
+lexDebugPrintToken(State *  N, Token *  t, const char *  tokenDescriptionArray[kCommonIrNodeTypeMax])
 {
 	TimeStampTraceMacro(kCommonTimeStampKeyLexDebugPrintToken);
 
@@ -737,7 +737,7 @@ lexDebugPrintToken(State *  N, Token *  t, const char *tokenDescriptionArray[kCo
 }
 
 void
-lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *tokenDescriptionArray[kCommonIrNodeTypeMax])
+lexPeekPrint(State *  N, int maxTokens, int formatCharacters, const char *  tokenDescriptionArray[kCommonIrNodeTypeMax])
 {
 	TimeStampTraceMacro(kCommonTimeStampKeyLexPeekPrint);
 
