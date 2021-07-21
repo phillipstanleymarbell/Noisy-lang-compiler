@@ -29,6 +29,7 @@
 
 typedef struct FrameListNode {
         LLVMValueRef frameValue;
+        Symbol * ownerFunction;
         struct FrameListNode * next;
 } FrameListNode;
 
@@ -45,11 +46,17 @@ typedef struct {
         LLVMBasicBlockRef       cleanupBB;
 } CodeGenState;
 
+/*
+*       We need to save coroutine frame pointers in order to destroy each coroutine created, at the
+*       end of each function that uses coroutines. Owner function is needed so we do not destroy frames that should not
+*       be destroyed yet (owned by other function).
+*/
 FrameList
-noisyAddFrameToList(FrameList list,LLVMValueRef frame)
+noisyAddFrameToList(FrameList list,LLVMValueRef frame, Symbol * ownerFunction)
 {
         FrameListNode * newFrameNode = (FrameListNode*) malloc(sizeof(FrameListNode));
         newFrameNode->frameValue = frame;
+        newFrameNode->ownerFunction = ownerFunction;
         newFrameNode->next= list;
         list = newFrameNode;
         return list;
@@ -83,16 +90,24 @@ noisyGetFrameFromList(FrameList list)
 }
 
 void
-noisyDestroyCoroutineFrames(CodeGenState * S)
+noisyDestroyCoroutineFrames(State * N,CodeGenState * S)
 {
-        while (S->frameList != NULL)
+        FrameListNode * iter = S->frameList;
+        while (iter != NULL)
         {
-                int argNum = 1;
-                LLVMValueRef args[1];
-                args[0] = noisyGetFrameFromList(S->frameList);
-                S->frameList = noisyRemoveFrameFromList(S->frameList);
-                LLVMValueRef callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.destroy");
-                LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"");
+                if (iter->ownerFunction == N->currentFunction)
+                {
+                        int argNum = 1;
+                        LLVMValueRef args[1];
+                        args[0] = noisyGetFrameFromList(iter);
+                        iter = noisyRemoveFrameFromList(iter);
+                        LLVMValueRef callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.destroy");
+                        LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"");
+                }
+                else
+                {
+                        iter = iter->next;
+                }
         }
 }
 
@@ -1567,7 +1582,7 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                                 i++;
                         }
                         functionVal = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(functionVal)),functionVal,args,funcSymbol->parameterNum,"k_hdl");
-                        S->frameList =  noisyAddFrameToList(S->frameList,functionVal);
+                        S->frameList =  noisyAddFrameToList(S->frameList,functionVal,N->currentFunction);
                         free(args);
                 }
                 return functionVal;
@@ -2010,7 +2025,7 @@ noisyOperatorToleranceDeclCodeGen(State * N,CodeGenState * S, IrNode * tolerance
 void
 noisyReturnStatementCodeGen(State * N,CodeGenState * S, IrNode * returnNode)
 {
-        noisyDestroyCoroutineFrames(S);
+        noisyDestroyCoroutineFrames(N,S);
         LLVMValueRef expressionValue = noisyExpressionCodeGen(N,S,LRL(returnNode));
         if (LRL(returnNode)->noisyType.basicType == noisyArrayType)
         {
@@ -2304,7 +2319,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
                 */
                 if (L(outputSignature)->type == kNoisyIrNodeType_Tnil)
                 {
-                        noisyDestroyCoroutineFrames(S);
+                        noisyDestroyCoroutineFrames(N,S);
                         LLVMBuildRetVoid(S->theBuilder);
                 }
         }
