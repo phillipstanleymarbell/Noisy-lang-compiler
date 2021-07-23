@@ -192,7 +192,7 @@ getIdentifierSignalUncertainty(State *  N, Physics *p)
 int
 newtonPhysicsLength(Physics *  physics)
 {
-	int length = 0;
+	int	length = 0;
 	char *	identifier = physics->identifier;
 	while (physics && physics->identifier == identifier)
 	{
@@ -204,7 +204,7 @@ newtonPhysicsLength(Physics *  physics)
 
 bool
 irPassEstimatorSynthesisExpressionLinear(State *  N, IrNode *  expressionXSeq) {
-	bool  stillLinear = true;
+	bool	stillLinear = true;
 
 	switch (expressionXSeq->type)
 	{
@@ -254,7 +254,7 @@ irPassEstimatorSynthesisExpressionLinear(State *  N, IrNode *  expressionXSeq) {
 bool
 irPassEstimatorSynthesisInvariantLinear(State *  N, ConstraintList listHead)
 {
-	bool stillLinear = true;
+	bool	stillLinear = true;
 	for (ConstraintList  iter = listHead; stillLinear && (iter != NULL); iter=iter->next)
 	{
 		stillLinear = stillLinear && irPassEstimatorSynthesisExpressionLinear(N, iter->constraint);
@@ -274,8 +274,8 @@ irPassEstimatorSynthesisInvariantLinear(State *  N, ConstraintList listHead)
 ConstraintList
 irPassEstimatorSynthesisCreateConstraintList(IrNode * currentNode,ConstraintList listHead)
 {
-	static int caseId = 0;
-	
+	static int	caseId = 0;
+
 	if (currentNode == NULL)
 	{
 		return listHead;
@@ -324,19 +324,19 @@ irPassEstimatorSynthesisCreateConstraintList(IrNode * currentNode,ConstraintList
 	default:
 		break;
 	}
-	
+
 	return listHead;
 }
 
 /*
 *	Helper function that takes a ConstraintList and frees its memory.
-*	NOTE : It does not free the memory of the IrNodes(so we expect nothing to go wrong), 
+*	NOTE : It does not free the memory of the IrNodes(so we expect nothing to go wrong),
 *	only the structs created for the constraintList.
 */
 ConstraintList
 irPassEstimatorSynthesisFreeConstraintList(ConstraintList listHead)
 {
-	ConstraintList del;
+	ConstraintList	del;
 	while (listHead != NULL)
 	{
 		del = listHead;
@@ -353,10 +353,10 @@ irPassEstimatorSynthesisFreeConstraintList(ConstraintList listHead)
 IrNode *
 irPassEstimatorSynthesisDetectSymbol(State *  N, IrNode *  ExpressionXSeq, Symbol *  stateVariableSymbol)
 {
-	int nth = 0;
-	int timesDetected = 0;
-	IrNode *  foundMatchingIrNode = NULL;
-	IrNode *  foundIdentifierIrNode = NULL;
+	int	nth = 0;
+	int	timesDetected = 0;
+	IrNode *	foundMatchingIrNode = NULL;
+	IrNode *	foundIdentifierIrNode = NULL;
 	foundIdentifierIrNode = findNthIrNodeOfType(N, ExpressionXSeq, kNewtonIrNodeType_Tidentifier, nth);
 	while(foundIdentifierIrNode != NULL)
 	{
@@ -384,10 +384,10 @@ irPassEstimatorSynthesisIsolateSymbolFactors(State *  N, IrNode *  ExpressionXSe
 										NULL /* right child */,
 										NULL /* source info */
 									);
-	int nth = 0;
-	int timesDetected = 0;
-	IrNode *  foundMatchingIrNode = NULL;
-	IrNode *  foundIdentifierIrNode = NULL;
+	int	nth = 0;
+	int	timesDetected = 0;
+	IrNode *	foundMatchingIrNode = NULL;
+	IrNode *	foundIdentifierIrNode = NULL;
 	foundIdentifierIrNode = findNthIrNodeOfType(N, ExpressionXSeq, kNewtonIrNodeType_Tidentifier, nth);
 	while(foundIdentifierIrNode != NULL)
 	{
@@ -433,7 +433,7 @@ irPassEstimatorSynthesisIsolateSymbolFactors(State *  N, IrNode *  ExpressionXSe
 void
 irPassEstimatorSynthesisCountStateDimensions(estimatorSynthesisState * E,State * N)
 {
-	ConstraintList iter;
+	ConstraintList	iter;
 	/*
 	*	Allocate memory for the stateVariable names and symbols arrays and initialize them.
 	*/
@@ -443,7 +443,7 @@ irPassEstimatorSynthesisCountStateDimensions(estimatorSynthesisState * E,State *
 
 	for (int i = 0; i < E->processParams; i++)
 	{
-		E->stateVariableNames[i]="";
+		E->stateVariableNames[i]="";	// This does not do what you think it does.
 		E->stateVariableSymbols[i]=NULL;
 	}
 	E->processConstraints = 0;
@@ -451,9 +451,9 @@ irPassEstimatorSynthesisCountStateDimensions(estimatorSynthesisState * E,State *
 	for (iter= E->processConstraintList; iter != NULL; iter = iter->next)
 	{
 		IrNode *  leafLHS = LLL(LL(iter->constraint));
-		
+
 		E->processConstraints++;
-		
+
 		for(int i = 0;i < E->processParams; i++)
 		{
 			if (E->stateVariableSymbols[i] == NULL)
@@ -461,11 +461,11 @@ irPassEstimatorSynthesisCountStateDimensions(estimatorSynthesisState * E,State *
 				int	needed = snprintf(NULL, 0, "STATE_%s_%d", leafLHS->tokenString, 0) + 1;
 				E->stateVariableNames[i] = malloc(needed);
 				snprintf(E->stateVariableNames[i], needed, "STATE_%s_%d", leafLHS->tokenString, 0);
-				
+
 				E->stateVariableSymbols[i] = leafLHS->symbol;
 
 				E->stateVariableUncertainties[i] = getIdentifierSignalUncertainty(N, leafLHS->physics);
-				
+
 				E->stateDimension++;
 
 				iter->stateVariableId = i;
@@ -477,13 +477,13 @@ irPassEstimatorSynthesisCountStateDimensions(estimatorSynthesisState * E,State *
 				break;
 			}
 		}
-		
+
 	}
 }
 
 /*
 *	Traverses the measure constraint list and counts the measure dimensions(Z). Also
-*	stores all the necessary information regarding LHS symbols, names and uncertainties.	
+*	stores all the necessary information regarding LHS symbols, names and uncertainties.
 */
 void
 irPassEstimatorSynthesisCountMeasureDimensions(estimatorSynthesisState * E,State * N,ConstraintList listHead)
@@ -503,13 +503,13 @@ irPassEstimatorSynthesisCountMeasureDimensions(estimatorSynthesisState * E,State
 	}
 
 	E->measureConstraints = 0;
-	
+
 	for (iter= listHead; iter != NULL; iter = iter->next)
 	{
 		IrNode *  leafLHS = LLL(LL(iter->constraint));
 
 		E->measureConstraints++;
-		
+
 		for(int i = 0; i < E->measureParams; i++)
 		{
 			if (E->measureVariableSymbols[i] == NULL)
@@ -517,11 +517,11 @@ irPassEstimatorSynthesisCountMeasureDimensions(estimatorSynthesisState * E,State
 				int	needed = snprintf(NULL, 0, "MEASURE_%s_%d", leafLHS->tokenString, 0) + 1;
 				E->measureVariableNames[i] = malloc(needed);
 				snprintf(E->measureVariableNames[i], needed, "MEASURE_%s_%d", leafLHS->tokenString, 0);
-				
+
 				E->measureVariableSymbols[i] = leafLHS->symbol;
 
 				E->measureVariableUncertainties[i] = getIdentifierSignalUncertainty(N, leafLHS->physics);
-				
+
 				E->measureDimension++;
 
 				iter->stateVariableId = i;
@@ -533,7 +533,7 @@ irPassEstimatorSynthesisCountMeasureDimensions(estimatorSynthesisState * E,State
 				break;
 			}
 		}
-		
+
 	}
 }
 
@@ -707,7 +707,7 @@ irPassEstimatorSynthesisGeneratePredict(estimatorSynthesisState * E,State * N,Ir
 		else {
 			flexprint(N->Fe,N->Fm,N->Fpc,"if ( ");
 			irPassCConstraintTreeWalk(N,LL(currentNode));
-			flexprint(N->Fe,N->Fm,N->Fpc," %s",irPassCNodeToStr(N,LRL(currentNode)->irLeftChild)); 
+			flexprint(N->Fe,N->Fm,N->Fpc," %s",irPassCNodeToStr(N,LRL(currentNode)->irLeftChild));
 			irPassCConstraintTreeWalk(N,LRR(currentNode));
 			flexprint(N->Fe,N->Fm,N->Fpc,")\n%s{\n",irPassEstimatorSynthesisGetIndentation(indent));
 		}
@@ -722,7 +722,7 @@ irPassEstimatorSynthesisGeneratePredict(estimatorSynthesisState * E,State * N,Ir
 	default:
 		break;
 	}
-	
+
 	return ;
 }
 
@@ -736,7 +736,7 @@ irPassEstimatorSynthesisGenerateUpdate(estimatorSynthesisState * E,State * N,IrN
 	static int counter = 0;
 	static ConstraintList iter = NULL;
 	static int indent = 1;
-	
+
 	if (currentNode == NULL)
 	{
 		return ;
@@ -767,9 +767,9 @@ irPassEstimatorSynthesisGenerateUpdate(estimatorSynthesisState * E,State * N,IrN
 			{
 				iter = iter->next;
 			}
-			
+
 			flexprint(N->Fe, N->Fm, N->Fpc, "%sHS[%s] = measure_%s_%d(", irPassEstimatorSynthesisGetIndentation(indent),E->measureVariableNames[iter->stateVariableId], E->measureVariableNames[iter->stateVariableId],iter->caseId);
-			
+
 			for (int currArg = 0; currArg < E->stateDimension; currArg++)
 			{
 				if (E->measureRelationMatrix[counter][currArg] == true)
@@ -835,7 +835,7 @@ irPassEstimatorSynthesisGenerateUpdate(estimatorSynthesisState * E,State * N,IrN
 		else {
 			flexprint(N->Fe,N->Fm,N->Fpc,"if ( ");
 			irPassCConstraintTreeWalk(N,LL(currentNode));
-			flexprint(N->Fe,N->Fm,N->Fpc," %s",irPassCNodeToStr(N,LRL(currentNode)->irLeftChild)); 
+			flexprint(N->Fe,N->Fm,N->Fpc," %s",irPassCNodeToStr(N,LRL(currentNode)->irLeftChild));
 			irPassCConstraintTreeWalk(N,LRR(currentNode));
 			flexprint(N->Fe,N->Fm,N->Fpc,")\n%s{\n",irPassEstimatorSynthesisGetIndentation(indent));
 		}
@@ -849,7 +849,7 @@ irPassEstimatorSynthesisGenerateUpdate(estimatorSynthesisState * E,State * N,IrN
 	}
 
 
-	
+
 }
 
 void
@@ -905,11 +905,11 @@ irPassEstimatorSynthesisFreeState(estimatorSynthesisState * E)
 		free(E->measureRelationMatrix);
 		free(E->measureFunctionLastArg);
 	}
-	
+
 
 	E->processConstraintList =  irPassEstimatorSynthesisFreeConstraintList(E->processConstraintList);
 	E->measureConstraintList = irPassEstimatorSynthesisFreeConstraintList(E->measureConstraintList);
-	
+
 }
 
 void
@@ -958,8 +958,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 	IrNode *	constraintXSeq = NULL;
 	estimatorSynthesisState * E = (estimatorSynthesisState *)malloc(sizeof(estimatorSynthesisState));
-	
-	
+
+
 	E->processConstraintList = irPassEstimatorSynthesisCreateConstraintList(processInvariant->constraints,NULL);
 
 	constraintXSeq = NULL;
@@ -971,7 +971,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	{
 		E->processParams++;
 	}
-	
+
 	/*
 	 *	Find state vector dimension (N) and book-keep process symbols.
 	 */
@@ -979,7 +979,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	irPassEstimatorSynthesisCountStateDimensions(E,N);
 
 	E->stateExtraParams = E->processParams - E->stateDimension;
-	
+
 	E->measureConstraintList = irPassEstimatorSynthesisCreateConstraintList(measureInvariant->constraints,NULL);
 
 	/*
@@ -992,20 +992,20 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	{
 		E->measureParams++;
 	}
-	
+
 	/*
 	 *	Find measurement vector dimension (Z) and book-keep measurements' symbols.
 	 */
 
 	irPassEstimatorSynthesisCountMeasureDimensions(E,N,E->measureConstraintList);
-	
+
 	// E->measureExtraParams = E->measureParams - E->stateDimension - E->measureDimension;
 
 	/*
 	 *	Find and book-keep extra params of process/
 	 */
 	irPassEstimatorSynthesisCountExtraParams(E,N,processInvariant->parameterList);
-	
+
 	/*
 	 *	Generate state indexing enumerator
 	 */
@@ -1164,7 +1164,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		/*
 		 *	NON-LINEAR PREDICT
 		 */
-	
+
 		/*
 		 *	Book-keep process parameter list symbols
 		 */
@@ -1180,7 +1180,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		 *	Each symbol in stateVariableSymbols has its own row
 		 *	relating it to the parameters of the invariant.
 		 */
-		
+
 		E->relationMatrix = (bool**) malloc(E->processConstraints * sizeof(bool*));
 		for (int i = 0; i < E->processConstraints;i++)
 		{
@@ -1515,7 +1515,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		{
 			E->measureRelationMatrix[i] = (bool*) malloc(E->stateDimension * sizeof(bool));
 		}
-		
+
 		counter = 0;
 		for (ConstraintList iter = E->measureConstraintList; iter != NULL; counter++,iter=iter->next)
 		{
@@ -1790,7 +1790,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble %s;\n", E->stateExtraParamSymbols[i]->identifier);
 	}
-	
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble prevtime = time;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble measure[MEASURE_DIMENSION];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\twhile (scanf(\"%%lf\", &time) > 0)\n");
