@@ -89,13 +89,13 @@
 
 typedef struct ConstraintNode
 {
-	IrNode * constraint;
-	int	stateVariableId;
-	int	caseId;
-	struct 	ConstraintNode * next;
+	IrNode *	constraint;
+	int			stateVariableId;
+	int			caseId;
+	struct ConstraintNode *  next;
 } ConstraintNode;
 
-typedef ConstraintNode * ConstraintList;
+typedef ConstraintNode *  ConstraintList;
 
 typedef struct estimatorSynthesisState
 {
@@ -272,7 +272,7 @@ irPassEstimatorSynthesisInvariantLinear(State *  N, ConstraintList listHead)
 *	Return:	The list that contains all the constraints of the invariant.
 */
 ConstraintList
-irPassEstimatorSynthesisCreateConstraintList(IrNode * currentNode,ConstraintList listHead)
+irPassEstimatorSynthesisCreateConstraintList(IrNode *  currentNode, ConstraintList listHead)
 {
 	static int	caseId = 0;
 
@@ -285,22 +285,25 @@ irPassEstimatorSynthesisCreateConstraintList(IrNode * currentNode,ConstraintList
 	case kNewtonIrNodeType_PconstraintList:
 	case kNewtonIrNodeType_PcaseStatementList:
 	case kNoisyIrNodeType_Xseq:
-		listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irLeftChild,listHead);
-		listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irRightChild,listHead);
-		break;
+	{
+		listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irLeftChild, listHead);
+		listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irRightChild, listHead);
+	}	break;
 	case kNewtonIrNodeType_PpiecewiseConstraint:
-		listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irLeftChild,listHead);
-		break;
+	{
+		listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irLeftChild, listHead);
+	}	break;
 	case kNewtonIrNodeType_Pconstraint:
+	{	
 		if (currentNode->irLeftChild->type == kNewtonIrNodeType_PpiecewiseConstraint)
 		{
-			listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irLeftChild,listHead);
+			listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irLeftChild, listHead);
 		}
 		else
 		{
 			if (listHead == NULL)
 			{
-				listHead = (ConstraintList)malloc(sizeof(ConstraintNode));
+				listHead = (ConstraintList)calloc(1, sizeof(ConstraintNode));
 				listHead->constraint = currentNode;
 				listHead->caseId = caseId;
 			}
@@ -308,19 +311,19 @@ irPassEstimatorSynthesisCreateConstraintList(IrNode * currentNode,ConstraintList
 			{
 				ConstraintList iter;
 				for (iter = listHead; iter->next != NULL; iter = iter->next);
-				iter->next = (ConstraintList)malloc(sizeof(ConstraintNode));
+				iter->next = (ConstraintList)calloc(1, sizeof(ConstraintNode));
 				iter->next->constraint = currentNode;
 				iter->next->caseId = caseId;
 			}
 		}
-		break;
+	}	break;
 	case kNewtonIrNodeType_PcaseStatement:
 		caseId++;
-		listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irRightChild,listHead);
+		listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irRightChild, listHead);
 		break;
 		/*
-		*	Skips the condition constraint.
-		*/
+		 *	Skips the condition constraint.
+		 */
 	default:
 		break;
 	}
