@@ -1224,7 +1224,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			flexprint(N->Fe, N->Fm, N->Fpc, "(");
 
 			int lastArg = 0;
-			for (lastArg = E->processConstraints-1; lastArg >= 0; lastArg--)
+			for (lastArg = E->processParams-1; lastArg >= 0; lastArg--)
 			{
 				if (E->relationMatrix[counter][lastArg] == true)
 				{
@@ -1234,7 +1234,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			}
 
 			int currArg = 0;
-			for (currArg = 0; currArg < E->processConstraints; currArg++)
+			for (currArg = 0; currArg < E->processParams; currArg++)
 			{
 				if (E->relationMatrix[counter][currArg] == true)
 				{
@@ -1267,7 +1267,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 					{
 						flexprint(N->Fe, N->Fm, N->Fpc, "double\nd_process_%s_%d_d%s ", E->stateVariableNames[iter->stateVariableId], iter->caseId,E->stateVariableSymbols[currDeriv]->identifier);
 						flexprint(N->Fe, N->Fm, N->Fpc, "(");
-						for (currArg = 0; currArg < E->processConstraints; currArg++)
+						for (currArg = 0; currArg < E->processParams; currArg++)
 						{
 							if (E->relationMatrix[counter][currArg] == true)
 							{
@@ -1279,7 +1279,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 						flexprint(N->Fe, N->Fm, N->Fpc, "\tcalculatedValue = (( process_%s_%d(",E->stateVariableNames[iter->stateVariableId],iter->caseId);
 
-						for (currArg = 0; currArg < E->processConstraints; currArg++)
+						for (currArg = 0; currArg < E->processParams; currArg++)
 						{
 							if (E->relationMatrix[counter][currArg] == true)
 							{
@@ -1302,7 +1302,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 
 						flexprint(N->Fe, N->Fm, N->Fpc, " - process_%s_%d(", E->stateVariableNames[iter->stateVariableId],iter->caseId);
 						currArg = 0;
-						for (currArg = 0; currArg < E->processConstraints; currArg++)
+						for (currArg = 0; currArg < E->processParams; currArg++)
 						{
 							if (E->relationMatrix[counter][currArg] == true)
 							{
@@ -1516,14 +1516,14 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		E->measureRelationMatrix = (bool**) malloc(E->measureConstraints * sizeof(bool*));
 		for (int i = 0; i < E->measureConstraints;i++)
 		{
-			E->measureRelationMatrix[i] = (bool*) malloc(E->stateDimension * sizeof(bool));
+			E->measureRelationMatrix[i] = (bool*) calloc(E->measureParams, sizeof(bool));
 		}
 
 		counter = 0;
 		for (ConstraintList iter = E->measureConstraintList; iter != NULL; counter++,iter=iter->next)
 		{
 			IrNode *  RHSExpressionXSeq = RRL(iter->constraint);
-			for (int mColumn = 0; mColumn < E->stateDimension; mColumn++)
+			for (int mColumn = 0; mColumn < E->measureParams; mColumn++)
 			{
 				/*
 				 *	Check if symbol from parameter list appears in RHS expression
@@ -1551,7 +1551,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			flexprint(N->Fe, N->Fm, N->Fpc, "(");
 
 			int lastArg = 0;
-			for (lastArg = E->stateDimension-1; lastArg >= 0; lastArg--)
+			for (lastArg = E->measureParams-1; lastArg >= 0; lastArg--)
 			{
 				if (E->measureRelationMatrix[counter][lastArg] == true)
 				{
@@ -1561,7 +1561,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 			}
 
 			// int currArg = 0;
-			for (int currArg = 0; currArg < E->stateDimension; currArg++)
+			for (int currArg = 0; currArg < E->measureParams; currArg++)
 			{
 				if (E->measureRelationMatrix[counter][currArg] == true)
 				{
@@ -1610,7 +1610,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 						flexprint(N->Fe, N->Fm, N->Fpc, "\tcalculatedValue = ((");
 						flexprint(N->Fe, N->Fm, N->Fpc, "measure_%s_%d(", E->measureVariableNames[iter->stateVariableId],iter->caseId);
 
-						for (int currArg = 0; currArg < E->stateDimension; currArg++)
+						for (int currArg = 0; currArg < E->measureParams; currArg++)
 						{
 							if (E->measureRelationMatrix[counter][currArg] == true)
 							{
@@ -1632,7 +1632,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 						flexprint(N->Fe, N->Fm, N->Fpc, ")");
 
 						flexprint(N->Fe, N->Fm, N->Fpc, " - measure_%s_%d(", E->measureVariableNames[iter->stateVariableId],iter->caseId);
-						for (int currArg = 0; currArg < E->stateDimension; currArg++)
+						for (int currArg = 0; currArg < E->measureParams; currArg++)
 						{
 							if (E->measureRelationMatrix[counter][currArg] == true)
 							{
