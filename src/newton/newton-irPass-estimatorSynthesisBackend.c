@@ -1800,11 +1800,11 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t{\n");
 	for (int i = 0; i < E->stateDimension; i++)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tscanf(\",%%*lf\");\n", i);
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tscanf(\",%%*lf\");\t// %s\n", E->stateVariableNames[i]);
 	}
 	for (int i = 0; i < E->measureDimension; i++)
 	{
-		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tscanf(\",%%lf\", &measure[%d]);\n", i);
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tscanf(\",%%lf\", &measure[%d]);\t// %s\n", i, E->measureVariableNames[i]);
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tdt = time-prevtime;\n\n");
