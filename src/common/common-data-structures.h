@@ -1227,6 +1227,7 @@ typedef struct
 	char *			estimatorProcessModel;
 	char *			estimatorMeasurementModel;
 	bool			autodiff;
+	bool			adaptive;
 	
 	/*
 	 *	Variables for storing lists of identifiers attached

@@ -1135,7 +1135,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Im = makeMatrix(MEASURE_DIMENSION, MEASURE_DIMENSION);\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Im->data = &cState->I[0][0];\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (size_t i = 0; i < MOVING_ESTIMATION_WINDOW; i++)\n\t{\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tfor (size_t j = 0; j < MOVING_ESTIMATION_WINDOW; j++)\n\t\t{\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tfor (size_t j = 0; j < MEASURE_DIMENSION; j++)\n\t\t{\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t\t\tcState->ei[i][j] = 0.0;\n");				
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t\t}\n\t}\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->bufferPos = 0;\n");
@@ -1752,12 +1752,14 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (int i = 0; i < MEASURE_DIMENSION; i++)\n\t{\n");	
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tcState->ei[cState->bufferPos][i] = HSm->data[i];\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->bufferPos = ++cState->bufferPos % MOVING_ESTIMATION_WINDOW;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->bufferPos = ++cState->bufferPos %% MOVING_ESTIMATION_WINDOW;\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 		
 		emitBlockComment(N, "Calculate innovation covariance matrix");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix eim = { .height = MEASURE_DIMENSION, .width = MOVING_ESTIMATION_WINDOW, .data = &cState->ei[0][0] };\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Im = multiplyMatrix(&eim, transposeMatrix(&eim));\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix eim = { .height = MOVING_ESTIMATION_WINDOW, .width = MEASURE_DIMENSION, .data = &cState->ei[0][0] };\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *	eim_T = transposeMatrix(&eim);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Im = multiplyMatrix(eim_T, &eim);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tfreeMatrix(eim_T);\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (size_t i = 0; i < MEASURE_DIMENSION*MEASURE_DIMENSION; i++)\n\t{\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tcState->Im->data[i] /= MOVING_ESTIMATION_WINDOW;\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");

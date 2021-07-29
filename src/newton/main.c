@@ -111,6 +111,7 @@ main(int argc, char *argv[])
 			{"process", required_argument, 0, 421},
 			{"measurement", required_argument, 0, 422},
 			{"auto-diff", no_argument, 0, 423},
+			{"adaptive", no_argument, 0, 424},
 			{"ipsa", required_argument, 0, 489},
 			{"kernelNumber", required_argument, 0, 494},
 			{"piNumber", required_argument, 0, 495},
@@ -401,6 +402,12 @@ main(int argc, char *argv[])
 			case 423:
 			{
 				N->autodiff = true;
+				break;
+			}
+
+			case 424:
+			{
+				N->adaptive = true;
 				break;
 			}
 
