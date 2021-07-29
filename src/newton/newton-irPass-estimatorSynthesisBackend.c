@@ -125,6 +125,13 @@ typedef struct estimatorSynthesisState
 	int *		measureFunctionLastArg;
 } estimatorSynthesisState;
 
+void
+emitBlockComment(State *  N, const char *  comment)
+{
+	static const char	kBlockCommentFmt[] = "\t/*\n\t *\t%s\n\t */\n";
+	flexprint(N->Fe, N->Fm, N->Fpc, kBlockCommentFmt, comment);
+}
+
 Invariant *
 findInvariantByIdentifier(State *  N, const char *  identifier)
 {
@@ -1029,6 +1036,12 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	}
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tMEASURE_DIMENSION\n};\n\n");
 
+	if (N->adaptive)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "\nenum constants\n{\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tMOVING_ESTIMATION_WINDOW = 10\n};\n");
+	}
+	
 	/*
 	 *	Generate core filter-state struct
 	 */
@@ -1043,6 +1056,15 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble Q[STATE_DIMENSION][STATE_DIMENSION];\n\tmatrix *\tQm;\n\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tProcess noise matrix\n\t */\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble R[MEASURE_DIMENSION][MEASURE_DIMENSION];\n\tmatrix *\tRm;\n\n");
+	if (N->adaptive)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tInnovation covariance matrix\n\t */\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble I[MEASURE_DIMENSION][MEASURE_DIMENSION];\n\tmatrix *\tIm;\n\n");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tInnovation buffer\n\t */\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble\tei[MOVING_ESTIMATION_WINDOW][MEASURE_DIMENSION];\n\tmatrix *\teim;\n\tint\t\tbufferPos;\n\n");		
+	}
+	
 	flexprint(N->Fe, N->Fm, N->Fpc, "};\n\n");
 
 	/*
@@ -1107,6 +1129,18 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Rm = makeMatrix(MEASURE_DIMENSION, MEASURE_DIMENSION);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Rm->data = &cState->R[0][0];\n\n");
 
+	if (N->adaptive)
+	{
+		emitBlockComment(N, "Innovation");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Im = makeMatrix(MEASURE_DIMENSION, MEASURE_DIMENSION);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Im->data = &cState->I[0][0];\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (size_t i = 0; i < MOVING_ESTIMATION_WINDOW; i++)\n\t{\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tfor (size_t j = 0; j < MOVING_ESTIMATION_WINDOW; j++)\n\t\t{\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\t\tcState->ei[i][j] = 0.0;\n");				
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\t}\n\t}\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->bufferPos = 0;\n");
+	}
+	
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n\n");
 
 
@@ -1683,24 +1717,13 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix Zm = { .height = MEASURE_DIMENSION, .width = 1, .data = Z };\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "\t// Kg = PH^T * (HPH^T + R)^(-1)\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t// HPH^T\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  Hm_T = transposeMatrix(&Hm);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  PHm_T = multiplyMatrix(cState->Pm, Hm_T);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  HPHm_T = multiplyMatrix(&Hm, PHm_T);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  hph = HPHm_T->data;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  r = cState->Rm->data;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n\tfor (int i = 0; i < MEASURE_DIMENSION * MEASURE_DIMENSION; i++)\n\t{\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\t\t*hph += *r;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\t\thph++;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tr++;\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  HPHm_T_inv = inverseMatrix(HPHm_T);\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  Kg = multiplyMatrix(PHm_T, HPHm_T_inv);\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
-	flexprint(N->Fe, N->Fm, N->Fpc, "\t// S <- S + Kg (Z - HS)\n");
 
+	emitBlockComment(N,  "Observe state (HS)");
 	if (linearMeasurement)
 	{
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  HSm = multiplyMatrix(&Hm, cState->Sm);\n");
@@ -1712,7 +1735,9 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  HSm = &HSm_s;\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  hs = &HS[0];\n");
 	}
-
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	
+	emitBlockComment(N, "Calculate innovation (Z-HS)");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  z = &Z[0];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n\tfor (int i = 0; i < MEASURE_DIMENSION; i++)\n\t{\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\t*hs = *z - *hs;\n");
@@ -1720,6 +1745,61 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tz++;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+	if (N->adaptive)
+	{
+		emitBlockComment(N, "Save innovation to buffer");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (int i = 0; i < MEASURE_DIMENSION; i++)\n\t{\n");	
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tcState->ei[cState->bufferPos][i] = HSm->data[i];\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->bufferPos = ++cState->bufferPos % MOVING_ESTIMATION_WINDOW;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+		
+		emitBlockComment(N, "Calculate innovation covariance matrix");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix eim = { .height = MEASURE_DIMENSION, .width = MOVING_ESTIMATION_WINDOW, .data = &cState->ei[0][0] };\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Im = multiplyMatrix(&eim, transposeMatrix(&eim));\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (size_t i = 0; i < MEASURE_DIMENSION*MEASURE_DIMENSION; i++)\n\t{\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tcState->Im->data[i] /= MOVING_ESTIMATION_WINDOW;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+		emitBlockComment(N, "Adapt measurement noise covariance matrix");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *\thph = HPHm_T->data;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *\tr = cState->Rm->data;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *\tim = cState->Im->data;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (int i = 0; i < MEASURE_DIMENSION * MEASURE_DIMENSION; i++)\n\t{\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\t// R = I - HPH_T\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\t*r = *im - *hph;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\thph++;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tr++;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	}	
+	
+	if (N->adaptive)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "\thph = HPHm_T->data;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tr = cState->Rm->data;\n");
+	}
+	else
+	{
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *\thph = HPHm_T->data;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *\tr = cState->Rm->data;\n");
+	}
+	
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n\tfor (int i = 0; i < MEASURE_DIMENSION * MEASURE_DIMENSION; i++)\n\t{\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t\t*hph += *r;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t\thph++;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tr++;\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  HPHm_T_inv = inverseMatrix(HPHm_T);\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  Kg = multiplyMatrix(PHm_T, HPHm_T_inv);\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t// S <- S + Kg (Z - HS)\n");
+
+	flexprint(N->Fe, N->Fm, N->Fpc, "\t// Kg = PH^T * (HPH^T + R)^(-1)\n");
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  KgZHS = multiplyMatrix(Kg, HSm);\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  s = &cState->S[0];\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble *  kgzhs = KgZHS->data;\n");
@@ -1740,6 +1820,24 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t\tkghp++;\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+
+	if (N->adaptive)
+	{
+		emitBlockComment(N, "Adapt process noise covariance matrix");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tmatrix *  KgI = multiplyMatrix(Kg, cState->Im);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Qm = multiplyMatrix(KgI, transposeMatrix(Kg));\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble * q = &cState->Q[0][0];\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble * qm = &cState->Qm->data[0];\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (size_t i = 0; i < STATE_DIMENSION*STATE_DIMENSION; i++)\n\t{\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\t// Q = KIK_T\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\t*q = *qm;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tq++;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tqm++;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
+	}
+	
+
 	flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n\n");
 
