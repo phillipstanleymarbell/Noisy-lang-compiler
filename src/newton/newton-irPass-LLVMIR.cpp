@@ -98,9 +98,72 @@ extern "C"
 #include "newton-irPass-cBackend.h"
 #include "newton-irPass-autoDiff.h"
 #include "newton-irPass-estimatorSynthesisBackend.h"
+#include "newton-irPass-invariantSignalAnnotation.h"
+
+
+void 
+getAllVariables(Function & F, State * N) 
+{
+	for (Function::iterator BB = F.begin(), E = F.end(); BB!=E; ++BB) {
+
+		for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+
+			//get the Metadata declared in the llvm intrinsic functions such as llvm.dbg.declare()
+			if (CallInst* CI = dyn_cast<CallInst>(I)) {
+
+				if (Function *F = CI->getCalledFunction()) {
+
+					if (F->getName().startswith("llvm.")) {
+
+						outs() << "===========================================================\n";
+
+						MetadataAsValue *MAV = cast<MetadataAsValue>(CI->getOperand(1));
+						DIVariable *Var = cast<DIVariable>(MAV->getMetadata());
+						DIDerivedType *Type = cast<DIDerivedType>(Var->getType());
+						DIType *BaseType = Type->getBaseType();
+
+						std::string temp(Type->getName());
+						char *cstr = &temp[0];
+
+						Signal * signal = NULL;
+						attachSignalsToParameterNodes(N);
+						signal = findKthSignalByIdentifier(N, cstr, 0);
+
+						if (signal)
+							outs() << "Found signal: " << cstr << " as :" 
+								<< signal->invariantExpressionIdentifier << " in invariant\n";
+					}
+				}
+			}
+		}
+	}
+}
+
+
+void 
+getAllMDNFunc(Function & F) 
+{
+	for (Function::iterator BB = F.begin(), E = F.end(); BB!=E; ++BB) {
+
+		for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+
+			SmallVector<std::pair<unsigned, MDNode*>, 4> MDForInst;
+
+			//Get all the mdnodes attached to each instruction
+			I->getAllMetadata(MDForInst);
+			for (auto &MD : MDForInst) {
+				outs() << "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+				if (MDNode *N = MD.second) {
+					outs() << *N << "\n";
+				}
+			}
+		}
+	}
+}
+
 
 void    
-irPassLLVMIR(State *  N)
+irPassLLVMIR(State * N)
 {
     if (N->llvmIR == NULL)
     {
@@ -111,7 +174,14 @@ irPassLLVMIR(State *  N)
 	SMDiagnostic Err;
 	LLVMContext Context;
 	std::unique_ptr<Module> Mod(parseIRFile(N->llvmIR, Err, Context));
-	Mod->dump();
+	if (!Mod) {
+        flexprint(N->Fe, N->Fm, N->Fperr, "Error: Couldn't parse IR file.");
+		fatal(N, Esanity);
+	}
+
+	for (Module::iterator mi = Mod->begin(); mi != Mod->end(); mi++) {
+		getAllVariables(*mi, N);
+	}
 }
 
 }
