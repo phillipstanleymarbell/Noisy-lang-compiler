@@ -1098,7 +1098,8 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		{
 			flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Q[%d][%d] =", i, j);
 			if (i != j) {
-				flexprint(N->Fe, N->Fm, N->Fpc, " %g;\n", pow(10, (log10(E->stateVariableUncertainties[i]*E->stateVariableUncertainties[j])/2))*1e-1);
+				// flexprint(N->Fe, N->Fm, N->Fpc, " %g;\n", pow(10, (log10(E->stateVariableUncertainties[i]*E->stateVariableUncertainties[j])/2))*1e-1);
+				flexprint(N->Fe, N->Fm, N->Fpc, " %lf;\n", 0.0);
 			}
 			else
 			{
