@@ -83,7 +83,6 @@ elastance : signal =
 #     v_t_k   ~ U_oc(SoC_k) - Ik*R
 # }
 
-voltage_
 
 
 # Models from:
@@ -93,14 +92,73 @@ voltage_
 # Approach,” IEEE Trans. Veh. Technol., vol. 62, no. 1, pp. 108–117, Jan. 2013,
 # doi: 10.1109/TVT.2012.2222684.
 
+
+# Initial process noise variances (Equation 24)
+
+voltage_var01 : signal =
+{
+    name        = "VoltageVar01" English;
+    uncertainty = GaussianDistribution (mean: 0, var: 0.1);
+    symbol      = Vv01;
+    derivation  = voltage;
+}
+
+voltage_var10 : signal =
+{
+    name        = "VoltageVar10" English;
+    uncertainty = GaussianDistribution (mean: 0, var: 10);
+    symbol      = Vv10;
+    derivation  = voltage;
+}
+
+voltage_var20 : signal =
+{
+    name        = "VoltageVar20" English;
+    uncertainty = GaussianDistribution (mean: 0, var: 20);
+    symbol      = Vv20;
+    derivation  = voltage;
+}
+
+voltage_var1 : signal =
+{
+    name        = "VoltageVar1" English;
+    uncertainty = GaussianDistribution (mean: 0, var: 1);
+    symbol      = Vv1;
+    derivation  = voltage;
+}
+
+elastance_var20 : signal =
+{
+    name        = "InverseFaradVar20" English;
+    uncertainty = GaussianDistribution (mean: 0, var: 20);
+    symbol      = Fn1v20;
+    derivation  = elastance;
+}
+
+conductance_var10en6 : signal =
+{
+    name        = "SiemensVar10en6" English;
+    uncertainty = GaussianDistribution (mean: 0, var: 1E-7));
+    symbol      = Gv10en6;
+    derivation  = conductance;
+}
+
+resistance_var1 : signal =
+{
+    name        = "OhmVar1" English;
+    uncertainty = GaussianDistribution (mean: 0, var: 1);
+    symbol      = Ohmv1;
+    derivation  = resistance;
+}
+
 # Section III.B.2, Equations 13, 14, 15, 16
 TheveninModelWithLookupProcess : invariant (
-                                            Uoc  : voltage,     # Battery OCV
-                                            Up   : voltage,     # Polarization voltage
-                                            Ut   : voltage,     # Battery terminal voltage
-                                            i_Cp : elastance,   # Inverse of polarization capacitance
-                                            i_Rp : conductance,  # Inverse of polarization resistance
-                                            Ro   : resistance,     # Ohmic resistance
+                                            Uoc  : voltage_var01,     # Battery OCV
+                                            Ut   : voltage_var10,     # Battery terminal voltage
+                                            Up   : voltage_var20,     # Polarization voltage
+                                            i_Cp : elastance_var20,   # Inverse of polarization capacitance
+                                            i_Rp : conductance_var10en6,  # Inverse of polarization resistance
+                                            Ro   : resistance_var1,     # Ohmic resistance
                                             # Control input
                                             IL   : current,   # Load current
                                             dt   : time
@@ -114,7 +172,7 @@ TheveninModelWithLookupProcess : invariant (
     Ro   ~ Ro
 }
 # Section III.B.2, Equation 17
-TheveninModelWithLookupMeasure : invariant (Ut : voltage) = 
+TheveninModelWithLookupMeasure : invariant (Ut : voltage_var1) = 
 {
     Ut ~ Ut
 }
