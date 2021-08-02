@@ -123,6 +123,7 @@ typedef struct estimatorSynthesisState
 	bool **		measureRelationMatrix;
 	int *		functionLastArg;
 	int *		measureFunctionLastArg;
+	int		currentIndentationLevel;
 } estimatorSynthesisState;
 
 void
@@ -1062,7 +1063,10 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble I[MEASURE_DIMENSION][MEASURE_DIMENSION];\n\tmatrix *\tIm;\n\n");
 
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t/*\n\t *\tInnovation buffer\n\t */\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble\tei[MOVING_ESTIMATION_WINDOW][MEASURE_DIMENSION];\n\tmatrix *\teim;\n\tint\t\tbufferPos;\n\n");		
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tdouble\tei[MOVING_ESTIMATION_WINDOW][MEASURE_DIMENSION];\n\tmatrix *\teim;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tint\t\tbufferPos;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tint\t\tbufferWrites;\n\n");
+
 	}
 	
 	flexprint(N->Fe, N->Fm, N->Fpc, "};\n\n");
@@ -1134,12 +1138,24 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	{
 		emitBlockComment(N, "Innovation");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Im = makeMatrix(MEASURE_DIMENSION, MEASURE_DIMENSION);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tif (cState->Im->data != NULL)\n\t{\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tfree(cState->Im->data);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
+
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (size_t i = 0; i < MEASURE_DIMENSION; i++)\n\t{\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tfor (size_t j = 0; j < MEASURE_DIMENSION; j++)\n\t\t{\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\t\tcState->I[i][j] = 0.0;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\t}\n\t}\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Im->data = &cState->I[0][0];\n");
+
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (size_t i = 0; i < MOVING_ESTIMATION_WINDOW; i++)\n\t{\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tfor (size_t j = 0; j < MEASURE_DIMENSION; j++)\n\t\t{\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t\t\tcState->ei[i][j] = 0.0;\n");				
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t\t}\n\t}\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->eim = makeMatrix(MEASURE_DIMENSION, MOVING_ESTIMATION_WINDOW);\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->eim->data = &cState->ei[0][0];\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->bufferPos = 0;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->bufferWrites = 0;\n");
 	}
 	
 	flexprint(N->Fe, N->Fm, N->Fpc, "}\n\n");
@@ -1754,6 +1770,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tcState->ei[cState->bufferPos][i] = HSm->data[i];\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->bufferPos = ++cState->bufferPos %% MOVING_ESTIMATION_WINDOW;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\tif (cState->bufferWrites > MOVING_ESTIMATION_WINDOW)\n\t{\n\t\tcState->bufferWrites++;\n\t}\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 		
 		emitBlockComment(N, "Calculate innovation covariance matrix");
@@ -1762,7 +1779,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tcState->Im = multiplyMatrix(eim_T, &eim);\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tfreeMatrix(eim_T);\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\tfor (size_t i = 0; i < MEASURE_DIMENSION*MEASURE_DIMENSION; i++)\n\t{\n");
-		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tcState->Im->data[i] /= MOVING_ESTIMATION_WINDOW;\n");
+		flexprint(N->Fe, N->Fm, N->Fpc, "\t\tcState->Im->data[i] /= (cState->bufferWrites >= MOVING_ESTIMATION_WINDOW ? MOVING_ESTIMATION_WINDOW : cState->bufferWrites);\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\t}\n");
 		flexprint(N->Fe, N->Fm, N->Fpc, "\n");
 
@@ -1950,11 +1967,11 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 void
 irPassEstimatorSynthesisBackend(State *  N)
 {
-    if (N->estimatorProcessModel == NULL || N->estimatorMeasurementModel == NULL)
-    {
-        flexprint(N->Fe, N->Fm, N->Fperr, "Please specify the invariant identifiers for the process and measurement model.\n");
+	if (N->estimatorProcessModel == NULL || N->estimatorMeasurementModel == NULL)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "Please specify the invariant identifiers for the process and measurement model.\n");
 		fatal(N, Esanity);
-    }
+	}
 
 	FILE *	apiFile;
 
