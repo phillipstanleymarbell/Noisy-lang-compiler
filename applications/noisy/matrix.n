@@ -1,0 +1,105 @@
+matrix : module(matrixDataType : type)
+{
+        matrixSum : function (matrixA : array [32][32] of matrixDataType, clipval : matrixDataType) -> (result : int32);
+        matrixMulConst : function (matrixA : array [32][32] of matrixDataType, constVal : matrixDataType) -> (result : array [32][32] of matrixDataType);
+        matrixAddConst : function (matrixA : array [32][32] of matrixDataType, constVal : matrixDataType) -> (result : array [32][32] of matrixDataType);
+        printInt32 : function (x : int32) -> (bytesPrinted : int32);
+        init : function (nil) -> (nil);
+}
+
+matrixSum : function (matrixA : array [32][32] of matrixDataType, clipval : matrixDataType) -> (result : int32) =
+{
+        tmp,prev,cur : matrixDataType;
+        tmp = 0;
+        prev= 0;
+        cur = 0;
+        
+        res : int32;
+        res = 0;
+        i,j : int32;
+
+        sequence(i = 0; i < 32; i += 1)
+        {
+                sequence(j = 0; j < 32 ; j += 1)
+                {
+                        cur = matrixA[i][j];
+                        tmp = tmp + cur;
+                        matchseq 
+                        {
+                                tmp > clipval => 
+                                {       
+                                        res += 10;
+                                        tmp = 0;
+                                }
+                                true =>
+                                {
+                                        matchseq
+                                        {
+                                                cur > prev =>
+                                                {
+                                                        res = res + 1;
+                                                }
+                                        };
+                                }
+                        };
+                        prev = cur;
+                };
+        };
+        return (result : res);
+}
+
+matrixMulConst : function (matrixA : array [32][32] of matrixDataType, constVal : matrixDataType) -> (result : array [32][32] of matrixDataType) =
+{
+        i,j : int32;
+        sequence(i = 0; i < 32; i += 1)
+        {
+                sequence(j = 0; j < 32; j += 1)
+                {
+                        matrixA[i][j] *= constVal;
+                };
+        };
+
+        return (result : matrixA);
+}
+
+matrixAddConst : function (matrixA : array [32][32] of matrixDataType, constVal : matrixDataType) -> (result : array [32][32] of matrixDataType) =
+{
+        i,j : int32;
+        sequence(i = 0; i < 32; i += 1)
+        {
+                sequence(j = 0; j < 32; j += 1)
+                {
+                        matrixA[i][j] += constVal;
+                };
+        };
+
+        return (result : matrixA);
+}
+
+init : function (nil) -> (nil) =
+{
+        int32Sum := load matrix->matrixSum (int32) (path matrix);
+        int32Add := load matrix->matrixAddConst (int32) (path matrix);
+        int32Mul := load matrix->matrixMulConst (int32) (path matrix);
+
+        matrixA : array[32][32] of int32;
+
+        i,j : int32;
+        sequence(i = 0; i < 32; i = i + 1)
+        {
+                sequence(j = 0; j < 32; j = j + 1)
+                {
+                        matrixA[i][j] = i * 32 + j;
+                };
+        };
+
+        res : int32;
+
+        matrixA = int32Add(matrixA : matrixA,constVal : 0);
+        matrixA = int32Mul(matrixA : matrixA,constVal : 2);
+
+
+        res = int32Sum(matrixA : matrixA, clipval : 120);
+
+        nil = printInt32(x : res);
+}
