@@ -189,6 +189,11 @@ processNewtonFile(State *  N, char *  filename)
 	{
 		irPassLLVMIR(N);
 	}
+	if(N->irPasses & kNewtonIrPassLLVMDimensionalAnalysis)
+	{
+ 		irPassLLVMDimensionAnalysis(N);
+	}
+
 	/*
 	 *	Dot backend.
 	 */

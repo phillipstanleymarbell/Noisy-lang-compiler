@@ -108,6 +108,7 @@ main(int argc, char *argv[])
 			{"RTLcodegen",		required_argument,	0,	'l'},
 			{"targetParam",		required_argument,	0,	'T'},
 			{"llvm-ir", required_argument, 0, 'L'},
+			{"llvm-DA", required_argument, 0, 'D'},
 			{"estimator-synthesis", required_argument, 0, 420},
 			{"process", required_argument, 0, 421},
 			{"measurement", required_argument, 0, 422},
@@ -408,6 +409,13 @@ main(int argc, char *argv[])
 			case 'L':
 			{
 				N->irPasses |= kNewtonIrPassLLVMIR;
+				N->llvmIR = optarg;
+				break;
+			}
+
+			case 'D':
+			{
+				N->irPasses |= kNewtonIrPassLLVMDimensionalAnalysis;
 				N->llvmIR = optarg;
 				break;
 			}

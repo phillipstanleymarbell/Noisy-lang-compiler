@@ -11,7 +11,8 @@ EXAMPLESPATH	= ../../applications/newton
 
 COMPILERVARIANT = gcc	#clang
 
-LLVM_CONFIG?=llvm-config
+#LLVM_CONFIG?=llvm-config
+LLVM_CONFIG?=/home/yuan/github_projects/llvm-project/build/bin/llvm-config
 
 SYSNAME		= Newton
 SYSNAMELOWER	= newton
@@ -90,6 +91,7 @@ SOURCES		=\
 		main.c\
 		newton-eigenLibraryInterface.cpp\
 		newton-irPass-LLVMIR.cpp\
+		newton-irPass-LLVM-DimensionAnalysis.cpp\
 
 
 #
@@ -116,6 +118,7 @@ OBJS		=\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR.$(OBJECTEXTENSION)\
+		newton-irPass-LLVM-DimensionAnalysis.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
@@ -154,6 +157,7 @@ CGIOBJS		=\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR.$(OBJECTEXTENSION)\
+		newton-irPass-LLVM-DimensionAnalysis.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend/$(OBJECTEXTENSION)\
@@ -192,6 +196,7 @@ LIBNEWTONOBJS =\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR.$(OBJECTEXTENSION)\
+		newton-irPass-LLVM-DimensionAnalysis.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
@@ -227,6 +232,7 @@ HEADERS		=\
 		newton-irPass-smtBackend.h\
 		newton-irPass-estimatorSynthesisBackend.h\
 		newton-irPass-LLVMIR.h\
+		newton-irPass-LLVM-DimensionAnalysis.h\
 		newton-irPass-invariantSignalAnnotation.h\
 		newton-irPass-piGroupsSignalAnnotation.h\
 		newton-irPass-ipsaBackend.h\
@@ -294,6 +300,11 @@ newton-eigenLibraryInterface.$(OBJECTEXTENSION): newton-eigenLibraryInterface.cp
 newton-irPass-LLVMIR.$(OBJECTEXTENSION): newton-irPass-LLVMIR.cpp
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
+
+newton-irPass-LLVM-DimensionAnalysis.$(OBJECTEXTENSION): newton-irPass-LLVM-DimensionAnalysis.cpp
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
+
 
 version.c: $(HEADERS) Makefile
 	echo 'char kNewtonVersion[] = "0.3-alpha-'`git rev-list --count HEAD`' ('`git rev-parse HEAD`') (build '`date '+%m-%d-%Y-%H:%M'`-`whoami`@`hostname -s`-`uname -s`-`uname -r`-`uname -m`\)\"\; > version.c
