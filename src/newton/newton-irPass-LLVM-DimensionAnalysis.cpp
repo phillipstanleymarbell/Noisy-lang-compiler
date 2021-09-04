@@ -144,7 +144,7 @@ void get_Newton_var(Function &F, std::vector<std::string> &newton_definition=New
 
 
 // a list of users of Newton type variables
-  void touched_variables(std::string varName, Function &F){
+void touched_variables(std::string varName, Function &F){
     const ValueSymbolTable* symbolTable = F.getValueSymbolTable();
     Value* track_var = symbolTable->lookup(varName);
     std::vector<Value*> workList;
@@ -180,7 +180,7 @@ void init_inst_type_collector(std::string newton_var, Function &F, std::map<Inst
 
 
 // check the content of the collector
-  void print_collector(std::map<Instruction*, std::string>& collector){
+void print_collector(std::map<Instruction*, std::string>& collector){
     std::map<Instruction*, std::string>::iterator i;
     for(i=collector.begin(); i!=collector.end(); i++){
       errs() << i->first << "\t" << i->second << "\n";
@@ -189,7 +189,7 @@ void init_inst_type_collector(std::string newton_var, Function &F, std::map<Inst
 
 
 // add instruction to collector if it has Newton operands
-  void add_to_collector(llvm::Value* operand, std::string type, std::map<Instruction*, std::string>& collector){
+void add_to_collector(llvm::Value* operand, std::string type, std::map<Instruction*, std::string>& collector){
     collector[dyn_cast<Instruction>(operand)] = type;
   }
 
@@ -207,7 +207,7 @@ void get_Newton_var_names(std::vector<llvm::StringRef>& newton_vars, std::vector
 
 
 // check operand if it is of a Newton type
-  bool check_operand(llvm::Value* operand, std::map<Instruction*, std::string>& collector){
+bool check_operand(llvm::Value* operand, std::map<Instruction*, std::string>& collector){
     if(collector.find(dyn_cast<Instruction>(operand)) != collector.end()){
       //errs() << collector[dyn_cast<Instruction>(operand)] << "  \n";
       return true;      
@@ -218,8 +218,8 @@ void get_Newton_var_names(std::vector<llvm::StringRef>& newton_vars, std::vector
 
 
 // find key
-  // check true or false
-  void valid_add(std::string ty1, std::string ty2, std::map<std::tuple<std::string, std::string, std::string>, bool>& rules=Newton_rules){
+// check true or false
+void valid_add(std::string ty1, std::string ty2, std::map<std::tuple<std::string, std::string, std::string>, bool>& rules=Newton_rules){
     std::tuple<std::string, std::string, std::string> key = std::make_tuple(ty1, ty2, "Add");
     auto it = rules.find(key);
     if(it != rules.end()){
@@ -232,7 +232,7 @@ void get_Newton_var_names(std::vector<llvm::StringRef>& newton_vars, std::vector
     }
   }
 
-  void valid_mul(std::string ty1, std::string ty2, std::map<std::tuple<std::string, std::string, std::string>, bool>& rules=Newton_rules){
+void valid_mul(std::string ty1, std::string ty2, std::map<std::tuple<std::string, std::string, std::string>, bool>& rules=Newton_rules){
     std::tuple<std::string, std::string, std::string> key = std::make_tuple(ty1, ty2, "Mul");
     auto it = rules.find(key);
     if(it != rules.end()){
@@ -247,8 +247,8 @@ void get_Newton_var_names(std::vector<llvm::StringRef>& newton_vars, std::vector
 
 
 // An example of how to perform dimensional analysis
-  // ====================================
-  void check_dimension(Function& F, std::map<Instruction*, std::string>& collector){
+// ====================================
+void check_dimension(Function& F, std::map<Instruction*, std::string>& collector){
     for (BasicBlock &BB : F){
       for(Instruction &I : BB){
 	switch (I.getOpcode()){
@@ -351,14 +351,16 @@ irPassLLVMDimensionAnalysis(State * N){
       fatal(N, Esanity);
   }
 
-  std::vector<std::tuple<llvm::StringRef, llvm::StringRef, unsigned> > newton_var_info;
 
-  int count = 0;
   for(Module::iterator mi=Mod->begin(); mi!=Mod->end(); mi++){
-      std::cout << "count: " << count++ << "\n";
-      //getVariables(*mi, N);
-      // -----
+      if (mi->isDeclaration()){
+          break;
+      }
+      
+      get_Newton_var(*mi);
+
       get_Newton_var_names(newton_vars);
+
       std::map<Instruction*, std::string> inst_type_collector2;
 
       for(llvm::StringRef name : newton_vars){
@@ -370,8 +372,8 @@ irPassLLVMDimensionAnalysis(State * N){
 
       std::cout << "\n----------\n";
       touched_variables("accX", *mi);
-      break;
   }
-}
+  
+}  // end of dimensional analysis
 
 }  // end of extern

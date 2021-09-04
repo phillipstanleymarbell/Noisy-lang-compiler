@@ -714,6 +714,7 @@ typedef enum
 	kNewtonIrPassPiGroupsSignalAnnotation			= (1 << 11),
 
 	kNewtonIrPassLLVMIR								= (1 << 12),
+	kNewtonIrPassLLVMDimensionalAnalysis			= (1<<13),
 
 	/*
 	 *	Code depends on this bringing up the rear.
