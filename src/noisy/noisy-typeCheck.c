@@ -295,12 +295,20 @@ bool
 noisyCanTypeCast(NoisyType fromType,NoisyType toType)
 {
         /*
-        *       We can convert from integers to other integers and from integers to floats.
+        *       We can convert from integers to other integers and from integers to floats and
+        *       floats to other floats.
         *       We do not permit any other type casts.
         */
         if (fromType.basicType > noisyBool && fromType.basicType <= noisyIntegerConstType)
         {
                 if (toType.basicType > noisyBool && toType.basicType <= noisyRealConstType)
+                {
+                        return true;
+                }
+        }
+        else if (fromType.basicType > noisyIntegerConstType && fromType.basicType <= noisyRealConstType)
+        {
+                if (toType.basicType > noisyIntegerConstType && toType.basicType <= noisyRealConstType)
                 {
                         return true;
                 }
@@ -497,36 +505,62 @@ NoisyType
 getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
 {
         NoisyType noisyType;
-        if (L(typeExpr)->type == kNoisyIrNodeType_PbasicType)
+        if (typeExpr->type == kNoisyIrNodeType_PconstantDecl)
         {
-                return getNoisyTypeFromBasicType(L(typeExpr));
-        }
-        else if (L(typeExpr)->type == kNoisyIrNodeType_PanonAggregateType)
-        {
-                IrNode * arrayType = LL(typeExpr);
-                if (arrayType->type == kNoisyIrNodeType_ParrayType)
+                NoisyType noisyType;
+                noisyType.arrayType = noisyInitType;
+                noisyType.dimensions = 0;
+                switch (L(typeExpr)->type)
                 {
-                        return getNoisyTypeFromArrayNode(N,arrayType);
+                case kNoisyIrNodeType_TintegerConst:
+                        noisyType.basicType = noisyIntegerConstType;
+                        break;
+                case kNoisyIrNodeType_TrealConst:
+                        noisyType.basicType = noisyRealConstType;
+                        break;
+                case kNoisyIrNodeType_TboolConst:
+                        noisyType.basicType = noisyBool;
+                        break;
+                default:
+                        noisyType.basicType = noisyTypeError;
+                        break;
                 }
-                /*
-                *       Lists and other non aggregate types are not supported
-                */
-                else
+                return noisyType;
+        }
+        else
+        {
+                if (L(typeExpr)->type == kNoisyIrNodeType_PbasicType)
                 {
+                        return getNoisyTypeFromBasicType(L(typeExpr));
+                }
+                else if (L(typeExpr)->type == kNoisyIrNodeType_PanonAggregateType)
+                {
+                        IrNode * arrayType = LL(typeExpr);
+                        if (arrayType->type == kNoisyIrNodeType_ParrayType)
+                        {
+                                return getNoisyTypeFromArrayNode(N,arrayType);
+                        }
                         /*
-                        *       Not supported types error.
+                        *       Lists and other non aggregate types are not supported
                         */
-                       char *	details;
+                        else
+                        {
+                                /*
+                                *       Not supported types error.
+                                */
+                        char *	details;
 
-                        asprintf(&details, "Unsupported non Aggregate Type\n");
-                        noisySemanticError(N,L(typeExpr),details);
-                        noisySemanticErrorRecovery(N);
+                                asprintf(&details, "Unsupported non Aggregate Type\n");
+                                noisySemanticError(N,L(typeExpr),details);
+                                noisySemanticErrorRecovery(N);
+                        }
+                }
+                else if (L(typeExpr)->type == kNoisyIrNodeType_PtypeName)
+                {
+                        return getNoisyTypeFromTypeSymbol(N,L(typeExpr));
                 }
         }
-        else if (L(typeExpr)->type == kNoisyIrNodeType_PtypeName)
-        {
-                return getNoisyTypeFromTypeSymbol(N,L(typeExpr));
-        }
+        
 
         noisyType.basicType = noisyTypeError;
         return noisyType;
