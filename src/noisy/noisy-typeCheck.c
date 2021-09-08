@@ -299,16 +299,9 @@ noisyCanTypeCast(NoisyType fromType,NoisyType toType)
         *       floats to other floats.
         *       We do not permit any other type casts.
         */
-        if (fromType.basicType > noisyBool && fromType.basicType <= noisyIntegerConstType)
+        if (fromType.basicType > noisyBool && fromType.basicType <= noisyRealConstType)
         {
                 if (toType.basicType > noisyBool && toType.basicType <= noisyRealConstType)
-                {
-                        return true;
-                }
-        }
-        else if (fromType.basicType > noisyIntegerConstType && fromType.basicType <= noisyRealConstType)
-        {
-                if (toType.basicType > noisyIntegerConstType && toType.basicType <= noisyRealConstType)
                 {
                         return true;
                 }
@@ -1934,7 +1927,7 @@ noisyGuardedStatementTypeCheck(State * N, IrNode * noisyGuardedStatementNode, Sc
 void
 noisyMatchStatementTypeCheck(State * N,IrNode * noisyMatchStatementNode,Scope * currentScope)
 {
-        noisyGuardedStatementTypeCheck(N,R(noisyMatchStatementNode),currentScope->firstChild->firstChild);
+        noisyGuardedStatementTypeCheck(N,R(noisyMatchStatementNode),currentScope->firstChild);
 }
 
 void
@@ -1962,8 +1955,8 @@ noisyOrderingHeadTypeCheck(State * N,IrNode * orderingHeadNode,Scope * currentSc
 void
 noisySequenceStatementTypeCheck(State * N,IrNode * noisySequenceStatementNode,Scope * currentScope)
 {
-        noisyOrderingHeadTypeCheck(N,L(noisySequenceStatementNode),currentScope->firstChild);
-        noisyStatementListTypeCheck(N,RL(noisySequenceStatementNode),currentScope->firstChild);
+        noisyOrderingHeadTypeCheck(N,L(noisySequenceStatementNode),currentScope->parent);
+        noisyStatementListTypeCheck(N,RL(noisySequenceStatementNode),currentScope);
 }
 
 void
@@ -2041,6 +2034,7 @@ void
 noisyStatementListTypeCheck(State * N, IrNode * statementListNode, Scope * currentScope)
 {
         Scope * nextScope = currentScope;
+        Scope * sequenceScope = currentScope->firstChild;
         for (IrNode * iter = statementListNode; iter != NULL; iter=R(iter))
         {
                 if (L(iter) != NULL && LL(iter) != NULL)
@@ -2049,6 +2043,12 @@ noisyStatementListTypeCheck(State * N, IrNode * statementListNode, Scope * curre
                         {
                                 noisyStatementTypeCheck(N,L(iter),nextScope);
                                 nextScope = currentScope->next;
+                        }
+                        else if (LL(iter)->type == kNoisyIrNodeType_PsequenceStatement
+                                || LL(iter)->type == kNoisyIrNodeType_PmatchStatement)
+                        {
+                                noisyStatementTypeCheck(N,L(iter),sequenceScope);
+                                sequenceScope = sequenceScope->next;
                         }
                         else
                         {
