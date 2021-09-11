@@ -78,7 +78,7 @@ init : function (nil) -> (ret : int32) =
         signalArr : array [26124] of int16;
         input : array[80] of int16;
         
-        # filter from https://sestevenson.wordpress.com/ mplementation-of-fir-filtering-in-c-part-1
+        # filter from https://sestevenson.wordpress.com/implementation-of-fir-filtering-in-c-part-1
         # bandpass filter around 1000Hz and sampling rate = 8000Hz
         
         coeffs := array of {float64 0.0448093,  0.0322875,   0.0181163,   0.0087615,   0.0056797,
