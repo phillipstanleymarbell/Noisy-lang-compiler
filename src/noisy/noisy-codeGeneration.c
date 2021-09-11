@@ -390,11 +390,20 @@ noisyDeclareFunction(State * N, CodeGenState * S,IrNode * funcNameNode,IrNode * 
                         {
                                 if (functionSymbol->isChannel)
                                 {
-                                        /*
-                                        *       The input channels of a channel function pass values by reference.
-                                        *       TODO; Check what happens with arrays.
-                                        */
-                                        paramArray[paramIndex] = LLVMPointerType(llvmType,0);
+                                        if (typ.basicType == noisyArrayType)
+                                        {
+                                                /*
+                                                *       Arrays are already being passed by reference.
+                                                */
+                                                paramArray[paramIndex] = llvmType;
+                                        }
+                                        else
+                                        {
+                                                /*
+                                                *       The input channels of a channel function pass values by reference.
+                                                */
+                                                paramArray[paramIndex] = LLVMPointerType(llvmType,0);
+                                        }
                                 }
                                 else
                                 {
@@ -1005,22 +1014,41 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S,IrNode * noisyUnaryOpNode, LLVMV
                         LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"");
 
                         NoisyType outputNoisyType = RL(factorNoisyType.functionDefinition->typeTree)->symbol->noisyType;
-                        LLVMTypeRef outputType = getLLVMTypeFromNoisyType(S,outputNoisyType,false,0);
+                        LLVMTypeRef outputType = getLLVMTypeFromNoisyType(S,outputNoisyType,true,0);
                         argNum = 3;
                         args[0] = termVal;
                         args[1] = LLVMConstInt(LLVMInt32TypeInContext(S->theContext),0,false);
                         args[2] = LLVMConstInt(LLVMInt1TypeInContext(S->theContext),0,false);
                         callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.promise");
                         LLVMValueRef promiseAddr = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"k_promiseAddrRaw");
-                        promiseAddr = LLVMBuildBitCast(S->theBuilder,promiseAddr,LLVMPointerType(outputType,0),"k_promiseAddr");
-                        return LLVMBuildLoad2(S->theBuilder,outputType,promiseAddr,"k_promiseVal");
+                        if (outputNoisyType.basicType == noisyArrayType)
+                        {
+                                promiseAddr = LLVMBuildBitCast(S->theBuilder,promiseAddr,outputType,"k_promiseAddr");
+                                return promiseAddr;
+                        }
+                        else
+                        {
+                                promiseAddr = LLVMBuildBitCast(S->theBuilder,promiseAddr,LLVMPointerType(outputType,0),"k_promiseAddr");
+                                return LLVMBuildLoad2(S->theBuilder,outputType,promiseAddr,"k_promiseVal");
+                        }
                 }
                 else
                 {
                         /*
                         *       This case is when we read from input channel of a channel function.
                         */
-                        LLVMValueRef readVal = LLVMBuildLoad2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(termVal)),termVal,"k_inputChanRead");
+                        LLVMValueRef readVal;
+                        if (noisyFactorNode->noisyType.basicType != noisyArrayType)
+                        {
+                                /*
+                                *       Since arrays are already passed by reference we don't need to load.
+                                */
+                                readVal = LLVMBuildLoad2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(termVal)),termVal,"k_inputChanRead");
+                        }
+                        else
+                        {
+                                readVal = termVal;
+                        }
                         int argNum = 2;
                         LLVMValueRef args[2];
                         args[0] = LLVMConstNull(LLVMTokenTypeInContext(S->theContext));
@@ -1583,7 +1611,18 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                                         break;
                                 }
                                 LLVMTypeRef argType = getLLVMTypeFromNoisyType(S,L(iter)->symbol->noisyType,false,0);
-                                LLVMValueRef inputChanAddr = LLVMBuildAlloca(S->theBuilder,argType,"k_inputChanAddr");
+                                LLVMValueRef inputChanAddr;
+                                if (L(iter)->symbol->noisyType.basicType == noisyArrayType)
+                                {
+                                        inputChanAddr = LLVMBuildAlloca(S->theBuilder,argType,"k_inputChanAddr");
+                                        LLVMValueRef idxValueList[] = {LLVMConstInt(LLVMInt32TypeInContext(S->theContext),0,false),LLVMConstInt(LLVMInt32TypeInContext(S->theContext),0,false)};
+                                        inputChanAddr = LLVMBuildGEP2(S->theBuilder,argType,inputChanAddr,idxValueList,2,"k_arrayDecay");
+                                }
+                                else
+                                {
+                                        inputChanAddr = LLVMBuildAlloca(S->theBuilder,argType,"k_inputChanAddr");
+                                }
+
                                 args[i] = inputChanAddr;
                                 funcSymbol->inputChanAddress = inputChanAddr;
                                 i++;
@@ -1833,14 +1872,35 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                         */
                                         if (lvalSym->symbolType == kNoisySymbolTypeReturnParameter)
                                         {
-                                                LLVMBuildStore(S->theBuilder,exprVal,lvalSym->llvmPointer);
+                                                if (exprNoisyType.basicType == noisyArrayType)
+                                                {
+                                                        LLVMValueRef oneVal[] = {LLVMConstInt(LLVMInt64TypeInContext(S->theContext),1,false)};
+                                                        LLVMTypeRef arrayType = getLLVMTypeFromNoisyType(S,exprNoisyType,false,0);
+                                                        LLVMValueRef sizeOfExprVal= LLVMBuildGEP2(S->theBuilder,arrayType,LLVMConstPointerNull(LLVMPointerType(arrayType,0)),oneVal,1,"");
+                                                        sizeOfExprVal = LLVMBuildPtrToInt(S->theBuilder,sizeOfExprVal,LLVMInt64TypeInContext(S->theContext),"k_sizeOfT");
+
+                                                        LLVMBuildMemCpy(S->theBuilder,lvalSym->llvmPointer,0,exprVal,0,sizeOfExprVal);
+                                                }
+                                                else
+                                                {
+                                                        LLVMBuildStore(S->theBuilder,exprVal,lvalSym->llvmPointer);
+                                                }
                                                 int argNum = 2;
                                                 LLVMValueRef args[2];
                                                 args[0] = LLVMConstNull(LLVMTokenTypeInContext(S->theContext));
                                                 args[1] = LLVMConstInt(LLVMInt1TypeInContext(S->theContext),0,false);
                                                 LLVMValueRef funcCall = LLVMGetNamedFunction(S->theModule,"llvm.coro.suspend");
                                                 LLVMValueRef suspend = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(funcCall)),funcCall,args,argNum,"");
-                                                LLVMBasicBlockRef resumeBB = LLVMInsertBasicBlockInContext(S->theContext,LLVMGetNextBasicBlock(LLVMGetInsertBlock(S->theBuilder)),"coroResume");
+                                                LLVMBasicBlockRef nextBB = LLVMGetNextBasicBlock(LLVMGetInsertBlock(S->theBuilder));
+                                                LLVMBasicBlockRef resumeBB;
+                                                if (nextBB != NULL)
+                                                {
+                                                        resumeBB = LLVMInsertBasicBlockInContext(S->theContext,nextBB,"coroResume");
+                                                }
+                                                else
+                                                {
+                                                        resumeBB = LLVMAppendBasicBlockInContext(S->theContext,S->currentFunction,"coroResume");
+                                                }
 
                                                 LLVMValueRef switchVal = LLVMBuildSwitch(S->theBuilder,suspend,S->suspendBB,2);
                                                 LLVMAddCase(switchVal,LLVMConstInt(LLVMInt8TypeInContext(S->theContext),0,false),resumeBB);
@@ -1851,8 +1911,50 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                         }
                                         else
                                         {
+                                                /*
+                                                *       TODO; CHANGE llvmsym pointer to llvm chan address.
+                                                */
                                                 LLVMValueRef inputChanAddress = lvalSym->noisyType.functionDefinition->inputChanAddress;
-                                                LLVMBuildStore(S->theBuilder,exprVal,inputChanAddress);
+                                                if (RRL(noisyAssignmentStatementNode)->noisyType.basicType == noisyArrayType)
+                                                {
+                                                        /*
+                                                        *       When we have an array cast on the rval of an assignment.
+                                                        */
+                                                        LLVMValueRef oneVal[] = {LLVMConstInt(LLVMInt64TypeInContext(S->theContext),1,false)};
+
+                                                        /*
+                                                        *       Solution on how to implement sizeof of a type
+                                                        *       https://stackoverflow.com/questions/14608250/how-can-i-find-the-size-of-a-type
+                                                        */
+
+                                                        LLVMValueRef sizeOfExprVal;
+
+                                                        LLVMValueRef srcArrayValue;
+                                                        LLVMValueRef dstPtrVal;
+                                                        if (RRL(noisyAssignmentStatementNode)->irLeftChild->type == kNoisyIrNodeType_PanonAggrCastExpr)
+                                                        {
+                                                                sizeOfExprVal= LLVMBuildGEP2(S->theBuilder,LLVMTypeOf(exprVal),LLVMConstPointerNull(LLVMPointerType(LLVMTypeOf(exprVal),0)),oneVal,1,"");
+                                                                sizeOfExprVal = LLVMBuildPtrToInt(S->theBuilder,sizeOfExprVal,LLVMInt64TypeInContext(S->theContext),"k_sizeOfT");
+                                                                srcArrayValue = LLVMAddGlobal(S->theModule,LLVMTypeOf(exprVal),"k_arrConst");
+                                                                LLVMSetInitializer(srcArrayValue,exprVal);
+                                                                LLVMSetGlobalConstant(srcArrayValue,true);
+                                                                dstPtrVal = LLVMBuildBitCast(S->theBuilder,inputChanAddress,LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0),"");
+                                                        }
+                                                        else
+                                                        {
+                                                                LLVMTypeRef arrayType = getLLVMTypeFromNoisyType(S,RRL(noisyAssignmentStatementNode)->noisyType,false,0);
+                                                                sizeOfExprVal= LLVMBuildGEP2(S->theBuilder,arrayType,LLVMConstPointerNull(LLVMPointerType(arrayType,0)),oneVal,1,"");
+                                                                sizeOfExprVal = LLVMBuildPtrToInt(S->theBuilder,sizeOfExprVal,LLVMInt64TypeInContext(S->theContext),"k_sizeOfT");
+                                                                srcArrayValue = exprVal;
+                                                                dstPtrVal = inputChanAddress;
+                                                        }
+
+                                                        LLVMBuildMemCpy(S->theBuilder,dstPtrVal,0,srcArrayValue,0,sizeOfExprVal);
+                                                }
+                                                else
+                                                {
+                                                        LLVMBuildStore(S->theBuilder,exprVal,inputChanAddress);
+                                                }
                                                 int argNum = 1;
                                                 LLVMValueRef args[1];
                                                 args[0] = lvalSym->llvmPointer;
@@ -2329,7 +2431,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
                 LLVMPositionBuilderAtEnd(S->theBuilder,dynFreeBB);
 
                 /*
-                *       On dynamic free we free the malloc'ed memory and we branc to suspend.
+                *       On dynamic free we free the malloc'ed memory and we branch to suspend.
                 */
                 LLVMBuildFree(S->theBuilder,mem);
                 LLVMBuildBr(S->theBuilder,suspendBB);
@@ -2351,15 +2453,50 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
                 S->cleanupBB = cleanupBB;
                 S->suspendBB = suspendBB;
 
+                /*
+                *       Array arguments need the following processing before any other code generation.
+                */
+                for  (IrNode * iter = RL(L(noisyFunctionDefnNode)->symbol->functionDefinition); iter != NULL; iter = RR(iter))
+                {
+                        Symbol * identifierSymbol;
+                        if (L(iter)->type == kNoisyIrNodeType_Tnil)
+                        {
+                                break;
+                        }
+                        else
+                        {
+                                identifierSymbol = L(iter)->symbol;
+                                // identifierSymbol->noisyType = getNoisyTypeFromTypeExpr(N,identifierSymbol->typeTree);
+                        }
+
+                        if (identifierSymbol->noisyType.basicType == noisyArrayType)
+                        {
+                                LLVMValueRef paramValue = LLVMGetParam(S->currentFunction,identifierSymbol->paramPosition);
+                                LLVMValueRef arrayAddrValue = LLVMBuildAlloca(S->theBuilder,LLVMTypeOf(paramValue),"k_arrAddr");
+                                LLVMBuildStore(S->theBuilder,paramValue,arrayAddrValue);
+                                identifierSymbol->llvmPointer = arrayAddrValue;
+                        }
+                }
+
                 noisyStatementListCodeGen(N,S,RR(noisyFunctionDefnNode)->irRightChild->irLeftChild);
 
                 S->cleanupBB = NULL;
                 S->suspendBB = NULL;
-                LLVMValueRef lastInst = LLVMGetLastInstruction(LLVMGetLastBasicBlock(S->currentFunction));
-                if (lastInst == NULL || LLVMIsATerminatorInst(lastInst) == NULL)
+                int basicBlockNum = LLVMCountBasicBlocks(S->currentFunction);
+                LLVMBasicBlockRef * basicBlocks = (LLVMBasicBlockRef *) calloc(basicBlockNum,sizeof(LLVMBasicBlockRef));
+
+                LLVMGetBasicBlocks(S->currentFunction,basicBlocks);
+
+                for (int i = 0; i < basicBlockNum; i++)
                 {
-                        LLVMBuildBr(S->theBuilder,cleanupBB);
+                        LLVMValueRef lastInst = LLVMGetLastInstruction(basicBlocks[i]);
+                        if (lastInst == NULL || !LLVMIsATerminatorInst(lastInst))
+                        {
+                                LLVMPositionBuilderAtEnd(S->theBuilder,basicBlocks[i]);
+                                LLVMBuildBr(S->theBuilder,cleanupBB);
+                        }
                 }
+                free(basicBlocks);
 
         }
         else
@@ -2375,7 +2512,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
                         Symbol * identifierSymbol;
                         if (L(iter)->type == kNoisyIrNodeType_Tnil)
                         {
-                        break;
+                                break;
                         }
                         else
                         {
