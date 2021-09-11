@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-#	Usage: ./noisyIr2dot.sh <noisy file> <pdf|png|other dot format> <Noisy Dot Level>
+#	Usage: ./noisyCompileAndRun.sh <noisy file>
 #
 
 if [ $# -ne 1 ]
