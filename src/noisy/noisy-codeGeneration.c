@@ -641,7 +641,17 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                         noisyFactorNode->noisyType = findConstantNoisyType(L(noisyFactorNode));
                         LLVMTypeRef constType = getLLVMTypeFromNoisyType(S,noisyFactorNode->noisyType,false,0);
                         LLVMValueRef constVal = LLVMGetInitializer(LLVMGetNamedGlobal(S->theModule, identifierSymbol->identifier));
-                        return LLVMConstIntCast(constVal,constType,true);
+                        /*
+                        *       TODO; Add more cases!
+                        */
+                        if (noisyIsOfType(noisyFactorNode->noisyType,noisyIntegerConstType))
+                        {
+                                return LLVMConstIntCast(constVal,constType,true);
+                        }
+                        else
+                        {
+                                return LLVMConstFPCast(constVal,constType);
+                        }
                 }
                 if (identifierSymbol->noisyType.basicType != noisyArrayType && identifierSymbol->noisyType.basicType != noisyNamegenType)
                 {
