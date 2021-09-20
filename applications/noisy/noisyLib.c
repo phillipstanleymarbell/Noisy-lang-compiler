@@ -38,6 +38,28 @@ readFloat64FromCSV()
         return y;
 }
 
+double
+readStartFloat64FromCSV()
+{
+        double x;
+        scanf("%lf",&x);
+        return x;
+}
+
+double
+readMiddleFloat64FromCSV()
+{
+        double x;
+        scanf(",%lf",&x);
+        return x;
+}
+
+int
+ekfWrite(double ts, double theta, double dtheta, double thetaCov, double dthetaCov)
+{
+        return printf("%.6f,%.15f,%.15f,%.15f,%.15f\n",ts,theta,dtheta,thetaCov,dthetaCov);
+}
+
 float
 readFloat32FromCSV()
 {
