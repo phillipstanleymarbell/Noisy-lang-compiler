@@ -14,5 +14,5 @@ name=$(basename $1 | cut -f 1 -d '.');
 ./noisy-`uname | tr '[:upper:]' '[:lower:]'`-EN $1;
 cd ../../applications/noisy;
 llc -filetype=obj $name.bc -o $name.o;
-clang $name.o noisyLib.o -o $name;
+clang $name.o noisyLib.o -lm -o $name;
 ./$name;
