@@ -1,0 +1,175 @@
+EKF : module ()
+{
+        ma : const 1.0;
+        l : const 0.5;
+        b : const 0.8;
+        g : const 9.80665;
+        PI : const 3.14159265359;
+        size : const 2837;
+        sin : function (x : float64) -> (out : float64);
+        cos : function (x : float64) -> (out : float64);
+        transpose : function (x : array [2][2] of float64) -> (out : array [2][2] of float64);
+        matrixMultiplication : function (x : array [2][2] of float64,y : array [2][2] of float64) -> (out : array [2][2] of float64);
+        matrixAddition : function (x : array [2][2] of float64,y : array [2][2] of float64) -> (out : array [2][2] of float64);
+        matrixMultiplication3 : function (x : array [2][2] of float64,y : array [2][2] of float64, z : array [2][2] of float64) -> (out : array [2][2] of float64);
+        calculateAPrioriEstimate : function (prevPred : array [2] of float64, dt : float64) -> (pred : array [2] of float64);
+        calculateF : function (sMinus : array [2] of float64, dt : float64) -> (F : array [2][2] of float64);
+        readStartFloat64FromCSV : function (nil) -> (x : float64);
+        readMiddleFloat64FromCSV : function (nil) -> (x : float64);
+        ekfWrite : function (timestamp : float64,theta : float64, dtheta : float64,thetaCov : float64, dthetaCov : float64) -> (x : int32);
+        init : function (nil) -> (x : int32);
+}
+
+init : function (nil) -> (x : int32) =
+{
+        
+        dt,prevTimestamp,timestamp,speedMeasurement : float64;
+
+        F  : array [2][2] of float64;
+        H : array [2] of float64;
+        sArr : array [2] of float64;
+        P : array [2][2] of float64;
+        Q : array [2][2] of float64;
+        R : float64;
+
+        s_minus : array [2] of float64;
+        P_minus : array [2][2] of float64;
+
+        F_trans : array [2][2] of float64;
+
+        y,S : float64;
+        Karr : array [2] of float64;
+
+        prevTimestamp = 0.0;
+
+        # --------------- EKF Initialize -----------------------
+        H = array of {float64 0.0,1.0};
+        sArr = array of {float64 PI / 6.0, 0.0};
+
+        P = array of {array of {float64 0.8,0.0},array of {float64 0.0,0.8}};
+        Q = array of {array of {float64 0.00003,0.0}, array of {float64 0.0 , 0.00008}};
+
+        R = 0.8;
+
+        sequence(i := int32 0; i < size; i += 1)
+        {
+                timestamp = readStartFloat64FromCSV();
+                nil = readMiddleFloat64FromCSV();
+                nil = readMiddleFloat64FromCSV();
+                speedMeasurement = readMiddleFloat64FromCSV();
+
+                # ---------------- EKF Predict ------------------------- 
+                dt = timestamp - prevTimestamp;
+                prevTimestamp = timestamp;
+
+                s_minus = calculateAPrioriEstimate(prevPred : sArr, dt : dt);
+
+                F = calculateF(sMinus : s_minus, dt : dt);
+                F_trans = transpose(x : F);
+
+                I := matrixMultiplication3(x : F, y : P, z : F_trans);
+
+                P_minus = matrixAddition(x: I, y : Q);
+
+                # --------------- EKF Update ----------------------------
+                y = speedMeasurement - s_minus[1];
+
+
+                # calculate S
+                temp : array[2] of float64;
+                temp[0] = H[0] * P_minus[0][0] + H[1] * P_minus[1][0];
+                temp[1] = H[0] * P_minus[0][1] + H[1] * P_minus[1][1];
+
+                S = (temp[0] * H[0] + temp[1] * H[1]) + R;
+
+                # calculate K
+                Karr[0] = (P_minus[0][0] * H[0] + P_minus[0][1] * H[1]) / S;
+                Karr[1] = (P_minus[1][0] * H[0] + P_minus[1][1] * H[1]) / S;
+
+                sArr[0] = s_minus[0] + Karr[0] * y;
+                sArr[1] = s_minus[1] + Karr[1] * y;
+
+                # calculate I - K * H
+                temp2 : array [2][2] of float64;
+                temp2[0][0] = 1.0 - Karr[0] * H[0];
+                temp2[0][1] = - Karr[0] * H[1];
+                temp2[1][0] = - Karr[1] * H[0];
+                temp2[1][1] = 1.0 - Karr[1] * H[1];
+
+                # P = temp * P_minus
+                P = matrixMultiplication(x : temp2, y : P_minus);
+
+                nil = ekfWrite(timestamp : timestamp, theta : sArr[0], dtheta : sArr[1], thetaCov : P[0][0], dthetaCov : P[1][1]);
+
+        };
+
+        return (x : 0);
+}
+
+
+calculateAPrioriEstimate : function (prevPred : array [2] of float64, dt : float64) -> (pred : array [2] of float64) =
+{
+        theta := prevPred[0];
+        dtheta := prevPred[1];
+
+        predArr : array[2] of float64;
+
+        predArr[0] = theta + dtheta * dt;
+        predArr[1] = dtheta - b / ma * dtheta * dt - g / l * sin(x : theta) * dt;
+
+        return (pred : predArr);
+}
+
+calculateF : function (sMinus : array [2] of float64, dt : float64) -> (F : array [2][2] of float64) =
+{
+        Farr : array[2][2] of float64;
+
+        Farr[0][0] = 1.0;
+        Farr[0][1] = dt;
+        Farr[1][0] = -cos(x : sMinus[0]) * g * dt / l;
+        Farr[1][1] = 1.0 - b / ma * dt;
+
+        return (F : Farr);
+
+}
+
+transpose : function (x : array [2][2] of float64) -> (out : array [2][2] of float64) =
+{
+        trans : array [2][2] of float64;
+        trans[0][0] = x[0][0];
+        trans[0][1] = x[1][0];
+        trans[1][0] = x[0][1];
+        trans[1][1] = x[1][1];
+
+        return ( out : trans);
+}
+
+matrixMultiplication : function (x : array [2][2] of float64, y : array [2][2] of float64) -> (out : array [2][2] of float64) =
+{
+        res : array [2][2] of float64;
+        res[0][0] = x[0][0] * y[0][0] + x[0][1] * y[1][0];
+        res[0][1] = x[0][0] * y[0][1] + x[0][1] * y[1][1];
+        res[1][0] = x[1][0] * y[0][0] + x[1][1] * y[1][0];
+        res[1][1] = x[1][0] * y[0][1] + x[1][1] * y[1][1];
+
+        return (out : res);
+}
+
+matrixMultiplication3 : function (x : array [2][2] of float64, y : array [2][2] of float64, z : array [2][2] of float64) -> (out : array [2][2] of float64) =
+{
+        res1 := matrixMultiplication(x : x, y : y);
+        res2 := matrixMultiplication(x : res1,y : z);
+
+        return (out : res2);
+}
+
+matrixAddition : function (x : array [2][2] of float64, y : array [2][2] of float64) -> (out : array [2][2] of float64)=
+{
+        res : array [2][2] of float64;
+        res[0][0] = x[0][0] + y[0][0];
+        res[0][1] = x[0][1] + y[0][1];
+        res[1][0] = x[1][0] + y[1][0];
+        res[1][1] = x[1][1] + y[1][1];
+
+        return (out : res);
+}
