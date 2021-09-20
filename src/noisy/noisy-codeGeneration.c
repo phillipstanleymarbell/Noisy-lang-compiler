@@ -243,6 +243,15 @@ findConstantNoisyType(IrNode * constantNode)
         {
                 return RRL(constantNode)->noisyType;
         }
+        else if (constantNode->type == kNoisyIrNodeType_PfieldSelect)
+        {
+                /*
+                *       If it is an index constant we return Int32.
+                */
+                NoisyType retType;
+                retType.basicType = noisyInt32;
+                return retType;
+        }
         else
         {
                 return findConstantNoisyType(constantNode->irParent);
