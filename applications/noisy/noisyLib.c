@@ -21,6 +21,14 @@ readInt32()
         return x;
 }
 
+int
+readMiddleInt32FromCSV()
+{
+        int x;
+        scanf(",%d",&x);
+        return x;
+}
+
 short int
 readInt16FromCSV()
 {
@@ -58,6 +66,12 @@ int
 ekfWrite(double ts, double theta, double dtheta, double thetaCov, double dthetaCov)
 {
         return printf("%.6f,%.15f,%.15f,%.15f,%.15f\n",ts,theta,dtheta,thetaCov,dthetaCov);
+}
+
+int
+bmeWrite(int temp, unsigned int pres, unsigned int hum)
+{
+        return printf("%d,%u,%u\n",temp,pres,hum);
 }
 
 float
