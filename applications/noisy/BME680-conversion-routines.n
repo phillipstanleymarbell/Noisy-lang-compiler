@@ -1,0 +1,196 @@
+BME680 : module ()
+{
+        N : const 20;
+        calc_calib_fine : function (temp_adc : nat32, calib_par_t1 : int16, calib_par_t2 : int16, calib_par_t3 : int8) -> (out : int32);
+        calc_temp : function (calib_fine : int32) -> (out : int16); 
+        calc_pressure : function (pres_adc : nat32,
+                                calib_t_fine : int32,
+                                calib_par_p1 : nat16,
+                                calib_par_p2 : int16,
+                                calib_par_p3 : int8,
+                                calib_par_p4 : int16,
+                                calib_par_p5 : int16,
+                                calib_par_p6 : int8,
+                                calib_par_p7 : int8,
+                                calib_par_p8 : int16,
+                                calib_par_p9 : int16,
+                                calib_par_p10 : nat8) -> (out : nat32);
+        calc_humidity : function (hum_adc : nat16,
+                                calib_t_fine : int32,
+                                calib_par_h1 : nat16,
+                                calib_par_h2 : nat16,
+                                calib_par_h3 : int8,
+                                calib_par_h4 : int8,
+                                calib_par_h5 : int8,
+                                calib_par_h6 : nat8,
+                                calib_par_h7 : int8) -> (out : nat32);
+        readInt32 : function (nil) -> (out : int32);
+        readMiddleInt32FromCSV : function (nil) -> (out : int32);
+        printInt32 : function (x : int32) -> (out : int32);
+        bmeWrite : function (temp : int32, pres : nat32, hum : nat32) -> (out : int32);
+        init : function (nil) -> (out : int32);
+}
+
+calc_calib_fine : function (temp_adc : nat32, calib_par_t1 : int16, calib_par_t2 : int16, calib_par_t3 : int8) -> (out : int32) =
+{
+        var1,var2,var3 : int64;
+
+        var1 = int64 ((int32 temp_adc >> 3) - (int32 calib_par_t1 << 1));
+        var2 = (var1 * (int64 calib_par_t2)) >> 11;
+        var3 = ((var1 >> 1) * (var1 >> 1)) >> 12;
+        var3 = (var3 * (int64 calib_par_t3 << 4)) >> 14;
+        calib_fine := int32 (var2 + var3);
+
+        return (out : calib_fine);
+}
+
+calc_temp : function (calib_fine : int32) -> (out : int16) =
+{
+        calc_temp := int16 (((calib_fine * 5) + 128) >> 8);
+        return (out : calc_temp);
+} 
+
+calc_pressure : function (pres_adc : nat32,
+                        calib_t_fine : int32,
+                        calib_par_p1 : nat16,
+                        calib_par_p2 : int16,
+                        calib_par_p3 : int8,
+                        calib_par_p4 : int16,
+                        calib_par_p5 : int16,
+                        calib_par_p6 : int8,
+                        calib_par_p7 : int8,
+                        calib_par_p8 : int16,
+                        calib_par_p9 : int16,
+                        calib_par_p10 : nat8) 
+                                                -> (out : nat32) =
+{
+        var1,var2,var3,pressure_comp : int32;
+
+        var1 = (calib_t_fine >> 1) - 64000;
+        var2 = ((((var1 >> 2) * (var1 >> 2)) >> 11) *
+		(int32 calib_par_p6)) >> 2;
+        var2 = var2 + ((var1 * (int32 calib_par_p5)) << 1);
+        var2 = (var2 >> 2) + ((int32 calib_par_p4) << 16);
+        var1 = (((((var1 >> 2) * (var1 >> 2)) >> 13) *
+		((int32 calib_par_p3) << 5)) >> 3) +
+		(((int32 calib_par_p2) * var1) >> 1);
+        var1 = var1 >> 18;
+        var1 = ((32768 + var1) * (int32 calib_par_p1)) >> 15;
+        pressure_comp = int32 (1048576 - pres_adc);
+        pressure_comp = int32 (nat32 (pressure_comp - (var2 >> 12))) * (nat32 3125);
+        matchseq
+        {
+                pressure_comp >= (1 << 30) =>
+                {
+                        pressure_comp = ((pressure_comp / var1) << 1);
+                }
+                true    =>
+                {
+                        pressure_comp = ((pressure_comp << 1) / var1);
+                }
+        };
+
+        var1 = ((int32 calib_par_p9) * (int32 (((pressure_comp >> 3) *
+		(pressure_comp >> 3)) >> 13))) >> 12;
+        var2 = ((pressure_comp >> 2) *
+		(int32 calib_par_p8)) >> 13;
+        var3 = ((int32 (pressure_comp >> 8)) * (int32 (pressure_comp >> 8)) *
+		(int32 (pressure_comp >> 8)) *
+		(int32 calib_par_p10)) >> 17;
+
+        pressure_comp = (int32 pressure_comp) + ((var1 + var2 + var3 +
+		((int32 calib_par_p7) << 7)) >> 4);  
+
+        return (out : nat32 pressure_comp);
+}
+
+calc_humidity : function (hum_adc : nat16,
+                                calib_t_fine : int32,
+                                calib_par_h1 : nat16,
+                                calib_par_h2 : nat16,
+                                calib_par_h3 : int8,
+                                calib_par_h4 : int8,
+                                calib_par_h5 : int8,
+                                calib_par_h6 : nat8,
+                                calib_par_h7 : int8) -> (out : nat32) =
+{
+        var1,var2,var3,var4,var5,var6,temp_scaled,calc_hum : int32;
+
+        temp_scaled = ((calib_t_fine * 5) + 128) >> 8;
+        var1 = (int32 hum_adc - ( (int32 calib_par_h1 * 16))) - (((temp_scaled * (int32 calib_par_h3)) / 100) >> 1);
+        var2 = ((int32 calib_par_h2)
+		* (((temp_scaled * (int32 calib_par_h4)) / 100)
+			+ (((temp_scaled * ((temp_scaled * (int32 calib_par_h5)) / 100)) >> 6)
+				/ 100) + (1 << 14))) >> 10;
+        var3 = var1 * var2;
+        var4 = int32 calib_par_h6 << 7;
+        var4 = ((var4) + ((temp_scaled * (int32 calib_par_h7)) / 100)) >> 4;
+        var5 = ((var3 >> 14) * (var3 >> 14)) >> 10;
+        var6 = (var4 * var5) >> 1;
+        calc_hum = (((var3 + var6) >> 10) * 1000) >> 12;
+
+        matchseq
+        {
+                calc_hum > 100000 =>
+                {
+                        calc_hum = 100000;
+                }
+                calc_hum < 0 =>
+                {
+                        calc_hum = 0;
+                }
+        };
+        return (out : nat32 calc_hum);
+}
+
+init : function (nil) -> (out : int32) =
+{
+        # Values for calibration parameters
+        t1 := int16 26372;
+        t2 := int16 26190;
+        t3 := int8 3;
+
+        p1 := nat16 36338;
+        p2 := int16 -10432;
+        p3 := int8 88;
+        p4 := int16 7194;
+        p5 := int16 -94;
+        p6 := int8 30;
+        p7 := int8 43;
+        p8 := int16 -2770;
+        p9 := int16 -2546;
+        p10 := nat8 30;
+
+        h1 := nat16 785;
+        h2 := nat16 1009;
+        h3 := int8 0;
+        h4 := int8 45;
+        h5 := int8 20;
+        h6 := nat8 120;
+        h7 := int8 -100;
+
+        temp : nat32;
+        pres : nat32;
+        hum : nat16;
+        i : int32;
+        sequence(i = 0; i < N; i += 1)
+        {
+                temp = nat32 readInt32();
+                pres = nat32 readMiddleInt32FromCSV();
+                hum = nat16 readMiddleInt32FromCSV();
+
+                calib_fine := calc_calib_fine(temp_adc : temp, calib_par_t1 : t1, calib_par_t2 : t2, calib_par_t3 : t3);
+                tempRes := calc_temp(calib_fine : calib_fine);
+                
+                presRes := calc_pressure(pres_adc : pres, calib_t_fine : calib_fine ,calib_par_p1 : p1, calib_par_p2 : p2, calib_par_p3 : p3, calib_par_p4 : p4,
+                                        calib_par_p5 : p5, calib_par_p6 : p6, calib_par_p7 : p7, calib_par_p8 : p8, calib_par_p9 : p9,
+                                        calib_par_p10 : p10);
+
+                humRes := calc_humidity(hum_adc : hum, calib_t_fine : calib_fine, calib_par_h1 : h1, calib_par_h2 : h2, calib_par_h3 : h3, calib_par_h4 : h4,
+                                        calib_par_h5 : h5, calib_par_h6 : h6, calib_par_h7 : h7);
+                
+                nil = bmeWrite(temp : int32 tempRes, pres : presRes, hum : humRes);
+        };
+
+        return (out : 0);
+}
