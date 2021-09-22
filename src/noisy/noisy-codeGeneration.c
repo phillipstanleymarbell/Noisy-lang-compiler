@@ -1282,7 +1282,7 @@ noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
                                                         /*
                                                         *       Convert from smaller to bigger signed integer.
                                                         */
-                                                        termVal = LLVMBuildSExtOrBitCast(S->theBuilder,termVal,destType,"k_typeCastRes");
+                                                        termVal = LLVMBuildZExtOrBitCast(S->theBuilder,termVal,destType,"k_typeCastRes");
                                                 }
                                                 else if (factorType.basicType - 6 > termType.basicType)
                                                 {
@@ -1393,7 +1393,10 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                                 }
                                 break;
                         case kNoisyIrNodeType_TrightShift:
-                                exprVal = LLVMBuildLShr(S->theBuilder,exprVal,termIterVal,"k_rShiftRes");
+                                /*
+                                *       TODO; Maybe add cases for different types. Sometimes we need logic shift(?).
+                                */
+                                exprVal = LLVMBuildAShr(S->theBuilder,exprVal,termIterVal,"k_rShiftRes");
                                 break;
                         case kNoisyIrNodeType_TleftShift:
                                 exprVal = LLVMBuildShl(S->theBuilder,exprVal,termIterVal,"k_lShiftRes");
