@@ -748,6 +748,7 @@ typedef enum
 	kNewtonIrBackendEstimatorSynthesis	= (1 << 6),
 	kNewtonIrBackendIpsa				= (1 << 7),
 
+	kNewtonIrBackendSignalTypedefHeader	= (1 << 9),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -1217,6 +1218,7 @@ typedef struct
 	char *			outputFilePath;
 	char *			outputSmtFilePath;
 	char *			outputCFilePath;
+	char *			outputSignalTypedefHeaderFilePath;
 	char *			outputRTLFilePath;
 	char *			outputEstimatorSynthesisFilePath;
 	char *			outputIpsaFilePath;

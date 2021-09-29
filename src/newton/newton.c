@@ -85,6 +85,7 @@
 #include "newton-irPass-dimensionalMatrixPiGroupSorted.h"
 #include "newton-irPass-dimensionalMatrixKernelRowCanonicalization.h"
 #include "newton-dimension-prescan.h"
+#include "newton-irPass-signalTypedefGenerationBackend.h"
 
 extern char *	gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
 
@@ -275,8 +276,15 @@ processNewtonFile(State *  N, char *  filename)
 	if (N->irBackends & kNewtonIrBackendIpsa)
 	{
 		irPassIpsaBackend(N, gNewtonAstNodeStrings);
-	} 
-	
+	}
+
+	/*
+	 * Signal typedef header generation backend
+	 */
+	if (N->irBackends & kNewtonIrBackendSignalTypedefHeader)
+	{
+		irPassSignalTypedefGenerationBackend(N);
+	}
 }
 
 static State*
