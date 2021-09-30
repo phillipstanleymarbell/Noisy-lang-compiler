@@ -77,7 +77,7 @@ irPassSignalTypedefGenerationProcessNewtonSources(State *  N)
 	 */
 	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassSignalTypedefGenerationBackend);
 
-	flexprint(N->Fe, N->Fm, N->Fph, "/*\n *\tGenerated .h file from Newton file: %s\n */\n", N->fileName);
+	flexprint(N->Fe, N->Fm, N->Fph, "/*\n *\tGenerated .h file from Newton file: %s\n */\n\n", N->fileName);
 
 	int count = 0;
     
@@ -85,7 +85,7 @@ irPassSignalTypedefGenerationProcessNewtonSources(State *  N)
 
 	while(oneIrNode != NULL)
     {
-        flexprint(N->Fe, N->Fm, N->Fph, "\ntypedef %s %s;\n", signalDefaultDatatype, oneIrNode->irLeftChild->tokenString);
+        flexprint(N->Fe, N->Fm, N->Fph, "typedef %s %s;\n", signalDefaultDatatype, oneIrNode->irLeftChild->tokenString);
 
         oneIrNode = findNthIrNodeOfType(N, N->newtonIrRoot, kNewtonIrNodeType_PbaseSignalDefinition, count++);
     }
