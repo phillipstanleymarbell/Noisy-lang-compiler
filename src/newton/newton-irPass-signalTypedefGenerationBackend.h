@@ -1,5 +1,5 @@
 /*
-	Authored 2018. Youchao Wang.
+	Authored 2021. Vasileios Tsoutsouras.
 
 	All rights reserved.
 
