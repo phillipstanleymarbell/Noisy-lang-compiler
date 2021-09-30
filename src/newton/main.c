@@ -116,6 +116,7 @@ main(int argc, char *argv[])
 			{"piNumber", required_argument, 0, 495},
 			{"physicalGroup1", required_argument, 0, 491},
 			{"physicalGroup2", required_argument, 0, 492},
+			{"generate-header", required_argument, 0, 493},
 			{0,			0,			0,	0}
 		};
 
@@ -438,6 +439,13 @@ main(int argc, char *argv[])
 				N->irPasses |= kNewtonIrPassPiGroupsSignalAnnotation;
 				N->irBackends |= kNewtonIrBackendIpsa;
 				N->outputIpsaFilePath = optarg;
+				break;
+			}
+
+			case 493:
+			{
+				N->irBackends |= kNewtonIrBackendSignalTypedefHeader;
+				N->outputSignalTypedefHeaderFilePath = optarg;
 				break;
 			}
 

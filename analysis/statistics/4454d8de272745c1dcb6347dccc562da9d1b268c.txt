@@ -1,6 +1,6 @@
 
-changeset: 1093:89076968f4c6794a0cb403de866aafa915c0fb1d
-char kNewtonVersion[] = "0.3-alpha-1093 (89076968f4c6794a0cb403de866aafa915c0fb1d) (build 09-29-2021-17:57-billtsou@billtsou-OptiPlex-7060-Linux-5.4.0-86-generic-x86_64)";
+changeset: 1095:4454d8de272745c1dcb6347dccc562da9d1b268c
+char kNewtonVersion[] = "0.3-alpha-1095 (4454d8de272745c1dcb6347dccc562da9d1b268c) (build 09-30-2021-12:16-billtsou@billtsou-OptiPlex-7060-Linux-5.4.0-88-generic-x86_64)";
 
 ./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s
 

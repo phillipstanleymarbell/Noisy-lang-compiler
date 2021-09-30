@@ -191,6 +191,11 @@ typedef enum
 	kNewtonTimeStampKeyIrPassHelperSymbolTableSize,
 
 	/*
+	 *	Signal typedef header generation backend
+	 */
+	kNewtonTimeStampKeyIrPassSignalTypedefGenerationBackend,
+
+	/*
 	 *	Used to tag un-tracked time.
 	 */
 	kNewtonTimeStampKeyUnknown,
