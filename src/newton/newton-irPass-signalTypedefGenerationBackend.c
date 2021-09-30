@@ -67,29 +67,7 @@
 #include "newton-symbolTable.h"
 #include "newton-irPass-invariantSignalAnnotation.h"
 
-extern const char *		gNewtonTokenDescriptions[kCommonIrNodeTypeMax];
-
-/*
- *  Function returns the number of Signals in the AST. (Used)
- */
-// int
-// countAllSignals(State * N)
-// {
-//     int count = 0;
-//     Signal * signal = findKthSignal(N, count);
-
-//     if(signal == NULL)
-//     {
-//         return count;
-//     }
-//     while(signal != NULL)
-//     {
-//         count++;
-//         signal = findKthSignal(N, count);
-//     }
-
-//     return count;    
-// }
+char const signalDefaultDatatype[] = "double";
 
 void
 irPassSignalTypedefGenerationProcessNewtonSources(State *  N)
@@ -99,26 +77,20 @@ irPassSignalTypedefGenerationProcessNewtonSources(State *  N)
 	 */
 	TimeStampTraceMacro(kNewtonTimeStampKeyIrPassSignalTypedefGenerationBackend);
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tGenerated .h file from Newton\n */\n");
+	flexprint(N->Fe, N->Fm, N->Fph, "/*\n *\tGenerated .h file from Newton file: %s\n */\n", N->fileName);
 
-	// int count = 0;
+	int count = 0;
     
-	// Signal * signal = findKthSignal(N, count);
+	IrNode * oneIrNode = findNthIrNodeOfType(N, N->newtonIrRoot, kNewtonIrNodeType_PbaseSignalDefinition, count++);
 
-	IrNode * oneIrNode = findNthIrNodeOfType(N, N->newtonIrRoot, kNewtonIrNodeType_PbaseSignalDefinition, 0);
+	while(oneIrNode != NULL)
+    {
+        flexprint(N->Fe, N->Fm, N->Fph, "\ntypedef %s %s;\n", signalDefaultDatatype, oneIrNode->irLeftChild->tokenString);
 
-	flexprint(N->Fe, N->Fm, N->Fpc, "\n\ttypedef double %s;\n", oneIrNode->tokenString);
+        oneIrNode = findNthIrNodeOfType(N, N->newtonIrRoot, kNewtonIrNodeType_PbaseSignalDefinition, count++);
+    }
 
-    // while(signal != NULL)
-    // {
-    //     count++;
-
-	// 	flexprint(N->Fe, N->Fm, N->Fpc, "\n\ttypedef double %s;\n", signal->identifier);
-
-    //     signal = findKthSignal(N, count);
-    // }
-	
-	flexprint(N->Fe, N->Fm, N->Fpc, "/*\n *\tEnd of the generated .h file\n */\n");
+	flexprint(N->Fe, N->Fm, N->Fph, "\n/*\n *\tEnd of the generated .h file\n */\n\n");
 }
 
 void
@@ -141,7 +113,7 @@ irPassSignalTypedefGenerationBackend(State *  N)
 			consolePrintBuffers(N);
 		}
 
-		fprintf(signalTypedefHeaderFile, "%s", N->Fpc->circbuf);
+		fprintf(signalTypedefHeaderFile, "%s", N->Fph->circbuf);
 
 		fclose(signalTypedefHeaderFile);
 	}

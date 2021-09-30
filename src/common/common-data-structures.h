@@ -1157,6 +1157,7 @@ typedef struct
 	FlexPrintBuf *		Fpinfo;
 	FlexPrintBuf *		Fpsmt2;
 	FlexPrintBuf *		Fpc;
+	FlexPrintBuf *		Fph;
 	FlexPrintBuf *		Fprtl;
 	FlexPrintBuf *		Fpmathjax;
 	FlexPrintBuf *		Fpipsa;
