@@ -236,14 +236,32 @@ init(CommonMode mode)
 		fatal(NULL, Emalloc);
 	}
 
-	//TODO: need to figure out right buffer size dynamically. 
+	/*
+	 *	FIXME: need to figure out right buffer size dynamically.
+	 */
 	N->Fpc->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
 	if (N->Fpc->circbuf == NULL)
 	{
 		fatal(NULL, Emalloc);
 	}
 
+	/*
+	 *	Used to hold signal typedef header file generation backend output
+	 */
+	N->Fph = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
+	if (N->Fph == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
 
+	/*
+	 *	FIXME: need to figure out right buffer size dynamically.
+	 */
+	N->Fph->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
+	if (N->Fph->circbuf == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
 
 	/*
 	 *	Used to hold RTL backend output
@@ -429,6 +447,15 @@ consolePrintBuffers(State *  N)
 	if (N && N->Fpc && strlen(N->Fpc->circbuf))
 	{
 		fprintf(stdout, "\nC Backend output:\n---------------------\n%s", N->Fpc->circbuf);
+		if (N->mode & kCommonModeCGI)
+		{
+			fflush(stdout);
+		}
+	}
+
+	if (N && N->Fph && strlen(N->Fph->circbuf))
+	{
+		fprintf(stdout, "\nSignal typedef header generation Backend output:\n---------------------\n%s", N->Fph->circbuf);
 		if (N->mode & kCommonModeCGI)
 		{
 			fflush(stdout);

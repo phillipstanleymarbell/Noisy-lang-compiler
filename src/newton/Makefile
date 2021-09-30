@@ -58,6 +58,7 @@ SOURCES		=\
 		newton-irPass-cBackend.c\
 		newton-irPass-targetParamBackend.c\
 		newton-irPass-RTLBackend.c\
+		newton-irPass-signalTypedefGenerationBackend.c\
 		newton-irPass-estimatorSynthesisBackend.c\
 		newton-irPass-invariantSignalAnnotation.c\
 		newton-irPass-piGroupsSignalAnnotation.c\
@@ -102,6 +103,7 @@ OBJS		=\
 		newton-irPass-autoDiff.$(OBJECTEXTENSION)\
 		newton-irPass-cBackend.$(OBJECTEXTENSION)\
 		newton-irPass-RTLBackend.$(OBJECTEXTENSION)\
+		newton-irPass-signalTypedefGenerationBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
@@ -139,6 +141,7 @@ CGIOBJS		=\
 		newton-irPass-autoDiff.$(OBJECTEXTENSION)\
 		newton-irPass-cBackend.$(OBJECTEXTENSION)\
 		newton-irPass-RTLBackend.$(OBJECTEXTENSION)\
+		newton-irPass-signalTypedefGenerationBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
