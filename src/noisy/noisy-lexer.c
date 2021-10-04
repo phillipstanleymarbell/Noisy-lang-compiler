@@ -862,7 +862,7 @@ checkMinus(State *  N)
 	*	corresponds to a float value. Previously it would be parsed as XXX Tminus YYY(integer) and it
 	*	would create problem during typechecking.
 	*/
-	if (N->currentToken[N->currentTokenLength - 1] == 'e' || N->currentToken[N->currentTokenLength - 1] == 'E')
+	if (N->currentTokenLength >= 1 && (N->currentToken[N->currentTokenLength - 1] == 'e' || N->currentToken[N->currentTokenLength - 1] == 'E'))
 	{
 		char * leftString = stringAtLeft(N,N->currentToken,N->currentToken[N->currentTokenLength - 1]);
 		if (isDecimalOrRealSeparatedWithChar(N,leftString,'.'))
