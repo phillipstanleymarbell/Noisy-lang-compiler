@@ -26,7 +26,6 @@ fibonacci : function (nil) -> (output: valueType) =
                         n = a + b;
                         a = b;
                         b = n;
-			# writetochannel
                 }
         };
 }
