@@ -2606,7 +2606,7 @@ noisyCodeGen(State * N)
         /*
         *       Declare the basic code generation state and the necessary data structures for LLVM.
         */
-        CodeGenState * S = (CodeGenState *)malloc(sizeof(CodeGenState));
+        CodeGenState * S = (CodeGenState *)calloc(1,sizeof(CodeGenState));
         S->theContext = LLVMContextCreate();
         S->theBuilder = LLVMCreateBuilderInContext(S->theContext);
         S->thePassManager = LLVMCreatePassManager();
