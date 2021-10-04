@@ -1,10 +1,11 @@
 # Compile and run at src/noisy/noisyCompileAndRunCoro.sh
+
 fib : module (valueType : type)
 {
-	fibonacci : function (nil) -> (output: valueType);
-	printInt32 : function (x : int32) -> (bytesPrinted : int32);
-	readInt32 : function (nil) -> (x : int32);
-	init	: function (nil) -> (x : int32);
+        fibonacci : function (nil) -> (output: valueType);
+        readInt32 : function (nil) -> (out : int32);
+        printInt32 : function (x : int32) -> (out : int32);
+        init	: function (nil) -> (x : int32);
 }
 
 fibonacci : function (nil) -> (output: valueType) =
@@ -15,15 +16,16 @@ fibonacci : function (nil) -> (output: valueType) =
 
         a = 0;
         b = 1;
+        n = b;
 
         iterate
         {
                 true => 
                 {
+                        output <-= n;
                         n = a + b;
                         a = b;
                         b = n;
-                        output <-= n;
 			# writetochannel
                 }
         };
