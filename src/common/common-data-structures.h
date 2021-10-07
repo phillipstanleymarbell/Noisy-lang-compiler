@@ -747,10 +747,11 @@ typedef enum
 	 *	the flag enables dumping the LaTeX / KaTeX when the kernel
 	 *	dumping is happening.
 	 */
-	kNewtonIrBackendLatex				= (1 << 5),
-	kNewtonIrBackendEstimatorSynthesis	= (1 << 6),
-	kNewtonIrBackendIpsa				= (1 << 7),
+	kNewtonIrBackendLatex				= (1 << 6),
+	kNewtonIrBackendEstimatorSynthesis	= (1 << 7),
+	kNewtonIrBackendIpsa				= (1 << 8),
 
+	kNewtonIrBackendSignalTypedefHeader	= (1 << 9),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -1159,6 +1160,7 @@ typedef struct
 	FlexPrintBuf *		Fpinfo;
 	FlexPrintBuf *		Fpsmt2;
 	FlexPrintBuf *		Fpc;
+	FlexPrintBuf *		Fph;
 	FlexPrintBuf *		Fprtl;
 	FlexPrintBuf *		Fpmathjax;
 	FlexPrintBuf *		Fpipsa;
@@ -1220,6 +1222,7 @@ typedef struct
 	char *			outputFilePath;
 	char *			outputSmtFilePath;
 	char *			outputCFilePath;
+	char *			outputSignalTypedefHeaderFilePath;
 	char *			outputRTLFilePath;
 	char *			outputEstimatorSynthesisFilePath;
 	char *			outputIpsaFilePath;
