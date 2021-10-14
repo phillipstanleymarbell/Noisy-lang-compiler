@@ -6,7 +6,7 @@ Pedometer : module()
         precision : const 0.1;
         readFloat32FromCSV : function (nil) -> (x : float32);
         printInt32 : function (x : int32) -> (out : int32);
-        noisyAbs : function (x : float32) -> (out : float32);
+        fabsf : function (x : float32) -> (out : float32);
         init : function (nil) -> (out : int32);
 }
 
@@ -77,7 +77,7 @@ init : function (nil) -> (out : int32) =
 
                 matchseq
                 {
-                        noisyAbs(x : acc_y - measurementNew_z) > precision =>
+                        fabsf(x : acc_y - measurementNew_z) > precision =>
                         {
                                 measurementNew_z = acc_y;
                                 match
