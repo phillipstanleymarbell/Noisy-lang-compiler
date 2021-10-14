@@ -168,6 +168,24 @@ isTypeExprComplete(State * N,IrNode * typeExpr)
         return false;
 }
 
+bool
+isMeasurementType(State * N, IrNode * typeExpr)
+{
+        if (R(typeExpr) != NULL && RL(typeExpr) != NULL)
+        {
+                IrNode * typeAnnoteList = RL(typeExpr);
+                for (IrNode * iter = typeAnnoteList; iter != NULL; iter = iter->irRightChild)
+                {
+                        if (LL(iter)->type == kNoisyIrNodeType_PtimeseriesDesignation && LLL(iter)->type == kNoisyIrNodeType_Tmeasurement)
+                        {
+                                return true;
+                        }
+                }
+                return false;
+        }
+        return false;
+}
+
 void
 noisyInitNoisyType(NoisyType * typ)
 {
@@ -884,7 +902,16 @@ noisyUnaryOpTypeCheck(State * N,IrNode * noisyUnaryOpNode,NoisyType factorType)
                 else
                 {
                         factorType.functionDefinition->isChannel = true;
-                        returnType = getNoisyTypeFromTypeExpr(N,RRL(factorType.functionDefinition->typeTree));
+                        IrNode * factorTypeExpr;
+                        if (factorType.functionDefinition->typeTree->type == kNoisyIrNodeType_PfunctionDecl)
+                        {
+                                factorTypeExpr = L(RLR(factorType.functionDefinition->typeTree));
+                        }
+                        else
+                        {
+                                factorTypeExpr = RRL(factorType.functionDefinition->typeTree);
+                        }
+                        returnType = getNoisyTypeFromTypeExpr(N,factorTypeExpr);
                 }
 
                 /*
@@ -1536,6 +1563,10 @@ noisyDeclareFunctionTypeCheck(State * N, const char * functionName,IrNode * inpu
         if (L(outputSignature)->type != kNoisyIrNodeType_Tnil)
         {
                 functionSymbol->isTypeComplete = functionSymbol->isTypeComplete && isTypeExprComplete(N,RL(outputSignature));
+                if (isMeasurementType(N,RL(outputSignature)) && parameterCount == 0)
+                {
+                        functionSymbol->isSensorChannel = true;
+                }
         }
 }
 

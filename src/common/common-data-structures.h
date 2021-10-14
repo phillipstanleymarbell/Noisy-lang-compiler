@@ -1218,6 +1218,7 @@ struct Symbol
 	*/
 	int			parameterNum;
 	bool			isTypeComplete;
+	bool			isSensorChannel;
 	bool			isChannel;
 	int			paramPosition;
 	LLVMValueRef		llvmPointer;
