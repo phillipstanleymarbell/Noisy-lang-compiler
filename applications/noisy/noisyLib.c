@@ -82,8 +82,10 @@ readFloat32FromCSV()
         return x;
 }
 
-float
-noisyAbs(float x)
+int
+readTemperature()
 {
-        return fabsf(x);
+        int x,y,z;
+        scanf("%d,%d,%d\n",&x,&y,&z);
+        return x;
 }
