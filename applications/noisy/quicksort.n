@@ -1,8 +1,7 @@
 # Compile and run at src/noisy/noisyCompileAndRun.sh
 quicksortModule : module ()
 {
-	printInt32 : function (x : int32) -> (bytesPrinted : int32);
-	readInt32 : function (nil) -> (x : int32);
+	# printInt32 : function (x : int32) -> (out : int32);
 	init	: function (argumentAx: int32) -> (argumentBx: int32);
 }
 
@@ -85,14 +84,14 @@ init	: function (argumentAx: int32) -> (argumentBx: int32) =
 	
 	sequence(i := int32 0 ; i < 10 ; i += 1)
 	{
-		nil = printInt32(x : a[i]);
+		#nil = printInt32(x : a[i]);
  	};
 
 	a = quicksort(arr : a,low : 0,high : 9);	
 
 	sequence(i = 0 ; i < 10 ; i += 1)
 	{
-		nil = printInt32(x : a[i]);
+		#nil = printInt32(x : a[i]);
  	};
 	
 	return (argumentBx : 0);
