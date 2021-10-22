@@ -1,5 +1,5 @@
 /*
-	Authored 2020. Orestis Kaparounakis.
+	Authored 2021. Nikos Mavrogeorgis.
 
 	All rights reserved.
 
@@ -33,18 +33,6 @@
 	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
-
-	This code makes the following assumptions for ease of implementation:
-	- No signals with subdimensions.
-	- Linear model must by factorised (e.g. 4*P+X and not 3*P+X+P).
-	- LHS of invariants is assumed to contain solely the state and measurement identifiers.
-	- System takes no input in linear case (B=0). // TODO: This is fixable.
-	- Invariant parameter lists start with the state variables, in the same order
-	  with which they appear in the invariant body.
-	- Measure invariant does not skip unused state variables.
-
-	Many of these can and will be lifted as development progresses.
-
 */
 
 #include <errno.h>
@@ -64,6 +52,7 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/SourceMgr.h"
@@ -100,6 +89,72 @@ extern "C"
 #include "newton-irPass-estimatorSynthesisBackend.h"
 #include "newton-irPass-invariantSignalAnnotation.h"
 
+std::map<StringRef, Physics*> vreg_physics_table;
+
+void 
+iterateInstructions(Function & F, State * N) 
+{
+	Physics* physics = NULL;
+	N->newtonIrTopScope = commonSymbolTableAllocScope(N);
+
+	for (BasicBlock &BB : F) {
+
+		for (Instruction &I : instructions(F)) {
+
+			switch (I.getOpcode()) {
+
+				case Instruction::Call:
+
+					if (CallInst* CI = dyn_cast<CallInst>(&I)) {
+
+						Function *F = CI->getCalledFunction();
+						if (F->getName().startswith("llvm.dbg.declare")) {
+
+							MetadataAsValue *MAV = cast<MetadataAsValue>(CI->getOperand(1));
+							DIVariable *Var = cast<DIVariable>(MAV->getMetadata());
+							DIDerivedType *Type = cast<DIDerivedType>(Var->getType());
+
+							physics = newtonPhysicsTableAddPhysicsForToken(N, N->newtonIrTopScope, NULL);
+							vreg_physics_table[Var->getName()] = physics;
+						}
+					}
+					break;
+
+				case Instruction::FAdd:
+
+					if (BinaryOperator* BO = dyn_cast<BinaryOperator>(&I)) {
+
+						StringRef leftTerm = BO->getOperand(1)->getName();
+						StringRef rightTerm = BO->getOperand(2)->getName();
+
+						if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm], vreg_physics_table[rightTerm]))
+							outs() << "leftTerm and rightTerm do not have the same dimensions.\n";
+					}
+					break;
+				case Instruction::FMul:
+					if (BinaryOperator* BO = dyn_cast<BinaryOperator>(&I)) {
+
+						StringRef leftTerm = BO->getOperand(1)->getName();
+						StringRef rightTerm = BO->getOperand(2)->getName();
+						//newtonPhysicsAddExponents(N, termRoot->physics, leftFactor->physics);
+					}
+					break;
+				case Instruction::Load:
+					//shallowCopyPhysicsNode
+					break;
+				case Instruction::Store:
+					// Check type of store
+					// Check dimensioality
+					if (StoreInst *StoreI = dyn_cast<StoreInst>(&I))
+						outs() << StoreI->isSimple() << "\n";
+					break;
+				default:
+					continue;
+			}
+		}
+	}
+}
+
 
 void 
 getAllVariables(Function & F, State * N) 
@@ -130,10 +185,15 @@ getAllVariables(Function & F, State * N)
 						signal = findKthSignalByIdentifier(N, cstr, 0);
 
 						if (signal)
-							outs() << "Found signal: " << cstr << " as :" 
-								<< signal->invariantExpressionIdentifier << " in invariant\n";
+							outs() << "Found signal: " << cstr << " as: " 
+								<< signal->invariantExpressionIdentifier << " with physics id:"
+								<< signal->baseNode->physics << " in invariant\n"; // TODO
 					}
 				}
+			}
+			else if (BinaryOperator* BO = dyn_cast<BinaryOperator>(I)) {
+				outs() << *(BO->getOperand(1)) << "\n";
+				outs() << BO->getOperand(1)->getName() << "\n";
 			}
 		}
 	}
@@ -181,6 +241,7 @@ irPassLLVMIR(State * N)
 
 	for (Module::iterator mi = Mod->begin(); mi != Mod->end(); mi++) {
 		getAllVariables(*mi, N);
+		iterateInstructions(*mi, N);
 	}
 }
 
