@@ -8,6 +8,12 @@ printInt32(int x)
 }
 
 int
+printNat32(unsigned int x)
+{
+        return printf("%u\n",x);
+}
+
+int
 printFloat64(double x)
 {
         return printf("%lf\n",x);

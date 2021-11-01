@@ -313,14 +313,24 @@ bool
 noisyCanTypeCast(NoisyType fromType,NoisyType toType)
 {
         /*
-        *       We can convert from integers to other integers and from integers to floats and
-        *       floats to other floats.
+        *       We can convert from integers to other integers, from integers to floats, from floats
+        *       to integers, from naturals to integers and from floats to other floats.
         *       We do not permit any other type casts.
         */
         if (fromType.basicType > noisyBool && fromType.basicType <= noisyRealConstType)
         {
                 if (toType.basicType > noisyBool && toType.basicType <= noisyRealConstType)
                 {
+                        /*
+                        *       We do not permit from integers to naturals
+                        */
+                        if (fromType.basicType > noisyBool && fromType.basicType <= noisyInt128)
+                        {
+                                if (toType.basicType >= noisyNat4 && toType.basicType <= noisyNat128)
+                                {
+                                        return false;
+                                }
+                        }
                         return true;
                 }
         }
