@@ -600,10 +600,18 @@ noisyDeclareFunction(State * N, CodeGenState * S,IrNode * funcNameNode,IrNode * 
                 if (!strcmp(functionSymbol->identifier,"init"))
                 {
                         func =  LLVMAddFunction(S->theModule,"main",funcType);
+                        char * funcAttr = "nounwind";
+                        unsigned funcAttrKind = LLVMGetEnumAttributeKindForName(funcAttr,strlen(funcAttr));
+                        LLVMAttributeRef funcAttrRef = LLVMCreateEnumAttribute(S->theContext,funcAttrKind,0);
+                        LLVMAddAttributeAtIndex(func,-1,funcAttrRef);
                 }
                 else
                 {
                         func =  LLVMAddFunction(S->theModule,functionSymbol->identifier,funcType);
+                        char * funcAttr = "nounwind";
+                        unsigned funcAttrKind = LLVMGetEnumAttributeKindForName(funcAttr,strlen(funcAttr));
+                        LLVMAttributeRef funcAttrRef = LLVMCreateEnumAttribute(S->theContext,funcAttrKind,0);
+                        LLVMAddAttributeAtIndex(func,-1,funcAttrRef);
                 }
         }
         else
