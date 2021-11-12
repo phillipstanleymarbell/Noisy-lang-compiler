@@ -117,6 +117,7 @@ main(int argc, char *argv[])
 			{"physicalGroup1", required_argument, 0, 491},
 			{"physicalGroup2", required_argument, 0, 492},
 			{"generate-header", required_argument, 0, 493},
+			{"signal-typedef-to", required_argument, 0, 496},
 			{0,			0,			0,	0}
 		};
 
@@ -449,6 +450,12 @@ main(int argc, char *argv[])
 				break;
 			}
 
+			case 496:
+			{
+				strcpy(N->signalTypedefDatatype, optarg);
+				break;
+			}
+
 			case '?':
 			{
 				/*
@@ -538,6 +545,8 @@ usage(State *  N)
 						"                | (--pigrouptoast, -a)                                       \n"
 						"                | (--codegen <path to output file>, -g <path to output file>)\n"
 						"                | (--RTLcodegen <path to output file>, -l <path to output file>)\n"
+						"                | (--generate-header=<path to output file>					  \n"
+						"                | (--signal-typedef-to=<data type string>					  \n"
 						"                | (--trace, -t)                                              \n"
 						"                | (--statistics, -s)                                         \n"
 						"                | (--latex, -x)                                              \n"

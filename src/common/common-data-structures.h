@@ -1185,6 +1185,12 @@ typedef struct
 	int 			targetParamLocatedKernel;
 
 	/*
+	 *	This is data type that a signal will be typedef'ed to
+	 *	in the signal typedef generation backend
+	 */
+	char *		signalTypedefDatatype;
+
+	/*
 	 *	We keep a global handle on the list of module scopes, for easy reference.
 	 *	In this use case, the node->identifier holds the scopes string name, and we
 	 *	chain then using their prev/next fields.
