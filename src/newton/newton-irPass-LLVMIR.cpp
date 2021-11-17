@@ -89,13 +89,12 @@ extern "C"
 #include "newton-irPass-estimatorSynthesisBackend.h"
 #include "newton-irPass-invariantSignalAnnotation.h"
 
-std::map<StringRef, Physics*> vreg_physics_table;
+std::map<Value*, Physics*> vreg_physics_table;
 
 void 
 iterateInstructions(Function & F, State * N) 
 {
 	Physics* physics = NULL;
-	N->newtonIrTopScope = commonSymbolTableAllocScope(N);
 
 	for (BasicBlock &BB : F) {
 
@@ -104,34 +103,51 @@ iterateInstructions(Function & F, State * N)
 			switch (I.getOpcode()) {
 
 				case Instruction::Call:
+					if (auto CI = dyn_cast<CallInst>(&I)) {
+						Function *CalledFunc = CI->getCalledFunction();
+						if (CalledFunc->getName().startswith("llvm.dbg.declare")) {
+                            // Example instruction
+                            // \code
+                            // call void @llvm.dbg.declare(metadata double* %accelerationX, metadata !11, metadata !DIExpression()), !dbg !14
+                            // \endcode
 
-					if (CallInst* CI = dyn_cast<CallInst>(&I)) {
+                            // Get the 1st operand from llvm.dbg.declare instrinsic.
+                            // You convert it to `MetadataAsValue` to be able to process it with LLVM `Value` API.
+							auto FirstOp = cast<MetadataAsValue>(CI->getOperand(0));
+                            // Extract the metadata from the first operand.
+							auto LocalVarAddrAsMetadata = cast<ValueAsMetadata>(FirstOp->getMetadata());
+                            // Finally, get the value contained in the metadata (`double* %accelerationX`).
+                            auto LocalVarAddr = LocalVarAddrAsMetadata->getValue();
 
-						Function *F = CI->getCalledFunction();
-						if (F->getName().startswith("llvm.dbg.declare")) {
-
-							MetadataAsValue *MAV = cast<MetadataAsValue>(CI->getOperand(1));
-							DIVariable *Var = cast<DIVariable>(MAV->getMetadata());
-							DIDerivedType *Type = cast<DIDerivedType>(Var->getType());
-
-							physics = newtonPhysicsTableAddPhysicsForToken(N, N->newtonIrTopScope, NULL);
-							vreg_physics_table[Var->getName()] = physics;
+                            // Get the 2nd operand from llvm.dbg.declare instrinsic.
+                            // You convert it to `MetadataAsValue` as explained above.
+                            auto SecondOp = cast<MetadataAsValue>(CI->getOperand(1));
+                            // Extract the metadata from the second operand.
+                            auto DIVar = cast<DIVariable>(SecondOp->getMetadata());
+                            // Get the type from the anonymous metadata instance.
+                            // E.g., from `!11 = !DILocalVariable(name: "accelerationX", scope: !7, file: !1, line: 14, type: !12)`.
+                            // you get `!12` which looks like:
+                            // `!12 = !DIDerivedType(tag: DW_TAG_typedef, name: "signalAccelerationX", file: !1, line: 7, baseType: !13)`.
+                            auto Type = cast<DIDerivedType>(DIVar->getType());
+                            // Finally, Type->getName() will give "signalAccelerationX", which is the Newton signal type.
+                            // You also need to convert it to `char *` (Newton does not work with llvm::StringRef).
+                            physics =  newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope, Type->getName().data());
+                            // Add the Physics struct to our mapping.
+                            vreg_physics_table[LocalVarAddr] = physics;
 						}
 					}
 					break;
 
 				case Instruction::FAdd:
-
-					if (BinaryOperator* BO = dyn_cast<BinaryOperator>(&I)) {
-
-						StringRef leftTerm = BO->getOperand(1)->getName();
-						StringRef rightTerm = BO->getOperand(2)->getName();
-
-						if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm], vreg_physics_table[rightTerm]))
-							outs() << "leftTerm and rightTerm do not have the same dimensions.\n";
+					if (auto BO = dyn_cast<BinaryOperator>(&I)) {
+						Value* leftTerm = BO->getOperand(0);
+						Value* rightTerm = BO->getOperand(1);
+//						if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm], vreg_physics_table[rightTerm]))
+//							outs() << "leftTerm and rightTerm do not have the same dimensions.\n";
 					}
 					break;
 				case Instruction::FMul:
+                    break;
 					if (BinaryOperator* BO = dyn_cast<BinaryOperator>(&I)) {
 
 						StringRef leftTerm = BO->getOperand(1)->getName();
@@ -139,14 +155,27 @@ iterateInstructions(Function & F, State * N)
 						//newtonPhysicsAddExponents(N, termRoot->physics, leftFactor->physics);
 					}
 					break;
+                case Instruction::Alloca:
+                    break;
+                    if (AllocaInst* AI = dyn_cast<AllocaInst>(&I)) {
+                        outs() << "Alloca instruction: " << I << "\n";
+                        outs() << "Alloca instruction pointer: " << AI << "\n";
+                        outs() << "==================\n";
+                    }
+                    //shallowCopyPhysicsNode
 				case Instruction::Load:
+                    break;
+                    if (LoadInst* LI = dyn_cast<LoadInst>(&I)) {
+                        outs() << "Load instruction: " << LI << "\n";
+                        outs() << "Load instruction operand: " << LI->getOperand(0) << "\n";
+                        outs() << "==================\n";
+                    }
 					//shallowCopyPhysicsNode
-					break;
 				case Instruction::Store:
 					// Check type of store
-					// Check dimensioality
-					if (StoreInst *StoreI = dyn_cast<StoreInst>(&I))
-						outs() << StoreI->isSimple() << "\n";
+					// Check dimensionality
+					//if (StoreInst *StoreI = dyn_cast<StoreInst>(&I))
+					//	outs() << StoreI->isSimple() << "\n";
 					break;
 				default:
 					continue;
