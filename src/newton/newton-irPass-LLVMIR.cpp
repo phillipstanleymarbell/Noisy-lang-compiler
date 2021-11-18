@@ -92,7 +92,7 @@ extern "C"
 std::map<Value*, Physics*> vreg_physics_table;
 
 void 
-iterateInstructions(Function & F, State * N) 
+dimensionalityCheck(Function & F, State * N)
 {
 	Physics* physics = NULL;
 
@@ -111,7 +111,7 @@ iterateInstructions(Function & F, State * N)
                             // call void @llvm.dbg.declare(metadata double* %accelerationX, metadata !11, metadata !DIExpression()), !dbg !14
                             // \endcode
 
-                            // Get the 1st operand from llvm.dbg.declare instrinsic.
+                            // Get the 1st operand from llvm.dbg.declare intrinsic.
                             // You convert it to `MetadataAsValue` to be able to process it with LLVM `Value` API.
 							auto FirstOp = cast<MetadataAsValue>(CI->getOperand(0));
                             // Extract the metadata from the first operand.
@@ -119,7 +119,7 @@ iterateInstructions(Function & F, State * N)
                             // Finally, get the value contained in the metadata (`double* %accelerationX`).
                             auto LocalVarAddr = LocalVarAddrAsMetadata->getValue();
 
-                            // Get the 2nd operand from llvm.dbg.declare instrinsic.
+                            // Get the 2nd operand from llvm.dbg.declare intrinsic.
                             // You convert it to `MetadataAsValue` as explained above.
                             auto SecondOp = cast<MetadataAsValue>(CI->getOperand(1));
                             // Extract the metadata from the second operand.
@@ -142,19 +142,33 @@ iterateInstructions(Function & F, State * N)
 					if (auto BO = dyn_cast<BinaryOperator>(&I)) {
 						Value* leftTerm = BO->getOperand(0);
 						Value* rightTerm = BO->getOperand(1);
-//						if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm], vreg_physics_table[rightTerm]))
-//							outs() << "leftTerm and rightTerm do not have the same dimensions.\n";
+						if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm], vreg_physics_table[rightTerm]))
+							outs() << "leftTerm and rightTerm do not have the same dimensions.\n";
 					}
 					break;
-				case Instruction::FMul:
-                    break;
-					if (BinaryOperator* BO = dyn_cast<BinaryOperator>(&I)) {
 
-						StringRef leftTerm = BO->getOperand(1)->getName();
-						StringRef rightTerm = BO->getOperand(2)->getName();
-						//newtonPhysicsAddExponents(N, termRoot->physics, leftFactor->physics);
+				case Instruction::FMul:
+					if (auto BO = dyn_cast<BinaryOperator>(&I)) {
+						Value* leftTerm = BO->getOperand(0);
+						Value* rightTerm = BO->getOperand(1);
+                        // `newtonPhysicsAddExponents1 adds the right argument to the left,
+                        // so we first create a new copy for our new Physics type.
+                        Physics* physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]);
+						newtonPhysicsAddExponents(N, physicsProduct, vreg_physics_table[rightTerm]);
 					}
 					break;
+
+                case Instruction::FDiv:
+                    if (auto BO = dyn_cast<BinaryOperator>(&I)) {
+                        Value* leftTerm = BO->getOperand(0);
+                        Value* rightTerm = BO->getOperand(1);
+                        // `newtonPhysicsSubtractExponents1 adds the right argument from the left,
+                        // so we first create a new copy for our new Physics type.
+                        Physics* physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]);
+                        newtonPhysicsSubtractExponents(N, physicsProduct, vreg_physics_table[rightTerm]);
+                    }
+                    break;
+
                 case Instruction::Alloca:
                     break;
                     if (AllocaInst* AI = dyn_cast<AllocaInst>(&I)) {
@@ -163,14 +177,13 @@ iterateInstructions(Function & F, State * N)
                         outs() << "==================\n";
                     }
                     //shallowCopyPhysicsNode
-				case Instruction::Load:
-                    break;
-                    if (LoadInst* LI = dyn_cast<LoadInst>(&I)) {
-                        outs() << "Load instruction: " << LI << "\n";
-                        outs() << "Load instruction operand: " << LI->getOperand(0) << "\n";
-                        outs() << "==================\n";
+
+				case Instruction::Load: // TODO: not all loads should have this
+                    if (auto LI = dyn_cast<LoadInst>(&I)) {
+                        vreg_physics_table[LI] = vreg_physics_table[LI->getOperand(0)];
                     }
-					//shallowCopyPhysicsNode
+                    break;
+
 				case Instruction::Store:
 					// Check type of store
 					// Check dimensionality
@@ -269,8 +282,8 @@ irPassLLVMIR(State * N)
 	}
 
 	for (Module::iterator mi = Mod->begin(); mi != Mod->end(); mi++) {
-		getAllVariables(*mi, N);
-		iterateInstructions(*mi, N);
+//		getAllVariables(*mi, N);
+		dimensionalityCheck(*mi, N);
 	}
 }
 
