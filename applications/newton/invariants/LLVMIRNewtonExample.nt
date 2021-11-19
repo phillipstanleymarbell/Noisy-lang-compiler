@@ -12,7 +12,7 @@ signalAccelerationY : signal =
 {
 	name		= "signalAccelerationY" English;
 	symbol		= accY;
-	derivation	= mass / second;
+	derivation	= mass;
 }
 
 signalAccelerationZ : signal =

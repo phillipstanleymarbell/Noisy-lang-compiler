@@ -102,10 +102,10 @@ dimensionalityCheck(Function & F, State * N)
 
 			switch (I.getOpcode()) {
 
-				case Instruction::Call:
-					if (auto CI = dyn_cast<CallInst>(&I)) {
-						Function *CalledFunc = CI->getCalledFunction();
-						if (CalledFunc->getName().startswith("llvm.dbg.declare")) {
+                case Instruction::Call:
+                    if (auto CI = dyn_cast<CallInst>(&I)) {
+                        Function *CalledFunc = CI->getCalledFunction();
+                        if (CalledFunc->getName().startswith("llvm.dbg.declare")) {
                             // Example instruction
                             // \code
                             // call void @llvm.dbg.declare(metadata double* %accelerationX, metadata !11, metadata !DIExpression()), !dbg !14
@@ -113,9 +113,9 @@ dimensionalityCheck(Function & F, State * N)
 
                             // Get the 1st operand from llvm.dbg.declare intrinsic.
                             // You convert it to `MetadataAsValue` to be able to process it with LLVM `Value` API.
-							auto FirstOp = cast<MetadataAsValue>(CI->getOperand(0));
+                            auto FirstOp = cast<MetadataAsValue>(CI->getOperand(0));
                             // Extract the metadata from the first operand.
-							auto LocalVarAddrAsMetadata = cast<ValueAsMetadata>(FirstOp->getMetadata());
+                            auto LocalVarAddrAsMetadata = cast<ValueAsMetadata>(FirstOp->getMetadata());
                             // Finally, get the value contained in the metadata (`double* %accelerationX`).
                             auto LocalVarAddr = LocalVarAddrAsMetadata->getValue();
 
@@ -128,67 +128,81 @@ dimensionalityCheck(Function & F, State * N)
                             // E.g., from `!11 = !DILocalVariable(name: "accelerationX", scope: !7, file: !1, line: 14, type: !12)`.
                             // you get `!12` which looks like:
                             // `!12 = !DIDerivedType(tag: DW_TAG_typedef, name: "signalAccelerationX", file: !1, line: 7, baseType: !13)`.
-                            auto Type = cast<DIDerivedType>(DIVar->getType());
-                            // Finally, Type->getName() will give "signalAccelerationX", which is the Newton signal type.
-                            // You also need to convert it to `char *` (Newton does not work with llvm::StringRef).
-                            physics =  newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope, Type->getName().data());
-                            // Add the Physics struct to our mapping.
-                            vreg_physics_table[LocalVarAddr] = physics;
-						}
-					}
-					break;
+                            if (auto Type = dyn_cast<DIDerivedType>(DIVar->getType())) {
+                                // Finally, Type->getName() will give "signalAccelerationX", which is the Newton signal type.
+                                // You also need to convert it to `char *` (Newton does not work with llvm::StringRef).
+                                physics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope,
+                                                                                 Type->getName().data());
+                                // Add the Physics struct to our mapping.
+                                vreg_physics_table[LocalVarAddr] = physics;
+                            }
+                        }
+                    }
+                    break;
 
-				case Instruction::FAdd:
-					if (auto BO = dyn_cast<BinaryOperator>(&I)) {
-						Value* leftTerm = BO->getOperand(0);
-						Value* rightTerm = BO->getOperand(1);
-						if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm], vreg_physics_table[rightTerm]))
-							outs() << "leftTerm and rightTerm do not have the same dimensions.\n";
-					}
-					break;
+                case Instruction::FAdd:
+                    if (auto BO = dyn_cast<BinaryOperator>(&I)) {
+                        Value *leftTerm = BO->getOperand(0);
+                        Value *rightTerm = BO->getOperand(1);
+                        if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm], vreg_physics_table[rightTerm])) {
+                            outs() << "Dimension mismatch in addition operands.\n";
+                            exit(1);
+                        }
+                        else
+                            vreg_physics_table[BO] = vreg_physics_table[leftTerm];
+                    }
+                    break;
 
-				case Instruction::FMul:
-					if (auto BO = dyn_cast<BinaryOperator>(&I)) {
-						Value* leftTerm = BO->getOperand(0);
-						Value* rightTerm = BO->getOperand(1);
+                case Instruction::FMul:
+                    if (auto BO = dyn_cast<BinaryOperator>(&I)) {
+                        Value *leftTerm = BO->getOperand(0);
+                        Value *rightTerm = BO->getOperand(1);
                         // `newtonPhysicsAddExponents1 adds the right argument to the left,
                         // so we first create a new copy for our new Physics type.
-                        Physics* physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]);
-						newtonPhysicsAddExponents(N, physicsProduct, vreg_physics_table[rightTerm]);
-					}
-					break;
+                        Physics *physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]);
+                        newtonPhysicsAddExponents(N, physicsProduct, vreg_physics_table[rightTerm]);
+                        // Store the result to the destination virtual register.
+                        vreg_physics_table[BO] = physicsProduct;
+                    }
+                    break;
 
                 case Instruction::FDiv:
                     if (auto BO = dyn_cast<BinaryOperator>(&I)) {
-                        Value* leftTerm = BO->getOperand(0);
-                        Value* rightTerm = BO->getOperand(1);
+                        Value *leftTerm = BO->getOperand(0);
+                        Value *rightTerm = BO->getOperand(1);
                         // `newtonPhysicsSubtractExponents1 adds the right argument from the left,
                         // so we first create a new copy for our new Physics type.
-                        Physics* physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]);
+                        Physics *physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]);
                         newtonPhysicsSubtractExponents(N, physicsProduct, vreg_physics_table[rightTerm]);
                     }
                     break;
 
                 case Instruction::Alloca:
                     break;
-                    if (AllocaInst* AI = dyn_cast<AllocaInst>(&I)) {
+                    if (AllocaInst *AI = dyn_cast<AllocaInst>(&I)) {
                         outs() << "Alloca instruction: " << I << "\n";
                         outs() << "Alloca instruction pointer: " << AI << "\n";
                         outs() << "==================\n";
                     }
                     //shallowCopyPhysicsNode
 
-				case Instruction::Load: // TODO: not all loads should have this
+                case Instruction::Load: // TODO: not all loads should have this
                     if (auto LI = dyn_cast<LoadInst>(&I)) {
                         vreg_physics_table[LI] = vreg_physics_table[LI->getOperand(0)];
                     }
                     break;
 
-				case Instruction::Store:
-					// Check type of store
-					// Check dimensionality
-					//if (StoreInst *StoreI = dyn_cast<StoreInst>(&I))
-					//	outs() << StoreI->isSimple() << "\n";
+                case Instruction::Store:
+                    if (auto StoreI = dyn_cast<StoreInst>(&I)) {
+                        Value *leftTerm = StoreI->getOperand(0);
+                        Value *rightTerm = StoreI->getOperand(1);
+                        if (!vreg_physics_table[leftTerm])
+                            break;
+                        if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm], vreg_physics_table[rightTerm])) {
+                            outs() << "Dimension mismatch in assignment.\n";
+                            exit(1);
+                        }
+                    }
 					break;
 				default:
 					continue;
