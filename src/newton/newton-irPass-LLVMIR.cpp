@@ -204,6 +204,81 @@ dimensionalityCheck(Function & F, State * N)
                         }
                     }
 					break;
+
+                // https://github.com/llvm/llvm-project/blob/main/llvm/include/llvm/IR/Instruction.def
+
+                // Terminator Instructions
+                // These instructions are used to terminate a basic block of the program.
+                // Every basic block must end with one of these instructions for it to be a well-formed basic block.
+                case Instruction::Ret:
+                case Instruction::Br:
+                case Instruction::Switch:
+                case Instruction::IndirectBr:
+                case Instruction::Invoke:
+                case Instruction::Resume:
+                case Instruction::Unreachable:
+                case Instruction::CleanupRet:
+                case Instruction::CatchRet:
+                case Instruction::CatchSwitch:
+                case Instruction::CallBr: // A call-site terminator
+
+                // Standard unary operators
+                case Instruction::FNeg:
+
+                // Standard binary operators
+                case Instruction::Add:
+                case Instruction::Sub:
+                case Instruction::FSub:
+                case Instruction::Mul:
+                case Instruction::UDiv:
+                case Instruction::SDiv:
+                case Instruction::URem:
+                case Instruction::SRem:
+                case Instruction::FRem:
+
+                // Logical operators (integer operands)
+                case Instruction::Shl:
+                case Instruction::LShr:
+                case Instruction::AShr:
+                case Instruction::And:
+                case Instruction::Or:
+                case Instruction::Xor:
+
+                // Memory operators...
+                case Instruction::GetElementPtr:
+                case Instruction::Fence:
+                case Instruction::AtomicCmpXchg:
+                case Instruction::AtomicRMW:
+
+                // Cast operators ...
+                case Instruction::Trunc:
+                case Instruction::ZExt:
+                case Instruction::SExt:
+                case Instruction::FPToUI:
+                case Instruction::FPToSI:
+                case Instruction::UIToFP:
+                case Instruction::SIToFP:
+                case Instruction::FPTrunc:
+                case Instruction::FPExt:
+                case Instruction::PtrToInt:
+                case Instruction::IntToPtr:
+                case Instruction::BitCast:
+                case Instruction::AddrSpaceCast:
+
+                // Other operators...
+                case Instruction::ICmp:
+                case Instruction::FCmp:
+                case Instruction::PHI:
+                case Instruction::Select:
+                case Instruction::UserOp1:
+                case Instruction::UserOp2:
+                case Instruction::VAArg:
+                case Instruction::ExtractElement:
+                case Instruction::InsertElement:
+                case Instruction::ShuffleVector:
+                case Instruction::ExtractValue:
+                case Instruction::InsertValue:
+                case Instruction::LandingPad:
 				default:
 					continue;
 			}
