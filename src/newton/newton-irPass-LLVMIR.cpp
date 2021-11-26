@@ -144,6 +144,9 @@ dimensionalityCheck(Function & F, State * N)
                     if (auto BO = dyn_cast<BinaryOperator>(&I)) {
                         Value *leftTerm = BO->getOperand(0);
                         Value *rightTerm = BO->getOperand(1);
+			outs() << "leftTerm: " << leftTerm->getName() << "\n";
+			outs() << "right value: " << *rightTerm << "\n";
+			outs() << "rightTerm: " << rightTerm->getName() << "\n";
                         if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm], vreg_physics_table[rightTerm])) {
                             outs() << "Dimension mismatch in addition operands.\n";
                             exit(1);
@@ -305,9 +308,10 @@ getAllVariables(Function & F, State * N)
 
 						MetadataAsValue *MAV = cast<MetadataAsValue>(CI->getOperand(1));
 						DIVariable *Var = cast<DIVariable>(MAV->getMetadata());
-						DIDerivedType *Type = cast<DIDerivedType>(Var->getType());
-						DIType *BaseType = Type->getBaseType();
+						//DIDerivedType *Type = cast<DIDerivedType>(Var->getType());
+						//DIType *BaseType = Type->getBaseType();
 
+						DIType *Type = Var->getType();
 						std::string temp(Type->getName());
 						char *cstr = &temp[0];
 
@@ -371,7 +375,7 @@ irPassLLVMIR(State * N)
 	}
 
 	for (Module::iterator mi = Mod->begin(); mi != Mod->end(); mi++) {
-//		getAllVariables(*mi, N);
+		getAllVariables(*mi, N);
 		dimensionalityCheck(*mi, N);
 	}
 }
