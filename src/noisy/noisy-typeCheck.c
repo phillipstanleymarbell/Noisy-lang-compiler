@@ -321,16 +321,16 @@ noisyCanTypeCast(NoisyType fromType,NoisyType toType)
         {
                 if (toType.basicType > noisyBool && toType.basicType <= noisyRealConstType)
                 {
-                        /*
-                        *       We do not permit from integers to naturals
-                        */
-                        if (fromType.basicType > noisyBool && fromType.basicType <= noisyInt128)
-                        {
-                                if (toType.basicType >= noisyNat4 && toType.basicType <= noisyNat128)
-                                {
-                                        return false;
-                                }
-                        }
+                        // /*
+                        // *       We do not permit from integers to naturals
+                        // */
+                        // if (fromType.basicType > noisyBool && fromType.basicType <= noisyInt128)
+                        // {
+                        //         if (toType.basicType >= noisyNat4 && toType.basicType <= noisyNat128)
+                        //         {
+                        //                 return false;
+                        //         }
+                        // }
                         return true;
                 }
         }
