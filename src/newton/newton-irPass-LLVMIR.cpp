@@ -144,9 +144,6 @@ dimensionalityCheck(Function & F, State * N)
                     if (auto BO = dyn_cast<BinaryOperator>(&I)) {
                         Value *leftTerm = BO->getOperand(0);
                         Value *rightTerm = BO->getOperand(1);
-			outs() << "leftTerm: " << leftTerm->getName() << "\n";
-			outs() << "right value: " << *rightTerm << "\n";
-			outs() << "rightTerm: " << rightTerm->getName() << "\n";
                         if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm], vreg_physics_table[rightTerm])) {
                             outs() << "Dimension mismatch in addition operands.\n";
                             exit(1);
@@ -199,9 +196,15 @@ dimensionalityCheck(Function & F, State * N)
                     if (auto StoreI = dyn_cast<StoreInst>(&I)) {
                         Value *leftTerm = StoreI->getOperand(0);
                         Value *rightTerm = StoreI->getOperand(1);
-                        if (!vreg_physics_table[leftTerm])
+                        Physics *leftPhysics = vreg_physics_table[leftTerm];
+                        Physics *rightPhysics = vreg_physics_table[rightTerm];
+                        if (!leftPhysics) // E.g. in number assignment to a newton signal
                             break;
-                        if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm], vreg_physics_table[rightTerm])) {
+                        if (!rightPhysics) {
+                            vreg_physics_table[rightTerm] = vreg_physics_table[leftTerm];
+                            break;
+                        }
+                        if (!areTwoPhysicsEquivalent(N, leftPhysics, rightPhysics)) {
                             outs() << "Dimension mismatch in assignment.\n";
                             exit(1);
                         }
@@ -375,7 +378,7 @@ irPassLLVMIR(State * N)
 	}
 
 	for (Module::iterator mi = Mod->begin(); mi != Mod->end(); mi++) {
-		getAllVariables(*mi, N);
+//		getAllVariables(*mi, N); // not needed for now
 		dimensionalityCheck(*mi, N);
 	}
 }
