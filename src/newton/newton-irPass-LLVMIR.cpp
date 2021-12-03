@@ -91,6 +91,35 @@ extern "C"
 
 std::map<Value*, Physics*> vreg_physics_table;
 
+
+const char*
+newtonTypeName(DIVariable* DIVar, State * N)
+{
+    if (auto Type = dyn_cast<DIDerivedType>(DIVar->getType())) {
+        if (Type->getTag() == dwarf::DW_TAG_typedef) {
+            return Type->getName().data();
+        }
+        else if (Type->getTag() == dwarf::DW_TAG_pointer_type) {
+            if (auto PointeeType = dyn_cast<DIDerivedType>(Type->getBaseType())) {
+                if (PointeeType->getTag() == dwarf::DW_TAG_typedef) {
+                    return Type->getName().data();
+                }
+                else {
+                    errs() << "Unhandled case 1\n";
+                }
+            }
+            else {
+                errs() << "Unhandled case 2\n";
+            }
+        }
+        else {
+            errs() << "Unhandled case 3\n";
+        }
+    }
+    errs() << "Unhandled case 4\n";
+    return nullptr;
+}
+
 void 
 dimensionalityCheck(Function & F, State * N)
 {
@@ -100,7 +129,8 @@ dimensionalityCheck(Function & F, State * N)
 
 		for (Instruction &I : instructions(F)) {
 
-			switch (I.getOpcode()) {
+            outs() << I << "\n";
+            switch (I.getOpcode()) {
 
                 case Instruction::Call:
                     if (auto CI = dyn_cast<CallInst>(&I)) {
@@ -128,11 +158,10 @@ dimensionalityCheck(Function & F, State * N)
                             // E.g., from `!11 = !DILocalVariable(name: "accelerationX", scope: !7, file: !1, line: 14, type: !12)`.
                             // you get `!12` which looks like:
                             // `!12 = !DIDerivedType(tag: DW_TAG_typedef, name: "signalAccelerationX", file: !1, line: 7, baseType: !13)`.
-                            if (auto Type = dyn_cast<DIDerivedType>(DIVar->getType())) {
-                                // Finally, Type->getName() will give "signalAccelerationX", which is the Newton signal type.
-                                // You also need to convert it to `char *` (Newton does not work with llvm::StringRef).
-                                physics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope,
-                                                                                 Type->getName().data());
+                            // Finally, Type->getName() will give "signalAccelerationX", which is the Newton signal type.
+                            // You also need to convert it to `char *` (Newton does not work with llvm::StringRef).
+                            if (auto name = newtonTypeName(DIVar, N)) {
+                                physics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope, name);
                                 // Add the Physics struct to our mapping.
                                 vreg_physics_table[LocalVarAddr] = physics;
                             }
@@ -379,7 +408,9 @@ irPassLLVMIR(State * N)
 
 	for (Module::iterator mi = Mod->begin(); mi != Mod->end(); mi++) {
 //		getAllVariables(*mi, N); // not needed for now
-		dimensionalityCheck(*mi, N);
+//        if (mi->getName().str() == std::string("calc_humidity")) {
+            dimensionalityCheck(*mi, N);
+//        }
 	}
 }
 
