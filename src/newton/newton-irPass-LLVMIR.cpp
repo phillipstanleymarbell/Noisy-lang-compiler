@@ -89,34 +89,40 @@ extern "C"
 #include "newton-irPass-estimatorSynthesisBackend.h"
 #include "newton-irPass-invariantSignalAnnotation.h"
 
-std::map<Value*, Physics*> vreg_physics_table;
+class PhysicsInfo {
+private:
+    Physics* physicsType;
+    std::vector<PhysicsInfo*> members;
+    bool isComposite;
+public:
+    PhysicsInfo(): physicsType{nullptr}, isComposite{true} {};
+    explicit PhysicsInfo(Physics* physics): physicsType{physics}, isComposite{false} {};
 
+    void pushPhysics(Physics* physics) { if (isComposite) members.push_back(new PhysicsInfo(physics)); }
+    void pushPhysicsInfo(PhysicsInfo* physics_info) { if (isComposite) members.push_back(physics_info); }
+};
 
+std::map<Value*, PhysicsInfo*> vreg_physics_table;
+
+/// Get the physics name of the DIType.
+/// If necessary, find the physics name of the subsequent types recursively, e.g. for pointers.
 const char*
-newtonTypeName(DIVariable* DIVar, State * N)
+newtonTypeName(DIType* DebugType, State * N)
 {
-    if (auto Type = dyn_cast<DIDerivedType>(DIVar->getType())) {
-        if (Type->getTag() == dwarf::DW_TAG_typedef) {
-            return Type->getName().data();
-        }
-        else if (Type->getTag() == dwarf::DW_TAG_pointer_type) {
-            if (auto PointeeType = dyn_cast<DIDerivedType>(Type->getBaseType())) {
-                if (PointeeType->getTag() == dwarf::DW_TAG_typedef) {
-                    return Type->getName().data();
-                }
-                else {
-                    errs() << "Unhandled case 1\n";
-                }
-            }
-            else {
-                errs() << "Unhandled case 2\n";
-            }
-        }
-        else {
-            errs() << "Unhandled case 3\n";
+    if (auto Type = dyn_cast<DIDerivedType>(DebugType)) {
+        switch (Type->getTag()) {
+            case dwarf::DW_TAG_typedef:
+                return Type->getName().data();
+            case dwarf::DW_TAG_pointer_type:
+            case dwarf::DW_TAG_const_type:
+            case dwarf::DW_TAG_member:
+                return newtonTypeName(Type->getBaseType(), N);
+            case dwarf::DW_TAG_structure_type:
+            default:
+                errs() << "Unhandled DW_TAG\n";
         }
     }
-    errs() << "Unhandled case 4\n";
+    errs() << "Cast to DIDerivedType failed.\n";
     return nullptr;
 }
 
@@ -160,10 +166,10 @@ dimensionalityCheck(Function & F, State * N)
                             // `!12 = !DIDerivedType(tag: DW_TAG_typedef, name: "signalAccelerationX", file: !1, line: 7, baseType: !13)`.
                             // Finally, Type->getName() will give "signalAccelerationX", which is the Newton signal type.
                             // You also need to convert it to `char *` (Newton does not work with llvm::StringRef).
-                            if (auto name = newtonTypeName(DIVar, N)) {
+                            if (auto name = newtonTypeName(DIVar->getType(), N)) {
                                 physics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope, name);
                                 // Add the Physics struct to our mapping.
-                                vreg_physics_table[LocalVarAddr] = physics;
+                                vreg_physics_table[LocalVarAddr] = new PhysicsInfo{physics};
                             }
                         }
                     }
@@ -173,7 +179,7 @@ dimensionalityCheck(Function & F, State * N)
                     if (auto BO = dyn_cast<BinaryOperator>(&I)) {
                         Value *leftTerm = BO->getOperand(0);
                         Value *rightTerm = BO->getOperand(1);
-                        if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm], vreg_physics_table[rightTerm])) {
+                        if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm]->physicsType, vreg_physics_table[rightTerm]->physicsType)) {
                             outs() << "Dimension mismatch in addition operands.\n";
                             exit(1);
                         }
@@ -188,10 +194,10 @@ dimensionalityCheck(Function & F, State * N)
                         Value *rightTerm = BO->getOperand(1);
                         // `newtonPhysicsAddExponents1 adds the right argument to the left,
                         // so we first create a new copy for our new Physics type.
-                        Physics *physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]);
-                        newtonPhysicsAddExponents(N, physicsProduct, vreg_physics_table[rightTerm]);
+                        Physics *physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]->physicsType);
+                        newtonPhysicsAddExponents(N, physicsProduct, vreg_physics_table[rightTerm]->physicsType);
                         // Store the result to the destination virtual register.
-                        vreg_physics_table[BO] = physicsProduct;
+                        vreg_physics_table[BO] = new PhysicsInfo{physicsProduct};
                     }
                     break;
 
@@ -201,8 +207,8 @@ dimensionalityCheck(Function & F, State * N)
                         Value *rightTerm = BO->getOperand(1);
                         // `newtonPhysicsSubtractExponents1 adds the right argument from the left,
                         // so we first create a new copy for our new Physics type.
-                        Physics *physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]);
-                        newtonPhysicsSubtractExponents(N, physicsProduct, vreg_physics_table[rightTerm]);
+                        Physics *physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]->physicsType);
+                        newtonPhysicsSubtractExponents(N, physicsProduct, vreg_physics_table[rightTerm]->physicsType);
                     }
                     break;
 
@@ -225,8 +231,8 @@ dimensionalityCheck(Function & F, State * N)
                     if (auto StoreI = dyn_cast<StoreInst>(&I)) {
                         Value *leftTerm = StoreI->getOperand(0);
                         Value *rightTerm = StoreI->getOperand(1);
-                        Physics *leftPhysics = vreg_physics_table[leftTerm];
-                        Physics *rightPhysics = vreg_physics_table[rightTerm];
+                        PhysicsInfo *leftPhysics = vreg_physics_table[leftTerm];
+                        PhysicsInfo *rightPhysics = vreg_physics_table[rightTerm];
                         if (!leftPhysics) // E.g. in number assignment to a newton signal
                             break;
                         if (!rightPhysics) {
@@ -408,9 +414,8 @@ irPassLLVMIR(State * N)
 
 	for (Module::iterator mi = Mod->begin(); mi != Mod->end(); mi++) {
 //		getAllVariables(*mi, N); // not needed for now
-//        if (mi->getName().str() == std::string("calc_humidity")) {
+//        if (mi->getName().str() == std::string("calc_humidity"))
             dimensionalityCheck(*mi, N);
-//        }
 	}
 }
 
