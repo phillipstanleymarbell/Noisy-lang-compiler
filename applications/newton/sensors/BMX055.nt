@@ -164,6 +164,7 @@ bmx055: sensor (
 		yAccelHigh = read 16r05;
 		yAccelLow = read 16r04;
 		bmx055yAcceleration = (yAccelHigh << 4) | (yAccelLow >> 4);
+		# bmx055yAcceleration = yAccelHigh[:4] + yAccelLow[4:];
 	},
 
 	interface bmx055zAcceleration == i2c (address: 16r18)
@@ -198,7 +199,7 @@ bmx055: sensor (
 	#
 	#	Register address of Magnetometer can be found in document 10.2 on page 130.
 	#
-	interface bmx055xMagneticFluxDensity == i2c (address: 16r10)
+	interface bmx055xMagneto == i2c (address: 16r10)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -207,10 +208,10 @@ bmx055: sensor (
 		#
 		xMagnetoHigh = read 16r43;
 		xMagnetoLow = read 16r42;
-		bmx055xMagneticFluxDensity = (xMagnetoHigh << 5) | (xMagnetoLow >> 3);
+		bmx055xMagneto = (xMagnetoHigh << 5) | (xMagnetoLow >> 3);
 	},
 
-	interface bmx055yMagneticFluxDensity == i2c (address: 16r10)
+	interface bmx055yMagneto == i2c (address: 16r10)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -219,10 +220,10 @@ bmx055: sensor (
 		#
 		yMagnetoHigh = read 16r45;
 		yMagnetoLow = read 16r44;
-		bmx055yMagneticFluxDensity = (yMagnetoHigh << 5) | (yMagnetoLow >> 3);
+		bmx055yMagneto = (yMagnetoHigh << 5) | (yMagnetoLow >> 3);
 	},
 
-	interface bmx055bmx055zMagneticFluxDensity == i2c (address: 16r10)
+	interface bmx055zMagneto == i2c (address: 16r10)
 	{
 		#
 		#	Start up at normal mode, modify (write value register) if set to other modes ...
@@ -231,7 +232,7 @@ bmx055: sensor (
 		#
 		zMagnetoHigh = read 16r47;
 		zMagnetoLow = read 16r46;
-		bmx055zMagneticFluxDensity = (zMagnetoHigh << 7) | (zMagnetoLow >> 1);
+		bmx055zMagneto = (zMagnetoHigh << 7) | (zMagnetoLow >> 1);
 	},
 
 	#
