@@ -3804,11 +3804,22 @@ newtonParseTerm(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
+	/*
+	 *	[unaryOp]
+	 */
 	if (inFirst(N, kNewtonIrNodeType_PunaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		addLeaf(N, node, newtonParseUnaryOp(N, currentScope));
 	}
 
+	/*
+	 *	factor
+	 */
+	addLeafWithChainingSeq(N, node, newtonParseFactor(N, currentScope));
+
+	/*
+	 *	["++" | "--"]
+	 */
 	if (peekCheck(N, 1, kNewtonIrNodeType_TplusPlus))
 	{
 		addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TplusPlus, currentScope));
@@ -3818,6 +3829,9 @@ newtonParseTerm(State *  N, Scope *  currentScope)
 		addLeafWithChainingSeq(N, node, newtonParseTerminal(N, kNewtonIrNodeType_TminusMinus, currentScope));
 	}
 
+	/*
+	 *	{highPrecedenceBinaryOp factor}
+	 */
 	while (inFirst(N, kNewtonIrNodeType_PhighPrecedenceBinaryOp, gNewtonFirsts, kNewtonIrNodeTypeMax))
 	{
 		addLeafWithChainingSeq(N, node, newtonParseHighPrecedenceBinaryOp(N, currentScope));
