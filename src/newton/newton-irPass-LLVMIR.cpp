@@ -100,29 +100,52 @@ public:
 
     void pushPhysics(Physics* physics) { if (isComposite) members.push_back(new PhysicsInfo(physics)); }
     void pushPhysicsInfo(PhysicsInfo* physics_info) { if (isComposite) members.push_back(physics_info); }
+
+    Physics* get_physics_type() { return physicsType; }
+    std::vector<PhysicsInfo *> get_members() { return members; }
+    bool get_is_composite() { return isComposite; }
 };
 
 std::map<Value*, PhysicsInfo*> vreg_physics_table;
 
-/// Get the physics name of the DIType.
+/// Get the physics info of the DIType.
 /// If necessary, find the physics name of the subsequent types recursively, e.g. for pointers.
-const char*
-newtonTypeName(DIType* DebugType, State * N)
+PhysicsInfo*
+newtonPhysicsInfo(DIType* DebugType, State * N)
 {
     if (auto Type = dyn_cast<DIDerivedType>(DebugType)) {
         switch (Type->getTag()) {
             case dwarf::DW_TAG_typedef:
-                return Type->getName().data();
+            {
+                Physics *physics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope,
+                                                                          Type->getName().data());
+                if (!physics)
+                    return newtonPhysicsInfo(Type->getBaseType(), N);
+                return new PhysicsInfo{physics};
+            }
             case dwarf::DW_TAG_pointer_type:
             case dwarf::DW_TAG_const_type:
             case dwarf::DW_TAG_member:
-                return newtonTypeName(Type->getBaseType(), N);
+                return newtonPhysicsInfo(Type->getBaseType(), N);
             case dwarf::DW_TAG_structure_type:
             default:
                 errs() << "Unhandled DW_TAG\n";
         }
     }
-    errs() << "Cast to DIDerivedType failed.\n";
+    else if (auto CType = dyn_cast<DICompositeType>(DebugType)) {
+        if (CType->getTag() == dwarf::DW_TAG_structure_type) {
+            auto physicsInfo = new PhysicsInfo();
+            for (auto i: CType->getElements())
+                if (auto DIMember = dyn_cast<DIDerivedType>(i))
+                    physicsInfo->pushPhysicsInfo(newtonPhysicsInfo(DIMember, N));
+            return physicsInfo;
+        }
+    }
+//    else { TODO
+//        errs() << "Unhandled DIType:\n";
+//        DebugType->dump();
+//        return nullptr;
+//    }
     return nullptr;
 }
 
@@ -166,10 +189,9 @@ dimensionalityCheck(Function & F, State * N)
                             // `!12 = !DIDerivedType(tag: DW_TAG_typedef, name: "signalAccelerationX", file: !1, line: 7, baseType: !13)`.
                             // Finally, Type->getName() will give "signalAccelerationX", which is the Newton signal type.
                             // You also need to convert it to `char *` (Newton does not work with llvm::StringRef).
-                            if (auto name = newtonTypeName(DIVar->getType(), N)) {
-                                physics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope, name);
-                                // Add the Physics struct to our mapping.
-                                vreg_physics_table[LocalVarAddr] = new PhysicsInfo{physics};
+                            if (auto physicsInfo = newtonPhysicsInfo(DIVar->getType(), N)) {
+                                // Add the PhysicsInfo to our mapping.
+                                vreg_physics_table[LocalVarAddr] = physicsInfo;
                             }
                         }
                     }
@@ -179,7 +201,8 @@ dimensionalityCheck(Function & F, State * N)
                     if (auto BO = dyn_cast<BinaryOperator>(&I)) {
                         Value *leftTerm = BO->getOperand(0);
                         Value *rightTerm = BO->getOperand(1);
-                        if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm]->physicsType, vreg_physics_table[rightTerm]->physicsType)) {
+                        if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm]->get_physics_type(),
+                                                     vreg_physics_table[rightTerm]->get_physics_type())) {
                             outs() << "Dimension mismatch in addition operands.\n";
                             exit(1);
                         }
@@ -194,8 +217,8 @@ dimensionalityCheck(Function & F, State * N)
                         Value *rightTerm = BO->getOperand(1);
                         // `newtonPhysicsAddExponents1 adds the right argument to the left,
                         // so we first create a new copy for our new Physics type.
-                        Physics *physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]->physicsType);
-                        newtonPhysicsAddExponents(N, physicsProduct, vreg_physics_table[rightTerm]->physicsType);
+                        Physics *physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]->get_physics_type());
+                        newtonPhysicsAddExponents(N, physicsProduct, vreg_physics_table[rightTerm]->get_physics_type());
                         // Store the result to the destination virtual register.
                         vreg_physics_table[BO] = new PhysicsInfo{physicsProduct};
                     }
@@ -207,19 +230,10 @@ dimensionalityCheck(Function & F, State * N)
                         Value *rightTerm = BO->getOperand(1);
                         // `newtonPhysicsSubtractExponents1 adds the right argument from the left,
                         // so we first create a new copy for our new Physics type.
-                        Physics *physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]->physicsType);
-                        newtonPhysicsSubtractExponents(N, physicsProduct, vreg_physics_table[rightTerm]->physicsType);
+                        Physics *physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]->get_physics_type());
+                        newtonPhysicsSubtractExponents(N, physicsProduct, vreg_physics_table[rightTerm]->get_physics_type());
                     }
                     break;
-
-                case Instruction::Alloca:
-                    break;
-                    if (AllocaInst *AI = dyn_cast<AllocaInst>(&I)) {
-                        outs() << "Alloca instruction: " << I << "\n";
-                        outs() << "Alloca instruction pointer: " << AI << "\n";
-                        outs() << "==================\n";
-                    }
-                    //shallowCopyPhysicsNode
 
                 case Instruction::Load: // TODO: not all loads should have this
                     if (auto LI = dyn_cast<LoadInst>(&I)) {
@@ -231,20 +245,32 @@ dimensionalityCheck(Function & F, State * N)
                     if (auto StoreI = dyn_cast<StoreInst>(&I)) {
                         Value *leftTerm = StoreI->getOperand(0);
                         Value *rightTerm = StoreI->getOperand(1);
-                        PhysicsInfo *leftPhysics = vreg_physics_table[leftTerm];
-                        PhysicsInfo *rightPhysics = vreg_physics_table[rightTerm];
-                        if (!leftPhysics) // E.g. in number assignment to a newton signal
+                        PhysicsInfo *leftPhysicsInfo = vreg_physics_table[leftTerm];
+                        PhysicsInfo *rightPhysicsInfo = vreg_physics_table[rightTerm];
+                        if (!leftPhysicsInfo) // E.g. in number assignment to a newton signal
                             break;
-                        if (!rightPhysics) {
+                        if (!rightPhysicsInfo) {
                             vreg_physics_table[rightTerm] = vreg_physics_table[leftTerm];
                             break;
                         }
-                        if (!areTwoPhysicsEquivalent(N, leftPhysics, rightPhysics)) {
+                        if (!areTwoPhysicsEquivalent(N, leftPhysicsInfo->get_physics_type(), rightPhysicsInfo->get_physics_type())) {
                             outs() << "Dimension mismatch in assignment.\n";
                             exit(1);
                         }
                     }
 					break;
+
+                case Instruction::GetElementPtr:
+                    if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
+                        uint64_t Idx;
+                        if (auto CI = dyn_cast<ConstantInt>(GEPI->getOperand(2))) {
+                            Idx = CI->getZExtValue();
+                        }
+                        auto physicsInfo = vreg_physics_table[GEPI->getPointerOperand()]->get_members()[Idx];
+                        vreg_physics_table[GEPI] = physicsInfo;
+                    }
+                    break;
+
 
                 // https://github.com/llvm/llvm-project/blob/main/llvm/include/llvm/IR/Instruction.def
 
@@ -286,7 +312,7 @@ dimensionalityCheck(Function & F, State * N)
                 case Instruction::Xor:
 
                 // Memory operators...
-                case Instruction::GetElementPtr:
+                case Instruction::Alloca:
                 case Instruction::Fence:
                 case Instruction::AtomicCmpXchg:
                 case Instruction::AtomicRMW:

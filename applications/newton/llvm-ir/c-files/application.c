@@ -8,23 +8,35 @@ typedef double signalAccelerationX;
 typedef double signalAccelerationY;
 typedef double signalAccelerationZ;
 
+typedef struct complex {
+    signalAccelerationX x;
+    signalAccelerationY y;
+} complex;
+
 int
 main (void)
 {
-	signalAccelerationX		accelerationX = 5.0, accelerationX2;
+	signalAccelerationX		accelerationX = 5.0;
 	signalAccelerationY		accelerationY = 5.0;
-	signalAccelerationZ		accelerationZ = 5.0;
+    signalAccelerationX*	accelerationX_ptr = &accelerationX;
     double x;
+
+    complex c;
+    c.x = accelerationY;
+    c.y = accelerationY;
 
 	/*
 	 * Dimensionally consistent statement
 	 */
-	accelerationX2 = accelerationX + accelerationX;
+	*accelerationX_ptr = accelerationX + accelerationX;
 
 	/*
 	 * Dimensionally inconsistent statement
 	 */
-	accelerationX2 = accelerationX + accelerationX;
-//    x = accelerationX2;
+//	*accelerationX2 = accelerationX + accelerationY;
+//    x = accelerationX;
+//    x = accelerationY;
+
+    printf("%f\n", accelerationX);
 	return 0;
 }
