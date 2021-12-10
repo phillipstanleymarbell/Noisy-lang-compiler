@@ -798,6 +798,11 @@ checkGt(State *  N)
 		gobble(N, 2);
 		type = kNewtonIrNodeType_Tmutualinf;
 	}
+	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '>')
+	{
+		gobble(N, 2);
+		type = kNewtonIrNodeType_TrightShift;
+	}
 	else if (eqf(N))
 	{
 		gobble(N, 2);
@@ -839,6 +844,11 @@ checkLt(State *  N)
 	{
 		gobble(N, 3);
 		type = kNewtonIrNodeType_Trelated;
+	}
+	else if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '<')
+	{
+		gobble(N, 2);
+		type = kNewtonIrNodeType_TleftShift;
 	}
 	else if (eqf(N))
 	{
