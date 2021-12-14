@@ -4349,8 +4349,18 @@ newtonParseIdentifierUsageTerminal(State *  N, IrNodeType expectedType, Scope * 
 	}
 
 	n->symbol = symbolSearchResult;
-	n->physics = deepCopyPhysicsNode(N, physicsSearchResult);
-	assert(n->physics->dimensions != NULL);
+
+	if (physicsSearchResult != NULL)
+	{
+		n->physics = deepCopyPhysicsNode(N, physicsSearchResult);
+		// TODO: What is the purpose of this assertion?
+		assert(n->physics->dimensions != NULL);
+	}
+	else
+	{
+		n->physics = NULL;
+	}
+	
 
 /*
 fprintf(stderr, "In identifier use of [%s], physics dimensions exponents are:\n", t->identifier);
