@@ -1166,6 +1166,8 @@ token	kNewtonIrNodeType_TminusMinus:			followset = {
 									}
 token	kNewtonIrNodeType_Tassign:			followset = {
 									}
+token	kNewtonIrNodeType_Tdef:				followset = {
+									}
 token	kNewtonIrNodeType_Tinclude:			followset = {
 									}
 token	kNewtonIrNodeType_TleftBracket:			followset = {

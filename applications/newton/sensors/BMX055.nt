@@ -149,9 +149,10 @@ bmx055: sensor (
 		#
 		#	Get MSB and LSB of xAccel data...
 		#
-		xAccelHigh = read 16r03;
-		xAccelLow = read 16r02;
+		xAccelHigh := read 16r03;
+		xAccelLow := read 16r02;
 		bmx055xAcceleration = (xAccelHigh << 4) | (xAccelLow >> 4);
+		# bmx055xAcceleration = xAccelHigh[:] + xAccelLow[4:];
 	},
 
 	interface bmx055yAcceleration == i2c (address: 16r18)
@@ -161,8 +162,8 @@ bmx055: sensor (
 		#
 		#	Get MSB and LSB of yAccel data...
 		#
-		yAccelHigh = read 16r05;
-		yAccelLow = read 16r04;
+		yAccelHigh := read 16r05;
+		yAccelLow := read 16r04;
 		bmx055yAcceleration = (yAccelHigh << 4) | (yAccelLow >> 4);
 		# bmx055yAcceleration = yAccelHigh[:4] + yAccelLow[4:];
 	},
@@ -174,8 +175,9 @@ bmx055: sensor (
 		#
 		#	Get MSB and LSB of zAccel data...
 		#
-		zAccelHigh = read 16r07;
-		zAccelLow = read 16r06;
+		 
+		zAccelHigh := read 16r07;
+		zAccelLow  := read 16r06;
 		bmx055zAcceleration = (zAccelHigh << 4) | (zAccelLow >> 4);
 	},
 
@@ -206,8 +208,8 @@ bmx055: sensor (
 		#	
 		#	Get MSB and LSB of xMagneto data...
 		#
-		xMagnetoHigh = read 16r43;
-		xMagnetoLow = read 16r42;
+		xMagnetoHigh := read 16r43;
+		xMagnetoLow := read 16r42;
 		bmx055xMagneto = (xMagnetoHigh << 5) | (xMagnetoLow >> 3);
 	},
 
@@ -218,8 +220,8 @@ bmx055: sensor (
 		#
 		#	Get MSB and LSB of yMagneto data...
 		#
-		yMagnetoHigh = read 16r45;
-		yMagnetoLow = read 16r44;
+		yMagnetoHigh := read 16r45;
+		yMagnetoLow := read 16r44;
 		bmx055yMagneto = (yMagnetoHigh << 5) | (yMagnetoLow >> 3);
 	},
 
@@ -230,8 +232,8 @@ bmx055: sensor (
 		#
 		#	Get MSB and LSB of zMagneto data...
 		#
-		zMagnetoHigh = read 16r47;
-		zMagnetoLow = read 16r46;
+		zMagnetoHigh := read 16r47;
+		zMagnetoLow := read 16r46;
 		bmx055zMagneto = (zMagnetoHigh << 7) | (zMagnetoLow >> 1);
 	},
 
@@ -247,8 +249,8 @@ bmx055: sensor (
 		#
 		#	Get MSB and LSB of xAngularRate data...
 		#
-		xAngularRateHigh = read 16r03;
-		xAngularRateLow = read 16r02;
+		xAngularRateHigh := read 16r03;
+		xAngularRateLow := read 16r02;
 		bmx055xAngularRate = (xAngularRateHigh << 8) | (xAngularRateLow);
 	},
 
@@ -259,8 +261,8 @@ bmx055: sensor (
 		#
 		#	Get MSB and LSB of yAngularRate data...	
 		#
-		yAngularRateHigh = read 16r05;
-		yAngularRateLow = read 16r04;
+		yAngularRateHigh := read 16r05;
+		yAngularRateLow := read 16r04;
 		bmx055yAngularRate = (yAngularRateHigh << 8) | (yAngularRateLow);
 	},
 
@@ -271,8 +273,8 @@ bmx055: sensor (
 		#
 		#	Get MSB and LSB of zAngularRate data...
 		#
-		zAngularRateHigh = read 16r07;
-		zAngularRateLow = read 16r06;
+		zAngularRateHigh := read 16r07;
+		zAngularRateLow := read 16r06;
 		bmx055zAngularRate = (zAngularRateHigh << 8) | (zAngularRateLow);
 	},
 

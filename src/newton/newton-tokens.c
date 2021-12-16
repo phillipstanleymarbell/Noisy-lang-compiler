@@ -122,6 +122,7 @@ const char *	gNewtonTokenDescriptions[kCommonIrNodeTypeMax] = {
 									[kNewtonIrNodeType_Taccuracy]		= "accuracy",
 									[kNewtonIrNodeType_Tanalog]		= "analog",
 									[kNewtonIrNodeType_Tassign]		= "=",
+									[kNewtonIrNodeType_Tdef]		= ":=",
 									[kNewtonIrNodeType_TatSign]		= "@",
 									[kNewtonIrNodeType_Tbits]		= "bits",
 									[kNewtonIrNodeType_Tcase]		= "case",

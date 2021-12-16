@@ -454,6 +454,7 @@ typedef enum
 	kNewtonIrNodeType_TleftBracket,
 	kNewtonIrNodeType_Tinclude,
 	kNewtonIrNodeType_Tassign,
+	kNewtonIrNodeType_Tdef,
 	kNewtonIrNodeType_TminusMinus,
 	kNewtonIrNodeType_TplusPlus,
 	kNewtonIrNodeType_TdotDot,

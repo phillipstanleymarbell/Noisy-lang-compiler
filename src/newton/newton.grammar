@@ -113,10 +113,10 @@ sensorInterfaceStatement	::=	"interface" identifier ["@" numericFactor "bits"] "
 sensorInterfaceType		::=	"i2c" | "spi" | "analog" .
 sensorInterfaceCommandList	::=	sensorInterfaceCommand ";" {sensorInterfaceCommand ";"} .
 sensorInterfaceCommand		::=	readRegisterCommand | writeRegisterCommand | delayCommand | arithmeticCommand .
-readRegisterCommand		::=	identifier "=" "read" ["[" numericExpression "]" ","] numericExpression .
+readRegisterCommand		::=	identifier [":=" | "="] "read" ["[" numericExpression "]" ","] numericExpression .
 writeRegisterCommand		::=	"write" numericExpression "," numericExpression .
 delayCommand			::=	"delay" numericExpression .
-arithmeticCommand		::=	identifier "=" expression .
+arithmeticCommand		::=	identifier [":=" | "="] expression .
 rangeStatement			::=	"range" identifier "==" "[" numericFactor [unitFactor] "," numericFactor [unitFactor] "]" .
 uncertaintyStatement		::=	"uncertainty" identifier "==" factor [unitFactor] .
 erasureValueStatement		::=	"erasuretoken" identifier "==" numericFactor [unitFactor] .
