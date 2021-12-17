@@ -35,58 +35,59 @@
         POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <assert.h>
 #include <errno.h>
-#include <inttypes.h>
-#include <math.h>
-#include <setjmp.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include <assert.h>
 #include <stdlib.h>
-#include <string.h>
+#include <setjmp.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
+#include <string.h>
+#include <stdint.h>
+#include <inttypes.h>
+#include <math.h>
 
-#include "llvm/IR/DebugInfoMetadata.h"
-#include "llvm/IR/InstIterator.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 
 using namespace llvm;
+
 
 extern "C"
 {
 
-#include "common-data-structures.h"
+#include "flextypes.h"
+#include "flexerror.h"
+#include "flex.h"
 #include "common-errors.h"
-#include "common-irHelpers.h"
+#include "version.h"
+#include "newton-timeStamps.h"
+#include "common-timeStamps.h"
+#include "common-data-structures.h"
+#include "noisy-parser.h"
+#include "newton-parser.h"
+#include "noisy-lexer.h"
+#include "newton-lexer.h"
 #include "common-irPass-helpers.h"
 #include "common-lexers-helpers.h"
+#include "common-irHelpers.h"
 #include "common-symbolTable.h"
-#include "common-timeStamps.h"
-#include "flex.h"
-#include "flexerror.h"
-#include "flextypes.h"
-#include "newton-irPass-autoDiff.h"
+#include "newton-types.h"
+#include "newton-symbolTable.h"
 #include "newton-irPass-cBackend.h"
+#include "newton-irPass-autoDiff.h"
 #include "newton-irPass-estimatorSynthesisBackend.h"
 #include "newton-irPass-invariantSignalAnnotation.h"
-#include "newton-lexer.h"
-#include "newton-parser.h"
-#include "newton-symbolTable.h"
-#include "newton-timeStamps.h"
-#include "newton-types.h"
-#include "noisy-lexer.h"
-#include "noisy-parser.h"
-#include "version.h"
 
 class PhysicsInfo
 {
