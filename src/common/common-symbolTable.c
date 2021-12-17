@@ -170,7 +170,8 @@ commonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
 //	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableOpenScope);
 
-	Scope *	 newScope = commonSymbolTableAllocScope(N);
+	Scope *		newScope = commonSymbolTableAllocScope(N);
+	Scope **	siblingScope = &scope->firstChild;
 
 	newScope->parent = scope;
 	newScope->begin = subTree->sourceInfo;
@@ -178,7 +179,6 @@ commonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 	/*
 	 *	Find last sibling (if any)
 	 */
-	Scope **  siblingScope = &scope->firstChild;
 	while (*siblingScope != NULL)
 	{
 		siblingScope = &(*siblingScope)->next;
