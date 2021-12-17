@@ -149,6 +149,41 @@ newtonPhysicsInfo(DIType* DebugType, State * N)
     return nullptr;
 }
 
+Physics*
+deepCopyPhysicsNodeWrapper(State *  N, Physics *  physics)
+{
+    if (physics)
+        return deepCopyPhysicsNode(N, physics);
+    else
+        return nullptr;
+}
+
+Physics*
+newtonPhysicsAddExponentsWrapper(State *  N, Physics *  left, Physics *  right)
+{
+    Physics *physicsProduct = deepCopyPhysicsNodeWrapper(N, left);
+    if (physicsProduct) {
+        newtonPhysicsAddExponents(N, physicsProduct, right);
+        return physicsProduct;
+    }
+    else {
+        return nullptr;
+    }
+}
+
+Physics*
+newtonPhysicsSubtractExponentsWrapper(State *  N, Physics *  left, Physics *  right)
+{
+    Physics *physicsQuotient = deepCopyPhysicsNodeWrapper(N, left);
+    if (physicsQuotient) {
+        newtonPhysicsSubtractExponents(N, physicsQuotient, right);
+        return physicsQuotient;
+    }
+    else {
+        return nullptr;
+    }
+}
+
 void 
 dimensionalityCheck(Function & F, State * N)
 {
@@ -158,7 +193,6 @@ dimensionalityCheck(Function & F, State * N)
 
 		for (Instruction &I : instructions(F)) {
 
-            outs() << I << "\n";
             switch (I.getOpcode()) {
 
                 case Instruction::Call:
@@ -197,41 +231,82 @@ dimensionalityCheck(Function & F, State * N)
                     }
                     break;
 
+                case Instruction::Add:
                 case Instruction::FAdd:
+                case Instruction::Sub:
+                case Instruction::FSub:
                     if (auto BO = dyn_cast<BinaryOperator>(&I)) {
-                        Value *leftTerm = BO->getOperand(0);
-                        Value *rightTerm = BO->getOperand(1);
-                        if (!areTwoPhysicsEquivalent(N, vreg_physics_table[leftTerm]->get_physics_type(),
-                                                     vreg_physics_table[rightTerm]->get_physics_type())) {
-                            outs() << "Dimension mismatch in addition operands.\n";
-                            exit(1);
+                        PhysicsInfo *leftTerm = vreg_physics_table[BO->getOperand(0)];
+                        PhysicsInfo *rightTerm = vreg_physics_table[BO->getOperand(1)];
+                        Physics* physicsSum;
+                        if (!leftTerm) {
+                            if (!rightTerm) {
+                                break;
+                            }
+                            physicsSum = rightTerm->get_physics_type();
                         }
-                        else
-                            vreg_physics_table[BO] = vreg_physics_table[leftTerm];
+                        else if (!rightTerm) {
+                            physicsSum = leftTerm->get_physics_type();
+                        }
+                        else {
+                            if (!areTwoPhysicsEquivalent(N, leftTerm->get_physics_type(),
+                                                         rightTerm->get_physics_type())) {
+                                outs() << "Dimension mismatch in addition operands.\n";
+                                exit(1);
+                            }
+                            physicsSum = leftTerm->get_physics_type();
+                        }
+                        vreg_physics_table[BO] = new PhysicsInfo{physicsSum};
                     }
                     break;
 
+                case Instruction::Mul:
                 case Instruction::FMul:
                     if (auto BO = dyn_cast<BinaryOperator>(&I)) {
-                        Value *leftTerm = BO->getOperand(0);
-                        Value *rightTerm = BO->getOperand(1);
-                        // `newtonPhysicsAddExponents1 adds the right argument to the left,
-                        // so we first create a new copy for our new Physics type.
-                        Physics *physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]->get_physics_type());
-                        newtonPhysicsAddExponents(N, physicsProduct, vreg_physics_table[rightTerm]->get_physics_type());
-                        // Store the result to the destination virtual register.
+                        PhysicsInfo *leftTerm = vreg_physics_table[BO->getOperand(0)];
+                        PhysicsInfo *rightTerm = vreg_physics_table[BO->getOperand(1)];
+                        Physics* physicsProduct;
+                        if (!leftTerm) {
+                            if (!rightTerm) {
+                                break;
+                            }
+                            physicsProduct = rightTerm->get_physics_type();
+                        }
+                        else if (!rightTerm) {
+                            physicsProduct = leftTerm->get_physics_type();
+                        }
+                        else {
+                            physicsProduct = newtonPhysicsAddExponentsWrapper(N,
+                                                                              leftTerm->get_physics_type(),
+                                                                              rightTerm->get_physics_type());
+                        }
+                         // Store the result to the destination virtual register.
                         vreg_physics_table[BO] = new PhysicsInfo{physicsProduct};
                     }
                     break;
 
+                case Instruction::SDiv:
                 case Instruction::FDiv:
                     if (auto BO = dyn_cast<BinaryOperator>(&I)) {
-                        Value *leftTerm = BO->getOperand(0);
-                        Value *rightTerm = BO->getOperand(1);
-                        // `newtonPhysicsSubtractExponents1 adds the right argument from the left,
-                        // so we first create a new copy for our new Physics type.
-                        Physics *physicsProduct = deepCopyPhysicsNode(N, vreg_physics_table[leftTerm]->get_physics_type());
-                        newtonPhysicsSubtractExponents(N, physicsProduct, vreg_physics_table[rightTerm]->get_physics_type());
+                        PhysicsInfo *leftTerm = vreg_physics_table[BO->getOperand(0)];
+                        PhysicsInfo *rightTerm = vreg_physics_table[BO->getOperand(1)];
+                        Physics* physicsProduct;
+                        if (!leftTerm) {
+                            if (!rightTerm) {
+                                break;
+                            }
+                            physicsProduct = rightTerm->get_physics_type();
+                        }
+                        else if (!rightTerm) {
+                            physicsProduct = leftTerm->get_physics_type();
+                        }
+                        else {
+                            physicsProduct = newtonPhysicsSubtractExponentsWrapper(N,
+                                                                                   leftTerm->get_physics_type(),
+                                                                                   rightTerm->get_physics_type());
+                        }
+                        // Store the result to the destination virtual register.
+                        vreg_physics_table[BO] = new PhysicsInfo{physicsProduct};
                     }
                     break;
 
@@ -271,6 +346,14 @@ dimensionalityCheck(Function & F, State * N)
                     }
                     break;
 
+                case Instruction::SExt:
+                case Instruction::ZExt:
+                case Instruction::AShr:
+                case Instruction::Shl:
+                case Instruction::Trunc:
+                case Instruction::SIToFP:
+                    vreg_physics_table[&I] = vreg_physics_table[I.getOperand(0)];
+                    break;
 
                 // https://github.com/llvm/llvm-project/blob/main/llvm/include/llvm/IR/Instruction.def
 
@@ -293,20 +376,13 @@ dimensionalityCheck(Function & F, State * N)
                 case Instruction::FNeg:
 
                 // Standard binary operators
-                case Instruction::Add:
-                case Instruction::Sub:
-                case Instruction::FSub:
-                case Instruction::Mul:
                 case Instruction::UDiv:
-                case Instruction::SDiv:
                 case Instruction::URem:
                 case Instruction::SRem:
                 case Instruction::FRem:
 
                 // Logical operators (integer operands)
-                case Instruction::Shl:
                 case Instruction::LShr:
-                case Instruction::AShr:
                 case Instruction::And:
                 case Instruction::Or:
                 case Instruction::Xor:
@@ -318,13 +394,9 @@ dimensionalityCheck(Function & F, State * N)
                 case Instruction::AtomicRMW:
 
                 // Cast operators ...
-                case Instruction::Trunc:
-                case Instruction::ZExt:
-                case Instruction::SExt:
                 case Instruction::FPToUI:
                 case Instruction::FPToSI:
                 case Instruction::UIToFP:
-                case Instruction::SIToFP:
                 case Instruction::FPTrunc:
                 case Instruction::FPExt:
                 case Instruction::PtrToInt:
@@ -346,6 +418,7 @@ dimensionalityCheck(Function & F, State * N)
                 case Instruction::ExtractValue:
                 case Instruction::InsertValue:
                 case Instruction::LandingPad:
+                    outs() << I << "\n";
 				default:
 					continue;
 			}
@@ -440,7 +513,7 @@ irPassLLVMIR(State * N)
 
 	for (Module::iterator mi = Mod->begin(); mi != Mod->end(); mi++) {
 //		getAllVariables(*mi, N); // not needed for now
-//        if (mi->getName().str() == std::string("calc_humidity"))
+        if (mi->getName().str() == std::string("calc_humidity"))
             dimensionalityCheck(*mi, N);
 	}
 }
