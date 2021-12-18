@@ -1,0 +1,25 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ master, issue-541]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: configure
+      run: |
+        echo "LIBFLEXPATH=$HOME/Noisy-lang-compiler/submodules/libflex" > config.local
+        echo "CONFIGPATH=$HOME/Noisy-lang-compiler/submodules/libflex" >> config.local
+        echo "OSTYPE=linux" >> config.local
+        echo "MACHTYPE=x86_64" >> config.local
+    - name: make
+      run: make
