@@ -23,8 +23,8 @@ jobs:
       run: ls submodules/*
     - name: configure
       run: |
-        echo "LIBFLEXPATH=$GITHUB_WORKSPACE/Noisy-lang-compiler/submodules/libflex" > config.local
-        echo "CONFIGPATH=$GITHUB_WORKSPACE/Noisy-lang-compiler/submodules/libflex" >> config.local
+        echo "LIBFLEXPATH=$GITHUB_WORKSPACE/submodules/libflex" > config.local
+        echo "CONFIGPATH=$GITHUB_WORKSPACE/submodules/libflex" >> config.local
         echo "OSTYPE=linux" >> config.local
         echo "MACHTYPE=x86_64" >> config.local
     - name: make
