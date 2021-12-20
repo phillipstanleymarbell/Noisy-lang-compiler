@@ -329,18 +329,18 @@ bmx055: sensor (
 	#
 	#	When this token is returned by the sensor, it denotes invalid sensed value / erasure in communication with sensor.
 	#
-	erasuretoken bmx055xAcceleration == kBMX055xAccelerationErasureToken,
-	erasuretoken bmx055yAcceleration == kBMX055yAccelerationErasureToken,
-	erasuretoken bmx055zAcceleration == kBMX055zAccelerationErasureToken,
-	erasuretoken bmx055Temperature == kBMX055TemperatureErasureToken,
+	erasureToken bmx055xAcceleration == 16rFEFE,
+	erasureToken bmx055yAcceleration == 16rFEFE,
+	erasureToken bmx055zAcceleration == 16rFEFE,
+	erasureToken bmx055Temperature == 16rFEFE,
 
-	erasuretoken bmx055xMagneto == kBMX055xMagnetoErasureToken,
-	erasuretoken bmx055yMagneto == kBMX055yMagnetoErasureToken,
-	erasuretoken bmx055zMagneto == kBMX055zMagnetoErasureToken,
+	erasureToken bmx055xMagneto == 16rFEFE,
+	erasureToken bmx055yMagneto == 16rFEFE,
+	erasureToken bmx055zMagneto == 16rFEFE,
 
-	erasuretoken bmx055xAngularRate == kBMX055xAngularRateErasureToken,
-	erasuretoken bmx055yAngularRate == kBMX055yAngularRateErasureToken,
-	erasuretoken bmx055zAngularRate == kBMX055zAngularRateErasureToken,
+	erasureToken bmx055xAngularRate == 16rFEFE,
+	erasureToken bmx055yAngularRate == 16rFEFE,
+	erasureToken bmx055zAngularRate == 16rFEFE,
 
 	#
 	#	Precision settings list for the sensor. This is a list of (precision, cost) pairs.
@@ -352,43 +352,43 @@ bmx055: sensor (
 	#	Could not find the relevant information in data sheet so I left the cost as 0.
 	#
 	precision bmx055xAcceleration == {
-					(12*bits, -1),
+					(12, -1)
 				},
 
 	precision bmx055yAcceleration == {
-					(12*bits, -1),
+					(12, -1)
 				},
 
 	precision bmx055zAcceleration == {
-					(12*bits, -1),
+					(12, -1)
 				},
 
 	precision bmx055Temperature == {
-					(8*bits, -1),
+					(8, -1)
 				},
 
 	precision bmx055xMagneto == {
-						(13*bits, -1),
+						(13, -1)
 					},
 
 	precision bmx055yMagneto == {
-						(13*bits, -1),
+						(13, -1)
 					},
 
 	precision bmx055zMagneto == {
-						(15*bits, -1),
+						(15, -1)
 					},
 
 	precision bmx055xAngularRate == {
-					(16*bits, -1),
+					(16, -1)
 				},
 
 	precision bmx055yAngularRate == {
-					(16*bits, -1),
+					(16, -1)
 				},
 
 	precision bmx055zAngularRate == {
-					(16*bits, -1),
+					(16, -1)
 				},
 
 	#
@@ -405,15 +405,15 @@ bmx055: sensor (
 	#	Current values (normal mode) of Accelerometer can be found in Table 2 of document 1.2 on page 11.
 	#
 	accuracy bmx055xAcceleration == {
-					(150*n, 312),
+					(150 n, 312)
 				},
 
 	accuracy bmx055yAcceleration == {
-					(150*n, 312),
+					(150 n, 312)
 				},
 
 	accuracy bmx055zAcceleration == {
-					(150*n, 312),
+					(150 n, 312)
 				},
 
 	#
@@ -424,7 +424,7 @@ bmx055: sensor (
 	#	Current values (normal mode) of Temperature Sensor can be found in Table 2 of document 1.2 on page 11.
 	#
 	accuracy bmx055Temperature == {
-					(4.0*K, 312),
+					(4.0 K, 312)
 				},
 
 	#
@@ -435,24 +435,24 @@ bmx055: sensor (
 	#	Current values (normal mode with 4 different presets) of Magnetometer can be found in Table 37 of document 9.2.4 on page 122.
 	#
 	accuracy bmx055xMagneto == {
-						(1.0*uT, 408),
-						(0.6*uT, 1200),
-						(0.5*uT, 1920),
-						(0.3*uT, 11760),
+						(1.0 uT, 408),
+						(0.6 uT, 1200),
+						(0.5 uT, 1920),
+						(0.3 uT, 11760)
 					},
 
 	accuracy bmx055yMagneto == {
-						(1.0*uT, 408),
-						(0.6*uT, 1200),
-						(0.5*uT, 1920),
-						(0.3*uT, 11760),
+						(1.0 uT, 408),
+						(0.6 uT, 1200),
+						(0.5 uT, 1920),
+						(0.3 uT, 11760)
 					},
 
 	accuracy bmx055zMagneto == {
-						(1.4*uT, 408),
-						(0.6*uT, 1200),
-						(0.5*uT, 1920),
-						(0.3*uT, 11760),
+						(1.4 uT, 408),
+						(0.6 uT, 1200),
+						(0.5 uT, 1920),
+						(0.3 uT, 11760)
 					},
 
 	#
@@ -463,14 +463,14 @@ bmx055: sensor (
 	#	Current values (normal mode) of Gyroscope can be found in Table 3 of document 1.2 on page 14.
 	#
 	accuracy bmx055xAngularRate == {
-					(0.1*aj, 0.012),
+					(0.1 ajf, 0.012)
 				},
 
 	accuracy bmx055xAngularRate == {
-					(0.1*aj, 0.012),
+					(0.1 ajf, 0.012)
 				},
 
 	accuracy bmx055xAngularRate == {
-					(0.1*aj, 0.012),
+					(0.1 ajf, 0.012)
 				}
 }
