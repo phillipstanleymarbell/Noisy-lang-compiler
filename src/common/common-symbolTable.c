@@ -188,8 +188,8 @@ commonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 	else
 	{
 		/*
-		*	Find last sibling (if any)
-		*/
+		 *	Find last sibling (if any)
+		 */
 		while (siblingScope->next != NULL)
 		{
 			siblingScope = siblingScope->next;
