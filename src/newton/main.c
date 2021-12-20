@@ -107,17 +107,18 @@ main(int argc, char *argv[])
 			{"latex",		no_argument,		0,	'x'},
 			{"RTLcodegen",		required_argument,	0,	'l'},
 			{"targetParam",		required_argument,	0,	'T'},
-			{"estimator-synthesis", required_argument, 0, 420},
-			{"process", required_argument, 0, 421},
-			{"measurement", required_argument, 0, 422},
-			{"auto-diff", no_argument, 0, 423},
-			{"ipsa", required_argument, 0, 489},
-			{"kernelNumber", required_argument, 0, 494},
-			{"piNumber", required_argument, 0, 495},
-			{"physicalGroup1", required_argument, 0, 491},
-			{"physicalGroup2", required_argument, 0, 492},
-			{"generate-header", required_argument, 0, 493},
-			{"signal-typedef-to", required_argument, 0, 496},
+			{"estimator-synthesis",	required_argument,	0,	420},
+			{"process",		required_argument,	0,	421},
+			{"measurement",		required_argument,	0,	422},
+			{"auto-diff",		no_argument,		0,	423},
+			{"ipsa",		required_argument,	0,	489},
+			{"kernelNumber",	required_argument,	0,	494},
+			{"piNumber",		required_argument,	0,	495},
+			{"physicalGroup1",	required_argument,	0,	491},
+			{"physicalGroup2",	required_argument,	0,	492},
+			{"generate-header",	required_argument,	0,	493},
+			{"signal-typedef-to",	required_argument,	0,	496},
+			{"no-sensors",		required_argument,	0,	550},
 			{0,			0,			0,	0}
 		};
 
@@ -348,11 +349,11 @@ main(int argc, char *argv[])
 			{
 				N->irBackends |= kNewtonIrBackendTargetParam;
 				N->targetParam = optarg;
-        
-        break;
+
+				break;
 			}
 
-      case 'x':
+			case 'x':
 			{
 				N->irPasses |= kNewtonIrPassDimensionalMatrixAnnotation;
 				N->irPasses |= kNewtonIrPassDimensionalMatrixPiGroups;
@@ -453,6 +454,12 @@ main(int argc, char *argv[])
 			case 496:
 			{
 				strcpy(N->signalTypedefDatatype, optarg);
+				break;
+			}
+
+			case 550:
+			{
+				N->irPasses |= kNewtonIrPassSensorsDisable;
 				break;
 			}
 

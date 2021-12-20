@@ -713,6 +713,7 @@ typedef enum
 	kNewtonIrPassInvariantSignalAnnotation			= (1 << 10),
 
 	kNewtonIrPassPiGroupsSignalAnnotation			= (1 << 11),
+	kNewtonIrPassSensorsDisable				= (1 << 12),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -854,6 +855,8 @@ typedef struct Physics		Physics;
 typedef struct IntegralList	IntegralList;
 typedef struct Invariant	Invariant;
 typedef struct Signal		Signal;
+typedef struct Sensor		Sensor;
+typedef struct Modality		Modality;
 
 struct Dimension
 {
@@ -926,6 +929,43 @@ struct Physics
 	Physics *		definition;
 
 	Physics *		next;
+};
+
+typedef enum {
+	kNewtonSensorInterfaceTypeI2C,
+	kNewtonSensorInterfaceTypeSPI,
+	kNewtonSensorInterfaceTypeUART,
+} SensorInterfaceType;
+
+struct Modality {
+	char *		identifier;		/* e.g, "bmx055xAcceleration" */
+	Signal *	signal;		/* Signal type to follow */
+	double		rangeLowerBound;
+	double		rangeUpperBound;
+
+	int		precisionBits;
+	double		precisionCost;
+
+	double		accuracy;
+	double		accuracyCost;
+	Signal *	accuracySignal;
+	
+	SensorInterfaceType	interfaceType;	/* WiP */
+	/* Missing register address for modality */
+	uint64_t	registerAddress;
+
+	Modality *	next;
+	// Modality *	prev;
+};
+
+struct Sensor {
+	IrNode *	baseNode;	/* Pointer to AST node of definition */
+	char *		identifer;	/* Definition identifier */
+	Modality *	modalityList;	/* List of sensor modalities */
+	uint16_t	erasureToken;
+
+	Sensor *	next;
+	// Sensor *	prev;
 };
 
 struct IntegralList
@@ -1270,6 +1310,7 @@ typedef struct
 	 */
 	int		primeNumbersIndex;
 	Invariant *	invariantList;
+	Sensor *	sensorList;
 } State;
 
 
