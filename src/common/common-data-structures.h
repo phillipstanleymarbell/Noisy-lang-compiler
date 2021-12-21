@@ -938,8 +938,9 @@ typedef enum {
 } SensorInterfaceType;
 
 struct Modality {
-	char *		identifier;		/* e.g, "bmx055xAcceleration" */
-	Signal *	signal;		/* Signal type to follow */
+	char *		identifier;		/* Modality name, e.g, "bmx055xAcceleration" */
+	Signal *	signal;			/* Signal type to follow */
+	Physics *	_physics;		/* Temporary field */
 	double		rangeLowerBound;
 	double		rangeUpperBound;
 
@@ -960,7 +961,7 @@ struct Modality {
 
 struct Sensor {
 	IrNode *	baseNode;	/* Pointer to AST node of definition */
-	char *		identifer;	/* Definition identifier */
+	char *		identifier;	/* Definition identifier */
 	Modality *	modalityList;	/* List of sensor modalities */
 	uint16_t	erasureToken;
 

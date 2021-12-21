@@ -74,15 +74,19 @@ irPassSensorsLoadSensor(State *  N, IrNode *  sensorNode)
 	 *	Copy identifier string
 	 */
 	needed = snprintf(NULL, 0, "%s", sensorNode->irLeftChild->tokenString) + 1;
-	sensor->identifer = malloc(needed);
-	snprintf(sensor->identifer, needed, "%s", sensorNode->irLeftChild->tokenString);
+	sensor->identifier = malloc(needed);
+	if (sensor->identifier == NULL)
+	{
+		fatal(N, Emalloc);
+	}
+	snprintf(sensor->identifier, needed, "%s", sensorNode->irLeftChild->tokenString);
 
-	sensor->erasureToken = (uint16_t)0xFF;
+	sensor->erasureToken = (uint16_t)0xFF;	// TODO: Write actual value
 
 	/*
 	 *	Loop over sensor parameter list
 	 */
-	parameterTuple = RL(sensorNode);
+	parameterTuple = RL(sensorNode);	/* The iterator for the loop */
 	while (parameterTuple != NULL)
 	{
 		IrNode *  	parameter = parameterTuple->irLeftChild;
@@ -96,9 +100,28 @@ irPassSensorsLoadSensor(State *  N, IrNode *  sensorNode)
 		{
 			fatal(N, Esanity);
 		}
-		
 
+		/*
+		 *	Modality Identifier
+		 */
+		needed = snprintf(NULL, 0, "%s", parameter->irLeftChild->tokenString) + 1;
+		modality->identifier = malloc(needed);
+		if (modality->identifier == NULL)
+		{
+			fatal(N, Emalloc);
+		}
+		snprintf(modality->identifier, needed, "%s", parameter->irLeftChild->tokenString);
+
+
+		/*
+		 *	Modality Signal
+		 */
+
+		// modality->signal;
 		
+		/*
+		 *	Prepare iterator for next `while` iteration
+		 */
 		parameterTuple = parameterTuple->irRightChild;
 	}
 	
@@ -131,4 +154,11 @@ Sensor *
 getSensorByIdentifier(State *  N, const char *  identifier)
 {
 	return NULL;
+}
+
+char *
+irPassSensorsSensorToJSON(Sensor *  s)
+{
+	// TODO: Implement?
+	return "";
 }
