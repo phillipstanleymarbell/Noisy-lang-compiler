@@ -149,6 +149,15 @@ newtonPhysicsInfo(DIType* DebugType, State * N)
     return nullptr;
 }
 
+void
+printDebugInfoLocation(Instruction* I)
+{
+
+    auto debugLocation = cast<DILocation>(I->getMetadata(0));
+    outs() << "Dimension mismatch at: line " << debugLocation->getLine() <<
+        ", column " << debugLocation->getColumn() << ".\n";
+}
+
 Physics*
 deepCopyPhysicsNodeWrapper(State *  N, Physics *  physics)
 {
@@ -251,7 +260,7 @@ dimensionalityCheck(Function & F, State * N)
                         else {
                             if (!areTwoPhysicsEquivalent(N, leftTerm->get_physics_type(),
                                                          rightTerm->get_physics_type())) {
-                                outs() << "Dimension mismatch in addition operands.\n";
+                                printDebugInfoLocation(BO);
                                 exit(1);
                             }
                             physicsSum = leftTerm->get_physics_type();
@@ -329,7 +338,7 @@ dimensionalityCheck(Function & F, State * N)
                             break;
                         }
                         if (!areTwoPhysicsEquivalent(N, leftPhysicsInfo->get_physics_type(), rightPhysicsInfo->get_physics_type())) {
-                            outs() << "Dimension mismatch in assignment.\n";
+                            printDebugInfoLocation(StoreI);
                             exit(1);
                         }
                     }
