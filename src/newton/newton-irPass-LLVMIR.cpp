@@ -456,28 +456,6 @@ dimensionalityCheck(Function & llvmIrFunction, State * N)
 }
 
 
-void 
-getAllMDNFunc(Function & F) 
-{
-	for (Function::iterator BB = F.begin(), E = F.end(); BB!=E; ++BB) {
-
-		for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-
-			SmallVector<std::pair<unsigned, MDNode*>, 4> MDForInst;
-
-			//Get all the mdnodes attached to each instruction
-			I->getAllMetadata(MDForInst);
-			for (auto &MD : MDForInst) {
-				outs() << "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
-				if (MDNode *N = MD.second) {
-					outs() << *N << "\n";
-				}
-			}
-		}
-	}
-}
-
-
 void
 irPassLLVMIR(State * N)
 {
