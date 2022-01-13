@@ -128,8 +128,9 @@ newtonPhysicsInfo(DIType* DebugType, State * N)
             case dwarf::DW_TAG_member:
                 return newtonPhysicsInfo(Type->getBaseType(), N);
             case dwarf::DW_TAG_structure_type:
+            case dwarf::DW_TAG_array_type:
             default:
-                errs() << "Unhandled DW_TAG\n";
+                errs() << "Unhandled DW_TAG for DIDerivedType\n";
         }
     }
     else if (auto CType = dyn_cast<DICompositeType>(DebugType)) {
@@ -139,6 +140,9 @@ newtonPhysicsInfo(DIType* DebugType, State * N)
                 if (auto DIMember = dyn_cast<DIDerivedType>(i))
                     physicsInfo->pushPhysicsInfo(newtonPhysicsInfo(DIMember, N));
             return physicsInfo;
+        }
+        else if (CType->getTag() == dwarf::DW_TAG_array_type) {
+            errs() << "Unhandled DW_TAG for DICompositeType\n";
         }
     }
 //    else { TODO
