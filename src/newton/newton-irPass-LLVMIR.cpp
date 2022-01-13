@@ -248,30 +248,32 @@ dimensionalityCheck(Function & F, State * N)
                 case Instruction::FAdd:
                 case Instruction::Sub:
                 case Instruction::FSub:
-                    if (auto BO = dyn_cast<BinaryOperator>(&I)) {
-                        PhysicsInfo *leftTerm = vreg_physics_table[BO->getOperand(0)];
-                        PhysicsInfo *rightTerm = vreg_physics_table[BO->getOperand(1)];
-                        Physics* physicsSum;
-                        if (!leftTerm) {
-                            if (!rightTerm) {
-                                break;
-                            }
-                            physicsSum = rightTerm->get_physics_type();
+                case Instruction::And:
+                case Instruction::Or:
+                case Instruction::Xor:
+                case Instruction::ICmp:
+                case Instruction::FCmp: {
+                    PhysicsInfo *leftTerm = vreg_physics_table[I.getOperand(0)];
+                    PhysicsInfo *rightTerm = vreg_physics_table[I.getOperand(1)];
+                    Physics *physicsSum;
+                    if (!leftTerm) {
+                        if (!rightTerm) {
+                            break;
                         }
-                        else if (!rightTerm) {
-                            physicsSum = leftTerm->get_physics_type();
+                        physicsSum = rightTerm->get_physics_type();
+                    } else if (!rightTerm) {
+                        physicsSum = leftTerm->get_physics_type();
+                    } else {
+                        if (!areTwoPhysicsEquivalent(N, leftTerm->get_physics_type(),
+                                                     rightTerm->get_physics_type())) {
+                            printDebugInfoLocation(&I);
+                            exit(1);
                         }
-                        else {
-                            if (!areTwoPhysicsEquivalent(N, leftTerm->get_physics_type(),
-                                                         rightTerm->get_physics_type())) {
-                                printDebugInfoLocation(BO);
-                                exit(1);
-                            }
-                            physicsSum = leftTerm->get_physics_type();
-                        }
-                        vreg_physics_table[BO] = new PhysicsInfo{physicsSum};
+                        physicsSum = leftTerm->get_physics_type();
                     }
+                    vreg_physics_table[&I] = new PhysicsInfo{physicsSum};
                     break;
+                }
 
                 case Instruction::Mul:
                 case Instruction::FMul:
@@ -300,6 +302,10 @@ dimensionalityCheck(Function & F, State * N)
 
                 case Instruction::SDiv:
                 case Instruction::FDiv:
+                case Instruction::UDiv:
+                case Instruction::URem:
+                case Instruction::SRem:
+                case Instruction::FRem:
                     if (auto BO = dyn_cast<BinaryOperator>(&I)) {
                         PhysicsInfo *leftTerm = vreg_physics_table[BO->getOperand(0)];
                         PhysicsInfo *rightTerm = vreg_physics_table[BO->getOperand(1)];
@@ -362,13 +368,61 @@ dimensionalityCheck(Function & F, State * N)
                 case Instruction::SExt:
                 case Instruction::ZExt:
                 case Instruction::AShr:
+                case Instruction::LShr:
                 case Instruction::Shl:
                 case Instruction::Trunc:
                 case Instruction::SIToFP:
+                case Instruction::FNeg:
+                case Instruction::FPToUI:
+                case Instruction::FPToSI:
+                case Instruction::UIToFP:
+                case Instruction::FPTrunc:
+                case Instruction::FPExt:
+                case Instruction::PtrToInt:
+                case Instruction::IntToPtr:
+                case Instruction::BitCast:
+                case Instruction::AddrSpaceCast:
+                case Instruction::ExtractElement:
                     vreg_physics_table[&I] = vreg_physics_table[I.getOperand(0)];
                     break;
 
+                case Instruction::PHI:
+                case Instruction::Select: {
+                    PhysicsInfo *leftTerm = vreg_physics_table[I.getOperand(0)];
+                    PhysicsInfo *rightTerm = vreg_physics_table[I.getOperand(1)];
+                    Physics* physicsPhi;
+                    if (!leftTerm) {
+                        if (!rightTerm) {
+                            break;
+                        }
+                        physicsPhi = rightTerm->get_physics_type();
+                    }
+                    else if (!rightTerm) {
+                        physicsPhi = leftTerm->get_physics_type();
+                    }
+                    else {
+                        if (!areTwoPhysicsEquivalent(N, leftTerm->get_physics_type(),
+                                                     rightTerm->get_physics_type())) {
+
+                            auto debugLocation = cast<DILocation>(I.getMetadata(0));
+                            errs() << "Warning, cannot deduce physics type at: line " << debugLocation->getLine() <<
+                                   ", column " << debugLocation->getColumn() << ".\n";
+                        }
+                        physicsPhi = leftTerm->get_physics_type();
+                    }
+                    vreg_physics_table[&I] = new PhysicsInfo{physicsPhi};
+                }
+                    break;
+
                 // https://github.com/llvm/llvm-project/blob/main/llvm/include/llvm/IR/Instruction.def
+
+                // vector/aggregate related
+                case Instruction::InsertElement:
+                case Instruction::ShuffleVector:
+                case Instruction::ExtractValue:
+                case Instruction::InsertValue:
+                    I.dump();
+                    errs() << "Unsupported LLVM IR Instruction!\n";
 
                 // Terminator Instructions
                 // These instructions are used to terminate a basic block of the program.
@@ -385,53 +439,15 @@ dimensionalityCheck(Function & F, State * N)
                 case Instruction::CatchSwitch:
                 case Instruction::CallBr: // A call-site terminator
 
-                // Standard unary operators
-                case Instruction::FNeg:
-
-                // Standard binary operators
-                case Instruction::UDiv:
-                case Instruction::URem:
-                case Instruction::SRem:
-                case Instruction::FRem:
-
-                // Logical operators (integer operands)
-                case Instruction::LShr:
-                case Instruction::And:
-                case Instruction::Or:
-                case Instruction::Xor:
-
-                // Memory operators...
+                // Memory operators
                 case Instruction::Alloca:
                 case Instruction::Fence:
                 case Instruction::AtomicCmpXchg:
                 case Instruction::AtomicRMW:
 
-                // Cast operators ...
-                case Instruction::FPToUI:
-                case Instruction::FPToSI:
-                case Instruction::UIToFP:
-                case Instruction::FPTrunc:
-                case Instruction::FPExt:
-                case Instruction::PtrToInt:
-                case Instruction::IntToPtr:
-                case Instruction::BitCast:
-                case Instruction::AddrSpaceCast:
-
-                // Other operators...
-                case Instruction::ICmp:
-                case Instruction::FCmp:
-                case Instruction::PHI:
-                case Instruction::Select:
-                case Instruction::UserOp1:
-                case Instruction::UserOp2:
-                case Instruction::VAArg:
-                case Instruction::ExtractElement:
-                case Instruction::InsertElement:
-                case Instruction::ShuffleVector:
-                case Instruction::ExtractValue:
-                case Instruction::InsertValue:
+                // Other operators
                 case Instruction::LandingPad:
-                    outs() << I << "\n";
+
 				default:
 					continue;
 			}
