@@ -200,7 +200,7 @@ dimensionalityCheck(Function & F, State * N)
 
 	for (BasicBlock &BB : F) {
 
-		for (Instruction &I : instructions(F)) {
+		for (Instruction &I : BB) {
 
             switch (I.getOpcode()) {
 
