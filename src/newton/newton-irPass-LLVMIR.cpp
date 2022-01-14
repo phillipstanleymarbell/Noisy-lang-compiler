@@ -95,8 +95,10 @@ public:
 
 std::map<Value *, PhysicsInfo *> virtualRegisterPhysicsTable;
 
-/// Get the physics info of the DIType.
-/// If necessary, find the physics name of the subsequent types recursively, e.g. for pointers.
+/*
+ *	Get the physics info of the DIType.
+ *	If necessary, find the physics name of the subsequent types recursively, e.g. for pointers.
+ */
 PhysicsInfo *
 newtonPhysicsInfo(DIType *  debugType, State *  N)
 {
@@ -188,36 +190,40 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 
 			switch (llvmIrInstruction.getOpcode()) {
 
+				/*
+				 *	This is where metadata are connected to the virtual registers.
+				 *	Using metadata we can get the typedef information related to Newton signals.
+			     *	Example instruction
+			     *	\code
+			     *	call void @llvm.dbg.declare(metadata double* %accelerationX, metadata !11, metadata !DIExpression()), !dbg !14
+			     *	\endcode
+			     *	Get the 1st operand from llvm.dbg.declare intrinsic.
+			     *	Convert it to `MetadataAsValue` to be able to process it with LLVM `Value` API.
+			     *	Extract the metadata from the first operand.
+			     *	Get the value contained in the metadata (`double* %accelerationX`).
+			     *	Get the 2nd operand from llvm.dbg.declare intrinsic.
+			     *	You convert it to `MetadataAsValue` as explained above.
+			     *	Extract the metadata from the second operand.
+			     *	Get the type from the anonymous metadata instance.
+			     *	E.g., from `!11 = !DILocalVariable(name: "accelerationX", scope: !7, file: !1, line: 14, type: !12)`.
+			     *	you get `!12` which looks like:
+			     *	`!12 = !DIDerivedType(tag: DW_TAG_typedef, name: "signalAccelerationX", file: !1, line: 7, baseType: !13)`.
+			     *	Finally, Type->getName() will give "signalAccelerationX", which is the Newton signal type.
+			     *	You also need to convert it to `char *` (Newton does not work with llvm::StringRef).
+			     *	Finally, add the PhysicsInfo to our mapping.
+				 */
 				case Instruction::Call:
 					if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction)) {
 						Function *	calledFunction = llvmIrCallInstruction->getCalledFunction();
 						if (calledFunction->getName().startswith("llvm.dbg.declare")) {
-							// Example instruction
-							// \code
-							// call void @llvm.dbg.declare(metadata double* %accelerationX, metadata !11, metadata !DIExpression()), !dbg !14
-							// \endcode
-
-							// Get the 1st operand from llvm.dbg.declare intrinsic.
-							// You convert it to `MetadataAsValue` to be able to process it with LLVM `Value` API.
 							auto	firstOperator = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(0));
-							// Extract the metadata from the first operand.
 							auto	localVariableAddressAsMetadata = cast<ValueAsMetadata>(firstOperator->getMetadata());
-							// Finally, get the value contained in the metadata (`double* %accelerationX`).
 							auto	localVariableAddress = localVariableAddressAsMetadata->getValue();
 
-							// Get the 2nd operand from llvm.dbg.declare intrinsic.
-							// You convert it to `MetadataAsValue` as explained above.
 							auto	secondOperator = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(1));
-							// Extract the metadata from the second operand.
 							auto	debugInfoVariable = cast<DIVariable>(secondOperator->getMetadata());
-							// Get the type from the anonymous metadata instance.
-							// E.g., from `!11 = !DILocalVariable(name: "accelerationX", scope: !7, file: !1, line: 14, type: !12)`.
-							// you get `!12` which looks like:
-							// `!12 = !DIDerivedType(tag: DW_TAG_typedef, name: "signalAccelerationX", file: !1, line: 7, baseType: !13)`.
-							// Finally, Type->getName() will give "signalAccelerationX", which is the Newton signal type.
-							// You also need to convert it to `char *` (Newton does not work with llvm::StringRef).
+
 							if (auto  physicsInfo = newtonPhysicsInfo(debugInfoVariable->getType(), N)) {
-								// Add the PhysicsInfo to our mapping.
 								virtualRegisterPhysicsTable[localVariableAddress] = physicsInfo;
 							}
 						}
@@ -275,7 +281,9 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 																			  leftTerm->get_physics_type(),
 																			  rightTerm->get_physics_type());
 						}
-						 // Store the result to the destination virtual register.
+						/*
+						 *	Store the result to the destination virtual register.
+						 */
 						virtualRegisterPhysicsTable[llvmIrBinaryOperator] = new PhysicsInfo{physicsProduct};
 					}
 					break;
@@ -304,12 +312,18 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 																				   leftTerm->get_physics_type(),
 																				   rightTerm->get_physics_type());
 						}
-						// Store the result to the destination virtual register.
+						/*
+						 *	Store the result to the destination virtual register.
+						 */
 						virtualRegisterPhysicsTable[llvmIrBinaryOperator] = new PhysicsInfo{physicsProduct};
 					}
 					break;
 
-				case Instruction::Load: // TODO: not all loads should have this
+				/*
+				 * 	Some load instruction may not need this.
+				 * 	Need to examine that. TODO
+				 */
+				case Instruction::Load:
 					if (auto llvmIrLoadInstruction = dyn_cast<LoadInst>(&llvmIrInstruction)) {
 						virtualRegisterPhysicsTable[llvmIrLoadInstruction] = virtualRegisterPhysicsTable[llvmIrLoadInstruction->getOperand(0)];
 					}
@@ -321,7 +335,10 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						Value *rightTerm = llvmIrStoreInstruction->getOperand(1);
 						PhysicsInfo *leftPhysicsInfo = virtualRegisterPhysicsTable[leftTerm];
 						PhysicsInfo *rightPhysicsInfo = virtualRegisterPhysicsTable[rightTerm];
-						if (!leftPhysicsInfo) // E.g. in number assignment to a newton signal
+						/*
+						 *	This case arises when we assign a number to a Newton signal.
+						 */
+						if (!leftPhysicsInfo)
 							break;
 						if (!rightPhysicsInfo) {
 							virtualRegisterPhysicsTable[rightTerm] = virtualRegisterPhysicsTable[leftTerm];
@@ -394,9 +411,15 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 				}
 					break;
 
-				// https://github.com/llvm/llvm-project/blob/main/llvm/include/llvm/IR/Instruction.def
+				/*
+				 *	More information on all the LLVM IR instructions can be found at:
+				 *	https://github.com/llvm/llvm-project/blob/main/llvm/include/llvm/IR/Instruction.def
+				 */
 
-				// vector/aggregate related
+				/*
+				 *	vector/aggregate related
+				 *	Unsupported for now.
+				 */
 				case Instruction::InsertElement:
 				case Instruction::ShuffleVector:
 				case Instruction::ExtractValue:
@@ -404,9 +427,12 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 					llvmIrInstruction.dump();
 					errs() << "Unsupported LLVM IR Instruction!\n";
 
-				// Terminator Instructions
-				// These instructions are used to terminate a basic block of the program.
-				// Every basic block must end with one of these instructions for it to be a well-formed basic block.
+				/*
+				 *	Terminator Instructions
+				 *	These instructions are used to terminate a basic block of the program.
+				 *	Every basic block must end with one of these instructions for it to be a well-formed basic block.
+				 *	So far, they are not interesting to handle for Newton-related information.
+				 */
 				case Instruction::Ret:
 				case Instruction::Br:
 				case Instruction::Switch:
@@ -417,15 +443,19 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 				case Instruction::CleanupRet:
 				case Instruction::CatchRet:
 				case Instruction::CatchSwitch:
-				case Instruction::CallBr: // A call-site terminator
+				case Instruction::CallBr:
 
-				// Memory operators
+				/*
+				 *	Memory operators
+				 */
 				case Instruction::Alloca:
 				case Instruction::Fence:
 				case Instruction::AtomicCmpXchg:
 				case Instruction::AtomicRMW:
 
-				// Other operators
+				/*
+				 *	Other operators
+				 */
 				case Instruction::LandingPad:
 
 				default:
