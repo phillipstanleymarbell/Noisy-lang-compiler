@@ -15,7 +15,7 @@ COMMON_FLAGS=-Wall -Wextra
 default: $(BIN).ll
 
 %.ll : %.c
-	@echo Compiling $*.cpp
+	@echo Compiling $*.c
 	$(QUIET)$(CC) -g -S -emit-llvm $(COMMON_FLAGS) -o $@ $<
 
 clean::
