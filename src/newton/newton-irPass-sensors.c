@@ -69,7 +69,7 @@ irPassSensorsLoadSensor(State *  N, IrNode *  sensorNode)
 	}
 
 	sensor->baseNode = sensorNode;
-	
+
 	/*
 	 *	Copy identifier string
 	 */
@@ -81,7 +81,7 @@ irPassSensorsLoadSensor(State *  N, IrNode *  sensorNode)
 	}
 	snprintf(sensor->identifier, needed, "%s", sensorNode->irLeftChild->tokenString);
 
-	sensor->erasureToken = (uint16_t)0xFF;	// TODO: Write actual value
+	sensor->erasureToken = (uint16_t)0x00;	// TODO: Write actual value
 
 	/*
 	 *	Loop over sensor parameter list
@@ -118,15 +118,15 @@ irPassSensorsLoadSensor(State *  N, IrNode *  sensorNode)
 		 */
 
 		// modality->signal;
-		
+
 		/*
 		 *	Prepare iterator for next `while` iteration
 		 */
 		parameterTuple = parameterTuple->irRightChild;
 	}
-	
-	
-	
+
+
+
 	// parameterTuple = RL(sensorNode);
 	// propertyList = RRL(sensorNode);
 	return sensor;
@@ -138,15 +138,15 @@ irPassSensors(State *  N)
 	int		n = 0;
 	IrNode *	sensorIrNode = NULL;
 	Sensor *	sensorListLast = N->sensorList;
-	
+
 	while ((sensorIrNode = findNthIrNodeOfType(N, N->newtonIrRoot, kNewtonIrNodeType_PsensorDefinition, n++)) != NULL)
 	{
 		Sensor *	currentSensor = irPassSensorsLoadSensor(N, sensorIrNode);
-		
+
 		sensorListLast->next = currentSensor;
 		sensorListLast = currentSensor;
 	}
-	
+
 	return;
 }
 
