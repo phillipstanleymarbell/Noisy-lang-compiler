@@ -120,6 +120,19 @@ irPassSensorsLoadSensor(State *  N, IrNode *  sensorNode)
 		// modality->signal;
 
 		/*
+		 *	Modality sensing range
+		 */
+		int		n = 0;
+		IrNode *	rangeNode;
+		do
+		{
+			rangeNode = findNthIrNodeOfType(N, sensorNode, kNewtonIrNodeType_PrangeStatement, n++);
+		} while (strcmp(modality->identifier, rangeNode->irLeftChild->tokenString) != 0);
+		modality->rangeLowerBound = RL(rangeNode)->value;
+		modality->rangeUpperBound = RR(R(rangeNode))->value;
+
+
+		/*
 		 *	Prepare iterator for next `while` iteration
 		 */
 		parameterTuple = parameterTuple->irRightChild;
