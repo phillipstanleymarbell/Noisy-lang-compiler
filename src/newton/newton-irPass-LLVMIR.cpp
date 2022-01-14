@@ -35,29 +35,18 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <errno.h>
 #include <stdio.h>
-#include <stdbool.h>
-#include <assert.h>
 #include <stdlib.h>
 #include <setjmp.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <time.h>
-#include <string.h>
 #include <stdint.h>
-#include <inttypes.h>
-#include <math.h>
 
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IRReader/IRReader.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 
 using namespace llvm;
@@ -98,12 +87,10 @@ public:
 	PhysicsInfo(): physicsType{nullptr}, isComposite{true} {};
 	explicit PhysicsInfo(Physics* physics): physicsType{physics}, isComposite{false} {};
 
-	void pushPhysics(Physics* physics) { if (isComposite) members.push_back(new PhysicsInfo(physics)); }
 	void pushPhysicsInfo(PhysicsInfo* physics_info) { if (isComposite) members.push_back(physics_info); }
 
 	Physics* get_physics_type() { return physicsType; }
 	std::vector<PhysicsInfo *> get_members() { return members; }
-	bool get_is_composite() { return isComposite; }
 };
 
 std::map<Value*, PhysicsInfo*> virtualRegisterPhysicsTable;
@@ -145,11 +132,6 @@ newtonPhysicsInfo(DIType* debugType, State * N)
 			errs() << "Unhandled DW_TAG for DICompositeType\n";
 		}
 	}
-//	else { TODO
-//		errs() << "Unhandled DIType:\n";
-//		DebugType->dump();
-//		return nullptr;
-//	}
 	return nullptr;
 }
 
@@ -200,8 +182,6 @@ newtonPhysicsSubtractExponentsWrapper(State *  N, Physics *  left, Physics *  ri
 void 
 dimensionalityCheck(Function & llvmIrFunction, State * N)
 {
-	Physics* physics = NULL;
-
 	for (BasicBlock &llvmIrBasicBlock : llvmIrFunction) {
 
 		for (Instruction &llvmIrInstruction : llvmIrBasicBlock) {
@@ -359,9 +339,9 @@ dimensionalityCheck(Function & llvmIrFunction, State * N)
 						uint64_t Index;
 						if (auto llvmIrConstantInt = dyn_cast<ConstantInt>(llvmIrGetElementPointerInstruction->getOperand(2))) {
 							Index = llvmIrConstantInt->getZExtValue();
-						}
 						auto physicsInfo = virtualRegisterPhysicsTable[llvmIrGetElementPointerInstruction->getPointerOperand()]->get_members()[Index];
 						virtualRegisterPhysicsTable[llvmIrGetElementPointerInstruction] = physicsInfo;
+						}
 					}
 					break;
 
@@ -459,7 +439,7 @@ dimensionalityCheck(Function & llvmIrFunction, State * N)
 void
 irPassLLVMIR(State * N)
 {
-	if (N->llvmIR == NULL)
+	if (N->llvmIR == nullptr)
 	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "Please specify the LLVM IR input file\n");
 		fatal(N, Esanity);
@@ -473,9 +453,8 @@ irPassLLVMIR(State * N)
 		fatal(N, Esanity);
 	}
 
-	for (Module::iterator mi = Mod->begin(); mi != Mod->end(); mi++) {
-		if (mi->getName().str() == std::string("calc_humidity"))
-			dimensionalityCheck(*mi, N);
+	for (auto & mi : *Mod) {
+			dimensionalityCheck(mi, N);
 	}
 }
 
