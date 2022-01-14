@@ -87,7 +87,7 @@ public:
 	PhysicsInfo(): physicsType{nullptr}, isComposite{true} {};
 	explicit PhysicsInfo(Physics *  physics): physicsType{physics}, isComposite{false} {};
 
-	void pushPhysicsInfo(PhysicsInfo *  physics_info) { if (isComposite) members.push_back(physics_info); }
+	void pushPhysicsInfo(PhysicsInfo *  physics_info) { if (isComposite) { members.push_back(physics_info); } }
 
 	Physics* get_physics_type() { return physicsType; }
 	std::vector<PhysicsInfo *> get_members() { return members; }
@@ -102,14 +102,18 @@ std::map<Value *, PhysicsInfo *> virtualRegisterPhysicsTable;
 PhysicsInfo *
 newtonPhysicsInfo(DIType *  debugType, State *  N)
 {
-	if (auto debugInfoDerivedType = dyn_cast<DIDerivedType>(debugType)) {
-		switch (debugInfoDerivedType->getTag()) {
+	if (auto debugInfoDerivedType = dyn_cast<DIDerivedType>(debugType))
+	{
+		switch (debugInfoDerivedType->getTag())
+		{
 			case dwarf::DW_TAG_typedef:
 			{
 				Physics *	physics = newtonPhysicsTablePhysicsForIdentifier(N, N->newtonIrTopScope,
 																		  debugInfoDerivedType->getName().data());
 				if (!physics)
+				{
 					return newtonPhysicsInfo(debugInfoDerivedType->getBaseType(), N);
+				}
 				return new PhysicsInfo{physics};
 			}
 			case dwarf::DW_TAG_pointer_type:
@@ -122,15 +126,22 @@ newtonPhysicsInfo(DIType *  debugType, State *  N)
 				errs() << "Unhandled DW_TAG for DIDerivedType\n";
 		}
 	}
-	else if (auto debugInfoCompositeType = dyn_cast<DICompositeType>(debugType)) {
-		if (debugInfoCompositeType->getTag() == dwarf::DW_TAG_structure_type) {
+	else if (auto debugInfoCompositeType = dyn_cast<DICompositeType>(debugType))
+	{
+		if (debugInfoCompositeType->getTag() == dwarf::DW_TAG_structure_type)
+		{
 			auto physicsInfo = new PhysicsInfo();
 			for (auto element: debugInfoCompositeType->getElements())
+			{
 				if (auto DIMember = dyn_cast<DIDerivedType>(element))
+				{
 					physicsInfo->pushPhysicsInfo(newtonPhysicsInfo(DIMember, N));
+				}
+			}
 			return physicsInfo;
 		}
-		else if (debugInfoCompositeType->getTag() == dwarf::DW_TAG_array_type) {
+		else if (debugInfoCompositeType->getTag() == dwarf::DW_TAG_array_type)
+		{
 			errs() << "Unhandled DW_TAG for DICompositeType\n";
 		}
 	}
@@ -146,37 +157,45 @@ printDebugInfoLocation(Instruction* llvmIrInstruction)
 		", column " << debugLocation->getColumn() << ".\n";
 }
 
-Physics*
+Physics *
 deepCopyPhysicsNodeWrapper(State *  N, Physics *  physics)
 {
 	if (physics)
+	{
 		return deepCopyPhysicsNode(N, physics);
+	}
 	else
+	{
 		return nullptr;
+	}
 }
 
-Physics*
+Physics *
 newtonPhysicsAddExponentsWrapper(State *  N, Physics *  left, Physics *  right)
 {
 	Physics *	physicsProduct = deepCopyPhysicsNodeWrapper(N, left);
-	if (physicsProduct) {
+	if (physicsProduct)
+	{
 		newtonPhysicsAddExponents(N, physicsProduct, right);
 		return physicsProduct;
 	}
-	else {
+	else
+	{
 		return nullptr;
 	}
 }
 
-Physics*
+Physics *
 newtonPhysicsSubtractExponentsWrapper(State *  N, Physics *  left, Physics *  right)
 {
 	Physics *	physicsQuotient = deepCopyPhysicsNodeWrapper(N, left);
-	if (physicsQuotient) {
+	if (physicsQuotient)
+	{
 		newtonPhysicsSubtractExponents(N, physicsQuotient, right);
 		return physicsQuotient;
 	}
-	else {
+	else
+	{
 		return nullptr;
 	}
 }
@@ -184,12 +203,12 @@ newtonPhysicsSubtractExponentsWrapper(State *  N, Physics *  left, Physics *  ri
 void 
 dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 {
-	for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction) {
-
-		for (Instruction &  llvmIrInstruction : llvmIrBasicBlock) {
-
-			switch (llvmIrInstruction.getOpcode()) {
-
+	for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction)
+	{
+		for (Instruction &  llvmIrInstruction : llvmIrBasicBlock)
+		{
+			switch (llvmIrInstruction.getOpcode())
+			{
 				/*
 				 *	This is where metadata are connected to the virtual registers.
 				 *	Using metadata we can get the typedef information related to Newton signals.
@@ -213,9 +232,11 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 			     *	Finally, add the PhysicsInfo to our mapping.
 				 */
 				case Instruction::Call:
-					if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction)) {
+					if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction))
+					{
 						Function *	calledFunction = llvmIrCallInstruction->getCalledFunction();
-						if (calledFunction->getName().startswith("llvm.dbg.declare")) {
+						if (calledFunction->getName().startswith("llvm.dbg.declare"))
+						{
 							auto	firstOperator = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(0));
 							auto	localVariableAddressAsMetadata = cast<ValueAsMetadata>(firstOperator->getMetadata());
 							auto	localVariableAddress = localVariableAddressAsMetadata->getValue();
@@ -223,7 +244,8 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 							auto	secondOperator = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(1));
 							auto	debugInfoVariable = cast<DIVariable>(secondOperator->getMetadata());
 
-							if (auto  physicsInfo = newtonPhysicsInfo(debugInfoVariable->getType(), N)) {
+							if (auto  physicsInfo = newtonPhysicsInfo(debugInfoVariable->getType(), N))
+							{
 								virtualRegisterPhysicsTable[localVariableAddress] = physicsInfo;
 							}
 						}
@@ -242,16 +264,23 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 					PhysicsInfo *	leftTerm = virtualRegisterPhysicsTable[llvmIrInstruction.getOperand(0)];
 					PhysicsInfo *	rightTerm = virtualRegisterPhysicsTable[llvmIrInstruction.getOperand(1)];
 					Physics *	physicsSum;
-					if (!leftTerm) {
-						if (!rightTerm) {
+					if (!leftTerm)
+					{
+						if (!rightTerm)
+						{
 							break;
 						}
 						physicsSum = rightTerm->get_physics_type();
-					} else if (!rightTerm) {
+					}
+					else if (!rightTerm)
+					{
 						physicsSum = leftTerm->get_physics_type();
-					} else {
+					}
+					else
+					{
 						if (!areTwoPhysicsEquivalent(N, leftTerm->get_physics_type(),
-													 rightTerm->get_physics_type())) {
+													 rightTerm->get_physics_type()))
+						{
 							printDebugInfoLocation(&llvmIrInstruction);
 							exit(1);
 						}
@@ -263,20 +292,25 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 
 				case Instruction::Mul:
 				case Instruction::FMul:
-					if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction)) {
+					if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+					{
 						PhysicsInfo *	leftTerm = virtualRegisterPhysicsTable[llvmIrBinaryOperator->getOperand(0)];
 						PhysicsInfo *	rightTerm = virtualRegisterPhysicsTable[llvmIrBinaryOperator->getOperand(1)];
 						Physics * 	physicsProduct;
-						if (!leftTerm) {
-							if (!rightTerm) {
+						if (!leftTerm)
+						{
+							if (!rightTerm)
+							{
 								break;
 							}
 							physicsProduct = rightTerm->get_physics_type();
 						}
-						else if (!rightTerm) {
+						else if (!rightTerm)
+						{
 							physicsProduct = leftTerm->get_physics_type();
 						}
-						else {
+						else
+						{
 							physicsProduct = newtonPhysicsAddExponentsWrapper(N,
 																			  leftTerm->get_physics_type(),
 																			  rightTerm->get_physics_type());
@@ -294,20 +328,25 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 				case Instruction::URem:
 				case Instruction::SRem:
 				case Instruction::FRem:
-					if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction)) {
+					if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+					{
 						PhysicsInfo *	leftTerm = virtualRegisterPhysicsTable[llvmIrBinaryOperator->getOperand(0)];
 						PhysicsInfo *	rightTerm = virtualRegisterPhysicsTable[llvmIrBinaryOperator->getOperand(1)];
 						Physics * 	physicsProduct;
-						if (!leftTerm) {
-							if (!rightTerm) {
+						if (!leftTerm)
+						{
+							if (!rightTerm)
+							{
 								break;
 							}
 							physicsProduct = rightTerm->get_physics_type();
 						}
-						else if (!rightTerm) {
+						else if (!rightTerm)
+						{
 							physicsProduct = leftTerm->get_physics_type();
 						}
-						else {
+						else
+						{
 							physicsProduct = newtonPhysicsSubtractExponentsWrapper(N,
 																				   leftTerm->get_physics_type(),
 																				   rightTerm->get_physics_type());
@@ -324,13 +363,15 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 				 * 	Need to examine that. TODO
 				 */
 				case Instruction::Load:
-					if (auto llvmIrLoadInstruction = dyn_cast<LoadInst>(&llvmIrInstruction)) {
+					if (auto llvmIrLoadInstruction = dyn_cast<LoadInst>(&llvmIrInstruction))
+					{
 						virtualRegisterPhysicsTable[llvmIrLoadInstruction] = virtualRegisterPhysicsTable[llvmIrLoadInstruction->getOperand(0)];
 					}
 					break;
 
 				case Instruction::Store:
-					if (auto llvmIrStoreInstruction = dyn_cast<StoreInst>(&llvmIrInstruction)) {
+					if (auto llvmIrStoreInstruction = dyn_cast<StoreInst>(&llvmIrInstruction))
+					{
 						Value *leftTerm = llvmIrStoreInstruction->getOperand(0);
 						Value *rightTerm = llvmIrStoreInstruction->getOperand(1);
 						PhysicsInfo *leftPhysicsInfo = virtualRegisterPhysicsTable[leftTerm];
@@ -339,12 +380,16 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						 *	This case arises when we assign a number to a Newton signal.
 						 */
 						if (!leftPhysicsInfo)
+						{
 							break;
-						if (!rightPhysicsInfo) {
+						}
+						if (!rightPhysicsInfo)
+						{
 							virtualRegisterPhysicsTable[rightTerm] = virtualRegisterPhysicsTable[leftTerm];
 							break;
 						}
-						if (!areTwoPhysicsEquivalent(N, leftPhysicsInfo->get_physics_type(), rightPhysicsInfo->get_physics_type())) {
+						if (!areTwoPhysicsEquivalent(N, leftPhysicsInfo->get_physics_type(), rightPhysicsInfo->get_physics_type()))
+						{
 							printDebugInfoLocation(llvmIrStoreInstruction);
 							exit(1);
 						}
@@ -352,12 +397,14 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 					break;
 
 				case Instruction::GetElementPtr:
-					if (auto llvmIrGetElementPointerInstruction = dyn_cast<GetElementPtrInst>(&llvmIrInstruction)) {
+					if (auto llvmIrGetElementPointerInstruction = dyn_cast<GetElementPtrInst>(&llvmIrInstruction))
+					{
 						uint64_t Index;
-						if (auto llvmIrConstantInt = dyn_cast<ConstantInt>(llvmIrGetElementPointerInstruction->getOperand(2))) {
+						if (auto llvmIrConstantInt = dyn_cast<ConstantInt>(llvmIrGetElementPointerInstruction->getOperand(2)))
+						{
 							Index = llvmIrConstantInt->getZExtValue();
-						auto physicsInfo = virtualRegisterPhysicsTable[llvmIrGetElementPointerInstruction->getPointerOperand()]->get_members()[Index];
-						virtualRegisterPhysicsTable[llvmIrGetElementPointerInstruction] = physicsInfo;
+							auto physicsInfo = virtualRegisterPhysicsTable[llvmIrGetElementPointerInstruction->getPointerOperand()]->get_members()[Index];
+							virtualRegisterPhysicsTable[llvmIrGetElementPointerInstruction] = physicsInfo;
 						}
 					}
 					break;
@@ -384,22 +431,28 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 					break;
 
 				case Instruction::PHI:
-				case Instruction::Select: {
+				case Instruction::Select:
+				{
 					PhysicsInfo *	leftTerm = virtualRegisterPhysicsTable[llvmIrInstruction.getOperand(0)];
 					PhysicsInfo *	rightTerm = virtualRegisterPhysicsTable[llvmIrInstruction.getOperand(1)];
 					Physics *	 physicsPhiNode;
-					if (!leftTerm) {
-						if (!rightTerm) {
+					if (!leftTerm)
+					{
+						if (!rightTerm)
+						{
 							break;
 						}
 						physicsPhiNode = rightTerm->get_physics_type();
 					}
-					else if (!rightTerm) {
+					else if (!rightTerm)
+					{
 						physicsPhiNode = leftTerm->get_physics_type();
 					}
-					else {
+					else
+					{
 						if (!areTwoPhysicsEquivalent(N, leftTerm->get_physics_type(),
-													 rightTerm->get_physics_type())) {
+													 rightTerm->get_physics_type()))
+						{
 
 							auto debugLocation = cast<DILocation>(llvmIrInstruction.getMetadata(0));
 							errs() << "Warning, cannot deduce physics type at: line " << debugLocation->getLine() <<
@@ -478,12 +531,14 @@ irPassLLVMIR(State *  N)
 	SMDiagnostic 	Err;
 	LLVMContext 	Context;
 	std::unique_ptr<Module>	Mod(parseIRFile(N->llvmIR, Err, Context));
-	if (!Mod) {
+	if (!Mod)
+	{
 		flexprint(N->Fe, N->Fm, N->Fperr, "Error: Couldn't parse IR file.");
 		fatal(N, Esanity);
 	}
 
-	for (auto & mi : *Mod) {
+	for (auto & mi : *Mod)
+	{
 			dimensionalityCheck(mi, N);
 	}
 }
