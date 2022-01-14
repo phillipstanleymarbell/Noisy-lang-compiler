@@ -119,17 +119,33 @@ irPassSensorsLoadSensor(State *  N, IrNode *  sensorNode)
 
 		// modality->signal;
 
+		IrNode *	tempNode = NULL;
+
 		/*
 		 *	Modality sensing range
 		 */
+		tempNode = NULL;
 		int		n = 0;
-		IrNode *	rangeNode;
 		do
 		{
-			rangeNode = findNthIrNodeOfType(N, sensorNode, kNewtonIrNodeType_PrangeStatement, n++);
-		} while (strcmp(modality->identifier, rangeNode->irLeftChild->tokenString) != 0);
-		modality->rangeLowerBound = RL(rangeNode)->value;
-		modality->rangeUpperBound = RR(R(rangeNode))->value;
+			tempNode = findNthIrNodeOfType(N, sensorNode, kNewtonIrNodeType_PrangeStatement, n++);
+			if (tempNode == NULL)
+			{
+				error(N, "no range statement found for modality");
+				break;
+			}
+		} while (strcmp(modality->identifier, tempNode->irLeftChild->tokenString) != 0);
+		if (tempNode != NULL)
+		{
+			modality->rangeLowerBound = RL(tempNode)->value;
+			modality->rangeUpperBound = RR(R(tempNode))->value;
+		}
+		
+
+		/*
+		 *	Modality accuracy
+		 */
+		
 
 
 		/*
