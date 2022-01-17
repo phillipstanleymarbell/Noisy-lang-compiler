@@ -321,8 +321,16 @@ irPassSensors(State *  N)
 }
 
 Sensor *
-getSensorByIdentifier(State *  N, const char *  identifier)
+irPassSensorsGetSensorByIdentifier(State *  N, const char *  identifier)
 {
+	for (Sensor * currentSensor = N->sensorList; currentSensor != NULL; currentSensor = currentSensor->next)
+	{
+		if (strcmp(currentSensor->identifier, identifier) == 0)
+		{
+			return currentSensor;
+		}
+	}
+	
 	return NULL;
 }
 

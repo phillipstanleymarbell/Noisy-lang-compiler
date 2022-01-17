@@ -37,4 +37,5 @@
 */
 
 void		irPassSensors(State *  N);
-Sensor *	getSensorByIdentifier(State *  N, const char *  identifier);
+Sensor *	irPassSensorsGetSensorByIdentifier(State *  N, const char *  identifier);
+void		irPassSensorsPrintSensor(State *  N, Sensor *  sensor);
