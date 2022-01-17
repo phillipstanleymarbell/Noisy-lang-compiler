@@ -934,7 +934,10 @@ struct Physics
 typedef enum {
 	kNewtonSensorInterfaceTypeI2C,
 	kNewtonSensorInterfaceTypeSPI,
+	kNewtonSensorInterfaceTypeAnalog,
 	kNewtonSensorInterfaceTypeUART,
+
+	kNewtonSensorInterfaceTypeMax
 } SensorInterfaceType;
 
 struct Modality {
@@ -949,7 +952,7 @@ struct Modality {
 
 	double		accuracy;
 	double		accuracyCost;
-	Signal *	accuracySignal;
+	// Signal *	accuracySignal;
 	
 	SensorInterfaceType	interfaceType;	/* WiP */
 	/* Missing register address for modality */

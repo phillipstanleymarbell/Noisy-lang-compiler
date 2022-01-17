@@ -56,11 +56,42 @@
 
 #include "common-irHelpers.h"
 
+
+const char *  sensorInterfaceTypeString[kNewtonSensorInterfaceTypeMax] = {
+	[kNewtonSensorInterfaceTypeI2C]		= "I2C",
+	[kNewtonSensorInterfaceTypeSPI]		= "SPI",
+	[kNewtonSensorInterfaceTypeAnalog]	= "Analog",
+	[kNewtonSensorInterfaceTypeUART]	= "UART",
+
+};
+
+void
+irPassSensorsPrintSensor(State *  N, Sensor *  sensor)
+{
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "Sensor: %s\n", sensor->identifier);
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "\tbaseNode: %p\n", sensor->baseNode);
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "\terasureToken: 0x%#02x\n", sensor->erasureToken);
+
+	for (Modality * currentModality = sensor->modalityList; currentModality != NULL; currentModality = currentModality->next)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\tModality: %s\n", currentModality->identifier);
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeLowerBound: %f\n", currentModality->rangeLowerBound);
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeUpperBound: %f\n", currentModality->rangeUpperBound);
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\taccuracy: %f\n", currentModality->accuracy);
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\taccuracyCost: %f\n", currentModality->accuracyCost);		
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\tprecisionBits: %d\n", currentModality->precisionBits);
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\tprecisionCost: %f\n", currentModality->precisionCost);	
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\tInterface: %s\n", sensorInterfaceTypeString[currentModality->interfaceType]);	
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\t\tAddress: 0x%#08x\n", currentModality->registerAddress);	
+	}	
+}
+
 Sensor *
 irPassSensorsLoadSensor(State *  N, IrNode *  sensorNode)
 {
 	int		needed = 0;
 	IrNode *	parameterTuple = NULL;
+	Modality *	modalityListLast = NULL;
 
 	Sensor *	sensor = calloc(1, sizeof(Sensor));
 	if (sensor == NULL)
@@ -101,6 +132,18 @@ irPassSensorsLoadSensor(State *  N, IrNode *  sensorNode)
 			fatal(N, Esanity);
 		}
 
+		if (sensor->modalityList == NULL)
+		{
+			sensor->modalityList = modality;
+			modalityListLast = sensor->modalityList;
+		}
+		else
+		{
+			modalityListLast->next = modality;
+			modalityListLast = modalityListLast->next;			
+		}
+		
+
 		/*
 		 *	Modality Identifier
 		 */
@@ -120,12 +163,16 @@ irPassSensorsLoadSensor(State *  N, IrNode *  sensorNode)
 		// modality->signal;
 
 		IrNode *	tempNode = NULL;
+		int		n = 0;
 
 		/*
 		 *	Modality sensing range
+		 *
+		 *	TODO: Currently only handles one range setting per
+		 *	sensor modality.
 		 */
 		tempNode = NULL;
-		int		n = 0;
+		n = 0;
 		do
 		{
 			tempNode = findNthIrNodeOfType(N, sensorNode, kNewtonIrNodeType_PrangeStatement, n++);
@@ -144,9 +191,89 @@ irPassSensorsLoadSensor(State *  N, IrNode *  sensorNode)
 
 		/*
 		 *	Modality accuracy
+		 *
+		 *	TODO: Currently only handles one accuracy setting per
+		 *	sensor modality.
 		 */
-		
+		tempNode = NULL;
+		n = 0;
+		do
+		{
+			tempNode = findNthIrNodeOfType(N, sensorNode, kNewtonIrNodeType_PaccuracyStatement, n++);
+			if (tempNode == NULL)
+			{
+				error(N, "no accuracy statement found for modality");
+				break;
+			}
+		} while (strcmp(modality->identifier, tempNode->irLeftChild->tokenString) != 0);
+		if (tempNode != NULL)
+		{
+			modality->accuracy	= RLL(tempNode)->value;
+			modality->accuracyCost	= R(RLR(tempNode))->value;
+		}
 
+		/*
+		 *	Modality precision
+		 *
+		 *	TODO: Currently only handles one precision setting per
+		 *	sensor modality.
+		 */
+		tempNode = NULL;
+		n = 0;
+		do
+		{
+			tempNode = findNthIrNodeOfType(N, sensorNode, kNewtonIrNodeType_PprecisionStatement, n++);
+			if (tempNode == NULL)
+			{
+				error(N, "no precision statement found for modality");
+				break;
+			}
+		} while (strcmp(modality->identifier, tempNode->irLeftChild->tokenString) != 0);
+		if (tempNode != NULL)
+		{
+			modality->precisionBits	= RLL(tempNode)->value;
+			modality->precisionCost	= L(RLR(tempNode))->value;
+		}
+
+		/*
+		 *	Modality interface
+		 */
+		tempNode = NULL;
+		n = 0;
+		do
+		{
+			tempNode = findNthIrNodeOfType(N, sensorNode, kNewtonIrNodeType_PsensorInterfaceStatement, n++);
+			if (tempNode == NULL)
+			{
+				error(N, "no interface statement found for modality");
+				break;
+			}
+		} while (strcmp(modality->identifier, tempNode->irLeftChild->tokenString) != 0);
+		if (tempNode != NULL)
+		{
+			switch (RLL(tempNode)->type)
+			{
+			case kNewtonIrNodeType_Ti2c:
+			{
+				modality->interfaceType = kNewtonSensorInterfaceTypeI2C;
+				modality->registerAddress = LR(RRL(tempNode))->value;
+				break;
+			}
+			case kNewtonIrNodeType_Tspi:
+			{
+				modality->interfaceType	= kNewtonSensorInterfaceTypeSPI;
+				break;
+			}
+			case kNewtonIrNodeType_Tanalog:
+			{
+				modality->interfaceType	= kNewtonSensorInterfaceTypeAnalog;
+				break;
+			}
+			
+			default:
+				break;
+			}
+		}
 
 		/*
 		 *	Prepare iterator for next `while` iteration
@@ -172,9 +299,23 @@ irPassSensors(State *  N)
 	{
 		Sensor *	currentSensor = irPassSensorsLoadSensor(N, sensorIrNode);
 
-		sensorListLast->next = currentSensor;
-		sensorListLast = currentSensor;
+		if (sensorListLast == NULL)
+		{
+			N->sensorList = currentSensor;
+		}
+		else
+		{
+			sensorListLast->next = currentSensor;
+			sensorListLast = sensorListLast->next;
+		}
 	}
+
+	// TODO: Remove debug line:
+	if (N->sensorList != NULL)
+	{
+		irPassSensorsPrintSensor(N, N->sensorList);
+	}
+	
 
 	return;
 }
