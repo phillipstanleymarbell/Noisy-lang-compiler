@@ -477,7 +477,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 				case Instruction::ShuffleVector:
 				case Instruction::ExtractValue:
 				case Instruction::InsertValue:
-					llvmIrInstruction.dump();
+					errs() << llvmIrInstruction << "\n";
 					errs() << "Unsupported LLVM IR Instruction!\n";
 
 				/*
