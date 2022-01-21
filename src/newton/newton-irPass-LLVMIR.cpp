@@ -149,12 +149,13 @@ newtonPhysicsInfo(DIType *  debugType, State *  N)
 }
 
 void
-printDebugInfoLocation(Instruction* llvmIrInstruction)
+printDebugInfoLocation(Instruction *  llvmIrInstruction, Physics *  left, Physics *  right)
 {
-
 	auto	debugLocation = cast<DILocation>(llvmIrInstruction->getMetadata(0));
 	outs() << "Dimension mismatch at: line " << debugLocation->getLine() <<
 		", column " << debugLocation->getColumn() << ".\n";
+	outs() << "Left-hand side: " << left->identifier << "\n";
+	outs() << "Right-hand side: " << right->identifier << "\n";
 }
 
 Physics *
@@ -281,7 +282,8 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						if (!areTwoPhysicsEquivalent(N, leftTerm->get_physics_type(),
 													 rightTerm->get_physics_type()))
 						{
-							printDebugInfoLocation(&llvmIrInstruction);
+							printDebugInfoLocation(&llvmIrInstruction,
+												   leftTerm->get_physics_type(), rightTerm->get_physics_type());
 							exit(1);
 						}
 						physicsSum = leftTerm->get_physics_type();
@@ -390,7 +392,8 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						}
 						if (!areTwoPhysicsEquivalent(N, leftPhysicsInfo->get_physics_type(), rightPhysicsInfo->get_physics_type()))
 						{
-							printDebugInfoLocation(llvmIrStoreInstruction);
+							printDebugInfoLocation(&llvmIrInstruction,
+												   leftPhysicsInfo->get_physics_type(), rightPhysicsInfo->get_physics_type());
 							exit(1);
 						}
 					}
