@@ -331,6 +331,21 @@ init(CommonMode mode)
 	 */
 	N->targetParamLocatedKernel = 0;
 
+	/*
+	 *	This is data type that a signal will be typedef'ed to
+	 *	in the signal typedef generation backend. The default
+	 *	data type is "double"
+	 */
+	N->signalTypedefDatatype = calloc(kCommonMaxBufferLength, sizeof(char));
+	if (N->signalTypedefDatatype == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+	else
+	{
+		strcpy(N->signalTypedefDatatype, "double");
+	}
+
 	return N;
 }
 

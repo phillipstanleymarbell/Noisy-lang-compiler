@@ -87,6 +87,7 @@
 #include "newton-irPass-dimensionalMatrixKernelRowCanonicalization.h"
 #include "newton-dimension-prescan.h"
 #include "newton-irPass-signalTypedefGenerationBackend.h"
+#include "newton-irPass-sensors.h"
 
 extern char *	gNewtonAstNodeStrings[kNoisyIrNodeTypeMax];
 
@@ -124,6 +125,11 @@ processNewtonFile(State *  N, char *  filename)
 	}
 
 	N->newtonIrRoot = newtonParse(N, N->newtonIrTopScope);
+
+	if (!(N->irPasses & kNewtonIrPassSensorsDisable))
+	{
+		irPassSensors(N);
+	}	
 
 	if (N->irPasses & kNewtonIrPassDimensionalMatrixAnnotation)
 	{

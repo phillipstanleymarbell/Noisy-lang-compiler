@@ -66,8 +66,6 @@
 #include "newton-symbolTable.h"
 #include "newton-irPass-invariantSignalAnnotation.h"
 
-char const signalDefaultDatatype[] = "double";
-
 void
 irPassSignalTypedefGenerationProcessNewtonSources(State *  N)
 {
@@ -84,7 +82,7 @@ irPassSignalTypedefGenerationProcessNewtonSources(State *  N)
 
 	while(oneIrNode != NULL)
     {
-        flexprint(N->Fe, N->Fm, N->Fph, "typedef %s %s;\n", signalDefaultDatatype, oneIrNode->irLeftChild->tokenString);
+        flexprint(N->Fe, N->Fm, N->Fph, "typedef %s %s;\n", N->signalTypedefDatatype, oneIrNode->irLeftChild->tokenString);
 
         oneIrNode = findNthIrNodeOfType(N, N->newtonIrRoot, kNewtonIrNodeType_PbaseSignalDefinition, count++);
     }
@@ -111,9 +109,11 @@ irPassSignalTypedefGenerationBackend(State *  N)
 			
 			consolePrintBuffers(N);
 		}
+		else
+		{
+			fprintf(signalTypedefHeaderFile, "%s", N->Fph->circbuf);
 
-		fprintf(signalTypedefHeaderFile, "%s", N->Fph->circbuf);
-
-		fclose(signalTypedefHeaderFile);
+			fclose(signalTypedefHeaderFile);
+		}
 	}
 }

@@ -170,14 +170,33 @@ commonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 {
 //	TimeStampTraceMacro(kNoisyTimeStampKeySymbolTableOpenScope);
 
-	Scope *	newScope = commonSymbolTableAllocScope(N);
+	Scope *		newScope = commonSymbolTableAllocScope(N);
+	Scope *		siblingScope = scope->firstChild;
 
 	newScope->parent = scope;
 	newScope->begin = subTree->sourceInfo;
-	/*
-	 *	TODO: Is first child always overwritten by subsequent scope siblings?
-	 */
-	scope->firstChild = newScope;
+	newScope->next = NULL;
+
+	if (siblingScope == NULL)
+	{
+		/*
+		 *	Parent has no other children
+		 */
+		siblingScope = newScope;
+		newScope->prev = NULL;
+	}
+	else
+	{
+		/*
+		 *	Find last sibling (if any)
+		 */
+		while (siblingScope->next != NULL)
+		{
+			siblingScope = siblingScope->next;
+		}		
+		siblingScope->next = newScope;
+		newScope->prev = siblingScope;
+	}
 
 	return newScope;
 }

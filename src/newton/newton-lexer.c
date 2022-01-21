@@ -66,6 +66,7 @@ static void		finishToken(State *  N);
 static void		checkEqual(State *  N);
 static void		checkGt(State *  N);
 static void		checkLt(State *  N);
+static void		checkColon(State *  N);
 static void		checkMul(State * N);
 static bool		checkProportionality(State * N);
 static void		checkDot(State *  N);
@@ -225,11 +226,6 @@ newtonLex(State *  N, char *  fileName)
 						checkSingle(N, kNewtonIrNodeType_Tsemicolon);
 						continue;
 					}
-					case ':':
-					{
-						checkSingle(N, kNewtonIrNodeType_Tcolon);
-						continue;
-					}
 					case '@':
 					{
 						checkSingle(N, kNewtonIrNodeType_TatSign);
@@ -289,6 +285,11 @@ newtonLex(State *  N, char *  fileName)
 					case '<':
 					{
 						checkLt(N);
+						continue;
+					}
+					case ':':
+					{
+						checkColon(N);
 						continue;
 					}
 					case '"':
@@ -798,6 +799,11 @@ checkGt(State *  N)
 		gobble(N, 2);
 		type = kNewtonIrNodeType_Tmutualinf;
 	}
+	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '>')
+	{
+		gobble(N, 2);
+		type = kNewtonIrNodeType_TrightShift;
+	}
 	else if (eqf(N))
 	{
 		gobble(N, 2);
@@ -840,6 +846,11 @@ checkLt(State *  N)
 		gobble(N, 3);
 		type = kNewtonIrNodeType_Trelated;
 	}
+	else if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '<')
+	{
+		gobble(N, 2);
+		type = kNewtonIrNodeType_TleftShift;
+	}
 	else if (eqf(N))
 	{
 		gobble(N, 2);
@@ -849,6 +860,42 @@ checkLt(State *  N)
 	{
 		gobble(N, 1);
 		type = kNewtonIrNodeType_Tlt;
+	}
+
+	Token *		newToken = lexAllocateToken(N,			type	/* type		*/,
+									NULL	/* identifier	*/,
+									0	/* integerConst	*/,
+									0.0	/* realConst	*/,
+									NULL	/* stringConst	*/,
+									NULL	/* sourceInfo	*/);
+
+	/*
+	 *	done() sets the N->currentTokenLength to zero and bzero's the N->currentToken buffer.
+	 */
+	done(N, newToken);
+}
+
+static void
+checkColon(State *  N)
+{
+	TimeStampTraceMacro(kNewtonTimeStampKey);
+
+	IrNodeType		type;
+
+	/*
+	 *	Gobble any extant chars.
+	 */
+	finishToken(N);
+
+	if (N->lineLength >= 2 && N->lineBuffer[N->columnNumber+1] == '=')
+	{
+		gobble(N, 2);
+		type = kNewtonIrNodeType_Tdef;
+	}
+	else
+	{
+		gobble(N, 1);
+		type = kNewtonIrNodeType_Tcolon;
 	}
 
 	Token *		newToken = lexAllocateToken(N,			type	/* type		*/,

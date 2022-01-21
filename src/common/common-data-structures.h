@@ -454,6 +454,7 @@ typedef enum
 	kNewtonIrNodeType_TleftBracket,
 	kNewtonIrNodeType_Tinclude,
 	kNewtonIrNodeType_Tassign,
+	kNewtonIrNodeType_Tdef,
 	kNewtonIrNodeType_TminusMinus,
 	kNewtonIrNodeType_TplusPlus,
 	kNewtonIrNodeType_TdotDot,
@@ -712,9 +713,8 @@ typedef enum
 	kNewtonIrPassInvariantSignalAnnotation			= (1 << 10),
 
 	kNewtonIrPassPiGroupsSignalAnnotation			= (1 << 11),
-
 	kNewtonIrPassLLVMIR								= (1 << 12),
-
+	kNewtonIrPassSensorsDisable				= (1 << 13),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -856,6 +856,8 @@ typedef struct Physics		Physics;
 typedef struct IntegralList	IntegralList;
 typedef struct Invariant	Invariant;
 typedef struct Signal		Signal;
+typedef struct Sensor		Sensor;
+typedef struct Modality		Modality;
 
 struct Dimension
 {
@@ -897,14 +899,14 @@ struct Invariant
 };
 
 struct Signal {
-    IrNode * 		baseNode;				//	The baseSignalDefinition IrNode.
-    char * 			identifier;				//	The signal identifier.
+	IrNode *		baseNode;				//	The baseSignalDefinition IrNode.
+	char *			identifier;				//	The signal identifier.
 	char *			invariantExpressionIdentifier;	//Identifier used in invariant expressions.
-	int				axis;					//	The axis of the multi axis signal that the signal corresponds to. Default value is zero.
-    char * 			sensorIdentifier;		//	Identifier of the sensor associated to a signal.
-    int 			physicalGroupNumber;	//  Conveys information about the physical origin of the signal. (e.g. The I2C bus number of a sensor connected to Ipsa).
-	int				dimensionIndex;			//	Conveys information about the dimension of the signal. Currently used for storing the dimension index for Ipsa.
-    Signal * 		relatedSignalList;		//	List of signals that should be co-sampled with this signal.
+	int			axis;					//	The axis of the multi axis signal that the signal corresponds to. Default value is zero.
+	char *			sensorIdentifier;		//	Identifier of the sensor associated to a signal.
+	int			physicalGroupNumber;	//  Conveys information about the physical origin of the signal. (e.g. The I2C bus number of a sensor connected to Ipsa).
+	int			dimensionIndex;			//	Conveys information about the dimension of the signal. Currently used for storing the dimension index for Ipsa.
+	Signal *		relatedSignalList;		//	List of signals that should be co-sampled with this signal.
 	Signal *		relatedSignalListNext;	//	Move to the next element of the relatedSignalList.
 	Signal *		relatedSignalListPrev;	//	Move to the previous element of the relatedSignalList.
 };
@@ -928,6 +930,47 @@ struct Physics
 	Physics *		definition;
 
 	Physics *		next;
+};
+
+typedef enum {
+	kNewtonSensorInterfaceTypeI2C,
+	kNewtonSensorInterfaceTypeSPI,
+	kNewtonSensorInterfaceTypeAnalog,
+	kNewtonSensorInterfaceTypeUART,
+
+	kNewtonSensorInterfaceTypeMax
+} SensorInterfaceType;
+
+struct Modality {
+	char *		identifier;		/* Modality name, e.g, "bmx055xAcceleration" */
+	Signal *	signal;			/* Signal type to follow */
+	Physics *	_physics;		/* Temporary field */
+	double		rangeLowerBound;
+	double		rangeUpperBound;
+
+	int		precisionBits;
+	double		precisionCost;
+
+	double		accuracy;
+	double		accuracyCost;
+	// Signal *	accuracySignal;
+	
+	SensorInterfaceType	interfaceType;	/* WiP */
+	/* Missing register address for modality */
+	uint64_t	registerAddress;
+
+	Modality *	next;
+	// Modality *	prev;
+};
+
+struct Sensor {
+	IrNode *	baseNode;	/* Pointer to AST node of definition */
+	char *		identifier;	/* Definition identifier */
+	Modality *	modalityList;	/* List of sensor modalities */
+	uint16_t	erasureToken;
+
+	Sensor *	next;
+	// Sensor *	prev;
 };
 
 struct IntegralList
@@ -1188,6 +1231,12 @@ typedef struct
 	int 			targetParamLocatedKernel;
 
 	/*
+	 *	This is data type that a signal will be typedef'ed to
+	 *	in the signal typedef generation backend
+	 */
+	char *		signalTypedefDatatype;
+
+	/*
 	 *	We keep a global handle on the list of module scopes, for easy reference.
 	 *	In this use case, the node->identifier holds the scopes string name, and we
 	 *	chain then using their prev/next fields.
@@ -1250,8 +1299,8 @@ typedef struct
 	 *	Variables to keep track of the kernel number and pi number
 	 *	specified by the user for Pi Groups Signal Annotation.
 	 */
-	int				kernelNumber;
-	int				piNumber;
+	int			kernelNumber;
+	int			piNumber;
 	bool			enableKernelSelect;
 	bool			enablePiSelect;
 
@@ -1270,7 +1319,8 @@ typedef struct
 	 *	Global index of which prime numbers we have used for the dimension id's
 	 */
 	int		primeNumbersIndex;
-	Invariant * invariantList;
+	Invariant *	invariantList;
+	Sensor *	sensorList;
 } State;
 
 

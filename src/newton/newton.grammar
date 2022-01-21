@@ -52,7 +52,7 @@ invariantDefinition		::=	identifier ":" "invariant" parameterTuple  "=" "{" [con
 baseSignalDefinition		::=	identifier ":" "signal" [subdimensionTuple] "=" "{" [nameStatement] [signalUncertaintyStatement] [sensorStatement] symbolStatement derivationStatement "}" .
 sensorDefinition		::=	identifier ":" "sensor" parameterTuple "=" "{" sensorPropertyList "}" .
 nameStatement			::=	"name" "=" stringConst languageSetting ";" .
-signalUncertaintyStatement	::= "uncertainty" "=" distribution [parameterTuple] ";" .
+signalUncertaintyStatement	::=	"uncertainty" "=" distribution [parameterTuple] ";" .
 sensorStatement			::=	"sensor" "=" identifier ";" .
 symbolStatement			::=	"symbol" "=" identifier ";" .
 derivationStatement		::=	"derivation" "=" ("none" | "dimensionless" | quantityExpression) ";" .
@@ -113,10 +113,10 @@ sensorInterfaceStatement	::=	"interface" identifier ["@" numericFactor "bits"] "
 sensorInterfaceType		::=	"i2c" | "spi" | "analog" .
 sensorInterfaceCommandList	::=	sensorInterfaceCommand ";" {sensorInterfaceCommand ";"} .
 sensorInterfaceCommand		::=	readRegisterCommand | writeRegisterCommand | delayCommand | arithmeticCommand .
-readRegisterCommand		::=	identifier "=" "read" ["[" numericExpression "]" ","] numericExpression .
+readRegisterCommand		::=	identifier [":=" | "="] "read" ["[" numericExpression "]" ","] numericExpression .
 writeRegisterCommand		::=	"write" numericExpression "," numericExpression .
 delayCommand			::=	"delay" numericExpression .
-arithmeticCommand		::=	identifier "=" expression .
+arithmeticCommand		::=	identifier [":=" | "="] expression .
 rangeStatement			::=	"range" identifier "==" "[" numericFactor [unitFactor] "," numericFactor [unitFactor] "]" .
 uncertaintyStatement		::=	"uncertainty" identifier "==" factor [unitFactor] .
 erasureValueStatement		::=	"erasuretoken" identifier "==" numericFactor [unitFactor] .
@@ -136,12 +136,12 @@ distribution			::=	"Gaussian" | "Laplacian" | "StudentT" | "Bernoulli" | "Binomi
 					| "Weibull" | "Erlang" | "Maxwell" | "FermiDirac" | "FisherZ" 
 					| "LogSeries" | "Gumbel" | "Rayleigh" | "Gibrat" | "PearsonIII"
 					| "ExtremeValue" | "F" | "Xi" | "XiSquared" | "Unconstrained" .
-transcendental			::= "sin" | "cos" | "tan" | "cotan" | "sec"  | "cosec"
-						| "arcsin" | "arccos" | "arctan" | "arccotan" | "arcsec"  | "arccosec"
-						| "sinh" | "cosh" | "tanh" | "cotanh" | "sech"  | "cosech"
-						| "arcsinh" | "arccosh" | "arctanh" | "arccotanh" | "arcsech"  | "arccosech"
-						| "exp" | "sqrt"
-						| "ln" | "log10" | "log2" .
+transcendental			::=	"sin" | "cos" | "tan" | "cotan" | "sec"  | "cosec"
+					| "arcsin" | "arccos" | "arctan" | "arccotan" | "arcsec"  | "arccosec"
+					| "sinh" | "cosh" | "tanh" | "cotanh" | "sech"  | "cosech"
+					| "arcsinh" | "arccosh" | "arctanh" | "arccotanh" | "arcsech"  | "arccosech"
+					| "exp" | "sqrt"
+					| "ln" | "log10" | "log2" .
 highPrecedenceBinaryOp		::=	"*" | "/" | "%" | "**" .
 lowPrecedenceBinaryOp		::=	"+" | "-" | ">>" | "<<" | "|" .
 unaryOp				::=	"-"  | "+" .
