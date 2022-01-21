@@ -36,6 +36,9 @@ For linear algebra in Newton, we use the Eigen library. This is also already lin
 
 The build also depends on the C protobuf compiler, `sloccount`, and on Graphviz. On Mac OS X, the easiest way to install these is to use macports (macports.org) to install the packages `protobuf-c` and `protobuf-cpp` (on Debian, you want the package `libprotobuf-c-dev` and on Ubuntu you also want `protobuf-c-compiler`), `sloccount`, and `graphviz-devel`.
 
+Furthermore, LLVM is a build and runtime dependency on this project.
+Currently, passes related to LLVM are tested with LLVM 12 and 13 versions.
+
 Once you have the above repositories, 
 
 1.	Create a file `config.local` in the root of the Noisy tree and edit it to contain 
