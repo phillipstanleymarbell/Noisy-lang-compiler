@@ -5,7 +5,7 @@ ifndef VERBOSE
 endif
 
 LLVM_CONFIG:=llvm-config
-CC:=clang-12
+CC:=clang # Currently tested with clang-12/clang-13
 
 vpath %.c c-files
 
