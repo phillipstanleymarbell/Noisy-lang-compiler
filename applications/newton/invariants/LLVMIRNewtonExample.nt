@@ -1,0 +1,29 @@
+
+include "NewtonBaseSignals.nt"
+
+signalAccelerationX : signal =
+{
+	name		= "signalAccelerationX" English;
+	symbol		= accX;
+	derivation	= mass / second;
+}
+
+signalAccelerationY : signal =
+{
+	name		= "signalAccelerationY" English;
+	symbol		= accY;
+	derivation	= mass;
+}
+
+signalAccelerationZ : signal =
+{
+	name		= "signalAccelerationZ" English;
+	symbol		= accZ;
+	derivation	= mass / second;
+}
+
+processXY : invariant( aX	: signalAccelerationX,
+					   aY	: signalAccelerationY) =
+{
+	aX < aY
+}

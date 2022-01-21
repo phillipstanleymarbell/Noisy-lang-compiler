@@ -11,6 +11,8 @@ EXAMPLESPATH	= ../../applications/newton
 
 COMPILERVARIANT = gcc	#clang
 
+LLVM_CONFIG?=llvm-config
+
 SYSNAME		= Newton
 SYSNAMELOWER	= newton
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
@@ -23,6 +25,13 @@ EXAMPLES_NEWTON_FLAGS = -v 2 -p#--verbose 1
 CXXFLAGS	= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
+
+LDFLAGS+=$(shell $(LLVM_CONFIG) --ldflags)
+CXXFLAGS+=$(COMMON_FLAGS) $(shell $(LLVM_CONFIG) --cxxflags) -fno-rtti
+CPPFLAGS+=$(shell $(LLVM_CONFIG) --cppflags) -I$(shell $(LLVM_CONFIG) --includedir)
+LLVMLIBS=$(shell $(LLVM_CONFIG) --libs irreader support)
+SYSTEMLIBS=$(shell $(LLVM_CONFIG) --system-libs)
+
 
 LIBNEWTON	= Newton
 LIBCOMMON	= Common
@@ -37,7 +46,7 @@ CGI_TARGET	= newtoncgi-$(OSTYPE)-$(NEWTON_L10N)
 CCFLAGS		+= -c -std=gnu99 -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
 CXXFLAGS	+= -c -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
 
-WFLAGS		= -Wall -Werror
+WFLAGS		= -Wall #-Werror
 INCDIRS		= -I. -I$(LIBFLEXPATH) -I$(COMMONPATH) -I$(NOISYPATH) -I$(INCLUDEPATH) -I$(TREEROOT)/submodules/eigen
 LINKDIRS	= -L. -L$(LIBFLEXPATH) -L$(COMMONPATH) -lCommon-$(OSTYPE)-EN
 PROTOC		= protoc-c
@@ -82,6 +91,7 @@ SOURCES		=\
 		newton-timeStamps.c\
 		main.c\
 		newton-eigenLibraryInterface.cpp\
+		newton-irPass-LLVMIR.cpp\
 
 
 #
@@ -109,6 +119,7 @@ OBJS		=\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
@@ -148,6 +159,7 @@ CGIOBJS		=\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend/$(OBJECTEXTENSION)\
@@ -186,6 +198,7 @@ LIBNEWTONOBJS =\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
@@ -221,6 +234,7 @@ HEADERS		=\
 		newton-irPass-dotBackend.h\
 		newton-irPass-smtBackend.h\
 		newton-irPass-estimatorSynthesisBackend.h\
+		newton-irPass-LLVMIR.h\
 		newton-irPass-invariantSignalAnnotation.h\
 		newton-irPass-piGroupsSignalAnnotation.h\
 		newton-irPass-ipsaBackend.h\
@@ -267,11 +281,11 @@ lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a: $(LIBNEWTONOBJS) $(CONFIGPATH)/confi
 #			Executables
 #
 target: $(OBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
-	$(LD) $(LINKDIRS) $(LDFLAGS) $(OBJS) -lflex-$(OSTYPE) -lm $(LINKDIRS) $(LDFLAGS) -o $(TARGET) -lstdc++
+	$(LD) $(LINKDIRS) $(LDFLAGS) $(OBJS) $(LLVMLIBS) $(SYSTEMLIBS) -lflex-$(OSTYPE) -lm $(LINKDIRS) $(LDFLAGS) -o $(TARGET) -lstdc++
 
 
 cgi:lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) $(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT) Makefile 
-	$(LD) $(LINKDIRS) $(LDFLAGS) $(CGIOBJS) -lflex-$(OSTYPE) $(LINKDIRS) $(LDFLAGS) -o $(CGI_TARGET) -lstdc++
+	$(LD) $(LINKDIRS) $(LDFLAGS) $(CGIOBJS) $(LLVMLIBS) $(SYSTEMLIBS) -lflex-$(OSTYPE) $(LINKDIRS) $(LDFLAGS) -o $(CGI_TARGET) -lstdc++
 
 
 #
@@ -282,6 +296,10 @@ cgi:lib$(LIBNEWTON)-$(OSTYPE)-$(NEWTON_L10N).a $(CGIOBJS) $(CONFIGPATH)/config.$
 	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
 newton-eigenLibraryInterface.$(OBJECTEXTENSION): newton-eigenLibraryInterface.cpp
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
+
+newton-irPass-LLVMIR.$(OBJECTEXTENSION): newton-irPass-LLVMIR.cpp
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 

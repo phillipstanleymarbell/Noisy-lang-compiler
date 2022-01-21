@@ -1,0 +1,7 @@
+
+changeset: 1092:e79c17580e83fb40c2d608d0e7e4847dd4ddbdd6
+char kNewtonVersion[] = "0.3-alpha-1092 (e79c17580e83fb40c2d608d0e7e4847dd4ddbdd6) (build 07-29-2021-20:01-blackgeorge@blackgeorge-IdeaPad-L340-17IRH-Gaming-Linux-5.3.0-62-generic-x86_64)";
+
+./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s
+
+./src/newton/newton-linux-EN -v 0 -eP applications/newton/invariants/ViolinWithTemperatureDependence-pigroups.nt

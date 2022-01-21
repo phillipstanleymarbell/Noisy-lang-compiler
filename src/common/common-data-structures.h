@@ -713,7 +713,8 @@ typedef enum
 	kNewtonIrPassInvariantSignalAnnotation			= (1 << 10),
 
 	kNewtonIrPassPiGroupsSignalAnnotation			= (1 << 11),
-	kNewtonIrPassSensorsDisable				= (1 << 12),
+	kNewtonIrPassLLVMIR								= (1 << 12),
+	kNewtonIrPassSensorsDisable				= (1 << 13),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
@@ -1281,6 +1282,11 @@ typedef struct
 	char *			estimatorProcessModel;
 	char *			estimatorMeasurementModel;
 	bool			autodiff;
+	
+	/*
+	 *	LLVM IR input file
+	 */
+	char *			llvmIR;
 	
 	/*
 	 *	Variables for storing lists of identifiers attached
