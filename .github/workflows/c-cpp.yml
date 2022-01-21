@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: install LLVM
+      run: sudo apt-get --assume-yes install llvm
     - uses: actions/checkout@v2
       with:
         submodules: recursive
