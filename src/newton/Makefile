@@ -53,6 +53,7 @@ SOURCES		=\
 		newton-dimension-pass.c\
 		newton-dimension-check-pass.c\
 		newton-irPass-autoDiff.c\
+		newton-irPass-sensors.c\
 		newton-irPass-dotBackend.c\
 		newton-irPass-smtBackend.c\
 		newton-irPass-cBackend.c\
@@ -101,6 +102,7 @@ OBJS		=\
 		newton-timeStamps.$(OBJECTEXTENSION)\
 		newton-typeSignatures.$(OBJECTEXTENSION)\
 		newton-irPass-autoDiff.$(OBJECTEXTENSION)\
+		newton-irPass-sensors.$(OBJECTEXTENSION)\
 		newton-irPass-cBackend.$(OBJECTEXTENSION)\
 		newton-irPass-RTLBackend.$(OBJECTEXTENSION)\
 		newton-irPass-signalTypedefGenerationBackend.$(OBJECTEXTENSION)\
@@ -139,6 +141,7 @@ CGIOBJS		=\
 		newton-timeStamps.$(OBJECTEXTENSION)\
 		newton-typeSignatures.$(OBJECTEXTENSION)\
 		newton-irPass-autoDiff.$(OBJECTEXTENSION)\
+		newton-irPass-sensors.$(OBJECTEXTENSION)\
 		newton-irPass-cBackend.$(OBJECTEXTENSION)\
 		newton-irPass-RTLBackend.$(OBJECTEXTENSION)\
 		newton-irPass-signalTypedefGenerationBackend.$(OBJECTEXTENSION)\
@@ -177,6 +180,7 @@ LIBNEWTONOBJS =\
 		newton-types.$(OBJECTEXTENSION)\
 		newton-timeStamps.$(OBJECTEXTENSION)\
 		newton-irPass-autoDiff.$(OBJECTEXTENSION)\
+		newton-irPass-sensors.$(OBJECTEXTENSION)\
 		newton-irPass-cBackend.$(OBJECTEXTENSION)\
 		newton-irPass-RTLBackend.$(OBJECTEXTENSION)\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
@@ -211,6 +215,7 @@ HEADERS		=\
 		newton-types.h\
 		newton-timeStamps.h\
 		newton-irPass-autoDiff.h\
+		newton-irPass-sensors.h\
 		newton-irPass-cBackend.h\
 		newton-irPass-RTLBackend.h\
 		newton-irPass-dotBackend.h\

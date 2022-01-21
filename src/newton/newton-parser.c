@@ -3249,7 +3249,7 @@ newtonParseSensorInterfaceCommand(State *  N, Scope *  currentScope)
 /*
  *	Grammar production:
  *
- *		readRegisterCommand		::=	identifier "=" "read" ["[" numericExpression "]" ","] numericExpression .
+ *		readRegisterCommand		::=	identifier [":=" | "="] "read" ["[" numericExpression "]" ","] numericExpression .
  */
 IrNode *
 newtonParseReadRegisterCommand(State *  N, Scope *  currentScope)
@@ -3262,8 +3262,20 @@ newtonParseReadRegisterCommand(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
-	addLeaf(N, node, newtonParseIdentifierDefinitionTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
-	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
+	/*
+	 *	Identifier can be definition or usage. 
+	 */
+	if (peekCheck(N, 2, kNewtonIrNodeType_Tdef))
+	{
+		addLeaf(N, node, newtonParseIdentifierDefinitionTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+		newtonParseTerminal(N, kNewtonIrNodeType_Tdef, currentScope);
+	}
+	else
+	{
+		addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+		newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
+	}
+
 	newtonParseTerminal(N, kNewtonIrNodeType_Tread, currentScope);
 
 	if (peekCheck(N, 1, kNewtonIrNodeType_TleftBracket))
@@ -3380,7 +3392,7 @@ newtonParseArithmeticCommand(State *  N, Scope *  currentScope)
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
 
-	addLeaf(N, node, newtonParseIdentifierDefinitionTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+	addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tassign, currentScope);
 	addLeaf(N, node, newtonParseExpression(N, currentScope));
 
@@ -3932,9 +3944,20 @@ newtonParseDistributionFactor(State *  N, Scope *  currentScope)
 						NULL /* right child */,
 						lexPeek(N, 1)->sourceInfo /* source info */
 					);
+	IrNode *	scopeBegin;
+	IrNode *	scopeEnd;
+	Scope *		newScope;
 
-	addLeaf(N, node, newtonParseDistribution(N, currentScope));
-	addLeaf(N, node, newtonParseParameterValueList(N, currentScope));
+	scopeBegin = newtonParseDistribution(N, currentScope);
+	addLeaf(N, node, scopeBegin);
+
+	newScope = commonSymbolTableOpenScope(N, currentScope, scopeBegin);
+	newScope->scopeParameterList = currentScope->scopeParameterList;
+
+	scopeEnd = newtonParseParameterValueList(N, newScope);
+	addLeaf(N, node, scopeEnd);
+
+	commonSymbolTableCloseScope(N, newScope, scopeEnd);
 
 	/*
 	 *	Activate this when Newton's FFI sets have been corrected. See issue #317.
@@ -3969,14 +3992,14 @@ newtonParseParameterValueList(State *  N, Scope *  currentScope)
 					);
 
 	newtonParseTerminal(N, kNewtonIrNodeType_TleftParen, currentScope);
-	addLeaf(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+	addLeaf(N, node, newtonParseIdentifier(N, currentScope));
 	newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
 	addLeafWithChainingSeq(N, node, newtonParseExpression(N, currentScope));
 
 	while (peekCheck(N, 1, kNewtonIrNodeType_Tcomma))
 	{
 		newtonParseTerminal(N, kNewtonIrNodeType_Tcomma, currentScope);
-		addLeafWithChainingSeq(N, node, newtonParseIdentifierUsageTerminal(N, kNewtonIrNodeType_Tidentifier, currentScope));
+		addLeafWithChainingSeq(N, node, newtonParseIdentifier(N, currentScope));
 		newtonParseTerminal(N, kNewtonIrNodeType_Tcolon, currentScope);
 		addLeafWithChainingSeq(N, node, newtonParseExpression(N, currentScope));
 	}
