@@ -1,0 +1,33 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: install LLVM
+      run: sudo apt-get --assume-yes install llvm
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: print path
+      run: pwd
+    - name: list root dir
+      run: ls
+    - name: list submodules dirs
+      run: ls submodules/*
+    - name: configure
+      run: |
+        echo "LIBFLEXPATH=$GITHUB_WORKSPACE/submodules/libflex" > config.local
+        echo "CONFIGPATH=$GITHUB_WORKSPACE/submodules/libflex" >> config.local
+        echo "OSTYPE=linux" >> config.local
+        echo "MACHTYPE=x86_64" >> config.local
+    - name: make
+      run: make
