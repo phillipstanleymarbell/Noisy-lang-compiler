@@ -4,7 +4,7 @@ extern "C"
 {
 #	endif /* __cplusplus */
 
-void    irPassLLVMIR(State *  N);
+void    irPassLLVMIRDimensionCheck(State *  N);
 
 #	ifdef __cplusplus
 } /* extern "C" */

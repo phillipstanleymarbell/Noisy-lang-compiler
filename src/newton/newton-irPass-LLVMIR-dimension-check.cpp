@@ -523,7 +523,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 
 
 void
-irPassLLVMIR(State *  N)
+irPassLLVMIRDimensionCheck(State *  N)
 {
 	if (N->llvmIR == nullptr)
 	{
