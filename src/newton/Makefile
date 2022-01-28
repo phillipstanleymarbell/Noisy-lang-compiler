@@ -91,7 +91,7 @@ SOURCES		=\
 		newton-timeStamps.c\
 		main.c\
 		newton-eigenLibraryInterface.cpp\
-		newton-irPass-LLVMIR.cpp\
+		newton-irPass-LLVMIR-dimension-check.cpp\
 
 
 #
@@ -119,7 +119,7 @@ OBJS		=\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
-		newton-irPass-LLVMIR.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
@@ -159,7 +159,7 @@ CGIOBJS		=\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
-		newton-irPass-LLVMIR.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend/$(OBJECTEXTENSION)\
@@ -198,7 +198,7 @@ LIBNEWTONOBJS =\
 		newton-irPass-dotBackend.$(OBJECTEXTENSION)\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
-		newton-irPass-LLVMIR.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
@@ -234,7 +234,7 @@ HEADERS		=\
 		newton-irPass-dotBackend.h\
 		newton-irPass-smtBackend.h\
 		newton-irPass-estimatorSynthesisBackend.h\
-		newton-irPass-LLVMIR.h\
+		newton-irPass-LLVMIR-dimension-check.h\
 		newton-irPass-invariantSignalAnnotation.h\
 		newton-irPass-piGroupsSignalAnnotation.h\
 		newton-irPass-ipsaBackend.h\
@@ -299,7 +299,7 @@ newton-eigenLibraryInterface.$(OBJECTEXTENSION): newton-eigenLibraryInterface.cp
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
-newton-irPass-LLVMIR.$(OBJECTEXTENSION): newton-irPass-LLVMIR.cpp
+newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION): newton-irPass-LLVMIR-dimension-check.cpp
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
