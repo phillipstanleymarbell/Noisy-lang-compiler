@@ -44,7 +44,7 @@ CGI_TARGET	= newtoncgi-$(OSTYPE)-$(NEWTON_L10N)
 
 #	-std=gnu99 because we use anonymous unions and induction variable defintions in loop head.
 CCFLAGS		+= -c -std=gnu99 -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
-CXXFLAGS	+= -c -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
+CXXFLAGS	+= -c -std=c++14 -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
 
 WFLAGS		= -Wall #-Werror
 INCDIRS		= -I. -I$(LIBFLEXPATH) -I$(COMMONPATH) -I$(NOISYPATH) -I$(INCLUDEPATH) -I$(TREEROOT)/submodules/eigen

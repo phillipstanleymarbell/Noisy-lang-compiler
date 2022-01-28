@@ -39,6 +39,8 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <stdint.h>
+#include <set>
+#include <algorithm>
 
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
@@ -79,11 +81,105 @@ extern "C"
 #include "newton-irPass-invariantSignalAnnotation.h"
 
 
+std::map<BasicBlock *, std::set<Value *>>	upwardExposedVariables;
+std::map<BasicBlock *, std::set<Value *>>	killedVariables;
+std::map<BasicBlock *, std::set<Value *>>	liveOutVariables;
+
+
+void
+initBasicBlock(BasicBlock &  llvmIrBasicBlock)
+{
+	upwardExposedVariables[&llvmIrBasicBlock].empty();
+	killedVariables[&llvmIrBasicBlock].empty();
+
+	for (Instruction &  llvmIrInstruction : llvmIrBasicBlock)
+	{
+		/*
+		 * Instructions of the form:
+		 * 		x <- y op z
+		 */
+		if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+		{
+			auto leftOperand = llvmIrBinaryOperator->getOperand(0);
+			auto rightOperand = llvmIrBinaryOperator->getOperand(1);
+
+			if (killedVariables[&llvmIrBasicBlock].count(leftOperand) == 0)
+			{
+				upwardExposedVariables[&llvmIrBasicBlock].insert(leftOperand);
+			}
+
+			if (killedVariables[&llvmIrBasicBlock].count(rightOperand) == 0)
+			{
+				upwardExposedVariables[&llvmIrBasicBlock].insert(leftOperand);
+			}
+
+			killedVariables[&llvmIrBasicBlock].insert(llvmIrBinaryOperator);
+		}
+	}
+
+	liveOutVariables[&llvmIrBasicBlock].empty();
+}
+
+bool
+computeLiveOurVariables(BasicBlock &  llvmIrBasicBlock)
+{
+	std::set<Value *>	computedLiveOutVariables;
+
+	auto 	terminatorInstruction = llvmIrBasicBlock.getTerminator();
+	auto	successorNumber = terminatorInstruction->getNumSuccessors();
+
+	for (unsigned int i = 0; i < successorNumber; i++)
+	{
+		BasicBlock *	successorBasicBlock = terminatorInstruction->getSuccessor(i);
+
+		std::set<Value *>	successorUpwardExposedVariables = upwardExposedVariables[successorBasicBlock];
+		std::set<Value *>	successorKilledVariables = killedVariables[successorBasicBlock];
+		std::set<Value *>	successorLiveOutVariables = liveOutVariables[successorBasicBlock];
+
+		std::set<Value *>	successorContributionToLiveOutVariables;
+		std::set<Value *>	liveOutVariablesSetDifferenceKilledVariables;
+
+		std::set_difference(successorLiveOutVariables.begin(), successorLiveOutVariables.end(),
+							successorKilledVariables.begin(), successorKilledVariables.end(),
+							std::inserter(liveOutVariablesSetDifferenceKilledVariables,
+										  liveOutVariablesSetDifferenceKilledVariables.end()));
+
+		std::set_union(successorUpwardExposedVariables.begin(), successorUpwardExposedVariables.end(),
+					   liveOutVariablesSetDifferenceKilledVariables.begin(), liveOutVariablesSetDifferenceKilledVariables.end(),
+					   std::inserter(successorContributionToLiveOutVariables,
+									 successorContributionToLiveOutVariables.end()));
+
+		std::set_union(computedLiveOutVariables.begin(), computedLiveOutVariables.end(),
+					   successorContributionToLiveOutVariables.begin(), successorContributionToLiveOutVariables.end(),
+					   std::inserter(computedLiveOutVariables,
+									 computedLiveOutVariables.end()));
+	}
+
+	return computedLiveOutVariables != liveOutVariables[&llvmIrBasicBlock];
+}
+
 void
 livenessAnalysis(Function &  llvmIrFunction, State *  N)
 {
-	std::set<Value *> UEVar;
-	std::set<Value *> VarKill;
+	for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction)
+	{
+		initBasicBlock(llvmIrBasicBlock);
+
+		auto	changed = true;
+		while (changed)
+		{
+			changed = false;
+			for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction)
+			{
+				auto 	liveOutVariablesHaveChanged = computeLiveOurVariables(llvmIrBasicBlock);
+
+				if (liveOutVariablesHaveChanged)
+				{
+					changed = true;
+				}
+			}
+		}
+	}
 }
 
 
