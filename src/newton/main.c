@@ -411,6 +411,7 @@ main(int argc, char *argv[])
 			case 'L':
 			{
 				N->irPasses |= kNewtonIrPassLLVMIRDimensionCheck;
+				N->irPasses |= kNewtonIrPassLLVMIRLivenessAnalysis;
 				N->llvmIR = optarg;
 				break;
 			}
