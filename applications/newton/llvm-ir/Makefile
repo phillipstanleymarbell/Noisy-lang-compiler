@@ -9,10 +9,14 @@ CC:=clang # Currently tested with clang-12/clang-13
 
 vpath %.c c-files
 
-BIN?=application
+BIN?=application if
 COMMON_FLAGS=-Wall -Wextra
 
-default: $(BIN).ll
+all: default if
+
+default: application.ll
+
+if_ : if.ll
 
 %.ll : %.c
 	@echo Compiling $*.c
