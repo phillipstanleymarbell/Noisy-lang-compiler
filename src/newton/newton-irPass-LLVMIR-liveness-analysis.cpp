@@ -119,14 +119,14 @@ initBasicBlock(BasicBlock &  llvmIrBasicBlock)
 			auto leftOperand = llvmIrBinaryOperator->getOperand(0);
 			auto rightOperand = llvmIrBinaryOperator->getOperand(1);
 
-			if (killedVariables[&llvmIrBasicBlock].count(leftOperand) == 0)
+			if (killedVariables[&llvmIrBasicBlock].count(leftOperand) == 0 && !isa<llvm::Constant>(leftOperand))
 			{
 				upwardExposedVariables[&llvmIrBasicBlock].insert(leftOperand);
 			}
 
-			if (killedVariables[&llvmIrBasicBlock].count(rightOperand) == 0)
+			if (killedVariables[&llvmIrBasicBlock].count(rightOperand) == 0 && !isa<llvm::Constant>(rightOperand))
 			{
-				upwardExposedVariables[&llvmIrBasicBlock].insert(leftOperand);
+				upwardExposedVariables[&llvmIrBasicBlock].insert(rightOperand);
 			}
 
 			killedVariables[&llvmIrBasicBlock].insert(llvmIrBinaryOperator);
@@ -136,7 +136,7 @@ initBasicBlock(BasicBlock &  llvmIrBasicBlock)
 	liveOutVariables[&llvmIrBasicBlock].empty();
 }
 
-bool
+std::set<Value *>
 computeLiveOurVariables(BasicBlock &  llvmIrBasicBlock)
 {
 	std::set<Value *>	computedLiveOutVariables;
@@ -171,7 +171,7 @@ computeLiveOurVariables(BasicBlock &  llvmIrBasicBlock)
 									 computedLiveOutVariables.end()));
 	}
 
-	return computedLiveOutVariables != liveOutVariables[&llvmIrBasicBlock];
+	return computedLiveOutVariables;
 }
 
 void
@@ -180,19 +180,20 @@ livenessAnalysis(Function &  llvmIrFunction, State *  N)
 	for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction)
 	{
 		initBasicBlock(llvmIrBasicBlock);
+	}
 
-		auto	changed = true;
-		while (changed)
+	auto	changed = true;
+	while (changed)
+	{
+		changed = false;
+		for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction)
 		{
-			changed = false;
-			for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction)
-			{
-				auto 	liveOutVariablesHaveChanged = computeLiveOurVariables(llvmIrBasicBlock);
+			auto 	computedLiveOutVariables = computeLiveOurVariables(llvmIrBasicBlock);
 
-				if (liveOutVariablesHaveChanged)
-				{
-					changed = true;
-				}
+			if (computedLiveOutVariables != liveOutVariables[&llvmIrBasicBlock])
+			{
+				changed = true;
+				liveOutVariables[&llvmIrBasicBlock] = computedLiveOutVariables;
 			}
 		}
 	}
@@ -221,6 +222,7 @@ irPassLLVMIRLivenessAnalysis(State *  N)
 	{
 		livenessAnalysis(mi, N);
 	}
+	printBasicBlockSets(liveOutVariables);
 }
 
 }
