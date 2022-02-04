@@ -87,6 +87,22 @@ std::map<BasicBlock *, std::set<Value *>>	liveOutVariables;
 
 
 void
+printBasicBlockSets(const std::map<BasicBlock *, std::set<Value *>>&  basicBlockSets)
+{
+	for (auto const& basicBlockSet : basicBlockSets)
+	{
+		outs() << "Basic Block: \n";
+		outs() << *(basicBlockSet.first->getFirstNonPHI()) << "\n";
+		for (auto const& var : basicBlockSet.second)
+		{
+			outs() << "		" << *var <<  "\n";
+		}
+		outs() << "=================================\n";
+	}
+}
+
+
+void
 initBasicBlock(BasicBlock &  llvmIrBasicBlock)
 {
 	upwardExposedVariables[&llvmIrBasicBlock].empty();
