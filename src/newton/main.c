@@ -107,7 +107,8 @@ main(int argc, char *argv[])
 			{"latex",		no_argument,		0,	'x'},
 			{"RTLcodegen",		required_argument,	0,	'l'},
 			{"targetParam",		required_argument,	0,	'T'},
-			{"llvm-ir",             required_argument,      0,      'L'},
+			{"llvm-ir",             required_argument,      0,      'I'},
+			{"llvm-ir-liveness-check",    no_argument,      0,      'L'},
 			{"estimator-synthesis",	required_argument,	0,	420},
 			{"process",		required_argument,	0,	421},
 			{"measurement",		required_argument,	0,	422},
@@ -408,11 +409,16 @@ main(int argc, char *argv[])
 				break;
 			}
 
-			case 'L':
+			case 'I':
 			{
 				N->irPasses |= kNewtonIrPassLLVMIRDimensionCheck;
-				N->irPasses |= kNewtonIrPassLLVMIRLivenessAnalysis;
 				N->llvmIR = optarg;
+				break;
+			}
+
+			case 'L':
+			{
+				N->irPasses |= kNewtonIrPassLLVMIRLivenessAnalysis;
 				break;
 			}
 
