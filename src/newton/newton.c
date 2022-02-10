@@ -278,6 +278,14 @@ processNewtonFile(State *  N, char *  filename)
 	 */
 	if (N->irBackends & kNewtonIrBackendEstimatorSynthesis)
 	{
+		if (N->verbosityLevel)
+		{
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "====kNewtonIrBackendEstimatorSynthesis====\n");
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "N->outputEstimatorSynthesisFilePath:\t%s\n", N->outputEstimatorSynthesisFilePath);
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "N->estimatorProcessModel:\t%s\n", N->estimatorProcessModel);
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "N->estimatorMeasurementModel:\t%s\n", N->estimatorMeasurementModel);
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "N->autodiff:\t%s\n", (N->autodiff?"true":"false"));
+		}
 		irPassEstimatorSynthesisBackend(N);
 	}
 

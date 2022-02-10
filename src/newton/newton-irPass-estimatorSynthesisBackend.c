@@ -128,13 +128,22 @@ typedef struct estimatorSynthesisState
 Invariant *
 findInvariantByIdentifier(State *  N, const char *  identifier)
 {
-	Symbol *	invariantSym = commonSymbolTableSymbolForIdentifier(N, N->newtonIrTopScope, identifier);
-	IrNode *	invariantNode = invariantSym->typeTree->irParent;
+	Symbol *	invariantSymbol;
+	IrNode *	invariantNode;
+	Invariant *	invariant;
 
+	invariantSymbol = commonSymbolTableSymbolForIdentifier(N, N->newtonIrTopScope, identifier);
+	if (invariantSymbol == NULL)
+	{
+		return NULL;
+	}
+	
+	invariantNode = invariantSymbol->typeTree->irParent;
+	
 	/*
 	 *	We are, in fact, comparing addresses here.
 	 */
-	Invariant *	invariant = N->invariantList;
+	invariant = N->invariantList;
 	while (invariant != NULL && invariant->identifier != invariantNode->irLeftChild->tokenString)
 	{
 		invariant = invariant->next;
@@ -933,6 +942,19 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	 */
 	Invariant *	processInvariant = findInvariantByIdentifier(N, N->estimatorProcessModel);
 	Invariant *	measureInvariant = findInvariantByIdentifier(N, N->estimatorMeasurementModel);
+	if (processInvariant == NULL || measureInvariant == NULL)
+	{
+		if (processInvariant == NULL)
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, "Process model Invariant '%s' not found\n", N->estimatorProcessModel);
+		}
+		if (measureInvariant == NULL)
+		{
+			flexprint(N->Fe, N->Fm, N->Fperr, "Measurement model Invariant '%s' not found\n", N->estimatorMeasurementModel);
+		}		
+		fatal(N, Esanity);
+	}
+	
 
 	/*
 	 *	Deduce the state variables from the process model invariant
@@ -1846,11 +1868,11 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 void
 irPassEstimatorSynthesisBackend(State *  N)
 {
-    if (N->estimatorProcessModel == NULL || N->estimatorMeasurementModel == NULL)
-    {
-        flexprint(N->Fe, N->Fm, N->Fperr, "Please specify the invariant identifiers for the process and measurement model.\n");
+	if (N->estimatorProcessModel == NULL || N->estimatorMeasurementModel == NULL)
+	{
+		flexprint(N->Fe, N->Fm, N->Fperr, "Please specify the invariant identifiers for the process and measurement model.\n");
 		fatal(N, Esanity);
-    }
+	}
 
 	FILE *	apiFile;
 
