@@ -81,9 +81,12 @@ extern "C"
 #include "newton-irPass-invariantSignalAnnotation.h"
 
 
-std::map<BasicBlock *, std::set<Value *>>	upwardExposedVariables;
-std::map<BasicBlock *, std::set<Value *>>	killedVariables;
-std::map<BasicBlock *, std::set<Value *>>	liveOutVariables;
+typedef struct livenessState {
+	std::map<BasicBlock *, std::set<Value *>>	upwardExposedVariables;
+	std::map<BasicBlock *, std::set<Value *>>	killedVariables;
+	std::map<BasicBlock *, std::set<Value *>>	liveOutVariables;
+} livenessState;
+
 
 
 void
@@ -103,10 +106,10 @@ printBasicBlockSets(const std::map<BasicBlock *, std::set<Value *>>&  basicBlock
 
 
 void
-initBasicBlock(BasicBlock &  llvmIrBasicBlock)
+initBasicBlock(livenessState *  livenessSets, BasicBlock &  llvmIrBasicBlock)
 {
-	upwardExposedVariables[&llvmIrBasicBlock].empty();
-	killedVariables[&llvmIrBasicBlock].empty();
+	livenessSets->upwardExposedVariables[&llvmIrBasicBlock].empty();
+	livenessSets->killedVariables[&llvmIrBasicBlock].empty();
 
 	for (Instruction &  llvmIrInstruction : llvmIrBasicBlock)
 	{
@@ -119,25 +122,25 @@ initBasicBlock(BasicBlock &  llvmIrBasicBlock)
 			auto leftOperand = llvmIrBinaryOperator->getOperand(0);
 			auto rightOperand = llvmIrBinaryOperator->getOperand(1);
 
-			if (killedVariables[&llvmIrBasicBlock].count(leftOperand) == 0 && !isa<llvm::Constant>(leftOperand))
+			if (livenessSets->killedVariables[&llvmIrBasicBlock].count(leftOperand) == 0 && !isa<llvm::Constant>(leftOperand))
 			{
-				upwardExposedVariables[&llvmIrBasicBlock].insert(leftOperand);
+				livenessSets->upwardExposedVariables[&llvmIrBasicBlock].insert(leftOperand);
 			}
 
-			if (killedVariables[&llvmIrBasicBlock].count(rightOperand) == 0 && !isa<llvm::Constant>(rightOperand))
+			if (livenessSets->killedVariables[&llvmIrBasicBlock].count(rightOperand) == 0 && !isa<llvm::Constant>(rightOperand))
 			{
-				upwardExposedVariables[&llvmIrBasicBlock].insert(rightOperand);
+				livenessSets->upwardExposedVariables[&llvmIrBasicBlock].insert(rightOperand);
 			}
 
-			killedVariables[&llvmIrBasicBlock].insert(llvmIrBinaryOperator);
+			livenessSets->killedVariables[&llvmIrBasicBlock].insert(llvmIrBinaryOperator);
 		}
 	}
 
-	liveOutVariables[&llvmIrBasicBlock].empty();
+	livenessSets->liveOutVariables[&llvmIrBasicBlock].empty();
 }
 
 std::set<Value *>
-computeLiveOurVariables(BasicBlock &  llvmIrBasicBlock)
+computeLiveOurVariables(livenessState *  livenessSets, BasicBlock &  llvmIrBasicBlock)
 {
 	std::set<Value *>	computedLiveOutVariables;
 
@@ -148,9 +151,9 @@ computeLiveOurVariables(BasicBlock &  llvmIrBasicBlock)
 	{
 		BasicBlock *	successorBasicBlock = terminatorInstruction->getSuccessor(i);
 
-		std::set<Value *>	successorUpwardExposedVariables = upwardExposedVariables[successorBasicBlock];
-		std::set<Value *>	successorKilledVariables = killedVariables[successorBasicBlock];
-		std::set<Value *>	successorLiveOutVariables = liveOutVariables[successorBasicBlock];
+		std::set<Value *>	successorUpwardExposedVariables = livenessSets->upwardExposedVariables[successorBasicBlock];
+		std::set<Value *>	successorKilledVariables = livenessSets->killedVariables[successorBasicBlock];
+		std::set<Value *>	successorLiveOutVariables = livenessSets->liveOutVariables[successorBasicBlock];
 
 		std::set<Value *>	successorContributionToLiveOutVariables;
 		std::set<Value *>	liveOutVariablesSetDifferenceKilledVariables;
@@ -175,11 +178,11 @@ computeLiveOurVariables(BasicBlock &  llvmIrBasicBlock)
 }
 
 void
-livenessAnalysis(State *  N, Function &  llvmIrFunction)
+livenessAnalysis(State *  N, livenessState *  livenessSets, Function &  llvmIrFunction)
 {
 	for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction)
 	{
-		initBasicBlock(llvmIrBasicBlock);
+		initBasicBlock(livenessSets, llvmIrBasicBlock);
 	}
 
 	auto	changed = true;
@@ -188,12 +191,12 @@ livenessAnalysis(State *  N, Function &  llvmIrFunction)
 		changed = false;
 		for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction)
 		{
-			auto 	computedLiveOutVariables = computeLiveOurVariables(llvmIrBasicBlock);
+			auto 	computedLiveOutVariables = computeLiveOurVariables(livenessSets, llvmIrBasicBlock);
 
-			if (computedLiveOutVariables != liveOutVariables[&llvmIrBasicBlock])
+			if (computedLiveOutVariables != livenessSets->liveOutVariables[&llvmIrBasicBlock])
 			{
 				changed = true;
-				liveOutVariables[&llvmIrBasicBlock] = computedLiveOutVariables;
+				livenessSets->liveOutVariables[&llvmIrBasicBlock] = computedLiveOutVariables;
 			}
 		}
 	}
@@ -218,11 +221,16 @@ irPassLLVMIRLivenessAnalysis(State *  N)
 		fatal(N, Esanity);
 	}
 
+	livenessState * 	livenessSets = new livenessState();
+	livenessSets->liveOutVariables = {};
+	livenessSets->upwardExposedVariables = {};
+	livenessSets->killedVariables = {};
+
 	for (auto & mi : *Mod)
 	{
-		livenessAnalysis(N, mi);
+		livenessAnalysis(N, livenessSets, mi);
 	}
-	printBasicBlockSets(liveOutVariables);
+	printBasicBlockSets(livenessSets->liveOutVariables);
 }
 
 }
