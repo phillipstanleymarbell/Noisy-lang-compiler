@@ -175,7 +175,7 @@ computeLiveOurVariables(BasicBlock &  llvmIrBasicBlock)
 }
 
 void
-livenessAnalysis(Function &  llvmIrFunction, State *  N)
+livenessAnalysis(State *  N, Function &  llvmIrFunction)
 {
 	for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction)
 	{
@@ -220,7 +220,7 @@ irPassLLVMIRLivenessAnalysis(State *  N)
 
 	for (auto & mi : *Mod)
 	{
-		livenessAnalysis(mi, N);
+		livenessAnalysis(N, mi);
 	}
 	printBasicBlockSets(liveOutVariables);
 }
