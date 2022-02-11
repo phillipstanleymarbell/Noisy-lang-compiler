@@ -309,15 +309,18 @@ irPassEstimatorSynthesisCreateConstraintList(IrNode * currentNode,ConstraintList
 		{
 			if (listHead == NULL)
 			{
-				listHead = (ConstraintList)malloc(sizeof(ConstraintNode));
+				listHead = calloc(1, sizeof(ConstraintNode));
 				listHead->constraint = currentNode;
 				listHead->caseId = caseId;
 			}
 			else
 			{
-				ConstraintList iter;
-				for (iter = listHead; iter->next != NULL; iter = iter->next);
-				iter->next = (ConstraintList)malloc(sizeof(ConstraintNode));
+				ConstraintList iter = listHead;
+				while (iter->next != NULL)
+				{
+					iter = iter->next;
+				}				
+				iter->next = calloc(1, sizeof(ConstraintNode));
 				iter->next->constraint = currentNode;
 				iter->next->caseId = caseId;
 			}
