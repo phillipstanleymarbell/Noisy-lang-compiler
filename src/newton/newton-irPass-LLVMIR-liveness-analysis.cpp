@@ -134,6 +134,23 @@ initBasicBlock(LivenessState *  livenessState, BasicBlock &  llvmIrBasicBlock)
 
 			livenessState->killedVariables[&llvmIrBasicBlock].insert(llvmIrBinaryOperator);
 		}
+		else if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction))
+		{
+			Function *	calledFunction = llvmIrCallInstruction->getCalledFunction();
+			if (calledFunction->getName().startswith("llvm.dbg.declare"))
+			{
+				continue;
+			}
+			for (auto& argumentIterator : llvmIrCallInstruction->args())
+			{
+				if (livenessState->killedVariables[&llvmIrBasicBlock].count(argumentIterator) == 0 && !isa<llvm::Constant>(*argumentIterator))
+				{
+					livenessState->upwardExposedVariables[&llvmIrBasicBlock].insert(argumentIterator);
+				}
+
+				livenessState->killedVariables[&llvmIrBasicBlock].insert(llvmIrCallInstruction);
+			}
+		}
 	}
 
 	livenessState->liveOutVariables[&llvmIrBasicBlock].empty();
