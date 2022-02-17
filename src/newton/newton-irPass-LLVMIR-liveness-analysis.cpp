@@ -113,42 +113,85 @@ initBasicBlock(LivenessState *  livenessState, BasicBlock &  llvmIrBasicBlock)
 
 	for (Instruction &  llvmIrInstruction : llvmIrBasicBlock)
 	{
-		/*
-		 * Instructions of the form:
-		 * 		x <- y op z
-		 */
-		if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+		switch (llvmIrInstruction.getOpcode())
 		{
-			auto leftOperand = llvmIrBinaryOperator->getOperand(0);
-			auto rightOperand = llvmIrBinaryOperator->getOperand(1);
+			case Instruction::Add:
+			case Instruction::FAdd:
+			case Instruction::Sub:
+			case Instruction::FSub:
+			case Instruction::Mul:
+			case Instruction::FMul:
+			case Instruction::SDiv:
+			case Instruction::FDiv:
+			case Instruction::UDiv:
+			case Instruction::URem:
+			case Instruction::SRem:
+			case Instruction::FRem:
+			case Instruction::And:
+			case Instruction::Or:
+			case Instruction::Xor:
+			case Instruction::ICmp:
+			case Instruction::FCmp:
+			{
+				auto leftOperand = llvmIrInstruction.getOperand(0);
+				auto rightOperand = llvmIrInstruction.getOperand(1);
 
-			if (livenessState->killedVariables[&llvmIrBasicBlock].count(leftOperand) == 0 && !isa<llvm::Constant>(leftOperand))
-			{
-				livenessState->upwardExposedVariables[&llvmIrBasicBlock].insert(leftOperand);
-			}
-
-			if (livenessState->killedVariables[&llvmIrBasicBlock].count(rightOperand) == 0 && !isa<llvm::Constant>(rightOperand))
-			{
-				livenessState->upwardExposedVariables[&llvmIrBasicBlock].insert(rightOperand);
-			}
-
-			livenessState->killedVariables[&llvmIrBasicBlock].insert(llvmIrBinaryOperator);
-		}
-		else if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction))
-		{
-			Function *	calledFunction = llvmIrCallInstruction->getCalledFunction();
-			if (calledFunction->getName().startswith("llvm.dbg.declare"))
-			{
-				continue;
-			}
-			for (auto& argumentIterator : llvmIrCallInstruction->args())
-			{
-				if (livenessState->killedVariables[&llvmIrBasicBlock].count(argumentIterator) == 0 && !isa<llvm::Constant>(*argumentIterator))
+				if (livenessState->killedVariables[&llvmIrBasicBlock].count(leftOperand) == 0 && !isa<llvm::Constant>(leftOperand))
 				{
-					livenessState->upwardExposedVariables[&llvmIrBasicBlock].insert(argumentIterator);
+					livenessState->upwardExposedVariables[&llvmIrBasicBlock].insert(leftOperand);
 				}
 
-				livenessState->killedVariables[&llvmIrBasicBlock].insert(llvmIrCallInstruction);
+				if (livenessState->killedVariables[&llvmIrBasicBlock].count(rightOperand) == 0 && !isa<llvm::Constant>(rightOperand))
+				{
+					livenessState->upwardExposedVariables[&llvmIrBasicBlock].insert(rightOperand);
+				}
+
+				livenessState->killedVariables[&llvmIrBasicBlock].insert(&llvmIrInstruction);
+			}
+			case Instruction::SExt:
+			case Instruction::ZExt:
+			case Instruction::AShr:
+			case Instruction::LShr:
+			case Instruction::Shl:
+			case Instruction::Trunc:
+			case Instruction::SIToFP:
+			case Instruction::FNeg:
+			case Instruction::FPToUI:
+			case Instruction::FPToSI:
+			case Instruction::UIToFP:
+			case Instruction::FPTrunc:
+			case Instruction::FPExt:
+			case Instruction::PtrToInt:
+			case Instruction::IntToPtr:
+			case Instruction::BitCast:
+			case Instruction::AddrSpaceCast:
+			case Instruction::ExtractElement:
+			{
+				auto operand = llvmIrInstruction.getOperand(0);
+
+				if (livenessState->killedVariables[&llvmIrBasicBlock].count(operand) == 0 && !isa<llvm::Constant>(operand))
+				{
+					livenessState->upwardExposedVariables[&llvmIrBasicBlock].insert(operand);
+				}
+
+				livenessState->killedVariables[&llvmIrBasicBlock].insert(&llvmIrInstruction);
+			}
+			case Instruction::Call:
+			{
+				if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction)) {
+					Function *calledFunction = llvmIrCallInstruction->getCalledFunction();
+					if (calledFunction->getName().startswith("llvm.dbg.declare")) {
+						continue;
+					}
+					for (auto &argumentIterator: llvmIrCallInstruction->args()) {
+						if (livenessState->killedVariables[&llvmIrBasicBlock].count(argumentIterator) == 0 &&
+							!isa<llvm::Constant>(*argumentIterator)) {
+							livenessState->upwardExposedVariables[&llvmIrBasicBlock].insert(argumentIterator);
+						}
+
+						livenessState->killedVariables[&llvmIrBasicBlock].insert(llvmIrCallInstruction);
+					}
+				}
 			}
 		}
 	}
