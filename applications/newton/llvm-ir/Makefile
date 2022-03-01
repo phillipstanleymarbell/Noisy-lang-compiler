@@ -12,7 +12,9 @@ vpath %.c c-files
 BIN?=application
 COMMON_FLAGS=-Wall -Wextra
 
-default: $(BIN).ll
+all: default
+
+default: application.ll simple_control_flow.ll
 
 %.ll : %.c
 	@echo Compiling $*.c

@@ -44,7 +44,7 @@ CGI_TARGET	= newtoncgi-$(OSTYPE)-$(NEWTON_L10N)
 
 #	-std=gnu99 because we use anonymous unions and induction variable defintions in loop head.
 CCFLAGS		+= -c -std=gnu99 -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
-CXXFLAGS	+= -c -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
+CXXFLAGS	+= -c -std=c++14 -DkNewtonL10N="\"$(NEWTON_L10N)\"" -DNEWTON_L10N_EN
 
 WFLAGS		= -Wall #-Werror
 INCDIRS		= -I. -I$(LIBFLEXPATH) -I$(COMMONPATH) -I$(NOISYPATH) -I$(INCLUDEPATH) -I$(TREEROOT)/submodules/eigen
@@ -92,6 +92,7 @@ SOURCES		=\
 		main.c\
 		newton-eigenLibraryInterface.cpp\
 		newton-irPass-LLVMIR-dimension-check.cpp\
+		newton-irPass-LLVMIR-liveness-analysis.cpp\
 
 
 #
@@ -120,6 +121,7 @@ OBJS		=\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-liveness-analysis.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
@@ -160,6 +162,7 @@ CGIOBJS		=\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-liveness-analysis.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend/$(OBJECTEXTENSION)\
@@ -199,6 +202,7 @@ LIBNEWTONOBJS =\
 		newton-irPass-smtBackend.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-liveness-analysis.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
@@ -235,6 +239,7 @@ HEADERS		=\
 		newton-irPass-smtBackend.h\
 		newton-irPass-estimatorSynthesisBackend.h\
 		newton-irPass-LLVMIR-dimension-check.h\
+		newton-irPass-LLVMIR-liveness-analysis.h\
 		newton-irPass-invariantSignalAnnotation.h\
 		newton-irPass-piGroupsSignalAnnotation.h\
 		newton-irPass-ipsaBackend.h\
@@ -300,6 +305,10 @@ newton-eigenLibraryInterface.$(OBJECTEXTENSION): newton-eigenLibraryInterface.cp
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
 newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION): newton-irPass-LLVMIR-dimension-check.cpp
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
+
+newton-irPass-LLVMIR-liveness-analysis.$(OBJECTEXTENSION): newton-irPass-LLVMIR-liveness-analysis.cpp
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
