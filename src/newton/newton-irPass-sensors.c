@@ -162,6 +162,11 @@ irPassSensorsLoadSensor(State *  N, IrNode *  sensorNode)
 
 		// modality->signal;
 
+		/*
+		 *	Modality _physics (temporary until there is signal functionality)
+		 */
+		modality->_physics = parameter->irRightChild->physics;
+
 		IrNode *	tempNode = NULL;
 		int		n = 0;
 
