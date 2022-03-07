@@ -142,7 +142,28 @@ newtonPhysicsInfo(DIType *  debugType, State *  N)
 		}
 		else if (debugInfoCompositeType->getTag() == dwarf::DW_TAG_array_type)
 		{
-			errs() << "Unhandled DW_TAG for DICompositeType\n";
+			/*
+			 * Example:
+			 * !12 = !DICompositeType(tag: DW_TAG_array_type, baseType: !13, size: 128, elements: !14)
+			 * !13 = !DIBasicType(name: "double", size: 64, encoding: DW_ATE_float)
+			 * !14 = !{!15}
+			 * !15 = !DISubrange(count: 2)
+			 */
+			auto physicsInfo = new PhysicsInfo();
+			auto arrayPhysicsInfo = newtonPhysicsInfo(debugInfoCompositeType->getBaseType(), N);
+			auto element = debugInfoCompositeType->getElements()[0];
+			if (auto debugInfoSubrange = dyn_cast<DISubrange>(element))
+			{
+				auto countPointerUnion = debugInfoSubrange->getCount();
+				auto countConstantIntPointer = countPointerUnion.get<ConstantInt*>();
+				auto elementCount = countConstantIntPointer->getZExtValue();
+
+				for (unsigned index = 0; index < elementCount; index++)
+				{
+					physicsInfo->pushPhysicsInfo(arrayPhysicsInfo);
+				}
+			}
+			return physicsInfo;
 		}
 	}
 	return nullptr;
