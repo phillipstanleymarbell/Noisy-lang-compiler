@@ -409,6 +409,22 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						}
 						if (!rightPhysicsInfo)
 						{
+							/*
+							 * If the lvalue is a pointer to a struct or array and has no physics type,
+							 * we must update its physicsInfo with the assigned type.
+							 */
+							if (auto llvmIrGetElementPointerInstruction = dyn_cast<GetElementPtrInst>(rightTerm))
+							{
+								uint64_t Index;
+								if (auto llvmIrConstantInt = dyn_cast<ConstantInt>(llvmIrGetElementPointerInstruction->getOperand(2)))
+								{
+									Value		*structurePointer = llvmIrGetElementPointerInstruction->getPointerOperand();
+									PhysicsInfo	*structurePointerPhysicsInfo = virtualRegisterPhysicsTable[structurePointer];
+
+									Index = llvmIrConstantInt->getZExtValue();
+									structurePointerPhysicsInfo->insertPhysicsInfoAt(virtualRegisterPhysicsTable[leftTerm], Index);
+								}
+							}
 							virtualRegisterPhysicsTable.insert({rightTerm, virtualRegisterPhysicsTable[leftTerm]});
 							break;
 						}
