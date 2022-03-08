@@ -88,6 +88,7 @@ public:
 	explicit PhysicsInfo(Physics *  physics): physicsType{physics}, isComposite{false} {};
 
 	void pushPhysicsInfo(PhysicsInfo *  physics_info) { if (isComposite) { members.push_back(physics_info); } }
+	void insertPhysicsInfoAt(PhysicsInfo *  physics_info, uint64_t index) { if (isComposite) { members.at(index) = physics_info; } }
 
 	Physics* get_physics_type() { return physicsType; }
 	std::vector<PhysicsInfo *> get_members() { return members; }
