@@ -269,7 +269,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 
 							if (auto  physicsInfo = newtonPhysicsInfo(debugInfoVariable->getType(), N))
 							{
-								virtualRegisterPhysicsTable[localVariableAddress] = physicsInfo;
+								virtualRegisterPhysicsTable.insert({localVariableAddress, physicsInfo});
 							}
 						}
 					}
@@ -310,7 +310,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						}
 						physicsSum = leftTerm->get_physics_type();
 					}
-					virtualRegisterPhysicsTable[&llvmIrInstruction] = new PhysicsInfo{physicsSum};
+					virtualRegisterPhysicsTable.insert({&llvmIrInstruction, new PhysicsInfo{physicsSum}});
 					break;
 				}
 
@@ -342,7 +342,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						/*
 						 *	Store the result to the destination virtual register.
 						 */
-						virtualRegisterPhysicsTable[llvmIrBinaryOperator] = new PhysicsInfo{physicsProduct};
+						virtualRegisterPhysicsTable.insert({llvmIrBinaryOperator, new PhysicsInfo{physicsProduct}});
 					}
 					break;
 
@@ -378,7 +378,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						/*
 						 *	Store the result to the destination virtual register.
 						 */
-						virtualRegisterPhysicsTable[llvmIrBinaryOperator] = new PhysicsInfo{physicsProduct};
+						virtualRegisterPhysicsTable.insert({llvmIrBinaryOperator, new PhysicsInfo{physicsProduct}});
 					}
 					break;
 
@@ -389,7 +389,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 				case Instruction::Load:
 					if (auto llvmIrLoadInstruction = dyn_cast<LoadInst>(&llvmIrInstruction))
 					{
-						virtualRegisterPhysicsTable[llvmIrLoadInstruction] = virtualRegisterPhysicsTable[llvmIrLoadInstruction->getOperand(0)];
+						virtualRegisterPhysicsTable.insert({llvmIrLoadInstruction, virtualRegisterPhysicsTable[llvmIrLoadInstruction->getOperand(0)]});
 					}
 					break;
 
@@ -409,7 +409,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						}
 						if (!rightPhysicsInfo)
 						{
-							virtualRegisterPhysicsTable[rightTerm] = virtualRegisterPhysicsTable[leftTerm];
+							virtualRegisterPhysicsTable.insert({rightTerm, virtualRegisterPhysicsTable[leftTerm]});
 							break;
 						}
 						if (!areTwoPhysicsEquivalent(N, leftPhysicsInfo->get_physics_type(), rightPhysicsInfo->get_physics_type()))
@@ -427,9 +427,12 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						uint64_t Index;
 						if (auto llvmIrConstantInt = dyn_cast<ConstantInt>(llvmIrGetElementPointerInstruction->getOperand(2)))
 						{
+							Value		*structurePointer = llvmIrGetElementPointerInstruction->getPointerOperand();
+							PhysicsInfo	*structurePointerPhysicsInfo = virtualRegisterPhysicsTable[structurePointer];
+
 							Index = llvmIrConstantInt->getZExtValue();
-							auto physicsInfo = virtualRegisterPhysicsTable[llvmIrGetElementPointerInstruction->getPointerOperand()]->get_members()[Index];
-							virtualRegisterPhysicsTable[llvmIrGetElementPointerInstruction] = physicsInfo;
+							auto physicsInfo = structurePointerPhysicsInfo->get_members()[Index];
+							virtualRegisterPhysicsTable.insert({llvmIrGetElementPointerInstruction, physicsInfo});
 						}
 					}
 					break;
@@ -452,7 +455,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 				case Instruction::BitCast:
 				case Instruction::AddrSpaceCast:
 				case Instruction::ExtractElement:
-					virtualRegisterPhysicsTable[&llvmIrInstruction] = virtualRegisterPhysicsTable[llvmIrInstruction.getOperand(0)];
+					virtualRegisterPhysicsTable.insert({&llvmIrInstruction, virtualRegisterPhysicsTable[llvmIrInstruction.getOperand(0)]});
 					break;
 
 				case Instruction::PHI:
@@ -485,7 +488,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						}
 						physicsPhiNode = leftTerm->get_physics_type();
 					}
-					virtualRegisterPhysicsTable[&llvmIrInstruction] = new PhysicsInfo{physicsPhiNode};
+					virtualRegisterPhysicsTable.insert({&llvmIrInstruction, new PhysicsInfo{physicsPhiNode}});
 				}
 					break;
 
