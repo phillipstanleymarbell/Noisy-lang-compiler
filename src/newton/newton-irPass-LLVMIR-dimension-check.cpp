@@ -131,7 +131,7 @@ newtonPhysicsInfo(DIType *  debugType, State *  N)
 	{
 		if (debugInfoCompositeType->getTag() == dwarf::DW_TAG_structure_type)
 		{
-			auto physicsInfo = new PhysicsInfo();
+			auto	physicsInfo = new PhysicsInfo();
 			for (auto element: debugInfoCompositeType->getElements())
 			{
 				if (auto DIMember = dyn_cast<DIDerivedType>(element))
@@ -150,14 +150,14 @@ newtonPhysicsInfo(DIType *  debugType, State *  N)
 			 * !14 = !{!15}
 			 * !15 = !DISubrange(count: 2)
 			 */
-			auto physicsInfo = new PhysicsInfo();
-			auto arrayPhysicsInfo = newtonPhysicsInfo(debugInfoCompositeType->getBaseType(), N);
-			auto element = debugInfoCompositeType->getElements()[0];
+			auto	physicsInfo = new PhysicsInfo();
+			auto	arrayPhysicsInfo = newtonPhysicsInfo(debugInfoCompositeType->getBaseType(), N);
+			auto	element = debugInfoCompositeType->getElements()[0];
 			if (auto debugInfoSubrange = dyn_cast<DISubrange>(element))
 			{
-				auto countPointerUnion = debugInfoSubrange->getCount();
-				auto countConstantIntPointer = countPointerUnion.get<ConstantInt*>();
-				auto elementCount = countConstantIntPointer->getZExtValue();
+				auto	countPointerUnion = debugInfoSubrange->getCount();
+				auto	countConstantIntPointer = countPointerUnion.get<ConstantInt*>();
+				auto	elementCount = countConstantIntPointer->getZExtValue();
 
 				for (unsigned index = 0; index < elementCount; index++)
 				{
@@ -396,10 +396,10 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 				case Instruction::Store:
 					if (auto llvmIrStoreInstruction = dyn_cast<StoreInst>(&llvmIrInstruction))
 					{
-						Value *leftTerm = llvmIrStoreInstruction->getOperand(0);
-						Value *rightTerm = llvmIrStoreInstruction->getOperand(1);
-						PhysicsInfo *leftPhysicsInfo = virtualRegisterPhysicsTable[leftTerm];
-						PhysicsInfo *rightPhysicsInfo = virtualRegisterPhysicsTable[rightTerm];
+						Value *			leftTerm = llvmIrStoreInstruction->getOperand(0);
+						Value *			rightTerm = llvmIrStoreInstruction->getOperand(1);
+						PhysicsInfo *	leftPhysicsInfo = virtualRegisterPhysicsTable[leftTerm];
+						PhysicsInfo *	rightPhysicsInfo = virtualRegisterPhysicsTable[rightTerm];
 						/*
 						 *	This case arises when we assign a number to a Newton signal.
 						 */
@@ -422,11 +422,11 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 							 */
 							if (auto llvmIrGetElementPointerInstruction = dyn_cast<GetElementPtrInst>(rightTerm))
 							{
-								uint64_t Index;
+								uint64_t	Index;
 								if (auto llvmIrConstantInt = dyn_cast<ConstantInt>(llvmIrGetElementPointerInstruction->getOperand(2)))
 								{
-									Value		*structurePointer = llvmIrGetElementPointerInstruction->getPointerOperand();
-									PhysicsInfo	*structurePointerPhysicsInfo = virtualRegisterPhysicsTable[structurePointer];
+									Value *			structurePointer = llvmIrGetElementPointerInstruction->getPointerOperand();
+									PhysicsInfo	*	structurePointerPhysicsInfo = virtualRegisterPhysicsTable[structurePointer];
 
 									Index = llvmIrConstantInt->getZExtValue();
 									structurePointerPhysicsInfo->insertPhysicsInfoAt(virtualRegisterPhysicsTable[leftTerm], Index);
@@ -450,11 +450,12 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						uint64_t Index;
 						if (auto llvmIrConstantInt = dyn_cast<ConstantInt>(llvmIrGetElementPointerInstruction->getOperand(2)))
 						{
-							Value		*structurePointer = llvmIrGetElementPointerInstruction->getPointerOperand();
-							PhysicsInfo	*structurePointerPhysicsInfo = virtualRegisterPhysicsTable[structurePointer];
+							Value *			structurePointer = llvmIrGetElementPointerInstruction->getPointerOperand();
+							PhysicsInfo	*	structurePointerPhysicsInfo = virtualRegisterPhysicsTable[structurePointer];
+							PhysicsInfo * 	physicsInfo;
 
 							Index = llvmIrConstantInt->getZExtValue();
-							auto physicsInfo = structurePointerPhysicsInfo->get_members()[Index];
+							physicsInfo = structurePointerPhysicsInfo->get_members()[Index];
 							virtualRegisterPhysicsTable.insert({llvmIrGetElementPointerInstruction, physicsInfo});
 						}
 					}
@@ -486,7 +487,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 				{
 					PhysicsInfo *	leftTerm = virtualRegisterPhysicsTable[llvmIrInstruction.getOperand(0)];
 					PhysicsInfo *	rightTerm = virtualRegisterPhysicsTable[llvmIrInstruction.getOperand(1)];
-					Physics *	 physicsPhiNode;
+					Physics *	 	physicsPhiNode;
 					if (!leftTerm)
 					{
 						if (!rightTerm)
@@ -590,7 +591,7 @@ irPassLLVMIRDimensionCheck(State *  N)
 
 	for (auto & mi : *Mod)
 	{
-			dimensionalityCheck(mi, N);
+		dimensionalityCheck(mi, N);
 	}
 }
 
