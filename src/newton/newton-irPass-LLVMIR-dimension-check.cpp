@@ -410,8 +410,15 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						if (!rightPhysicsInfo)
 						{
 							/*
-							 * If the lvalue is a pointer to a struct or array and has no physics type,
+							 * If the lvalue refers to a struct or array element and has no physics type,
 							 * we must update its physicsInfo with the assigned type.
+							 * If it had a type then we wouldn't be in this case,
+							 * since the `GetElementPtr` case would have assigned the `rightTerm` that physics type.
+							 * Example:
+							 * \code
+							 * %7 = getelementptr inbounds [2 x double], [2 x double]* %2, i64 0, i64 0, !dbg !27
+							 * store double %6, double* %7, align 16, !dbg !28
+							 * \endcode
 							 */
 							if (auto llvmIrGetElementPointerInstruction = dyn_cast<GetElementPtrInst>(rightTerm))
 							{
