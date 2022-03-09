@@ -269,7 +269,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 
 							if (auto  physicsInfo = newtonPhysicsInfo(debugInfoVariable->getType(), N))
 							{
-								virtualRegisterPhysicsTable.insert({localVariableAddress, physicsInfo});
+								virtualRegisterPhysicsTable[localVariableAddress] = physicsInfo;
 							}
 						}
 					}
