@@ -422,14 +422,14 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 							 */
 							if (auto llvmIrGetElementPointerInstruction = dyn_cast<GetElementPtrInst>(rightTerm))
 							{
-								uint64_t	Index;
+								uint64_t	index;
 								if (auto llvmIrConstantInt = dyn_cast<ConstantInt>(llvmIrGetElementPointerInstruction->getOperand(2)))
 								{
 									Value *			structurePointer = llvmIrGetElementPointerInstruction->getPointerOperand();
 									PhysicsInfo	*	structurePointerPhysicsInfo = virtualRegisterPhysicsTable[structurePointer];
 
-									Index = llvmIrConstantInt->getZExtValue();
-									structurePointerPhysicsInfo->insertPhysicsInfoAt(virtualRegisterPhysicsTable[leftTerm], Index);
+									index = llvmIrConstantInt->getZExtValue();
+									structurePointerPhysicsInfo->insertPhysicsInfoAt(virtualRegisterPhysicsTable[leftTerm], index);
 								}
 							}
 							virtualRegisterPhysicsTable.insert({rightTerm, virtualRegisterPhysicsTable[leftTerm]});
@@ -447,15 +447,15 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 				case Instruction::GetElementPtr:
 					if (auto llvmIrGetElementPointerInstruction = dyn_cast<GetElementPtrInst>(&llvmIrInstruction))
 					{
-						uint64_t Index;
+						uint64_t index;
 						if (auto llvmIrConstantInt = dyn_cast<ConstantInt>(llvmIrGetElementPointerInstruction->getOperand(2)))
 						{
 							Value *			structurePointer = llvmIrGetElementPointerInstruction->getPointerOperand();
 							PhysicsInfo	*	structurePointerPhysicsInfo = virtualRegisterPhysicsTable[structurePointer];
 							PhysicsInfo * 	physicsInfo;
 
-							Index = llvmIrConstantInt->getZExtValue();
-							physicsInfo = structurePointerPhysicsInfo->get_members()[Index];
+							index = llvmIrConstantInt->getZExtValue();
+							physicsInfo = structurePointerPhysicsInfo->get_members()[index];
 							virtualRegisterPhysicsTable.insert({llvmIrGetElementPointerInstruction, physicsInfo});
 						}
 					}
