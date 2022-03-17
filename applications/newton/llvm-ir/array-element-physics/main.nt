@@ -1,0 +1,10 @@
+include "NewtonBaseSignals.nt"
+
+walk : invariant(
+		x  : distance,
+		v  : speed,
+		dt : time) =
+{
+	x ~ x + v*dt,
+	v ~ v
+}
