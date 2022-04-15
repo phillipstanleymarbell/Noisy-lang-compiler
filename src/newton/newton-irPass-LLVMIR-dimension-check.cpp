@@ -48,6 +48,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/IR/IRBuilder.h"
 
 using namespace llvm;
 
@@ -224,8 +225,9 @@ newtonPhysicsSubtractExponentsWrapper(State *  N, Physics *  left, Physics *  ri
 }
 
 void 
-dimensionalityCheck(Function &  llvmIrFunction, State *  N)
+dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  RuntimeCheckFunction)
 {
+
 	for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction)
 	{
 		for (Instruction &  llvmIrInstruction : llvmIrBasicBlock)
@@ -447,8 +449,22 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 				case Instruction::GetElementPtr:
 					if (auto llvmIrGetElementPointerInstruction = dyn_cast<GetElementPtrInst>(&llvmIrInstruction))
 					{
+						uint8_t operandsNumber = llvmIrGetElementPointerInstruction->getNumOperands();
 						uint64_t index;
-						if (auto llvmIrConstantInt = dyn_cast<ConstantInt>(llvmIrGetElementPointerInstruction->getOperand(2)))
+
+						/*
+						 * TODO: handle all cases with arrays and pointers.
+						 */
+						if (operandsNumber != 3)
+						{
+							continue;
+						}
+
+						/*
+						 * For one-dimensional arrays the 3rd operand is the index of the expression.
+						 */
+						Value *		indexOperand = llvmIrGetElementPointerInstruction->getOperand(2);
+						if (auto llvmIrConstantInt = dyn_cast<ConstantInt>(indexOperand))
 						{
 							Value *			structurePointer = llvmIrGetElementPointerInstruction->getPointerOperand();
 							PhysicsInfo	*	structurePointerPhysicsInfo = virtualRegisterPhysicsTable[structurePointer];
@@ -457,6 +473,14 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 							index = llvmIrConstantInt->getZExtValue();
 							physicsInfo = structurePointerPhysicsInfo->get_members()[index];
 							virtualRegisterPhysicsTable.insert({llvmIrGetElementPointerInstruction, physicsInfo});
+						}
+						else
+						{
+							IRBuilder<> 	builder(&llvmIrInstruction);
+							Type *	argumentType = RuntimeCheckFunction.getFunctionType()->getParamType(0);
+							auto	variableIndex = builder.CreateIntCast(indexOperand, argumentType, true);
+
+							builder.CreateCall(RuntimeCheckFunction, {variableIndex});
 						}
 					}
 					break;
@@ -589,9 +613,17 @@ irPassLLVMIRDimensionCheck(State *  N)
 		fatal(N, Esanity);
 	}
 
+	auto& Ctx = Mod->getContext();
+
+	Type *VoidTy = Type::getVoidTy(Ctx);
+	Type *ArgTy = Type::getInt64Ty(Ctx);
+
+	FunctionCallee ArrayDimensionalityCheck = Mod->getOrInsertFunction("__array_dimensionality_check", VoidTy, ArgTy);
+
 	for (auto & mi : *Mod)
 	{
-		dimensionalityCheck(mi, N);
+		dimensionalityCheck(mi, N, ArrayDimensionalityCheck);
+		mi.dump();
 	}
 }
 
