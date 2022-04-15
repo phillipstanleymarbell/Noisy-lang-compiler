@@ -49,6 +49,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/Bitcode/BitcodeWriter.h"
 
 using namespace llvm;
 
@@ -623,8 +624,11 @@ irPassLLVMIRDimensionCheck(State *  N)
 	for (auto & mi : *Mod)
 	{
 		dimensionalityCheck(mi, N, ArrayDimensionalityCheck);
-		mi.dump();
 	}
+
+	std::error_code ec (errno,std::generic_category());
+	raw_fd_ostream outputFile(StringRef("../../applications/newton/llvm-ir/array-element-physics/out.bc"), ec);
+	WriteBitcodeToFile(*Mod, outputFile);
 }
 
 }
