@@ -897,13 +897,18 @@ typedef struct Modality		Modality;
 =======
 typedef struct NoisyType	NoisyType;
 
+enum
+{
+	kNoisyStaticArrayMaxNumberOfDimensions = 128
+};
+
 struct NoisyType
 {
         NoisyBasicType basicType;
         int dimensions;
         NoisyBasicType arrayType;
 	Symbol * functionDefinition;
-        int sizeOfDimension[128];
+        int sizeOfDimension[kNoisyStaticArrayMaxNumberOfDimensions];
 };
 
 
