@@ -189,9 +189,9 @@ isMeasurementType(State * N, IrNode * typeExpr)
 void
 noisyInitNoisyType(NoisyType * typ)
 {
-        typ->basicType = noisyInitType;
+        typ->basicType = noisyBasicTypeInit;
         typ->dimensions = 0;
-        typ->arrayType = noisyInitType;
+        typ->arrayType = noisyBasicTypeInit;
 }
 
 bool
@@ -199,7 +199,7 @@ noisyTypeEquals(NoisyType typ1, NoisyType typ2)
 {
         if (typ1.basicType == typ2.basicType)
         {
-                if (typ1.basicType == noisyArrayType)
+                if (typ1.basicType == noisyBasicTypeArrayType)
                 {
                         if (typ1.arrayType == typ2.arrayType)
                         {
@@ -220,21 +220,21 @@ noisyTypeEquals(NoisyType typ1, NoisyType typ2)
                 }
                 return true;
         }
-        else if (typ1.basicType == noisyIntegerConstType)
+        else if (typ1.basicType == noisyBasicTypeIntegerConstType)
         {
-                return noisyIsOfType(typ2,noisyIntegerConstType);
+                return noisyIsOfType(typ2,noisyBasicTypeIntegerConstType);
         }
-        else if (typ2.basicType == noisyIntegerConstType)
+        else if (typ2.basicType == noisyBasicTypeIntegerConstType)
         {
-                return noisyIsOfType(typ1,noisyIntegerConstType);        
+                return noisyIsOfType(typ1,noisyBasicTypeIntegerConstType);        
         }
-        else if (typ1.basicType == noisyRealConstType)
+        else if (typ1.basicType == noisyBasicTypeRealConstType)
         {
-                return noisyIsOfType(typ2,noisyRealConstType);          
+                return noisyIsOfType(typ2,noisyBasicTypeRealConstType);          
         }
-        else if (typ2.basicType == noisyRealConstType)
+        else if (typ2.basicType == noisyBasicTypeRealConstType)
         {
-                return noisyIsOfType(typ1,noisyRealConstType);          
+                return noisyIsOfType(typ1,noisyBasicTypeRealConstType);          
         }
         return false;
 }
@@ -242,23 +242,23 @@ noisyTypeEquals(NoisyType typ1, NoisyType typ2)
 bool
 noisyIsOfType(NoisyType typ1,NoisyBasicType typeSuperSet)
 {
-        if (typeSuperSet == noisyIntegerConstType)
+        if (typeSuperSet == noisyBasicTypeIntegerConstType)
         {
                 switch (typ1.basicType)
                 {
-                case noisyInt4:
-                case noisyInt8:
-                case noisyInt16:
-                case noisyInt32:
-                case noisyInt64:
-                case noisyInt128:
-                case noisyIntegerConstType:
-                case noisyNat4:
-                case noisyNat8:
-                case noisyNat16:
-                case noisyNat32:
-                case noisyNat64:
-                case noisyNat128:
+                case noisyBasicTypeInt4:
+                case noisyBasicTypeInt8:
+                case noisyBasicTypeInt16:
+                case noisyBasicTypeInt32:
+                case noisyBasicTypeInt64:
+                case noisyBasicTypeInt128:
+                case noisyBasicTypeIntegerConstType:
+                case noisyBasicTypeNat4:
+                case noisyBasicTypeNat8:
+                case noisyBasicTypeNat16:
+                case noisyBasicTypeNat32:
+                case noisyBasicTypeNat64:
+                case noisyBasicTypeNat128:
                         return true;
                         break;
                 default:
@@ -266,15 +266,15 @@ noisyIsOfType(NoisyType typ1,NoisyBasicType typeSuperSet)
                         break;
                 }
         }
-        else if (typeSuperSet == noisyRealConstType)
+        else if (typeSuperSet == noisyBasicTypeRealConstType)
         {
                 switch (typ1.basicType)
                 {
-                case noisyFloat16:
-                case noisyFloat32:
-                case noisyFloat64:
-                case noisyFloat128:
-                case noisyRealConstType:
+                case noisyBasicTypeFloat16:
+                case noisyBasicTypeFloat32:
+                case noisyBasicTypeFloat64:
+                case noisyBasicTypeFloat128:
+                case noisyBasicTypeRealConstType:
                         return true;
                         break;
                 default:
@@ -282,9 +282,9 @@ noisyIsOfType(NoisyType typ1,NoisyBasicType typeSuperSet)
                         break;
                 }
         }
-        else if (typeSuperSet == noisyArithType)
+        else if (typeSuperSet == noisyBasicTypeArithType)
         {
-                return noisyIsOfType(typ1,noisyIntegerConstType) || noisyIsOfType(typ1,noisyRealConstType);
+                return noisyIsOfType(typ1,noisyBasicTypeIntegerConstType) || noisyIsOfType(typ1,noisyBasicTypeRealConstType);
         }
         return false;
 }
@@ -292,12 +292,12 @@ noisyIsOfType(NoisyType typ1,NoisyBasicType typeSuperSet)
 bool
 noisyIsSigned(NoisyType typ)
 {
-        return (typ.basicType > noisyInitType && typ.basicType <= noisyInt128);
+        return (typ.basicType > noisyBasicTypeInit && typ.basicType <= noisyBasicTypeInt128);
 }
 /*
 *       Takes two NoisyTypes arguments, compares their basicType
 *       and returns the most specific type. For example if we have
-*       a noisyIntegerConst and a noisyInt32 it returns the noisyInt32 type.
+*       a noisyIntegerConst and a noisyBasicTypeInt32 it returns the noisyBasicTypeInt32 type.
 */
 NoisyType
 noisyGetMoreSpecificType(NoisyType typ1, NoisyType typ2)
@@ -317,16 +317,16 @@ noisyCanTypeCast(NoisyType fromType,NoisyType toType)
         *       to integers, from naturals to integers and from floats to other floats.
         *       We do not permit any other type casts.
         */
-        if (fromType.basicType > noisyBool && fromType.basicType <= noisyRealConstType)
+        if (fromType.basicType > noisyBasicTypeBool && fromType.basicType <= noisyBasicTypeRealConstType)
         {
-                if (toType.basicType > noisyBool && toType.basicType <= noisyRealConstType)
+                if (toType.basicType > noisyBasicTypeBool && toType.basicType <= noisyBasicTypeRealConstType)
                 {
                         // /*
                         // *       We do not permit from integers to naturals
                         // */
-                        // if (fromType.basicType > noisyBool && fromType.basicType <= noisyInt128)
+                        // if (fromType.basicType > noisyBasicTypeBool && fromType.basicType <= noisyBasicTypeInt128)
                         // {
-                        //         if (toType.basicType >= noisyNat4 && toType.basicType <= noisyNat128)
+                        //         if (toType.basicType >= noisyBasicTypeNat4 && toType.basicType <= noisyBasicTypeNat128)
                         //         {
                         //                 return false;
                         //         }
@@ -341,12 +341,12 @@ NoisyType
 getNoisyTypeFromBasicType(IrNode * basicType)
 {
         NoisyType noisyType;
-        noisyType.arrayType = noisyInitType;
+        noisyType.arrayType = noisyBasicTypeInit;
         noisyType.dimensions = 0;
 
         if (L(basicType)->type == kNoisyIrNodeType_Tbool)
         {
-                noisyType.basicType = noisyBool;
+                noisyType.basicType = noisyBasicTypeBool;
         }
         else if (L(basicType)->type == kNoisyIrNodeType_PintegerType)
         {
@@ -357,40 +357,40 @@ getNoisyTypeFromBasicType(IrNode * basicType)
                 switch (LL(basicType)->type)
                 {
                 case kNoisyIrNodeType_Tint4:
-                        noisyType.basicType = noisyInt4;
+                        noisyType.basicType = noisyBasicTypeInt4;
                         break;
                 case kNoisyIrNodeType_Tnat4:
-                        noisyType.basicType = noisyNat4;
+                        noisyType.basicType = noisyBasicTypeNat4;
                         break;
                 case kNoisyIrNodeType_Tint8:
-                        noisyType.basicType = noisyInt8;
+                        noisyType.basicType = noisyBasicTypeInt8;
                         break;
                 case kNoisyIrNodeType_Tnat8:
-                        noisyType.basicType = noisyNat8;
+                        noisyType.basicType = noisyBasicTypeNat8;
                         break;
                 case kNoisyIrNodeType_Tint16:
-                        noisyType.basicType = noisyInt16;
+                        noisyType.basicType = noisyBasicTypeInt16;
                         break;
                 case kNoisyIrNodeType_Tnat16:
-                        noisyType.basicType = noisyNat16;
+                        noisyType.basicType = noisyBasicTypeNat16;
                         break;
                 case kNoisyIrNodeType_Tint32:
-                        noisyType.basicType = noisyInt32;
+                        noisyType.basicType = noisyBasicTypeInt32;
                         break;
                 case kNoisyIrNodeType_Tnat32:
-                        noisyType.basicType = noisyNat32;
+                        noisyType.basicType = noisyBasicTypeNat32;
                         break;
                 case kNoisyIrNodeType_Tint64:
-                        noisyType.basicType = noisyInt64;
+                        noisyType.basicType = noisyBasicTypeInt64;
                         break;
                 case kNoisyIrNodeType_Tnat64:
-                        noisyType.basicType = noisyNat64;
+                        noisyType.basicType = noisyBasicTypeNat64;
                         break;
                 case kNoisyIrNodeType_Tint128:
-                        noisyType.basicType = noisyInt128;
+                        noisyType.basicType = noisyBasicTypeInt128;
                         break;
                 case kNoisyIrNodeType_Tnat128:
-                        noisyType.basicType = noisyNat128;
+                        noisyType.basicType = noisyBasicTypeNat128;
                         break;
                 default:
                         break;
@@ -401,16 +401,16 @@ getNoisyTypeFromBasicType(IrNode * basicType)
                 switch (LL(basicType)->type)
                 {
                 case kNoisyIrNodeType_Tfloat16:
-                        noisyType.basicType = noisyFloat16;
+                        noisyType.basicType = noisyBasicTypeFloat16;
                         break;
                 case kNoisyIrNodeType_Tfloat32:
-                        noisyType.basicType = noisyFloat32;
+                        noisyType.basicType = noisyBasicTypeFloat32;
                         break;
                 case kNoisyIrNodeType_Tfloat64:
-                        noisyType.basicType = noisyFloat64;
+                        noisyType.basicType = noisyBasicTypeFloat64;
                         break;
                 case kNoisyIrNodeType_Tfloat128:
-                        noisyType.basicType = noisyFloat128;
+                        noisyType.basicType = noisyBasicTypeFloat128;
                         break;
                 default:
                         break;
@@ -418,7 +418,7 @@ getNoisyTypeFromBasicType(IrNode * basicType)
         }
         else if(L(basicType)->type == kNoisyIrNodeType_Tstring)
         {
-                noisyType.basicType = noisyString;
+                noisyType.basicType = noisyBasicTypeString;
         }
         return noisyType;
 }
@@ -432,7 +432,7 @@ getNoisyTypeFromArrayNode(State * N,IrNode * arrayTypeNode)
 {
         NoisyType noisyType;
 
-        noisyType.basicType = noisyArrayType;
+        noisyType.basicType = noisyBasicTypeArrayType;
         noisyType.dimensions = 0;
 
         for (IrNode * iter = arrayTypeNode; iter != NULL; iter = R(iter))
@@ -478,7 +478,7 @@ getNoisyTypeFromTypeSymbol(State * N,IrNode * typeNameNode)
                 *       Type symbol does not exist error?
                 */
                 typeSymbol = commonSymbolTableSymbolForIdentifier(N,N->noisyIrTopScope,L(typeNameNode)->tokenString);
-                noisyType.basicType = noisyTypeError;
+                noisyType.basicType = noisyBasicTypeErrorType;
                 return noisyType;
         }
 
@@ -486,7 +486,7 @@ getNoisyTypeFromTypeSymbol(State * N,IrNode * typeNameNode)
 
         if (typeTree == NULL)
         {
-                noisyType.basicType = noisyTypeError;
+                noisyType.basicType = noisyBasicTypeErrorType;
                 return noisyType;
         }
 
@@ -513,14 +513,14 @@ getNoisyTypeFromTypeSymbol(State * N,IrNode * typeNameNode)
         }
         else
         {
-                noisyType.basicType = noisyTypeError;
+                noisyType.basicType = noisyBasicTypeErrorType;
                 return noisyType;
         }
 }
 
 /*
 *       Takes the state N and a TypeExpr node and returns the corresponding
-*       NoisyType. If it fails the returned basic type is noisyTypeError.
+*       NoisyType. If it fails the returned basic type is noisyBasicTypeErrorType.
 */
 NoisyType
 getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
@@ -529,21 +529,21 @@ getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
         if (typeExpr->type == kNoisyIrNodeType_PconstantDecl)
         {
                 NoisyType noisyType;
-                noisyType.arrayType = noisyInitType;
+                noisyType.arrayType = noisyBasicTypeInit;
                 noisyType.dimensions = 0;
                 switch (L(typeExpr)->type)
                 {
                 case kNoisyIrNodeType_TintegerConst:
-                        noisyType.basicType = noisyIntegerConstType;
+                        noisyType.basicType = noisyBasicTypeIntegerConstType;
                         break;
                 case kNoisyIrNodeType_TrealConst:
-                        noisyType.basicType = noisyRealConstType;
+                        noisyType.basicType = noisyBasicTypeRealConstType;
                         break;
                 case kNoisyIrNodeType_TboolConst:
-                        noisyType.basicType = noisyBool;
+                        noisyType.basicType = noisyBasicTypeBool;
                         break;
                 default:
-                        noisyType.basicType = noisyTypeError;
+                        noisyType.basicType = noisyBasicTypeErrorType;
                         break;
                 }
                 return noisyType;
@@ -583,7 +583,7 @@ getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
         }
         
 
-        noisyType.basicType = noisyTypeError;
+        noisyType.basicType = noisyBasicTypeErrorType;
         return noisyType;
 }
 
@@ -615,7 +615,7 @@ noisyArgumentMatchesSignature(State * N, IrNode * argName,IrNode * expr,IrNode *
 
 /*
 *       Takes a noisyFactor IrNode and a the currentScope and returns the NoisyType of the factor.
-*       If every type check is correct returns the type else it returns noisyTypeError.
+*       If every type check is correct returns the type else it returns noisyBasicTypeErrorType.
 */
 NoisyType
 getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope)
@@ -624,19 +624,19 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 
         if (L(noisyFactorNode)->type == kNoisyIrNodeType_TintegerConst)
         {
-                factorType.basicType = noisyIntegerConstType;
+                factorType.basicType = noisyBasicTypeIntegerConstType;
         }
         else if (L(noisyFactorNode)->type == kNoisyIrNodeType_TrealConst)
         {
-                factorType.basicType = noisyRealConstType;
+                factorType.basicType = noisyBasicTypeRealConstType;
         }
         else if (L(noisyFactorNode)->type == kNoisyIrNodeType_TstringConst)
         {
-                factorType.basicType = noisyString;
+                factorType.basicType = noisyBasicTypeString;
         }
         else if (L(noisyFactorNode)->type == kNoisyIrNodeType_TboolConst)
         {
-                factorType.basicType = noisyBool;
+                factorType.basicType = noisyBasicTypeBool;
         }
         else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PqualifiedIdentifier)
         {
@@ -644,7 +644,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 
                 if (identifierSymbol == NULL)
                 {
-                        factorType.basicType = noisyTypeError;
+                        factorType.basicType = noisyBasicTypeErrorType;
                 }
 
                 if (identifierSymbol->typeTree != NULL)
@@ -657,12 +657,12 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                         factorType = identifierSymbol->noisyType;
                 }
                 
-                if (factorType.basicType == noisyArrayType)
+                if (factorType.basicType == noisyBasicTypeArrayType)
                 {
                         int dims = 0;
                         for (IrNode * iter = LR(noisyFactorNode); iter != NULL; iter = R(iter))
                         {
-                                if (! noisyIsOfType(getNoisyTypeFromExpression(N,LR(iter),currentScope), noisyIntegerConstType))
+                                if (! noisyIsOfType(getNoisyTypeFromExpression(N,LR(iter),currentScope), noisyBasicTypeIntegerConstType))
                                 {
                                         /*
                                         *       Indexes are not integers error.
@@ -672,7 +672,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                                         asprintf(&details, "Indexing \"%s\" array with a non-integer expression\n",identifierSymbol->identifier);
                                         noisySemanticError(N,iter,details);
                                         noisySemanticErrorRecovery(N);
-                                        // factorType.basicType = noisyTypeError;
+                                        // factorType.basicType = noisyBasicTypeErrorType;
                                 }
                                 dims++;
                         }
@@ -702,7 +702,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                 {
                         if (LR(noisyFactorNode) != NULL)
                         {
-                                factorType.basicType = noisyTypeError;
+                                factorType.basicType = noisyBasicTypeErrorType;
                         }
                 }
         }
@@ -717,7 +717,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                 if (functionNameSymbol == NULL)
                 {
                         functionNameSymbol = commonSymbolTableSymbolForIdentifier(N,currentScope,LL(noisyFactorNode)->tokenString);
-                        if (functionNameSymbol->noisyType.basicType != noisyNamegenType)
+                        if (functionNameSymbol->noisyType.basicType != noisyBasicTypeNamegenType)
                         {
                                 char * details;
 
@@ -749,7 +749,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                 {
                         if (LR(noisyFactorNode) == NULL)
                         {
-                                factorType.basicType = noisyNilType;        
+                                factorType.basicType = noisyBasicTypeNilType;        
                         }
                         else
                         {
@@ -800,7 +800,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
                 */
                 if (L(outputSignature)->type ==kNoisyIrNodeType_Tnil)
                 {
-                        factorType.basicType = noisyNilType;
+                        factorType.basicType = noisyBasicTypeNilType;
                 }
                 else
                 {
@@ -820,7 +820,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
         }
         else if (L(noisyFactorNode)->type == kNoisyIrNodeType_Tnil)
         {
-                factorType.basicType = noisyNilType;
+                factorType.basicType = noisyBasicTypeNilType;
         }
         noisyFactorNode->noisyType = factorType;
         return factorType;
@@ -838,7 +838,7 @@ noisyUnaryOpTypeCheck(State * N,IrNode * noisyUnaryOpNode,NoisyType factorType)
         if (L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tplus ||
             L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tminus)
         {
-                if (!noisyIsOfType(factorType,noisyArithType))
+                if (!noisyIsOfType(factorType,noisyBasicTypeArithType))
                 {
                         char * details;
                         asprintf(&details, "Unary operator and operand mismatch \"%s\"\n",L(noisyUnaryOpNode)->tokenString);
@@ -848,7 +848,7 @@ noisyUnaryOpTypeCheck(State * N,IrNode * noisyUnaryOpNode,NoisyType factorType)
         }
         else if (L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Ttilde)
         {
-                if (!noisyIsOfType(factorType,noisyIntegerConstType))
+                if (!noisyIsOfType(factorType,noisyBasicTypeIntegerConstType))
                 {
                         char * details;
                         asprintf(&details, "Unary operator and operand mismatch \"%s\"\n",L(noisyUnaryOpNode)->tokenString);
@@ -858,7 +858,7 @@ noisyUnaryOpTypeCheck(State * N,IrNode * noisyUnaryOpNode,NoisyType factorType)
         }
         else if (L(noisyUnaryOpNode)->type == kNoisyIrNodeType_PunaryBoolOp)
         {
-                if (factorType.basicType != noisyBool)
+                if (factorType.basicType != noisyBasicTypeBool)
                 {
                         char * details;
                         asprintf(&details, "Unary operator and operand mismatch \"%s\"\n",LL(noisyUnaryOpNode)->tokenString);
@@ -870,7 +870,7 @@ noisyUnaryOpTypeCheck(State * N,IrNode * noisyUnaryOpNode,NoisyType factorType)
                 || L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tsort
                 || L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Treverse)
         {
-                if (factorType.basicType != noisyArrayType && factorType.basicType != noisyString)
+                if (factorType.basicType != noisyBasicTypeArrayType && factorType.basicType != noisyBasicTypeString)
                 {
                         char * details;
                         asprintf(&details, "Unary operator and operand mismatch \"%s\"\n",L(noisyUnaryOpNode)->tokenString);
@@ -880,13 +880,13 @@ noisyUnaryOpTypeCheck(State * N,IrNode * noisyUnaryOpNode,NoisyType factorType)
                 if (L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tlength)
                 {
                         NoisyType ret;
-                        ret.basicType = noisyIntegerConstType;
+                        ret.basicType = noisyBasicTypeIntegerConstType;
                         returnType = ret;
                 }
         }
         else if (L(noisyUnaryOpNode)->type == kNoisyIrNodeType_TchannelOperator)
         {
-                if (factorType.basicType != noisyNamegenType)
+                if (factorType.basicType != noisyBasicTypeNamegenType)
                 {
                         IrNode * qualifiedIdentifierNode = RL(noisyUnaryOpNode->irParent);
                         if (qualifiedIdentifierNode->type == kNoisyIrNodeType_PqualifiedIdentifier)
@@ -1016,7 +1016,7 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                 if (LL(iter)->type == kNoisyIrNodeType_Tasterisk
                 || LL(iter)->type == kNoisyIrNodeType_Tdivide)
                 {
-                        if (!noisyIsOfType(termType,noisyArithType))
+                        if (!noisyIsOfType(termType,noisyBasicTypeArithType))
                         {
                                 /*
                                 *       Operator and operand mismatch.
@@ -1033,7 +1033,7 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                 else if (LL(iter)->type == kNoisyIrNodeType_Tpercent
                 || LL(iter)->type == kNoisyIrNodeType_TarithmeticAnd)
                 {
-                        if (!noisyIsOfType(termType,noisyIntegerConstType))
+                        if (!noisyIsOfType(termType,noisyBasicTypeIntegerConstType))
                         {
                                 char *	details;
 
@@ -1045,7 +1045,7 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                 }
                 else if (LL(iter)->type == kNoisyIrNodeType_PhighPrecedenceBinaryBoolOp)
                 {
-                        NoisyType boolType = {noisyBool,0,0};
+                        NoisyType boolType = {noisyBasicTypeBool,0,0};
                         if (!noisyTypeEquals(termType,boolType))
                         {
                                 /*
@@ -1077,7 +1077,7 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
                 termType = noisyUnaryOpTypeCheck(N,unaryOpNode,termType);
         }
 
-        if (basicType.basicType != noisyInitType)
+        if (basicType.basicType != noisyBasicTypeInit)
         {
                 /*
                 *       The basic type, typecasts the factor expression.
@@ -1128,9 +1128,9 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                 {
                                 case kNoisyIrNodeType_Tplus:
                                 case kNoisyIrNodeType_Tminus:
-                                        if (!noisyIsOfType(returnType,noisyArithType))
+                                        if (!noisyIsOfType(returnType,noisyBasicTypeArithType))
                                         {
-                                                if (L(operatorNode)->type == kNoisyIrNodeType_Tplus && returnType.basicType == noisyString)
+                                                if (L(operatorNode)->type == kNoisyIrNodeType_Tplus && returnType.basicType == noisyBasicTypeString)
                                                 {
                                                         /*
                                                         *       We use it for emphasis. "+" operator works for strings as well.
@@ -1152,7 +1152,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                 case kNoisyIrNodeType_TrightShift:
                                 case kNoisyIrNodeType_TleftShift:
                                 case kNoisyIrNodeType_TbitwiseOr:
-                                        if (!noisyIsOfType(returnType,noisyIntegerConstType))
+                                        if (!noisyIsOfType(returnType,noisyBasicTypeIntegerConstType))
                                         {
                                                 char *	details;
 
@@ -1165,7 +1165,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                         if (LL(operatorNode)->type == kNoisyIrNodeType_Tequals
                                         || LL(operatorNode)->type == kNoisyIrNodeType_TnotEqual)
                                         {
-                                                if (returnType.basicType == noisyArrayType)
+                                                if (returnType.basicType == noisyBasicTypeArrayType)
                                                 {
                                                         char *	details;
 
@@ -1177,20 +1177,20 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                                 *       This type assignment happens here so we can find constants' type.
                                                 */
                                                 RL(iter)->noisyType = returnType;
-                                                returnType.basicType = noisyBool;
+                                                returnType.basicType = noisyBasicTypeBool;
                                         }
                                         else if (LL(operatorNode)->type == kNoisyIrNodeType_TgreaterThan
                                                 || LL(operatorNode)-> type == kNoisyIrNodeType_TgreaterThanEqual
                                                 || LL(operatorNode)-> type == kNoisyIrNodeType_TlessThan
                                                 || LL(operatorNode)-> type == kNoisyIrNodeType_TlessThanEqual)
                                         {
-                                                if (noisyIsOfType(returnType,noisyArithType))
+                                                if (noisyIsOfType(returnType,noisyBasicTypeArithType))
                                                 {
                                                         /*
                                                         *       This type assignment happens here so we can find constants' type.
                                                         */
                                                         RL(iter)->noisyType = returnType;
-                                                        returnType.basicType = noisyBool; 
+                                                        returnType.basicType = noisyBasicTypeBool; 
                                                 }
                                                 else
                                                 {
@@ -1212,7 +1212,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                         }
                                         break;
                                 case kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp:
-                                        if (returnType.basicType != noisyBool)
+                                        if (returnType.basicType != noisyBasicTypeBool)
                                         {
                                                 char *	details;
 
@@ -1243,7 +1243,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
         {
                 if (LL(noisyExpressionNode)->type == kNoisyIrNodeType_ParrayCastExpr)
                 {
-                        returnType.basicType = noisyArrayType;
+                        returnType.basicType = noisyBasicTypeArrayType;
                         if (LLL(noisyExpressionNode)->type == kNoisyIrNodeType_PinitList)
                         {
                                 int sizeOfDim = 0;
@@ -1252,7 +1252,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                 noisyInitNoisyType(&elemType);
                                 for (IrNode * iter = LLL(noisyExpressionNode); iter != NULL; iter = R(iter))
                                 {
-                                        if (elemType.basicType == noisyInitType)
+                                        if (elemType.basicType == noisyBasicTypeInit)
                                         {
                                                elemType = getNoisyTypeFromExpression(N,LL(iter),currentScope);
                                         }
@@ -1274,7 +1274,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                         sizeOfDim++;
                                 }
 
-                                if (elemType.basicType != noisyArrayType)
+                                if (elemType.basicType != noisyBasicTypeArrayType)
                                 {
                                         returnType.dimensions = 1;
                                         returnType.sizeOfDimension[0] = sizeOfDim;
@@ -1306,7 +1306,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                         {
                                                 exprNode = RLL(iter);
                                         }
-                                        if (elemType.basicType == noisyInitType)
+                                        if (elemType.basicType == noisyBasicTypeInit)
                                         {
                                                elemType = getNoisyTypeFromExpression(N,exprNode,currentScope);
                                         }
@@ -1326,7 +1326,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                                         }
                                 }
 
-                                if (elemType.basicType != noisyArrayType)
+                                if (elemType.basicType != noisyBasicTypeArrayType)
                                 {
                                         returnType.dimensions = 1;
                                         returnType.sizeOfDimension[0] = sizeOfDim;
@@ -1523,7 +1523,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
                         }
                 }
 
-                returnType.basicType = noisyNamegenType;
+                returnType.basicType = noisyBasicTypeNamegenType;
                 loadCount++;
         }
         noisyExpressionNode->noisyType = returnType;
@@ -1717,13 +1717,13 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                         }
                                         
 
-                                        if (lValueType.basicType == noisyArrayType)
+                                        if (lValueType.basicType == noisyBasicTypeArrayType)
                                         {
                                                 // arrayLvalType = lValueType;
                                                 int dims = 0;
                                                 for (IrNode * iter2 = LLR(iter); iter2 != NULL; iter2 = R(iter2))
                                                 {
-                                                        if (! noisyIsOfType(getNoisyTypeFromExpression(N,LR(iter2),currentScope), noisyIntegerConstType))
+                                                        if (! noisyIsOfType(getNoisyTypeFromExpression(N,LR(iter2),currentScope), noisyBasicTypeIntegerConstType))
                                                         {
                                                                 /*
                                                                 *       Indexes are not integers error.
@@ -1733,7 +1733,7 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                                                 asprintf(&details, "Indexing \"%s\" array with a non-integer expression\n",LLL(iter)->symbol->identifier);
                                                                 noisySemanticError(N,iter,details);
                                                                 noisySemanticErrorRecovery(N);
-                                                                // factorType.basicType = noisyTypeError;
+                                                                // factorType.basicType = noisyBasicTypeErrorType;
                                                         }
                                                         dims++;
                                                 }
@@ -1782,7 +1782,7 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                                                 *       For "/=", "*=", "-=", "+="
                                                                 *       operators, values need to have arithmetic type.
                                                                 */
-                                                                if (!noisyIsOfType(lValueType,noisyArithType))
+                                                                if (!noisyIsOfType(lValueType,noisyBasicTypeArithType))
                                                                 {
                                                                         char *	details;
 
@@ -1797,7 +1797,7 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                                                 *       For "^=", "|=", "&=", "%=", ">>=", "<<=" 
                                                                 *       operators, values need to have integer type.
                                                                 */
-                                                                if (!noisyIsOfType(lValueType,noisyIntegerConstType))
+                                                                if (!noisyIsOfType(lValueType,noisyBasicTypeIntegerConstType))
                                                                 {
                                                                         char *	details;
 
@@ -1821,10 +1821,10 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                         }
                                         else if (RLL(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_TchannelOperatorAssign)
                                         {
-                                                if (lValueType.basicType == noisyNamegenType)
+                                                if (lValueType.basicType == noisyBasicTypeNamegenType)
                                                 {
                                                         /*
-                                                        *       Else if lval has noisyNamegenType it means we write to the input channel
+                                                        *       Else if lval has noisyBasicTypeNamegenType it means we write to the input channel
                                                         *       of a channel function.
                                                         */
                                                         if (lValueType.functionDefinition->parameterNum != 1)
@@ -1857,7 +1857,7 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                                         noisySemanticErrorRecovery(N);
                                                 }
                                         }
-                                        else if (rValueType.basicType == noisyNilType)
+                                        else if (rValueType.basicType == noisyBasicTypeNilType)
                                         {
                                                 /*
                                                 *       We can assign nil to any type.
@@ -1881,7 +1881,7 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                         /*
                                         *       We assign to the expression the noisyType so we can find the appropriate type for constants.
                                         */
-                                        if (lValueType.basicType != noisyNamegenType)
+                                        if (lValueType.basicType != noisyBasicTypeNamegenType)
                                         {
                                                 RRL(noisyAssignmentStatementNode)->noisyType = lValueType;
                                         }
@@ -1889,7 +1889,7 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
                                         {
                                                 /*
                                                 *       For channel assignment lval and rval do not have the same noisyType.
-                                                *       Lval has noisyNamegenType and rval should have the channel's input type.
+                                                *       Lval has noisyBasicTypeNamegenType and rval should have the channel's input type.
                                                 */
                                                 RRL(noisyAssignmentStatementNode)->noisyType = expectedRvalType;
                                         }
@@ -1948,7 +1948,7 @@ noisyGuardedStatementTypeCheck(State * N, IrNode * noisyGuardedStatementNode, Sc
                 */
                 NoisyType exprType = getNoisyTypeFromExpression(N,L(iter),currentScope);
 
-                if (exprType.basicType != noisyBool)
+                if (exprType.basicType != noisyBasicTypeBool)
                 {
                         char *	details;
 
@@ -1982,7 +1982,7 @@ noisyOrderingHeadTypeCheck(State * N,IrNode * orderingHeadNode,Scope * currentSc
 {
         noisyAssignmentStatementTypeCheck(N,L(orderingHeadNode),currentScope);
         NoisyType exprType = getNoisyTypeFromExpression(N,RL(orderingHeadNode),currentScope);
-        if (exprType.basicType != noisyBool)
+        if (exprType.basicType != noisyBasicTypeBool)
         {
                 char *	details;
 

@@ -385,14 +385,14 @@ noisyFindDimension(IrNode * typeAnnoteListNode)
 NoisyType
 findConstantNoisyType(IrNode * constantNode)
 {
-        if (constantNode->noisyType.basicType > noisyInitType
-        && constantNode->noisyType.basicType != noisyRealConstType
-        && constantNode->noisyType.basicType != noisyIntegerConstType
-        && constantNode->noisyType.basicType != noisyArrayType)
+        if (constantNode->noisyType.basicType > noisyBasicTypeInit
+        && constantNode->noisyType.basicType != noisyBasicTypeRealConstType
+        && constantNode->noisyType.basicType != noisyBasicTypeIntegerConstType
+        && constantNode->noisyType.basicType != noisyBasicTypeArrayType)
         {
                 return constantNode->noisyType;
         }
-        else if (constantNode->noisyType.basicType == noisyArrayType)
+        else if (constantNode->noisyType.basicType == noisyBasicTypeArrayType)
         {
                 NoisyType retType;
                 retType.basicType = constantNode->noisyType.arrayType;
@@ -408,7 +408,7 @@ findConstantNoisyType(IrNode * constantNode)
                 *       If it is an index constant we return Int32.
                 */
                 NoisyType retType;
-                retType.basicType = noisyInt32;
+                retType.basicType = noisyBasicTypeInt32;
                 return retType;
         }
         else
@@ -424,51 +424,51 @@ getLLVMTypeFromNoisyType(CodeGenState * S,NoisyType noisyType,bool byRef,int lim
         NoisyType basicTypeHelper;
         switch (noisyType.basicType)
         {
-        case noisyBool:
+        case noisyBasicTypeBool:
                 llvmType = LLVMInt1TypeInContext(S->theContext);
                 break;
-        case noisyInt4:
-        case noisyNat4:
+        case noisyBasicTypeInt4:
+        case noisyBasicTypeNat4:
                 llvmType = LLVMIntTypeInContext(S->theContext,4);
                 break;
-        case noisyInt8:
-        case noisyNat8:
+        case noisyBasicTypeInt8:
+        case noisyBasicTypeNat8:
                 llvmType = LLVMInt8TypeInContext(S->theContext);
                 break;
-        case noisyInt16:
-        case noisyNat16:
+        case noisyBasicTypeInt16:
+        case noisyBasicTypeNat16:
                 llvmType = LLVMInt16TypeInContext(S->theContext);
                 break;
-        case noisyInt32:
-        case noisyIntegerConstType:
-        case noisyNat32:
+        case noisyBasicTypeInt32:
+        case noisyBasicTypeIntegerConstType:
+        case noisyBasicTypeNat32:
                 llvmType = LLVMInt32TypeInContext(S->theContext);
                 break;
-        case noisyInt64:
-        case noisyNat64:
+        case noisyBasicTypeInt64:
+        case noisyBasicTypeNat64:
                 llvmType = LLVMInt64TypeInContext(S->theContext);
                 break;
-        case noisyInt128:
-        case noisyNat128:
+        case noisyBasicTypeInt128:
+        case noisyBasicTypeNat128:
                 llvmType = LLVMInt128TypeInContext(S->theContext);
                 break;
-        case noisyFloat16:
+        case noisyBasicTypeFloat16:
                 llvmType = LLVMHalfTypeInContext(S->theContext);
                 break;
-        case noisyFloat32:
-        case noisyRealConstType:
+        case noisyBasicTypeFloat32:
+        case noisyBasicTypeRealConstType:
                 llvmType = LLVMFloatTypeInContext(S->theContext);
                 break;
-        case noisyFloat64:
+        case noisyBasicTypeFloat64:
                 llvmType = LLVMDoubleTypeInContext(S->theContext);
                 break;
-        case noisyFloat128:
+        case noisyBasicTypeFloat128:
                 llvmType = LLVMFP128TypeInContext(S->theContext);
                 break;
-        case noisyString:
+        case noisyBasicTypeString:
                 llvmType = LLVMPointerType(LLVMInt8TypeInContext(S->theContext),0);
                 break;
-        case noisyArrayType:
+        case noisyBasicTypeArrayType:
                 if (byRef)
                 {
                         basicTypeHelper.basicType = noisyType.arrayType;
@@ -525,7 +525,7 @@ noisyDeclareFunction(State * N, CodeGenState * S,IrNode * funcNameNode,IrNode * 
                 outputBasicType = RL(outputSignature);
                 returnNoisyType = getNoisyTypeFromTypeExpr(N,outputBasicType);
                 returnType = getLLVMTypeFromNoisyType(S,returnNoisyType,true,0);
-                if (returnNoisyType.basicType == noisyArrayType)
+                if (returnNoisyType.basicType == noisyBasicTypeArrayType)
                 {
                         returnType = LLVMVoidTypeInContext(S->theContext);
                         returnsArray = true;
@@ -558,7 +558,7 @@ noisyDeclareFunction(State * N, CodeGenState * S,IrNode * funcNameNode,IrNode * 
                         {
                                 if (functionSymbol->isChannel)
                                 {
-                                        if (typ.basicType == noisyArrayType)
+                                        if (typ.basicType == noisyBasicTypeArrayType)
                                         {
                                                 /*
                                                 *       Arrays are already being passed by reference.
@@ -653,7 +653,7 @@ noisyDeclareFunction(State * N, CodeGenState * S,IrNode * funcNameNode,IrNode * 
                 *       Write to channel.
                 */
                 LLVMValueRef outChan = L(outputSignature)->symbol->llvmPointer;
-                if (returnNoisyType.basicType == noisyArrayType)
+                if (returnNoisyType.basicType == noisyBasicTypeArrayType)
                 {
                         LLVMValueRef oneVal[] = {LLVMConstInt(LLVMInt64TypeInContext(S->theContext),1,false)};
                         LLVMTypeRef arrayType = getLLVMTypeFromNoisyType(S,returnNoisyType,false,0);
@@ -879,8 +879,8 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                 Symbol * identifierSymbol = LL(noisyFactorNode)->symbol;
                 if (identifierSymbol->symbolType == kNoisySymbolTypeParameter)
                 {
-                        if (identifierSymbol->noisyType.basicType != noisyArrayType
-                        && identifierSymbol->noisyType.basicType != noisyString)
+                        if (identifierSymbol->noisyType.basicType != noisyBasicTypeArrayType
+                        && identifierSymbol->noisyType.basicType != noisyBasicTypeString)
                         {
                                 return LLVMGetParam(S->currentFunction,identifierSymbol->paramPosition);
                         }
@@ -893,7 +893,7 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                         /*
                         *       TODO; Add more cases!
                         */
-                        if (noisyIsOfType(noisyFactorNode->noisyType,noisyIntegerConstType))
+                        if (noisyIsOfType(noisyFactorNode->noisyType,noisyBasicTypeIntegerConstType))
                         {
                                 return LLVMConstIntCast(constVal,constType,true);
                         }
@@ -902,13 +902,13 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                                 return LLVMConstFPCast(constVal,constType);
                         }
                 }
-                if (identifierSymbol->noisyType.basicType != noisyArrayType && identifierSymbol->noisyType.basicType != noisyNamegenType)
+                if (identifierSymbol->noisyType.basicType != noisyBasicTypeArrayType && identifierSymbol->noisyType.basicType != noisyBasicTypeNamegenType)
                 {
                         char * name;
                         asprintf(&name,"val_%s",identifierSymbol->identifier);
                         return LLVMBuildLoad2(S->theBuilder,getLLVMTypeFromNoisyType(S,identifierSymbol->noisyType,false,0),identifierSymbol->llvmPointer,name);
                 }
-                else if (identifierSymbol->noisyType.basicType == noisyArrayType)
+                else if (identifierSymbol->noisyType.basicType == noisyBasicTypeArrayType)
                 {
                         LLVMValueRef arrayPtr = noisyGetArrayPositionPointer(N,S,identifierSymbol,L(noisyFactorNode));
                         char * name;
@@ -930,7 +930,7 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                                 return LLVMBuildGEP2(S->theBuilder,getLLVMTypeFromNoisyType(S,identifierSymbol->noisyType,false,0),arrayPtr,idxValueList,2,"k_arrayDecay");
                         }
                 }
-                else if (identifierSymbol->noisyType.basicType == noisyNamegenType)
+                else if (identifierSymbol->noisyType.basicType == noisyBasicTypeNamegenType)
                 {
                         Symbol * channelSymbol = identifierSymbol->noisyType.functionDefinition;
                         if (channelSymbol->isChannel)
@@ -949,7 +949,7 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
         else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PnamegenInvokeShorthand)
         {
                 Symbol * functionSymbol = LL(noisyFactorNode)->symbol;
-                if (functionSymbol->noisyType.basicType == noisyNamegenType)
+                if (functionSymbol->noisyType.basicType == noisyBasicTypeNamegenType)
                 {
                         functionSymbol = functionSymbol->noisyType.functionDefinition;
                 }
@@ -977,7 +977,7 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                 if (outputSignature->irLeftChild->type != kNoisyIrNodeType_Tnil)
                 {
                         noisyReturnType = outputSignature->irLeftChild->symbol->noisyType;
-                        if (noisyReturnType.basicType == noisyArrayType)
+                        if (noisyReturnType.basicType == noisyBasicTypeArrayType)
                         {
                                 retType = LLVMVoidTypeInContext(S->theContext);
                                 returnsArray = true;
@@ -1023,7 +1023,7 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                         /*
                         *       Passing an array as an argument of a function.
                         */
-                        if (expr->noisyType.basicType == noisyArrayType)
+                        if (expr->noisyType.basicType == noisyBasicTypeArrayType)
                         {
                                 /*
                                 *       When we pass an array as argument of a function we create a copy of the original array and we pass it by reference
@@ -1089,58 +1089,58 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                 NoisyType exprType = getNoisyTypeFromBasicType(LL(noisyFactorNode));
                 switch (exprType.basicType)
                 {
-                case noisyBool:
+                case noisyBasicTypeBool:
                         return LLVMConstInt(LLVMInt1TypeInContext(S->theContext),1,false);
                         break;
-                case noisyInt4:
+                case noisyBasicTypeInt4:
                         return LLVMConstInt(LLVMIntType(4),7,true);
                         break;
-                case noisyInt8:
+                case noisyBasicTypeInt8:
                         return LLVMConstInt(LLVMInt8TypeInContext(S->theContext),127,true);
                         break;
-                case noisyInt16:
+                case noisyBasicTypeInt16:
                         return LLVMConstInt(LLVMInt16TypeInContext(S->theContext),32767,true);
                         break;
-                case noisyInt32:
+                case noisyBasicTypeInt32:
                         return LLVMConstInt(LLVMInt32TypeInContext(S->theContext),2147483647,true);
                         break;
-                case noisyInt64:
+                case noisyBasicTypeInt64:
                         return LLVMConstInt(LLVMInt64TypeInContext(S->theContext),9223372036854775807,true);
                         break;
-                // case noisyInt128:
+                // case noisyBasicTypeInt128:
                 //         return LLVMConstInt(LLVMInt128Type(),0x7fffffffffffffffffffffffffffffff,true);
                 //         break;
-                case noisyNat4:
+                case noisyBasicTypeNat4:
                         return LLVMConstInt(LLVMIntType(4),15,false);
                         break;
-                case noisyNat8:
+                case noisyBasicTypeNat8:
                         return LLVMConstInt(LLVMInt8TypeInContext(S->theContext),255,false);
                         break;
-                case noisyNat16:
+                case noisyBasicTypeNat16:
                         return LLVMConstInt(LLVMInt16TypeInContext(S->theContext),65535,false);
                         break;
-                case noisyNat32:
+                case noisyBasicTypeNat32:
                         return LLVMConstInt(LLVMInt32TypeInContext(S->theContext),0xffffffff,false);
                         break;
-                case noisyNat64:
+                case noisyBasicTypeNat64:
                         return LLVMConstInt(LLVMInt64TypeInContext(S->theContext),0xffffffffffffffff,false);
                         break;
-                // case noisyNat128:
+                // case noisyBasicTypeNat128:
                 //         return LLVMConstInt(LLVMInt128TypeInContext(S->theContext),0xffffffffffffffffffffffffffffffffLL,false);
                 //         break;
-                case noisyFloat16:
+                case noisyBasicTypeFloat16:
                         /*
                         *       TODO; May be wrong for half float.
                         */
                         return LLVMConstReal(LLVMHalfTypeInContext(S->theContext),65.504f);
                         break;
-                case noisyFloat32:
+                case noisyBasicTypeFloat32:
                         return LLVMConstReal(LLVMFloatTypeInContext(S->theContext),FLT_MAX);
                         break;
-                case noisyFloat64:
+                case noisyBasicTypeFloat64:
                         return LLVMConstReal(LLVMDoubleTypeInContext(S->theContext),DBL_MAX);
                         break;
-                case noisyFloat128:
+                case noisyBasicTypeFloat128:
                         return LLVMConstReal(LLVMFP128TypeInContext(S->theContext),LDBL_MAX);
                         break;
                 default:
@@ -1152,58 +1152,58 @@ noisyFactorCodeGen(State * N,CodeGenState * S,IrNode * noisyFactorNode)
                 NoisyType exprType = getNoisyTypeFromBasicType(LL(noisyFactorNode));
                 switch (exprType.basicType)
                 {
-                case noisyBool:
+                case noisyBasicTypeBool:
                         return LLVMConstInt(LLVMInt1TypeInContext(S->theContext),0,false);
                         break;
-                case noisyInt4:
+                case noisyBasicTypeInt4:
                         return LLVMConstInt(LLVMIntType(4),-8,true);
                         break;
-                case noisyInt8:
+                case noisyBasicTypeInt8:
                         return LLVMConstInt(LLVMInt8TypeInContext(S->theContext),-128,true);
                         break;
-                case noisyInt16:
+                case noisyBasicTypeInt16:
                         return LLVMConstInt(LLVMInt16TypeInContext(S->theContext),-32768,true);
                         break;
-                case noisyInt32:
+                case noisyBasicTypeInt32:
                         return LLVMConstInt(LLVMInt32TypeInContext(S->theContext),-2147483648,true);
                         break;
-                case noisyInt64:
+                case noisyBasicTypeInt64:
                         return LLVMConstInt(LLVMInt64TypeInContext(S->theContext),0x1000000000000000LL,true);
                         break;
-                // case noisyInt128:
+                // case noisyBasicTypeInt128:
                 //         return LLVMConstInt(LLVMInt128TypeInContext(S->theContext),0x10000000000000000000000000000000,true);
                 //         break;
-                case noisyNat4:
+                case noisyBasicTypeNat4:
                         return LLVMConstInt(LLVMIntType(4),0,false);
                         break;
-                case noisyNat8:
+                case noisyBasicTypeNat8:
                         return LLVMConstInt(LLVMInt8TypeInContext(S->theContext),0,false);
                         break;
-                case noisyNat16:
+                case noisyBasicTypeNat16:
                         return LLVMConstInt(LLVMInt16TypeInContext(S->theContext),0,false);
                         break;
-                case noisyNat32:
+                case noisyBasicTypeNat32:
                         return LLVMConstInt(LLVMInt32TypeInContext(S->theContext),0,false);
                         break;
-                case noisyNat64:
+                case noisyBasicTypeNat64:
                         return LLVMConstInt(LLVMInt64TypeInContext(S->theContext),0,false);
                         break;
-                case noisyNat128:
+                case noisyBasicTypeNat128:
                         return LLVMConstInt(LLVMInt128TypeInContext(S->theContext),0,false);
                         break;
-                case noisyFloat16:
+                case noisyBasicTypeFloat16:
                         /*
                         *       TODO; May be wrong for half float.
                         */
                         return LLVMConstReal(LLVMHalfTypeInContext(S->theContext),-65.504f);
                         break;
-                case noisyFloat32:
+                case noisyBasicTypeFloat32:
                         return LLVMConstReal(LLVMFloatTypeInContext(S->theContext),FLT_MIN);
                         break;
-                case noisyFloat64:
+                case noisyBasicTypeFloat64:
                         return LLVMConstReal(LLVMDoubleTypeInContext(S->theContext),DBL_MIN);
                         break;
-                case noisyFloat128:
+                case noisyBasicTypeFloat128:
                         return LLVMConstReal(LLVMFP128TypeInContext(S->theContext),LDBL_MIN);
                         break;
                 default:
@@ -1233,7 +1233,7 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S,IrNode * noisyUnaryOpNode, LLVMV
         *       case kNoisyIrNodeType_Tplus: Does not do anything.
         */
         case kNoisyIrNodeType_Tminus:
-                if (noisyIsOfType(noisyFactorNode->noisyType,noisyIntegerConstType))
+                if (noisyIsOfType(noisyFactorNode->noisyType,noisyBasicTypeIntegerConstType))
                 {
                         /*
                         *       We use sub instruction for integer neg.
@@ -1264,7 +1264,7 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S,IrNode * noisyUnaryOpNode, LLVMV
                 /*
                 *       If the factor has noisyNamegen type it means we read from the output channel of a coroutine.
                 */
-                if (factorNoisyType.basicType == noisyNamegenType)
+                if (factorNoisyType.basicType == noisyBasicTypeNamegenType)
                 {
                         int argNum = 1;
                         LLVMValueRef args[3];
@@ -1284,7 +1284,7 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S,IrNode * noisyUnaryOpNode, LLVMV
                         args[2] = LLVMConstInt(LLVMInt1TypeInContext(S->theContext),0,false);
                         callFunc = LLVMGetNamedFunction(S->theModule,"llvm.coro.promise");
                         LLVMValueRef promiseAddr = LLVMBuildCall2(S->theBuilder,LLVMGetElementType(LLVMTypeOf(callFunc)),callFunc,args,argNum,"k_promiseAddrRaw");
-                        if (outputNoisyType.basicType == noisyArrayType)
+                        if (outputNoisyType.basicType == noisyBasicTypeArrayType)
                         {
                                 promiseAddr = LLVMBuildBitCast(S->theBuilder,promiseAddr,outputType,"k_promiseAddr");
                                 return promiseAddr;
@@ -1301,7 +1301,7 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S,IrNode * noisyUnaryOpNode, LLVMV
                         *       This case is when we read from input channel of a channel function.
                         */
                         LLVMValueRef readVal;
-                        if (noisyFactorNode->noisyType.basicType != noisyArrayType)
+                        if (noisyFactorNode->noisyType.basicType != noisyBasicTypeArrayType)
                         {
                                 /*
                                 *       Since arrays are already passed by reference we don't need to load.
@@ -1391,7 +1391,7 @@ noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
                 switch (LL(iter)->type)
                 {
                 case kNoisyIrNodeType_Tasterisk:
-                        if (noisyIsOfType(noisyTermNode->noisyType,noisyIntegerConstType))
+                        if (noisyIsOfType(noisyTermNode->noisyType,noisyBasicTypeIntegerConstType))
                         {
                                 termVal = LLVMBuildMul(S->theBuilder,termVal,factorIterVal,"k_mulRes");
                         }
@@ -1401,7 +1401,7 @@ noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
                         }
                         break;
                 case kNoisyIrNodeType_Tdivide:
-                        if (noisyIsOfType(noisyTermNode->noisyType,noisyIntegerConstType))
+                        if (noisyIsOfType(noisyTermNode->noisyType,noisyBasicTypeIntegerConstType))
                         {
                                 if (noisyIsSigned(noisyTermNode->noisyType))
                                 {
@@ -1418,7 +1418,7 @@ noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
                         }
                         break;
                 case kNoisyIrNodeType_Tpercent:
-                        if (noisyIsOfType(noisyTermNode->noisyType,noisyIntegerConstType))
+                        if (noisyIsOfType(noisyTermNode->noisyType,noisyBasicTypeIntegerConstType))
                         {
                                 if (noisyIsSigned(noisyTermNode->noisyType))
                                 {
@@ -1464,14 +1464,14 @@ noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
                 termVal = noisyUnaryOpCodeGen(N,S,unaryOpNode,termVal,factorNode);
         }
 
-        if (typeCast && factorNode->noisyType.basicType != noisyIntegerConstType && factorNode->noisyType.basicType != noisyRealConstType)
+        if (typeCast && factorNode->noisyType.basicType != noisyBasicTypeIntegerConstType && factorNode->noisyType.basicType != noisyBasicTypeRealConstType)
         {
                 NoisyType factorType = factorNode->noisyType;
                 NoisyType termType = noisyTermNode->noisyType;
                 LLVMTypeRef destType = getLLVMTypeFromNoisyType(S,termType,false,0);
-                if (noisyIsOfType(factorType,noisyIntegerConstType))
+                if (noisyIsOfType(factorType,noisyBasicTypeIntegerConstType))
                 {
-                        if (noisyIsOfType(termType,noisyIntegerConstType))
+                        if (noisyIsOfType(termType,noisyBasicTypeIntegerConstType))
                         {
                                 if (noisyIsSigned(factorType))
                                 {
@@ -1556,7 +1556,7 @@ noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
 
                                 }
                         }
-                        else if (noisyIsOfType(termType,noisyRealConstType))
+                        else if (noisyIsOfType(termType,noisyBasicTypeRealConstType))
                         {
                                 /*
                                 *       Convert from integer to float
@@ -1571,9 +1571,9 @@ noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
                                 }
                         }
                 }
-                else if (noisyIsOfType(factorType,noisyRealConstType))
+                else if (noisyIsOfType(factorType,noisyBasicTypeRealConstType))
                 {
-                        if (noisyIsOfType(termType,noisyIntegerConstType))
+                        if (noisyIsOfType(termType,noisyBasicTypeIntegerConstType))
                         {
                                 if (noisyIsSigned(termType))
                                 {
@@ -1584,7 +1584,7 @@ noisyTermCodeGen(State * N,CodeGenState * S,IrNode * noisyTermNode)
                                         termVal = LLVMBuildFPToUI(S->theBuilder,termVal,destType,"k_typeCastRes");
                                 }
                         }
-                        else if (noisyIsOfType(termType,noisyRealConstType))
+                        else if (noisyIsOfType(termType,noisyBasicTypeRealConstType))
                         {
                                 if (factorType.basicType < termType.basicType)
                                 {
@@ -1617,7 +1617,7 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                         switch (L(operatorNode)->type)
                         {
                         case kNoisyIrNodeType_Tplus:
-                                if (noisyIsOfType(termNode->noisyType,noisyIntegerConstType))
+                                if (noisyIsOfType(termNode->noisyType,noisyBasicTypeIntegerConstType))
                                 {
                                         exprVal = LLVMBuildAdd(S->theBuilder,exprVal,termIterVal,"k_sumRes");
                                 }
@@ -1627,7 +1627,7 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                                 }
                                 break;
                         case kNoisyIrNodeType_Tminus:
-                                if (noisyIsOfType(termNode->noisyType,noisyIntegerConstType))
+                                if (noisyIsOfType(termNode->noisyType,noisyBasicTypeIntegerConstType))
                                 {
                                         exprVal = LLVMBuildSub(S->theBuilder,exprVal,termIterVal,"k_subRes");
                                 }
@@ -1658,7 +1658,7 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                                 switch (LL(operatorNode)->type )
                                 {
                                 case kNoisyIrNodeType_Tequals:
-                                        if (noisyIsOfType(termNode->noisyType,noisyRealConstType))
+                                        if (noisyIsOfType(termNode->noisyType,noisyBasicTypeRealConstType))
                                         {
                                                 exprVal = LLVMBuildFCmp(S->theBuilder,LLVMRealOEQ,exprVal,termIterVal,"k_equalRes");
                                         }
@@ -1668,7 +1668,7 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                                         }
                                         break;
                                 case kNoisyIrNodeType_TnotEqual:
-                                        if (noisyIsOfType(termNode->noisyType,noisyRealConstType))
+                                        if (noisyIsOfType(termNode->noisyType,noisyBasicTypeRealConstType))
                                         {
                                                 exprVal = LLVMBuildFCmp(S->theBuilder,LLVMRealONE,exprVal,termIterVal,"k_notEqualRes");
                                         }
@@ -1678,7 +1678,7 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                                         }
                                         break;
                                 case kNoisyIrNodeType_TgreaterThan:
-                                        if (noisyIsOfType(termNode->noisyType,noisyRealConstType))
+                                        if (noisyIsOfType(termNode->noisyType,noisyBasicTypeRealConstType))
                                         {
                                                 exprVal = LLVMBuildFCmp(S->theBuilder,LLVMRealOGT,exprVal,termIterVal,"k_gtRes");
                                         }
@@ -1695,7 +1695,7 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                                         }
                                         break;
                                 case kNoisyIrNodeType_TgreaterThanEqual:
-                                        if (noisyIsOfType(termNode->noisyType,noisyRealConstType))
+                                        if (noisyIsOfType(termNode->noisyType,noisyBasicTypeRealConstType))
                                         {
                                                 exprVal = LLVMBuildFCmp(S->theBuilder,LLVMRealOGE,exprVal,termIterVal,"k_geRes");
                                         }
@@ -1712,7 +1712,7 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                                         }
                                         break;
                                 case kNoisyIrNodeType_TlessThan:
-                                        if (noisyIsOfType(termNode->noisyType,noisyRealConstType))
+                                        if (noisyIsOfType(termNode->noisyType,noisyBasicTypeRealConstType))
                                         {
                                                 exprVal = LLVMBuildFCmp(S->theBuilder,LLVMRealOLT,exprVal,termIterVal,"k_ltRes");
                                         }
@@ -1729,7 +1729,7 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                                         }
                                         break;
                                 case kNoisyIrNodeType_TlessThanEqual:
-                                        if (noisyIsOfType(termNode->noisyType,noisyRealConstType))
+                                        if (noisyIsOfType(termNode->noisyType,noisyBasicTypeRealConstType))
                                         {
                                                 exprVal = LLVMBuildFCmp(S->theBuilder,LLVMRealOLE,exprVal,termIterVal,"k_leRes");
                                         }
@@ -1879,7 +1879,7 @@ noisyExpressionCodeGen(State * N,CodeGenState * S, IrNode * noisyExpressionNode)
                                 }
                                 LLVMTypeRef argType = getLLVMTypeFromNoisyType(S,L(iter)->symbol->noisyType,false,0);
                                 LLVMValueRef inputChanAddr;
-                                if (L(iter)->symbol->noisyType.basicType == noisyArrayType)
+                                if (L(iter)->symbol->noisyType.basicType == noisyBasicTypeArrayType)
                                 {
                                         inputChanAddr = LLVMBuildAlloca(S->theBuilder,argType,"k_inputChanAddr");
                                         LLVMValueRef idxValueList[] = {LLVMConstInt(LLVMInt32TypeInContext(S->theContext),0,false),LLVMConstInt(LLVMInt32TypeInContext(S->theContext),0,false)};
@@ -1937,7 +1937,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 switch (RLL(noisyAssignmentStatementNode)->type)
                                 {
                                 case kNoisyIrNodeType_TcolonAssign:
-                                        if (lvalSym->noisyType.basicType != noisyNamegenType)
+                                        if (lvalSym->noisyType.basicType != noisyBasicTypeNamegenType)
                                         {
                                                 char * name;
                                                 asprintf(&name,"var_%s",lvalSym->identifier);
@@ -1947,7 +1947,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 case kNoisyIrNodeType_TplusAssign:
                                         asprintf(&name,"val_%s",lvalSym->identifier);
                                         lvalType = getLLVMTypeFromNoisyType(S,exprNoisyType,false,0);
-                                        if (lvalSym->noisyType.basicType == noisyArrayType)
+                                        if (lvalSym->noisyType.basicType == noisyBasicTypeArrayType)
                                         {
                                                 lvalVal = noisyGetArrayPositionPointer(N,S,lvalSym,LL(iter));
                                         }
@@ -1956,7 +1956,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                                 lvalVal = lvalSym->llvmPointer;
                                         }
                                         lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalVal,name);
-                                        if (noisyIsOfType(exprNoisyType,noisyIntegerConstType))
+                                        if (noisyIsOfType(exprNoisyType,noisyBasicTypeIntegerConstType))
                                         {
                                                 exprVal = LLVMBuildAdd(S->theBuilder,lvalVal,exprVal,"k_sumRes");
                                         }
@@ -1968,7 +1968,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 case kNoisyIrNodeType_TminusAssign:
                                         asprintf(&name,"val_%s",lvalSym->identifier);
                                         lvalType = getLLVMTypeFromNoisyType(S,exprNoisyType,false,0);
-                                        if (lvalSym->noisyType.basicType == noisyArrayType)
+                                        if (lvalSym->noisyType.basicType == noisyBasicTypeArrayType)
                                         {
                                                 lvalVal = noisyGetArrayPositionPointer(N,S,lvalSym,LL(iter));
                                         }
@@ -1977,7 +1977,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                                 lvalVal = lvalSym->llvmPointer;
                                         }
                                         lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalVal,name);
-                                        if (noisyIsOfType(exprNoisyType,noisyIntegerConstType))
+                                        if (noisyIsOfType(exprNoisyType,noisyBasicTypeIntegerConstType))
                                         {
                                                 exprVal = LLVMBuildSub(S->theBuilder,lvalVal,exprVal,"k_subRes");
                                         }
@@ -1989,7 +1989,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 case kNoisyIrNodeType_TasteriskAssign:
                                         asprintf(&name,"val_%s",lvalSym->identifier);
                                         lvalType = getLLVMTypeFromNoisyType(S,exprNoisyType,false,0);
-                                        if (lvalSym->noisyType.basicType == noisyArrayType)
+                                        if (lvalSym->noisyType.basicType == noisyBasicTypeArrayType)
                                         {
                                                 lvalVal = noisyGetArrayPositionPointer(N,S,lvalSym,LL(iter));
                                         }
@@ -1998,7 +1998,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                                 lvalVal = lvalSym->llvmPointer;
                                         }
                                         lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalVal,name);
-                                        if (noisyIsOfType(exprNoisyType,noisyIntegerConstType))
+                                        if (noisyIsOfType(exprNoisyType,noisyBasicTypeIntegerConstType))
                                         {
                                                 exprVal = LLVMBuildMul(S->theBuilder,lvalVal,exprVal,"k_mulRes");
                                         }
@@ -2010,7 +2010,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 case kNoisyIrNodeType_TdivideAssign:
                                         asprintf(&name,"val_%s",lvalSym->identifier);
                                         lvalType = getLLVMTypeFromNoisyType(S,exprNoisyType,false,0);
-                                        if (lvalSym->noisyType.basicType == noisyArrayType)
+                                        if (lvalSym->noisyType.basicType == noisyBasicTypeArrayType)
                                         {
                                                 lvalVal = noisyGetArrayPositionPointer(N,S,lvalSym,LL(iter));
                                         }
@@ -2019,7 +2019,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                                 lvalVal = lvalSym->llvmPointer;
                                         }
                                         lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalVal,name);
-                                        if (noisyIsOfType(exprNoisyType,noisyIntegerConstType))
+                                        if (noisyIsOfType(exprNoisyType,noisyBasicTypeIntegerConstType))
                                         {
                                                 if (noisyIsSigned(exprNoisyType))
                                                 {
@@ -2038,7 +2038,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 case kNoisyIrNodeType_TpercentAssign:
                                         asprintf(&name,"val_%s",lvalSym->identifier);
                                         lvalType = getLLVMTypeFromNoisyType(S,exprNoisyType,false,0);
-                                        if (lvalSym->noisyType.basicType == noisyArrayType)
+                                        if (lvalSym->noisyType.basicType == noisyBasicTypeArrayType)
                                         {
                                                 lvalVal = noisyGetArrayPositionPointer(N,S,lvalSym,LL(iter));
                                         }
@@ -2047,7 +2047,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                                 lvalVal = lvalSym->llvmPointer;
                                         }
                                         lvalVal = LLVMBuildLoad2(S->theBuilder,lvalType,lvalVal,name);
-                                        if (noisyIsOfType(exprNoisyType,noisyIntegerConstType))
+                                        if (noisyIsOfType(exprNoisyType,noisyBasicTypeIntegerConstType))
                                         {
                                                 if (noisyIsSigned(exprNoisyType))
                                                 {
@@ -2065,7 +2065,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 case kNoisyIrNodeType_TorAssign:
                                         asprintf(&name,"val_%s",lvalSym->identifier);
                                         lvalType = getLLVMTypeFromNoisyType(S,exprNoisyType,false,0);
-                                        if (lvalSym->noisyType.basicType == noisyArrayType)
+                                        if (lvalSym->noisyType.basicType == noisyBasicTypeArrayType)
                                         {
                                                 lvalVal = noisyGetArrayPositionPointer(N,S,lvalSym,LL(iter));
                                         }
@@ -2079,7 +2079,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 case kNoisyIrNodeType_TandAssign:
                                         asprintf(&name,"val_%s",lvalSym->identifier);
                                         lvalType = getLLVMTypeFromNoisyType(S,exprNoisyType,false,0);
-                                        if (lvalSym->noisyType.basicType == noisyArrayType)
+                                        if (lvalSym->noisyType.basicType == noisyBasicTypeArrayType)
                                         {
                                                 lvalVal = noisyGetArrayPositionPointer(N,S,lvalSym,LL(iter));
                                         }
@@ -2093,7 +2093,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 case kNoisyIrNodeType_TxorAssign:
                                         asprintf(&name,"val_%s",lvalSym->identifier);
                                         lvalType = getLLVMTypeFromNoisyType(S,exprNoisyType,false,0);
-                                        if (lvalSym->noisyType.basicType == noisyArrayType)
+                                        if (lvalSym->noisyType.basicType == noisyBasicTypeArrayType)
                                         {
                                                 lvalVal = noisyGetArrayPositionPointer(N,S,lvalSym,LL(iter));
                                         }
@@ -2107,7 +2107,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 case kNoisyIrNodeType_TleftShiftAssign:
                                         asprintf(&name,"val_%s",lvalSym->identifier);
                                         lvalType = getLLVMTypeFromNoisyType(S,exprNoisyType,false,0);
-                                        if (lvalSym->noisyType.basicType == noisyArrayType)
+                                        if (lvalSym->noisyType.basicType == noisyBasicTypeArrayType)
                                         {
                                                 lvalVal = noisyGetArrayPositionPointer(N,S,lvalSym,LL(iter));
                                         }
@@ -2121,7 +2121,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                 case kNoisyIrNodeType_TrightShiftAssign:
                                         asprintf(&name,"val_%s",lvalSym->identifier);
                                         lvalType = getLLVMTypeFromNoisyType(S,exprNoisyType,false,0);
-                                        if (lvalSym->noisyType.basicType == noisyArrayType)
+                                        if (lvalSym->noisyType.basicType == noisyBasicTypeArrayType)
                                         {
                                                 lvalVal = noisyGetArrayPositionPointer(N,S,lvalSym,LL(iter));
                                         }
@@ -2139,7 +2139,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                         */
                                         if (lvalSym->symbolType == kNoisySymbolTypeReturnParameter)
                                         {
-                                                if (exprNoisyType.basicType == noisyArrayType)
+                                                if (exprNoisyType.basicType == noisyBasicTypeArrayType)
                                                 {
                                                         LLVMValueRef oneVal[] = {LLVMConstInt(LLVMInt64TypeInContext(S->theContext),1,false)};
                                                         LLVMTypeRef arrayType = getLLVMTypeFromNoisyType(S,exprNoisyType,false,0);
@@ -2182,7 +2182,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                                 *       TODO; CHANGE llvmsym pointer to llvm chan address.
                                                 */
                                                 LLVMValueRef inputChanAddress = lvalSym->noisyType.functionDefinition->inputChanAddress;
-                                                if (RRL(noisyAssignmentStatementNode)->noisyType.basicType == noisyArrayType)
+                                                if (RRL(noisyAssignmentStatementNode)->noisyType.basicType == noisyBasicTypeArrayType)
                                                 {
                                                         /*
                                                         *       When we have an array cast on the rval of an assignment.
@@ -2234,7 +2234,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                         break;
                                 }
 
-                                if (RRL(noisyAssignmentStatementNode)->noisyType.basicType == noisyArrayType)
+                                if (RRL(noisyAssignmentStatementNode)->noisyType.basicType == noisyBasicTypeArrayType)
                                 {
                                         /*
                                         *       When we have an array cast on the rval of an assignment.
@@ -2278,7 +2278,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
 
                                         LLVMBuildMemCpy(S->theBuilder,dstPtrVal,0,srcArrayValue,0,sizeOfExprVal);
                                 }
-                                else if (lvalSym->noisyType.basicType == noisyArrayType)
+                                else if (lvalSym->noisyType.basicType == noisyBasicTypeArrayType)
                                 {
                                         /*
                                         *       When we have an array on lval of an assignment.
@@ -2292,7 +2292,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                         */
                                         ;
                                 }
-                                else if (lvalSym->noisyType.basicType != noisyNamegenType)
+                                else if (lvalSym->noisyType.basicType != noisyBasicTypeNamegenType)
                                 {
                                         LLVMBuildStore(S->theBuilder,exprVal,lvalSym->llvmPointer);
                                 }
@@ -2310,7 +2310,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                         if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
                         {
                                 Symbol * identifierSymbol = LLL(iter)->symbol;
-                                if (identifierSymbol->noisyType.basicType != noisyNamegenType)
+                                if (identifierSymbol->noisyType.basicType != noisyBasicTypeNamegenType)
                                 {
                                         char * name;
                                         asprintf(&name,"var_%s",identifierSymbol->identifier);
@@ -2487,7 +2487,7 @@ noisyReturnStatementCodeGen(State * N,CodeGenState * S, IrNode * returnNode)
 {
         noisyDestroyCoroutineFrames(N,S);
         LLVMValueRef expressionValue = noisyExpressionCodeGen(N,S,LRL(returnNode));
-        if (LRL(returnNode)->noisyType.basicType == noisyArrayType)
+        if (LRL(returnNode)->noisyType.basicType == noisyBasicTypeArrayType)
         {
                 LLVMValueRef oneVal[] = {LLVMConstInt(LLVMInt64TypeInContext(S->theContext),1,false)};
                 LLVMTypeRef arrayType = getLLVMTypeFromNoisyType(S,LRL(returnNode)->noisyType,false,0);
@@ -2601,7 +2601,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
                                 // identifierSymbol->noisyType = getNoisyTypeFromTypeExpr(N,identifierSymbol->typeTree);
                         }
 
-                        if (identifierSymbol->noisyType.basicType == noisyArrayType)
+                        if (identifierSymbol->noisyType.basicType == noisyBasicTypeArrayType)
                         {
                                 LLVMValueRef paramValue = LLVMGetParam(S->currentFunction,identifierSymbol->paramPosition);
                                 LLVMValueRef arrayAddrValue = LLVMBuildAlloca(S->theBuilder,LLVMTypeOf(paramValue),"k_arrAddr");
@@ -2652,7 +2652,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
                                 // identifierSymbol->noisyType = getNoisyTypeFromTypeExpr(N,identifierSymbol->typeTree);
                         }
 
-                        if (identifierSymbol->noisyType.basicType == noisyArrayType)
+                        if (identifierSymbol->noisyType.basicType == noisyBasicTypeArrayType)
                         {
                                 LLVMValueRef paramValue = LLVMGetParam(S->currentFunction,identifierSymbol->paramPosition);
                                 LLVMValueRef arrayAddrValue = LLVMBuildAlloca(S->theBuilder,LLVMTypeOf(paramValue),"k_arrAddr");
@@ -2664,7 +2664,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S,IrNode * noisyFunctionDefnN
                 if (L(outputSignature)->type != kNoisyIrNodeType_Tnil)
                 {
                         Symbol * identifierSymbol = L(outputSignature)->symbol;
-                        if (identifierSymbol->noisyType.basicType == noisyArrayType)
+                        if (identifierSymbol->noisyType.basicType == noisyBasicTypeArrayType)
                         {
                                 LLVMValueRef paramValue = LLVMGetLastParam(S->currentFunction);
                                 LLVMValueRef arrayAddrValue = LLVMBuildAlloca(S->theBuilder,LLVMTypeOf(paramValue),"k_retAddr");
