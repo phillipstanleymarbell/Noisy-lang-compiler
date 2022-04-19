@@ -6,7 +6,11 @@ BasedOnStyle: Google
 SortIncludes: false
 TabWidth: 8
 IndentWidth: 8
-UseTab: Always 
+UseTab: Always
+AlignConsecutiveDeclarations: true
+DerivePointerAlignment: false
+SpaceAroundPointerQualifiers: Default
+PointerAlignment: Middle
 AlwaysBreakAfterDefinitionReturnType: All
 AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: true
