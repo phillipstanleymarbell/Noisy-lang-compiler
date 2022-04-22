@@ -1,6 +1,6 @@
 
 changeset: 1218:16d7754fb4a4cd69a1028da671ef704574b4e9d4
-char kNewtonVersion[] = "0.3-alpha- () (build 04-18-2022-16:46-mupei@LAPTOP-179TJAMV-Linux-4.4.0-22000-Microsoft-x86_64)";
+char kNewtonVersion[] = "0.3-alpha- () (build 04-22-2022-10:04-mupei@LAPTOP-179TJAMV-Linux-4.4.0-22000-Microsoft-x86_64)";
 
 ./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s
 
