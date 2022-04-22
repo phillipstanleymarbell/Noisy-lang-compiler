@@ -441,7 +441,7 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 							// todo: let's measure the "var * var" the next time...
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a var * var expression, which didn't support yet.\n");
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a var * var expression, which is not supported yet.\n");
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
@@ -487,13 +487,13 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 							// todo: let's measure the "var / var" the next time...
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a var / var expression, which didn't support yet.\n");
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a var / var expression, which is not supported yet.\n");
 						}
 						else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 							/// todo: I don't know if we need to deal with "const / var" here,
 							/// like 2/x. if x in [-4, 4], then the range of 2/x is (-inf, -0.5] and [0.5, inf)
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a const / var expression, which didn't support yet.\n");
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a const / var expression, which is not supported yet.\n");
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
@@ -536,12 +536,12 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 							// todo: I don't know if we need to concern the "var << var"
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a var << var expression, which didn't support yet.\n");
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a var << var expression, which is not supported yet.\n");
 						}
 						else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 							/// todo: I don't know if we need to deal with "const << var" here,
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a const << var expression, which didn't support yet.\n");
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a const << var expression, which is not supported yet.\n");
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
@@ -583,12 +583,12 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 							// todo: I don't know if we need to concern the "var >> var"
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a var << var expression, which didn't support yet.\n");
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a var << var expression, which is not supported yet.\n");
 						}
 						else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 							/// todo: I don't know if we need to deal with "const >> var" here,
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a const << var expression, which didn't support yet.\n");
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a const << var expression, which is not supported yet.\n");
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
