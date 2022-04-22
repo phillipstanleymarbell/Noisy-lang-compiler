@@ -14,7 +14,7 @@ COMMON_FLAGS=-Wall -Wextra
 
 all: default
 
-default: application.ll simple_control_flow.ll
+default: application.ll simple_control_flow.ll test.ll
 
 %.ll : %.c
 	@echo Compiling $*.c
