@@ -93,6 +93,7 @@ SOURCES		=\
 		newton-eigenLibraryInterface.cpp\
 		newton-irPass-LLVMIR-dimension-check.cpp\
 		newton-irPass-LLVMIR-liveness-analysis.cpp\
+		newton-irPass-LLVMIR-simplify-control-flow-by-range.cpp\
 
 
 #
@@ -122,6 +123,7 @@ OBJS		=\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-liveness-analysis.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-simplify-control-flow-by-range.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
@@ -163,6 +165,7 @@ CGIOBJS		=\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-liveness-analysis.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-simplify-control-flow-by-range.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend/$(OBJECTEXTENSION)\
@@ -203,6 +206,7 @@ LIBNEWTONOBJS =\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-liveness-analysis.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-simplify-control-flow-by-range.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
@@ -240,6 +244,7 @@ HEADERS		=\
 		newton-irPass-estimatorSynthesisBackend.h\
 		newton-irPass-LLVMIR-dimension-check.h\
 		newton-irPass-LLVMIR-liveness-analysis.h\
+		newton-irPass-LLVMIR-simplify-control-flow-by-range.h\
 		newton-irPass-invariantSignalAnnotation.h\
 		newton-irPass-piGroupsSignalAnnotation.h\
 		newton-irPass-ipsaBackend.h\
@@ -309,6 +314,10 @@ newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION): newton-irPass-LLVMIR-di
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
 newton-irPass-LLVMIR-liveness-analysis.$(OBJECTEXTENSION): newton-irPass-LLVMIR-liveness-analysis.cpp
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
+
+newton-irPass-LLVMIR-simplify-control-flow-by-range.$(OBJECTEXTENSION): newton-irPass-LLVMIR-simplify-control-flow-by-range.cpp
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 

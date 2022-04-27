@@ -78,6 +78,7 @@
 #include "newton-irPass-ipsaBackend.h"
 #include "newton-irPass-LLVMIR-dimension-check.h"
 #include "newton-irPass-LLVMIR-liveness-analysis.h"
+#include "newton-irPass-LLVMIR-simplify-control-flow-by-range.h"
 #include "newton-irPass-dimensionalMatrixAnnotation.h"
 #include "newton-irPass-dimensionalMatrixPiGroups.h"
 #include "newton-irPass-dimensionalMatrixPrinter.h"
@@ -200,6 +201,10 @@ processNewtonFile(State *  N, char *  filename)
 	if (N->irPasses & kNewtonIrPassLLVMIRLivenessAnalysis)
 	{
 		irPassLLVMIRLivenessAnalysis(N);
+	}
+	if (N->irPasses & kNewtonIrPassLLVMIRSimplifyControlFlowByRange)
+	{
+		irPassLLVMIRSimplifyControlFlowByRange(N);
 	}
 	/*
 	 *	Dot backend.
