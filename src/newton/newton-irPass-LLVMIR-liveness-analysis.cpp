@@ -754,34 +754,35 @@ irPassLLVMIRLivenessAnalysis(State *  N)
 		fatal(N, Esanity);
 	}
 
-  flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
-  auto boundInfo = new BoundInfo();
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
+	auto boundInfo = new BoundInfo();
 
 	/*
-   * 	get sensor info, we only concern the id and range here
-   */
-  if (N->sensorList != NULL)
-  {
-    for (Modality * currentModality = N->sensorList->modalityList; currentModality != NULL; currentModality = currentModality->next)
-    {
-      flexprint(N->Fe, N->Fm, N->Fpinfo, "\tModality: %s\n", currentModality->identifier);
-      flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeLowerBound: %f\n", currentModality->rangeLowerBound);
-      flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeUpperBound: %f\n", currentModality->rangeUpperBound);
-      boundInfo->typeRange.emplace(currentModality->identifier,
-                                   std::make_pair(currentModality->rangeLowerBound, currentModality->rangeUpperBound));
-    }
-  }
+	 * 	get sensor info, we only concern the id and range here
+	 */
+	if (N->sensorList != NULL)
+	{
+		for (Modality * currentModality = N->sensorList->modalityList; currentModality != NULL; currentModality = currentModality->next)
+		{
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "\tModality: %s\n", currentModality->identifier);
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeLowerBound: %f\n", currentModality->rangeLowerBound);
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeUpperBound: %f\n", currentModality->rangeUpperBound);
+			boundInfo->typeRange.emplace(currentModality->identifier,
+						     std::make_pair(currentModality->rangeLowerBound, currentModality->rangeUpperBound));
+		}
+	}
 
-  for (auto& mi : *Mod)
-  {
-    inferBound(N, boundInfo, mi);
-  }
+	for (auto & mi : *Mod)
+	{
+		inferBound(N, boundInfo, mi);
+	}
 
-  flexprint(N->Fe, N->Fm, N->Fpinfo, "\nafter infer bound\n");
-  for (auto& vr: boundInfo->variableBound) {
-    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tvariable: %s, range: %f -> %f\n",
-              vr.first.data(), vr.second.first, vr.second.second);
-  }
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "\nafter infer bound\n");
+	for (auto & vr : boundInfo->variableBound)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\tvariable: %s, range: %f -> %f\n",
+			  vr.first.data(), vr.second.first, vr.second.second);
+	}
 
 	auto	livenessState = new LivenessState();
 
