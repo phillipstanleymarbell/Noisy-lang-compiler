@@ -89,8 +89,8 @@ typedef struct LivenessState {
 
 
 typedef struct BoundInfo {
-  std::map<std::string, std::pair<double, double>> variableBound;
-  std::map<std::string, std::pair<double, double>> typeRange;
+	std::map<std::string, std::pair<double, double>> variableBound;
+	std::map<std::string, std::pair<double, double>> typeRange;
 } BoundInfo;
 
 void
