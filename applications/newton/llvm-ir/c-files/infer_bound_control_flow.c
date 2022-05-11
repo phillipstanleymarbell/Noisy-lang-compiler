@@ -65,6 +65,9 @@ main (void)
 	}
 
 	// increasing
+	// if x in [-16, 2], this for block should be eliminated
+	// if x in [3, 16], y6=y6+(x-i0)
+	// so the range of y6 is [y6, y6+x-2], where x>2
 	for (int i = 2; i < x; i++)
 	{
 		// it's better to infer the range of y6, which is [6, 20]
@@ -72,6 +75,9 @@ main (void)
 	}
 
 	// decreasing
+	// if x in [1, 16], this for block should be eliminated
+	// if x in [-16, 0], y7 = y7+(i0-x)
+	// so the range of y7 is [y7, y7+1-x], where x<1
 	for (int i = 1; i > x; i--)
 	{
 		// it's better to infer the range of y7, which is [7, 24]
@@ -92,6 +98,9 @@ main (void)
 	}
 
 	// increasing
+	// if x in [5, 16], this for block should be eliminated
+	// if x in [-16, 4], y10=y10+(5-x)
+	// so the range of y6 is [y10, y10+5-x], where x<5
 	while (x < 5)
 	{
 		// it's better to infer the range of y10, which is [10, 31]
@@ -100,6 +109,9 @@ main (void)
 	}
 
 	// decreasing
+	// if x in [-16, 0], this for block should be eliminated
+	// if x in [1, 16], y11=y11+(x-0)
+	// so the range of y11 is [y11, y11+x-0], where x>0
 	while (x > 0)
 	{
 		// it's better to infer the range of y11, which is [11, 27]
