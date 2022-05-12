@@ -43,7 +43,7 @@ Once you have the above repositories,
 
 1.	Create a file `config.local` in the root of the Noisy tree and edit it to contain 
 ```make
-	LIBFLEXPATH     = full-path-to-libflex-repository-clone 
+	LIBFLEXPATH     = full-path-to-libflex-repository-clone
 	CONFIGPATH      = full-path-to-libflex-repository-clone
 	OSTYPE		= <one of 'linux' or 'darwin'>
 	MACHTYPE	= x86_64
