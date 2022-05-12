@@ -22,6 +22,7 @@ If you forgot to clone with `--recursive` and end up with empty submodule direct
 	git submodule update --init
 ```
 
+### Prerequisites
 Building the Noisy compiler and debug tools depends on the [`libflex`](https://github.com/phillipstanleymarbell/libflex), [`Wirth-tools`](https://github.com/phillipstanleymarbell/Wirth-tools), and [`DTrace-scripts`](https://github.com/phillipstanleymarbell/DTrace-scripts) repositories. These repositories are already included as submodules:
 ```
 	Libflex:		git@github.com:phillipstanleymarbell/libflex.git
@@ -34,11 +35,13 @@ For linear algebra in Newton, we use the Eigen library. This is also already lin
 	Eigen:			git@github.com:eigenteam/eigen-git-mirror.git	
 ```
 
+
 The build also depends on the C protobuf compiler, `sloccount`, and on Graphviz. On Mac OS X, the easiest way to install these is to use macports (macports.org) to install the packages `protobuf-c` and `protobuf-cpp` (on Debian, you want the package `libprotobuf-c-dev` and on Ubuntu you also want `protobuf-c-compiler`), `sloccount`, and `graphviz-devel`.
 
 Furthermore, LLVM is a build and runtime dependency on this project.
 Currently, passes related to LLVM are tested with LLVM 12 and 13 versions.
 
+### Build
 Once you have the above repositories, 
 
 1.	Create a file `config.local` in the root of the Noisy tree and edit it to contain 
@@ -56,6 +59,8 @@ For example,
 	OSTYPE		= linux
 	MACHTYPE	= x86_64
 ```
+
+Please make sure that absolute paths are used above. 
 
 2.	Copy `config.local` to the libflex directory
 ```shell
