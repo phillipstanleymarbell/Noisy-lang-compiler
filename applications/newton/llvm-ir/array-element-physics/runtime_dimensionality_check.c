@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void __array_dimensionality_check(int64_t index)
+void __array_dimensionality_check(int index, int * array)
 {
-	printf("Found index: %ld\n", index);
+	printf("Found index: %d, %p\n", index, array);
 }

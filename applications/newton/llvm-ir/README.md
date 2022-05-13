@@ -28,6 +28,7 @@ make
 cd ../../../../src/newton
 ./<newton-executable> --llvm-ir=../../applications/newton/llvm-ir/array-element-physics/main.ll ../../applications/newton/invariants/LLVMIRNewtonExample.nt
 cd -
+make main_opt.ll
 make main
 ./main
 ```

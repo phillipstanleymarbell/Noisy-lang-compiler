@@ -479,10 +479,22 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  Runt
 						else
 						{
 							IRBuilder<> 	builder(&llvmIrInstruction);
-							Type *	argumentType = RuntimeCheckFunction.getFunctionType()->getParamType(0);
-							auto	variableIndex = builder.CreateIntCast(indexOperand, argumentType, true);
+							llvm::Type *i64Type = llvm::IntegerType::getInt64Ty(builder.getContext());
 
-							builder.CreateCall(RuntimeCheckFunction, {variableIndex});
+							Type *	argumentType = RuntimeCheckFunction.getFunctionType()->getParamType(0);
+							Type *	pointerType = RuntimeCheckFunction.getFunctionType()->getParamType(1);
+
+							auto element_size = llvm::ConstantInt::get(i64Type, 8);
+							auto array_size = llvm::ConstantInt::get(i64Type, 100);
+							auto alloc_size = llvm::ConstantExpr::getMul(element_size, array_size);
+
+							Instruction* Malloc = CallInst::CreateMalloc(&llvmIrInstruction,
+																		 i64Type, i64Type->getPointerTo(), alloc_size,
+																		 nullptr, nullptr, "");
+
+							auto	variableIndex = builder.CreateIntCast(indexOperand, argumentType, true);
+							auto	pointerIndex = builder.CreatePointerCast(Malloc, pointerType);
+							builder.CreateCall(RuntimeCheckFunction, {variableIndex, pointerIndex});
 						}
 					}
 					break;
@@ -622,9 +634,10 @@ irPassLLVMIRDimensionCheck(State *  N)
 	auto& Ctx = Mod->getContext();
 
 	Type *VoidTy = Type::getVoidTy(Ctx);
-	Type *ArgTy = Type::getInt64Ty(Ctx);
+	Type *FirstArgTy = Type::getInt64Ty(Ctx);
+	Type *SecondArgTy = Type::getInt64PtrTy(Ctx);
 
-	FunctionCallee ArrayDimensionalityCheck = Mod->getOrInsertFunction("__array_dimensionality_check", VoidTy, ArgTy);
+	FunctionCallee ArrayDimensionalityCheck = Mod->getOrInsertFunction("__array_dimensionality_check", VoidTy, FirstArgTy, SecondArgTy);
 
 	for (auto & mi : *Mod)
 	{

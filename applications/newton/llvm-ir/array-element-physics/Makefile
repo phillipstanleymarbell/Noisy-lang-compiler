@@ -5,6 +5,7 @@ endif
 LLVM_CONFIG:=llvm-config
 CC:=clang # Currently tested with clang-12/clang-13
 LLC:=llc
+LLVM-DIS:= llvm-dis-12
 
 COMMON_FLAGS=-Wall -Wextra
 
@@ -13,8 +14,11 @@ default: main.ll
 main : main.o runtime_dimensionality_check.o
 	$(_QUIET)$(CC) $^ -o $@
 
-main.o : out.bc
-	$(_QUIET)$(LLC) -filetype=obj out.bc -o $@
+main.o : main.bc
+	$(_QUIET)$(LLC) -filetype=obj $< -o $@
+
+main_opt.ll : main.bc
+	$(_QUIET)$(LLVM-DIS) $< -o $@
 
 %.ll : %.c
 	$(_QUIET)$(CC) -g -S -emit-llvm $(COMMON_FLAGS) -o $@ $<
