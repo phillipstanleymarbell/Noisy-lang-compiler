@@ -50,6 +50,7 @@
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
+#include "llvm/Support/Path.h"
 
 using namespace llvm;
 
@@ -605,6 +606,10 @@ irPassLLVMIRDimensionCheck(State *  N)
 		fatal(N, Esanity);
 	}
 
+	StringRef	filePath(N->llvmIR);
+	std::string	outputFilePath;
+	outputFilePath = std::string(sys::path::parent_path(filePath)) + "/" + std::string(sys::path::stem(filePath)) + ".bc";
+
 	SMDiagnostic 	Err;
 	LLVMContext 	Context;
 	std::unique_ptr<Module>	Mod(parseIRFile(N->llvmIR, Err, Context));
@@ -626,8 +631,8 @@ irPassLLVMIRDimensionCheck(State *  N)
 		dimensionalityCheck(mi, N, ArrayDimensionalityCheck);
 	}
 
-	std::error_code ec (errno,std::generic_category());
-	raw_fd_ostream outputFile(StringRef("../../applications/newton/llvm-ir/array-element-physics/out.bc"), ec);
+	std::error_code errorCode(errno,std::generic_category());
+	raw_fd_ostream outputFile(outputFilePath, errorCode);
 	WriteBitcodeToFile(*Mod, outputFile);
 }
 
