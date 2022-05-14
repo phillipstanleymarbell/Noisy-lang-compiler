@@ -11,7 +11,7 @@ for opening an issue, creating a branch, creating a Pull Request, and getting it
 ## Getting started
 
 Make sure you have the project set up correctly by following the guide in 
-the [README.md](https://github.com/phillipstanleymarbell/Noisy-lang-compiler/blob/master/README.md).
+the [README.md](https://github.com/phillipstanleymarbell/Noisy-lang-compiler/tree/master#getting-started).
 
 ## Issues and branches
 
