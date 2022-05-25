@@ -25,3 +25,5 @@ BraceWrapping:
   AfterFunction: true
   AfterNamespace: true
   BeforeElse: true
+AlignConsecutiveAssignments: Consecutive
+AlignTrailingComments: true
