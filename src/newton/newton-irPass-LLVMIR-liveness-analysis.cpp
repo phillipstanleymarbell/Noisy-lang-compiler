@@ -89,8 +89,8 @@ typedef struct LivenessState {
 
 
 typedef struct BoundInfo {
-  std::map<std::string, std::pair<double, double>> variableBound;
-  std::map<std::string, std::pair<double, double>> typeRange;
+	std::map<std::string, std::pair<double, double>> variableBound;
+	std::map<std::string, std::pair<double, double>> typeRange;
 } BoundInfo;
 
 void
@@ -267,9 +267,11 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							auto variableType = debugInfoVariable->getType();
 							valueName.emplace(localVariableAddress, debugInfoVariable->getName().str());
 
-							// if we find such type in boundInfo->typeRange,
-							// we get its range and bind the var with it in boundInfo->variableBound
-							// and record it in the virtualRegisterRange
+							/*
+							 *	if we find such type in boundInfo->typeRange,
+							 *	we get its range and bind the var with it in boundInfo->variableBound
+							 *	and record it in the virtualRegisterRange
+							 */
 							auto typeRangeIt = boundInfo->typeRange.find(variableType->getName().str());
 							if (typeRangeIt != boundInfo->typeRange.end())
 							{
@@ -286,8 +288,10 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 					{
 						Value * leftOperand = llvmIrInstruction.getOperand(0);
 						Value * rightOperand = llvmIrInstruction.getOperand(1);
-						/// todo: expression normalization needed, which simpily the "const + const" or normalize into the "var + const" form
-						/// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						/*
+						 * 	todo: expression normalization needed, which simpily the "const + const" or normalize into the "var + const" form
+						 *	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						 */
 						if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)) ||
 						    (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
@@ -299,16 +303,20 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							double lowerBound = 0.0;
 							double upperBound = 0.0;
 
-							// eg. x1+x2
-							// btw, I don't think we should check type here, which should be done in other pass like dimension-check
-							// find left operand from the virtualRegisterRange
+							/*
+							 * 	eg. x1+x2
+							 * 	btw, I don't think we should check type here, which should be done in other pass like dimension-check
+							 * 	find left operand from the virtualRegisterRange
+							 */
 							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
 								lowerBound = vrRangeIt->second.first;
 								upperBound = vrRangeIt->second.second;
 							}
-							// find right operand from the virtualRegisterRange
+							/*
+							 * 	find right operand from the virtualRegisterRange
+							 */
 							vrRangeIt = virtualRegisterRange.find(rightOperand);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
@@ -319,15 +327,17 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
-							// eg. x+2
-							// get the constant value
+							/*
+							 * 	eg. x+2
+							 */
 							double constValue = 0.0;
 							if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
 							{
-								// both "float" and "double" type can use "convertToDouble"
+								/*
+								 * 	both "float" and "double" type can use "convertToDouble"
+								 */
 								constValue = (constFp->getValueAPF()).convertToDouble();
 							}
-							// find the variable from the virtualRegisterRange
 							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
@@ -349,8 +359,10 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 					{
 						Value * leftOperand = llvmIrInstruction.getOperand(0);
 						Value * rightOperand = llvmIrInstruction.getOperand(1);
-						/// todo: expression normalization needed, which simpily the "const - const" form
-						/// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						/*
+						 * 	todo: expression normalization needed, which simpily the "const - const" form
+						 * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						 */
 						if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
 						{
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tExpression normalization needed.\n");
@@ -361,16 +373,17 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							double lowerBound = 0.0;
 							double upperBound = 0.0;
 
-							// eg. x1-x2
-							// btw, I don't think we should check type here, which should be done in other pass like dimension-check
-							// find left operand from the virtualRegisterRange
+							/*
+							 * 	eg. x1-x2
+							 * 	btw, I don't think we should check type here, which should be done in other pass like dimension-check
+							 * 	find left operand from the virtualRegisterRange
+							 */
 							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
 								lowerBound = vrRangeIt->second.first;
 								upperBound = vrRangeIt->second.second;
 							}
-							// find right operand from the virtualRegisterRange
 							vrRangeIt = virtualRegisterRange.find(rightOperand);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
@@ -381,15 +394,14 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
-							// eg. x-2
-							// get the constant value
+							/*
+							 * 	eg. x-2
+							 */
 							double constValue = 0.0;
 							if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
 							{
-								// both "float" and "double" type can use "convertToDouble"
 								constValue = (constFp->getValueAPF()).convertToDouble();
 							}
-							// find the variable from the virtualRegisterRange
 							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
@@ -400,15 +412,14 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						}
 						else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
-							// eg. 2-x
-							// get the constant value
+							/*
+							 * 	eg. 2-x
+							 */
 							double constValue = 0.0;
 							if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(leftOperand))
 							{
-								// both "float" and "double" type can use "convertToDouble"
 								constValue = (constFp->getValueAPF()).convertToDouble();
 							}
-							// find the variable from the virtualRegisterRange
 							auto vrRangeIt = virtualRegisterRange.find(rightOperand);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
@@ -430,8 +441,10 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 					{
 						Value * leftOperand = llvmIrInstruction.getOperand(0);
 						Value * rightOperand = llvmIrInstruction.getOperand(1);
-						/// todo: expression normalization needed, which simpily the "const * const" or normalize into the "var * const" form
-						/// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						/*
+						 * 	todo: expression normalization needed, which simpily the "const * const" or normalize into the "var * const" form
+						 * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						 */
 						if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)) ||
 						    (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
@@ -440,20 +453,21 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 
 						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
-							// todo: let's measure the "var * var" the next time...
+							/*
+							 * 	todo: let's measure the "var * var" the next time...
+							 */
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a var * var expression, which is not supported yet.\n");
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
-							// eg. x*2
-							// get the constant value
+							/*
+							 * 	eg. x*2
+							 */
 							double constValue = 1.0;
 							if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
 							{
-								// both "float" and "double" type can use "convertToDouble"
 								constValue = (constFp->getValueAPF()).convertToDouble();
 							}
-							// find the variable from the virtualRegisterRange
 							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
@@ -476,9 +490,11 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 					{
 						Value * leftOperand = llvmIrInstruction.getOperand(0);
 						Value * rightOperand = llvmIrInstruction.getOperand(1);
-						/// todo: expression normalization needed, which simpily the "const / const" form
-						/// and the assertion of "rightOperand.value != 0" should be done in expression normalization too
-						/// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						/*
+						 * 	todo: expression normalization needed, which simpily the "const / const" form
+						 * 	and the assertion of "rightOperand.value != 0" should be done in expression normalization too
+						 * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						 */
 						if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
 						{
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tExpression normalization needed.\n");
@@ -486,26 +502,29 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 
 						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
-							// todo: let's measure the "var / var" the next time...
+							/*
+							 * 	todo: let's measure the "var / var" the next time...
+							 */
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a var / var expression, which is not supported yet.\n");
 						}
 						else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
-							/// todo: I don't know if we need to deal with "const / var" here,
-							/// like 2/x. if x in [-4, 4], then the range of 2/x is (-inf, -0.5] and [0.5, inf)
+							/*
+							 * 	todo: I don't know if we need to deal with "const / var" here,
+							 * 	like 2/x. if x in [-4, 4], then the range of 2/x is (-inf, -0.5] and [0.5, inf)
+							 */
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a const / var expression, which is not supported yet.\n");
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
-							// eg. x/2
-							// get the constant value
+							/*
+							 * 	eg. x/2
+							 */
 							double constValue = 1.0;
 							if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
 							{
-								// both "float" and "double" type can use "convertToDouble"
 								constValue = (constFp->getValueAPF()).convertToDouble();
 							}
-							// find the variable from the virtualRegisterRange
 							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
@@ -526,8 +545,10 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 					{
 						Value * leftOperand = llvmIrInstruction.getOperand(0);
 						Value * rightOperand = llvmIrInstruction.getOperand(1);
-						/// todo: expression normalization needed, which simpily the "const << const" form
-						/// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						/*
+						 * 	todo: expression normalization needed, which simpily the "const << const" form
+						 * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						 */
 						if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
 						{
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tExpression normalization needed.\n");
@@ -535,24 +556,28 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 
 						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
-							// todo: I don't know if we need to concern the "var << var"
+							/*
+							 * 	todo: I don't know if we need to concern the "var << var"
+							 */
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a var << var expression, which is not supported yet.\n");
 						}
 						else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
-							/// todo: I don't know if we need to deal with "const << var" here,
+							/*
+							 * 	todo: I don't know if we need to deal with "const << var" here,
+							 */
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a const << var expression, which is not supported yet.\n");
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
-							// eg. x<<2
-							// get the constant value
+							/*
+							 * 	eg. x<<2
+							 */
 							int constValue = 1.0;
 							if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
 							{
 								constValue = constInt->getZExtValue();
 							}
-							// find the variable from the virtualRegisterRange
 							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
@@ -573,8 +598,10 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 					{
 						Value * leftOperand = llvmIrInstruction.getOperand(0);
 						Value * rightOperand = llvmIrInstruction.getOperand(1);
-						/// todo: expression normalization needed, which simpily the "const >> const" form
-						/// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						/*
+						 * 	todo: expression normalization needed, which simpily the "const >> const" form
+						 * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						 */
 						if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
 						{
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tExpression normalization needed.\n");
@@ -582,24 +609,28 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 
 						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
-							// todo: I don't know if we need to concern the "var >> var"
+							/*
+							 * 	todo: I don't know if we need to concern the "var >> var"
+							 */
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a var << var expression, which is not supported yet.\n");
 						}
 						else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
-							/// todo: I don't know if we need to deal with "const >> var" here,
+							/*
+							 * 	todo: I don't know if we need to deal with "const >> var" here,
+							 */
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tIt's a const << var expression, which is not supported yet.\n");
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
-							// eg. x>>2
-							// get the constant value
+							/*
+							 *	eg. x>>2
+							 */
 							int constValue = 1.0;
 							if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
 							{
 								constValue = constInt->getZExtValue();
 							}
-							// find the variable from the virtualRegisterRange
 							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
@@ -621,8 +652,7 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 				case Instruction::UIToFP:
 				{
 					Value * operand = llvmIrInstruction.getOperand(0);
-					// find the variable from the virtualRegisterRange
-					auto vrRangeIt = virtualRegisterRange.find(operand);
+					auto	vrRangeIt = virtualRegisterRange.find(operand);
 					if (vrRangeIt != virtualRegisterRange.end())
 					{
 						virtualRegisterRange.emplace(&llvmIrInstruction,
@@ -651,14 +681,18 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 					{
 						Value * leftTerm = llvmIrStoreInstruction->getOperand(0);
 						Value * rightTerm = llvmIrStoreInstruction->getOperand(1);
-						/// here we focus on the "var2 = var1" pattern
-						/// eg. store double %5, double* %3, align 8, !dbg !19
+						/*
+						 * 	here we focus on the "var2 = var1" pattern
+						 * 	eg. store double %5, double* %3, align 8, !dbg !19
+						 */
 						if (!leftTerm->hasName() && !rightTerm->hasName())
 						{
 							auto vrRangeIt = virtualRegisterRange.find(leftTerm);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
-								// find the variable from the virtualRegisterRange
+								/*
+							  	 * 	find the variable from the virtualRegisterRange
+							  	 */
 								auto valueNameIt = valueName.find(rightTerm);
 								if (valueNameIt != valueName.end())
 								{
@@ -720,32 +754,35 @@ irPassLLVMIRLivenessAnalysis(State *  N)
 		fatal(N, Esanity);
 	}
 
-  flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
-  auto boundInfo = new BoundInfo();
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
+	auto boundInfo = new BoundInfo();
 
-  // get sensor info, we only concern the id and range here
-  if (N->sensorList != NULL)
-  {
-    for (Modality * currentModality = N->sensorList->modalityList; currentModality != NULL; currentModality = currentModality->next)
-    {
-      flexprint(N->Fe, N->Fm, N->Fpinfo, "\tModality: %s\n", currentModality->identifier);
-      flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeLowerBound: %f\n", currentModality->rangeLowerBound);
-      flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeUpperBound: %f\n", currentModality->rangeUpperBound);
-      boundInfo->typeRange.emplace(currentModality->identifier,
-                                   std::make_pair(currentModality->rangeLowerBound, currentModality->rangeUpperBound));
-    }
-  }
+	/*
+	 * 	get sensor info, we only concern the id and range here
+	 */
+	if (N->sensorList != NULL)
+	{
+		for (Modality * currentModality = N->sensorList->modalityList; currentModality != NULL; currentModality = currentModality->next)
+		{
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "\tModality: %s\n", currentModality->identifier);
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeLowerBound: %f\n", currentModality->rangeLowerBound);
+			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeUpperBound: %f\n", currentModality->rangeUpperBound);
+			boundInfo->typeRange.emplace(currentModality->identifier,
+						     std::make_pair(currentModality->rangeLowerBound, currentModality->rangeUpperBound));
+		}
+	}
 
-  for (auto& mi : *Mod)
-  {
-    inferBound(N, boundInfo, mi);
-  }
+	for (auto & mi : *Mod)
+	{
+		inferBound(N, boundInfo, mi);
+	}
 
-  flexprint(N->Fe, N->Fm, N->Fpinfo, "\nafter infer bound\n");
-  for (auto& vr: boundInfo->variableBound) {
-    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tvariable: %s, range: %f -> %f\n",
-              vr.first.data(), vr.second.first, vr.second.second);
-  }
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "\nafter infer bound\n");
+	for (auto & vr : boundInfo->variableBound)
+	{
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "\tvariable: %s, range: %f -> %f\n",
+			  vr.first.data(), vr.second.first, vr.second.second);
+	}
 
 	auto	livenessState = new LivenessState();
 
