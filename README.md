@@ -6,6 +6,8 @@ Newton is a language for specifying assertions (invariants) about physical syste
 Because the Newton compiler started out as a modification of the Noisy compiler implementation to test out ideas, the implementation of Newton borrows/shares many components from the Noisy compiler and is therefore distributed with it.
 - - - -
 
+## Getting started
+
 The correct way to clone this repository to get the submodules is:
 ```sh
 	git clone --recursive git@github.com:phillipstanleymarbell/Noisy-lang-compiler.git
@@ -43,7 +45,7 @@ Once you have the above repositories,
 
 1.	Create a file `config.local` in the root of the Noisy tree and edit it to contain 
 ```make
-	LIBFLEXPATH     = full-path-to-libflex-repository-clone 
+	LIBFLEXPATH     = full-path-to-libflex-repository-clone
 	CONFIGPATH      = full-path-to-libflex-repository-clone
 	OSTYPE		= <one of 'linux' or 'darwin'>
 	MACHTYPE	= x86_64

@@ -1,0 +1,49 @@
+# 
+# test
+# 
+include "applications/newton/include/NewtonBaseSignals.nt"
+
+
+accelerationNoise : signal =
+{
+	name = "micro g per square root of Hertz" English;
+	symbol = n;
+	derivation = 1E-6 * acceleration / (frequency ** 0.5);
+}
+kBMX055xAccelerationStdev		: constant = -1;
+
+test: sensor (
+			bmx055xAcceleration:acceleration
+			) =
+{
+	range bmx055xAcceleration == [-16 mjf, 16 mjf],
+
+	#
+	#	The operation sequence needed to get a sample
+	#
+	#	i2c address of Accelerometer can be found in Table 64 on page 145.
+	#
+	#	Register address of Accelerometer can be found in Figure 12 of document 6.2 on page 49.
+	#
+	interface bmx055xAcceleration == i2c (address: 16r18)
+	{
+		#
+		#	Start up at normal mode, modify (write value register) if set to other modes ...
+		#
+		#	Get MSB and LSB of xAccel data...
+		#
+		xAccelHigh := read 16r03;
+		xAccelLow := read 16r02;
+		bmx055xAcceleration = (xAccelHigh << 4) | (xAccelLow >> 4);
+		# bmx055xAcceleration = xAccelHigh[:] + xAccelLow[4:];
+	},
+	uncertainty bmx055xAcceleration == GaussianDistribution(mean: bmx055xAcceleration, stdev: kBMX055xAccelerationStdev),
+	erasureToken bmx055xAcceleration == 16rFEFE,
+	precision bmx055xAcceleration == {
+					(12, -1)
+				},
+	accuracy bmx055xAcceleration == {
+					(150 n, 312)
+				}
+
+}
