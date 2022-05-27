@@ -89,6 +89,78 @@ typedef struct BoundInfo {
 	std::map<std::string, std::pair<double, double>> typeRange;
 } BoundInfo;
 
+enum CmpRes {
+  AlwaysTrue	=	1,
+  AlwaysFalse	=	2,
+  Depends		=	3,
+};
+
+CmpRes
+compareWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLowerBound, double variableUpperBound, double constValue)
+{
+	switch (llvmIrFCmpInstruction->getPredicate())
+	{
+		case FCmpInst::FCMP_TRUE:
+			return CmpRes::AlwaysTrue;
+		case FCmpInst::FCMP_FALSE:
+			return CmpRes::AlwaysFalse;
+		/*
+		 * Ordered means that neither operand is a QNAN while unordered means that either operand may be a QNAN.
+		 * More details in https://llvm.org/docs/LangRef.html#fcmp-instruction
+		 * todo: let's deal with unordered when facing it
+		 * */
+		case FCmpInst::FCMP_OGT:
+			if (variableLowerBound > constValue)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (variableUpperBound < constValue)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+		case FCmpInst::FCMP_OLT:
+			if (variableUpperBound < constValue)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (variableLowerBound > constValue)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+		// todo: other enums
+		default:
+			return CmpRes::Depends;
+	}
+}
+
+static Type *GetCompareTy(Value *Op) {
+	return CmpInst::makeCmpResultType(Op->getType());
+}
+
+/*
+ * For a boolean type or a vector of boolean type, return false or a vector
+ * with every element false.
+ * */
+static llvm::Constant *getFalse(Type *Ty) {
+	return ConstantInt::getFalse(Ty);
+}
+
+/*
+ * For a boolean type or a vector of boolean type, return true or a vector
+ * with every element true.
+ * */
+static llvm::Constant *getTrue(Type *Ty) {
+	return ConstantInt::getTrue(Ty);
+}
+
 void
 simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 {
@@ -131,9 +203,11 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 					}
 					break;
 				case Instruction::ICmp:
-				case Instruction::FCmp: {
-					auto leftOperand = llvmIrInstruction.getOperand(0);
-					auto rightOperand = llvmIrInstruction.getOperand(1);
+				case Instruction::FCmp:
+					if (auto llvmIrFCmpInstruction = dyn_cast<FCmpInst>(&llvmIrInstruction))
+					{
+					auto leftOperand = llvmIrFCmpInstruction->getOperand(0);
+					auto rightOperand = llvmIrFCmpInstruction->getOperand(1);
 					/// todo: expression normalization needed, which simpily the "const cmp const" or normalize into the "var cmp const" form
 					/// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
 					if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)) ||
@@ -161,7 +235,30 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						auto vrRangeIt = virtualRegisterRange.find(leftOperand);
 						if (vrRangeIt != virtualRegisterRange.end())
 						{
-
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCmp: varibale's lower bound: %f, upper bound: %f\n",
+				 						vrRangeIt->second.first, vrRangeIt->second.second);
+							CmpRes compareResult = compareWithVariableRange(llvmIrFCmpInstruction,
+													   vrRangeIt->second.first, vrRangeIt->second.second, constValue);
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCmp: the comparison result is %d\n", compareResult);
+							// Fold trivial predicates.
+							Type *retTy = GetCompareTy(leftOperand);
+							Value *resValue = nullptr;
+							if (compareResult == CmpRes::AlwaysTrue)
+							{
+								resValue = getTrue(retTy);
+								llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+//								llvmIrFCmpInstruction->eraseFromParent();
+							}
+							else if (compareResult == CmpRes::AlwaysFalse)
+							{
+								resValue = getFalse(retTy);
+								llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+//								llvmIrFCmpInstruction->eraseFromParent();
+							}
+						}
+						else
+						{
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tCmp: Unknown variable\n");
 						}
 					}
 					break;
