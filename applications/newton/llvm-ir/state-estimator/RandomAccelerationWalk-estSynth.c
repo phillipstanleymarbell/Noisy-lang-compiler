@@ -173,7 +173,7 @@ void filterUpdate(CoreState *cState, double Z[MEASURE_DIMENSION], time dt)
 		r++;
 	}
 
-	matrix *HPHm_T_inv = matrixInverse(HPHm_T);
+	matrix *HPHm_T_inv = inverseMatrix(HPHm_T);
 	matrix *Kg = multiplyMatrix(PHm_T, HPHm_T_inv);
 
 	// S <- S + Kg (Z - HS)
