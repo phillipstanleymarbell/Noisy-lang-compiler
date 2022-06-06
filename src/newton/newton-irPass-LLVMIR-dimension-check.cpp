@@ -51,6 +51,7 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/JSON.h"
 
 using namespace llvm;
 
@@ -99,6 +100,7 @@ public:
 };
 
 std::map<Value *, PhysicsInfo *> virtualRegisterPhysicsTable;
+std::map<StringRef, PhysicsInfo *> sourceVariablePhysicsTable;
 
 /*
  *	Get the physics info of the DIType.
@@ -227,6 +229,24 @@ newtonPhysicsSubtractExponentsWrapper(State *  N, Physics *  left, Physics *  ri
 	}
 }
 
+void
+dumpPhysicsInfoJSON(json::OStream &jsonOStream, StringRef name, PhysicsInfo* physicsInfo)
+{
+	if (physicsInfo->is_composite()) {
+		jsonOStream.attributeBegin(name);
+		jsonOStream.arrayBegin();
+		for (auto &member : physicsInfo->get_members()) {
+			dumpPhysicsInfoJSON(jsonOStream, "", member);
+		}
+		jsonOStream.arrayEnd();
+		jsonOStream.attributeEnd();
+	}
+	else if (!name.empty())
+		jsonOStream.attribute(name, physicsInfo->get_physics_type()->identifier);
+	else
+		jsonOStream.value(physicsInfo->get_physics_type()->identifier);
+}
+
 void 
 dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  RuntimeCheckFunction)
 {
@@ -275,6 +295,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  Runt
 							if (auto  physicsInfo = newtonPhysicsInfo(debugInfoVariable->getType(), N))
 							{
 								virtualRegisterPhysicsTable[localVariableAddress] = physicsInfo;
+								sourceVariablePhysicsTable[debugInfoVariable->getName()] = physicsInfo;
 							}
 						}
 					}
@@ -622,6 +643,7 @@ irPassLLVMIRDimensionCheck(State *  N)
 	StringRef	filePath(N->llvmIR);
 	std::string	filePathStem;
 	std::string	modifiedIRFilePath;
+	std::string	JSONFilePath;
 
 	std::error_code errorCode(errno,std::generic_category());
 
@@ -629,6 +651,11 @@ irPassLLVMIRDimensionCheck(State *  N)
 
 	modifiedIRFilePath = filePathStem + ".bc";
 	raw_fd_ostream modifiedIROutputFile(modifiedIRFilePath, errorCode);
+
+	JSONFilePath = filePathStem + ".json";
+	raw_fd_ostream JSONOutputFile(JSONFilePath, errorCode);
+	int JSONPrettyPrinting = true;
+	json::OStream jsonOStream(JSONOutputFile, JSONPrettyPrinting);
 
 	SMDiagnostic 	Err;
 	LLVMContext 	Context;
@@ -653,6 +680,12 @@ irPassLLVMIRDimensionCheck(State *  N)
 	}
 
 	WriteBitcodeToFile(*Mod, modifiedIROutputFile);
+
+	jsonOStream.object([&] {
+		for (auto &iter: sourceVariablePhysicsTable) {
+			dumpPhysicsInfoJSON(jsonOStream, iter.first, iter.second);
+		}
+	});
 }
 
 }
