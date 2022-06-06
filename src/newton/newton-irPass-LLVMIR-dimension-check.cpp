@@ -620,8 +620,15 @@ irPassLLVMIRDimensionCheck(State *  N)
 	}
 
 	StringRef	filePath(N->llvmIR);
-	std::string	outputFilePath;
-	outputFilePath = std::string(sys::path::parent_path(filePath)) + "/" + std::string(sys::path::stem(filePath)) + ".bc";
+	std::string	filePathStem;
+	std::string	modifiedIRFilePath;
+
+	std::error_code errorCode(errno,std::generic_category());
+
+	filePathStem = std::string(sys::path::parent_path(filePath)) + "/" + std::string(sys::path::stem(filePath));
+
+	modifiedIRFilePath = filePathStem + ".bc";
+	raw_fd_ostream modifiedIROutputFile(modifiedIRFilePath, errorCode);
 
 	SMDiagnostic 	Err;
 	LLVMContext 	Context;
@@ -645,9 +652,7 @@ irPassLLVMIRDimensionCheck(State *  N)
 		dimensionalityCheck(mi, N, ArrayDimensionalityCheck);
 	}
 
-	std::error_code errorCode(errno,std::generic_category());
-	raw_fd_ostream outputFile(outputFilePath, errorCode);
-	WriteBitcodeToFile(*Mod, outputFile);
+	WriteBitcodeToFile(*Mod, modifiedIROutputFile);
 }
 
 }
