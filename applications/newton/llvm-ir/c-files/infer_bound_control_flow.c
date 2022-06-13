@@ -7,25 +7,27 @@
  */
 typedef double bmx055xAcceleration; // [-16, 16]
 
-// random floating point, [min, max]
-float randomFloat(float min, float max) {
-	float referenceValue = min + 1.0 * rand() / RAND_MAX * (max - min);
-//	printf("reference value: %f\n", referenceValue);
-	return referenceValue;
-}
+//// random floating point, [min, max]
+//float randomFloat(float min, float max) {
+//	float referenceValue = min + 1.0 * rand() / RAND_MAX * (max - min);
+////	printf("reference value: %f\n", referenceValue);
+//	return referenceValue;
+//}
 
-int ifStatement(bmx055xAcceleration x, float referenceValue) {
-	int y;
+static int ifStatement(bmx055xAcceleration x) {
+	int y = 397;
 	// if statement
-	if (x > referenceValue)
-	{
-		y = 0;
+	if (x > -34.19) {
+		y += 10;
+	} else {
+		y /= 7;
 	}
-	else
-	{
-		y = 10;
+
+	if (x < 35.72) {
+		y += 20;
+	} else {
+		y /= 11;
 	}
-	// so y1=0
 	return y;
 }
 
@@ -45,9 +47,9 @@ int ifStatement(bmx055xAcceleration x, float referenceValue) {
 //}
 
 int
-main (void)
+controlFlowFunc(void)
 {
-	bmx055xAcceleration x = randomFloat(-16, 16);
+	bmx055xAcceleration x;
 	int y1, y2, y3;
 	int y4 = 4;
 	int y5 = 5;
@@ -58,24 +60,10 @@ main (void)
 	int y10 = 10;
 	int y11 = 11;
 
-	srand((unsigned)time(NULL));
+	// basic
+	y1 = ifStatement(x);
 
-	struct timeval t1,t2;
-	double timeuse;
-	gettimeofday(&t1,NULL);
-
-	for (size_t i = 0; i < 10000; i++) {
-		// basic
-		y1 = ifStatement(x, randomFloat(-50, -30));
-
-//		y2 = elseStatement(x);
-	}
-
-	gettimeofday(&t2,NULL);
-	double t1_time = t1.tv_sec*1000000 + t1.tv_usec;
-	double t2_time = t2.tv_sec*1000000 + t2.tv_usec;
-	timeuse = t2_time - t1_time;
-	printf("y1: %d\ttime use: %f\n", y1, timeuse);
+//	y2 = elseStatement(x);
 
 //	// for statement
 //	for (int i = 20; i < x; i++)
