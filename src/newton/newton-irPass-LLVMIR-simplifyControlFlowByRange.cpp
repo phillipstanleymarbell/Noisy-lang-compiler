@@ -247,7 +247,7 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							{
 								resValue = getTrue(retTy);
 								llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
-								llvmIrFCmpInstruction->eraseFromParent();
+//								llvmIrFCmpInstruction->eraseFromParent();
 							}
 							else if (compareResult == CmpRes::AlwaysFalse)
 							{

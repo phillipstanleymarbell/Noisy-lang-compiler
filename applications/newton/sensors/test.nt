@@ -1,7 +1,7 @@
 # 
 # test
 # 
-include "applications/newton/include/NewtonBaseSignals.nt"
+include "NewtonBaseSignals.nt"
 
 
 accelerationNoise : signal =

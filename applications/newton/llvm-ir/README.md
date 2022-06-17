@@ -43,3 +43,13 @@ cd ../../../src/newton
 opt infer_bound_control_flow_output.ll -O2 -S -o out.ll
 ```
 
+#### draft performance test
+
+```make
+cd /path/to/Noisy-lang-compiler/applications/newton/llvm-ir/performance_test
+# get the original performance
+bash ./test.sh infer_bound_control_flow
+# get the optimized performance
+bash ./test.sh infer_bound_control_flow optimized
+```
+

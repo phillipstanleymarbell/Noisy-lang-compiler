@@ -18,7 +18,7 @@ default: application.ll simple_control_flow.ll infer_bound.ll infer_bound_contro
 
 %.ll : %.c
 	@echo Compiling $*.c
-	$(QUIET)$(CC) -g -pg -S -emit-llvm $(COMMON_FLAGS) -o $@ $<
+	$(QUIET)$(CC) -g -S -emit-llvm $(COMMON_FLAGS) -o $@ $<
 
 clean::
 	$(QUIET)rm -f *.ll
