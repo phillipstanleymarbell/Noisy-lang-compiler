@@ -6,13 +6,6 @@
  */
 typedef double bmx055xAcceleration; // [-16, 16]
 
-//// random floating point, [min, max]
-//float randomFloat(float min, float max) {
-//	float referenceValue = min + 1.0 * rand() / RAND_MAX * (max - min);
-////	printf("reference value: %f\n", referenceValue);
-//	return referenceValue;
-//}
-
 static int ifStatement(bmx055xAcceleration x) {
 	int y = 397;
 	// if statement

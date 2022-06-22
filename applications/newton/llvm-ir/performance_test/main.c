@@ -7,13 +7,22 @@
  * This file should be created automatically, including:
  * the specific header file,
  * the loop iteration numbers,
- * the api function that needed test.
+ * the api function that needed test,
+ * the test data.
  */
 #include "../c-files/infer_bound_control_flow.h"
+//#include "../c-files/e_exp.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
+
+// random floating point, [min, max]
+float randomFloat(float min, float max) {
+	float randFpValue = min + 1.0 * rand() / RAND_MAX * (max - min);
+//	printf("reference value: %f\n", randFpValue);
+	return randFpValue;
+}
 
 int main() {
 //	srand((unsigned)time(NULL));
@@ -28,7 +37,8 @@ int main() {
 //		gettimeofday(&t1,NULL);
 
 		for (int i = 0; i < 1000000; i++) {
-			controlFlowFunc();
+//			controlFlowFunc();
+			libc_exp(randomFloat(0.35, 1.0));
 		}
 
 //		gettimeofday(&t2,NULL);

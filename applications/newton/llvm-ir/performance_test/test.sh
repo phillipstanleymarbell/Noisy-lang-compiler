@@ -1,13 +1,16 @@
 #!/bin/bash
 
+cd ..
+make clean
+make
+
 if [ $2 == "optimized" ]
 then
-  cd ..
-  make clean
-  make
   cd ../../../src/newton
   ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$1.ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
   cd ../../applications/newton/llvm-ir/performance_test/
+else
+  cd performance_test/
 fi
 
 rm -rf out.*
@@ -21,6 +24,8 @@ else
 fi
 llvm-as-12 out.ll -o out.bc
 llc out.bc -o out.s
-gcc -fPIC -shared out.s -O2 -o libout.so
+#gcc -fPIC -shared out.s -O2 -o libout.so
+gcc -c out.s -o out.o
+ar -rc libout.a out.o
 gcc main.c -L. -lout -O2 -o main_out
 perf stat -B ./main_out if=/dev/zero of=/dev/null count=1000000

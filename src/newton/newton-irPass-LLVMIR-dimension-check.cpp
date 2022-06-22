@@ -591,7 +591,7 @@ irPassLLVMIRDimensionCheck(State *  N)
 
 	for (auto & mi : *Mod)
 	{
-		dimensionalityCheck(mi, N);
+//		dimensionalityCheck(mi, N);
 	}
 }
 

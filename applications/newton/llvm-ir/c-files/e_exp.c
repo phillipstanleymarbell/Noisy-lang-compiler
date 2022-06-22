@@ -11,7 +11,7 @@
  * ====================================================
  */
 
-/* __ieee754_exp(x)
+/* libc_exp(x)
  * Returns the exponential of x.
  *
  * Method
@@ -76,7 +76,7 @@
 
 #include "fdlibm.h"
 #include "math_config.h"
-#if __OBSOLETE_MATH
+//#if __OBSOLETE_MATH
 
 #ifndef _DOUBLE_IS_32BITS
 
@@ -102,17 +102,21 @@ P3   =  6.61375632143793436117e-05, /* 0x3F11566A, 0xAF25DE2C */
 P4   = -1.65339022054652515390e-06, /* 0xBEBBBD41, 0xC5D26BF1 */
 P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 
+/*
+ * Definitions generated from Newton
+ */
+typedef __uint32_t bmx055xMagneto;
 
 #ifdef __STDC__
-	double __ieee754_exp(double x)	/* default IEEE double exp */
+	double libc_exp(double x)	/* default IEEE double exp */
 #else
-	double __ieee754_exp(x)	/* default IEEE double exp */
+	double libc_exp(x)	/* default IEEE double exp */
 	double x;
 #endif
 {
 	double y,hi,lo,c,t;
 	__int32_t k = 0,xsb;
-	__uint32_t hx;
+	bmx055xMagneto hx;
 
 	GET_HIGH_WORD(hx,x);
 	xsb = (hx>>31)&1;		/* sign bit of x */
@@ -127,13 +131,13 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 		     return x+x; 		/* NaN */
 		else return (xsb==0)? x:0.0;	/* exp(+-inf)={inf,0} */
 	    }
-	    if(x > o_threshold) return __math_oflow(0); /* overflow */
-	    if(x < u_threshold) return __math_uflow(0); /* underflow */
+	    if(x > o_threshold) return -1; /* overflow */
+	    if(x < u_threshold) return -2; /* underflow */
 	}
 
     /* argument reduction */
-	if(hx > 0x3fd62e42) {		/* if  |x| > 0.5 ln2 */ 
-	    if(hx < 0x3FF0A2B2) {	/* and |x| < 1.5 ln2 */
+	if(hx > 0x3fd62e42) {		/* if  |x| > 0.5 ln2; hx > 1,071,001,154 */
+	    if(hx < 0x3FF0A2B2) {	/* and |x| < 1.5 ln2; hx < 1,072,734,898 */
 		hi = x-ln2HI[xsb]; lo=ln2LO[xsb]; k = 1-xsb-xsb;
 	    } else {
 		k  = invln2*x+halF[xsb];
@@ -166,35 +170,35 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 }
 
 #endif /* defined(_DOUBLE_IS_32BITS) */
-#endif /* __OBSOLETE_MATH */
+//#endif /* __OBSOLETE_MATH */
 
-#include <sys/time.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-// random floating point, [min, max]
-float randomFloat(float min, float max) {
-	float referenceValue = min + 1.0 * rand() / RAND_MAX * (max - min);
-//	printf("reference value: %f\n", referenceValue);
-	return referenceValue;
-}
-
-int main() {
-	struct timeval t1,t2;
-	double timeuse;
-	gettimeofday(&t1,NULL);
-
-	double res;
-	for (size_t i = 0; i < 10000; i++) {
-		res = __ieee754_exp(randomFloat(0.35, 1.0));
-	}
-
-	gettimeofday(&t2,NULL);
-	double t1_time = t1.tv_sec*1000000 + t1.tv_usec;
-	double t2_time = t2.tv_sec*1000000 + t2.tv_usec;
-	timeuse = t2_time - t1_time;
-
-	printf("time use: %f\n", timeuse);
-	printf("res: %f\n", res);
-	return 0;
-}
+//#include <sys/time.h>
+//#include <stdio.h>
+//#include <stdlib.h>
+//
+//// random floating point, [min, max]
+//static float randomFloat(float min, float max) {
+//	float referenceValue = min + 1.0 * rand() / RAND_MAX * (max - min);
+////	printf("reference value: %f\n", referenceValue);
+//	return referenceValue;
+//}
+//
+//int main() {
+////	struct timeval t1,t2;
+////	double timeuse;
+////	gettimeofday(&t1,NULL);
+//
+//	double res;
+//	for (size_t i = 0; i < 10000; i++) {
+//		res = libc_exp(randomFloat(0.35, 1.0));
+//	}
+//
+////	gettimeofday(&t2,NULL);
+////	double t1_time = t1.tv_sec*1000000 + t1.tv_usec;
+////	double t2_time = t2.tv_sec*1000000 + t2.tv_usec;
+////	timeuse = t2_time - t1_time;
+////
+////	printf("time use: %f\n", timeuse);
+//	printf("res: %f\n", res);
+//	return 0;
+//}

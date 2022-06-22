@@ -90,13 +90,16 @@ typedef struct BoundInfo {
 } BoundInfo;
 
 enum CmpRes {
-  AlwaysTrue	=	1,
-  AlwaysFalse	=	2,
-  Depends		=	3,
+  Depends		=	1,
+  AlwaysTrue	=	2,
+  AlwaysFalse	=	3,
+  AlwaysEq		=	4,
+  AlwaysNe		=	5,
+  Unsupported	=	6,
 };
 
 CmpRes
-compareWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLowerBound, double variableUpperBound, double constValue)
+compareFCmpWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLowerBound, double variableUpperBound, double constValue)
 {
 	switch (llvmIrFCmpInstruction->getPredicate())
 	{
@@ -114,7 +117,7 @@ compareWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLowerB
 			{
 				return CmpRes::AlwaysTrue;
 			}
-			else if (variableUpperBound < constValue)
+			else if (variableUpperBound <= constValue)
 			{
 				return CmpRes::AlwaysFalse;
 			}
@@ -127,7 +130,7 @@ compareWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLowerB
 			{
 				return CmpRes::AlwaysTrue;
 			}
-			else if (variableLowerBound > constValue)
+			else if (variableLowerBound >= constValue)
 			{
 				return CmpRes::AlwaysFalse;
 			}
@@ -137,7 +140,83 @@ compareWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLowerB
 			}
 		// todo: other enums
 		default:
-			return CmpRes::Depends;
+			return CmpRes::Unsupported;
+	}
+}
+
+CmpRes
+compareICmpWithVariableRange(ICmpInst * llvmIrICmpInstruction, double variableLowerBound, double variableUpperBound, double constValue)
+{
+	switch (llvmIrICmpInstruction->getPredicate())
+	{
+		case ICmpInst::ICMP_EQ:
+			return CmpRes::AlwaysEq;
+		case ICmpInst::ICMP_NE:
+			return CmpRes::AlwaysNe;
+		/*
+		 * Ordered means that neither operand is a QNAN while unordered means that either operand may be a QNAN.
+		 * More details in https://llvm.org/docs/LangRef.html#fcmp-instruction
+		 * todo: let's deal with unordered when facing it
+		 * */
+		case ICmpInst::ICMP_SGE:
+		case ICmpInst::ICMP_UGE:
+			if (variableLowerBound >= constValue)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (variableUpperBound < constValue)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+		case ICmpInst::ICMP_SGT:
+		case ICmpInst::ICMP_UGT:
+			if (variableLowerBound > constValue)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (variableUpperBound <= constValue)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+		case ICmpInst::ICMP_SLE:
+		case ICmpInst::ICMP_ULE:
+			if (variableUpperBound <= constValue)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (variableLowerBound > constValue)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+		case ICmpInst::ICMP_SLT:
+		case ICmpInst::ICMP_ULT:
+			if (variableUpperBound < constValue)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (variableLowerBound >= constValue)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+			// todo: other enums
+		default:
+			return CmpRes::Unsupported;
 	}
 }
 
@@ -203,66 +282,136 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 					}
 					break;
 				case Instruction::ICmp:
-				case Instruction::FCmp:
-					if (auto llvmIrFCmpInstruction = dyn_cast<FCmpInst>(&llvmIrInstruction))
+					if (auto llvmIrICmpInstruction = dyn_cast<ICmpInst>(&llvmIrInstruction))
 					{
-					auto leftOperand = llvmIrFCmpInstruction->getOperand(0);
-					auto rightOperand = llvmIrFCmpInstruction->getOperand(1);
-					/// todo: expression normalization needed, which simpily the "const cmp const" or normalize into the "var cmp const" form
-					/// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
-					if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)) ||
-							(isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
-					{
-						flexprint(N->Fe, N->Fm, N->Fperr, "\tExpression normalization needed.\n");
-					}
-
-					if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
-					{
-
-					}
-					else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
-					{
-						// eg. fcmp ogt double %1, 0
-						// get the constant value
-						double constValue = 0.0;
-						if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+						auto leftOperand = llvmIrICmpInstruction->getOperand(0);
+						auto rightOperand = llvmIrICmpInstruction->getOperand(1);
+						if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
-							// both "float" and "double" type can use "convertToDouble"
-							constValue = (constFp->getValueAPF()).convertToDouble();
+							std::swap(leftOperand, rightOperand);
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: swap left and right\n");
 						}
-						flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCmp: right operand: %f\n", constValue);
-						// find the variable from the virtualRegisterRange
-						auto vrRangeIt = virtualRegisterRange.find(leftOperand);
-						if (vrRangeIt != virtualRegisterRange.end())
+						/// todo: expression normalization needed, which simpily the "const cmp const" or normalize into the "var cmp const" form
+						/// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
-							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCmp: varibale's lower bound: %f, upper bound: %f\n",
-				 						vrRangeIt->second.first, vrRangeIt->second.second);
-							CmpRes compareResult = compareWithVariableRange(llvmIrFCmpInstruction,
-													   vrRangeIt->second.first, vrRangeIt->second.second, constValue);
-							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCmp: the comparison result is %d\n", compareResult);
-							// Fold trivial predicates.
-							Type *retTy = GetCompareTy(leftOperand);
-							Value *resValue = nullptr;
-							if (compareResult == CmpRes::AlwaysTrue)
-							{
-								resValue = getTrue(retTy);
-								llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
-//								llvmIrFCmpInstruction->eraseFromParent();
-							}
-							else if (compareResult == CmpRes::AlwaysFalse)
-							{
-								resValue = getFalse(retTy);
-								llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
-//								llvmIrFCmpInstruction->eraseFromParent();
-							}
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tICmp: Expression normalization needed.\n");
 						}
-						else
+						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tCmp: Unknown variable\n");
+
+						}
+						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+						{
+							// eg. fcmp ogt double %1, 0
+							// get the constant value
+							double constValue = 0.0;
+							if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+							{
+								// both "float" and "double" type can use "convertToDouble"
+								constValue = (constFp->getValueAPF()).convertToDouble();
+							}
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: right operand: %f\n", constValue);
+							// find the variable from the virtualRegisterRange
+							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
+							if (vrRangeIt != virtualRegisterRange.end())
+							{
+								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: varibale's lower bound: %f, upper bound: %f\n",
+										  vrRangeIt->second.first, vrRangeIt->second.second);
+								CmpRes compareResult = compareICmpWithVariableRange(llvmIrICmpInstruction,
+																				vrRangeIt->second.first, vrRangeIt->second.second, constValue);
+								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: the comparison result is %d\n", compareResult);
+								// Fold trivial predicates.
+								Type *retTy = GetCompareTy(leftOperand);
+								Value *resValue = nullptr;
+								if (compareResult == CmpRes::AlwaysTrue)
+								{
+									resValue = getTrue(retTy);
+									llvmIrICmpInstruction->replaceAllUsesWith(resValue);
+//								llvmIrICmpInstruction->eraseFromParent();
+								}
+								else if (compareResult == CmpRes::AlwaysFalse)
+								{
+									resValue = getFalse(retTy);
+									llvmIrICmpInstruction->replaceAllUsesWith(resValue);
+//								llvmIrICmpInstruction->eraseFromParent();
+								}
+								else if (compareResult == CmpRes::Unsupported)
+								{
+									flexprint(N->Fe, N->Fm, N->Fperr, "\tICmp: Current ICmp Predicate is not supported.\n");
+								}
+							}
+							else
+							{
+								flexprint(N->Fe, N->Fm, N->Fperr, "\tICmp: Unknown variable\n");
+							}
 						}
 					}
 					break;
-				}
+
+				case Instruction::FCmp:
+					if (auto llvmIrFCmpInstruction = dyn_cast<FCmpInst>(&llvmIrInstruction))
+					{
+						auto leftOperand = llvmIrFCmpInstruction->getOperand(0);
+						auto rightOperand = llvmIrFCmpInstruction->getOperand(1);
+						if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
+						{
+							std::swap(leftOperand, rightOperand);
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: swap left and right\n");
+						}
+						/// todo: expression normalization needed, which simpily the "const cmp const" or normalize into the "var cmp const" form
+						/// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+						{
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tFCmp: Expression normalization needed.\n");
+						}
+						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+						{
+
+						}
+						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+						{
+							// eg. fcmp ogt double %1, 0
+							// get the constant value
+							double constValue = 0.0;
+							if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+							{
+								// both "float" and "double" type can use "convertToDouble"
+								constValue = (constFp->getValueAPF()).convertToDouble();
+							}
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: right operand: %f\n", constValue);
+							// find the variable from the virtualRegisterRange
+							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
+							if (vrRangeIt != virtualRegisterRange.end())
+							{
+								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: varibale's lower bound: %f, upper bound: %f\n",
+											vrRangeIt->second.first, vrRangeIt->second.second);
+								CmpRes compareResult = compareFCmpWithVariableRange(llvmIrFCmpInstruction,
+														   vrRangeIt->second.first, vrRangeIt->second.second, constValue);
+								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: the comparison result is %d\n", compareResult);
+								// Fold trivial predicates.
+								Type *retTy = GetCompareTy(leftOperand);
+								Value *resValue = nullptr;
+								if (compareResult == CmpRes::AlwaysTrue)
+								{
+									resValue = getTrue(retTy);
+									llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+	//								llvmIrFCmpInstruction->eraseFromParent();
+								}
+								else if (compareResult == CmpRes::AlwaysFalse)
+								{
+									resValue = getFalse(retTy);
+									llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+	//								llvmIrFCmpInstruction->eraseFromParent();
+								}
+							}
+							else
+							{
+								flexprint(N->Fe, N->Fm, N->Fperr, "\tFCmp: Unknown variable\n");
+							}
+						}
+					}
+					break;
 
 				case Instruction::Br:
 					if (auto llvmIrBrInstruction = dyn_cast<BranchInst>(&llvmIrInstruction))

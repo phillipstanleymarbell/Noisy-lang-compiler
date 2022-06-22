@@ -288,17 +288,18 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 					{
 						Value * leftOperand = llvmIrInstruction.getOperand(0);
 						Value * rightOperand = llvmIrInstruction.getOperand(1);
-						/*
-						 * 	todo: expression normalization needed, which simpily the "const + const" or normalize into the "var + const" form
-						 *	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
-						 */
-						if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)) ||
-						    (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
+						if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tExpression normalization needed.\n");
+							std::swap(leftOperand, rightOperand);
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tAdd: swap left and right\n");
 						}
-
-						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+						/// todo: expression normalization needed, which simpily the "const cmp const" or normalize into the "var cmp const" form
+						/// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+						{
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tAdd: Expression normalization needed.\n");
+						}
+						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 							double lowerBound = 0.0;
 							double upperBound = 0.0;
@@ -359,16 +360,18 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 					{
 						Value * leftOperand = llvmIrInstruction.getOperand(0);
 						Value * rightOperand = llvmIrInstruction.getOperand(1);
-						/*
-						 * 	todo: expression normalization needed, which simpily the "const - const" form
-						 * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
-						 */
-						if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
+						if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tExpression normalization needed.\n");
+							std::swap(leftOperand, rightOperand);
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tSub: swap left and right\n");
 						}
-
-						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+						/// todo: expression normalization needed, which simpily the "const cmp const" or normalize into the "var cmp const" form
+						/// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+						{
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tSub: Expression normalization needed.\n");
+						}
+						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 							double lowerBound = 0.0;
 							double upperBound = 0.0;
@@ -441,17 +444,18 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 					{
 						Value * leftOperand = llvmIrInstruction.getOperand(0);
 						Value * rightOperand = llvmIrInstruction.getOperand(1);
-						/*
-						 * 	todo: expression normalization needed, which simpily the "const * const" or normalize into the "var * const" form
-						 * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
-						 */
-						if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)) ||
-						    (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
+						if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tExpression normalization needed.\n");
+							std::swap(leftOperand, rightOperand);
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tMul: swap left and right\n");
 						}
-
-						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+						/// todo: expression normalization needed, which simpily the "const cmp const" or normalize into the "var cmp const" form
+						/// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+						else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+						{
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tMul: Expression normalization needed.\n");
+						}
+						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 							/*
 							 * 	todo: let's measure the "var * var" the next time...
@@ -497,10 +501,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						 */
 						if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
 						{
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tExpression normalization needed.\n");
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tDiv: Expression normalization needed.\n");
 						}
-
-						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 							/*
 							 * 	todo: let's measure the "var / var" the next time...
@@ -551,10 +554,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						 */
 						if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
 						{
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tExpression normalization needed.\n");
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tShl: Expression normalization needed.\n");
 						}
-
-						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 							/*
 							 * 	todo: I don't know if we need to concern the "var << var"
@@ -604,10 +606,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						 */
 						if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
 						{
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tExpression normalization needed.\n");
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tShr: Expression normalization needed.\n");
 						}
-
-						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 							/*
 							 * 	todo: I don't know if we need to concern the "var >> var"

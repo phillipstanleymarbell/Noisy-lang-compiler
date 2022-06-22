@@ -249,22 +249,6 @@ extern int   __kernel_rem_pio2f __P((float*,float*,int,int,int,const __int32_t*)
 /* A union which permits us to convert between a double and two 32 bit
    ints.  */
 
-#ifdef __IEEE_BIG_ENDIAN
-
-typedef union
-{
-  double value;
-  struct
-  {
-    __uint32_t msw;
-    __uint32_t lsw;
-  } parts;
-} ieee_double_shape_type;
-
-#endif
-
-#ifdef __IEEE_LITTLE_ENDIAN
-
 typedef union
 {
   double value;
@@ -275,7 +259,6 @@ typedef union
   } parts;
 } ieee_double_shape_type;
 
-#endif
 
 /* Get two 32 bit ints from a double.  */
 
