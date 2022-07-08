@@ -668,11 +668,9 @@ irPassLLVMIRDimensionCheck(State *  N)
 		fatal(N, Esanity);
 	}
 
-	auto& Ctx = Mod->getContext();
-
-	Type *VoidTy = Type::getVoidTy(Ctx);
-	Type *FirstArgTy = Type::getInt64Ty(Ctx);
-	Type *SecondArgTy = Type::getInt64PtrTy(Ctx);
+	Type *VoidTy = Type::getVoidTy(Context);
+	Type *FirstArgTy = Type::getInt64Ty(Context);
+	Type *SecondArgTy = Type::getInt64PtrTy(Context);
 
 	FunctionCallee ArrayDimensionalityCheck = Mod->getOrInsertFunction("__array_dimensionality_check", VoidTy, FirstArgTy, SecondArgTy);
 
