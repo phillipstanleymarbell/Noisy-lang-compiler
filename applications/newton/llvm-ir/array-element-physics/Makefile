@@ -5,7 +5,7 @@ endif
 LLVM_CONFIG:=llvm-config
 CC:=clang # Currently tested with clang-12/clang-13
 LLC:=llc
-LLVM-DIS:= llvm-dis-12
+LLVM-DIS:= llvm-dis
 
 COMMON_FLAGS=-Wall -Wextra
 
