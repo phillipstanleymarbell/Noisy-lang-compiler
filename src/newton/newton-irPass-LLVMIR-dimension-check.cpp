@@ -248,12 +248,12 @@ dumpPhysicsInfoJSON(json::OStream &jsonOStream, StringRef name, PhysicsInfo* phy
 }
 
 void 
-dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  RuntimeCheckFunction)
+dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  runtimeCheckFunction)
 {
 
 	for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction)
 	{
-		for (Instruction &  llvmIrInstruction : llvmIrBasicBlock)
+		for (Instruction & 	llvmIrInstruction : llvmIrBasicBlock)
 		{
 			switch (llvmIrInstruction.getOpcode())
 			{
@@ -505,8 +505,8 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  Runt
 							IRBuilder<> 	builder(&llvmIrInstruction);
 							llvm::Type *i64Type = llvm::IntegerType::getInt64Ty(builder.getContext());
 
-							Type *	argumentType = RuntimeCheckFunction.getFunctionType()->getParamType(0);
-							Type *	pointerType = RuntimeCheckFunction.getFunctionType()->getParamType(1);
+							Type *	argumentType = runtimeCheckFunction.getFunctionType()->getParamType(0);
+							Type *	pointerType = runtimeCheckFunction.getFunctionType()->getParamType(1);
 
 							auto element_size = llvm::ConstantInt::get(i64Type, 8);
 							auto array_size = llvm::ConstantInt::get(i64Type, 100);
@@ -518,7 +518,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  Runt
 
 							auto	variableIndex = builder.CreateIntCast(indexOperand, argumentType, true);
 							auto	pointerIndex = builder.CreatePointerCast(Malloc, pointerType);
-							builder.CreateCall(RuntimeCheckFunction, {variableIndex, pointerIndex});
+							builder.CreateCall(runtimeCheckFunction, {variableIndex, pointerIndex});
 						}
 					}
 					break;
@@ -672,11 +672,11 @@ irPassLLVMIRDimensionCheck(State *  N)
 	Type *FirstArgTy = Type::getInt64Ty(Context);
 	Type *SecondArgTy = Type::getInt64PtrTy(Context);
 
-	FunctionCallee ArrayDimensionalityCheck = Mod->getOrInsertFunction("__array_dimensionality_check", VoidTy, FirstArgTy, SecondArgTy);
+	FunctionCallee	arrayDimensionalityCheck = Mod->getOrInsertFunction("__array_dimensionality_check", VoidTy, FirstArgTy, SecondArgTy);
 
 	for (auto & mi : *Mod)
 	{
-		dimensionalityCheck(mi, N, ArrayDimensionalityCheck);
+		dimensionalityCheck(mi, N, arrayDimensionalityCheck);
 	}
 
 	WriteBitcodeToFile(*Mod, modifiedIROutputFile);
