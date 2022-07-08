@@ -86,16 +86,16 @@ class PhysicsInfo {
 private:
 	Physics *	physicsType;
 	std::vector<PhysicsInfo *> members;
-	bool isComposite;
+	bool composite;
 public:
-	PhysicsInfo(): physicsType{nullptr}, isComposite{true} {};
-	explicit PhysicsInfo(Physics *  physics): physicsType{physics}, isComposite{false} {};
+	PhysicsInfo(): physicsType{nullptr}, composite{true} {};
+	explicit PhysicsInfo(Physics *  physics): physicsType{physics}, composite{false} {};
 
-	void pushPhysicsInfo(PhysicsInfo *  physics_info) { if (isComposite) { members.push_back(physics_info); } }
-	void insertPhysicsInfoAt(PhysicsInfo *  physics_info, uint64_t index) { if (isComposite) { members.at(index) = physics_info; } }
+	void pushPhysicsInfo(PhysicsInfo *  physics_info) { if (composite) { members.push_back(physics_info); } }
+	void insertPhysicsInfoAt(PhysicsInfo *  physics_info, uint64_t index) { if (composite) { members.at(index) = physics_info; } }
 
-	bool is_composite() const { return isComposite; }
-	Physics* get_physics_type() { return physicsType; }
+	bool isComposite() const { return composite; }
+	Physics* getPhysicsType() { return physicsType; }
 	std::vector<PhysicsInfo *> get_members() { return members; }
 };
 
@@ -232,7 +232,7 @@ newtonPhysicsSubtractExponentsWrapper(State *  N, Physics *  left, Physics *  ri
 void
 dumpPhysicsInfoJSON(json::OStream &jsonOStream, StringRef name, PhysicsInfo* physicsInfo)
 {
-	if (physicsInfo->is_composite()) {
+	if (physicsInfo->isComposite()) {
 		jsonOStream.attributeBegin(name);
 		jsonOStream.arrayBegin();
 		for (auto &member : physicsInfo->get_members()) {
@@ -242,9 +242,9 @@ dumpPhysicsInfoJSON(json::OStream &jsonOStream, StringRef name, PhysicsInfo* phy
 		jsonOStream.attributeEnd();
 	}
 	else if (!name.empty())
-		jsonOStream.attribute(name, physicsInfo->get_physics_type()->identifier);
+		jsonOStream.attribute(name, physicsInfo->getPhysicsType()->identifier);
 	else
-		jsonOStream.value(physicsInfo->get_physics_type()->identifier);
+		jsonOStream.value(physicsInfo->getPhysicsType()->identifier);
 }
 
 void 
@@ -319,22 +319,22 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  Runt
 						{
 							break;
 						}
-						physicsSum = rightTerm->get_physics_type();
+						physicsSum = rightTerm->getPhysicsType();
 					}
 					else if (!rightTerm)
 					{
-						physicsSum = leftTerm->get_physics_type();
+						physicsSum = leftTerm->getPhysicsType();
 					}
 					else
 					{
-						if (!areTwoPhysicsEquivalent(N, leftTerm->get_physics_type(),
-													 rightTerm->get_physics_type()))
+						if (!areTwoPhysicsEquivalent(N, leftTerm->getPhysicsType(),
+													 rightTerm->getPhysicsType()))
 						{
 							printDebugInfoLocation(&llvmIrInstruction,
-												   leftTerm->get_physics_type(), rightTerm->get_physics_type());
+												   leftTerm->getPhysicsType(), rightTerm->getPhysicsType());
 							exit(1);
 						}
-						physicsSum = leftTerm->get_physics_type();
+						physicsSum = leftTerm->getPhysicsType();
 					}
 					virtualRegisterPhysicsTable.insert({&llvmIrInstruction, new PhysicsInfo{physicsSum}});
 					break;
@@ -353,17 +353,17 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  Runt
 							{
 								break;
 							}
-							physicsProduct = rightTerm->get_physics_type();
+							physicsProduct = rightTerm->getPhysicsType();
 						}
 						else if (!rightTerm)
 						{
-							physicsProduct = leftTerm->get_physics_type();
+							physicsProduct = leftTerm->getPhysicsType();
 						}
 						else
 						{
 							physicsProduct = newtonPhysicsAddExponentsWrapper(N,
-																			  leftTerm->get_physics_type(),
-																			  rightTerm->get_physics_type());
+																			  leftTerm->getPhysicsType(),
+																			  rightTerm->getPhysicsType());
 						}
 						/*
 						 *	Store the result to the destination virtual register.
@@ -389,17 +389,17 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  Runt
 							{
 								break;
 							}
-							physicsProduct = rightTerm->get_physics_type();
+							physicsProduct = rightTerm->getPhysicsType();
 						}
 						else if (!rightTerm)
 						{
-							physicsProduct = leftTerm->get_physics_type();
+							physicsProduct = leftTerm->getPhysicsType();
 						}
 						else
 						{
 							physicsProduct = newtonPhysicsSubtractExponentsWrapper(N,
-																				   leftTerm->get_physics_type(),
-																				   rightTerm->get_physics_type());
+																				   leftTerm->getPhysicsType(),
+																				   rightTerm->getPhysicsType());
 						}
 						/*
 						 *	Store the result to the destination virtual register.
@@ -461,10 +461,12 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  Runt
 							virtualRegisterPhysicsTable.insert({rightTerm, virtualRegisterPhysicsTable[leftTerm]});
 							break;
 						}
-						if (!areTwoPhysicsEquivalent(N, leftPhysicsInfo->get_physics_type(), rightPhysicsInfo->get_physics_type()))
+						if (!areTwoPhysicsEquivalent(N, leftPhysicsInfo->getPhysicsType(),
+													 rightPhysicsInfo->getPhysicsType()))
 						{
 							printDebugInfoLocation(&llvmIrInstruction,
-												   leftPhysicsInfo->get_physics_type(), rightPhysicsInfo->get_physics_type());
+												   leftPhysicsInfo->getPhysicsType(),
+												   rightPhysicsInfo->getPhysicsType());
 							exit(1);
 						}
 					}
@@ -554,23 +556,23 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  Runt
 						{
 							break;
 						}
-						physicsPhiNode = rightTerm->get_physics_type();
+						physicsPhiNode = rightTerm->getPhysicsType();
 					}
 					else if (!rightTerm)
 					{
-						physicsPhiNode = leftTerm->get_physics_type();
+						physicsPhiNode = leftTerm->getPhysicsType();
 					}
 					else
 					{
-						if (!areTwoPhysicsEquivalent(N, leftTerm->get_physics_type(),
-													 rightTerm->get_physics_type()))
+						if (!areTwoPhysicsEquivalent(N, leftTerm->getPhysicsType(),
+													 rightTerm->getPhysicsType()))
 						{
 
 							auto debugLocation = cast<DILocation>(llvmIrInstruction.getMetadata(0));
 							errs() << "Warning, cannot deduce physics type at: line " << debugLocation->getLine() <<
 								   ", column " << debugLocation->getColumn() << ".\n";
 						}
-						physicsPhiNode = leftTerm->get_physics_type();
+						physicsPhiNode = leftTerm->getPhysicsType();
 					}
 					virtualRegisterPhysicsTable.insert({&llvmIrInstruction, new PhysicsInfo{physicsPhiNode}});
 				}
