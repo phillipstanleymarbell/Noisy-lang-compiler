@@ -248,8 +248,14 @@ dumpPhysicsInfoJSON(json::OStream &jsonOStream, StringRef name, PhysicsInfo* phy
 }
 
 void 
-dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  runtimeCheckFunction)
+dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  runtimeCheckFunction, FunctionCallee initNewtonRuntime)
 {
+	if (!llvmIrFunction.empty())
+	{
+		Instruction *	firstIrInstruction = llvmIrFunction.begin()->getFirstNonPHI();
+		IRBuilder<> 	builder(firstIrInstruction);
+		builder.CreateCall(initNewtonRuntime, {});
+	}
 
 	for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction)
 	{
@@ -673,10 +679,11 @@ irPassLLVMIRDimensionCheck(State *  N)
 	Type *SecondArgTy = Type::getInt64PtrTy(Context);
 
 	FunctionCallee	arrayDimensionalityCheck = Mod->getOrInsertFunction("__array_dimensionality_check", VoidTy, FirstArgTy, SecondArgTy);
+	FunctionCallee	initNewtonRuntime = Mod->getOrInsertFunction("__newtonInit", VoidTy);
 
 	for (auto & mi : *Mod)
 	{
-		dimensionalityCheck(mi, N, arrayDimensionalityCheck);
+		dimensionalityCheck(mi, N, arrayDimensionalityCheck, initNewtonRuntime);
 	}
 
 	WriteBitcodeToFile(*Mod, modifiedIROutputFile);
