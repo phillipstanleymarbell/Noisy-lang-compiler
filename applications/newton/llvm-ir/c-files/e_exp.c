@@ -1,79 +1,3 @@
-
-/* @(#)e_exp.c 5.1 93/09/24 */
-/*
- * ====================================================
- * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
- *
- * Developed at SunPro, a Sun Microsystems, Inc. business.
- * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
- * is preserved.
- * ====================================================
- */
-
-/* libc_exp(x)
- * Returns the exponential of x.
- *
- * Method
- *   1. Argument reduction:
- *      Reduce x to an r so that |r| <= 0.5*ln2 ~ 0.34658.
- *	Given x, find r and integer k such that
- *
- *               x = k*ln2 + r,  |r| <= 0.5*ln2.  
- *
- *      Here r will be represented as r = hi-lo for better 
- *	accuracy.
- *
- *   2. Approximation of exp(r) by a special rational function on
- *	the interval [0,0.34658]:
- *	Write
- *	    R(r**2) = r*(exp(r)+1)/(exp(r)-1) = 2 + r*r/6 - r**4/360 + ...
- *      We use a special Reme algorithm on [0,0.34658] to generate 
- * 	a polynomial of degree 5 to approximate R. The maximum error 
- *	of this polynomial approximation is bounded by 2**-59. In
- *	other words,
- *	    R(z) ~ 2.0 + P1*z + P2*z**2 + P3*z**3 + P4*z**4 + P5*z**5
- *  	(where z=r*r, and the values of P1 to P5 are listed below)
- *	and
- *	    |                  5          |     -59
- *	    | 2.0+P1*z+...+P5*z   -  R(z) | <= 2 
- *	    |                             |
- *	The computation of exp(r) thus becomes
- *                             2*r
- *		exp(r) = 1 + -------
- *		              R - r
- *                                 r*R1(r)	
- *		       = 1 + r + ----------- (for better accuracy)
- *		                  2 - R1(r)
- *	where
- *			         2       4             10
- *		R1(r) = r - (P1*r  + P2*r  + ... + P5*r   ).
- *	
- *   3. Scale back to obtain exp(x):
- *	From step 1, we have
- *	   exp(x) = 2^k * exp(r)
- *
- * Special cases:
- *	exp(INF) is INF, exp(NaN) is NaN;
- *	exp(-INF) is 0, and
- *	for finite argument, only exp(0)=1 is exact.
- *
- * Accuracy:
- *	according to an error analysis, the error is always less than
- *	1 ulp (unit in the last place).
- *
- * Misc. info.
- *	For IEEE double 
- *	    if x >  7.09782712893383973096e+02 then exp(x) overflow
- *	    if x < -7.45133219101941108420e+02 then exp(x) underflow
- *
- * Constants:
- * The hexadecimal values are the intended ones for the following 
- * constants. The decimal values may be used, provided that the 
- * compiler will convert from decimal to binary accurately enough
- * to produce the hexadecimal values shown.
- */
-
 #include "fdlibm.h"
 #include "math_config.h"
 //#if __OBSOLETE_MATH
@@ -124,7 +48,7 @@ typedef __uint32_t bmx055xMagneto;
 
     /* filter out non-finite argument */
 	if(hx >= 0x40862E42) {			/* if |x|>=709.78... */
-            if(hx>=0x7ff00000) {
+        if(hx>=0x7ff00000) {
 	        __uint32_t lx;
 		GET_LOW_WORD(lx,x);
 		if(((hx&0xfffff)|lx)!=0) 
@@ -171,34 +95,3 @@ typedef __uint32_t bmx055xMagneto;
 
 #endif /* defined(_DOUBLE_IS_32BITS) */
 //#endif /* __OBSOLETE_MATH */
-
-//#include <sys/time.h>
-//#include <stdio.h>
-//#include <stdlib.h>
-//
-//// random floating point, [min, max]
-//static float randomFloat(float min, float max) {
-//	float referenceValue = min + 1.0 * rand() / RAND_MAX * (max - min);
-////	printf("reference value: %f\n", referenceValue);
-//	return referenceValue;
-//}
-//
-//int main() {
-////	struct timeval t1,t2;
-////	double timeuse;
-////	gettimeofday(&t1,NULL);
-//
-//	double res;
-//	for (size_t i = 0; i < 10000; i++) {
-//		res = libc_exp(randomFloat(0.35, 1.0));
-//	}
-//
-////	gettimeofday(&t2,NULL);
-////	double t1_time = t1.tv_sec*1000000 + t1.tv_usec;
-////	double t2_time = t2.tv_sec*1000000 + t2.tv_usec;
-////	timeuse = t2_time - t1_time;
-////
-////	printf("time use: %f\n", timeuse);
-//	printf("res: %f\n", res);
-//	return 0;
-//}

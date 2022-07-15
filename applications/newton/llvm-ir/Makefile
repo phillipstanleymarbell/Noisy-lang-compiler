@@ -14,11 +14,11 @@ COMMON_FLAGS=-Wall -Wextra
 
 all: default
 
-default: application.ll simple_control_flow.ll infer_bound.ll infer_bound_control_flow.ll e_exp.ll
+default: application.ll simple_control_flow.ll infer_bound.ll infer_bound_control_flow.ll e_exp.ll sincosf.ll e_log.ll e_acosh.ll e_j0.ll e_y0.ll
 
 %.ll : %.c
 	@echo Compiling $*.c
 	$(QUIET)$(CC) -g -S -emit-llvm $(COMMON_FLAGS) -o $@ $<
 
 clean::
-	$(QUIET)rm -f *.ll
+	$(QUIET)rm -f *.ll *.bc
