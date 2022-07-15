@@ -20,7 +20,9 @@ make optimized AIM_FILE="your file" # eg. make optimized AIM_FILE=e_log
 # make all again to get the optimized performance data
 sudo make all
 
-# plot the performance figures
+# record your performance data and plot the performance figures
+# sorry we need to record the data manually currently
+vi result.log
 python3 performance.py
 ```
 
