@@ -1,6 +1,6 @@
 
 changeset: 1242:fcec44fad45864db8b05b64f905441ff2dbb761a
-char kNewtonVersion[] = "0.3-alpha-1242 (fcec44fad45864db8b05b64f905441ff2dbb761a) (build 07-13-2022-14:14-pei@pei-G5-5500-Linux-5.15.0-40-generic-x86_64)";
+char kNewtonVersion[] = "0.3-alpha-1242 (fcec44fad45864db8b05b64f905441ff2dbb761a) (build 07-15-2022-17:48-pei@pei-G5-5500-Linux-5.15.0-40-generic-x86_64)";
 
 ./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s
 
