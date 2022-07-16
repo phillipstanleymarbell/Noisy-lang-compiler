@@ -1,0 +1,4 @@
+
+changeset: 1245:8fd2e2ddb2eb4ccf0beb25c15dc26601b9c93c82
+\n./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s
+\n./src/newton/newton-linux-EN -v 0 -eP applications/newton/invariants/ViolinWithTemperatureDependence-pigroups.nt

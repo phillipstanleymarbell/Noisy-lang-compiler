@@ -100,6 +100,48 @@ __newtonInsert(int64_t dimensions[kMaxDimensions])
 }
 
 /**
+ * @brief Calculates the product of the dimensions for the given symbol
+ * identifiers and returns the identifier of the product.
+ *
+ * @param firstFactorSymbolID	The symbol identifier of the first factor of the product.
+ * @param secondFactorSymbolID 	The symbol identifier of the second factor of the product.
+ * @return size_t 		The symbol identifier for the product.
+ */
+size_t
+__newtonProductInsert(size_t firstFactorSymbolID, size_t secondFactorSymbolID)
+{
+	int64_t		productDimensions[kMaxDimensions];
+	
+	for (size_t i = 0; i < kMaxDimensions; i++)
+	{
+		productDimensions[i] = symbolSignalTable[firstFactorSymbolID][i] + symbolSignalTable[secondFactorSymbolID][i];
+	}
+
+	return __newtonInsert(productDimensions);
+}
+
+/**
+ * @brief Calculates the quotient of the dimensions for the given symbol
+ * identifiers and returns the identifier of the quotient.
+ *
+ * @param firstFactorSymbolID	The symbol identifier of the dividend.
+ * @param secondFactorSymbolID 	The symbol identifier of the divisor.
+ * @return size_t 		The symbol identifier for the quotient.
+ */
+size_t
+__newtonQuotientInsert(size_t dividendSymbolID, size_t divisorSymbolID)
+{
+	int64_t		quotientDimensions[kMaxDimensions];
+	
+	for (size_t i = 0; i < kMaxDimensions; i++)
+	{
+		quotientDimensions[i] = symbolSignalTable[dividendSymbolID][i] - symbolSignalTable[divisorSymbolID][i];
+	}
+
+	return __newtonInsert(quotientDimensions);
+}
+
+/**
  * @brief Re-initializes the passed symbol identifer to not refer to any dimensions.
  * 
  * @param symbolID The symbol identifier to release.
@@ -111,6 +153,13 @@ __newtonDelete(size_t symbolID)
 	symbolSignalTable[symbolID] = NULL;
 }
 
+/**
+ * @brief Get the dimensions array for a given symbol identifier.
+ * 
+ * @param symbolID 	The symbol identifier for which to fetch the dimensions.
+ * @param result 	A pointer to a int64_t array to place the result into.
+ * @return int		Zero if successful.
+ */
 int
 __newtonGetSymbolDimensions(size_t symbolID, int64_t  result[kMaxDimensions])
 {
@@ -126,6 +175,14 @@ __newtonGetSymbolDimensions(size_t symbolID, int64_t  result[kMaxDimensions])
 	}
 }
 
+/**
+ * @brief Checks for dimensional homogeneity for the dimensions of the given
+ * symbol identifiers.
+ *
+ * @param firstSymbolID 
+ * @param secondSymbolID 
+ * @return int			Zero if homogenous.
+ */
 int
 __newtonCheckDimensions(size_t firstSymbolID, size_t secondSymbolID)
 {
