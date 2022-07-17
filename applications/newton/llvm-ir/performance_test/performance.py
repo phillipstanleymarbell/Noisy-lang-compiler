@@ -15,9 +15,9 @@ for i in range(2, len(performance_data), 2):
 
 fig = plt.figure(1)
 
-y_labels = ["instruction counts (million)", "branch counts (million)", "time elapsed (s)", "bytes"]
-y_ranges = [(100, 600), (20, 90), (0.01, 0.10), (3000, 16000)]
-y_units = [1000000, 1000000, 1, 1]
+y_labels = ["instruction counts (million)", "IR lines", "time elapsed (s)", "bytes"]
+y_ranges = [(130, 600), (100, 1600), (0.01, 0.10), (3000, 16000)]
+y_units = [1000000, 1, 1, 1]
 
 for fig_id in range(4):
     ax1 = plt.subplot(2, 2, fig_id + 1)

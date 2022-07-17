@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <stdint.h>
+#include <string.h>
 #include <set>
 #include <algorithm>
 
@@ -46,50 +47,6 @@ extern "C"
 #include "newton-irPass-estimatorSynthesisBackend.h"
 #include "newton-irPass-invariantSignalAnnotation.h"
 
-// todo: maybe we can move this to the struct "State" in common-data-structures.h
-class IRDumper {
-	public:
-	IRDumper() = default;
-
-	~IRDumper() = default;
-
-	void
-	dump(State * N, std::string fileSuffix, std::unique_ptr<Module> Mod)
-	{
-		StringRef filePath(N->llvmIR);
-		filePath_ =
-		    std::string(sys::path::parent_path(filePath)) + "/" +
-		    std::string(sys::path::stem(filePath)) + "_" + fileSuffix + ".";
-
-		clean();
-
-		flexprint(N->Fe, N->Fm, N->Fpinfo, "Dump IR of: %s\n", filePath_.c_str());
-		std::error_code errorCode(errno, std::generic_category());
-		raw_fd_ostream	dumpedFile(filePath_ + "bc", errorCode);
-		WriteBitcodeToFile(*Mod, dumpedFile);
-		dumpedFile.close();
-
-		disassemble();
-	}
-
-	private:
-	std::string filePath_;
-
-	void
-	clean()
-	{
-		std::string cmd = "rm -f " + filePath_ + "*";
-		system(cmd.c_str());
-	}
-
-	void
-	disassemble()
-	{
-		std::string cmd = "llvm-dis " + filePath_ + "bc" + " -o " + filePath_ + "ll";
-		system(cmd.c_str());
-	}
-};
-
 typedef struct BoundInfo {
 	std::map<std::string, std::pair<double, double>> variableBound;
 	std::map<std::string, std::pair<double, double>> typeRange;
@@ -101,6 +58,22 @@ enum CmpRes {
 	AlwaysFalse = 3,
 	Unsupported = 6,
 };
+
+void
+dumpIR(State * N, std::string fileSuffix, std::unique_ptr<Module> Mod)
+{
+    StringRef filePath(N->llvmIR);
+    std::string dirPath = std::string(sys::path::parent_path(filePath)) + "/";
+    std::string fileName = std::string(sys::path::stem(filePath)) + "_" + fileSuffix + ".bc";
+    std::string filePathStr = dirPath + fileName;
+    filePath = StringRef(filePathStr);
+
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "Dump IR of: %s\n", filePath.str().c_str());
+    std::error_code errorCode(errno, std::generic_category());
+    raw_fd_ostream	dumpedFile(filePath, errorCode);
+    WriteBitcodeToFile(*Mod, dumpedFile);
+    dumpedFile.close();
+}
 
 CmpRes
 compareFCmpWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLowerBound, double variableUpperBound, double constValue)
@@ -561,7 +534,6 @@ irPassLLVMIRSimplifyControlFlowByRange(State * N)
 		simplifyControlFlow(N, boundInfo, mi);
 	}
 
-	auto dumper = new IRDumper();
-	dumper->dump(N, "output", std::move(Mod));
+    dumpIR(N, "output", std::move(Mod));
 }
 }

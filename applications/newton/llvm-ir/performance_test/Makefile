@@ -33,11 +33,11 @@ newton_opt = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(AIM
 optimized::
 	cd $(NEWTON_BIN_DIR) && $(newton_opt)
 	$(LLVM-DIS) ../$(OUTPUT_BC)
-	$(OPT) ../$(OUTPUT_FILE) --simplifycfg -S -o $(OUT_FILE)
+	$(OPT) ../$(OUTPUT_FILE) --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
 non_optimized::
 	sed 's/optnone //' ../$(AIM_FILE).ll > ../$(NON_OPT_FILE)
-	$(OPT) ../$(NON_OPT_FILE) --simplifycfg -S -o $(OUT_FILE)
+	$(OPT) ../$(NON_OPT_FILE) --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
 all::
 	$(LLVM-AS) $(OUT_FILE) -o $(OUT_BC)
