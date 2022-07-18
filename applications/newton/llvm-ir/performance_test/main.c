@@ -59,12 +59,8 @@ main()
 	 * */
 	for (int i = 0; i < 1000000; i++)
 	{
-		//        result = controlFlowFunc(randomFloat(-16.0, 16.0));
-		//        result = libc_exp(randomFloat(3.0, 10.0));
-		//        result = libc_log(randomFloat(3.0, 10.0));
-		result = libc_acosh(randomFloat(3.0, 10.0));
-		//        result = libc_j0(randomFloat(3.0, 10.0));
-		//        result = libc_y0(randomFloat(3.0, 10.0));
+//		result = controlFlowFunc(randomFloat(-16.0, 16.0));
+        result = libc_api(randomFloat(3.0, 10.0));
 	}
 
 	return 0;

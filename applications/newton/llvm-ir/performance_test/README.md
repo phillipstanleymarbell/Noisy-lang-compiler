@@ -5,20 +5,20 @@ Currently, we use LLVM tools and perf tool to get the performance data, and run 
 Here's the command:
 
 ```bash
-# clean the current directory
-make clean
-# clean and create .ll file
-make
-# change the API function you want to test in main.c. sorry, this step should be done manually
-vi main.c
-# get the non_optimized files
-make non_optimized AIM_FILE="your file" # eg. make non_optimized AIM_FILE=e_log
-# get the non_optimized performance data
-sudo make all
-# get the optimized files
-make optimized AIM_FILE="your file" # eg. make optimized AIM_FILE=e_log
-# make all again to get the optimized performance data
-sudo make all
+# run specific command related the file you want to test
+# sudo make "your file without opt"
+# sudo make "your file with opt"
+# for now, we supported five testcase pair from newlib
+sudo make perf_exp
+sudo make perf_exp_opt
+sudo make perf_log
+sudo make perf_log_opt
+sudo make perf_acosh
+sudo make perf_acosh_opt
+sudo make perf_j0
+sudo make perf_j0_opt
+sudo make perf_y0
+sudo make perf_y0_opt
 
 # record your performance data and plot the performance figures
 # sorry we need to record the data manually currently
