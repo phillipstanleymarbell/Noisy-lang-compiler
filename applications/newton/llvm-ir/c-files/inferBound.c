@@ -60,7 +60,9 @@ main (void)
 	y3 = x1 - x2;
 	y4 = x1 - 3.7;
 	y5 = 4.6 - x2;
-	// multiply
+	/*
+	 *	Multiplication
+	 */
 	y6 = x1 * 3;
 	// division
 	y7 = x1 / 2;
