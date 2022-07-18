@@ -47,7 +47,9 @@ static int
 ifStatement(bmx055xAcceleration x)
 {
 	int y = 397;
-	// if statement
+	/*
+	 *	If statement
+	 */
 	if (x > -34.19)
 	{
 		y += 10;
