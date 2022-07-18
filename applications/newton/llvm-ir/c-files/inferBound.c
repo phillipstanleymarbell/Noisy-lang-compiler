@@ -68,7 +68,9 @@ main (void)
 	 *	Division
 	 */
 	y7 = x1 / 2;
-	// shift left
+	/*
+	 *	Shift left
+	 */
 	y8 = (int)x1 << 3;
 	// shift right
 	y9 = (int)x2 >> 4;
