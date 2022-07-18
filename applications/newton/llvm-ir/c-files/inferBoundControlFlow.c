@@ -74,8 +74,9 @@ int
 controlFlowFunc(double input)
 {
 	bmx055xAcceleration x;
-	x = input;
 	int y;
+
+	x = input;
 
 	y = ifStatement(x);
 
