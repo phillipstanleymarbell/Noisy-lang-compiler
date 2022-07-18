@@ -98,17 +98,17 @@ enum CmpRes {
 void
 dumpIR(State * N, std::string fileSuffix, std::unique_ptr<Module> Mod)
 {
-    StringRef filePath(N->llvmIR);
-    std::string dirPath = std::string(sys::path::parent_path(filePath)) + "/";
-    std::string fileName = std::string(sys::path::stem(filePath)) + "_" + fileSuffix + ".bc";
-    std::string filePathStr = dirPath + fileName;
-    filePath = StringRef(filePathStr);
+	StringRef   filePath(N->llvmIR);
+	std::string dirPath	= std::string(sys::path::parent_path(filePath)) + "/";
+	std::string fileName	= std::string(sys::path::stem(filePath)) + "_" + fileSuffix + ".bc";
+	std::string filePathStr = dirPath + fileName;
+	filePath		= StringRef(filePathStr);
 
-    flexprint(N->Fe, N->Fm, N->Fpinfo, "Dump IR of: %s\n", filePath.str().c_str());
-    std::error_code errorCode(errno, std::generic_category());
-    raw_fd_ostream	dumpedFile(filePath, errorCode);
-    WriteBitcodeToFile(*Mod, dumpedFile);
-    dumpedFile.close();
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "Dump IR of: %s\n", filePath.str().c_str());
+	std::error_code errorCode(errno, std::generic_category());
+	raw_fd_ostream	dumpedFile(filePath, errorCode);
+	WriteBitcodeToFile(*Mod, dumpedFile);
+	dumpedFile.close();
 }
 
 CmpRes
@@ -326,8 +326,6 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 	 * Change attr of the function
 	 * */
 	llvmIrFunction.removeFnAttr(Attribute::OptimizeNone);
-	//    llvmIrFunction.removeFnAttr(Attribute::NoInline);
-	//    llvmIrFunction.addFnAttr(Attribute::AlwaysInline);
 
 	std::map<Value *, std::pair<double, double>> virtualRegisterRange;
 	for (BasicBlock & llvmIrBasicBlock : llvmIrFunction)
@@ -350,9 +348,11 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							auto debugInfoVariable = cast<DIVariable>(variableMetadata->getMetadata());
 							auto variableType      = debugInfoVariable->getType();
 
-							// if we find such type in boundInfo->typeRange,
-							// we get its range and bind the var with it in boundInfo->variableBound
-							// and record it in the virtualRegisterRange
+							/*
+							 * if we find such type in boundInfo->typeRange,
+							 * we get its range and bind the var with it in boundInfo->variableBound
+							 * and record it in the virtualRegisterRange
+							 * */
 							auto typeRangeIt = boundInfo->typeRange.find(variableType->getName().str());
 							if (typeRangeIt != boundInfo->typeRange.end())
 							{
@@ -392,12 +392,9 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
-							// eg. fcmp ogt double %1, 0
-							// get the constant value
 							double constValue = 0.0;
 							if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
 							{
-								// both "float" and "double" type can use "convertToDouble"
 								constValue = constInt->getSExtValue();
 							}
 							else
@@ -405,7 +402,9 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 								flexprint(N->Fe, N->Fm, N->Fperr, "\tICmp: it's not a const fp!!!!!!!!!!!\n");
 							}
 							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: right operand: %f\n", constValue);
-							// find the variable from the virtualRegisterRange
+							/*
+							 * find the variable from the virtualRegisterRange
+							 * */
 							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
@@ -414,20 +413,20 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 								CmpRes compareResult = compareICmpWithVariableRange(llvmIrICmpInstruction,
 														    vrRangeIt->second.first, vrRangeIt->second.second, constValue);
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: the comparison result is %d\n", compareResult);
-								// Fold trivial predicates.
+								/*
+								 * Fold trivial predicates.
+								 * */
 								Type *	retTy	 = GetCompareTy(leftOperand);
 								Value * resValue = nullptr;
 								if (compareResult == CmpRes::AlwaysTrue)
 								{
 									resValue = getTrue(retTy);
 									llvmIrICmpInstruction->replaceAllUsesWith(resValue);
-									//								llvmIrICmpInstruction->eraseFromParent();
 								}
 								else if (compareResult == CmpRes::AlwaysFalse)
 								{
 									resValue = getFalse(retTy);
 									llvmIrICmpInstruction->replaceAllUsesWith(resValue);
-									//								llvmIrICmpInstruction->eraseFromParent();
 								}
 								else if (compareResult == CmpRes::Unsupported)
 								{
@@ -461,16 +460,18 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
-							// eg. fcmp ogt double %1, 0
-							// get the constant value
 							double constValue = 0.0;
 							if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
 							{
-								// both "float" and "double" type can use "convertToDouble"
+								/*
+								 * both "float" and "double" type can use "convertToDouble"
+								 * */
 								constValue = (constFp->getValueAPF()).convertToDouble();
 							}
 							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: right operand: %f\n", constValue);
-							// find the variable from the virtualRegisterRange
+							/*
+							 * find the variable from the virtualRegisterRange
+							 * */
 							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != virtualRegisterRange.end())
 							{
@@ -479,48 +480,26 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 								CmpRes compareResult = compareFCmpWithVariableRange(llvmIrFCmpInstruction,
 														    vrRangeIt->second.first, vrRangeIt->second.second, constValue);
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: the comparison result is %d\n", compareResult);
-								// Fold trivial predicates.
+								/*
+								 * Fold trivial predicates.
+								 * */
 								Type *	retTy	 = GetCompareTy(leftOperand);
 								Value * resValue = nullptr;
 								if (compareResult == CmpRes::AlwaysTrue)
 								{
 									resValue = getTrue(retTy);
 									llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
-									//								llvmIrFCmpInstruction->eraseFromParent();
 								}
 								else if (compareResult == CmpRes::AlwaysFalse)
 								{
 									resValue = getFalse(retTy);
 									llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
-									//								llvmIrFCmpInstruction->eraseFromParent();
 								}
 							}
 							else
 							{
 								flexprint(N->Fe, N->Fm, N->Fperr, "\tFCmp: Unknown variable\n");
 							}
-						}
-					}
-					break;
-
-				case Instruction::Br:
-					if (auto llvmIrBrInstruction = dyn_cast<BranchInst>(&llvmIrInstruction))
-					{
-						flexprint(N->Fe, N->Fm, N->Fpinfo, "\tInstruction::Br\n");
-						if (llvmIrBrInstruction->isConditional())
-						{
-							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tconditional\n");
-							auto condValue = llvmIrBrInstruction->getCondition();
-							auto vrRangeIt = virtualRegisterRange.find(condValue);
-							if (vrRangeIt != virtualRegisterRange.end())
-							{
-								// if true, remove the condition
-								// if false, remove the whole block
-							}
-						}
-						else
-						{
-							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tunconditional\n");
 						}
 					}
 					break;
@@ -553,7 +532,9 @@ irPassLLVMIRSimplifyControlFlowByRange(State * N)
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
 	auto boundInfo = new BoundInfo();
 
-	// get sensor info, we only concern the id and range here
+	/*
+	 * get sensor info, we only concern the id and range here
+	 * */
 	if (N->sensorList != NULL)
 	{
 		for (Modality * currentModality = N->sensorList->modalityList; currentModality != NULL; currentModality = currentModality->next)
@@ -570,6 +551,6 @@ irPassLLVMIRSimplifyControlFlowByRange(State * N)
 		simplifyControlFlow(N, boundInfo, mi);
 	}
 
-    dumpIR(N, "output", std::move(Mod));
+	dumpIR(N, "output", std::move(Mod));
 }
 }
