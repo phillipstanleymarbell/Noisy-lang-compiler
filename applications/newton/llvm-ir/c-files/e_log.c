@@ -1,3 +1,25 @@
+/* @(#)e_log.c 5.1 93/09/24 */
+/*
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ *
+ * ====================================================
+ * @Name: Pei Mu
+ * @Modifications:
+ * 1. change the type of `hx` into
+ * a physical type `bmx055xMagneto`
+ * 2. rename the function as `libc_log` so that
+ * it does not conflict with system libraries
+ * @SHA: e5791079c6235c5e40a273bd15d39c0f91609e7c
+ * ====================================================
+ */
+
 #include "fdlibm.h"
 //#if __OBSOLETE_MATH
 

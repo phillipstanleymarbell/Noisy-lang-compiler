@@ -39,33 +39,43 @@
 #include <stdlib.h>
 
 /*
- * random floating point, [min, max]
- * */
-float
-randomFloat(float min, float max)
+ * Definitions generated from Newton
+ */
+typedef double bmx055xAcceleration;  // [-16, 16]
+
+static int
+ifStatement(bmx055xAcceleration x)
 {
-	float randFpValue = min + 1.0 * rand() / RAND_MAX * (max - min);
-	return randFpValue;
+	int y = 397;
+	// if statement
+	if (x > -34.19)
+	{
+		y += 10;
+	}
+	else
+	{
+		y /= 7;
+	}
+
+	if (x < 35.72)
+	{
+		y += 20;
+	}
+	else
+	{
+		y /= 11;
+	}
+	return y;
 }
 
 int
-main()
+controlFlowFunc(double input)
 {
-	double result = 0;
-	/*
-	 * I try to pass the function name from command line to make it more automatic,
-	 * but it's seemingly forbidden in C/C++.
-	 * So we need to write the function name manually here.
-	 * */
-	for (int i = 0; i < 1000000; i++)
-	{
-		//        result = controlFlowFunc(randomFloat(-16.0, 16.0));
-		//        result = libc_exp(randomFloat(3.0, 10.0));
-		//        result = libc_log(randomFloat(3.0, 10.0));
-		result = libc_acosh(randomFloat(3.0, 10.0));
-		//        result = libc_j0(randomFloat(3.0, 10.0));
-		//        result = libc_y0(randomFloat(3.0, 10.0));
-	}
+	bmx055xAcceleration x;
+	x = input;
+	int y;
 
-	return 0;
+	y = ifStatement(x);
+
+	return y;
 }

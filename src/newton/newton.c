@@ -77,7 +77,7 @@
 #include "newton-irPass-piGroupsSignalAnnotation.h"
 #include "newton-irPass-ipsaBackend.h"
 #include "newton-irPass-LLVMIR-dimension-check.h"
-#include "newton-irPass-LLVMIR-liveness-analysis.h"
+#include "newton-irPass-LLVMIR-livenessAnalysis.h"
 #include "newton-irPass-LLVMIR-simplifyControlFlowByRange.h"
 #include "newton-irPass-dimensionalMatrixAnnotation.h"
 #include "newton-irPass-dimensionalMatrixPiGroups.h"

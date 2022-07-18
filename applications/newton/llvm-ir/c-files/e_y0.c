@@ -1,3 +1,25 @@
+/* @(#)e_j0.c 5.1 93/09/24 */
+/*
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ *
+ * ====================================================
+ * @Name: Pei Mu
+ * @Modifications:
+ * 1. change the type of `ix` into
+ * a physical type `bmx055xMagneto`
+ * 2. rename the function as `libc_pzero`, `libc_qzero`, `libc_j0`, `libc_y0`
+ * so that it does not conflict with system libraries
+ * @SHA: 5e24839658f6576b68b26c977897b9ad3fc3c23f
+ * ====================================================
+ */
+
 #include "fdlibm.h"
 
 #ifndef _DOUBLE_IS_32BITS

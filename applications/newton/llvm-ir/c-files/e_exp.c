@@ -1,3 +1,25 @@
+/* @(#)e_exp.c 5.1 93/09/24 */
+/*
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ *
+ * ====================================================
+ * @Name: Pei Mu
+ * @Modifications:
+ * 1. change the type of `hx` into
+ * a physical type `bmx055xMagneto`
+ * 2. rename the function as `libc_exp` so that
+ * it does not conflict with system libraries
+ * @SHA: 12ad9a46dff86b7750aa9c8f8fca7349a0925114
+ * ====================================================
+ */
+
 #include "fdlibm.h"
 #include "math_config.h"
 //#if __OBSOLETE_MATH
