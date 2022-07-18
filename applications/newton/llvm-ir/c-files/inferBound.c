@@ -54,7 +54,9 @@ main (void)
 	 */
 	y1 = x1 + x2;
 	y2 = x1 + 5.1;
-	// sub
+	/*
+	 *	Subtraction
+	 */
 	y3 = x1 - x2;
 	y4 = x1 - 3.7;
 	y5 = 4.6 - x2;
