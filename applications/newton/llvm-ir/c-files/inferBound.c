@@ -64,7 +64,9 @@ main (void)
 	 *	Multiplication
 	 */
 	y6 = x1 * 3;
-	// division
+	/*
+	 *	Division
+	 */
 	y7 = x1 / 2;
 	// shift left
 	y8 = (int)x1 << 3;
