@@ -48,7 +48,10 @@ main (void)
 {
 	bmx055xAcceleration x1 = 3.2, x2 = 4.5;
 	double y1, y2, y3, y4, y5, y6, y7, y8, y9;
-	// add
+
+	/*
+	 *	Addition
+	 */
 	y1 = x1 + x2;
 	y2 = x1 + 5.1;
 	// sub
