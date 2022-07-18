@@ -74,5 +74,6 @@ main (void)
 	y8 = (int)x1 << 3;
 	// shift right
 	y9 = (int)x2 >> 4;
+
 	return 0;
 }
