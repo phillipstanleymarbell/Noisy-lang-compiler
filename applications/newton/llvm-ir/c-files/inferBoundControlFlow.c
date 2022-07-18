@@ -39,7 +39,7 @@
 #include <stdlib.h>
 
 /*
- * Definitions generated from Newton
+ *	Definitions generated from Newton
  */
 typedef double bmx055xAcceleration;  // [-16, 16]
 
