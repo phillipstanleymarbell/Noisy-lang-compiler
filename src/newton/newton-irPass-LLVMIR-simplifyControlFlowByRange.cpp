@@ -84,8 +84,8 @@ extern "C"
 #include "newton-irPass-invariantSignalAnnotation.h"
 
 typedef struct BoundInfo {
-	std::map<std::string, std::pair<double, double>> variableBound;
 	std::map<std::string, std::pair<double, double>> typeRange;
+    std::map<Value *, std::pair<double, double>> virtualRegisterRange;
 } BoundInfo;
 
 enum CmpRes {
@@ -319,6 +319,667 @@ getTrue(Type * Ty)
 	return ConstantInt::getTrue(Ty);
 }
 
+/*
+ * todo:
+ * 1. infer the range of the result of function call
+ * 2. add the liveness information into virtualRegisterRange
+ * 3. deal with structure, union and array access
+ * 4. deal with some special case of binary, eg. var | var
+ * */
+std::pair<Value *, std::pair<double, double>>
+inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
+{
+    for (BasicBlock & llvmIrBasicBlock : llvmIrFunction)
+    {
+        for (Instruction & llvmIrInstruction : llvmIrBasicBlock)
+        {
+            switch (llvmIrInstruction.getOpcode())
+            {
+                case Instruction::Call:
+                    if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction))
+                    {
+                        Function * calledFunction = llvmIrCallInstruction->getCalledFunction();
+                        if (calledFunction->getName().startswith("llvm.dbg.declare"))
+                        {
+                            auto firstOperator = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(0));
+                            auto localVariableAddressAsMetadata = cast<ValueAsMetadata>(firstOperator->getMetadata());
+                            auto localVariableAddress = localVariableAddressAsMetadata->getValue();
+
+                            auto variableMetadata = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(1));
+                            auto debugInfoVariable = cast<DIVariable>(variableMetadata->getMetadata());
+                            auto variableType = debugInfoVariable->getType();
+
+                            /*
+                             *	if we find such type in boundInfo->typeRange,
+                             *	we record it in the boundInfo->virtualRegisterRange
+                             */
+                            auto typeRangeIt = boundInfo->typeRange.find(variableType->getName().str());
+                            if (typeRangeIt != boundInfo->typeRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(localVariableAddress, typeRangeIt->second);
+                            }
+                        }
+                        /*
+                         * It's function defined by programmer, eg. %17 = call i32 @abstop12(float %16), !dbg !83
+                         * */
+                        else
+                        {
+                            if (!calledFunction || calledFunction->isDeclaration())
+                            {
+                                flexprint(N->Fe, N->Fm, N->Fperr, "\tCall: CalledFunction %s is nullptr or undeclared.\n",
+                                          calledFunction->getName().str().c_str());
+                                continue;
+                            }
+                            /*
+                             * Algorithm to infer the range of CallInst's result.
+                             * 1. find the CallInst (caller).
+                             * 2. check if the CallInst's operands is a variable with range.
+                             * 3. infer the range of the operands (if needed).
+                             * 4. look into the called function (callee), and get its operands with range in step 3.
+                             * 5. if there's a CallInst in the body of called function, go to step 1.
+                             *    else infer the range of the return value.
+                             * 6. set the range of the result of the CallInst.
+                             * */
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect CalledFunction %s.\n",
+                                      calledFunction->getName().str().c_str());
+                            auto innerBoundInfo = new BoundInfo();
+                            for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
+                            {
+                                /*
+                                 *	if we find the operand in boundInfo->virtualRegisterRange,
+                                 *	we know it's a variable with range.
+                                 */
+                                auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrCallInstruction->getOperand(idx));
+                                if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                                {
+                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
+                                              vrRangeIt->second.first, vrRangeIt->second.second);
+                                    innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx), vrRangeIt->second);
+                                }
+                            }
+                            auto returnRange = inferBound(N, innerBoundInfo, *calledFunction);
+                            if (returnRange.first != nullptr)
+                            {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
+                            }
+                        }
+                    }
+                    break;
+
+                case Instruction::Add:
+                case Instruction::FAdd:
+                    if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+                    {
+                        Value * leftOperand = llvmIrInstruction.getOperand(0);
+                        Value * rightOperand = llvmIrInstruction.getOperand(1);
+                        if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
+                        {
+                            std::swap(leftOperand, rightOperand);
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tAdd: swap left and right\n");
+                        }
+                            /// todo: expression normalization needed, which simpily the "const cmp const" or normalize into the "var cmp const" form
+                            /// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+                        else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tAdd: Expression normalization needed.\n");
+                        }
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            double lowerBound = 0.0;
+                            double upperBound = 0.0;
+
+                            /*
+                             * 	eg. x1+x2
+                             * 	btw, I don't think we should check type here, which should be done in other pass like dimension-check
+                             * 	find left operand from the boundInfo->virtualRegisterRange
+                             */
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = vrRangeIt->second.first;
+                                upperBound = vrRangeIt->second.second;
+                            }
+                            /*
+                             * 	find right operand from the boundInfo->virtualRegisterRange
+                             */
+                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound += vrRangeIt->second.first;
+                                upperBound += vrRangeIt->second.second;
+                            }
+                            boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	eg. x+2
+                             */
+                            double constValue = 0.0;
+                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+                            {
+                                /*
+                                 * 	both "float" and "double" type can use "convertToDouble"
+                                 */
+                                constValue = (constFp->getValueAPF()).convertToDouble();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                                                        std::make_pair(vrRangeIt->second.first + constValue,
+                                                                                       vrRangeIt->second.second + constValue));
+                            }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tUnexpected error. Might have an invalid operand.\n");
+                        }
+                    }
+                    break;
+
+                case Instruction::Sub:
+                case Instruction::FSub:
+                    if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+                    {
+                        Value * leftOperand = llvmIrInstruction.getOperand(0);
+                        Value * rightOperand = llvmIrInstruction.getOperand(1);
+                        // todo: we cannot swap it
+                        if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
+                        {
+                            std::swap(leftOperand, rightOperand);
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tSub: swap left and right\n");
+                        }
+                            /// todo: expression normalization needed, which simpily the "const cmp const" or normalize into the "var cmp const" form
+                            /// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+                        else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tSub: Expression normalization needed.\n");
+                        }
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            double lowerBound = 0.0;
+                            double upperBound = 0.0;
+
+                            /*
+                             * 	eg. x1-x2
+                             * 	btw, I don't think we should check type here, which should be done in other pass like dimension-check
+                             * 	find left operand from the boundInfo->virtualRegisterRange
+                             */
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = vrRangeIt->second.first;
+                                upperBound = vrRangeIt->second.second;
+                            }
+                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound -= vrRangeIt->second.second;
+                                upperBound -= vrRangeIt->second.first;
+                            }
+                            boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	eg. x-2
+                             */
+                            double constValue = 0.0;
+                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+                            {
+                                constValue = (constFp->getValueAPF()).convertToDouble();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                                                        std::make_pair(vrRangeIt->second.first - constValue,
+                                                                                       vrRangeIt->second.second - constValue));
+                            }
+                        }
+                        else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	eg. 2-x
+                             */
+                            double constValue = 0.0;
+                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(leftOperand))
+                            {
+                                constValue = (constFp->getValueAPF()).convertToDouble();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                                                        std::make_pair(constValue - vrRangeIt->second.second,
+                                                                                       constValue - vrRangeIt->second.first));
+                            }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tSub: Unexpected error. Might have an invalid operand.\n");
+                        }
+                    }
+                    break;
+
+                case Instruction::Mul:
+                case Instruction::FMul:
+                    if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+                    {
+                        Value * leftOperand = llvmIrInstruction.getOperand(0);
+                        Value * rightOperand = llvmIrInstruction.getOperand(1);
+                        if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
+                        {
+                            std::swap(leftOperand, rightOperand);
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tMul: swap left and right\n");
+                        }
+                            /// todo: expression normalization needed, which simpily the "const cmp const" or normalize into the "var cmp const" form
+                            /// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+                        else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tMul: Expression normalization needed.\n");
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	todo: let's measure the "var * var" the next time...
+                             */
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tMul: It's a var * var expression, which is not supported yet.\n");
+                        }
+                        if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	eg. x*2
+                             */
+                            double constValue = 1.0;
+                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+                            {
+                                constValue = (constFp->getValueAPF()).convertToDouble();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                                                        std::make_pair(vrRangeIt->second.first * constValue,
+                                                                                       vrRangeIt->second.second * constValue));
+                            }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tMul: Unexpected error. Might have an invalid operand.\n");
+                        }
+                    }
+                    break;
+
+                case Instruction::SDiv:
+                case Instruction::FDiv:
+                case Instruction::UDiv:
+                    if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+                    {
+                        Value * leftOperand = llvmIrInstruction.getOperand(0);
+                        Value * rightOperand = llvmIrInstruction.getOperand(1);
+                        /*
+                         * 	todo: expression normalization needed, which simpily the "const / const" form
+                         * 	and the assertion of "rightOperand.value != 0" should be done in expression normalization too
+                         * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+                         */
+                        if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tDiv: Expression normalization needed.\n");
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	todo: let's measure the "var / var" the next time...
+                             */
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tDiv: It's a var / var expression, which is not supported yet.\n");
+                        }
+                        else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	todo: I don't know if we need to deal with "const / var" here,
+                             * 	like 2/x. if x in [-4, 4], then the range of 2/x is (-inf, -0.5] and [0.5, inf)
+                             */
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tDiv: It's a const / var expression, which is not supported yet.\n");
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	eg. x/2
+                             */
+                            double constValue = 1.0;
+                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+                            {
+                                constValue = (constFp->getValueAPF()).convertToDouble();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                                                        std::make_pair(vrRangeIt->second.first / constValue,
+                                                                                       vrRangeIt->second.second / constValue));
+                            }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tDiv: Unexpected error. Might have an invalid operand.\n");
+                        }
+                    }
+                    break;
+
+                case Instruction::Shl:
+                    if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+                    {
+                        Value * leftOperand = llvmIrInstruction.getOperand(0);
+                        Value * rightOperand = llvmIrInstruction.getOperand(1);
+                        /*
+                         * 	todo: expression normalization needed, which simpily the "const << const" form
+                         * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+                         */
+                        if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tShl: Expression normalization needed.\n");
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	todo: I don't know if we need to concern the "var << var"
+                             */
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tShl: It's a var << var expression, which is not supported yet.\n");
+                        }
+                        else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	todo: I don't know if we need to deal with "const << var" here,
+                             */
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tShl: It's a const << var expression, which is not supported yet.\n");
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	eg. x<<2
+                             */
+                            int constValue = 1.0;
+                            if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getZExtValue();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                                                        std::make_pair((int)vrRangeIt->second.first << constValue,
+                                                                                       (int)vrRangeIt->second.second << constValue));
+                            }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tShl: Unexpected error. Might have an invalid operand.\n");
+                        }
+                    }
+                    break;
+
+                case Instruction::LShr:
+                case Instruction::AShr:
+                    if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+                    {
+                        Value * leftOperand = llvmIrInstruction.getOperand(0);
+                        Value * rightOperand = llvmIrInstruction.getOperand(1);
+                        /*
+                         * 	todo: expression normalization needed, which simpily the "const >> const" form
+                         * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+                         */
+                        if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tShr: Expression normalization needed.\n");
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	todo: I don't know if we need to concern the "var >> var"
+                             */
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tShr: It's a var << var expression, which is not supported yet.\n");
+                        }
+                        else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	todo: I don't know if we need to deal with "const >> var" here,
+                             */
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tShr: It's a const << var expression, which is not supported yet.\n");
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             *	eg. x>>2
+                             */
+                            int constValue = 1.0;
+                            if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getZExtValue();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                                                        std::make_pair((int)vrRangeIt->second.first >> constValue,
+                                                                                       (int)vrRangeIt->second.second >> constValue));
+                            }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tShr: Unexpected error. Might have an invalid operand.\n");
+                        }
+                    }
+                    break;
+
+                case Instruction::And:
+                    if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+                    {
+                        Value * leftOperand = llvmIrInstruction.getOperand(0);
+                        Value * rightOperand = llvmIrInstruction.getOperand(1);
+                        /*
+                         * 	todo: if const simplification needed?
+                         */
+                        if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tAnd: Expression normalization needed.\n");
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	todo: I don't know if we need to concern the "var & var"
+                             */
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tAnd: It's a var & var expression, which is not supported yet.\n");
+                        }
+                        else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            std::swap(leftOperand, rightOperand);
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tAnd: swap left and right\n");
+                        }
+                        if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             *	eg. x&2
+                             */
+                            int constValue = 1.0;
+                            if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getZExtValue();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                                                        std::make_pair((int)vrRangeIt->second.first & constValue,
+                                                                                       (int)vrRangeIt->second.second & constValue));
+                            }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tAnd: Unexpected error. Might have an invalid operand.\n");
+                        }
+                    }
+                    break;
+
+                case Instruction::Or:
+                    if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+                    {
+                        Value * leftOperand = llvmIrInstruction.getOperand(0);
+                        Value * rightOperand = llvmIrInstruction.getOperand(1);
+                        /*
+                         * 	todo: expression normalization needed, which simpily the "const | const" form
+                         * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+                         */
+                        if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tOr: Expression normalization needed.\n");
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	todo: I don't know if we need to concern the "var | var"
+                             */
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tOr: It's a var | var expression, which is not supported yet.\n");
+                        }
+                        else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            std::swap(leftOperand, rightOperand);
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tOr: swap left and right\n");
+                        }
+                        if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             *	eg. x|2
+                             */
+                            int constValue = 1.0;
+                            if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getZExtValue();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                                                        std::make_pair((int)vrRangeIt->second.first | constValue,
+                                                                                       (int)vrRangeIt->second.second | constValue));
+                            }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tOr: Unexpected error. Might have an invalid operand.\n");
+                        }
+                    }
+                    break;
+
+                case Instruction::Xor:
+                    if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+                    {
+                        Value * leftOperand = llvmIrInstruction.getOperand(0);
+                        Value * rightOperand = llvmIrInstruction.getOperand(1);
+                        /*
+                         * 	todo: expression normalization needed, which simpily the "const ^ const" form
+                         * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+                         */
+                        if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tXor: Expression normalization needed.\n");
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	todo: I don't know if we need to concern the "var ^ var"
+                             */
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tXor: It's a var ^ var expression, which is not supported yet.\n");
+                        }
+                        else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            std::swap(leftOperand, rightOperand);
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tXor: swap left and right\n");
+                        }
+                        if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             *	eg. x^2
+                             */
+                            int constValue = 1.0;
+                            if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getZExtValue();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                                                        std::make_pair((int)vrRangeIt->second.first ^ constValue,
+                                                                                       (int)vrRangeIt->second.second ^ constValue));
+                            }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tXor: Unexpected error. Might have an invalid operand.\n");
+                        }
+                    }
+                    break;
+
+                case Instruction::FPToUI:
+                case Instruction::FPToSI:
+                case Instruction::SIToFP:
+                case Instruction::UIToFP:
+                {
+                    Value * operand = llvmIrInstruction.getOperand(0);
+                    auto	vrRangeIt = boundInfo->virtualRegisterRange.find(operand);
+                    if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                    {
+                        boundInfo->virtualRegisterRange.emplace(&llvmIrInstruction,
+                                                                vrRangeIt->second);
+                    }
+                }
+                    break;
+
+                case Instruction::Load:
+                    if (auto llvmIrLoadInstruction = dyn_cast<LoadInst>(&llvmIrInstruction))
+                    {
+                        auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrLoadInstruction->getOperand(0));
+                        if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                        {
+                            boundInfo->virtualRegisterRange.emplace(llvmIrLoadInstruction, vrRangeIt->second);
+                        }
+                    }
+                    break;
+
+                case Instruction::Store:
+                    if (auto llvmIrStoreInstruction = dyn_cast<StoreInst>(&llvmIrInstruction))
+                    {
+                        auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrStoreInstruction->getOperand(0));
+                        if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                        {
+                            boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), vrRangeIt->second);
+                        }
+                    }
+                    break;
+
+                case Instruction::Ret:
+                    if (auto llvmIrReturnInstruction = dyn_cast<ReturnInst>(&llvmIrInstruction))
+                    {
+                        if (llvmIrReturnInstruction->getNumOperands() != 0)
+                        {
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrReturnInstruction->getOperand(0));
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                return {llvmIrReturnInstruction, vrRangeIt->second};
+                            }
+                        }
+                    }
+
+                default:
+                    continue;
+            }
+        }
+    }
+    return {nullptr, {}};
+}
+
 void
 simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 {
@@ -327,57 +988,20 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 	 * */
 	llvmIrFunction.removeFnAttr(Attribute::OptimizeNone);
 
-	std::map<Value *, std::pair<double, double>> virtualRegisterRange;
 	for (BasicBlock & llvmIrBasicBlock : llvmIrFunction)
 	{
 		for (Instruction & llvmIrInstruction : llvmIrBasicBlock)
 		{
 			switch (llvmIrInstruction.getOpcode())
 			{
-				case Instruction::Call:
-					if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction))
-					{
-						Function * calledFunction = llvmIrCallInstruction->getCalledFunction();
-						if (calledFunction->getName().startswith("llvm.dbg.declare"))
-						{
-							auto firstOperator		    = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(0));
-							auto localVariableAddressAsMetadata = cast<ValueAsMetadata>(firstOperator->getMetadata());
-							auto localVariableAddress	    = localVariableAddressAsMetadata->getValue();
-
-							auto variableMetadata  = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(1));
-							auto debugInfoVariable = cast<DIVariable>(variableMetadata->getMetadata());
-							auto variableType      = debugInfoVariable->getType();
-
-							/*
-							 * if we find such type in boundInfo->typeRange,
-							 * we get its range and bind the var with it in boundInfo->variableBound
-							 * and record it in the virtualRegisterRange
-							 * */
-							auto typeRangeIt = boundInfo->typeRange.find(variableType->getName().str());
-							if (typeRangeIt != boundInfo->typeRange.end())
-							{
-								boundInfo->variableBound.emplace(debugInfoVariable->getName().str(), typeRangeIt->second);
-								virtualRegisterRange.emplace(localVariableAddress, typeRangeIt->second);
-							}
-						}
-					}
-					break;
-
-				case Instruction::Load:
-					if (auto llvmIrLoadInstruction = dyn_cast<LoadInst>(&llvmIrInstruction))
-					{
-						auto vrRangeIt = virtualRegisterRange.find(llvmIrLoadInstruction->getOperand(0));
-						if (vrRangeIt != virtualRegisterRange.end())
-						{
-							virtualRegisterRange.emplace(llvmIrLoadInstruction, vrRangeIt->second);
-						}
-					}
-					break;
 				case Instruction::ICmp:
 					if (auto llvmIrICmpInstruction = dyn_cast<ICmpInst>(&llvmIrInstruction))
 					{
 						auto leftOperand  = llvmIrICmpInstruction->getOperand(0);
 						auto rightOperand = llvmIrICmpInstruction->getOperand(1);
+                        /*
+                         * todo: change prediction signal
+                         * */
 						if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
 							std::swap(leftOperand, rightOperand);
@@ -390,7 +1014,7 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 						}
-						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+						if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
 							double constValue = 0.0;
 							if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
@@ -403,10 +1027,10 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							}
 							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: right operand: %f\n", constValue);
 							/*
-							 * find the variable from the virtualRegisterRange
+							 * find the variable from the boundInfo->virtualRegisterRange
 							 * */
-							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
-							if (vrRangeIt != virtualRegisterRange.end())
+							auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+							if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 							{
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: varibale's lower bound: %f, upper bound: %f\n",
 									  vrRangeIt->second.first, vrRangeIt->second.second);
@@ -446,6 +1070,9 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 					{
 						auto leftOperand  = llvmIrFCmpInstruction->getOperand(0);
 						auto rightOperand = llvmIrFCmpInstruction->getOperand(1);
+                        /*
+                         * todo: change prediction signal
+                         * */
 						if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
 							std::swap(leftOperand, rightOperand);
@@ -458,7 +1085,7 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
 						}
-						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+						if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
 							double constValue = 0.0;
 							if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
@@ -470,10 +1097,10 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							}
 							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: right operand: %f\n", constValue);
 							/*
-							 * find the variable from the virtualRegisterRange
+							 * find the variable from the boundInfo->virtualRegisterRange
 							 * */
-							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
-							if (vrRangeIt != virtualRegisterRange.end())
+							auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+							if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 							{
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: varibale's lower bound: %f, upper bound: %f\n",
 									  vrRangeIt->second.first, vrRangeIt->second.second);
@@ -529,7 +1156,6 @@ irPassLLVMIRSimplifyControlFlowByRange(State * N)
 		fatal(N, Esanity);
 	}
 
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
 	auto boundInfo = new BoundInfo();
 
 	/*
@@ -546,6 +1172,13 @@ irPassLLVMIRSimplifyControlFlowByRange(State * N)
 		}
 	}
 
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
+    for (auto & mi : *Mod)
+    {
+        inferBound(N, boundInfo, mi);
+    }
+
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
 	for (auto & mi : *Mod)
 	{
 		simplifyControlFlow(N, boundInfo, mi);

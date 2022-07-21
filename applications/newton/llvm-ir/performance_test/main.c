@@ -39,12 +39,17 @@
 #include <stdlib.h>
 
 /*
+ * Definitions generated from Newton
+ */
+typedef double bmx055xAcceleration;  // [-16, 16]
+
+/*
  * random floating point, [min, max]
  * */
-float
+bmx055xAcceleration
 randomFloat(float min, float max)
 {
-	float randFpValue = min + 1.0 * rand() / RAND_MAX * (max - min);
+    bmx055xAcceleration randFpValue = min + 1.0 * rand() / RAND_MAX * (max - min);
 	return randFpValue;
 }
 
@@ -60,7 +65,8 @@ main()
 	for (int i = 0; i < 1000000; i++)
 	{
 //		result = controlFlowFunc(randomFloat(-16.0, 16.0));
-        result = libc_api(randomFloat(3.0, 10.0));
+//        result = libc_api(randomFloat(3.0, 10.0));
+        result = libc_api(randomFloat(-16.0, 16.0));
 	}
 
 	return 0;

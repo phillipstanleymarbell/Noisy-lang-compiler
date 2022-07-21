@@ -111,6 +111,21 @@ change_y0:
 y0_change_back:
 	$(call change_back,y0)
 
+sincosf_non_opt:
+	$(call sed_fn,sincosf)
+	$(call opt_fn,sincosf_non_opt)
+
+sincosf_opt:
+	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,sincosf)
+	llvm-dis ../sincosf_output.bc
+	$(call opt_fn,sincosf_output)
+
+change_sincosf:
+	$(call change_main_api,sincosf)
+
+sincosf_change_back:
+	$(call change_back,sincosf)
+
 perf_exp: clean make_ll exp_non_opt change_exp perf_data exp_change_back
 
 perf_exp_opt: clean make_ll exp_opt change_exp perf_data exp_change_back
@@ -131,7 +146,11 @@ perf_y0: clean make_ll y0_non_opt change_y0 perf_data y0_change_back
 
 perf_y0_opt: clean make_ll y0_opt change_y0 perf_data y0_change_back
 
-all: perf_exp perf_exp_opt perf_log perf_log_opt perf_acosh perf_acosh_opt perf_j0 perf_j0_opt perf_y0 perf_y0_opt
+perf_sincosf: clean make_ll sincosf_non_opt change_sincosf perf_data sincosf_change_back
+
+perf_sincosf_opt: clean make_ll sincosf_opt change_sincosf perf_data sincosf_change_back
+
+all: perf_exp perf_exp_opt perf_log perf_log_opt perf_acosh perf_acosh_opt perf_j0 perf_j0_opt perf_y0 perf_y0_opt perf_sincosf perf_sincosf_opt
 
 clean:
 	$(QUIET)rm -f *.ll *.o *.s *.txt out.* libout.a main_out

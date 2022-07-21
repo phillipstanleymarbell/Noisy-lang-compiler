@@ -31,17 +31,24 @@
 #include "math_config.h"
 #include "sincosf.h"
 
+bmx055xAcceleration test_fn(bmx055xAcceleration x, bmx055xAcceleration y) {
+    return x + y;
+}
+
 /* Fast sincosf implementation.  Worst-case ULP is 0.5607, maximum relative
    error is 0.5303 * 2^-23.  A single-step range reduction is used for
    small values.  Large inputs have their range reduced using fast integer
    arithmetic.  */
 void
-libc_sincosf (float y, float *sinp, float *cosp)
+libc_sincosf (bmx055xAcceleration y, float *sinp, float *cosp)
 {
     double x = y;
     double s;
     int n;
     const sincos_t *p = &__sincosf_table[0];
+
+    bmx055xAcceleration kkk;
+    bmx055xAcceleration z = test_fn(kkk, y);
 
     if (abstop12 (y) < abstop12 (pio4))
     {
@@ -102,8 +109,8 @@ libc_sincosf (float y, float *sinp, float *cosp)
 
 //#endif
 
-int main() {
-    float sinp, cosp;
-    libc_sincosf (35.85, &sinp, &cosp);
-    printf("sinp: %f, cosp: %f\n", sinp, cosp);
-}
+//int main() {
+//    float sinp, cosp;
+//    libc_sincosf (35.85, &sinp, &cosp);
+//    printf("sinp: %f, cosp: %f\n", sinp, cosp);
+//}
