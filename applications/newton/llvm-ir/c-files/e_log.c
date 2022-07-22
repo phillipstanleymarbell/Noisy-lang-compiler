@@ -65,7 +65,6 @@ static double zero   =  0.0;
     bmx055xMagneto hx;
 
 	EXTRACT_WORDS(hx,lx,x);
-//    printf("------------hx: %d, lx: %d\"------------\n", hx, lx);
 
 	k=0;
 	if (hx < 0x00100000) {			/* hx < 1048576; x < 2**-1022  */

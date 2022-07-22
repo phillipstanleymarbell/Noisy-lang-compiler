@@ -59,8 +59,21 @@ main()
 	 * */
 	for (int i = 0; i < 1000000; i++)
 	{
-//		result = controlFlowFunc(randomFloat(-16.0, 16.0));
-        result = libc_api(randomFloat(3.0, 10.0));
+#ifdef CONTROL_FLOW_FUNC
+		result = controlFlowFunc(randomFloat(-16.0, 16.0));
+#elif defined(LIBC_EXP)
+        result = libc_exp(randomFloat(3.0, 10.0));
+#elif defined(LIBC_LOG)
+        result = libc_log(randomFloat(3.0, 10.0));
+#elif defined(LIBC_ACOSH)
+		result = libc_acosh(randomFloat(3.0, 10.0));
+#elif defined(LIBC_J0)
+        result = libc_j0(randomFloat(3.0, 10.0));
+#elif defined(LIBC_Y0)
+		result = libc_y0(randomFloat(3.0, 10.0));
+#else
+        printf("didn't find MACRO\n");
+#endif
 	}
 
 	return 0;
