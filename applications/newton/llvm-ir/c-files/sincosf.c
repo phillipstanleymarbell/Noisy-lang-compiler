@@ -31,7 +31,9 @@
 #include "math_config.h"
 #include "sincosf.h"
 
+// warning to programmer, [-16, 16]
 bmx055xAcceleration test_fn(bmx055xAcceleration x, bmx055xAcceleration y) {
+//    return v * t; // speed * time = length
     return x + y;
 }
 
@@ -48,7 +50,11 @@ libc_sincosf (bmx055xAcceleration y, float *sinp, float *cosp)
     const sincos_t *p = &__sincosf_table[0];
 
     bmx055xAcceleration kkk;
-    bmx055xAcceleration z = test_fn(kkk, y);
+    bmx055xAcceleration z = test_fn(kkk, y); // [-32, 32]
+    if (z > 64)
+    {
+        z += 1;
+    }
 
     if (abstop12 (y) < abstop12 (pio4))
     {

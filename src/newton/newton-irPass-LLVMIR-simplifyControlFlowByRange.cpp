@@ -402,6 +402,25 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             {
                                 boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
                             }
+                            /*
+                             * Check the return type of the function,
+                             * if it's a physical type that records in `boundInfo.typeRange`
+                             * but didn't match the range we inferred from `inferBound` algorithm,
+                             * we give a warning to the programmer.
+                             * But we still believe in the range we inferred from the function body.
+                             * */
+                            DISubprogram *subProgram = calledFunction->getSubprogram();
+                            DITypeRefArray typeArray = subProgram->getType()->getTypeArray();
+                            if (typeArray[0] != nullptr) {
+                                StringRef returnTypeName = typeArray[0]->getName();
+                                auto vrRangeIt = boundInfo->typeRange.find(returnTypeName.str());
+                                if (vrRangeIt != boundInfo->typeRange.end() &&
+                                (vrRangeIt->second.first != returnRange.second.first || vrRangeIt->second.second != returnRange.second.second))
+                                {
+                                    flexprint(N->Fe, N->Fm, N->Fperr, "\tCall: the range of the function's return type is: %f - %f, but we inferred as: %f - %f\n",
+                                              vrRangeIt->second.first, vrRangeIt->second.second, returnRange.second.first, returnRange.second.second);
+                                }
+                            }
                         }
                     }
                     break;
