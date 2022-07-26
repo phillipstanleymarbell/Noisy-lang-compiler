@@ -119,10 +119,10 @@ converttoint (double_t x)
 /*
  * Definitions generated from Newton
  */
-typedef double bmx055xAcceleration;  // [-16, 16]
+typedef double bmx055yAcceleration;  // [-16, 16]
 
 static inline uint32_t
-asuint (bmx055xAcceleration f)
+asuint (bmx055yAcceleration f)
 {
 	union
 	{

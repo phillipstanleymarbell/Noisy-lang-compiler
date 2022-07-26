@@ -24,10 +24,12 @@ kBMX055xMagnetoStdev			: constant = -1;
 
 test: sensor (
 			bmx055xAcceleration: acceleration,
+            bmx055yAcceleration: acceleration,
 			bmx055xMagneto: magneticFluxDensity
 			) =
 {
 	range bmx055xAcceleration == [-16 mjf, 16 mjf],
+    range bmx055yAcceleration == [1 mjf, 16 mjf],
 	range bmx055xMagneto == [1074266112 uT, 1076101120 uT],
 
 	#

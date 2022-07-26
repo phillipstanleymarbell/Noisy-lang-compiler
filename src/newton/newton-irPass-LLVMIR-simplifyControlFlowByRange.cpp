@@ -112,7 +112,7 @@ dumpIR(State * N, std::string fileSuffix, std::unique_ptr<Module> Mod)
 }
 
 CmpRes
-compareFCmpWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLowerBound, double variableUpperBound, double constValue)
+compareFCmpConstWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLowerBound, double variableUpperBound, double constValue)
 {
 	switch (llvmIrFCmpInstruction->getPredicate())
 	{
@@ -206,7 +206,102 @@ compareFCmpWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLo
 }
 
 CmpRes
-compareICmpWithVariableRange(ICmpInst * llvmIrICmpInstruction, double variableLowerBound, double variableUpperBound, double constValue)
+compareFCmpWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double leftVariableLowerBound, double leftVariableUpperBound,
+                             double rightVariableLowerBound, double rightVariableUpperBound)
+{
+    switch (llvmIrFCmpInstruction->getPredicate())
+    {
+        case FCmpInst::FCMP_TRUE:
+            return CmpRes::AlwaysTrue;
+        case FCmpInst::FCMP_FALSE:
+            return CmpRes::AlwaysFalse;
+            /*
+             * Ordered means that neither operand is a QNAN while unordered means that either operand may be a QNAN.
+             * More details in https://llvm.org/docs/LangRef.html#fcmp-instruction
+             * */
+        case FCmpInst::FCMP_OEQ:
+        case FCmpInst::FCMP_UEQ:
+            if ((leftVariableLowerBound == rightVariableLowerBound) && (leftVariableUpperBound == rightVariableUpperBound))
+            {
+                return CmpRes::AlwaysTrue;
+            }
+            else
+            {
+                return CmpRes::AlwaysFalse;
+            }
+        case FCmpInst::FCMP_OGT:
+        case FCmpInst::FCMP_UGT:
+            if (leftVariableLowerBound > rightVariableUpperBound)
+            {
+                return CmpRes::AlwaysTrue;
+            }
+            else if (leftVariableUpperBound <= rightVariableLowerBound)
+            {
+                return CmpRes::AlwaysFalse;
+            }
+            else
+            {
+                return CmpRes::Depends;
+            }
+        case FCmpInst::FCMP_OGE:
+        case FCmpInst::FCMP_UGE:
+            if (leftVariableLowerBound >= rightVariableUpperBound)
+            {
+                return CmpRes::AlwaysTrue;
+            }
+            else if (leftVariableUpperBound < rightVariableLowerBound)
+            {
+                return CmpRes::AlwaysFalse;
+            }
+            else
+            {
+                return CmpRes::Depends;
+            }
+        case FCmpInst::FCMP_OLT:
+        case FCmpInst::FCMP_ULT:
+            if (leftVariableUpperBound < rightVariableLowerBound)
+            {
+                return CmpRes::AlwaysTrue;
+            }
+            else if (leftVariableLowerBound >= rightVariableUpperBound)
+            {
+                return CmpRes::AlwaysFalse;
+            }
+            else
+            {
+                return CmpRes::Depends;
+            }
+        case FCmpInst::FCMP_OLE:
+        case FCmpInst::FCMP_ULE:
+            if (leftVariableUpperBound <= rightVariableLowerBound)
+            {
+                return CmpRes::AlwaysTrue;
+            }
+            else if (leftVariableLowerBound > rightVariableUpperBound)
+            {
+                return CmpRes::AlwaysFalse;
+            }
+            else
+            {
+                return CmpRes::Depends;
+            }
+        case FCmpInst::FCMP_ONE:
+        case FCmpInst::FCMP_UNE:
+            if ((leftVariableUpperBound < rightVariableLowerBound) || (leftVariableLowerBound > rightVariableUpperBound))
+            {
+                return CmpRes::AlwaysTrue;
+            }
+            else
+            {
+                return CmpRes::AlwaysFalse;
+            }
+        default:
+            return CmpRes::Unsupported;
+    }
+}
+
+CmpRes
+compareICmpConstWithVariableRange(ICmpInst * llvmIrICmpInstruction, double variableLowerBound, double variableUpperBound, double constValue)
 {
 	switch (llvmIrICmpInstruction->getPredicate())
 	{
@@ -293,6 +388,96 @@ compareICmpWithVariableRange(ICmpInst * llvmIrICmpInstruction, double variableLo
 	}
 }
 
+CmpRes
+compareICmpWithVariableRange(ICmpInst * llvmIrICmpInstruction, double leftVariableLowerBound, double leftVariableUpperBound,
+                             double rightVariableLowerBound, double rightVariableUpperBound)
+{
+    switch (llvmIrICmpInstruction->getPredicate())
+    {
+        /*
+         * Ordered means that neither operand is a QNAN while unordered means that either operand may be a QNAN.
+         * More details in https://llvm.org/docs/LangRef.html#icmp-instruction
+         * */
+        case ICmpInst::ICMP_EQ:
+            if ((leftVariableLowerBound == rightVariableLowerBound) && (leftVariableUpperBound == rightVariableUpperBound))
+            {
+                return CmpRes::AlwaysTrue;
+            }
+            else
+            {
+                return CmpRes::AlwaysFalse;
+            }
+        case ICmpInst::ICMP_NE:
+            if (leftVariableUpperBound < rightVariableLowerBound || leftVariableLowerBound > rightVariableUpperBound)
+            {
+                return CmpRes::AlwaysTrue;
+            }
+            else
+            {
+                return CmpRes::AlwaysFalse;
+            }
+        case ICmpInst::ICMP_UGT:
+        case ICmpInst::ICMP_SGT:
+            if (leftVariableLowerBound > rightVariableUpperBound)
+            {
+                return CmpRes::AlwaysTrue;
+            }
+            else if (leftVariableUpperBound <= rightVariableLowerBound)
+            {
+                return CmpRes::AlwaysFalse;
+            }
+            else
+            {
+                return CmpRes::Depends;
+            }
+        case ICmpInst::ICMP_UGE:
+        case ICmpInst::ICMP_SGE:
+            if (leftVariableLowerBound >= rightVariableUpperBound)
+            {
+                return CmpRes::AlwaysTrue;
+            }
+            else if (leftVariableUpperBound < rightVariableLowerBound)
+            {
+                return CmpRes::AlwaysFalse;
+            }
+            else
+            {
+                return CmpRes::Depends;
+            }
+        case ICmpInst::ICMP_ULT:
+        case ICmpInst::ICMP_SLT:
+            if (leftVariableUpperBound < rightVariableLowerBound)
+            {
+                return CmpRes::AlwaysTrue;
+            }
+            else if (leftVariableLowerBound >= rightVariableUpperBound)
+            {
+                return CmpRes::AlwaysFalse;
+            }
+            else
+            {
+                return CmpRes::Depends;
+            }
+        case ICmpInst::ICMP_ULE:
+        case ICmpInst::ICMP_SLE:
+            if (leftVariableUpperBound <= rightVariableLowerBound)
+            {
+                return CmpRes::AlwaysTrue;
+            }
+            else if (leftVariableLowerBound > rightVariableUpperBound)
+            {
+                return CmpRes::AlwaysFalse;
+            }
+            else
+            {
+                return CmpRes::Depends;
+            }
+        default:
+            return CmpRes::Unsupported;
+    }
+}
+
+
 static Type *
 GetCompareTy(Value * Op)
 {
@@ -329,6 +514,7 @@ getTrue(Type * Ty)
 std::pair<Value *, std::pair<double, double>>
 inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 {
+    std::map<Value *, Value *> union_address;
     for (BasicBlock & llvmIrBasicBlock : llvmIrFunction)
     {
         for (Instruction & llvmIrInstruction : llvmIrBasicBlock)
@@ -349,14 +535,52 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             auto debugInfoVariable = cast<DIVariable>(variableMetadata->getMetadata());
                             auto variableType = debugInfoVariable->getType();
 
-                            /*
-                             *	if we find such type in boundInfo->typeRange,
-                             *	we record it in the boundInfo->virtualRegisterRange
-                             */
-                            auto typeRangeIt = boundInfo->typeRange.find(variableType->getName().str());
-                            if (typeRangeIt != boundInfo->typeRange.end())
+                            if (const auto *compositeVariableType = dyn_cast<DICompositeType>(variableType))
                             {
-                                boundInfo->virtualRegisterRange.emplace(localVariableAddress, typeRangeIt->second);
+                                /*
+                                 * It's a composite type, including structure, union, array, and enumeration
+                                 * */
+                                auto typeTag = compositeVariableType->getTag();
+                                if (typeTag == dwarf::DW_TAG_union_type)
+                                {
+                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: DW_TAG_union_type\n");
+                                }
+                                else if (typeTag == dwarf::DW_TAG_structure_type)
+                                {
+                                    // todo
+                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: DW_TAG_structure_type\n");
+//                                    auto unionTypeArr = compositeVariableType->getElements();
+//                                    for (size_t i = 0; i < unionTypeArr.size(); i++)
+//                                    {
+//                                        auto typeRangeIt = boundInfo->typeRange.find(unionTypeArr[i]->getName().str());
+//                                        if (typeRangeIt != boundInfo->typeRange.end())
+//                                        {
+//                                            boundInfo->virtualRegisterRange.emplace(localVariableAddress, typeRangeIt->second);
+//                                        }
+//                                    }
+                                }
+                                else if (typeTag == dwarf::DW_TAG_array_type)
+                                {
+                                    // todo
+                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: DW_TAG_array_type\n");
+                                }
+                                else if (typeTag == dwarf::DW_TAG_enumeration_type)
+                                {
+                                    // todo
+                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: DW_TAG_enumeration_type\n");
+                                }
+                            }
+                            else
+                            {
+                                /*
+                                *	if we find such type in boundInfo->typeRange,
+                                *	we record it in the boundInfo->virtualRegisterRange
+                                */
+                                auto typeRangeIt = boundInfo->typeRange.find(variableType->getName().str());
+                                if (typeRangeIt != boundInfo->typeRange.end())
+                                {
+                                    boundInfo->virtualRegisterRange.emplace(localVariableAddress, typeRangeIt->second);
+                                }
                             }
                         }
                         /*
@@ -382,19 +606,42 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                              * */
                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect CalledFunction %s.\n",
                                       calledFunction->getName().str().c_str());
+                            if (strcmp(calledFunction->getName().str().c_str(), "abstop12") == 0) {
+                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: Debug\n");
+                            }
                             auto innerBoundInfo = new BoundInfo();
                             for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
                             {
                                 /*
-                                 *	if we find the operand in boundInfo->virtualRegisterRange,
-                                 *	we know it's a variable with range.
-                                 */
-                                auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrCallInstruction->getOperand(idx));
-                                if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                                 * First, we check if it's a constant value
+                                 * */
+                                if (ConstantInt* cInt = dyn_cast<ConstantInt>(llvmIrCallInstruction->getOperand(idx)))
                                 {
-                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
-                                              vrRangeIt->second.first, vrRangeIt->second.second);
-                                    innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx), vrRangeIt->second);
+                                    int64_t constIntValue = cInt->getSExtValue();
+                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant int value: %d.\n", constIntValue);
+                                    innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
+                                                                                 std::make_pair(static_cast<double>(constIntValue), static_cast<double>(constIntValue)));
+                                }
+                                else if (ConstantFP * constFp = dyn_cast<ConstantFP>(llvmIrCallInstruction->getOperand(idx)))
+                                {
+                                    double constDoubleValue = (constFp->getValueAPF()).convertToDouble();
+                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant double value: %f.\n", constDoubleValue);
+                                    innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
+                                                                                 std::make_pair(constDoubleValue, constDoubleValue));
+                                }
+                                else
+                                {
+                                    /*
+                                    *	if we find the operand in boundInfo->virtualRegisterRange,
+                                    *	we know it's a variable with range.
+                                    */
+                                    auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrCallInstruction->getOperand(idx));
+                                    if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                                    {
+                                        flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
+                                        vrRangeIt->second.first, vrRangeIt->second.second);
+                                        innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx), vrRangeIt->second);
+                                    }
                                 }
                             }
                             auto returnRange = inferBound(N, innerBoundInfo, *calledFunction);
@@ -975,6 +1222,66 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         {
                             boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), vrRangeIt->second);
                         }
+                        /*
+                        * TODO: check if all union's always need a store instruction
+                        * */
+                        auto uaIt = union_address.find(llvmIrStoreInstruction->getOperand(1));
+                        if (uaIt != union_address.end())
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tStore Union: %f - %f\n",  vrRangeIt->second.first, vrRangeIt->second.second);
+                            boundInfo->virtualRegisterRange.emplace(uaIt->second, vrRangeIt->second);
+                        }
+                    }
+                    break;
+
+                case Instruction::FPTrunc:
+                    if (auto llvmIrFPTruncInstruction = dyn_cast<FPTruncInst>(&llvmIrInstruction))
+                    {
+                        auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrFPTruncInstruction->getOperand(0));
+                        if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFPTrunc: %f - %f\n",  vrRangeIt->second.first, vrRangeIt->second.second);
+                            boundInfo->virtualRegisterRange.emplace(llvmIrFPTruncInstruction, vrRangeIt->second);
+                        }
+                    }
+                    break;
+
+                case Instruction::BitCast:
+                    if (auto llvmIrBitCastInstruction = dyn_cast<BitCastInst>(&llvmIrInstruction))
+                    {
+                        /*
+                         * record the union info
+                         * */
+                        union_address.emplace(llvmIrBitCastInstruction, llvmIrBitCastInstruction->getOperand(0));
+                        assert(llvmIrBitCastInstruction->getType()->getTypeID() == Type::PointerTyID);
+                        auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrBitCastInstruction->getOperand(0));
+                        if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                        {
+                            float originLow = static_cast<float>(vrRangeIt->second.first);
+                            float originHigh = static_cast<float>(vrRangeIt->second.second);
+                            double lowRange, highRange;
+                            switch (llvmIrBitCastInstruction->getType()->getContainedType(0)->getTypeID())
+                            {
+                                case Type::FloatTyID:
+                                    lowRange = static_cast<double>(*reinterpret_cast<float *>(&originLow));
+                                    highRange = static_cast<double>(*reinterpret_cast<float *>(&originHigh));
+                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::FloatTyID, %f - %f to %f - %f\n",
+                                              vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
+                                    boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
+                                    break;
+                                case Type::IntegerTyID:
+                                    lowRange = static_cast<double>(*reinterpret_cast<int *>(&originLow));
+                                    highRange = static_cast<double>(*reinterpret_cast<int *>(&originHigh));
+                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::IntegerTyID, %f - %f to %f - %f\n",
+                                              vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
+                                    boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
+                                    break;
+                                default:
+                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Do not support other type yet.\n");
+                                    boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, vrRangeIt->second);
+                                    continue;
+                            }
+                        }
                     }
                     break;
 
@@ -990,6 +1297,7 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             }
                         }
                     }
+                    break;
 
                 default:
                     continue;
@@ -1032,6 +1340,41 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
+                            auto vrLeftRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            auto vrRightRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrLeftRangeIt != boundInfo->virtualRegisterRange.end() &&
+                                vrRightRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: left operand's lower bound: %f, upper bound: %f\n",
+                                          vrLeftRangeIt->second.first, vrLeftRangeIt->second.second);
+                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: right operand's lower bound: %f, upper bound: %f\n",
+                                          vrRightRangeIt->second.first, vrRightRangeIt->second.second);
+                                CmpRes compareResult = compareICmpWithVariableRange(llvmIrICmpInstruction,
+                                                                                    vrLeftRangeIt->second.first,
+                                                                                    vrLeftRangeIt->second.second,
+                                                                                    vrRightRangeIt->second.first,
+                                                                                    vrRightRangeIt->second.second);
+                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: the comparison result is %d\n", compareResult);
+                                /*
+                                 * Fold trivial predicates.
+                                 * */
+                                Type *	retTy	 = GetCompareTy(leftOperand);
+                                Value * resValue = nullptr;
+                                if (compareResult == CmpRes::AlwaysTrue)
+                                {
+                                    resValue = getTrue(retTy);
+                                    llvmIrICmpInstruction->replaceAllUsesWith(resValue);
+                                }
+                                else if (compareResult == CmpRes::AlwaysFalse)
+                                {
+                                    resValue = getFalse(retTy);
+                                    llvmIrICmpInstruction->replaceAllUsesWith(resValue);
+                                }
+                                else if (compareResult == CmpRes::Unsupported)
+                                {
+                                    flexprint(N->Fe, N->Fm, N->Fperr, "\tICmp: Current ICmp Predicate is not supported.\n");
+                                }
+                            }
 						}
 						if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
@@ -1053,7 +1396,7 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							{
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: varibale's lower bound: %f, upper bound: %f\n",
 									  vrRangeIt->second.first, vrRangeIt->second.second);
-								CmpRes compareResult = compareICmpWithVariableRange(llvmIrICmpInstruction,
+								CmpRes compareResult = compareICmpConstWithVariableRange(llvmIrICmpInstruction,
 														    vrRangeIt->second.first, vrRangeIt->second.second, constValue);
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: the comparison result is %d\n", compareResult);
 								/*
@@ -1103,6 +1446,41 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
+                            auto vrLeftRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            auto vrRightRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrLeftRangeIt != boundInfo->virtualRegisterRange.end() &&
+                                vrRightRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: left operand's lower bound: %f, upper bound: %f\n",
+                                          vrLeftRangeIt->second.first, vrLeftRangeIt->second.second);
+                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: right operand's lower bound: %f, upper bound: %f\n",
+                                          vrRightRangeIt->second.first, vrRightRangeIt->second.second);
+                                CmpRes compareResult = compareFCmpWithVariableRange(llvmIrFCmpInstruction,
+                                                                                    vrLeftRangeIt->second.first,
+                                                                                    vrLeftRangeIt->second.second,
+                                                                                    vrRightRangeIt->second.first,
+                                                                                    vrRightRangeIt->second.second);
+                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: the comparison result is %d\n", compareResult);
+                                /*
+                                 * Fold trivial predicates.
+                                 * */
+                                Type *	retTy	 = GetCompareTy(leftOperand);
+                                Value * resValue = nullptr;
+                                if (compareResult == CmpRes::AlwaysTrue)
+                                {
+                                    resValue = getTrue(retTy);
+                                    llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+                                }
+                                else if (compareResult == CmpRes::AlwaysFalse)
+                                {
+                                    resValue = getFalse(retTy);
+                                    llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+                                }
+                                else if (compareResult == CmpRes::Unsupported)
+                                {
+                                    flexprint(N->Fe, N->Fm, N->Fperr, "\tICmp: Current ICmp Predicate is not supported.\n");
+                                }
+                            }
 						}
 						if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
@@ -1114,6 +1492,10 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 								 * */
 								constValue = (constFp->getValueAPF()).convertToDouble();
 							}
+                            else
+                            {
+                                flexprint(N->Fe, N->Fm, N->Fperr, "\tFCmp: it's not a const fp!!!!!!!!!!!\n");
+                            }
 							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: right operand: %f\n", constValue);
 							/*
 							 * find the variable from the boundInfo->virtualRegisterRange
@@ -1123,7 +1505,7 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							{
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: varibale's lower bound: %f, upper bound: %f\n",
 									  vrRangeIt->second.first, vrRangeIt->second.second);
-								CmpRes compareResult = compareFCmpWithVariableRange(llvmIrFCmpInstruction,
+								CmpRes compareResult = compareFCmpConstWithVariableRange(llvmIrFCmpInstruction,
 														    vrRangeIt->second.first, vrRangeIt->second.second, constValue);
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: the comparison result is %d\n", compareResult);
 								/*

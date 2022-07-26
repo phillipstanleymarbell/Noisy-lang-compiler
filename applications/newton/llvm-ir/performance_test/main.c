@@ -66,7 +66,7 @@ main()
 	{
 //		result = controlFlowFunc(randomFloat(-16.0, 16.0));
 //        result = libc_api(randomFloat(3.0, 10.0));
-        result = libc_api(randomFloat(-16.0, 16.0));
+        result = libc_api(randomFloat(1, 16.0));
 	}
 
 	return 0;

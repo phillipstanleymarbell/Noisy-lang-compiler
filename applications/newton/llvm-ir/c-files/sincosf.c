@@ -32,7 +32,7 @@
 #include "sincosf.h"
 
 // warning to programmer, [-16, 16]
-bmx055xAcceleration test_fn(bmx055xAcceleration x, bmx055xAcceleration y) {
+bmx055yAcceleration test_fn(bmx055yAcceleration x, bmx055yAcceleration y) {
 //    return v * t; // speed * time = length
     return x + y;
 }
@@ -42,19 +42,12 @@ bmx055xAcceleration test_fn(bmx055xAcceleration x, bmx055xAcceleration y) {
    small values.  Large inputs have their range reduced using fast integer
    arithmetic.  */
 void
-libc_sincosf (bmx055xAcceleration y, float *sinp, float *cosp)
+libc_sincosf (bmx055yAcceleration y, float *sinp, float *cosp)
 {
     double x = y;
     double s;
     int n;
     const sincos_t *p = &__sincosf_table[0];
-
-    bmx055xAcceleration kkk;
-    bmx055xAcceleration z = test_fn(kkk, y); // [-32, 32]
-    if (z > 64)
-    {
-        z += 1;
-    }
 
     if (abstop12 (y) < abstop12 (pio4))
     {
