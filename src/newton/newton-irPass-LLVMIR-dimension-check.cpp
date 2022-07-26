@@ -674,12 +674,12 @@ irPassLLVMIRDimensionCheck(State *  N)
 		fatal(N, Esanity);
 	}
 
-	Type *VoidTy = Type::getVoidTy(Context);
-	Type *FirstArgTy = Type::getInt64Ty(Context);
-	Type *SecondArgTy = Type::getInt64PtrTy(Context);
+	Type *VoidType = Type::getVoidTy(Context);
+	Type *Int64Type = Type::getInt64Ty(Context);
+	Type *Int64PointerType = Type::getInt64PtrTy(Context);
 
-	FunctionCallee	arrayDimensionalityCheck = Mod->getOrInsertFunction("__array_dimensionality_check", VoidTy, FirstArgTy, SecondArgTy);
-	FunctionCallee	initNewtonRuntime = Mod->getOrInsertFunction("__newtonInit", VoidTy);
+	FunctionCallee	arrayDimensionalityCheck = Mod->getOrInsertFunction("__array_dimensionality_check", /* return type */ VoidType, Int64Type, Int64PointerType);
+	FunctionCallee	initNewtonRuntime = Mod->getOrInsertFunction("__newtonInit", /* return type */ VoidType);
 
 	for (auto & mi : *Mod)
 	{
