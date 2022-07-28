@@ -554,6 +554,37 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  runt
 							index = llvmIrConstantInt->getZExtValue();
 							physicsInfo = structurePointerPhysicsInfo->get_members()[index];
 							virtualRegisterPhysicsTable.insert({llvmIrGetElementPointerInstruction, physicsInfo});
+
+							if (physicsInfo) {
+								auto dimensionIterator = physicsInfo->getPhysicsType()->dimensions;
+								IRBuilder<> builder(&llvmIrInstruction);
+								Type *argumentType = runtimeCheckFunction.getFunctionType()->getParamType(0);
+								Type *pointerType = runtimeCheckFunction.getFunctionType()->getParamType(1);
+								Type *Int64Type = llvm::IntegerType::getInt64Ty(builder.getContext());
+
+								auto element_size = llvm::ConstantInt::get(Int64Type, sizeof(int64_t));
+								auto array_size = llvm::ConstantInt::get(Int64Type, kMaxDimensions);
+								auto alloc_size = llvm::ConstantExpr::getMul(element_size, array_size);
+
+								Instruction *Malloc = CallInst::CreateMalloc(&llvmIrInstruction,
+																			 Int64Type, Int64Type->getPointerTo(),
+																			 alloc_size,
+																			 nullptr, nullptr, "");
+								auto pointerIndex = builder.CreatePointerCast(Malloc, pointerType);
+								Value *locationPointer;
+								int64_t exponent;
+								for (int64_t i = 0; dimensionIterator; dimensionIterator = dimensionIterator->next, i++) {
+									exponent = (int64_t) dimensionIterator->exponent;
+									if (exponent) {
+										locationPointer = builder.CreateGEP(pointerIndex,
+																			llvm::ConstantInt::get(Int64Type, i));
+										builder.CreateStore(llvm::ConstantInt::get(Int64Type, exponent),
+															locationPointer);
+									}
+								}
+								auto symbolNumber = builder.CreateCall(newtonInsert, {pointerIndex});
+								virtualRegisterIdentifier.insert({llvmIrGetElementPointerInstruction, symbolNumber});
+							}
 						}
 						else
 						{
