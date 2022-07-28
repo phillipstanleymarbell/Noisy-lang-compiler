@@ -82,6 +82,11 @@ extern "C"
 #include "newton-irPass-estimatorSynthesisBackend.h"
 #include "newton-irPass-invariantSignalAnnotation.h"
 
+
+enum DefaultConstantsE {
+	kMaxDimensions			= 1024
+} DefaultConstants;
+
 class PhysicsInfo {
 private:
 	Physics *	physicsType;
@@ -100,6 +105,7 @@ public:
 };
 
 std::map<Value *, PhysicsInfo *> virtualRegisterPhysicsTable;
+std::map<Value *, Value *> virtualRegisterIdentifier;
 std::map<StringRef, PhysicsInfo *> sourceVariablePhysicsTable;
 
 /*
@@ -248,7 +254,7 @@ dumpPhysicsInfoJSON(json::OStream &jsonOStream, StringRef name, PhysicsInfo* phy
 }
 
 void 
-dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  runtimeCheckFunction, FunctionCallee initNewtonRuntime)
+dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  runtimeCheckFunction, FunctionCallee initNewtonRuntime, FunctionCallee newtonInsert)
 {
 	if (!llvmIrFunction.empty())
 	{
@@ -302,6 +308,37 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  runt
 							{
 								virtualRegisterPhysicsTable[localVariableAddress] = physicsInfo;
 								sourceVariablePhysicsTable[debugInfoVariable->getName()] = physicsInfo;
+
+								if (!physicsInfo->isComposite())
+								{
+									auto	dimensionIterator = physicsInfo->getPhysicsType()->dimensions;
+									IRBuilder<> 	builder(&llvmIrInstruction);
+									Type *	argumentType = runtimeCheckFunction.getFunctionType()->getParamType(0);
+									Type *	pointerType = runtimeCheckFunction.getFunctionType()->getParamType(1);
+									Type *	Int64Type = llvm::IntegerType::getInt64Ty(builder.getContext());
+
+									auto element_size = llvm::ConstantInt::get(Int64Type, sizeof(int64_t));
+									auto array_size = llvm::ConstantInt::get(Int64Type, kMaxDimensions);
+									auto alloc_size = llvm::ConstantExpr::getMul(element_size, array_size);
+
+									Instruction* Malloc = CallInst::CreateMalloc(&llvmIrInstruction,
+																				 Int64Type, Int64Type->getPointerTo(), alloc_size,
+																				 nullptr, nullptr, "");
+									auto	pointerIndex = builder.CreatePointerCast(Malloc, pointerType);
+									Value *	locationPointer;
+									int64_t exponent;
+									for (int64_t i = 0; dimensionIterator; dimensionIterator = dimensionIterator->next, i++)
+									{
+										exponent = (int64_t)dimensionIterator->exponent;
+										if (exponent)
+										{
+											locationPointer = builder.CreateGEP(pointerIndex, llvm::ConstantInt::get(Int64Type, i));
+											builder.CreateStore(llvm::ConstantInt::get(Int64Type, exponent), locationPointer);
+										}
+									}
+									auto	symbolNumber = builder.CreateCall(newtonInsert, {pointerIndex});
+									virtualRegisterIdentifier[localVariableAddress] = symbolNumber;
+								}
 							}
 						}
 					}
@@ -680,10 +717,11 @@ irPassLLVMIRDimensionCheck(State *  N)
 
 	FunctionCallee	arrayDimensionalityCheck = Mod->getOrInsertFunction("__array_dimensionality_check", /* return type */ VoidType, Int64Type, Int64PointerType);
 	FunctionCallee	initNewtonRuntime = Mod->getOrInsertFunction("__newtonInit", /* return type */ VoidType);
+	FunctionCallee	newtonInsert = Mod->getOrInsertFunction("__newtonInsert", /* return type */ Int64Type, Int64PointerType);
 
 	for (auto & mi : *Mod)
 	{
-		dimensionalityCheck(mi, N, arrayDimensionalityCheck, initNewtonRuntime);
+		dimensionalityCheck(mi, N, arrayDimensionalityCheck, initNewtonRuntime, newtonInsert);
 	}
 
 	WriteBitcodeToFile(*Mod, modifiedIROutputFile);
