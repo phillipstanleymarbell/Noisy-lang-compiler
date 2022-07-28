@@ -253,8 +253,8 @@ dumpPhysicsInfoJSON(json::OStream &jsonOStream, StringRef name, PhysicsInfo* phy
 		jsonOStream.value(physicsInfo->getPhysicsType()->identifier);
 }
 
-void 
-dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  runtimeCheckFunction, FunctionCallee initNewtonRuntime, FunctionCallee newtonInsert)
+void
+dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  runtimeCheckFunction, FunctionCallee initNewtonRuntime, FunctionCallee newtonInsert, FunctionCallee newtonCheckDimensions)
 {
 	if (!llvmIrFunction.empty())
 	{
@@ -355,7 +355,17 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  runt
 				case Instruction::FCmp: {
 					PhysicsInfo *	leftTerm = virtualRegisterPhysicsTable[llvmIrInstruction.getOperand(0)];
 					PhysicsInfo *	rightTerm = virtualRegisterPhysicsTable[llvmIrInstruction.getOperand(1)];
+					Value *		leftIdentifier = virtualRegisterIdentifier[llvmIrInstruction.getOperand(0)];
+					Value *		rightIdentifier = virtualRegisterIdentifier[llvmIrInstruction.getOperand(1)];
 					Physics *	physicsSum;
+					if (leftIdentifier && rightIdentifier)
+					{
+						IRBuilder<> 	builder(&llvmIrInstruction);
+						Type *	argumentType = newtonCheckDimensions.getFunctionType()->getParamType(0);
+						auto	leftIndex = builder.CreateIntCast(leftIdentifier, argumentType, true);
+						auto	rightIndex = builder.CreateIntCast(rightIdentifier, argumentType, true);
+						builder.CreateCall(newtonCheckDimensions, {leftIndex, rightIndex});
+					}
 					if (!leftTerm)
 					{
 						if (!rightTerm)
@@ -459,6 +469,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  runt
 					if (auto llvmIrLoadInstruction = dyn_cast<LoadInst>(&llvmIrInstruction))
 					{
 						virtualRegisterPhysicsTable.insert({llvmIrLoadInstruction, virtualRegisterPhysicsTable[llvmIrLoadInstruction->getOperand(0)]});
+						virtualRegisterIdentifier.insert({llvmIrLoadInstruction, virtualRegisterIdentifier[llvmIrLoadInstruction->getOperand(0)]});
 					}
 					break;
 
@@ -502,6 +513,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  runt
 								}
 							}
 							virtualRegisterPhysicsTable.insert({rightTerm, virtualRegisterPhysicsTable[leftTerm]});
+							virtualRegisterIdentifier.insert({rightTerm, virtualRegisterIdentifier[leftTerm]});
 							break;
 						}
 						if (!areTwoPhysicsEquivalent(N, leftPhysicsInfo->getPhysicsType(),
@@ -718,10 +730,11 @@ irPassLLVMIRDimensionCheck(State *  N)
 	FunctionCallee	arrayDimensionalityCheck = Mod->getOrInsertFunction("__array_dimensionality_check", /* return type */ VoidType, Int64Type, Int64PointerType);
 	FunctionCallee	initNewtonRuntime = Mod->getOrInsertFunction("__newtonInit", /* return type */ VoidType);
 	FunctionCallee	newtonInsert = Mod->getOrInsertFunction("__newtonInsert", /* return type */ Int64Type, Int64PointerType);
+	FunctionCallee	newtonCheckDimensions = Mod->getOrInsertFunction("__newtonCheckDimensions", /* return type */ Int64Type, Int64Type, Int64Type);
 
 	for (auto & mi : *Mod)
 	{
-		dimensionalityCheck(mi, N, arrayDimensionalityCheck, initNewtonRuntime, newtonInsert);
+		dimensionalityCheck(mi, N, arrayDimensionalityCheck, initNewtonRuntime, newtonInsert, newtonCheckDimensions);
 	}
 
 	WriteBitcodeToFile(*Mod, modifiedIROutputFile);

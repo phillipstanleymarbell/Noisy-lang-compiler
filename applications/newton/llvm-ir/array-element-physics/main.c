@@ -15,6 +15,8 @@ main(int argc, char const *argv[])
 	state[0] = x;
 	state[1] = v;
 
+	x = x + x;
+	v = v + v;
 
 	/* Next state */
 	for (int i = 0; i < 10; i++)

@@ -186,6 +186,7 @@ __newtonGetSymbolDimensions(size_t symbolID, int64_t  result[kMaxDimensions])
 int
 __newtonCheckDimensions(size_t firstSymbolID, size_t secondSymbolID)
 {
+	printf("Examining %d %d\n", firstSymbolID, secondSymbolID);
 	for (size_t i = 0; i < kMaxDimensions; i++)
 	{
 		if (symbolSignalTable[firstSymbolID][i] != symbolSignalTable[secondSymbolID][i])
