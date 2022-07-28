@@ -2,7 +2,8 @@ typedef double	time;
 typedef double	distance;
 typedef double	speed;
 
-int 
+
+int
 main(int argc, char const *argv[])
 {
 	double state[2];
@@ -14,9 +15,15 @@ main(int argc, char const *argv[])
 	state[0] = x;
 	state[1] = v;
 
+	x = x + x;
+	v = v + v;
+	x = state[0] + state[0];
+
 	/* Next state */
-	state[0] = state[0] + v*dt;
-	state[1] = state[1];		/* constant velocity */
+	for (int i = 0; i < 10; i++)
+	{
+		state[0] = state[i] + v*dt;
+	}
 
 	return 0;
 }

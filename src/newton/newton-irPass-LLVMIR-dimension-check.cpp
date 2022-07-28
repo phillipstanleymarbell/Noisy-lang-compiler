@@ -48,6 +48,10 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/Bitcode/BitcodeWriter.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/JSON.h"
 
 using namespace llvm;
 
@@ -78,23 +82,31 @@ extern "C"
 #include "newton-irPass-estimatorSynthesisBackend.h"
 #include "newton-irPass-invariantSignalAnnotation.h"
 
+
+enum DefaultConstantsE {
+	kMaxDimensions			= 1024
+} DefaultConstants;
+
 class PhysicsInfo {
 private:
 	Physics *	physicsType;
 	std::vector<PhysicsInfo *> members;
-	bool isComposite;
+	bool composite;
 public:
-	PhysicsInfo(): physicsType{nullptr}, isComposite{true} {};
-	explicit PhysicsInfo(Physics *  physics): physicsType{physics}, isComposite{false} {};
+	PhysicsInfo(): physicsType{nullptr}, composite{true} {};
+	explicit PhysicsInfo(Physics *  physics): physicsType{physics}, composite{false} {};
 
-	void pushPhysicsInfo(PhysicsInfo *  physics_info) { if (isComposite) { members.push_back(physics_info); } }
-	void insertPhysicsInfoAt(PhysicsInfo *  physics_info, uint64_t index) { if (isComposite) { members.at(index) = physics_info; } }
+	void pushPhysicsInfo(PhysicsInfo *  physics_info) { if (composite) { members.push_back(physics_info); } }
+	void insertPhysicsInfoAt(PhysicsInfo *  physics_info, uint64_t index) { if (composite) { members.at(index) = physics_info; } }
 
-	Physics* get_physics_type() { return physicsType; }
+	bool isComposite() const { return composite; }
+	Physics* getPhysicsType() { return physicsType; }
 	std::vector<PhysicsInfo *> get_members() { return members; }
 };
 
 std::map<Value *, PhysicsInfo *> virtualRegisterPhysicsTable;
+std::map<Value *, Value *> virtualRegisterIdentifier;
+std::map<StringRef, PhysicsInfo *> sourceVariablePhysicsTable;
 
 /*
  *	Get the physics info of the DIType.
@@ -223,12 +235,37 @@ newtonPhysicsSubtractExponentsWrapper(State *  N, Physics *  left, Physics *  ri
 	}
 }
 
-void 
-dimensionalityCheck(Function &  llvmIrFunction, State *  N)
+void
+dumpPhysicsInfoJSON(json::OStream &jsonOStream, StringRef name, PhysicsInfo* physicsInfo)
 {
+	if (physicsInfo->isComposite()) {
+		jsonOStream.attributeBegin(name);
+		jsonOStream.arrayBegin();
+		for (auto &member : physicsInfo->get_members()) {
+			dumpPhysicsInfoJSON(jsonOStream, "", member);
+		}
+		jsonOStream.arrayEnd();
+		jsonOStream.attributeEnd();
+	}
+	else if (!name.empty())
+		jsonOStream.attribute(name, physicsInfo->getPhysicsType()->identifier);
+	else
+		jsonOStream.value(physicsInfo->getPhysicsType()->identifier);
+}
+
+void
+dimensionalityCheck(Function &  llvmIrFunction, State *  N, FunctionCallee  runtimeCheckFunction, FunctionCallee initNewtonRuntime, FunctionCallee newtonInsert, FunctionCallee newtonCheckDimensions)
+{
+	if (!llvmIrFunction.empty())
+	{
+		Instruction *	firstIrInstruction = llvmIrFunction.begin()->getFirstNonPHI();
+		IRBuilder<> 	builder(firstIrInstruction);
+		builder.CreateCall(initNewtonRuntime, {});
+	}
+
 	for (BasicBlock &  llvmIrBasicBlock : llvmIrFunction)
 	{
-		for (Instruction &  llvmIrInstruction : llvmIrBasicBlock)
+		for (Instruction & 	llvmIrInstruction : llvmIrBasicBlock)
 		{
 			switch (llvmIrInstruction.getOpcode())
 			{
@@ -270,6 +307,38 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 							if (auto  physicsInfo = newtonPhysicsInfo(debugInfoVariable->getType(), N))
 							{
 								virtualRegisterPhysicsTable[localVariableAddress] = physicsInfo;
+								sourceVariablePhysicsTable[debugInfoVariable->getName()] = physicsInfo;
+
+								if (!physicsInfo->isComposite())
+								{
+									auto	dimensionIterator = physicsInfo->getPhysicsType()->dimensions;
+									IRBuilder<> 	builder(&llvmIrInstruction);
+									Type *	argumentType = runtimeCheckFunction.getFunctionType()->getParamType(0);
+									Type *	pointerType = runtimeCheckFunction.getFunctionType()->getParamType(1);
+									Type *	Int64Type = llvm::IntegerType::getInt64Ty(builder.getContext());
+
+									auto element_size = llvm::ConstantInt::get(Int64Type, sizeof(int64_t));
+									auto array_size = llvm::ConstantInt::get(Int64Type, kMaxDimensions);
+									auto alloc_size = llvm::ConstantExpr::getMul(element_size, array_size);
+
+									Instruction* Malloc = CallInst::CreateMalloc(&llvmIrInstruction,
+																				 Int64Type, Int64Type->getPointerTo(), alloc_size,
+																				 nullptr, nullptr, "");
+									auto	pointerIndex = builder.CreatePointerCast(Malloc, pointerType);
+									Value *	locationPointer;
+									int64_t exponent;
+									for (int64_t i = 0; dimensionIterator; dimensionIterator = dimensionIterator->next, i++)
+									{
+										exponent = (int64_t)dimensionIterator->exponent;
+										if (exponent)
+										{
+											locationPointer = builder.CreateGEP(pointerIndex, llvm::ConstantInt::get(Int64Type, i));
+											builder.CreateStore(llvm::ConstantInt::get(Int64Type, exponent), locationPointer);
+										}
+									}
+									auto	symbolNumber = builder.CreateCall(newtonInsert, {pointerIndex});
+									virtualRegisterIdentifier[localVariableAddress] = symbolNumber;
+								}
 							}
 						}
 					}
@@ -286,29 +355,39 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 				case Instruction::FCmp: {
 					PhysicsInfo *	leftTerm = virtualRegisterPhysicsTable[llvmIrInstruction.getOperand(0)];
 					PhysicsInfo *	rightTerm = virtualRegisterPhysicsTable[llvmIrInstruction.getOperand(1)];
+					Value *		leftIdentifier = virtualRegisterIdentifier[llvmIrInstruction.getOperand(0)];
+					Value *		rightIdentifier = virtualRegisterIdentifier[llvmIrInstruction.getOperand(1)];
 					Physics *	physicsSum;
+					if (leftIdentifier && rightIdentifier)
+					{
+						IRBuilder<> 	builder(&llvmIrInstruction);
+						Type *	argumentType = newtonCheckDimensions.getFunctionType()->getParamType(0);
+						auto	leftIndex = builder.CreateIntCast(leftIdentifier, argumentType, true);
+						auto	rightIndex = builder.CreateIntCast(rightIdentifier, argumentType, true);
+						builder.CreateCall(newtonCheckDimensions, {leftIndex, rightIndex});
+					}
 					if (!leftTerm)
 					{
 						if (!rightTerm)
 						{
 							break;
 						}
-						physicsSum = rightTerm->get_physics_type();
+						physicsSum = rightTerm->getPhysicsType();
 					}
 					else if (!rightTerm)
 					{
-						physicsSum = leftTerm->get_physics_type();
+						physicsSum = leftTerm->getPhysicsType();
 					}
 					else
 					{
-						if (!areTwoPhysicsEquivalent(N, leftTerm->get_physics_type(),
-													 rightTerm->get_physics_type()))
+						if (!areTwoPhysicsEquivalent(N, leftTerm->getPhysicsType(),
+													 rightTerm->getPhysicsType()))
 						{
 							printDebugInfoLocation(&llvmIrInstruction,
-												   leftTerm->get_physics_type(), rightTerm->get_physics_type());
+												   leftTerm->getPhysicsType(), rightTerm->getPhysicsType());
 							exit(1);
 						}
-						physicsSum = leftTerm->get_physics_type();
+						physicsSum = leftTerm->getPhysicsType();
 					}
 					virtualRegisterPhysicsTable.insert({&llvmIrInstruction, new PhysicsInfo{physicsSum}});
 					break;
@@ -327,17 +406,17 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 							{
 								break;
 							}
-							physicsProduct = rightTerm->get_physics_type();
+							physicsProduct = rightTerm->getPhysicsType();
 						}
 						else if (!rightTerm)
 						{
-							physicsProduct = leftTerm->get_physics_type();
+							physicsProduct = leftTerm->getPhysicsType();
 						}
 						else
 						{
 							physicsProduct = newtonPhysicsAddExponentsWrapper(N,
-																			  leftTerm->get_physics_type(),
-																			  rightTerm->get_physics_type());
+																			  leftTerm->getPhysicsType(),
+																			  rightTerm->getPhysicsType());
 						}
 						/*
 						 *	Store the result to the destination virtual register.
@@ -363,17 +442,17 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 							{
 								break;
 							}
-							physicsProduct = rightTerm->get_physics_type();
+							physicsProduct = rightTerm->getPhysicsType();
 						}
 						else if (!rightTerm)
 						{
-							physicsProduct = leftTerm->get_physics_type();
+							physicsProduct = leftTerm->getPhysicsType();
 						}
 						else
 						{
 							physicsProduct = newtonPhysicsSubtractExponentsWrapper(N,
-																				   leftTerm->get_physics_type(),
-																				   rightTerm->get_physics_type());
+																				   leftTerm->getPhysicsType(),
+																				   rightTerm->getPhysicsType());
 						}
 						/*
 						 *	Store the result to the destination virtual register.
@@ -390,6 +469,7 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 					if (auto llvmIrLoadInstruction = dyn_cast<LoadInst>(&llvmIrInstruction))
 					{
 						virtualRegisterPhysicsTable.insert({llvmIrLoadInstruction, virtualRegisterPhysicsTable[llvmIrLoadInstruction->getOperand(0)]});
+						virtualRegisterIdentifier.insert({llvmIrLoadInstruction, virtualRegisterIdentifier[llvmIrLoadInstruction->getOperand(0)]});
 					}
 					break;
 
@@ -433,12 +513,15 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 								}
 							}
 							virtualRegisterPhysicsTable.insert({rightTerm, virtualRegisterPhysicsTable[leftTerm]});
+							virtualRegisterIdentifier.insert({rightTerm, virtualRegisterIdentifier[leftTerm]});
 							break;
 						}
-						if (!areTwoPhysicsEquivalent(N, leftPhysicsInfo->get_physics_type(), rightPhysicsInfo->get_physics_type()))
+						if (!areTwoPhysicsEquivalent(N, leftPhysicsInfo->getPhysicsType(),
+													 rightPhysicsInfo->getPhysicsType()))
 						{
 							printDebugInfoLocation(&llvmIrInstruction,
-												   leftPhysicsInfo->get_physics_type(), rightPhysicsInfo->get_physics_type());
+												   leftPhysicsInfo->getPhysicsType(),
+												   rightPhysicsInfo->getPhysicsType());
 							exit(1);
 						}
 					}
@@ -447,8 +530,22 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 				case Instruction::GetElementPtr:
 					if (auto llvmIrGetElementPointerInstruction = dyn_cast<GetElementPtrInst>(&llvmIrInstruction))
 					{
+						uint8_t operandsNumber = llvmIrGetElementPointerInstruction->getNumOperands();
 						uint64_t index;
-						if (auto llvmIrConstantInt = dyn_cast<ConstantInt>(llvmIrGetElementPointerInstruction->getOperand(2)))
+
+						/*
+						 * TODO: handle all cases with arrays and pointers.
+						 */
+						if (operandsNumber != 3)
+						{
+							continue;
+						}
+
+						/*
+						 * For one-dimensional arrays the 3rd operand is the index of the expression.
+						 */
+						Value *		indexOperand = llvmIrGetElementPointerInstruction->getOperand(2);
+						if (auto llvmIrConstantInt = dyn_cast<ConstantInt>(indexOperand))
 						{
 							Value *			structurePointer = llvmIrGetElementPointerInstruction->getPointerOperand();
 							PhysicsInfo	*	structurePointerPhysicsInfo = virtualRegisterPhysicsTable[structurePointer];
@@ -457,6 +554,57 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 							index = llvmIrConstantInt->getZExtValue();
 							physicsInfo = structurePointerPhysicsInfo->get_members()[index];
 							virtualRegisterPhysicsTable.insert({llvmIrGetElementPointerInstruction, physicsInfo});
+
+							if (physicsInfo) {
+								auto dimensionIterator = physicsInfo->getPhysicsType()->dimensions;
+								IRBuilder<> builder(&llvmIrInstruction);
+								Type *argumentType = runtimeCheckFunction.getFunctionType()->getParamType(0);
+								Type *pointerType = runtimeCheckFunction.getFunctionType()->getParamType(1);
+								Type *Int64Type = llvm::IntegerType::getInt64Ty(builder.getContext());
+
+								auto element_size = llvm::ConstantInt::get(Int64Type, sizeof(int64_t));
+								auto array_size = llvm::ConstantInt::get(Int64Type, kMaxDimensions);
+								auto alloc_size = llvm::ConstantExpr::getMul(element_size, array_size);
+
+								Instruction *Malloc = CallInst::CreateMalloc(&llvmIrInstruction,
+																			 Int64Type, Int64Type->getPointerTo(),
+																			 alloc_size,
+																			 nullptr, nullptr, "");
+								auto pointerIndex = builder.CreatePointerCast(Malloc, pointerType);
+								Value *locationPointer;
+								int64_t exponent;
+								for (int64_t i = 0; dimensionIterator; dimensionIterator = dimensionIterator->next, i++) {
+									exponent = (int64_t) dimensionIterator->exponent;
+									if (exponent) {
+										locationPointer = builder.CreateGEP(pointerIndex,
+																			llvm::ConstantInt::get(Int64Type, i));
+										builder.CreateStore(llvm::ConstantInt::get(Int64Type, exponent),
+															locationPointer);
+									}
+								}
+								auto symbolNumber = builder.CreateCall(newtonInsert, {pointerIndex});
+								virtualRegisterIdentifier.insert({llvmIrGetElementPointerInstruction, symbolNumber});
+							}
+						}
+						else
+						{
+							IRBuilder<> 	builder(&llvmIrInstruction);
+							llvm::Type *i64Type = llvm::IntegerType::getInt64Ty(builder.getContext());
+
+							Type *	argumentType = runtimeCheckFunction.getFunctionType()->getParamType(0);
+							Type *	pointerType = runtimeCheckFunction.getFunctionType()->getParamType(1);
+
+							auto element_size = llvm::ConstantInt::get(i64Type, 8);
+							auto array_size = llvm::ConstantInt::get(i64Type, 100);
+							auto alloc_size = llvm::ConstantExpr::getMul(element_size, array_size);
+
+							Instruction* Malloc = CallInst::CreateMalloc(&llvmIrInstruction,
+																		 i64Type, i64Type->getPointerTo(), alloc_size,
+																		 nullptr, nullptr, "");
+
+							auto	variableIndex = builder.CreateIntCast(indexOperand, argumentType, true);
+							auto	pointerIndex = builder.CreatePointerCast(Malloc, pointerType);
+							builder.CreateCall(runtimeCheckFunction, {variableIndex, pointerIndex});
 						}
 					}
 					break;
@@ -494,23 +642,23 @@ dimensionalityCheck(Function &  llvmIrFunction, State *  N)
 						{
 							break;
 						}
-						physicsPhiNode = rightTerm->get_physics_type();
+						physicsPhiNode = rightTerm->getPhysicsType();
 					}
 					else if (!rightTerm)
 					{
-						physicsPhiNode = leftTerm->get_physics_type();
+						physicsPhiNode = leftTerm->getPhysicsType();
 					}
 					else
 					{
-						if (!areTwoPhysicsEquivalent(N, leftTerm->get_physics_type(),
-													 rightTerm->get_physics_type()))
+						if (!areTwoPhysicsEquivalent(N, leftTerm->getPhysicsType(),
+													 rightTerm->getPhysicsType()))
 						{
 
 							auto debugLocation = cast<DILocation>(llvmIrInstruction.getMetadata(0));
 							errs() << "Warning, cannot deduce physics type at: line " << debugLocation->getLine() <<
 								   ", column " << debugLocation->getColumn() << ".\n";
 						}
-						physicsPhiNode = leftTerm->get_physics_type();
+						physicsPhiNode = leftTerm->getPhysicsType();
 					}
 					virtualRegisterPhysicsTable.insert({&llvmIrInstruction, new PhysicsInfo{physicsPhiNode}});
 				}
@@ -580,6 +728,23 @@ irPassLLVMIRDimensionCheck(State *  N)
 		fatal(N, Esanity);
 	}
 
+	StringRef	filePath(N->llvmIR);
+	std::string	filePathStem;
+	std::string	modifiedIRFilePath;
+	std::string	JSONFilePath;
+
+	std::error_code errorCode(errno,std::generic_category());
+
+	filePathStem = std::string(sys::path::parent_path(filePath)) + "/" + std::string(sys::path::stem(filePath));
+
+	modifiedIRFilePath = filePathStem + ".bc";
+	raw_fd_ostream modifiedIROutputFile(modifiedIRFilePath, errorCode);
+
+	JSONFilePath = filePathStem + ".json";
+	raw_fd_ostream JSONOutputFile(JSONFilePath, errorCode);
+	int JSONPrettyPrinting = true;
+	json::OStream jsonOStream(JSONOutputFile, JSONPrettyPrinting);
+
 	SMDiagnostic 	Err;
 	LLVMContext 	Context;
 	std::unique_ptr<Module>	Mod(parseIRFile(N->llvmIR, Err, Context));
@@ -589,10 +754,27 @@ irPassLLVMIRDimensionCheck(State *  N)
 		fatal(N, Esanity);
 	}
 
+	Type *VoidType = Type::getVoidTy(Context);
+	Type *Int64Type = Type::getInt64Ty(Context);
+	Type *Int64PointerType = Type::getInt64PtrTy(Context);
+
+	FunctionCallee	arrayDimensionalityCheck = Mod->getOrInsertFunction("__array_dimensionality_check", /* return type */ VoidType, Int64Type, Int64PointerType);
+	FunctionCallee	initNewtonRuntime = Mod->getOrInsertFunction("__newtonInit", /* return type */ VoidType);
+	FunctionCallee	newtonInsert = Mod->getOrInsertFunction("__newtonInsert", /* return type */ Int64Type, Int64PointerType);
+	FunctionCallee	newtonCheckDimensions = Mod->getOrInsertFunction("__newtonCheckDimensions", /* return type */ Int64Type, Int64Type, Int64Type);
+
 	for (auto & mi : *Mod)
 	{
-		dimensionalityCheck(mi, N);
+		dimensionalityCheck(mi, N, arrayDimensionalityCheck, initNewtonRuntime, newtonInsert, newtonCheckDimensions);
 	}
+
+	WriteBitcodeToFile(*Mod, modifiedIROutputFile);
+
+	jsonOStream.object([&] {
+		for (auto &iter: sourceVariablePhysicsTable) {
+			dumpPhysicsInfoJSON(jsonOStream, iter.first, iter.second);
+		}
+	});
 }
 
 }

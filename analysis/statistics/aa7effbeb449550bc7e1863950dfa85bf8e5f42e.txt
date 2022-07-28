@@ -1,7 +1,6 @@
 
-changeset: 1218:16d7754fb4a4cd69a1028da671ef704574b4e9d4
-
-char kNewtonVersion[] = "0.3-alpha-1218 (16d7754fb4a4cd69a1028da671ef704574b4e9d4) (build 04-15-2022-14:04-blackgeorge@blackgeorge-IdeaPad-L340-17IRH-Gaming-Linux-5.3.0-62-generic-x86_64)";
+changeset: 1219:aa7effbeb449550bc7e1863950dfa85bf8e5f42e
+char kNewtonVersion[] = "0.3-alpha-1219 (aa7effbeb449550bc7e1863950dfa85bf8e5f42e) (build 04-15-2022-19:36-blackgeorge@blackgeorge-IdeaPad-L340-17IRH-Gaming-Linux-5.3.0-62-generic-x86_64)";
 
 ./src/noisy/noisy-linux-EN -O0 applications/noisy/helloWorld.n -s
 

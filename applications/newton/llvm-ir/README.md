@@ -20,6 +20,19 @@ cd ../../../../src/newton
 ./<newton-executable> --llvm-ir=../../applications/newton/llvm-ir/adc_test/test_hum_adc.ll ../../applications/newton/invariants/LLVMIRNewtonExample.nt
 ```
 
+### Arrays with variable indices
+
+```make
+cd /path/to/Noisy-lang-compiler/applications/newton/llvm-ir/array-element-physics
+make
+cd ../../../../src/newton
+./<newton-executable> --llvm-ir=../../applications/newton/llvm-ir/array-element-physics/main.ll ../../applications/newton/invariants/LLVMIRNewtonExample.nt
+cd -
+make main_opt.ll
+make main
+./main
+```
+
 ## Liveness check with Newton and LLVM IR
 
 Pass the flag `--llvm-ir-liveness-check`, to do a liveness check for a LLVM IR file given with `--llvm-ir`.
