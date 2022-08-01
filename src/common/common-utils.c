@@ -836,7 +836,16 @@ error(State *  N, const char *  msg)
 
 	flexprint(N->Fe, N->Fm, N->Fperr, "\n%s%s\n", Eerror, msg);
 
-	if (N != NULL && N->Fe != NULL && (char*)N->Fe->errstr != NULL)
+	/*
+	 *	The commented out condition of the if-clause below causes the
+	 *	following error with GCC 12.1:
+	 *
+	 *		common-utils.c: In function ‘error’:
+	 *		common-utils.c:839:64: error: the comparison will always evaluate as ‘true’ for the address of ‘errstr’ will never be NULL [-Werror=address]
+  	 *		  839 |         if (N != NULL && N->Fe != NULL && (char*)N->Fe->errstr != NULL)
+	 *
+	 */
+	if (N != NULL && N->Fe != NULL /* && (char*)N->Fe->errstr != NULL */)
 	{
 		snprintf(N->Fe->errstr, N->Fe->errlen, "%s%s", Eerror, msg);
 	}
