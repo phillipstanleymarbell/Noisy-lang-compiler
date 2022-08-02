@@ -20,6 +20,9 @@ sudo make perf_j0_opt
 sudo make perf_y0
 sudo make perf_y0_opt
 
+# collect the line count of IR
+wc -l out.ll
+
 # record your performance data and plot the performance figures
 # sorry we need to record the data manually currently
 vi result.log

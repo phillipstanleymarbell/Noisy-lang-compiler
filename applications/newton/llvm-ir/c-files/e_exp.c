@@ -52,17 +52,18 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
  * Definitions generated from Newton
  */
 typedef __uint32_t bmx055xMagneto;
+typedef double bmx055xAcceleration;
 
 #ifdef __STDC__
-	double libc_exp(double x)	/* default IEEE double exp */
+	double libc_exp(bmx055xAcceleration x)	/* default IEEE double exp */
 #else
 	double libc_exp(x)	/* default IEEE double exp */
-	double x;
+    bmx055xAcceleration x;
 #endif
 {
 	double y,hi,lo,c,t;
 	__int32_t k = 0,xsb;
-	bmx055xMagneto hx;
+	__uint32_t hx;
 
 	GET_HIGH_WORD(hx,x);
 	xsb = (hx>>31)&1;		/* sign bit of x */

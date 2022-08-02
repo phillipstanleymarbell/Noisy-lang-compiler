@@ -514,7 +514,7 @@ getTrue(Type * Ty)
 std::pair<Value *, std::pair<double, double>>
 inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 {
-    std::map<Value *, Value *> union_address;
+    std::map<Value *, Value *> unionAddress;
     for (BasicBlock & llvmIrBasicBlock : llvmIrFunction)
     {
         for (Instruction & llvmIrInstruction : llvmIrBasicBlock)
@@ -595,7 +595,7 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 continue;
                             }
                             /*
-                             * Algorithm to infer the range of CallInst's result.
+                             * Algorithm to infer the range of CallInst's result:
                              * 1. find the CallInst (caller).
                              * 2. check if the CallInst's operands is a variable with range.
                              * 3. infer the range of the operands (if needed).
@@ -1222,11 +1222,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         {
                             boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), vrRangeIt->second);
                         }
-                        /*
-                        * TODO: check if all union's always need a store instruction
-                        * */
-                        auto uaIt = union_address.find(llvmIrStoreInstruction->getOperand(1));
-                        if (uaIt != union_address.end())
+                        auto uaIt = unionAddress.find(llvmIrStoreInstruction->getOperand(1));
+                        if (uaIt != unionAddress.end())
                         {
                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tStore Union: %f - %f\n",  vrRangeIt->second.first, vrRangeIt->second.second);
                             boundInfo->virtualRegisterRange.emplace(uaIt->second, vrRangeIt->second);
@@ -1250,9 +1247,26 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     if (auto llvmIrBitCastInstruction = dyn_cast<BitCastInst>(&llvmIrInstruction))
                     {
                         /*
-                         * record the union info
+                        * for the union type, LLVM IR uses a store intrinsic to link the variables, e.g.
+                         * union {
+                         *   float f;
+                         *   uint32_t i;
+                         * } u = {f};
+                         * The IR is:
+                         *   %4 = bitcast %union.anon* %3 to double*
+                         *   %5 = load double, double* %2, align 8
+                         *   store double %5, double* %4, align 8
+                         *   %6 = bitcast %union.anon* %3 to i32*
+                         *
+                         * So the Algorithm to infer the range of Union type is:
+                         * 1. record the first bitcast instruction info to a map,
+                         *    as we didn't have the actual variable information
+                         * 2. check with the store instruction with the records in the map
+                         *    and store the actual variable to the %union.anon
+                         * 3. get the variable info from the %union.anon by the second bitcast instruction,
+                         *    and reinterpret it if necessary
                          * */
-                        union_address.emplace(llvmIrBitCastInstruction, llvmIrBitCastInstruction->getOperand(0));
+                        unionAddress.emplace(llvmIrBitCastInstruction, llvmIrBitCastInstruction->getOperand(0));
                         assert(llvmIrBitCastInstruction->getType()->getTypeID() == Type::PointerTyID);
                         auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrBitCastInstruction->getOperand(0));
                         if (vrRangeIt != boundInfo->virtualRegisterRange.end())
@@ -1269,12 +1283,24 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                               vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                     boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
                                     break;
+                                case Type::DoubleTyID:
+                                    lowRange = *reinterpret_cast<float *>(&originLow);
+                                    highRange = *reinterpret_cast<float *>(&originHigh);
+                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::DoubleTyID, %f - %f to %f - %f\n",
+                                              vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
+                                    boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
+                                    break;
                                 case Type::IntegerTyID:
                                     lowRange = static_cast<double>(*reinterpret_cast<int *>(&originLow));
                                     highRange = static_cast<double>(*reinterpret_cast<int *>(&originHigh));
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::IntegerTyID, %f - %f to %f - %f\n",
                                               vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                     boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
+                                    break;
+                                case Type::StructTyID:
+                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::StructTyID, %f - %f to %f - %f\n",
+                                              vrRangeIt->second.first, vrRangeIt->second.second, originLow, originHigh);
+                                    boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(originLow, originHigh));
                                     break;
                                 default:
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Do not support other type yet.\n");

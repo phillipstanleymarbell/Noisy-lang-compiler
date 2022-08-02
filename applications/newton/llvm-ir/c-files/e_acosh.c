@@ -36,16 +36,17 @@ static double
 * Definitions generated from Newton
 */
 typedef __uint32_t bmx055xMagneto;
+typedef double bmx055xAcceleration;
 
 #ifdef __STDC__
-double libc_acosh(double x)
+double libc_acosh(bmx055xAcceleration x)
 #else
 double libc_acosh(x)
-        double x;
+        bmx055xAcceleration x;
 #endif
 {
     double t;
-    bmx055xMagneto hx;
+    __uint32_t hx;
     __uint32_t lx;
     EXTRACT_WORDS(hx,lx,x);
     if(hx<0x3ff00000) {		/* hx < 1072693248; x < 1 */

@@ -53,6 +53,7 @@ S04  =  1.16614003333790000205e-09; /* 0x3E1408BC, 0xF4745D8F */
 * Definitions generated from Newton
 */
 typedef __uint32_t bmx055xMagneto;
+typedef double bmx055xAcceleration;
 
 #ifdef __STDC__
 static const double zero = 0.0;
@@ -61,15 +62,15 @@ static double zero = 0.0;
 #endif
 
 #ifdef __STDC__
-double libc_j0(double x)
+double libc_j0(bmx055xAcceleration x)
 #else
 double libc_j0(x)
-        double x;
+        bmx055xAcceleration x;
 #endif
 {
     double z, s,c,ss,cc,r,u,v;
     __int32_t hx;
-    bmx055xMagneto ix;
+    __uint32_t ix;
 
     GET_HIGH_WORD(hx,x);
     ix = hx&0x7fffffff;
@@ -219,10 +220,10 @@ static double pS2[5] = {
 };
 
 #ifdef __STDC__
-static double libc_pzero(double x)
+static double libc_pzero(bmx055xAcceleration x)
 #else
 static double libc_pzero(x)
-        double x;
+        bmx055xAcceleration x;
 #endif
 {
 #ifdef __STDC__
@@ -231,7 +232,7 @@ static double libc_pzero(x)
     double *p,*q;
 #endif
     double z,r,s;
-    bmx055xMagneto ix;
+    __uint32_t ix;
     GET_HIGH_WORD(ix,x);
     ix &= 0x7fffffff;
     if(ix>=0x40200000)     {p = pR8; q= pS8;}
@@ -355,10 +356,10 @@ static double qS2[6] = {
 };
 
 #ifdef __STDC__
-static double libc_qzero(double x)
+static double libc_qzero(bmx055xAcceleration x)
 #else
 static double libc_qzero(x)
-        double x;
+        bmx055xAcceleration x;
 #endif
 {
 #ifdef __STDC__
@@ -367,7 +368,7 @@ static double libc_qzero(x)
     double *p,*q;
 #endif
     double s,r,z;
-    bmx055xMagneto ix;
+    __uint32_t ix;
     GET_HIGH_WORD(ix,x);
     ix &= 0x7fffffff;
     if(ix>=0x40200000)     {p = qR8; q= qS8;}

@@ -45,6 +45,7 @@ Lg7 = 1.479819860511658591e-01;  /* 3FC2F112 DF3E5244 */
  * Definitions generated from Newton
  */
 typedef __uint32_t bmx055xMagneto;
+typedef double bmx055xAcceleration;
 
 #ifdef __STDC__
 static const double zero   =  0.0;
@@ -53,16 +54,16 @@ static double zero   =  0.0;
 #endif
 
 #ifdef __STDC__
-	double libc_log(double x)
+	double libc_log(bmx055xAcceleration x)
 #else
 	double libc_log(x)
-	double x;
+            bmx055xAcceleration x;
 #endif
 {
 	double hfsq,f,s,z,R,w,t1,t2,dk;
 	__int32_t k,i,j;
 	__uint32_t lx;
-    bmx055xMagneto hx;
+    __uint32_t hx;
 
 	EXTRACT_WORDS(hx,lx,x);
 //    printf("------------hx: %d, lx: %d\"------------\n", hx, lx);

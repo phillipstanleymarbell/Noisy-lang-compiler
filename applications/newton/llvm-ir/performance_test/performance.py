@@ -50,12 +50,12 @@ for i in range(2, len(performance_data), 2):
 
 fig = plt.figure(1)
 
-y_labels = ["instruction counts (million)", "IR lines", "time elapsed (s)", "bytes"]
+y_labels = ["instruction counts (million)", "IR lines", "time consumption (s)", "size of library (bytes)"]
 y_ranges = [(130, 600), (100, 1600), (0.01, 0.10), (3000, 16000)]
 y_units = [1000000, 1, 1, 1]
 
 for fig_id in range(4):
-    ax1 = plt.subplot(2, 2, fig_id + 1)
+    ax1 = plt.figure(fig_id + 1)
 
     count_list = []
     for i in range(1, len(performance_data), 2):
@@ -74,4 +74,4 @@ for fig_id in range(4):
         x[i] = x[i] + width
     plt.bar(x, opt_count_list, width=width, label='optimized performance', fc='r')
     plt.legend()
-plt.show()
+    plt.show()
