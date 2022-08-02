@@ -41,6 +41,13 @@ The build also depends on the C protobuf compiler, `sloccount`, and on Graphviz.
 Furthermore, LLVM is a build and runtime dependency on this project.
 Currently, passes related to LLVM are tested with LLVM 12 and 13 versions.
 
+Make sure `llvm-config` is installed for one of the above versions. In case it is named differently, e.g., `llvm-config-x` you will need to create a symbolic link:
+
+```bash
+cd /location/of/llvm-config-x
+ln -s llvm-config-x llvm-config
+```
+
 Once you have the above repositories, 
 
 1.	Create a file `config.local` in the root of the Noisy tree and edit it to contain 
