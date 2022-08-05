@@ -1,7 +1,7 @@
 # 
 # test
 # 
-include "applications/newton/include/NewtonBaseSignals.nt"
+include "NewtonBaseSignals.nt"
 
 
 accelerationNoise : signal =
@@ -10,13 +10,25 @@ accelerationNoise : signal =
 	symbol = n;
 	derivation = 1E-6 * acceleration / (frequency ** 0.5);
 }
+microMagneto : signal =
+{
+	name = "micro Tesla" English;
+	symbol = uT;
+	derivation = 1E-6 * magneticFluxDensity;
+}
+
+kBMX055xMagnetoErasureToken	: constant = 16rFEFE;
+
 kBMX055xAccelerationStdev		: constant = -1;
+kBMX055xMagnetoStdev			: constant = -1;
 
 test: sensor (
-			bmx055xAcceleration:acceleration
+			bmx055xAcceleration: acceleration,
+			bmx055xMagneto: magneticFluxDensity
 			) =
 {
 	range bmx055xAcceleration == [-16 mjf, 16 mjf],
+	range bmx055xMagneto == [1074266112 uT, 1076101120 uT],
 
 	#
 	#	The operation sequence needed to get a sample
@@ -37,13 +49,39 @@ test: sensor (
 		bmx055xAcceleration = (xAccelHigh << 4) | (xAccelLow >> 4);
 		# bmx055xAcceleration = xAccelHigh[:] + xAccelLow[4:];
 	},
+
+	interface bmx055xMagneto == i2c (address: 16r10)
+    	{
+    		#
+    		#	Start up at normal mode, modify (write value register) if set to other modes ...
+    		#
+    		#	Get MSB and LSB of xMagneto data...
+    		#
+    		xMagnetoHigh := read 16r43;
+    		xMagnetoLow := read 16r42;
+    		bmx055xMagneto = (xMagnetoHigh << 5) | (xMagnetoLow >> 3);
+    	},
+
 	uncertainty bmx055xAcceleration == GaussianDistribution(mean: bmx055xAcceleration, stdev: kBMX055xAccelerationStdev),
+	uncertainty bmx055xMagneto == GaussianDistribution(mean: bmx055xMagneto, stdev: kBMX055xMagnetoStdev),
+
 	erasureToken bmx055xAcceleration == 16rFEFE,
+	erasureToken bmx055xMagneto == 16rFEFE,
+
 	precision bmx055xAcceleration == {
 					(12, -1)
 				},
+    precision bmx055xMagneto == {
+    						(13, -1)
+    					},
+
 	accuracy bmx055xAcceleration == {
 					(150 n, 312)
-				}
-
+				},
+    accuracy bmx055xMagneto == {
+    						(1.0 uT, 408),
+    						(0.6 uT, 1200),
+    						(0.5 uT, 1920),
+    						(0.3 uT, 11760)
+    					}
 }

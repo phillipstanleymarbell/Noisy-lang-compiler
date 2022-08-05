@@ -716,6 +716,7 @@ typedef enum
 	kNewtonIrPassLLVMIRDimensionCheck								= (1 << 12),
 	kNewtonIrPassSensorsDisable				= (1 << 13),
 	kNewtonIrPassLLVMIRLivenessAnalysis				= (1 << 14),
+	kNewtonIrPassLLVMIRSimplifyControlFlowByRange				= (1 << 15),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */
