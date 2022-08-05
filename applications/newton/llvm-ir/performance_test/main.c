@@ -72,7 +72,7 @@ main()
 #elif defined(LIBC_Y0)
 		result = libc_y0(randomFloat(3.0, 10.0));
 #else
-        printf("didn't find MACRO\n");
+	#error "Benchmark function not defined"
 #endif
 	}
 
