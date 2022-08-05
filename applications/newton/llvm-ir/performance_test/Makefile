@@ -20,8 +20,6 @@ OUT_LIB = libout.a
 change_main_api = sed -i 's/api/$(1)/g' main.c
 change_back = sed -i 's/$(1)/api/g' main.c
 
-sed_fn = sed 's/optnone //' ../$(1).ll > ../$(1)_non_opt.ll
-
 opt_fn = opt ../$(1).ll --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
 newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
@@ -39,8 +37,7 @@ perf_data:
 	cset shield --exec -- perf stat -B ./main_out if=/dev/zero of=/dev/null count=1000000
 
 exp_non_opt:
-	$(call sed_fn,e_exp)
-	$(call opt_fn,e_exp_non_opt)
+	$(call opt_fn,e_exp)
 
 exp_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,e_exp)
@@ -54,8 +51,7 @@ exp_change_back:
 	$(call change_back,exp)
 
 log_non_opt:
-	$(call sed_fn,e_log)
-	$(call opt_fn,e_log_non_opt)
+	$(call opt_fn,e_log)
 
 log_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,e_log)
@@ -69,8 +65,7 @@ log_change_back:
 	$(call change_back,log)
 
 acosh_non_opt:
-	$(call sed_fn,e_acosh)
-	$(call opt_fn,e_acosh_non_opt)
+	$(call opt_fn,e_acosh)
 
 acosh_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,e_acosh)
@@ -84,8 +79,7 @@ acosh_change_back:
 	$(call change_back,acosh)
 
 j0_non_opt:
-	$(call sed_fn,e_j0)
-	$(call opt_fn,e_j0_non_opt)
+	$(call opt_fn,e_j0)
 
 j0_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,e_j0)
@@ -99,8 +93,7 @@ j0_change_back:
 	$(call change_back,j0)
 
 y0_non_opt:
-	$(call sed_fn,e_y0)
-	$(call opt_fn,e_y0_non_opt)
+	$(call opt_fn,e_y0)
 
 y0_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,e_y0)
@@ -114,8 +107,7 @@ y0_change_back:
 	$(call change_back,y0)
 
 sincosf_non_opt:
-	$(call sed_fn,sincosf)
-	$(call opt_fn,sincosf_non_opt)
+	$(call opt_fn,sincosf)
 
 sincosf_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,sincosf)
@@ -130,8 +122,7 @@ sincosf_change_back:
 
 float64_add_non_opt:
 	mv ../CHStone_test/float64_add.ll ../.
-	$(call sed_fn,float64_add)
-	$(call opt_fn,float64_add_non_opt)
+	$(call opt_fn,float64_add)
 
 float64_add_opt:
 	mv ../CHStone_test/float64_add.ll ../.
@@ -147,8 +138,7 @@ float64_add_change_back:
 
 float64_div_non_opt:
 	mv ../CHStone_test/float64_div.ll ../.
-	$(call sed_fn,float64_div)
-	$(call opt_fn,float64_div_non_opt)
+	$(call opt_fn,float64_div)
 
 float64_div_opt:
 	mv ../CHStone_test/float64_div.ll ../.
@@ -164,8 +154,7 @@ float64_div_change_back:
 
 float64_mul_non_opt:
 	mv ../CHStone_test/float64_mul.ll ../.
-	$(call sed_fn,float64_mul)
-	$(call opt_fn,float64_mul_non_opt)
+	$(call opt_fn,float64_mul)
 
 float64_mul_opt:
 	mv ../CHStone_test/float64_mul.ll ../.
@@ -181,8 +170,7 @@ float64_mul_change_back:
 
 sin_non_opt:
 	mv ../CHStone_test/sin.ll ../.
-	$(call sed_fn,sin)
-	$(call opt_fn,sin_non_opt)
+	$(call opt_fn,sin)
 
 sin_opt:
 	mv ../CHStone_test/sin.ll ../.

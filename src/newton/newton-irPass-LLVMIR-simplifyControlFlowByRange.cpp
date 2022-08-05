@@ -525,7 +525,7 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction))
                     {
                         Function * calledFunction = llvmIrCallInstruction->getCalledFunction();
-                        if (calledFunction->getName().startswith("llvm.dbg.declare"))
+                        if (calledFunction->getName().startswith("llvm.dbg.value"))
                         {
                             auto firstOperator = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(0));
                             auto localVariableAddressAsMetadata = cast<ValueAsMetadata>(firstOperator->getMetadata());
@@ -606,9 +606,6 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                              * */
                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect CalledFunction %s.\n",
                                       calledFunction->getName().str().c_str());
-                            if (strcmp(calledFunction->getName().str().c_str(), "abstop12") == 0) {
-                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: Debug\n");
-                            }
                             auto innerBoundInfo = new BoundInfo();
                             for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
                             {
@@ -1217,11 +1214,15 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                 case Instruction::Store:
                     if (auto llvmIrStoreInstruction = dyn_cast<StoreInst>(&llvmIrInstruction))
                     {
+                        // todo: if it's a const value
                         auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrStoreInstruction->getOperand(0));
                         if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                         {
                             boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), vrRangeIt->second);
                         }
+                        /*
+                         * Each time if there's a StorInst assign to the unionAddress, it updates the value of union.
+                         * */
                         auto uaIt = unionAddress.find(llvmIrStoreInstruction->getOperand(1));
                         if (uaIt != unionAddress.end())
                         {
@@ -1267,14 +1268,21 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                          *    and reinterpret it if necessary
                          * */
                         unionAddress.emplace(llvmIrBitCastInstruction, llvmIrBitCastInstruction->getOperand(0));
-                        assert(llvmIrBitCastInstruction->getType()->getTypeID() == Type::PointerTyID);
+                        assert(llvmIrBitCastInstruction->getDestTy()->getTypeID() == Type::PointerTyID);
                         auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrBitCastInstruction->getOperand(0));
                         if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                         {
-                            float originLow = static_cast<float>(vrRangeIt->second.first);
-                            float originHigh = static_cast<float>(vrRangeIt->second.second);
+                            /*
+                             * In our current test cases, there's only double->uint64_t or float->uint32_t.
+                             * But theoretically there will be uint64_t->double, uint32_t->float or others.
+                             * We should rewrite it to
+                             * `auto originLow = static_cast<uint64_t>vrRangeIt->second.first;` when it appears.
+                             * */
+                            double originLow = vrRangeIt->second.first;
+                            double originHigh = vrRangeIt->second.second;
                             double lowRange, highRange;
-                            switch (llvmIrBitCastInstruction->getType()->getContainedType(0)->getTypeID())
+                            auto DestEleType = llvmIrBitCastInstruction->getDestTy()->getPointerElementType();
+                            switch (DestEleType->getTypeID())
                             {
                                 case Type::FloatTyID:
                                     lowRange = static_cast<double>(*reinterpret_cast<float *>(&originLow));
@@ -1284,15 +1292,45 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                     boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
                                     break;
                                 case Type::DoubleTyID:
-                                    lowRange = *reinterpret_cast<float *>(&originLow);
-                                    highRange = *reinterpret_cast<float *>(&originHigh);
+                                    lowRange = *reinterpret_cast<double *>(&originLow);
+                                    highRange = *reinterpret_cast<double *>(&originHigh);
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::DoubleTyID, %f - %f to %f - %f\n",
                                               vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                     boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
                                     break;
                                 case Type::IntegerTyID:
-                                    lowRange = static_cast<double>(*reinterpret_cast<int *>(&originLow));
-                                    highRange = static_cast<double>(*reinterpret_cast<int *>(&originHigh));
+                                    if (DestEleType->isSized()) {
+                                        switch (DestEleType->getIntegerBitWidth())
+                                        {
+                                            case 32:
+                                                lowRange = static_cast<double>(*reinterpret_cast<int32_t *>(&originLow));
+                                                highRange = static_cast<double>(*reinterpret_cast<int32_t *>(&originHigh));
+                                                break;
+                                            case 64:
+                                                lowRange = static_cast<double>(*reinterpret_cast<int64_t *>(&originLow));
+                                                highRange = static_cast<double>(*reinterpret_cast<int64_t *>(&originHigh));
+                                                break;
+                                            default:
+                                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        switch (DestEleType->getIntegerBitWidth())
+                                        {
+                                            case 32:
+                                                lowRange = static_cast<double>(*reinterpret_cast<uint32_t *>(&originLow));
+                                                highRange = static_cast<double>(*reinterpret_cast<uint32_t *>(&originHigh));
+                                                break;
+                                            case 64:
+                                                lowRange = static_cast<double>(*reinterpret_cast<uint64_t *>(&originLow));
+                                                highRange = static_cast<double>(*reinterpret_cast<uint64_t *>(&originHigh));
+                                                break;
+                                            default:
+                                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::UnSignedInteger, don't support such bit width yet.");
+                                        }
+                                    }
+
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::IntegerTyID, %f - %f to %f - %f\n",
                                               vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                     boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
@@ -1300,7 +1338,6 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 case Type::StructTyID:
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::StructTyID, %f - %f to %f - %f\n",
                                               vrRangeIt->second.first, vrRangeIt->second.second, originLow, originHigh);
-                                    boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(originLow, originHigh));
                                     break;
                                 default:
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Do not support other type yet.\n");
@@ -1310,6 +1347,147 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         }
                     }
                     break;
+
+                case Instruction::GetElementPtr:
+                    if (auto llvmIrGetElePtrInstruction = dyn_cast<GetElementPtrInst>(&llvmIrInstruction))
+                    {
+                        /*
+                         * If there's a union type like:
+                         * typedef union
+                         * {
+                         *   double value;
+                         *   struct
+                         *   {
+                         *     __uint32_t lsw;
+                         *     __uint32_t msw;
+                         *   } parts;
+                         * } ieee_double_shape_type;
+                         *
+                         * ieee_double_shape_type gh_u;
+                         * gh_u.value = (d);
+                         * (i) = gh_u.parts.msw;
+                         *
+                         * It's IR is:
+                         * %9 = bitcast %union.ieee_double_shape_type* %2 to double*, !dbg !66
+                         * store double %0, double* %9, align 8, !dbg !66
+                         * %10 = bitcast %union.ieee_double_shape_type* %2 to %struct.anon*, !dbg !66
+                         * %11 = getelementptr inbounds %struct.anon, %struct.anon* %10, i32 0, i32 1, !dbg !66
+                         *
+                         * Our algorithm is:
+                         * 1. record the union information by the `bitcast` instructions;
+                         * 2. record the `bitcast` instruction with the `struct.anon*` as the destination
+                         * 3.
+                         * */
+                        auto uaIt = unionAddress.find(llvmIrGetElePtrInstruction->getPointerOperand());
+                        if (uaIt != unionAddress.end())
+                        {
+                            /*
+                             * The pointer operand has been recorded in the unionAddress,
+                             * so the value of this elementPtr must be gotten from the nearest bitcasts of union.
+                             * */
+                            auto it = std::find_if(unionAddress.rbegin(), unionAddress.rend(), [uaIt](const auto & ua){
+                                return (ua.second == uaIt->second) && (ua.first != uaIt->first);
+                            });
+                            if (it != unionAddress.rend())
+                            {
+                                auto vrRangeIt = boundInfo->virtualRegisterRange.find(it->second);
+                                if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                                {
+                                    double originLow = vrRangeIt->second.first;
+                                    double originHigh = vrRangeIt->second.second;
+                                    uint64_t originLowWord = *reinterpret_cast<uint64_t*>(&originLow);
+                                    uint64_t originHighWord = *reinterpret_cast<uint64_t*>(&originHigh);
+                                    double lowRange, highRange;
+                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tGetElementPtr: find the value holder.");
+                                    auto valueHolderBitcast = dyn_cast<BitCastInst>(it->first);
+                                    auto DestEleType = valueHolderBitcast->getDestTy()->getPointerElementType();
+                                    // todo: is it necessary to check? or does it have other usage?
+                                    unsigned dataBitWidth = DestEleType->getPrimitiveSizeInBits();
+                                    /*
+                                     * re-interpret the value in structure, e.g. for the example we showed below,
+                                     * uint32_t lsw = static_cast<uint32_t>(long_word);
+                                     * uint32_t msw = static_cast<uint32_t>(long_word >> 32);
+                                     * */
+                                    if (llvmIrGetElePtrInstruction->getNumOperands() == 1)
+                                    {
+                                        /*
+                                         * It's pointer address, like array[5]
+                                         * todo: implement when meet
+                                         * */
+                                        int pointer_offset = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(1))->getZExtValue();
+                                    }
+                                    else
+                                    {
+                                        /*
+                                         * It's a value
+                                         * */
+                                        int pointer_offset = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(1))->getZExtValue();
+                                        assert(pointer_offset == 0);
+                                        int element_offset = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(2))->getZExtValue();
+                                        auto resEleTy = llvmIrGetElePtrInstruction->getResultElementType();
+                                        switch (resEleTy->getTypeID())
+                                        {
+                                            case Type::FloatTyID:
+                                                lowRange = static_cast<double>(static_cast<float>(originLowWord >> (32 * element_offset)));
+                                                highRange = static_cast<double>(static_cast<float>(originHighWord >> (32 * element_offset)));
+                                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::FloatTyID, %f - %f to %f - %f\n",
+                                                          vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
+                                                boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange));
+                                                break;
+                                            case Type::DoubleTyID:
+                                                lowRange = static_cast<double>(originLowWord >> (32 * element_offset));
+                                                highRange = static_cast<double>(originHighWord >> (32 * element_offset));
+                                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::DoubleTyID, %f - %f to %f - %f\n",
+                                                          vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
+                                                boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange));
+                                                break;
+                                            case Type::IntegerTyID:
+                                                if (resEleTy->isSized()) {
+                                                    switch (resEleTy->getPrimitiveSizeInBits())
+                                                    {
+                                                        case 32:
+                                                            lowRange = static_cast<double>(static_cast<int32_t>(originLowWord >> (32 * element_offset)));
+                                                            highRange = static_cast<double>(static_cast<int32_t>(originHighWord >> (32 * element_offset)));
+                                                            break;
+                                                        case 64:
+                                                            lowRange = static_cast<double>(static_cast<int64_t>(originLowWord));
+                                                            highRange = static_cast<double>(static_cast<int64_t>(originHighWord));
+                                                            break;
+                                                        default:
+                                                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    switch (resEleTy->getPrimitiveSizeInBits())
+                                                    {
+                                                        case 32:
+                                                            lowRange = static_cast<double>(static_cast<uint32_t>(originLowWord >> (32 * element_offset)));
+                                                            highRange = static_cast<double>(static_cast<uint32_t>(originHighWord >> (32 * element_offset)));
+                                                            break;
+                                                        case 64:
+                                                            lowRange = static_cast<double>(static_cast<uint64_t>(originLowWord));
+                                                            highRange = static_cast<double>(static_cast<uint64_t>(originHighWord));
+                                                            break;
+                                                        default:
+                                                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
+                                                    }
+                                                }
+
+                                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::IntegerTyID, %f - %f to %f - %f\n",
+                                                          vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
+                                                boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange));
+                                            break;
+                                            default:
+                                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tGetElePtr: Do not support other type yet.\n");
+                                                boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, vrRangeIt->second);
+                                                continue;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                 case Instruction::Ret:
                     if (auto llvmIrReturnInstruction = dyn_cast<ReturnInst>(&llvmIrInstruction))
@@ -1336,11 +1514,6 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 void
 simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 {
-	/*
-	 * Change attr of the function
-	 * */
-	llvmIrFunction.removeFnAttr(Attribute::OptimizeNone);
-
 	for (BasicBlock & llvmIrBasicBlock : llvmIrFunction)
 	{
 		for (Instruction & llvmIrInstruction : llvmIrBasicBlock)
