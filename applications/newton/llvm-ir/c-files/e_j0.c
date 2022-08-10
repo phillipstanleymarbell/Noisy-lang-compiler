@@ -83,7 +83,7 @@ double libc_j0(x)
         cc = s+c;
         if(ix<0x7fe00000) {  /* make sure x+x not overflow */
             z = -cos(x+x);
-            if ((s*c)<zero) cc = z/ss;
+            if ((s*c)<zero) cc = z/ss; // todo? basic function support?
             else 	    ss = z/cc;
         }
         /*
@@ -235,9 +235,9 @@ static double libc_pzero(x)
     __uint32_t ix;
     GET_HIGH_WORD(ix,x);
     ix &= 0x7fffffff;
-    if(ix>=0x40200000)     {p = pR8; q= pS8;}
-    else if(ix>=0x40122E8B){p = pR5; q= pS5;}
-    else if(ix>=0x4006DB6D){p = pR3; q= pS3;}
+    if(ix>=0x40200000)     {p = pR8; q= pS8;} // todo
+    else if(ix>=0x40122E8B){p = pR5; q= pS5;} // todo
+    else if(ix>=0x4006DB6D){p = pR3; q= pS3;} // todo
     else {p = pR2; q= pS2;}
     z = one/(x*x);
     r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
@@ -371,9 +371,9 @@ static double libc_qzero(x)
     __uint32_t ix;
     GET_HIGH_WORD(ix,x);
     ix &= 0x7fffffff;
-    if(ix>=0x40200000)     {p = qR8; q= qS8;}
-    else if(ix>=0x40122E8B){p = qR5; q= qS5;}
-    else if(ix>=0x4006DB6D){p = qR3; q= qS3;}
+    if(ix>=0x40200000)     {p = qR8; q= qS8;} // todo
+    else if(ix>=0x40122E8B){p = qR5; q= qS5;} // todo
+    else if(ix>=0x4006DB6D){p = qR3; q= qS3;} // todo
     else {p = qR2; q= qS2;}
     z = one/(x*x);
     r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));

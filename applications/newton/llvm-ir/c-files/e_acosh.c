@@ -56,7 +56,7 @@ double libc_acosh(x)
             return x+x;
         } else
             return log(x)+ln2;	/* acosh(huge)=log(2x) */
-    } else if(((hx-0x3ff00000)|lx)==0) {
+    } else if(((hx-0x3ff00000)|lx)==0) { // todo
         return 0.0;			/* acosh(1) = 0 */
     } else if (hx > 0x40000000) {	/* hx > 1073741824; 2**28 > x > 2 */
         t=x*x;

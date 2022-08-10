@@ -97,7 +97,7 @@ double libc_j0(x)
         return z;
     }
     if(ix<0x3f200000) {	/* |x| < 2**-13 */
-        if(huge+x>one) {	/* raise inexact if x != 0 */
+        if(huge+x>one) {	/* raise inexact if x != 0 */ // todo
             if(ix<0x3e400000) return one;	/* |x|<2**-27 */
             else 	      return one - 0.25*x*x;
         }
@@ -145,7 +145,7 @@ double libc_y0(x)
     ix = 0x7fffffff&hx;
     /* Y0(NaN) is NaN, y0(-inf) is Nan, y0(inf) is 0  */
     if(ix>=0x7ff00000) return  one/(x+x*x);
-    if((ix|lx)==0) return -one/zero;
+    if((ix|lx)==0) return -one/zero; // todo
     if(hx<0) return zero/zero;
     if(ix >= 0x40000000) {  /* |x| >= 2.0 */
         /* y0(x) = sqrt(2/(pi*x))*(p0(x)*sin(x0)+q0(x)*cos(x0))

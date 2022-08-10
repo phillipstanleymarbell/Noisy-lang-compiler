@@ -66,7 +66,6 @@ static double zero   =  0.0;
     __uint32_t hx;
 
 	EXTRACT_WORDS(hx,lx,x);
-//    printf("------------hx: %d, lx: %d\"------------\n", hx, lx);
 
 	k=0;
 	if (hx < 0x00100000) {			/* hx < 1048576; x < 2**-1022  */
@@ -76,14 +75,14 @@ static double zero   =  0.0;
 	    k -= 54; x *= two54; /* subnormal number, scale up x */
 	    GET_HIGH_WORD(hx,x);
 	} 
-	if (hx >= 0x7ff00000) return x+x;   /* hx >= 2146435072 */
+	if (hx >= 0x7ff00000) return x+x;   /* hx >= 2146435072 */  // todo, compare with inf
 	k += (hx>>20)-1023;
 	hx &= 0x000fffff;
 	i = (hx+0x95f64)&0x100000;
 	SET_HIGH_WORD(x,hx|(i^0x3ff00000));	/* normalize x or x/2 */
 	k += (i>>20);
 	f = x-1.0;
-	if((0x000fffff&(2+hx))<3) {	/* |f| < 2**-20 */
+	if((0x000fffff&(2+hx))<3) {	/* |f| < 2**-20 */  // todo
           if(f==zero) { if(k==0) return zero;  else {dk=(double)k;
                                return dk*ln2_hi+dk*ln2_lo;}}
 	    R = f*f*(0.5-0.33333333333333333*f);
@@ -100,7 +99,7 @@ static double zero   =  0.0;
 	t2= z*(Lg1+w*(Lg3+w*(Lg5+w*Lg7))); 
 	i |= j;
 	R = t2+t1;
-	if(i>0) {
+	if(i>0) { // todo
 	    hfsq=0.5*f*f;
 	    if(k==0) return f-(hfsq-s*(hfsq+R)); else
 		     return dk*ln2_hi-((hfsq-(s*(hfsq+R)+dk*ln2_lo))-f);

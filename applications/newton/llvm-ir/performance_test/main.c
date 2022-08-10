@@ -54,9 +54,20 @@ randomFloat(float min, float max)
 }
 
 int
-main()
+main(int argc, char** argv)
 {
 	double result = 0;
+    double parameters[2];
+    char* pEnd;
+    if (argc == 2) {
+        for (size_t idx = 1; idx < argc; idx++) {
+            parameters[idx] = strtod(argv[idx], &pEnd);
+        }
+    }
+    else {
+        parameters[0] = 3.0;
+        parameters[1] = 10.0;
+    }
 	/*
 	 * I try to pass the function name from command line to make it more automatic,
 	 * but it's seemingly forbidden in C/C++.
@@ -64,9 +75,32 @@ main()
 	 * */
 	for (int i = 0; i < 1000000; i++)
 	{
-//		result = controlFlowFunc(randomFloat(-16.0, 16.0));
-        result = api(randomFloat(3.0, 10.0));
-//        result = libc_api(randomFloat(1, 16.0));
+#ifdef CONTROL_FLOW_FUNC
+		result = controlFlowFunc(randomFloat(-16.0, 16.0));
+#elif defined(LIBC_EXP)
+        result = libc_exp(randomFloat(parameters[0], parameters[1]));
+#elif defined(LIBC_LOG)
+        result = libc_log(randomFloat(parameters[0], parameters[1]));
+#elif defined(LIBC_ACOSH)
+		result = libc_acosh(randomFloat(parameters[0], parameters[1]));
+#elif defined(LIBC_J0)
+        result = libc_j0(randomFloat(parameters[0], parameters[1]));
+#elif defined(LIBC_Y0)
+		result = libc_y0(randomFloat(parameters[0], parameters[1]));
+#elif defined(LIBC_SINCOSF)
+        float sinp, cosp;
+        result = libc_sincosf(randomFloat(parameters[0], parameters[1]), &sinp, &cosp);
+#elif defined(FLOAT64_ADD)
+        result = float64_add(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 3.2, parameters[1] + 2.9));
+#elif defined(FLOAT64_DIV)
+        result = float64_div(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 3.2, parameters[1] + 2.9));
+#elif defined(FLOAT64_MUL)
+        result = float64_mul(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 3.2, parameters[1] + 2.9));
+#elif defined(FLOAT64_SIN)
+        result = float64_sin(randomFloat(parameters[0], parameters[1]));
+#else
+	#error "Benchmark function not defined"
+#endif
 	}
 
 	return 0;

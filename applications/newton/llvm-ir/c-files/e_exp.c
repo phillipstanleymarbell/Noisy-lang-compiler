@@ -74,7 +74,7 @@ typedef double bmx055xAcceleration;
         if(hx>=0x7ff00000) {
 	        __uint32_t lx;
 		GET_LOW_WORD(lx,x);
-		if(((hx&0xfffff)|lx)!=0) 
+		if(((hx&0xfffff)|lx)!=0)
 		     return x+x; 		/* NaN */
 		else return (xsb==0)? x:0.0;	/* exp(+-inf)={inf,0} */
 	    }
@@ -101,9 +101,9 @@ typedef double bmx055xAcceleration;
     /* x is now in primary range */
 	t  = x*x;
 	c  = x - t*(P1+t*(P2+t*(P3+t*(P4+t*P5))));
-	if(k==0) 	return one-((x*c)/(c-2.0)-x); 
+	if(k==0) 	return one-((x*c)/(c-2.0)-x);  // todo, infer range from array
 	else 		y = one-((lo-(x*c)/(2.0-c))-hi);
-	if(k >= -1021) {
+	if(k >= -1021) {  // todo
 	    __uint32_t hy;
 	    GET_HIGH_WORD(hy,y);
 	    SET_HIGH_WORD(y,hy+(k<<20));	/* add k to y's exponent */
