@@ -67,7 +67,7 @@ int main() {
             "perf_acosh", "perf_j0",
             "perf_y0", "perf_sincosf",
             "perf_float64_add", "perf_float64_div",
-            "perf_float64_mul", "perf_sin"};
+            "perf_float64_mul", "perf_float64_sin"};
 
     const size_t iteration_num = 2;
 

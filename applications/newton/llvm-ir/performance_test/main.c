@@ -64,9 +64,31 @@ main()
 	 * */
 	for (int i = 0; i < 1000000; i++)
 	{
-//		result = controlFlowFunc(randomFloat(-16.0, 16.0));
-        result = api(randomFloat(3.0, 10.0));
-//        result = libc_api(randomFloat(1, 16.0));
+#ifdef CONTROL_FLOW_FUNC
+		result = controlFlowFunc(randomFloat(-16.0, 16.0));
+#elif defined(LIBC_EXP)
+        result = libc_exp(randomFloat(3.0, 10.0));
+#elif defined(LIBC_LOG)
+        result = libc_log(randomFloat(3.0, 10.0));
+#elif defined(LIBC_ACOSH)
+		result = libc_acosh(randomFloat(3.0, 10.0));
+#elif defined(LIBC_J0)
+        result = libc_j0(randomFloat(3.0, 10.0));
+#elif defined(LIBC_Y0)
+		result = libc_y0(randomFloat(3.0, 10.0));
+#elif defined(LIBC_SINCOSF)
+        result = libc_sincosf(randomFloat(3.0, 10.0));
+#elif defined(FLOAT64_ADD)
+        result = float64_add(randomFloat(3.0, 10.0));
+#elif defined(FLOAT64_DIV)
+        result = float64_div(randomFloat(3.0, 10.0));
+#elif defined(FLOAT64_MUL)
+        result = float64_mul(randomFloat(3.0, 10.0));
+#elif defined(FLOAT64_SIN)
+        result = float64_sin(randomFloat(3.0, 10.0));
+#else
+	#error "Benchmark function not defined"
+#endif
 	}
 
 	return 0;

@@ -37,3 +37,8 @@
 14.	The pattern `\t\n` (tab followed by newline) should never occur in a source file.
 
 15.	Except for temporary debugging statements, all print statements should use `flexprint` from the `libflex` library (https://github.com/phillipstanleymarbell/libflex). This allows us to buffer print statements and makes the web interface/demos and other deployments possible. Errors go into the buffer `Fperr` and informational output (almost everything that is not an error) goes into `Fpinfo`. We sometimes have additional dedicated buffers to isolate certain outputs.
+
+
+### .clang-format
+
+The .clang-format file is a clang-format specification that you can use as a starting point for formatting your code. Please note that simply applying  this formatting style is not enough for covering all of the above conventions. For example, conventions (8) to (12) are something you should ensure yourself.

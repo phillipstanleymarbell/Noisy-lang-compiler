@@ -17,23 +17,24 @@ OUT_S = out.s
 OUT_OBJ = out.o
 OUT_LIB = libout.a
 
-change_main_api = sed -i 's/api/$(1)/g' main.c
-change_back = sed -i 's/$(1)/api/g' main.c
-
 opt_fn = opt ../$(1).ll --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
 newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
 
+compile_main_fn = $(CC) main.c -no-pie -L. -lout -D $(1) -O2 -o main_out -lm
+
 make_ll:
 	cd $(SUBDIR) && $(MAKE_CLEAN) && $(MAKE)
 	cd $(CHStone_DIR) && $(MAKE_CLEAN) && $(MAKE)
+	cp ../CHStone_test/*.ll ../.
 
-perf_data:
+compile_lib:
 	llvm-as $(OUT_FILE) -o $(OUT_BC)
 	llc $(OUT_BC) -o $(OUT_S)
 	$(CC) -c $(OUT_S) -o $(OUT_OBJ)
 	ar -rc $(OUT_LIB) $(OUT_OBJ)
-	$(CC) main.c -no-pie -L. -lout -O2 -o main_out -lm
+
+perf_data:
 	cset shield --exec -- perf stat -B ./main_out if=/dev/zero of=/dev/null count=1000000
 
 exp_non_opt:
@@ -44,11 +45,8 @@ exp_opt:
 	llvm-dis ../e_exp_output.bc
 	$(call opt_fn,e_exp_output)
 
-change_exp:
-	$(call change_main_api,exp)
-
-exp_change_back:
-	$(call change_back,exp)
+compile_exp:
+	$(call compile_main_fn,LIBC_EXP)
 
 log_non_opt:
 	$(call opt_fn,e_log)
@@ -58,11 +56,8 @@ log_opt:
 	llvm-dis ../e_log_output.bc
 	$(call opt_fn,e_log_output)
 
-change_log:
-	$(call change_main_api,log)
-
-log_change_back:
-	$(call change_back,log)
+compile_log:
+	$(call compile_main_fn,LIBC_LOG)
 
 acosh_non_opt:
 	$(call opt_fn,e_acosh)
@@ -72,11 +67,8 @@ acosh_opt:
 	llvm-dis ../e_acosh_output.bc
 	$(call opt_fn,e_acosh_output)
 
-change_acosh:
-	$(call change_main_api,acosh)
-
-acosh_change_back:
-	$(call change_back,acosh)
+compile_acosh:
+	$(call compile_main_fn,LIBC_ACOSH)
 
 j0_non_opt:
 	$(call opt_fn,e_j0)
@@ -86,11 +78,8 @@ j0_opt:
 	llvm-dis ../e_j0_output.bc
 	$(call opt_fn,e_j0_output)
 
-change_j0:
-	$(call change_main_api,j0)
-
-j0_change_back:
-	$(call change_back,j0)
+compile_j0:
+	$(call compile_main_fn,LIBC_J0)
 
 y0_non_opt:
 	$(call opt_fn,e_y0)
@@ -100,11 +89,8 @@ y0_opt:
 	llvm-dis ../e_y0_output.bc
 	$(call opt_fn,e_y0_output)
 
-change_y0:
-	$(call change_main_api,y0)
-
-y0_change_back:
-	$(call change_back,y0)
+compile_y0:
+	$(call compile_main_fn,LIBC_Y0)
 
 sincosf_non_opt:
 	$(call opt_fn,sincosf)
@@ -114,123 +100,99 @@ sincosf_opt:
 	llvm-dis ../sincosf_output.bc
 	$(call opt_fn,sincosf_output)
 
-change_sincosf:
-	$(call change_main_api,sincosf)
-
-sincosf_change_back:
-	$(call change_back,sincosf)
+compile_sincosf:
+	$(call compile_main_fn,LIBC_SINCOSF)
 
 float64_add_non_opt:
-	mv ../CHStone_test/float64_add.ll ../.
 	$(call opt_fn,float64_add)
 
 float64_add_opt:
-	mv ../CHStone_test/float64_add.ll ../.
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,float64_add)
 	llvm-dis ../float64_add_output.bc
 	$(call opt_fn,float64_add_output)
 
-change_float64_add:
-	$(call change_main_api,float64_add)
-
-float64_add_change_back:
-	$(call change_back,float64_add)
+compile_float64_add:
+	$(call compile_main_fn,FLOAT64_ADD)
 
 float64_div_non_opt:
-	mv ../CHStone_test/float64_div.ll ../.
 	$(call opt_fn,float64_div)
 
 float64_div_opt:
-	mv ../CHStone_test/float64_div.ll ../.
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,float64_div)
 	llvm-dis ../float64_div_output.bc
 	$(call opt_fn,float64_div_output)
 
-change_float64_div:
-	$(call change_main_api,float64_div)
-
-float64_div_change_back:
-	$(call change_back,float64_div)
+compile_float64_div:
+	$(call compile_main_fn,FLOAT64_DIV)
 
 float64_mul_non_opt:
-	mv ../CHStone_test/float64_mul.ll ../.
 	$(call opt_fn,float64_mul)
 
 float64_mul_opt:
-	mv ../CHStone_test/float64_mul.ll ../.
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,float64_mul)
 	llvm-dis ../float64_mul_output.bc
 	$(call opt_fn,float64_mul_output)
 
-change_float64_mul:
-	$(call change_main_api,float64_mul)
+compile_float64_mul:
+	$(call compile_main_fn,FLOAT64_MUL)
 
-float64_mul_change_back:
-	$(call change_back,float64_mul)
+float64_sin_non_opt:
+	$(call opt_fn,float64_sin)
 
-sin_non_opt:
-	mv ../CHStone_test/sin.ll ../.
-	$(call opt_fn,sin)
+float64_sin_opt:
+	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,float64_sin)
+	llvm-dis ../float64_sin_output.bc
+	$(call opt_fn,float64_sin_output)
 
-sin_opt:
-	mv ../CHStone_test/sin.ll ../.
-	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,sin)
-	llvm-dis ../sin_output.bc
-	$(call opt_fn,sin_output)
+compile_float64_sin:
+	$(call compile_main_fn,FLOAT64_SIN)
 
-change_sin:
-	$(call change_main_api,sin)
+perf_exp: clean make_ll exp_non_opt compile_lib compile_exp perf_data
 
-sin_change_back:
-	$(call change_back,sin)
+perf_exp_opt: clean make_ll exp_opt compile_lib compile_exp perf_data
 
-perf_exp: clean make_ll exp_non_opt change_exp perf_data exp_change_back
+perf_log: clean make_ll log_non_opt compile_lib compile_log perf_data 
 
-perf_exp_opt: clean make_ll exp_opt change_exp perf_data exp_change_back
+perf_log_opt: clean make_ll log_opt compile_lib compile_log perf_data 
 
-perf_log: clean make_ll log_non_opt change_log perf_data log_change_back
+perf_acosh: clean make_ll acosh_non_opt compile_lib compile_acosh perf_data 
 
-perf_log_opt: clean make_ll log_opt change_log perf_data log_change_back
+perf_acosh_opt: clean make_ll acosh_opt compile_lib compile_acosh perf_data 
 
-perf_acosh: clean make_ll acosh_non_opt change_acosh perf_data acosh_change_back
+perf_j0: clean make_ll j0_non_opt compile_lib compile_j0 perf_data 
 
-perf_acosh_opt: clean make_ll acosh_opt change_acosh perf_data acosh_change_back
+perf_j0_opt: clean make_ll j0_opt compile_lib compile_j0 perf_data 
 
-perf_j0: clean make_ll j0_non_opt change_j0 perf_data j0_change_back
+perf_y0: clean make_ll y0_non_opt compile_lib compile_y0 perf_data 
 
-perf_j0_opt: clean make_ll j0_opt change_j0 perf_data j0_change_back
+perf_y0_opt: clean make_ll y0_opt compile_lib compile_y0 perf_data 
 
-perf_y0: clean make_ll y0_non_opt change_y0 perf_data y0_change_back
+perf_sincosf: clean make_ll sincosf_non_opt compile_lib compile_sincosf perf_data
 
-perf_y0_opt: clean make_ll y0_opt change_y0 perf_data y0_change_back
+perf_sincosf_opt: clean make_ll sincosf_opt compile_lib compile_sincosf perf_data
 
-perf_sincosf: clean make_ll sincosf_non_opt change_sincosf perf_data sincosf_change_back
+perf_float64_add: clean make_ll float64_add_non_opt compile_lib compile_float64_add perf_data
 
-perf_sincosf_opt: clean make_ll sincosf_opt change_sincosf perf_data sincosf_change_back
+perf_float64_add_opt: clean make_ll float64_add_opt compile_lib compile_float64_add perf_data
 
-perf_float64_add: clean make_ll float64_add_non_opt change_float64_add perf_data float64_add_change_back
+perf_float64_div: clean make_ll float64_div_non_opt compile_lib compile_float64_div perf_data
 
-perf_float64_add_opt: clean make_ll float64_add_opt change_float64_add perf_data float64_add_change_back
+perf_float64_div_opt: clean make_ll float64_div_opt compile_lib compile_float64_div perf_data
 
-perf_float64_div: clean make_ll float64_div_non_opt change_float64_div perf_data float64_div_change_back
+perf_float64_mul: clean make_ll float64_mul_non_opt compile_lib compile_float64_mul perf_data
 
-perf_float64_div_opt: clean make_ll float64_div_opt change_float64_div perf_data float64_div_change_back
+perf_float64_mul_opt: clean make_ll float64_mul_opt compile_lib compile_float64_mul perf_data
 
-perf_float64_mul: clean make_ll float64_mul_non_opt change_float64_mul perf_data float64_mul_change_back
+perf_float64_sin: clean make_ll float64_sin_non_opt compile_lib compile_float64_sin perf_data
 
-perf_float64_mul_opt: clean make_ll float64_mul_opt change_float64_mul perf_data float64_mul_change_back
-
-perf_sin: clean make_ll sin_non_opt change_sin perf_data sin_change_back
-
-perf_sin_opt: clean make_ll sin_opt change_sin perf_data sin_change_back
-
-all: perf_exp perf_exp_opt perf_log perf_log_opt perf_acosh perf_acosh_opt perf_j0 perf_j0_opt perf_y0 perf_y0_opt perf_sincosf perf_sincosf_opt perf_float64_add perf_float64_add_opt perf_float64_div perf_float64_div_opt perf_float64_mul perf_float64_mul_opt perf_sin perf_sin_opt
+perf_float64_sin_opt: clean make_ll float64_sin_opt compile_lib compile_float64_sin perf_data
 
 auto_test_compile:
 	clang++ auto_test.cpp -g -o auto_test
 
-auto_test:
-	./auto_test
+all: default
+
+default: perf_exp perf_exp_opt perf_log perf_log_opt perf_acosh perf_acosh_opt perf_j0 perf_j0_opt perf_y0 perf_y0_opt perf_sincosf perf_sincosf_opt perf_float64_add perf_float64_add_opt perf_float64_div perf_float64_div_opt perf_float64_mul perf_float64_mul_opt perf_float64_sin perf_float64_sin_opt auto_test_compile
 
 clean:
-	$(QUIET)rm -f *.ll *.o *.s *.txt out.* libout.a main_out
+	$(QUIET)rm -f *.ll *.o *.s *.txt out.* libout.a main_out auto_test

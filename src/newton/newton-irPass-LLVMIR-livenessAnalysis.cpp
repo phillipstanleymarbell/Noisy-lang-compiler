@@ -41,6 +41,7 @@
 #include <stdint.h>
 #include <set>
 #include <algorithm>
+#include <map>
 
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"

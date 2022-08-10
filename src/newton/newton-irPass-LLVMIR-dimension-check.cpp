@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <stdint.h>
+#include <map>
 
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
