@@ -52,7 +52,7 @@ S04  =  1.16614003333790000205e-09; /* 0x3E1408BC, 0xF4745D8F */
 /*
 * Definitions generated from Newton
 */
-typedef __uint32_t bmx055xMagneto;
+typedef double bmx055xAcceleration;
 
 #ifdef __STDC__
 static const double zero = 0.0;
@@ -69,7 +69,7 @@ double libc_j0(x)
 {
     double z, s,c,ss,cc,r,u,v;
     __int32_t hx;
-    bmx055xMagneto ix;
+    __int32_t ix;
 
     GET_HIGH_WORD(hx,x);
     ix = hx&0x7fffffff;
@@ -131,15 +131,15 @@ v03  =  2.59150851840457805467e-07, /* 0x3E91642D, 0x7FF202FD */
 v04  =  4.41110311332675467403e-10; /* 0x3DFE5018, 0x3BD6D9EF */
 
 #ifdef __STDC__
-double libc_y0(double x)
+double libc_y0(bmx055xAcceleration x)
 #else
 double libc_y0(x)
-        double x;
+        bmx055xAcceleration x;
 #endif
 {
     double z, s,c,ss,cc,u,v;
     __int32_t hx,lx;
-    bmx055xMagneto ix;
+    __int32_t ix;
 
     EXTRACT_WORDS(hx,lx,x);
     ix = 0x7fffffff&hx;
@@ -306,10 +306,11 @@ static double libc_pzero(x)
     double *p,*q;
 #endif
     double z,r,s;
-    bmx055xMagneto ix;
+    __int32_t ix;
     GET_HIGH_WORD(ix,x);
     ix &= 0x7fffffff;
-    if(ix>=0x40200000)     {p = pR8; q= pS8;}
+    if (ix>=0x41b00000)    {return one;}
+    else if(ix>=0x40200000){p = pR8; q= pS8;}
     else if(ix>=0x40122E8B){p = pR5; q= pS5;}
     else if(ix>=0x4006DB6D){p = pR3; q= pS3;}
     else {p = pR2; q= pS2;}
@@ -442,10 +443,11 @@ static double libc_qzero(x)
     double *p,*q;
 #endif
     double s,r,z;
-    bmx055xMagneto ix;
+    __int32_t ix;
     GET_HIGH_WORD(ix,x);
     ix &= 0x7fffffff;
-    if(ix>=0x40200000)     {p = qR8; q= qS8;}
+    if (ix>=0x41b00000)    {return -.125/x;}
+    else if(ix>=0x40200000){p = qR8; q= qS8;}
     else if(ix>=0x40122E8B){p = qR5; q= qS5;}
     else if(ix>=0x4006DB6D){p = qR3; q= qS3;}
     else {p = qR2; q= qS2;}

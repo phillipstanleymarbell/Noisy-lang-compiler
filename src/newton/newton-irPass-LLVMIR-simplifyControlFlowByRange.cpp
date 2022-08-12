@@ -34,13 +34,14 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+#include <algorithm>
+#include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
 #include <stdint.h>
 #include <string.h>
 #include <set>
-#include <algorithm>
 
 #include "llvm/Bitcode/BitcodeWriter.h"
 #include "llvm/IR/DebugInfoMetadata.h"
@@ -606,6 +607,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                              * */
                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect CalledFunction %s.\n",
                                       calledFunction->getName().str().c_str());
+                            if (calledFunction->getName().str() == "extractFloat64Sign") {
+                                printf("extractFloat64Sign\n");
+                            }
                             auto innerBoundInfo = new BoundInfo();
                             for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
                             {
@@ -725,6 +729,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                  * 	both "float" and "double" type can use "convertToDouble"
                                  */
                                 constValue = (constFp->getValueAPF()).convertToDouble();
+                            } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getSExtValue();
                             }
                             auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
@@ -792,6 +799,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
                             {
                                 constValue = (constFp->getValueAPF()).convertToDouble();
+                            } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getSExtValue();
                             }
                             auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
@@ -810,6 +820,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(leftOperand))
                             {
                                 constValue = (constFp->getValueAPF()).convertToDouble();
+                            } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getSExtValue();
                             }
                             auto vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
@@ -859,6 +872,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
                             {
                                 constValue = (constFp->getValueAPF()).convertToDouble();
+                            } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getSExtValue();
                             }
                             auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
@@ -915,6 +931,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
                             {
                                 constValue = (constFp->getValueAPF()).convertToDouble();
+                            } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getSExtValue();
                             }
                             auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
@@ -930,6 +949,65 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         }
                     }
                     break;
+
+                case Instruction::URem:
+                case Instruction::SRem:
+                case Instruction::FRem:
+                    if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
+                    {
+                        Value * leftOperand = llvmIrInstruction.getOperand(0);
+                        Value * rightOperand = llvmIrInstruction.getOperand(1);
+                        /*
+                         * 	todo: expression normalization needed, which simpily the "const % const" form
+                         * 	and the assertion of "rightOperand.value != 0" should be done in expression normalization too
+                         * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
+                         */
+                        if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: Expression normalization needed.\n");
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	todo: let's measure the "var % var" the next time...
+                             */
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: It's a var % var expression, which is not supported yet.\n");
+                        }
+                        else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	todo: I don't know if we need to deal with "const % var" here, like 2%x.
+                             */
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: It's a const % var expression, which is not supported yet.\n");
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	eg. x%2
+                             */
+                            double constValue = 1.0;
+                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+                            {
+                                constValue = (constFp->getValueAPF()).convertToDouble();
+                            }
+                            else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getSExtValue();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                        std::make_pair(remainder(vrRangeIt->second.first, constValue),
+                                                       remainder(vrRangeIt->second.second, constValue)));
+                            }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: Unexpected error. Might have an invalid operand.\n");
+                        }
+                    }
+                break;
 
                 case Instruction::Shl:
                     if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
@@ -1189,7 +1267,13 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                 case Instruction::FPToSI:
                 case Instruction::SIToFP:
                 case Instruction::UIToFP:
+                case Instruction::ZExt:
+                case Instruction::SExt:
+                case Instruction::FPExt:
                 {
+                    /*
+                     * todo: these can be merged in BitCastInst/TruncInst, but need template<Type>
+                     * */
                     Value * operand = llvmIrInstruction.getOperand(0);
                     auto	vrRangeIt = boundInfo->virtualRegisterRange.find(operand);
                     if (vrRangeIt != boundInfo->virtualRegisterRange.end())
@@ -1232,6 +1316,74 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     }
                     break;
 
+                case Instruction::Trunc:
+                    if (auto llvmIrTruncInstruction = dyn_cast<TruncInst>(&llvmIrInstruction))
+                    {
+                        auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrTruncInstruction->getOperand(0));
+                        if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFPTrunc: %f - %f\n",  vrRangeIt->second.first, vrRangeIt->second.second);
+                            double originLow = vrRangeIt->second.first;
+                            double originHigh = vrRangeIt->second.second;
+                            double lowRange = 0, highRange = 0;
+                            auto DestEleType = llvmIrTruncInstruction->getDestTy();
+                            switch (DestEleType->getTypeID())
+                            {
+                                case Type::IntegerTyID:
+                                if (DestEleType->isSized()) {
+                                    switch (DestEleType->getIntegerBitWidth())
+                                    {
+                                        case 8:
+                                            lowRange = static_cast<double>(static_cast<int8_t>(originLow));
+                                            highRange = static_cast<double>(static_cast<int8_t>(originHigh));
+                                        break;
+                                        case 16:
+                                            lowRange = static_cast<double>(static_cast<int16_t>(originLow));
+                                            highRange = static_cast<double>(static_cast<int16_t>(originHigh));
+                                        break;
+                                        case 32:
+                                            lowRange = static_cast<double>(static_cast<int32_t>(originLow));
+                                            highRange = static_cast<double>(static_cast<int32_t>(originHigh));
+                                        break;
+                                        case 64:
+                                            lowRange = static_cast<double>(static_cast<int64_t>(originLow));
+                                            highRange = static_cast<double>(static_cast<int64_t>(originHigh));
+                                        break;
+                                        default:
+                                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tTrunc: Type::SignedInteger, don't support such bit width yet.");
+                                    }
+                                    }
+                                else
+                                {
+                                    switch (DestEleType->getIntegerBitWidth())
+                                    {
+                                        case 8:
+                                            lowRange = static_cast<double>(static_cast<uint8_t>(originLow));
+                                            highRange = static_cast<double>(static_cast<uint8_t>(originHigh));
+                                        break;
+                                        case 16:
+                                            lowRange = static_cast<double>(static_cast<uint16_t>(originLow));
+                                            highRange = static_cast<double>(static_cast<uint16_t>(originHigh));
+                                        break;
+                                        case 32:
+                                            lowRange = static_cast<double>(static_cast<uint32_t>(originLow));
+                                            highRange = static_cast<double>(static_cast<uint32_t>(originHigh));
+                                        break;
+                                        case 64:
+                                            lowRange = static_cast<double>(static_cast<uint64_t>(originLow));
+                                            highRange = static_cast<double>(static_cast<uint64_t>(originHigh));
+                                        break;
+                                        default:
+                                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tTrunc: Type::UnSignedInteger, don't support such bit width yet.");
+                                    }
+                                }
+                                break;
+                            }
+                            boundInfo->virtualRegisterRange.emplace(llvmIrTruncInstruction, std::make_pair(lowRange, highRange));
+                        }
+                    }
+                break;
+
                 case Instruction::FPTrunc:
                     if (auto llvmIrFPTruncInstruction = dyn_cast<FPTruncInst>(&llvmIrInstruction))
                     {
@@ -1239,7 +1391,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                         {
                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFPTrunc: %f - %f\n",  vrRangeIt->second.first, vrRangeIt->second.second);
-                            boundInfo->virtualRegisterRange.emplace(llvmIrFPTruncInstruction, vrRangeIt->second);
+                            boundInfo->virtualRegisterRange.emplace(llvmIrFPTruncInstruction,
+                                                                    std::make_pair(static_cast<double>(static_cast<float>(vrRangeIt->second.first)),
+                                                                                   static_cast<double>(static_cast<float>(vrRangeIt->second.second))));
                         }
                     }
                     break;
@@ -1502,7 +1656,57 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         }
                     }
                     break;
+                case Instruction::FNeg:
+                    if (auto llvmIrFNegInstruction = dyn_cast<UnaryOperator>(&llvmIrInstruction))
+                    {
+                        if (llvmIrFNegInstruction->getNumOperands() != 0)
+                        {
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrFNegInstruction->getOperand(0));
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(
+                                        llvmIrFNegInstruction, std::make_pair(-vrRangeIt->second.first,
+                                                                              -vrRangeIt->second.second));
+                            }
+                        }
+                    }
+                    break;
 
+                case Instruction::PHI:
+                    break;
+
+                case Instruction::Select:
+                    break;
+
+                case Instruction::Switch:
+                    break;
+
+                case Instruction::IndirectBr:
+                case Instruction::Invoke:
+                case Instruction::Resume:
+                case Instruction::Unreachable:
+                case Instruction::CleanupRet:
+                case Instruction::CatchRet:
+                case Instruction::CatchSwitch:
+                case Instruction::CallBr:
+                case Instruction::Fence:
+                case Instruction::AtomicCmpXchg:
+                case Instruction::AtomicRMW:
+                case Instruction::PtrToInt:
+                case Instruction::IntToPtr:
+                case Instruction::AddrSpaceCast:
+                case Instruction::CleanupPad:
+                case Instruction::CatchPad:
+                case Instruction::UserOp1:
+                case Instruction::UserOp2:
+                case Instruction::VAArg:
+                case Instruction::ExtractElement:
+                case Instruction::InsertElement:
+                case Instruction::ShuffleVector:
+                case Instruction::ExtractValue:
+                case Instruction::InsertValue:
+                case Instruction::LandingPad:
+                case Instruction::Freeze:
                 default:
                     continue;
             }
@@ -1520,6 +1724,14 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 		{
 			switch (llvmIrInstruction.getOpcode())
 			{
+                case Instruction::Call:
+                    if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction))
+                    {
+                        Function * calledFunction = llvmIrCallInstruction->getCalledFunction();
+                        if (calledFunction->getName().str() == "extractFloat64Sign") {
+                            printf("extractFloat64Sign\n");
+                        }
+                    }
 				case Instruction::ICmp:
 					if (auto llvmIrICmpInstruction = dyn_cast<ICmpInst>(&llvmIrInstruction))
 					{

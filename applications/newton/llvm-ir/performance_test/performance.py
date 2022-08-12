@@ -34,44 +34,99 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import matplotlib.pyplot as plt
+import os
+import shutil
 
 performance_data = []
-with open('result.log', 'r') as f:
+with open('perf.log', 'r') as f:
     for line in f.readlines():
         line_list = line.strip('\n').split('\t')
         performance_data.append(line_list)
 
+# [instruction counts (million)", "time consumption (s)", "IR lines", "size of library (bytes)"]
+y_units = [1000, 1000, 1, 1]
+
+params_num = 10
+test_case_num = 10
+merit_num = 4
+
+# prepare data
 name_list = []
-for i in range(1, len(performance_data), 2):
+for i in range(1, len(performance_data), 3 * params_num):
     name_list.append(performance_data[i][0])
 opt_name_list = []
-for i in range(2, len(performance_data), 2):
+for i in range(2, len(performance_data), 3):
     opt_name_list.append(performance_data[i][0])
+
+param_list = []
+for i in range(1, 3 * params_num, 3):
+    param_list.append(performance_data[i][1])
+
+inst_count = []
+for i in range(1, len(performance_data), 3):
+    inst_count.append(float(performance_data[i][2]) / y_units[0])
+opt_inst_count = []
+for i in range(2, len(performance_data), 3):
+    opt_inst_count.append(float(performance_data[i][2]) / y_units[0])
+
+time_consumption = []
+for i in range(1, len(performance_data), 3):
+    time_consumption.append(float(performance_data[i][3]) / y_units[1])
+opt_time_consumption = []
+for i in range(2, len(performance_data), 3):
+    opt_time_consumption.append(float(performance_data[i][3]) / y_units[1])
+
+ir_lines = []
+for i in range(1, len(performance_data), 3):
+    ir_lines.append(float(performance_data[i][4]) / y_units[2])
+opt_ir_lines = []
+for i in range(2, len(performance_data), 3):
+    opt_ir_lines.append(float(performance_data[i][4]) / y_units[2])
+
+lib_size = []
+for i in range(1, len(performance_data), 3):
+    lib_size.append(float(performance_data[i][5]) / y_units[3])
+opt_lib_size = []
+for i in range(2, len(performance_data), 3):
+    opt_lib_size.append(float(performance_data[i][5]) / y_units[3])
+
+ori_perf_data = [inst_count, time_consumption, ir_lines, lib_size]
+opt_perf_data = [opt_inst_count, opt_time_consumption, opt_ir_lines, opt_lib_size]
 
 fig = plt.figure(1)
 
-y_labels = ["instruction counts (million)", "IR lines", "time consumption (s)", "size of library (bytes)"]
-y_ranges = [(130, 600), (100, 1600), (0.01, 0.10), (3000, 16000)]
-y_units = [1000000, 1, 1, 1]
+y_labels = ["instruction counts (million)", "time consumption (s)", "IR lines", "size of library (bytes)"]
+# y_ranges = [(min(opt_inst_count), max(inst_count)), (min(opt_time_consumption), max(time_consumption)),
+#             (min(opt_ir_lines), max(ir_lines)), (min(opt_lib_size), max(lib_size))]
 
-for fig_id in range(4):
-    ax1 = plt.figure(fig_id + 1)
+fig_path = "fig/"
+folder = os.path.exists(fig_path)
+if folder:
+    shutil.rmtree(fig_path, ignore_errors=True)
+os.mkdir(fig_path)
 
-    count_list = []
-    for i in range(1, len(performance_data), 2):
-        count_list.append(float(performance_data[i][fig_id + 1]) / y_units[fig_id])
-    opt_count_list = []
-    for i in range(2, len(performance_data), 2):
-        opt_count_list.append(float(performance_data[i][fig_id + 1]) / y_units[fig_id])
-    x = list(range(len(count_list)))
-    total_width, n = 0.5, 2
-    width = total_width / n
+for merit_id in range(merit_num):
+    for test_case_id in range(test_case_num):
+        ax1 = plt.figure(merit_id * test_case_num + test_case_id + 1)
 
-    plt.ylim(y_ranges[fig_id])
-    plt.ylabel(y_labels[fig_id])
-    plt.bar(x, count_list, width=width, label='basic performance', tick_label=name_list, fc='y')
-    for i in range(len(x)):
-        x[i] = x[i] + width
-    plt.bar(x, opt_count_list, width=width, label='optimized performance', fc='r')
-    plt.legend()
-    plt.show()
+        x = list(range(params_num))
+        total_width, n = 0.5, 2
+        width = total_width / n
+
+        plt_y_begin = params_num * test_case_id
+        plt_y_end = params_num * test_case_id + params_num
+        y_ranges = (min(opt_perf_data[merit_id][plt_y_begin:plt_y_end]) * 0.8,
+                    max(ori_perf_data[merit_id][plt_y_begin:plt_y_end]) * 1.2)
+
+        plt.ylim(y_ranges)
+        plt.ylabel(y_labels[merit_id])
+
+        plt.bar(x, ori_perf_data[merit_id][plt_y_begin:plt_y_end],
+                width=width, label='basic performance', fc='y')
+        for i in range(len(x)):
+            x[i] = x[i] + width
+        plt.bar(x, opt_perf_data[merit_id][plt_y_begin:plt_y_end],
+                width=width, label='optimized performance', fc='r')
+        plt.legend()
+        plt.savefig(fig_path + name_list[test_case_id] + "-" + y_labels[merit_id] + "-" + ".png")
+        plt.close()

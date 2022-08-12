@@ -116,13 +116,8 @@ converttoint (double_t x)
 # define TOINT_INTRINSICS 0
 #endif
 
-/*
- * Definitions generated from Newton
- */
-typedef double bmx055yAcceleration;  // [-16, 16]
-
 static inline uint32_t
-asuint (bmx055yAcceleration f)
+asuint (double f)
 {
 	union
 	{

@@ -31,18 +31,17 @@
 #include "math_config.h"
 #include "sincosf.h"
 
-// warning to programmer, [-16, 16]
-bmx055yAcceleration test_fn(bmx055yAcceleration x, bmx055yAcceleration y) {
-//    return v * t; // speed * time = length
-    return x + y;
-}
+/*
+* Definitions generated from Newton
+*/
+typedef double bmx055xAcceleration;
 
 /* Fast sincosf implementation.  Worst-case ULP is 0.5607, maximum relative
    error is 0.5303 * 2^-23.  A single-step range reduction is used for
    small values.  Large inputs have their range reduced using fast integer
    arithmetic.  */
 void
-libc_sincosf (bmx055yAcceleration y, float *sinp, float *cosp)
+libc_sincosf (bmx055xAcceleration y, float *sinp, float *cosp)
 {
     double x = y;
     double s;

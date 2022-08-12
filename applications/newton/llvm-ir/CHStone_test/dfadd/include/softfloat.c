@@ -376,9 +376,10 @@ normalizeRoundAndPack:
 *----------------------------------------------------------------------------*/
 
 typedef float64 bmx055xAcceleration;
+typedef float64 bmx055yAcceleration;
 
 float64
-float64_add (bmx055xAcceleration a, bmx055xAcceleration b)
+float64_add (bmx055xAcceleration a, bmx055yAcceleration b)
 {
   flag aSign, bSign;
 

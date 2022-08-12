@@ -50,7 +50,7 @@ extern const uint32_t __inv_pio4[] HIDDEN;
 
 /* Top 12 bits of the float representation with the sign bit cleared.  */
 static inline uint32_t
-abstop12 (bmx055yAcceleration x)
+abstop12 (double x)
 {
     return (asuint (x) >> 20) & 0x7ff;
 }

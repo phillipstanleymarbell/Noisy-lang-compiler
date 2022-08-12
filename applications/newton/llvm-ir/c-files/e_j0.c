@@ -52,7 +52,6 @@ S04  =  1.16614003333790000205e-09; /* 0x3E1408BC, 0xF4745D8F */
 /*
 * Definitions generated from Newton
 */
-typedef __uint32_t bmx055xMagneto;
 typedef double bmx055xAcceleration;
 
 #ifdef __STDC__
@@ -220,10 +219,10 @@ static double pS2[5] = {
 };
 
 #ifdef __STDC__
-static double libc_pzero(bmx055xAcceleration x)
+static double libc_pzero(double x)
 #else
 static double libc_pzero(x)
-        bmx055xAcceleration x;
+        double x;
 #endif
 {
 #ifdef __STDC__
@@ -235,7 +234,8 @@ static double libc_pzero(x)
     __uint32_t ix;
     GET_HIGH_WORD(ix,x);
     ix &= 0x7fffffff;
-    if(ix>=0x40200000)     {p = pR8; q= pS8;} // todo
+    if (ix>=0x41b00000)    {return one;}
+    else if(ix>=0x40200000){p = pR8; q= pS8;} // todo
     else if(ix>=0x40122E8B){p = pR5; q= pS5;} // todo
     else if(ix>=0x4006DB6D){p = pR3; q= pS3;} // todo
     else {p = pR2; q= pS2;}
@@ -356,10 +356,10 @@ static double qS2[6] = {
 };
 
 #ifdef __STDC__
-static double libc_qzero(bmx055xAcceleration x)
+static double libc_qzero(double x)
 #else
 static double libc_qzero(x)
-        bmx055xAcceleration x;
+        double x;
 #endif
 {
 #ifdef __STDC__
@@ -371,7 +371,8 @@ static double libc_qzero(x)
     __uint32_t ix;
     GET_HIGH_WORD(ix,x);
     ix &= 0x7fffffff;
-    if(ix>=0x40200000)     {p = qR8; q= qS8;} // todo
+    if (ix>=0x41b00000)    {return -.125/x;}
+    else if(ix>=0x40200000){p = qR8; q= qS8;} // todo
     else if(ix>=0x40122E8B){p = qR5; q= qS5;} // todo
     else if(ix>=0x4006DB6D){p = qR3; q= qS3;} // todo
     else {p = qR2; q= qS2;}

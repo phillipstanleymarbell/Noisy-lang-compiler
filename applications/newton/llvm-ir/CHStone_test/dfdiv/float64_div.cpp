@@ -261,8 +261,9 @@ extern "C" {
 #endif
 
 typedef float64 bmx055xAcceleration;
+typedef float64 bmx055yAcceleration;
 
-float64 float64_div (bmx055xAcceleration a, bmx055xAcceleration b)
+float64 float64_div (bmx055xAcceleration a, bmx055yAcceleration b)
 {
   flag aSign, bSign, zSign;
   int16 aExp, bExp, zExp;

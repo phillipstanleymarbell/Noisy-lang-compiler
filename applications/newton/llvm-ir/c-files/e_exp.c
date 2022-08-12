@@ -51,7 +51,6 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 /*
  * Definitions generated from Newton
  */
-typedef __uint32_t bmx055xMagneto;
 typedef double bmx055xAcceleration;
 
 #ifdef __STDC__

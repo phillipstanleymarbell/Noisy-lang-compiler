@@ -35,7 +35,6 @@ static double
 /*
 * Definitions generated from Newton
 */
-typedef __uint32_t bmx055xMagneto;
 typedef double bmx055xAcceleration;
 
 #ifdef __STDC__

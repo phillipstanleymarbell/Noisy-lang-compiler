@@ -18,7 +18,8 @@ default: adpcm_main.ll float64_add.ll float64_div.ll float64_mul.ll float64_sin.
 
 %.ll : %.cpp
 	@echo Compiling $*.c
-	$(QUIET)$(CC) -g -S -emit-llvm $(COMMON_FLAGS) -o $@ $<
+	$(QUIET)$(CC) -g -O0 -Xclang -disable-O0-optnone -S -emit-llvm $(COMMON_FLAGS) -o $@ $<
+	opt $@ --mem2reg -S -o $@
 
 clean::
 	$(QUIET)rm -f *.ll *.bc

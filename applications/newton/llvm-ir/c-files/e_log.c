@@ -44,7 +44,6 @@ Lg7 = 1.479819860511658591e-01;  /* 3FC2F112 DF3E5244 */
 /*
  * Definitions generated from Newton
  */
-typedef __uint32_t bmx055xMagneto;
 typedef double bmx055xAcceleration;
 
 #ifdef __STDC__

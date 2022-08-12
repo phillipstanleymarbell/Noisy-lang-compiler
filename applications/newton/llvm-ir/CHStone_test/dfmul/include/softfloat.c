@@ -237,8 +237,11 @@ roundAndPackFloat64 (flag zSign, int16 zExp, bits64 zSig)
 | for Binary Floating-Point Arithmetic.
 *----------------------------------------------------------------------------*/
 
+typedef float64 bmx055xAcceleration;
+typedef float64 bmx055yAcceleration;
+
 float64
-float64_mul (float64 a, float64 b)
+float64_mul (bmx055xAcceleration a, bmx055yAcceleration b)
 {
   flag aSign, bSign, zSign;
   int16 aExp, bExp, zExp;

@@ -148,7 +148,7 @@ perf_exp: clean make_ll exp_non_opt compile_lib compile_exp
 
 perf_exp_opt: clean make_ll exp_opt compile_lib compile_exp
 
-perf_log: clean make_ll log_non_opt compile_lib compile_log 
+perf_log: clean make_ll log_non_opt compile_lib compile_log
 
 perf_log_opt: clean make_ll log_opt compile_lib compile_log 
 
