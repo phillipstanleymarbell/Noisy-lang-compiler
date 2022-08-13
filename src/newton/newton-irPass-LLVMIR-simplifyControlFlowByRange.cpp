@@ -607,8 +607,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                              * */
                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect CalledFunction %s.\n",
                                       calledFunction->getName().str().c_str());
-                            if (calledFunction->getName().str() == "extractFloat64Sign") {
-                                printf("extractFloat64Sign\n");
+                            if (calledFunction->getName().str() == "addFloat64Sigs") {
+                                printf("addFloat64Sigs\n");
                             }
                             auto innerBoundInfo = new BoundInfo();
                             for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
@@ -650,6 +650,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             {
                                 boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
                             }
+                            boundInfo->virtualRegisterRange.insert(innerBoundInfo->virtualRegisterRange.begin(),
+                                                                   innerBoundInfo->virtualRegisterRange.end());
                             /*
                              * Check the return type of the function,
                              * if it's a physical type that records in `boundInfo.typeRange`
@@ -1728,8 +1730,8 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction))
                     {
                         Function * calledFunction = llvmIrCallInstruction->getCalledFunction();
-                        if (calledFunction->getName().str() == "extractFloat64Sign") {
-                            printf("extractFloat64Sign\n");
+                        if (calledFunction->getName().str() == "extractFloat64Exp") {
+                            printf("extractFloat64Exp\n");
                         }
                     }
 				case Instruction::ICmp:

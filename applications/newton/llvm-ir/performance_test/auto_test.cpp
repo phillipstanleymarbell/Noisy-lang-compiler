@@ -161,7 +161,7 @@ int main(int argc, char** argv) {
             "perf_float64_add", "perf_float64_div",
             "perf_float64_mul", "perf_float64_sin"};
 
-    if (argc == 2) {
+    if (argc >= 2) {
         test_cases.clear();
         test_cases.emplace_back(argv[1]);
     }
@@ -172,7 +172,13 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    const std::vector<std::vector<double>> parameters{
+    std::ofstream avg_speedup("average_speedup.log");
+    if (!avg_speedup.is_open()) {
+        std::cout << "error opening perf.log";
+        return -1;
+    }
+
+    std::vector<std::vector<double>> parameters{
             {-1000.3, -999.2},
             {-134.5, -133.8},
             {-23.9, -23.1},
@@ -185,9 +191,20 @@ int main(int argc, char** argv) {
             {999.8, 1000.9}
     };
 
+    if (argc == 4) {
+        parameters.clear();
+        std::vector<double> input_param{strtod(argv[2], nullptr), strtod(argv[3], nullptr)};
+        parameters.emplace_back(input_param);
+    }
+
     ofs << "test case\tparam\tinstruction count\ttime consumption\tir lines\tlibrary size" << std::endl;
+    avg_speedup << "test cast\tinstruction count\ttime consumption\tir lines\tlibrary size" << std::endl;
 
     for (size_t case_id = 0; case_id < test_cases.size(); case_id++) {
+        float avg_inst_speedup = 0;
+        float avg_time_speedup = 0;
+        float avg_ir_reduce = 0;
+        float avg_lib_size_reduce = 0;
         for (auto p : parameters) {
             const std::string param_str = change_nt_range("sed -i 's/3 mjf, 10 mjf/", "/g' ../../sensors/test.nt", p);
             const double p1 = p.front() + 3.2;
@@ -201,13 +218,24 @@ int main(int argc, char** argv) {
             float time_speedup = (ori_perf_data.time_consumption_avg - opt_perf_data.time_consumption_avg) * 100 / opt_perf_data.time_consumption_avg;
             float ir_reduce = (ori_perf_data.ir_lines - opt_perf_data.ir_lines) * 100 / opt_perf_data.ir_lines;
             float lib_size_reduce = (ori_perf_data.library_size - opt_perf_data.library_size) * 100 / opt_perf_data.library_size;
-            ofs << "speed up after optimization\t" << inst_speedup << "%\t" << time_speedup << "%\t"
+            ofs << "speed up after optimization\t" << param_str << "\t" << inst_speedup << "%\t" << time_speedup << "%\t"
                 << ir_reduce << "%\t" << lib_size_reduce << "%" << std::endl;
+
+            avg_inst_speedup += inst_speedup;
+            avg_time_speedup += time_speedup;
+            avg_ir_reduce += ir_reduce;
+            avg_lib_size_reduce += lib_size_reduce;
 
             // reset test.nt
             change_nt_range("sed -i 's/", "/3 mjf, 10 mjf/g' ../../sensors/test.nt", p);
             change_nt_range("sed -i 's/", "/1 mjf, 16 mjf/g' ../../sensors/test.nt", {p1, p2});
         }
+        avg_inst_speedup /= parameters.size();
+        avg_time_speedup /= parameters.size();
+        avg_ir_reduce /= parameters.size();
+        avg_lib_size_reduce /= parameters.size();
+        avg_speedup << test_cases[case_id] << "\t" << avg_inst_speedup << "%\t" << avg_time_speedup << "%\t"
+                    << avg_ir_reduce << "%\t" << avg_lib_size_reduce << "%" << std::endl;
     }
 
     ofs.close();
