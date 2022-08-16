@@ -485,9 +485,9 @@ float64 float64_mul (float64 a, float64 b)
     }
   if (bExp == 0)
     {
-      if (bSig == 0)
+//      if (bSig == 0)
 	return packFloat64 (zSign, 0, 0);
-      normalizeFloat64Subnormal (bSig, &bExp, &bSig);
+//      normalizeFloat64Subnormal (bSig, &bExp, &bSig);
     }
   zExp = aExp + bExp - 0x3FF;
   aSig = (aSig | LIT64 (0x0010000000000000)) << 10;

@@ -505,13 +505,6 @@ getTrue(Type * Ty)
 	return ConstantInt::getTrue(Ty);
 }
 
-/*
- * todo:
- * 1. infer the range of the result of function call
- * 2. add the liveness information into virtualRegisterRange
- * 3. deal with structure, union and array access
- * 4. deal with some special case of binary, eg. var | var
- * */
 std::pair<Value *, std::pair<double, double>>
 inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 {
@@ -686,8 +679,6 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             std::swap(leftOperand, rightOperand);
                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tAdd: swap left and right\n");
                         }
-                            /// todo: expression normalization needed, which simpily the "const cmp const" or normalize into the "var cmp const" form
-                            /// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
                         else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tAdd: Expression normalization needed.\n");
@@ -762,8 +753,6 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             std::swap(leftOperand, rightOperand);
                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tSub: swap left and right\n");
                         }
-                            /// todo: expression normalization needed, which simpily the "const cmp const" or normalize into the "var cmp const" form
-                            /// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
                         else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tSub: Expression normalization needed.\n");
@@ -852,8 +841,6 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             std::swap(leftOperand, rightOperand);
                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tMul: swap left and right\n");
                         }
-                            /// todo: expression normalization needed, which simpily the "const cmp const" or normalize into the "var cmp const" form
-                            /// so this if-branch is a debug message, and will be deleted after finishing the expression normalization
                         else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tMul: Expression normalization needed.\n");
@@ -900,11 +887,6 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         Value * leftOperand = llvmIrInstruction.getOperand(0);
                         Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        /*
-                         * 	todo: expression normalization needed, which simpily the "const / const" form
-                         * 	and the assertion of "rightOperand.value != 0" should be done in expression normalization too
-                         * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
-                         */
                         if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tDiv: Expression normalization needed.\n");
@@ -959,11 +941,6 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         Value * leftOperand = llvmIrInstruction.getOperand(0);
                         Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        /*
-                         * 	todo: expression normalization needed, which simpily the "const % const" form
-                         * 	and the assertion of "rightOperand.value != 0" should be done in expression normalization too
-                         * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
-                         */
                         if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: Expression normalization needed.\n");
@@ -1016,10 +993,6 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         Value * leftOperand = llvmIrInstruction.getOperand(0);
                         Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        /*
-                         * 	todo: expression normalization needed, which simpily the "const << const" form
-                         * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
-                         */
                         if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tShl: Expression normalization needed.\n");
@@ -1069,10 +1042,6 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         Value * leftOperand = llvmIrInstruction.getOperand(0);
                         Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        /*
-                         * 	todo: expression normalization needed, which simpily the "const >> const" form
-                         * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
-                         */
                         if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tShr: Expression normalization needed.\n");
@@ -1121,19 +1090,38 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         Value * leftOperand = llvmIrInstruction.getOperand(0);
                         Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        /*
-                         * 	todo: if const simplification needed?
-                         */
                         if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tAnd: Expression normalization needed.\n");
                         }
                         else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
+                            double lowerBound = 0.0;
+                            double upperBound = 0.0;
                             /*
-                             * 	todo: I don't know if we need to concern the "var & var"
+                             * 	eg. x1 & x2
                              */
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tAnd: It's a var & var expression, which is not supported yet.\n");
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = vrRangeIt->second.first;
+                                upperBound = vrRangeIt->second.second;
+                                if (lowerBound < 0 || upperBound < 0)
+                                {
+                                    break;
+                                }
+                            }
+                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = (int)lowerBound & (int)vrRangeIt->second.second;
+                                upperBound = (int)upperBound & (int)vrRangeIt->second.first;
+                                if (lowerBound < 0 || upperBound < 0)
+                                {
+                                    break;
+                                }
+                            }
+                            boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
                         }
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
@@ -1170,20 +1158,38 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         Value * leftOperand = llvmIrInstruction.getOperand(0);
                         Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        /*
-                         * 	todo: expression normalization needed, which simpily the "const | const" form
-                         * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
-                         */
                         if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tOr: Expression normalization needed.\n");
                         }
                         else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
+                            double lowerBound = 0.0;
+                            double upperBound = 0.0;
                             /*
-                             * 	todo: I don't know if we need to concern the "var | var"
+                             * 	eg. x1 | x2
                              */
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tOr: It's a var | var expression, which is not supported yet.\n");
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = vrRangeIt->second.first;
+                                upperBound = vrRangeIt->second.second;
+                                if (lowerBound < 0 || upperBound < 0)
+                                {
+                                    break;
+                                }
+                            }
+                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = (int)lowerBound | (int)vrRangeIt->second.second;
+                                upperBound = (int)upperBound | (int) vrRangeIt->second.first;
+                                if (lowerBound < 0 || upperBound < 0)
+                                {
+                                    break;
+                                }
+                            }
+                            boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
                         }
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
@@ -1220,10 +1226,6 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         Value * leftOperand = llvmIrInstruction.getOperand(0);
                         Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        /*
-                         * 	todo: expression normalization needed, which simpily the "const ^ const" form
-                         * 	so this if-branch is a debug message, and will be deleted after finishing the expression normalization
-                         */
                         if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tXor: Expression normalization needed.\n");
@@ -1542,7 +1544,10 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                              * so the value of this elementPtr must be gotten from the nearest bitcasts of union.
                              * */
                             auto it = std::find_if(unionAddress.rbegin(), unionAddress.rend(), [uaIt](const auto & ua){
-                                return (ua.second == uaIt->second) && (ua.first != uaIt->first);
+                                auto valueHolderBitcast = dyn_cast<BitCastInst>(ua.first);
+                                assert(valueHolderBitcast != nullptr);
+                                auto resTypeId = valueHolderBitcast->getDestTy()->getTypeID();
+                                return (ua.second == uaIt->second) && (resTypeId != Type::StructTyID);
                             });
                             if (it != unionAddress.rend())
                             {

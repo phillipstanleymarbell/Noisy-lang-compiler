@@ -10,9 +10,10 @@
 #include <ctype.h>
 #include <iostream>
 #include <fstream>
+#include <math.h>
 #include <vector>
 
-uint64_t getCount(std::string string, size_t position) {
+int64_t getCount(std::string string, size_t position) {
     std::string substring;
     substring = string.substr(0, position);
     substring.erase(
@@ -28,10 +29,10 @@ uint64_t getCount(std::string string, size_t position) {
     return std::stoi(substring);
 }
 
-std::pair<uint64_t, uint64_t> processData(std::string test_case, std::string params) {
+std::pair<int64_t, int64_t> processData(std::string test_case, std::string params) {
     std::string line;
     size_t position;
-    uint64_t inst_count, time_consumption;
+    int64_t inst_count, time_consumption;
 
     // perf command
     std::string cmd = "make " + test_case;
@@ -87,7 +88,7 @@ std::string change_nt_range(std::string cmd1, std::string cmd2, std::vector<doub
     return param_str;
 }
 
-uint64_t exactNumber() {
+int64_t exactNumber() {
     std::ifstream ifs("tmp.log");
     if (!ifs.is_open()) {
         std::cout << "error opening tmp.log";
@@ -110,14 +111,14 @@ uint64_t exactNumber() {
     return std::strtol(line.data(), &pEnd, 10);
 }
 
-uint64_t getIrLines() {
+int64_t getIrLines() {
     std::string cmd = "wc -l out.ll 2>&1 | tee tmp.log";
     system(cmd.data());
 
     return exactNumber();
 }
 
-uint64_t getLibSize() {
+int64_t getLibSize() {
     std::string cmd = "wc -c libout.a 2>&1 | tee tmp.log";
     system(cmd.data());
 
@@ -125,10 +126,10 @@ uint64_t getLibSize() {
 }
 
 struct perfData {
-    uint64_t inst_count_avg;
-    uint64_t time_consumption_avg;
-    uint64_t ir_lines;
-    uint64_t library_size;
+    int64_t inst_count_avg;
+    int64_t time_consumption_avg;
+    int64_t ir_lines;
+    int64_t library_size;
 };
 
 struct perfData recordData(std::string test_cases, std::string param_str, std::ofstream& ofs) {
@@ -137,7 +138,7 @@ struct perfData recordData(std::string test_cases, std::string param_str, std::o
     perfData perf_data = {0, 0, 0, 0};
 
     for (size_t idx = 0; idx < iteration_num; idx++) {
-        const std::pair<uint64_t, uint64_t> inst_time_data = processData(test_cases, param_str);
+        const std::pair<int64_t, int64_t> inst_time_data = processData(test_cases, param_str);
         perf_data.inst_count_avg += (inst_time_data.first/1000);
         perf_data.time_consumption_avg += (inst_time_data.second/1000);
     }
@@ -178,7 +179,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    std::vector<std::vector<double>> parameters{
+    std::vector<std::vector<double>> normalParameters{
             {-1000.3, -999.2},
             {-134.5, -133.8},
             {-23.9, -23.1},
@@ -191,20 +192,38 @@ int main(int argc, char** argv) {
             {999.8, 1000.9}
     };
 
+    std::vector<std::vector<double>> trigonometricParams{
+            {0, 0.17453292519943295}, // (0, pi/18)
+            {0.6981317007977318, 0.8726646259971648}, // (2pi/9, 5pi/18)
+            {1.3962634015954636, 1.5707963267948966}, // (4pi/9, pi/2)
+            {2.0943951023931953, 2.2689280275926285}, // (2pi/3, 13pi/18)
+            {2.792526803190927, 2.9670597283903604}, // (8pi/9, 17pi/18)
+            {3.490658503988659, 3.665191429188092}, // (10pi/9, 7pi/6)
+            {4.1887902047863905, 4.363323129985824}, // (8pi/6, 25pi/18)
+            {4.886921905584122, 5.061454830783556}, // (14pi/9, 29pi/18)
+            {5.585053606381854, 5.759586531581288}, // (16pi/9, 33pi/18)
+            {5.934119456780721, 6.1086523819801535} // (17pi/9, 35pi/18)
+    };
+
     if (argc == 4) {
-        parameters.clear();
+        normalParameters.clear();
         std::vector<double> input_param{strtod(argv[2], nullptr), strtod(argv[3], nullptr)};
-        parameters.emplace_back(input_param);
+        normalParameters.emplace_back(input_param);
+
+        trigonometricParams.clear();
+        trigonometricParams.emplace_back(input_param);
     }
 
     ofs << "test case\tparam\tinstruction count\ttime consumption\tir lines\tlibrary size" << std::endl;
     avg_speedup << "test cast\tinstruction count\ttime consumption\tir lines\tlibrary size" << std::endl;
 
     for (size_t case_id = 0; case_id < test_cases.size(); case_id++) {
-        float avg_inst_speedup = 0;
-        float avg_time_speedup = 0;
-        float avg_ir_reduce = 0;
-        float avg_lib_size_reduce = 0;
+        int avg_inst_speedup = 0;
+        int avg_time_speedup = 0;
+        int avg_ir_reduce = 0;
+        int avg_lib_size_reduce = 0;
+        const std::vector<std::vector<double>> parameters =
+                test_cases[case_id] == "perf_float64_sin" ? trigonometricParams : normalParameters;
         for (auto p : parameters) {
             const std::string param_str = change_nt_range("sed -i 's/3 mjf, 10 mjf/", "/g' ../../sensors/test.nt", p);
             const double p1 = p.front() + 3.2;
@@ -214,10 +233,10 @@ int main(int argc, char** argv) {
             perfData ori_perf_data = recordData(test_cases[case_id], param_str, ofs);
             perfData opt_perf_data = recordData(test_cases[case_id] + "_opt", param_str, ofs);
 
-            float inst_speedup = (ori_perf_data.inst_count_avg - opt_perf_data.inst_count_avg) * 100 / opt_perf_data.inst_count_avg;
-            float time_speedup = (ori_perf_data.time_consumption_avg - opt_perf_data.time_consumption_avg) * 100 / opt_perf_data.time_consumption_avg;
-            float ir_reduce = (ori_perf_data.ir_lines - opt_perf_data.ir_lines) * 100 / opt_perf_data.ir_lines;
-            float lib_size_reduce = (ori_perf_data.library_size - opt_perf_data.library_size) * 100 / opt_perf_data.library_size;
+            int inst_speedup = round((ori_perf_data.inst_count_avg - opt_perf_data.inst_count_avg) * 100 / opt_perf_data.inst_count_avg);
+            int time_speedup = round((ori_perf_data.time_consumption_avg - opt_perf_data.time_consumption_avg) * 100 / opt_perf_data.time_consumption_avg);
+            int ir_reduce = round((ori_perf_data.ir_lines - opt_perf_data.ir_lines) * 100 / opt_perf_data.ir_lines);
+            int lib_size_reduce = round((ori_perf_data.library_size - opt_perf_data.library_size) * 100 / opt_perf_data.library_size);
             ofs << "speed up after optimization\t" << param_str << "\t" << inst_speedup << "%\t" << time_speedup << "%\t"
                 << ir_reduce << "%\t" << lib_size_reduce << "%" << std::endl;
 
@@ -230,10 +249,10 @@ int main(int argc, char** argv) {
             change_nt_range("sed -i 's/", "/3 mjf, 10 mjf/g' ../../sensors/test.nt", p);
             change_nt_range("sed -i 's/", "/1 mjf, 16 mjf/g' ../../sensors/test.nt", {p1, p2});
         }
-        avg_inst_speedup /= parameters.size();
-        avg_time_speedup /= parameters.size();
-        avg_ir_reduce /= parameters.size();
-        avg_lib_size_reduce /= parameters.size();
+        avg_inst_speedup = round(avg_inst_speedup / parameters.size());
+        avg_time_speedup = round(avg_time_speedup / parameters.size());
+        avg_ir_reduce = round(avg_ir_reduce / parameters.size());
+        avg_lib_size_reduce = round(avg_lib_size_reduce / parameters.size());
         avg_speedup << test_cases[case_id] << "\t" << avg_inst_speedup << "%\t" << avg_time_speedup << "%\t"
                     << avg_ir_reduce << "%\t" << avg_lib_size_reduce << "%" << std::endl;
     }

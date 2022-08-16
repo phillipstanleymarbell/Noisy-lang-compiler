@@ -261,13 +261,13 @@ addFloat64Sigs (float64 a, float64 b, flag zSign)
     }
   else
     {
-      if (aExp == 0x7FF)
+      if (aExp == 0x7FF) // todo
 	{
-	  if (aSig | bSig)
+	  if (aSig | bSig) // todo
 	    return propagateFloat64NaN (a, b);
 	  return a;
 	}
-      if (aExp == 0)
+      if (aExp == 0) // todo
 	return packFloat64 (zSign, 0, (aSig + bSig) >> 9);
       zSig = LIT64 (0x4000000000000000) + aSig + bSig;
       zExp = aExp;

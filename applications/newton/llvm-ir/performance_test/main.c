@@ -59,9 +59,9 @@ main(int argc, char** argv)
 	double result = 0;
     double parameters[2];
     char* pEnd;
-    if (argc == 2) {
-        for (size_t idx = 1; idx < argc; idx++) {
-            parameters[idx] = strtod(argv[idx], &pEnd);
+    if (argc == 3) {
+        for (size_t idx = 0; idx < argc-1; idx++) {
+            parameters[idx] = strtod(argv[idx+1], &pEnd);
         }
     }
     else {
