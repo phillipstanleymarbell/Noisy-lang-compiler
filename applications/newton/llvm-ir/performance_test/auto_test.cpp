@@ -184,7 +184,7 @@ int main(int argc, char** argv) {
             {-134.5, -133.8},
             {-23.9, -23.1},
             {-5.4, -4.5},
-            {-1.1, -0.6},
+            {-1.8, -0.4},
             {0.2, 0.9},
             {9.7, 10.5},
             {35.75, 36.03},
@@ -226,8 +226,8 @@ int main(int argc, char** argv) {
                 test_cases[case_id] == "perf_float64_sin" ? trigonometricParams : normalParameters;
         for (auto p : parameters) {
             const std::string param_str = change_nt_range("sed -i 's/3 mjf, 10 mjf/", "/g' ../../sensors/test.nt", p);
-            const double p1 = p.front() + 3.2;
-            const double p2 = p.back() + 2.9;
+            const double p1 = p.front() + 0.6;
+            const double p2 = p.back() + 0.3;
             change_nt_range("sed -i 's/1 mjf, 16 mjf/", "/g' ../../sensors/test.nt", {p1, p2});
 
             perfData ori_perf_data = recordData(test_cases[case_id], param_str, ofs);

@@ -91,11 +91,11 @@ main(int argc, char** argv)
         float sinp, cosp;
         result = libc_sincosf(randomFloat(parameters[0], parameters[1]), &sinp, &cosp);
 #elif defined(FLOAT64_ADD)
-        result = float64_add(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 3.2, parameters[1] + 2.9));
+        result = float64_add(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 0.6, parameters[1] + 0.3));
 #elif defined(FLOAT64_DIV)
-        result = float64_div(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 3.2, parameters[1] + 2.9));
+        result = float64_div(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 0.6, parameters[1] + 0.3));
 #elif defined(FLOAT64_MUL)
-        result = float64_mul(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 3.2, parameters[1] + 2.9));
+        result = float64_mul(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 0.6, parameters[1] + 0.3));
 #elif defined(FLOAT64_SIN)
         result = float64_sin(randomFloat(parameters[0], parameters[1]));
 #else
