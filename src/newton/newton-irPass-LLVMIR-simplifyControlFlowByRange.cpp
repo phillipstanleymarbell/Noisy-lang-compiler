@@ -1302,20 +1302,41 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                 case Instruction::Store:
                     if (auto llvmIrStoreInstruction = dyn_cast<StoreInst>(&llvmIrInstruction))
                     {
-                        // todo: if it's a const value
-                        auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrStoreInstruction->getOperand(0));
-                        if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                        if (isa<llvm::Constant>(llvmIrStoreInstruction->getOperand(0)))
                         {
-                            boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), vrRangeIt->second);
+                            /*
+                             * 	eg. store double 5.000000e+00, double* %2, align 8, !dbg !27
+                             */
+                            double constValue = 0.0;
+                            if (ConstantFP *constFp = llvm::dyn_cast<llvm::ConstantFP>(llvmIrStoreInstruction->getOperand(0)))
+                            {
+                                /*
+                                 * 	both "float" and "double" type can use "convertToDouble"
+                                 */
+                                constValue = (constFp->getValueAPF()).convertToDouble();
+                            }
+                            else if (ConstantInt *constInt = llvm::dyn_cast<llvm::ConstantInt>(llvmIrStoreInstruction->getOperand(0)))
+                            {
+                                constValue = constInt->getSExtValue();
+                            }
+                            boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), std::make_pair(constValue, constValue));
                         }
-                        /*
-                         * Each time if there's a StorInst assign to the unionAddress, it updates the value of union.
-                         * */
-                        auto uaIt = unionAddress.find(llvmIrStoreInstruction->getOperand(1));
-                        if (uaIt != unionAddress.end())
+                        else
                         {
-                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tStore Union: %f - %f\n",  vrRangeIt->second.first, vrRangeIt->second.second);
-                            boundInfo->virtualRegisterRange.emplace(uaIt->second, vrRangeIt->second);
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrStoreInstruction->getOperand(0));
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), vrRangeIt->second);
+                            }
+                            /*
+                             * Each time if there's a StorInst assign to the unionAddress, it updates the value of union.
+                             * */
+                            auto uaIt = unionAddress.find(llvmIrStoreInstruction->getOperand(1));
+                            if (uaIt != unionAddress.end())
+                            {
+                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tStore Union: %f - %f\n",  vrRangeIt->second.first, vrRangeIt->second.second);
+                                boundInfo->virtualRegisterRange.emplace(uaIt->second, vrRangeIt->second);
+                            }
                         }
                     }
                     break;
@@ -1532,9 +1553,10 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                          * %11 = getelementptr inbounds %struct.anon, %struct.anon* %10, i32 0, i32 1, !dbg !66
                          *
                          * Our algorithm is:
-                         * 1. record the union information by the `bitcast` instructions;
-                         * 2. record the `bitcast` instruction with the `struct.anon*` as the destination
-                         * 3.
+                         * 1. check if the pointer operand has been recorded in the map that contains bitcast information
+                         * 2. get the value-holder bitcast instruction from the map
+                         * 3. check if the range of the value-holder has been inferred
+                         * 4. get the variable info from the value-holder, and cast it if necessary
                          * */
                         auto uaIt = unionAddress.find(llvmIrGetElePtrInstruction->getPointerOperand());
                         if (uaIt != unionAddress.end())
@@ -1648,6 +1670,7 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 }
                             }
                         }
+                        // todo: infer the range from structure or array
                     }
 
                 case Instruction::Ret:
