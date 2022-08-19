@@ -13,7 +13,7 @@
 #include <math.h>
 #include <vector>
 
-int64_t getCount(std::string string, size_t position) {
+int64_t getCount(const std::string& string, size_t position) {
     std::string substring;
     substring = string.substr(0, position);
     substring.erase(
@@ -29,7 +29,7 @@ int64_t getCount(std::string string, size_t position) {
     return std::stoi(substring);
 }
 
-std::pair<int64_t, int64_t> processData(std::string test_case, std::string params) {
+std::pair<int64_t, int64_t> processData(const std::string test_case, const std::string params) {
     std::string line;
     size_t position;
     int64_t inst_count, time_consumption;
@@ -69,14 +69,14 @@ std::pair<int64_t, int64_t> processData(std::string test_case, std::string param
     return std::make_pair(inst_count, time_consumption);
 }
 
-std::string change_nt_range(std::string cmd1, std::string cmd2, std::vector<double> params) {
+std::string change_nt_range(const std::string& cmd1, const std::string& cmd2, const std::vector<double>& params) {
     std::string param_str;
     std::string change_nt_cmd;
     param_str.clear();
     change_nt_cmd.clear();
     change_nt_cmd = cmd1;
     // prepare parameters
-    for (auto pp : params) {
+    for (const auto& pp : params) {
         param_str += std::to_string(pp) + " ";
         change_nt_cmd += std::to_string(pp) + " mjf, ";
     }
@@ -132,7 +132,7 @@ struct perfData {
     int64_t library_size;
 };
 
-struct perfData recordData(std::string test_cases, std::string param_str, std::ofstream& ofs) {
+struct perfData recordData(const std::string& test_cases, const std::string& param_str, std::ofstream& ofs) {
     const size_t iteration_num = 5;
 
     perfData perf_data = {0, 0, 0, 0};
@@ -192,6 +192,13 @@ int main(int argc, char** argv) {
             {999.8, 1000.9}
     };
 
+    std::vector<double> range_extend{1, 10, 100, 1000, 10000, 100000};
+
+    if (argc == 3) {
+        range_extend.clear();
+        range_extend.emplace_back(strtod(argv[2], nullptr));
+    }
+
     std::vector<std::vector<double>> trigonometricParams{
             {0, 0.17453292519943295}, // (0, pi/18)
             {0.6981317007977318, 0.8726646259971648}, // (2pi/9, 5pi/18)
@@ -215,7 +222,7 @@ int main(int argc, char** argv) {
     }
 
     ofs << "test case\tparam\tinstruction count\ttime consumption\tir lines\tlibrary size" << std::endl;
-    avg_speedup << "test cast\tinstruction count\ttime consumption\tir lines\tlibrary size" << std::endl;
+    avg_speedup << "test cast\textend\tinstruction count\ttime consumption\tir lines\tlibrary size" << std::endl;
 
     for (size_t case_id = 0; case_id < test_cases.size(); case_id++) {
         int avg_inst_speedup = 0;
@@ -224,37 +231,47 @@ int main(int argc, char** argv) {
         int avg_lib_size_reduce = 0;
         const std::vector<std::vector<double>> parameters =
                 test_cases[case_id] == "perf_float64_sin" ? trigonometricParams : normalParameters;
-        for (auto p : parameters) {
-            const std::string param_str = change_nt_range("sed -i 's/3 mjf, 10 mjf/", "/g' ../../sensors/test.nt", p);
-            const double p1 = p.front() + 0.6;
-            const double p2 = p.back() + 0.3;
-            change_nt_range("sed -i 's/1 mjf, 16 mjf/", "/g' ../../sensors/test.nt", {p1, p2});
+        for (const auto& extend : range_extend) {
+            for (const auto& p : parameters) {
+                const std::string param_str = change_nt_range("sed -i 's/3 mjf, 10 mjf/",
+                                                              "/g' ../../sensors/test.nt",
+                                                              {p.front(), p.back()-1+extend});
+                const double p1 = p.front() + 0.6;
+                const double p2 = p.back() + 0.3;
+                change_nt_range("sed -i 's/1 mjf, 16 mjf/", "/g' ../../sensors/test.nt", {p1, p2-1+extend});
 
-            perfData ori_perf_data = recordData(test_cases[case_id], param_str, ofs);
-            perfData opt_perf_data = recordData(test_cases[case_id] + "_opt", param_str, ofs);
+                perfData ori_perf_data = recordData(test_cases[case_id], param_str, ofs);
+                perfData opt_perf_data = recordData(test_cases[case_id] + "_opt", param_str, ofs);
 
-            int inst_speedup = round((ori_perf_data.inst_count_avg - opt_perf_data.inst_count_avg) * 100 / opt_perf_data.inst_count_avg);
-            int time_speedup = round((ori_perf_data.time_consumption_avg - opt_perf_data.time_consumption_avg) * 100 / opt_perf_data.time_consumption_avg);
-            int ir_reduce = round((ori_perf_data.ir_lines - opt_perf_data.ir_lines) * 100 / opt_perf_data.ir_lines);
-            int lib_size_reduce = round((ori_perf_data.library_size - opt_perf_data.library_size) * 100 / opt_perf_data.library_size);
-            ofs << "speed up after optimization\t" << param_str << "\t" << inst_speedup << "%\t" << time_speedup << "%\t"
-                << ir_reduce << "%\t" << lib_size_reduce << "%" << std::endl;
+                int inst_speedup = round((ori_perf_data.inst_count_avg - opt_perf_data.inst_count_avg) * 100 / opt_perf_data.inst_count_avg);
+                int time_speedup = round((ori_perf_data.time_consumption_avg - opt_perf_data.time_consumption_avg) * 100 / opt_perf_data.time_consumption_avg);
+                int ir_reduce = round((ori_perf_data.ir_lines - opt_perf_data.ir_lines) * 100 / opt_perf_data.ir_lines);
+                int lib_size_reduce = round((ori_perf_data.library_size - opt_perf_data.library_size) * 100 / opt_perf_data.library_size);
+                ofs << "speed up after optimization\t" << param_str << "\t" << inst_speedup << "%\t" << time_speedup << "%\t"
+                    << ir_reduce << "%\t" << lib_size_reduce << "%" << std::endl;
 
-            avg_inst_speedup += inst_speedup;
-            avg_time_speedup += time_speedup;
-            avg_ir_reduce += ir_reduce;
-            avg_lib_size_reduce += lib_size_reduce;
+                avg_inst_speedup += inst_speedup;
+                avg_time_speedup += time_speedup;
+                avg_ir_reduce += ir_reduce;
+                avg_lib_size_reduce += lib_size_reduce;
 
-            // reset test.nt
-            change_nt_range("sed -i 's/", "/3 mjf, 10 mjf/g' ../../sensors/test.nt", p);
-            change_nt_range("sed -i 's/", "/1 mjf, 16 mjf/g' ../../sensors/test.nt", {p1, p2});
+                // reset test.nt
+                change_nt_range("sed -i 's/", "/3 mjf, 10 mjf/g' ../../sensors/test.nt",
+                                {p.front(), p.back()-1+extend});
+                change_nt_range("sed -i 's/", "/1 mjf, 16 mjf/g' ../../sensors/test.nt", {p1, p2-1+extend});
+            }
+            avg_inst_speedup = round(avg_inst_speedup / parameters.size());
+            avg_time_speedup = round(avg_time_speedup / parameters.size());
+            avg_ir_reduce = round(avg_ir_reduce / parameters.size());
+            avg_lib_size_reduce = round(avg_lib_size_reduce / parameters.size());
+            avg_speedup << test_cases[case_id] << "\t" << extend << "\t" << avg_inst_speedup << "%\t"
+                        << avg_time_speedup << "%\t" << avg_ir_reduce << "%\t" << avg_lib_size_reduce << "%" << std::endl;
+
+            if (test_cases[case_id] == "perf_float64_sin") {
+                // trigonometricParams cannot have extend
+                break;
+            }
         }
-        avg_inst_speedup = round(avg_inst_speedup / parameters.size());
-        avg_time_speedup = round(avg_time_speedup / parameters.size());
-        avg_ir_reduce = round(avg_ir_reduce / parameters.size());
-        avg_lib_size_reduce = round(avg_lib_size_reduce / parameters.size());
-        avg_speedup << test_cases[case_id] << "\t" << avg_inst_speedup << "%\t" << avg_time_speedup << "%\t"
-                    << avg_ir_reduce << "%\t" << avg_lib_size_reduce << "%" << std::endl;
     }
 
     ofs.close();

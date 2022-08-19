@@ -128,5 +128,7 @@ for merit_id in range(merit_num):
         plt.bar(x, opt_perf_data[merit_id][plt_y_begin:plt_y_end],
                 width=width, label='optimized performance', fc='r')
         plt.legend()
-        plt.savefig(fig_path + name_list[test_case_id] + "-" + y_labels[merit_id] + "-" + ".png")
+        file_name = fig_path + name_list[test_case_id] + "-" + y_labels[merit_id] + ".pdf"
+        file_name = file_name.replace(" ", "_")
+        plt.savefig(file_name)
         plt.close()
