@@ -49,6 +49,10 @@ y_units = [1000, 1000, 1, 1]
 params_num = 10
 test_case_num = 10
 merit_num = 4
+range_extend_num = 6
+
+# changed with auto_test.cpp
+range_extend_list = [1, 10, 100, 1000, 10000, 100000]
 
 # prepare data
 name_list = []
@@ -59,7 +63,7 @@ for i in range(2, len(performance_data), 3):
     opt_name_list.append(performance_data[i][0])
 
 param_list = []
-for i in range(1, 3 * params_num, 3):
+for i in range(1, 3 * params_num * range_extend_num, 3):
     param_list.append(performance_data[i][1])
 
 inst_count = []
@@ -107,28 +111,33 @@ os.mkdir(fig_path)
 
 for merit_id in range(merit_num):
     for test_case_id in range(test_case_num):
-        ax1 = plt.figure(merit_id * test_case_num + test_case_id + 1)
+        for range_extend_id in range(range_extend_num):
+            ax1 = plt.figure(merit_id * test_case_num * range_extend_num +
+                             test_case_id * range_extend_num + range_extend_id + 1)
 
-        x = list(range(params_num))
-        total_width, n = 0.5, 2
-        width = total_width / n
+            x = list(range(params_num))
+            total_width, n = 0.5, 2
+            width = total_width / n
 
-        plt_y_begin = params_num * test_case_id
-        plt_y_end = params_num * test_case_id + params_num
-        y_ranges = (min(opt_perf_data[merit_id][plt_y_begin:plt_y_end]) * 0.8,
-                    max(ori_perf_data[merit_id][plt_y_begin:plt_y_end]) * 1.2)
+            plt_y_begin = params_num * (test_case_id * range_extend_num + range_extend_id)
+            plt_y_end = plt_y_begin + params_num
+            y_ranges = (min(opt_perf_data[merit_id][plt_y_begin:plt_y_end]) * 0.8,
+                        max(ori_perf_data[merit_id][plt_y_begin:plt_y_end]) * 1.2)
 
-        plt.ylim(y_ranges)
-        plt.ylabel(y_labels[merit_id])
+            plt.ylim(y_ranges)
+            plt.ylabel(y_labels[merit_id])
 
-        plt.bar(x, ori_perf_data[merit_id][plt_y_begin:plt_y_end],
-                width=width, label='basic performance', fc='y')
-        for i in range(len(x)):
-            x[i] = x[i] + width
-        plt.bar(x, opt_perf_data[merit_id][plt_y_begin:plt_y_end],
-                width=width, label='optimized performance', fc='r')
-        plt.legend()
-        file_name = fig_path + name_list[test_case_id] + "-" + y_labels[merit_id] + ".pdf"
-        file_name = file_name.replace(" ", "_")
-        plt.savefig(file_name)
-        plt.close()
+            plt.bar(x, ori_perf_data[merit_id][plt_y_begin:plt_y_end],
+                    width=width, label='basic performance', fc='y')
+            for i in range(len(x)):
+                x[i] = x[i] + width
+            plt.bar(x, opt_perf_data[merit_id][plt_y_begin:plt_y_end],
+                    width=width, label='optimized performance', fc='r')
+            plt.legend()
+            file_name = fig_path + name_list[test_case_id * range_extend_num + range_extend_id] + "-" + \
+                        str(range_extend_list[range_extend_id]) + "-" + y_labels[merit_id] + ".pdf"
+            file_name = file_name.replace(" ", "_")
+            plt.savefig(file_name)
+            plt.close()
+            if test_case_id == 9:
+                break
