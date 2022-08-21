@@ -89,6 +89,17 @@ y0_opt:
 compile_y0:
 	$(call compile_main_fn,LIBC_Y0)
 
+rem_pio2_non_opt:
+	$(call opt_fn,e_rem_pio2)
+
+rem_pio2_opt:
+	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,e_rem_pio2)
+	llvm-dis ../e_rem_pio2_output.bc
+	$(call opt_fn,e_rem_pio2_output)
+
+compile_rem_pio2:
+	$(call compile_main_fn,LIBC_REM_PIO2)
+
 sincosf_non_opt:
 	$(call opt_fn,sincosf)
 
@@ -162,7 +173,11 @@ perf_j0_opt: clean make_ll j0_opt compile_lib compile_j0
 
 perf_y0: clean make_ll y0_non_opt compile_lib compile_y0 
 
-perf_y0_opt: clean make_ll y0_opt compile_lib compile_y0 
+perf_y0_opt: clean make_ll y0_opt compile_lib compile_y0
+
+perf_rem_pio2: clean make_ll rem_pio2_non_opt compile_lib compile_rem_pio2
+
+perf_rem_pio2_opt: clean make_ll rem_pio2_opt compile_lib compile_rem_pio2
 
 perf_sincosf: clean make_ll sincosf_non_opt compile_lib compile_sincosf
 
@@ -189,7 +204,7 @@ auto_test_compile:
 
 all: default
 
-default: perf_exp perf_exp_opt perf_log perf_log_opt perf_acosh perf_acosh_opt perf_j0 perf_j0_opt perf_y0 perf_y0_opt perf_sincosf perf_sincosf_opt perf_float64_add perf_float64_add_opt perf_float64_div perf_float64_div_opt perf_float64_mul perf_float64_mul_opt perf_float64_sin perf_float64_sin_opt auto_test_compile
+default: perf_exp perf_exp_opt perf_log perf_log_opt perf_acosh perf_acosh_opt perf_j0 perf_j0_opt perf_y0 perf_y0_opt perf_rem_pio2 perf_rem_pio2_opt perf_sincosf perf_sincosf_opt perf_float64_add perf_float64_add_opt perf_float64_div perf_float64_div_opt perf_float64_mul perf_float64_mul_opt perf_float64_sin perf_float64_sin_opt auto_test_compile
 
 clean:
 	$(QUIET)rm -f *.ll *.o *.s *.txt out.* libout.a main_out auto_test

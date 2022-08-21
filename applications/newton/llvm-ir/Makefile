@@ -14,7 +14,7 @@ COMMON_FLAGS=-Wall -Wextra
 
 all: default
 
-default: application.ll simple_control_flow.ll inferBound.ll inferBoundControlFlow.ll e_exp.ll sincosf.ll e_log.ll e_acosh.ll e_j0.ll e_y0.ll
+default: application.ll simple_control_flow.ll inferBound.ll inferBoundControlFlow.ll e_exp.ll sincosf.ll e_log.ll e_acosh.ll e_j0.ll e_y0.ll e_rem_pio2.ll
 
 %.ll : %.c
 	@echo Compiling $*.c

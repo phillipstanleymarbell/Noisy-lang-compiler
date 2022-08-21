@@ -47,7 +47,7 @@ with open('perf.log', 'r') as f:
 y_units = [1000, 1000, 1, 1]
 
 params_num = 10
-test_case_num = 10
+test_case_num = 11
 merit_num = 4
 range_extend_num = 6
 

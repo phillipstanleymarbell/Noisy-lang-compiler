@@ -158,7 +158,7 @@ int main(int argc, char** argv) {
     std::vector<std::string> test_cases{
             "perf_exp", "perf_log",
             "perf_acosh", "perf_j0",
-            "perf_y0", "perf_sincosf",
+            "perf_y0", "perf_rem_pio2", "perf_sincosf",
             "perf_float64_add", "perf_float64_div",
             "perf_float64_mul", "perf_float64_sin"};
 

@@ -37,6 +37,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "../c-files/fdlibm.h"
 
 /*
  * Definitions generated from Newton
@@ -78,15 +79,18 @@ main(int argc, char** argv)
 #ifdef CONTROL_FLOW_FUNC
 		result = controlFlowFunc(randomFloat(-16.0, 16.0));
 #elif defined(LIBC_EXP)
-        result = libc_exp(randomFloat(parameters[0], parameters[1]));
+        result = __ieee754_exp(randomFloat(parameters[0], parameters[1]));
 #elif defined(LIBC_LOG)
-        result = libc_log(randomFloat(parameters[0], parameters[1]));
+        result = __ieee754_log(randomFloat(parameters[0], parameters[1]));
 #elif defined(LIBC_ACOSH)
-		result = libc_acosh(randomFloat(parameters[0], parameters[1]));
+		result = __ieee754_acosh(randomFloat(parameters[0], parameters[1]));
 #elif defined(LIBC_J0)
-        result = libc_j0(randomFloat(parameters[0], parameters[1]));
+        result = __ieee754_j0(randomFloat(parameters[0], parameters[1]));
 #elif defined(LIBC_Y0)
-		result = libc_y0(randomFloat(parameters[0], parameters[1]));
+		result = __ieee754_y0(randomFloat(parameters[0], parameters[1]));
+#elif defined(LIBC_REM_PIO2)
+        bmx055xAcceleration y[2];
+        result = __ieee754_rem_pio2(randomFloat(parameters[0], parameters[1]), y);
 #elif defined(LIBC_SINCOSF)
         float sinp, cosp;
         result = libc_sincosf(randomFloat(parameters[0], parameters[1]), &sinp, &cosp);

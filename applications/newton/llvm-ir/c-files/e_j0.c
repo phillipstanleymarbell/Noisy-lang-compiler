@@ -1,33 +1,67 @@
-/* @(#)e_j0.c 5.1 93/09/24 */
+
+/* @(#)e_j0.c 1.3 95/01/18 */
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
  *
- * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Developed at SunSoft, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice
+ * software is freely granted, provided that this notice 
  * is preserved.
  * ====================================================
- *
- * ====================================================
- * @Name: Pei Mu
- * @Modifications:
- * 1. change the type of `ix` into
- * a physical type `bmx055xMagneto`
- * 2. rename the function as `libc_pzero`, `libc_qzero`, `libc_j0`
- * so that it does not conflict with system libraries
- * @SHA: 5e24839658f6576b68b26c977897b9ad3fc3c23f
- * ====================================================
+ */
+
+/* __ieee754_j0(x), __ieee754_y0(x)
+ * Bessel function of the first and second kinds of order zero.
+ * Method -- j0(x):
+ *	1. For tiny x, we use j0(x) = 1 - x^2/4 + x^4/64 - ...
+ *	2. Reduce x to |x| since j0(x)=j0(-x),  and
+ *	   for x in (0,2)
+ *		j0(x) = 1-z/4+ z^2*R0/S0,  where z = x*x;
+ *	   (precision:  |j0-1+z/4-z^2R0/S0 |<2**-63.67 )
+ *	   for x in (2,inf)
+ * 		j0(x) = sqrt(2/(pi*x))*(p0(x)*cos(x0)-q0(x)*sin(x0))
+ * 	   where x0 = x-pi/4. It is better to compute sin(x0),cos(x0)
+ *	   as follow:
+ *		cos(x0) = cos(x)cos(pi/4)+sin(x)sin(pi/4)
+ *			= 1/sqrt(2) * (cos(x) + sin(x))
+ *		sin(x0) = sin(x)cos(pi/4)-cos(x)sin(pi/4)
+ *			= 1/sqrt(2) * (sin(x) - cos(x))
+ * 	   (To avoid cancellation, use
+ *		sin(x) +- cos(x) = -cos(2x)/(sin(x) -+ cos(x))
+ * 	    to compute the worse one.)
+ *	   
+ *	3 Special cases
+ *		j0(nan)= nan
+ *		j0(0) = 1
+ *		j0(inf) = 0
+ *		
+ * Method -- y0(x):
+ *	1. For x<2.
+ *	   Since 
+ *		y0(x) = 2/pi*(j0(x)*(ln(x/2)+Euler) + x^2/4 - ...)
+ *	   therefore y0(x)-2/pi*j0(x)*ln(x) is an even function.
+ *	   We use the following function to approximate y0,
+ *		y0(x) = U(z)/V(z) + (2/pi)*(j0(x)*ln(x)), z= x^2
+ *	   where 
+ *		U(z) = u00 + u01*z + ... + u06*z^6
+ *		V(z) = 1  + v01*z + ... + v04*z^4
+ *	   with absolute approximation error bounded by 2**-72.
+ *	   Note: For tiny x, U/V = u0 and j0(x)~1, hence
+ *		y0(tiny) = u0 + (2/pi)*ln(tiny), (choose tiny<2**-27)
+ *	2. For x>=2.
+ * 		y0(x) = sqrt(2/(pi*x))*(p0(x)*cos(x0)+q0(x)*sin(x0))
+ * 	   where x0 = x-pi/4. It is better to compute sin(x0),cos(x0)
+ *	   by the method mentioned above.
+ *	3. Special cases: y0(0)=-inf, y0(x<0)=NaN, y0(inf)=0.
  */
 
 #include "fdlibm.h"
 
-#ifndef _DOUBLE_IS_32BITS
-
 #ifdef __STDC__
-static double libc_pzero(double), libc_qzero(double);
+static double pzero(double), qzero(double);
 #else
-static double libc_pzero(x), libc_qzero(x);
+static double pzero(), qzero();
 #endif
 
 #ifdef __STDC__
@@ -49,29 +83,24 @@ S02  =  1.16926784663337450260e-04, /* 0x3F1EA6D2, 0xDD57DBF4 */
 S03  =  5.13546550207318111446e-07, /* 0x3EA13B54, 0xCE84D5A9 */
 S04  =  1.16614003333790000205e-09; /* 0x3E1408BC, 0xF4745D8F */
 
+static double zero = 0.0;
+
 /*
 * Definitions generated from Newton
 */
 typedef double bmx055xAcceleration;
 
 #ifdef __STDC__
-static const double zero = 0.0;
+double __ieee754_j0(bmx055xAcceleration x)
 #else
-static double zero = 0.0;
-#endif
-
-#ifdef __STDC__
-double libc_j0(bmx055xAcceleration x)
-#else
-double libc_j0(x)
+double __ieee754_j0(x)
         bmx055xAcceleration x;
 #endif
 {
     double z, s,c,ss,cc,r,u,v;
-    __int32_t hx;
-    __uint32_t ix;
+    int hx,ix;
 
-    GET_HIGH_WORD(hx,x);
+    hx = __HI(x);
     ix = hx&0x7fffffff;
     if(ix>=0x7ff00000) return one/(x*x);
     x = fabs(x);
@@ -82,7 +111,7 @@ double libc_j0(x)
         cc = s+c;
         if(ix<0x7fe00000) {  /* make sure x+x not overflow */
             z = -cos(x+x);
-            if ((s*c)<zero) cc = z/ss; // todo? basic function support?
+            if ((s*c)<zero) cc = z/ss;
             else 	    ss = z/cc;
         }
         /*
@@ -91,7 +120,7 @@ double libc_j0(x)
          */
         if(ix>0x48000000) z = (invsqrtpi*cc)/sqrt(x);
         else {
-            u = libc_pzero(x); v = libc_qzero(x);
+            u = pzero(x); v = qzero(x);
             z = invsqrtpi*(u*cc-v*ss)/sqrt(x);
         }
         return z;
@@ -113,14 +142,14 @@ double libc_j0(x)
     }
 }
 
-/* The asymptotic expansions of libc_pzero is
+/* The asymptotic expansions of pzero is
  *	1 - 9/128 s^2 + 11025/98304 s^4 - ...,	where s = 1/x.
- * For x >= 2, We approximate libc_pzero by
- * 	libc_pzero(x) = 1 + (R/S)
+ * For x >= 2, We approximate pzero by
+ * 	pzero(x) = 1 + (R/S)
  * where  R = pR0 + pR1*s^2 + pR2*s^4 + ... + pR5*s^10
  * 	  S = 1 + pS0*s^2 + ... + pS4*s^10
  * and
- *	| libc_pzero(x)-1-R/S | <= 2  ** ( -60.26)
+ *	| pzero(x)-1-R/S | <= 2  ** ( -60.26)
  */
 #ifdef __STDC__
 static const double pR8[6] = { /* for x in [inf, 8]=1/[0,0.125] */
@@ -219,9 +248,9 @@ static double pS2[5] = {
 };
 
 #ifdef __STDC__
-static double libc_pzero(double x)
+static double pzero(double x)
 #else
-static double libc_pzero(x)
+static double pzero(x)
         double x;
 #endif
 {
@@ -231,14 +260,12 @@ static double libc_pzero(x)
     double *p,*q;
 #endif
     double z,r,s;
-    __uint32_t ix;
-    GET_HIGH_WORD(ix,x);
-    ix &= 0x7fffffff;
-    if (ix>=0x41b00000)    {return one;}
-    else if(ix>=0x40200000){p = pR8; q= pS8;} // todo
-    else if(ix>=0x40122E8B){p = pR5; q= pS5;} // todo
-    else if(ix>=0x4006DB6D){p = pR3; q= pS3;} // todo
-    else {p = pR2; q= pS2;}
+    int ix;
+    ix = 0x7fffffff&__HI(x);
+    if(ix>=0x40200000)     {p = pR8; q= pS8;}
+    else if(ix>=0x40122E8B){p = pR5; q= pS5;}
+    else if(ix>=0x4006DB6D){p = pR3; q= pS3;}
+    else if(ix>=0x40000000){p = pR2; q= pS2;}
     z = one/(x*x);
     r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
     s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*q[4]))));
@@ -246,14 +273,14 @@ static double libc_pzero(x)
 }
 
 
-/* For x >= 8, the asymptotic expansions of libc_qzero is
+/* For x >= 8, the asymptotic expansions of qzero is
  *	-1/8 s + 75/1024 s^3 - ..., where s = 1/x.
- * We approximate libc_qzero by
- * 	libc_qzero(x) = s*(-1.25 + (R/S))
+ * We approximate pzero by
+ * 	qzero(x) = s*(-1.25 + (R/S))
  * where  R = qR0 + qR1*s^2 + qR2*s^4 + ... + qR5*s^10
  * 	  S = 1 + qS0*s^2 + ... + qS5*s^12
  * and
- *	| libc_qzero(x)/s +1.25-R/S | <= 2  ** ( -61.22)
+ *	| qzero(x)/s +1.25-R/S | <= 2  ** ( -61.22)
  */
 #ifdef __STDC__
 static const double qR8[6] = { /* for x in [inf, 8]=1/[0,0.125] */
@@ -356,9 +383,9 @@ static double qS2[6] = {
 };
 
 #ifdef __STDC__
-static double libc_qzero(double x)
+static double qzero(double x)
 #else
-static double libc_qzero(x)
+static double qzero(x)
         double x;
 #endif
 {
@@ -368,18 +395,14 @@ static double libc_qzero(x)
     double *p,*q;
 #endif
     double s,r,z;
-    __uint32_t ix;
-    GET_HIGH_WORD(ix,x);
-    ix &= 0x7fffffff;
-    if (ix>=0x41b00000)    {return -.125/x;}
-    else if(ix>=0x40200000){p = qR8; q= qS8;} // todo
-    else if(ix>=0x40122E8B){p = qR5; q= qS5;} // todo
-    else if(ix>=0x4006DB6D){p = qR3; q= qS3;} // todo
-    else {p = qR2; q= qS2;}
+    int ix;
+    ix = 0x7fffffff&__HI(x);
+    if(ix>=0x40200000)     {p = qR8; q= qS8;}
+    else if(ix>=0x40122E8B){p = qR5; q= qS5;}
+    else if(ix>=0x4006DB6D){p = qR3; q= qS3;}
+    else if(ix>=0x40000000){p = qR2; q= qS2;}
     z = one/(x*x);
     r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
     s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*(q[4]+z*q[5])))));
     return (-.125 + r/s)/x;
 }
-
-#endif /* defined(_DOUBLE_IS_32BITS) */
