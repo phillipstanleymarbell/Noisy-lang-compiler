@@ -139,5 +139,9 @@ for merit_id in range(merit_num):
             file_name = file_name.replace(" ", "_")
             plt.savefig(file_name)
             plt.close()
-            if test_case_id == 9:
+            if test_case_id == test_case_num - 1:
                 break
+
+os.system('cp perf.log fig/')
+os.system('cp average_speedup.log fig/')
+os.system('tar -zvcf fig.tar.gz fig/')

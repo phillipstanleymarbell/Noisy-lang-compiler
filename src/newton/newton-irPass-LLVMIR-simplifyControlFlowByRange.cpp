@@ -1698,6 +1698,12 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         }
                     }
                     break;
+                case Instruction::Br:
+                    if (auto llvmIrBrInstruction = dyn_cast<BranchInst>(&llvmIrInstruction))
+                    {
+
+                    }
+                    break;
 
                 case Instruction::PHI:
                     break;

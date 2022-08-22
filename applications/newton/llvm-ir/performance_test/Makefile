@@ -17,11 +17,16 @@ OUT_S = out.s
 OUT_OBJ = out.o
 OUT_LIB = libout.a
 
+ifdef CROSS_COMPILE
+TARGET_FLAG = -target aarch64
+TARGET_LLC_FLAG = --march=aarch64
+endif
+
 opt_fn = opt ../$(1).ll --O3 -S -o $(OUT_FILE)
 
 newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
 
-compile_main_fn = $(CC) main.c -no-pie -L. -lout -D $(1) -O2 -o main_out -lm
+compile_main_fn = $(CC) $(TARGET_FLAG) main.c -no-pie -L. -lout -D $(1) -O2 -o main_out -lm
 
 make_ll:
 	cd $(SUBDIR) && $(MAKE_CLEAN) && $(MAKE)
@@ -30,8 +35,8 @@ make_ll:
 
 compile_lib:
 	llvm-as $(OUT_FILE) -o $(OUT_BC)
-	llc $(OUT_BC) -o $(OUT_S)
-	$(CC) -c $(OUT_S) -o $(OUT_OBJ)
+	llc $(TARGET_LLC_FLAG) $(OUT_BC) -o $(OUT_S)
+	$(CC) $(TARGET_FLAG) -c $(OUT_S) -o $(OUT_OBJ)
 	ar -rc $(OUT_LIB) $(OUT_OBJ)
 
 exp_non_opt:
