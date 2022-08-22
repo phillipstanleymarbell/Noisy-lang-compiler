@@ -14,7 +14,7 @@ COMMON_FLAGS=-Wall -Wextra
 
 all: default
 
-default: adpcm_main.ll float64_add.ll float64_div.ll float64_mul.ll float64_sin.ll Gsm_LPC_Analysis.ll motion_vectors.ll
+default: float64_add.ll float64_div.ll float64_mul.ll float64_sin.ll
 
 %.ll : %.cpp
 	@echo Compiling $*.c
