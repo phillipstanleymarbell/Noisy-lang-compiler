@@ -96,6 +96,19 @@ enum CmpRes {
 	Unsupported = 6,
 };
 
+enum varType {
+    INT8        = 1,
+    INT16       = 2,
+    INT32       = 3,
+    INT64       = 4,
+    FLOAT       = 5,
+    DOUBLE      = 6,
+    UNCHANGED   = 7
+};
+
+Type *
+shrinkType(State * N, Value *boundValue, const std::pair<double, double>& boundRange, bool& singFlag);
+
 void
 dumpIR(State * N, std::string fileSuffix, std::unique_ptr<Module> Mod)
 {
@@ -513,6 +526,7 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
     {
         for (Instruction & llvmIrInstruction : llvmIrBasicBlock)
         {
+            IRBuilder<> Builder(&llvmIrBasicBlock);
             switch (llvmIrInstruction.getOpcode())
             {
                 case Instruction::Call:
@@ -575,6 +589,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 if (typeRangeIt != boundInfo->typeRange.end())
                                 {
                                     boundInfo->virtualRegisterRange.emplace(localVariableAddress, typeRangeIt->second);
+                                    bool singFlag;
+                                    Type * newType = shrinkType(N, localVariableAddress, typeRangeIt->second, singFlag);
                                 }
                             }
                         }
@@ -613,6 +629,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant int value: %d.\n", constIntValue);
                                     innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
                                                                                  std::make_pair(static_cast<double>(constIntValue), static_cast<double>(constIntValue)));
+                                    bool singFlag;
+                                    shrinkType(N, calledFunction->getArg(idx),
+                                               std::make_pair(static_cast<double>(constIntValue), static_cast<double>(constIntValue)), singFlag);
                                 }
                                 else if (ConstantFP * constFp = dyn_cast<ConstantFP>(llvmIrCallInstruction->getOperand(idx)))
                                 {
@@ -620,6 +639,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant double value: %f.\n", constDoubleValue);
                                     innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
                                                                                  std::make_pair(constDoubleValue, constDoubleValue));
+                                    bool singFlag;
+                                    shrinkType(N, calledFunction->getArg(idx),
+                                               std::make_pair(constDoubleValue, constDoubleValue), singFlag);
                                 }
                                 else
                                 {
@@ -633,6 +655,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                         flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
                                         vrRangeIt->second.first, vrRangeIt->second.second);
                                         innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx), vrRangeIt->second);
+                                        bool signFlag;
+                                        shrinkType(N, calledFunction->getArg(idx), vrRangeIt->second, signFlag);
                                     }
                                 }
                             }
@@ -640,6 +664,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             if (returnRange.first != nullptr)
                             {
                                 boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
+                                bool signFlag;
+                                shrinkType(N, llvmIrCallInstruction, returnRange.second, signFlag);
                             }
                             boundInfo->virtualRegisterRange.insert(innerBoundInfo->virtualRegisterRange.begin(),
                                                                    innerBoundInfo->virtualRegisterRange.end());
@@ -707,6 +733,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 upperBound += vrRangeIt->second.second;
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
+                            bool signFlag;
+                            Type * newType = shrinkType(N, llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound), signFlag);
                         }
                         else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
@@ -730,6 +758,14 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(vrRangeIt->second.first + constValue,
                                                                                        vrRangeIt->second.second + constValue));
+                                bool signFlag;
+                                Type * newType = shrinkType(N, llvmIrBinaryOperator,
+                                                               std::make_pair(vrRangeIt->second.first + constValue,
+                                                                              vrRangeIt->second.second + constValue), signFlag);
+                                if (newType != nullptr)
+                                {
+                                    rightOperand->mutateType(newType);
+                                }
                             }
                         }
                         else
@@ -778,6 +814,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 upperBound -= vrRangeIt->second.first;
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
+                            bool signFlag;
+                            Type * newType = shrinkType(N, llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound), signFlag);
                         }
                         else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
@@ -798,6 +836,14 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(vrRangeIt->second.first - constValue,
                                                                                        vrRangeIt->second.second - constValue));
+                                bool signFlag;
+                                Type * newType = shrinkType(N, llvmIrBinaryOperator,
+                                                                      std::make_pair(vrRangeIt->second.first - constValue,
+                                                                                     vrRangeIt->second.second - constValue), signFlag);
+                                if (newType != nullptr)
+                                {
+                                    rightOperand->mutateType(newType);
+                                }
                             }
                         }
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
@@ -819,6 +865,14 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(constValue - vrRangeIt->second.second,
                                                                                        constValue - vrRangeIt->second.first));
+                                bool signFlag;
+                                Type * newType = shrinkType(N, llvmIrBinaryOperator,
+                                                            std::make_pair(constValue - vrRangeIt->second.second,
+                                                                           constValue - vrRangeIt->second.first), signFlag);
+                                if (newType != nullptr)
+                                {
+                                    leftOperand->mutateType(newType);
+                                }
                             }
                         }
                         else
@@ -869,6 +923,14 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(vrRangeIt->second.first * constValue,
                                                                                        vrRangeIt->second.second * constValue));
+                                bool signFlag;
+                                Type * newType = shrinkType(N, llvmIrBinaryOperator,
+                                                            std::make_pair(vrRangeIt->second.first * constValue,
+                                                                           vrRangeIt->second.second * constValue), signFlag);
+                                if (newType != nullptr)
+                                {
+                                    rightOperand->mutateType(newType);
+                                }
                             }
                         }
                         else
@@ -923,6 +985,14 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(vrRangeIt->second.first / constValue,
                                                                                        vrRangeIt->second.second / constValue));
+                                bool signFlag;
+                                Type * newType = shrinkType(N, llvmIrBinaryOperator,
+                                                            std::make_pair(vrRangeIt->second.first / constValue,
+                                                                           vrRangeIt->second.second / constValue), signFlag);
+                                if (newType != nullptr)
+                                {
+                                    rightOperand->mutateType(newType);
+                                }
                             }
                         }
                         else
@@ -977,6 +1047,14 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                         std::make_pair(remainder(vrRangeIt->second.first, constValue),
                                                        remainder(vrRangeIt->second.second, constValue)));
+                                bool signFlag;
+                                Type * newType = shrinkType(N, llvmIrBinaryOperator,
+                                                                      std::make_pair(remainder(vrRangeIt->second.first, constValue),
+                                                                                     remainder(vrRangeIt->second.second, constValue)), signFlag);
+                                if (newType != nullptr)
+                                {
+                                    rightOperand->mutateType(newType);
+                                }
                             }
                         }
                         else
@@ -1025,6 +1103,14 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first << constValue,
                                                                                        (int)vrRangeIt->second.second << constValue));
+                                bool signFlag;
+                                Type * newType = shrinkType(N, llvmIrBinaryOperator,
+                                                            std::make_pair((int)vrRangeIt->second.first << constValue,
+                                                                           (int)vrRangeIt->second.second << constValue), signFlag);
+                                if (newType != nullptr)
+                                {
+                                    rightOperand->mutateType(newType);
+                                }
                             }
                         }
                         else
@@ -1074,6 +1160,17 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first >> constValue,
                                                                                        (int)vrRangeIt->second.second >> constValue));
+                                bool singFlag;
+                                Type * newType = shrinkType(N, llvmIrBinaryOperator,
+                                                            std::make_pair((int)vrRangeIt->second.first >> constValue,
+                                                                           (int)vrRangeIt->second.second >> constValue), singFlag);
+                                Builder.SetInsertPoint(llvmIrBinaryOperator->getNextNode());
+                                auto tmp = llvmIrBinaryOperator->clone();
+                                llvmIrBasicBlock.getInstList().insert(llvmIrBinaryOperator->getIterator(), tmp);
+                                Value * intCast = Builder.CreateIntCast(tmp, newType, singFlag);
+                                llvmIrBinaryOperator->replaceAllUsesWith(intCast);
+                                llvmIrBinaryOperator->eraseFromParent();
+                                singFlag = true;
                             }
                         }
                         else
@@ -1120,6 +1217,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 }
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
+                            bool signFlag;
+                            Type * newType = shrinkType(N, llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound), signFlag);
                         }
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
@@ -1142,6 +1241,14 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first & constValue,
                                                                                        (int)vrRangeIt->second.second & constValue));
+                                bool signFlag;
+                                Type * newType = shrinkType(N, llvmIrBinaryOperator,
+                                                            std::make_pair((int)vrRangeIt->second.first & constValue,
+                                                                           (int)vrRangeIt->second.second & constValue), signFlag);
+                                if (newType != nullptr)
+                                {
+                                    rightOperand->mutateType(newType);
+                                }
                             }
                         }
                         else
@@ -1188,6 +1295,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 }
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
+                            bool signFlag;
+                            Type * newType = shrinkType(N, llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound), signFlag);
                         }
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
@@ -1210,6 +1319,14 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first | constValue,
                                                                                        (int)vrRangeIt->second.second | constValue));
+                                bool signFlag;
+                                Type * newType = shrinkType(N, llvmIrBinaryOperator,
+                                                            std::make_pair((int)vrRangeIt->second.first | constValue,
+                                                                           (int)vrRangeIt->second.second | constValue), signFlag);
+                                if (newType != nullptr)
+                                {
+                                    rightOperand->mutateType(newType);
+                                }
                             }
                         }
                         else
@@ -1256,6 +1373,14 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first ^ constValue,
                                                                                        (int)vrRangeIt->second.second ^ constValue));
+                                bool signFlag;
+                                Type * newType = shrinkType(N, llvmIrBinaryOperator,
+                                                            std::make_pair((int)vrRangeIt->second.first ^ constValue,
+                                                                           (int)vrRangeIt->second.second ^ constValue), signFlag);
+                                if (newType != nullptr)
+                                {
+                                    rightOperand->mutateType(newType);
+                                }
                             }
                         }
                         else
@@ -1282,6 +1407,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         boundInfo->virtualRegisterRange.emplace(&llvmIrInstruction,
                                                                 vrRangeIt->second);
+                        bool signFlag;
+                        Type * newType = shrinkType(N, &llvmIrInstruction, vrRangeIt->second, signFlag);
                     }
                 }
                     break;
@@ -1293,6 +1420,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                         {
                             boundInfo->virtualRegisterRange.emplace(llvmIrLoadInstruction, vrRangeIt->second);
+                            bool signFlag;
+                            Type * newType = shrinkType(N, llvmIrLoadInstruction, vrRangeIt->second, signFlag);
+
                         }
                     }
                     break;
@@ -1318,6 +1448,11 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 constValue = constInt->getSExtValue();
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), std::make_pair(constValue, constValue));
+                            bool signFlag;
+                            Type * newType = shrinkType(N, llvmIrStoreInstruction->getOperand(1), std::make_pair(constValue, constValue), signFlag);                            if (newType != nullptr)
+                            {
+                                llvmIrStoreInstruction->getOperand(0)->mutateType(newType);
+                            }
                         }
                         else
                         {
@@ -1325,6 +1460,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                             {
                                 boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), vrRangeIt->second);
+                                bool signFlag;
+                                Type * newType = shrinkType(N, llvmIrStoreInstruction->getOperand(1), vrRangeIt->second, signFlag);
                             }
                             /*
                              * Each time if there's a StorInst assign to the unionAddress, it updates the value of union.
@@ -1334,6 +1471,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             {
                                 flexprint(N->Fe, N->Fm, N->Fpinfo, "\tStore Union: %f - %f\n",  vrRangeIt->second.first, vrRangeIt->second.second);
                                 boundInfo->virtualRegisterRange.emplace(uaIt->second, vrRangeIt->second);
+                                bool signFlag;
+                                Type * newType = shrinkType(N, uaIt->second, vrRangeIt->second, signFlag);
                             }
                         }
                     }
@@ -1353,7 +1492,6 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             switch (DestEleType->getTypeID())
                             {
                                 case Type::IntegerTyID:
-                                if (DestEleType->isSized()) {
                                     switch (DestEleType->getIntegerBitWidth())
                                     {
                                         case 8:
@@ -1375,34 +1513,11 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                         default:
                                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tTrunc: Type::SignedInteger, don't support such bit width yet.");
                                     }
-                                    }
-                                else
-                                {
-                                    switch (DestEleType->getIntegerBitWidth())
-                                    {
-                                        case 8:
-                                            lowRange = static_cast<double>(static_cast<uint8_t>(originLow));
-                                            highRange = static_cast<double>(static_cast<uint8_t>(originHigh));
-                                        break;
-                                        case 16:
-                                            lowRange = static_cast<double>(static_cast<uint16_t>(originLow));
-                                            highRange = static_cast<double>(static_cast<uint16_t>(originHigh));
-                                        break;
-                                        case 32:
-                                            lowRange = static_cast<double>(static_cast<uint32_t>(originLow));
-                                            highRange = static_cast<double>(static_cast<uint32_t>(originHigh));
-                                        break;
-                                        case 64:
-                                            lowRange = static_cast<double>(static_cast<uint64_t>(originLow));
-                                            highRange = static_cast<double>(static_cast<uint64_t>(originHigh));
-                                        break;
-                                        default:
-                                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tTrunc: Type::UnSignedInteger, don't support such bit width yet.");
-                                    }
-                                }
                                 break;
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrTruncInstruction, std::make_pair(lowRange, highRange));
+                            bool signFlag;
+                            Type * newType = shrinkType(N, llvmIrTruncInstruction, std::make_pair(lowRange, highRange), signFlag);
                         }
                     }
                 break;
@@ -1417,6 +1532,10 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             boundInfo->virtualRegisterRange.emplace(llvmIrFPTruncInstruction,
                                                                     std::make_pair(static_cast<double>(static_cast<float>(vrRangeIt->second.first)),
                                                                                    static_cast<double>(static_cast<float>(vrRangeIt->second.second))));
+                            bool signFlag;
+                            Type * newType = shrinkType(N, llvmIrFPTruncInstruction,
+                                                        std::make_pair(static_cast<double>(static_cast<float>(vrRangeIt->second.first)),
+                                                                       static_cast<double>(static_cast<float>(vrRangeIt->second.second))), signFlag);
                         }
                     }
                     break;
@@ -1459,6 +1578,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             double originHigh = vrRangeIt->second.second;
                             double lowRange, highRange;
                             auto DestEleType = llvmIrBitCastInstruction->getDestTy()->getPointerElementType();
+                            Type * newType = nullptr;
+                            bool signFlag;
                             switch (DestEleType->getTypeID())
                             {
                                 case Type::FloatTyID:
@@ -1467,6 +1588,7 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::FloatTyID, %f - %f to %f - %f\n",
                                               vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                     boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
+                                    newType = shrinkType(N, llvmIrBitCastInstruction, std::make_pair(lowRange, highRange), signFlag);
                                     break;
                                 case Type::DoubleTyID:
                                     lowRange = *reinterpret_cast<double *>(&originLow);
@@ -1474,43 +1596,27 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::DoubleTyID, %f - %f to %f - %f\n",
                                               vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                     boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
+                                    newType = shrinkType(N, llvmIrBitCastInstruction, std::make_pair(lowRange, highRange), signFlag);
                                     break;
                                 case Type::IntegerTyID:
-                                    if (DestEleType->isSized()) {
-                                        switch (DestEleType->getIntegerBitWidth())
-                                        {
-                                            case 32:
-                                                lowRange = static_cast<double>(*reinterpret_cast<int32_t *>(&originLow));
-                                                highRange = static_cast<double>(*reinterpret_cast<int32_t *>(&originHigh));
-                                                break;
-                                            case 64:
-                                                lowRange = static_cast<double>(*reinterpret_cast<int64_t *>(&originLow));
-                                                highRange = static_cast<double>(*reinterpret_cast<int64_t *>(&originHigh));
-                                                break;
-                                            default:
-                                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
-                                        }
-                                    }
-                                    else
+                                    switch (DestEleType->getIntegerBitWidth())
                                     {
-                                        switch (DestEleType->getIntegerBitWidth())
-                                        {
-                                            case 32:
-                                                lowRange = static_cast<double>(*reinterpret_cast<uint32_t *>(&originLow));
-                                                highRange = static_cast<double>(*reinterpret_cast<uint32_t *>(&originHigh));
-                                                break;
-                                            case 64:
-                                                lowRange = static_cast<double>(*reinterpret_cast<uint64_t *>(&originLow));
-                                                highRange = static_cast<double>(*reinterpret_cast<uint64_t *>(&originHigh));
-                                                break;
-                                            default:
-                                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::UnSignedInteger, don't support such bit width yet.");
-                                        }
+                                        case 32:
+                                            lowRange = static_cast<double>(*reinterpret_cast<int32_t *>(&originLow));
+                                            highRange = static_cast<double>(*reinterpret_cast<int32_t *>(&originHigh));
+                                            break;
+                                        case 64:
+                                            lowRange = static_cast<double>(*reinterpret_cast<int64_t *>(&originLow));
+                                            highRange = static_cast<double>(*reinterpret_cast<int64_t *>(&originHigh));
+                                            break;
+                                        default:
+                                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
                                     }
 
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::IntegerTyID, %f - %f to %f - %f\n",
                                               vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                     boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
+                                    newType = shrinkType(N, llvmIrBitCastInstruction, std::make_pair(lowRange, highRange), signFlag);
                                     break;
                                 case Type::StructTyID:
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::StructTyID, %f - %f to %f - %f\n",
@@ -1519,6 +1625,7 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 default:
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Do not support other type yet.\n");
                                     boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, vrRangeIt->second);
+                                    newType = shrinkType(N, llvmIrBitCastInstruction, vrRangeIt->second, signFlag);
                                     continue;
                             }
                         }
@@ -1606,6 +1713,8 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                         element_offset = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(2))->getZExtValue();
                                     }
                                     auto resEleTy = llvmIrGetElePtrInstruction->getResultElementType();
+                                    Type * newType = nullptr;
+                                    bool signFlag;
                                     switch (resEleTy->getTypeID())
                                     {
                                         case Type::FloatTyID:
@@ -1614,6 +1723,7 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::FloatTyID, %f - %f to %f - %f\n",
                                                       vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                             boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange));
+                                            newType = shrinkType(N, llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange), signFlag);
                                             break;
                                         case Type::DoubleTyID:
                                             lowRange = static_cast<double>(originLowWord >> (32 * element_offset));
@@ -1621,47 +1731,32 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::DoubleTyID, %f - %f to %f - %f\n",
                                                       vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                             boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange));
+                                            newType = shrinkType(N, llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange), signFlag);
                                             break;
                                         case Type::IntegerTyID:
-                                            if (resEleTy->isSized()) {
-                                                switch (resEleTy->getPrimitiveSizeInBits())
-                                                {
-                                                    case 32:
-                                                        lowRange = static_cast<double>(static_cast<int32_t>(originLowWord >> (32 * element_offset)));
-                                                        highRange = static_cast<double>(static_cast<int32_t>(originHighWord >> (32 * element_offset)));
-                                                        break;
-                                                    case 64:
-                                                        lowRange = static_cast<double>(static_cast<int64_t>(originLowWord));
-                                                        highRange = static_cast<double>(static_cast<int64_t>(originHighWord));
-                                                        break;
-                                                    default:
-                                                        flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
-                                                }
-                                            }
-                                            else
+                                            switch (resEleTy->getPrimitiveSizeInBits())
                                             {
-                                                switch (resEleTy->getPrimitiveSizeInBits())
-                                                {
-                                                    case 32:
-                                                        lowRange = static_cast<double>(static_cast<uint32_t>(originLowWord >> (32 * element_offset)));
-                                                        highRange = static_cast<double>(static_cast<uint32_t>(originHighWord >> (32 * element_offset)));
-                                                        break;
-                                                    case 64:
-                                                        lowRange = static_cast<double>(static_cast<uint64_t>(originLowWord));
-                                                        highRange = static_cast<double>(static_cast<uint64_t>(originHighWord));
-                                                        break;
-                                                    default:
-                                                        flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
-                                                }
+                                                case 32:
+                                                    lowRange = static_cast<double>(static_cast<int32_t>(originLowWord >> (32 * element_offset)));
+                                                    highRange = static_cast<double>(static_cast<int32_t>(originHighWord >> (32 * element_offset)));
+                                                    break;
+                                                case 64:
+                                                    lowRange = static_cast<double>(static_cast<int64_t>(originLowWord));
+                                                    highRange = static_cast<double>(static_cast<int64_t>(originHighWord));
+                                                    break;
+                                                default:
+                                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
                                             }
 
                                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::IntegerTyID, %f - %f to %f - %f\n",
                                                       vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                             boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange));
-                                        break;
+                                            newType = shrinkType(N, llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange), signFlag);
+                                            break;
                                         default:
                                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tGetElePtr: Do not support other type yet.\n");
                                             boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, vrRangeIt->second);
+                                            newType = shrinkType(N, llvmIrGetElePtrInstruction, vrRangeIt->second, signFlag);
                                             continue;
                                     }
                                 }
@@ -1694,6 +1789,9 @@ inferBound(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(
                                         llvmIrFNegInstruction, std::make_pair(-vrRangeIt->second.first,
                                                                               -vrRangeIt->second.second));
+                                bool signFlag;
+                                Type * newType = shrinkType(N, llvmIrFNegInstruction, std::make_pair(-vrRangeIt->second.first,
+                                                                                    -vrRangeIt->second.second), signFlag);
                             }
                         }
                     }
@@ -1981,6 +2079,112 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 			}
 		}
 	}
+}
+
+Type *
+shrinkIntType(State * N, Value *boundValue, const std::pair<double, double>& boundRange, bool& signFlag)
+{
+    /*
+     * Signed-ness in LLVM is not stored into the integer, it is left to
+     * interpretation to the instruction that use them.
+     * */
+    signFlag = boundRange.first < 0;
+
+    varType finalType = UNCHANGED;
+    if ((!signFlag && boundRange.second < UINT8_MAX) ||
+        (signFlag && boundRange.first > INT8_MIN && boundRange.second < INT8_MAX))
+    {
+        finalType = INT8;
+    }
+    else if ((!signFlag && boundRange.second < UINT16_MAX) ||
+             (signFlag && boundRange.first > INT16_MIN && boundRange.second < INT16_MAX))
+    {
+        finalType = INT16;
+    }
+    else if ((!signFlag && boundRange.second < UINT32_MAX) ||
+             (signFlag && boundRange.first > INT32_MIN && boundRange.second < INT32_MAX))
+    {
+        finalType = INT32;
+    }
+    else if ((!signFlag && boundRange.second < UINT64_MAX) ||
+             (signFlag && boundRange.first > INT64_MIN && boundRange.second < INT64_MAX))
+    {
+        finalType = INT64;
+    }
+    else
+    {
+        finalType = UNCHANGED;
+    }
+
+    auto previousType = boundValue->getType();
+    auto typeId = previousType->getTypeID();
+    auto& context = previousType->getContext();
+    unsigned bitWidth;
+
+    bool isPointer = false;
+    unsigned pointerAddr;
+    if (typeId == Type::PointerTyID)
+    {
+        typeId = previousType->getPointerElementType()->getTypeID();
+        bitWidth = previousType->getPointerElementType()->getIntegerBitWidth();
+        isPointer = true;
+        pointerAddr = previousType->getPointerAddressSpace();
+    }
+    else
+    {
+        bitWidth = previousType->getIntegerBitWidth();
+    }
+    assert(typeId = Type::IntegerTyID);
+
+    Type *newType = nullptr;
+    switch (bitWidth) {
+        case 64:
+            if (finalType == INT32)
+            {
+                newType = IntegerType::getInt32Ty(context);
+            }
+        case 32:
+            if (finalType == INT16)
+            {
+                newType = IntegerType::getInt16Ty(context);
+            }
+        case 16:
+            if (finalType == INT8)
+            {
+                newType = IntegerType::getInt8Ty(context);
+            }
+            break;
+        default:
+            flexprint(N->Fe, N->Fm, N->Fpinfo,
+                      "\tshrinkType: Type::Integer, don't support such bit width yet.");
+    }
+
+    if (newType != nullptr) {
+        newType = isPointer ? newType->getPointerTo(pointerAddr) : newType;
+//        boundValue->mutateType(newType);
+    }
+
+    return newType;
+}
+
+Type *
+shrinkType(State * N, Value *boundValue, const std::pair<double, double>& boundRange, bool& signFlag)
+{
+    auto valueType = boundValue->getType();
+    auto valueTypeId = valueType->getTypeID() == Type::PointerTyID ?
+            valueType->getPointerElementType()->getTypeID() :
+            valueType->getTypeID();
+
+    switch (valueTypeId) {
+        case Type::IntegerTyID:
+            return shrinkIntType(N, boundValue, boundRange, signFlag);
+//        case Type::FloatTyID:
+//            break;
+//        case Type::DoubleTyID:
+//            break;
+        default:
+            return nullptr;
+    }
 }
 
 void
