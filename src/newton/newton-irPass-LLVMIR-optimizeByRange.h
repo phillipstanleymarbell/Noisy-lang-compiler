@@ -35,7 +35,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "newton-irPass-LLVMIR-rangeAnalysis.h"
+#ifndef NEWTON_IR_PASS_LLVM_IR_OPTIMIZE_BY_RANGE
+#define NEWTON_IR_PASS_LLVM_IR_OPTIMIZE_BY_RANGE
 
 #ifdef __cplusplus
 extern "C"
@@ -43,8 +44,10 @@ extern "C"
 #endif /* __cplusplus */
 
 void
-simplifyControlFlow(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction);
+irPassLLVMIROptimizeByRange(State * N);
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */
+
+#endif /* NEWTON_IR_PASS_LLVM_IR_OPTIMIZE_BY_RANGE */

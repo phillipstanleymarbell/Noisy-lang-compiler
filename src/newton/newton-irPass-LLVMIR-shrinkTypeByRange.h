@@ -35,6 +35,9 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef NEWTON_IR_PASS_LLVM_IR_SHRINK_TYPE_BY_RANGE
+#define NEWTON_IR_PASS_LLVM_IR_SHRINK_TYPE_BY_RANGE
+
 #include "newton-irPass-LLVMIR-rangeAnalysis.h"
 
 #ifdef __cplusplus
@@ -43,8 +46,10 @@ extern "C"
 #endif /* __cplusplus */
 
 void
-simplifyControlFlow(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction);
+shrinkType(State * N, Instruction *inInstruction, llvm::BasicBlock & llvmIrBasicBlock, const std::pair<double, double>& boundRange);
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */
+
+#endif /* NEWTON_IR_PASS_LLVM_IR_SHRINK_TYPE_BY_RANGE */

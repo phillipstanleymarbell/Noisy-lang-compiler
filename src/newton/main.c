@@ -419,7 +419,7 @@ main(int argc, char *argv[])
 			case 'L':
 			{
 				N->irPasses |= kNewtonIrPassLLVMIRLivenessAnalysis;
-				N->irPasses |= kNewtonIrPassLLVMIRSimplifyControlFlowByRange;
+				N->irPasses |= kNewtonirPassLLVMIROptimizeByRange;
 				break;
 			}
 
