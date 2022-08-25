@@ -37,6 +37,8 @@
 
 #include "newton-irPass-LLVMIR-shrinkTypeByRange.h"
 
+using namespace llvm;
+
 extern "C"
 {
 
@@ -103,7 +105,7 @@ shrinkIntType(State * N, Value *boundValue, const std::pair<double, double>& bou
     {
         bitWidth = previousType->getIntegerBitWidth();
     }
-    assert(typeId = Type::IntegerTyID);
+    assert(typeId == Type::IntegerTyID);
 
     Type *newType = nullptr;
     switch (bitWidth) {
@@ -170,4 +172,6 @@ shrinkType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasicBlock,
 //        inInstruction->removeFromParent();
         ReplaceInstWithInst(inInstruction, tmp);
     }
+}
+
 }

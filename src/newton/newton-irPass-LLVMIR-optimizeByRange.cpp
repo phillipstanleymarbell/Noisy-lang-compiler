@@ -35,10 +35,11 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "newton-irPass-LLVMIR-optimizeByRange.h"
+#ifdef __cplusplus
 #include "newton-irPass-LLVMIR-rangeAnalysis.h"
 #include "newton-irPass-LLVMIR-simplifyControlFlowByRange.h"
 #include "newton-irPass-LLVMIR-shrinkTypeByRange.h"
+#endif /* __cplusplus */
 
 #include <algorithm>
 #include <cmath>
@@ -61,31 +62,10 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
 
+using namespace llvm;
+
 extern "C"
 {
-
-#include "flextypes.h"
-#include "flexerror.h"
-#include "flex.h"
-#include "common-errors.h"
-#include "version.h"
-#include "newton-timeStamps.h"
-#include "common-timeStamps.h"
-#include "common-data-structures.h"
-#include "noisy-parser.h"
-#include "newton-parser.h"
-#include "noisy-lexer.h"
-#include "newton-lexer.h"
-#include "common-irPass-helpers.h"
-#include "common-lexers-helpers.h"
-#include "common-irHelpers.h"
-#include "common-symbolTable.h"
-#include "newton-types.h"
-#include "newton-symbolTable.h"
-#include "newton-irPass-cBackend.h"
-#include "newton-irPass-autoDiff.h"
-#include "newton-irPass-estimatorSynthesisBackend.h"
-#include "newton-irPass-invariantSignalAnnotation.h"
 
 void
 dumpIR(State * N, std::string fileSuffix, std::unique_ptr<Module> Mod)

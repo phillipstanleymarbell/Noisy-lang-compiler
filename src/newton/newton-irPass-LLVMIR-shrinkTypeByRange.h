@@ -46,7 +46,7 @@ extern "C"
 #endif /* __cplusplus */
 
 void
-shrinkType(State * N, Instruction *inInstruction, llvm::BasicBlock & llvmIrBasicBlock, const std::pair<double, double>& boundRange);
+shrinkType(State * N, llvm::Instruction *inInstruction, llvm::BasicBlock & llvmIrBasicBlock, const std::pair<double, double>& boundRange);
 
 #ifdef __cplusplus
 } /* extern "C" */

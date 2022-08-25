@@ -37,6 +37,8 @@
 
 #include "newton-irPass-LLVMIR-rangeAnalysis.h"
 
+using namespace llvm;
+
 extern "C"
 {
 
@@ -110,7 +112,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 if (typeRangeIt != boundInfo->typeRange.end())
                                 {
                                     boundInfo->virtualRegisterRange.emplace(localVariableAddress, typeRangeIt->second);
-//                                    shrinkType(N, localVariableAddress, llvmIrBasicBlock, typeRangeIt->second);
+//                                    ////shrinkType(N, localVariableAddress, llvmIrBasicBlock, typeRangeIt->second);
                                 }
                             }
                         }
@@ -149,7 +151,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant int value: %d.\n", constIntValue);
                                     innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
                                                                                  std::make_pair(static_cast<double>(constIntValue), static_cast<double>(constIntValue)));
-//                                    shrinkType(N, calledFunction->getArg(idx), llvmIrBasicBlock,
+//                                    //shrinkType(N, calledFunction->getArg(idx), llvmIrBasicBlock,
 //                                               std::make_pair(static_cast<double>(constIntValue), static_cast<double>(constIntValue)));
                                 }
                                 else if (ConstantFP * constFp = dyn_cast<ConstantFP>(llvmIrCallInstruction->getOperand(idx)))
@@ -158,7 +160,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant double value: %f.\n", constDoubleValue);
                                     innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
                                                                                  std::make_pair(constDoubleValue, constDoubleValue));
-//                                    shrinkType(N, calledFunction->getArg(idx), llvmIrBasicBlock,
+//                                    //shrinkType(N, calledFunction->getArg(idx), llvmIrBasicBlock,
 //                                               std::make_pair(constDoubleValue, constDoubleValue));
                                 }
                                 else
@@ -173,7 +175,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                         flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
                                         vrRangeIt->second.first, vrRangeIt->second.second);
                                         innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx), vrRangeIt->second);
-//                                        shrinkType(N, calledFunction->getArg(idx), llvmIrBasicBlock, vrRangeIt->second);
+//                                        //shrinkType(N, calledFunction->getArg(idx), llvmIrBasicBlock, vrRangeIt->second);
                                     }
                                 }
                             }
@@ -181,7 +183,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             if (returnRange.first != nullptr)
                             {
                                 boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
-                                shrinkType(N, llvmIrCallInstruction, llvmIrBasicBlock, returnRange.second);
+                                //shrinkType(N, llvmIrCallInstruction, llvmIrBasicBlock, returnRange.second);
                             }
                             boundInfo->virtualRegisterRange.insert(innerBoundInfo->virtualRegisterRange.begin(),
                                                                    innerBoundInfo->virtualRegisterRange.end());
@@ -249,7 +251,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 upperBound += vrRangeIt->second.second;
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
-                            shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock, std::make_pair(lowerBound, upperBound));
+                            //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock, std::make_pair(lowerBound, upperBound));
                         }
                         else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
@@ -273,9 +275,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(vrRangeIt->second.first + constValue,
                                                                                        vrRangeIt->second.second + constValue));
-                                shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
-                                                               std::make_pair(vrRangeIt->second.first + constValue,
-                                                                              vrRangeIt->second.second + constValue));
+                                //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
+//                                                               std::make_pair(vrRangeIt->second.first + constValue,
+//                                                                              vrRangeIt->second.second + constValue));
                             }
                         }
                         else
@@ -324,7 +326,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 upperBound -= vrRangeIt->second.first;
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
-                            shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock, std::make_pair(lowerBound, upperBound));
+                            //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock, std::make_pair(lowerBound, upperBound));
                         }
                         else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
@@ -345,9 +347,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(vrRangeIt->second.first - constValue,
                                                                                        vrRangeIt->second.second - constValue));
-                                shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
-                                                                      std::make_pair(vrRangeIt->second.first - constValue,
-                                                                                     vrRangeIt->second.second - constValue));
+                                //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
+//                                                                      std::make_pair(vrRangeIt->second.first - constValue,
+//                                                                                     vrRangeIt->second.second - constValue));
                             }
                         }
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
@@ -369,9 +371,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(constValue - vrRangeIt->second.second,
                                                                                        constValue - vrRangeIt->second.first));
-                                shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
-                                                            std::make_pair(constValue - vrRangeIt->second.second,
-                                                                           constValue - vrRangeIt->second.first));
+                                //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
+//                                                            std::make_pair(constValue - vrRangeIt->second.second,
+//                                                                           constValue - vrRangeIt->second.first));
                             }
                         }
                         else
@@ -422,9 +424,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(vrRangeIt->second.first * constValue,
                                                                                        vrRangeIt->second.second * constValue));
-                                shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
-                                                            std::make_pair(vrRangeIt->second.first * constValue,
-                                                                           vrRangeIt->second.second * constValue));
+                                //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
+//                                                            std::make_pair(vrRangeIt->second.first * constValue,
+//                                                                           vrRangeIt->second.second * constValue));
                             }
                         }
                         else
@@ -479,9 +481,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(vrRangeIt->second.first / constValue,
                                                                                        vrRangeIt->second.second / constValue));
-                                shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
-                                                            std::make_pair(vrRangeIt->second.first / constValue,
-                                                                           vrRangeIt->second.second / constValue));
+                                //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
+//                                                            std::make_pair(vrRangeIt->second.first / constValue,
+//                                                                           vrRangeIt->second.second / constValue));
                             }
                         }
                         else
@@ -536,9 +538,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                         std::make_pair(remainder(vrRangeIt->second.first, constValue),
                                                        remainder(vrRangeIt->second.second, constValue)));
-                                shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
-                                                                      std::make_pair(remainder(vrRangeIt->second.first, constValue),
-                                                                                     remainder(vrRangeIt->second.second, constValue)));
+                                //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
+//                                                                      std::make_pair(remainder(vrRangeIt->second.first, constValue),
+//                                                                                     remainder(vrRangeIt->second.second, constValue)));
                             }
                         }
                         else
@@ -587,9 +589,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first << constValue,
                                                                                        (int)vrRangeIt->second.second << constValue));
-                                shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
-                                                            std::make_pair((int)vrRangeIt->second.first << constValue,
-                                                                           (int)vrRangeIt->second.second << constValue));
+                                //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
+//                                                            std::make_pair((int)vrRangeIt->second.first << constValue,
+//                                                                           (int)vrRangeIt->second.second << constValue));
                             }
                         }
                         else
@@ -639,9 +641,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first >> constValue,
                                                                                        (int)vrRangeIt->second.second >> constValue));
-                                shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
-                                                            std::make_pair((int)vrRangeIt->second.first >> constValue,
-                                                                           (int)vrRangeIt->second.second >> constValue));
+                                //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
+//                                                            std::make_pair((int)vrRangeIt->second.first >> constValue,
+//                                                                           (int)vrRangeIt->second.second >> constValue));
                             }
                         }
                         else
@@ -688,7 +690,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 }
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
-                            shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock, std::make_pair(lowerBound, upperBound));
+                            //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock, std::make_pair(lowerBound, upperBound));
                         }
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
@@ -711,9 +713,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first & constValue,
                                                                                        (int)vrRangeIt->second.second & constValue));
-                                shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
-                                                            std::make_pair((int)vrRangeIt->second.first & constValue,
-                                                                           (int)vrRangeIt->second.second & constValue));
+                                //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
+//                                                            std::make_pair((int)vrRangeIt->second.first & constValue,
+//                                                                           (int)vrRangeIt->second.second & constValue));
                             }
                         }
                         else
@@ -760,7 +762,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 }
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
-                            shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock, std::make_pair(lowerBound, upperBound));
+                            //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock, std::make_pair(lowerBound, upperBound));
                         }
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
@@ -783,9 +785,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first | constValue,
                                                                                        (int)vrRangeIt->second.second | constValue));
-                                shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
-                                                            std::make_pair((int)vrRangeIt->second.first | constValue,
-                                                                           (int)vrRangeIt->second.second | constValue));
+                                //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
+//                                                            std::make_pair((int)vrRangeIt->second.first | constValue,
+//                                                                           (int)vrRangeIt->second.second | constValue));
                             }
                         }
                         else
@@ -832,9 +834,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first ^ constValue,
                                                                                        (int)vrRangeIt->second.second ^ constValue));
-                                shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
-                                                            std::make_pair((int)vrRangeIt->second.first ^ constValue,
-                                                                           (int)vrRangeIt->second.second ^ constValue));
+                                //shrinkType(N, llvmIrBinaryOperator, llvmIrBasicBlock,
+//                                                            std::make_pair((int)vrRangeIt->second.first ^ constValue,
+//                                                                           (int)vrRangeIt->second.second ^ constValue));
                             }
                         }
                         else
@@ -861,7 +863,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         boundInfo->virtualRegisterRange.emplace(&llvmIrInstruction,
                                                                 vrRangeIt->second);
-                        shrinkType(N, &llvmIrInstruction, llvmIrBasicBlock, vrRangeIt->second);
+                        //shrinkType(N, &llvmIrInstruction, llvmIrBasicBlock, vrRangeIt->second);
                     }
                 }
                     break;
@@ -873,7 +875,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                         {
                             boundInfo->virtualRegisterRange.emplace(llvmIrLoadInstruction, vrRangeIt->second);
-                            shrinkType(N, llvmIrLoadInstruction, llvmIrBasicBlock, vrRangeIt->second);
+                            //shrinkType(N, llvmIrLoadInstruction, llvmIrBasicBlock, vrRangeIt->second);
 
                         }
                     }
@@ -900,7 +902,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 constValue = constInt->getSExtValue();
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), std::make_pair(constValue, constValue));
-//                            shrinkType(N, llvmIrStoreInstruction->getOperand(1), llvmIrBasicBlock, std::make_pair(constValue, constValue));
+//                            //shrinkType(N, llvmIrStoreInstruction->getOperand(1), llvmIrBasicBlock, std::make_pair(constValue, constValue));
                         }
                         else
                         {
@@ -908,7 +910,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                             {
                                 boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), vrRangeIt->second);
-//                                shrinkType(N, llvmIrStoreInstruction->getOperand(1), llvmIrBasicBlock, vrRangeIt->second);
+//                                //shrinkType(N, llvmIrStoreInstruction->getOperand(1), llvmIrBasicBlock, vrRangeIt->second);
                             }
                             /*
                              * Each time if there's a StorInst assign to the unionAddress, it updates the value of union.
@@ -918,7 +920,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             {
                                 flexprint(N->Fe, N->Fm, N->Fpinfo, "\tStore Union: %f - %f\n",  vrRangeIt->second.first, vrRangeIt->second.second);
                                 boundInfo->virtualRegisterRange.emplace(uaIt->second, vrRangeIt->second);
-//                                shrinkType(N, uaIt->second, llvmIrBasicBlock, vrRangeIt->second);
+//                                //shrinkType(N, uaIt->second, llvmIrBasicBlock, vrRangeIt->second);
                             }
                         }
                     }
@@ -962,7 +964,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 break;
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrTruncInstruction, std::make_pair(lowRange, highRange));
-                            shrinkType(N, llvmIrTruncInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
+                            //shrinkType(N, llvmIrTruncInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
                         }
                     }
                 break;
@@ -977,9 +979,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             boundInfo->virtualRegisterRange.emplace(llvmIrFPTruncInstruction,
                                                                     std::make_pair(static_cast<double>(static_cast<float>(vrRangeIt->second.first)),
                                                                                    static_cast<double>(static_cast<float>(vrRangeIt->second.second))));
-                            shrinkType(N, llvmIrFPTruncInstruction, llvmIrBasicBlock,
-                                                        std::make_pair(static_cast<double>(static_cast<float>(vrRangeIt->second.first)),
-                                                                       static_cast<double>(static_cast<float>(vrRangeIt->second.second))));
+                            //shrinkType(N, llvmIrFPTruncInstruction, llvmIrBasicBlock,
+//                                                        std::make_pair(static_cast<double>(static_cast<float>(vrRangeIt->second.first)),
+//                                                                       static_cast<double>(static_cast<float>(vrRangeIt->second.second))));
                         }
                     }
                     break;
@@ -1031,7 +1033,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::FloatTyID, %f - %f to %f - %f\n",
                                               vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                     boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
-                                    shrinkType(N, llvmIrBitCastInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
+                                    //shrinkType(N, llvmIrBitCastInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
                                     break;
                                 case Type::DoubleTyID:
                                     lowRange = *reinterpret_cast<double *>(&originLow);
@@ -1039,7 +1041,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::DoubleTyID, %f - %f to %f - %f\n",
                                               vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                     boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
-                                    shrinkType(N, llvmIrBitCastInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
+                                    //shrinkType(N, llvmIrBitCastInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
                                     break;
                                 case Type::IntegerTyID:
                                     switch (DestEleType->getIntegerBitWidth())
@@ -1059,7 +1061,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::IntegerTyID, %f - %f to %f - %f\n",
                                               vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                     boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
-                                    shrinkType(N, llvmIrBitCastInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
+                                    //shrinkType(N, llvmIrBitCastInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
                                     break;
                                 case Type::StructTyID:
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::StructTyID, %f - %f to %f - %f\n",
@@ -1068,7 +1070,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 default:
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Do not support other type yet.\n");
                                     boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, vrRangeIt->second);
-                                    shrinkType(N, llvmIrBitCastInstruction, llvmIrBasicBlock, vrRangeIt->second);
+                                    //shrinkType(N, llvmIrBitCastInstruction, llvmIrBasicBlock, vrRangeIt->second);
                                     continue;
                             }
                         }
@@ -1165,7 +1167,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::FloatTyID, %f - %f to %f - %f\n",
                                                       vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                             boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange));
-                                            shrinkType(N, llvmIrGetElePtrInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
+                                            //shrinkType(N, llvmIrGetElePtrInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
                                             break;
                                         case Type::DoubleTyID:
                                             lowRange = static_cast<double>(originLowWord >> (32 * element_offset));
@@ -1173,7 +1175,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::DoubleTyID, %f - %f to %f - %f\n",
                                                       vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                             boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange));
-                                            shrinkType(N, llvmIrGetElePtrInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
+                                            //shrinkType(N, llvmIrGetElePtrInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
                                             break;
                                         case Type::IntegerTyID:
                                             switch (resEleTy->getPrimitiveSizeInBits())
@@ -1193,12 +1195,12 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::IntegerTyID, %f - %f to %f - %f\n",
                                                       vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
                                             boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange));
-                                            shrinkType(N, llvmIrGetElePtrInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
+                                            //shrinkType(N, llvmIrGetElePtrInstruction, llvmIrBasicBlock, std::make_pair(lowRange, highRange));
                                             break;
                                         default:
                                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tGetElePtr: Do not support other type yet.\n");
                                             boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, vrRangeIt->second);
-                                            shrinkType(N, llvmIrGetElePtrInstruction, llvmIrBasicBlock, vrRangeIt->second);
+                                            //shrinkType(N, llvmIrGetElePtrInstruction, llvmIrBasicBlock, vrRangeIt->second);
                                             continue;
                                     }
                                 }
@@ -1231,8 +1233,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(
                                         llvmIrFNegInstruction, std::make_pair(-vrRangeIt->second.first,
                                                                               -vrRangeIt->second.second));
-                                shrinkType(N, llvmIrFNegInstruction, llvmIrBasicBlock, std::make_pair(-vrRangeIt->second.first,
-                                                                                                      -vrRangeIt->second.second));
+                                //shrinkType(N, llvmIrFNegInstruction, llvmIrBasicBlock, std::make_pair(-vrRangeIt->second.first,
+//                                                                                                      -vrRangeIt->second.second));
                             }
                         }
                     }

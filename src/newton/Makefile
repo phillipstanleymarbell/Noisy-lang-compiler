@@ -93,9 +93,9 @@ SOURCES		=\
 		newton-eigenLibraryInterface.cpp\
 		newton-irPass-LLVMIR-dimension-check.cpp\
 		newton-irPass-LLVMIR-livenessAnalysis.cpp\
-		newton-irPass-LLVMIR-simplifyControlFlowByRange.cpp\
 		newton-irPass-LLVMIR-optimizeByRange.cpp\
 		newton-irPass-LLVMIR-rangeAnalysis.cpp\
+		newton-irPass-LLVMIR-simplifyControlFlowByRange.cpp\
 		newton-irPass-LLVMIR-shrinkTypeByRange.cpp\
 
 
@@ -126,9 +126,9 @@ OBJS		=\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-livenessAnalysis.$(OBJECTEXTENSION)\
-		newton-irPass-LLVMIR-simplifyControlFlowByRange.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-optimizeByRange.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-rangeAnalysis.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-simplifyControlFlowByRange.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-shrinkTypeByRange.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
@@ -171,10 +171,10 @@ CGIOBJS		=\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-livenessAnalysis.$(OBJECTEXTENSION)\
-		newton-irPass-LLVMIR-simplifyControlFlowByRange.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-optimizeByRange.$(OBJECTEXTENSION)\
-        newton-irPass-LLVMIR-rangeAnalysis.$(OBJECTEXTENSION)\
-        newton-irPass-LLVMIR-shrinkTypeByRange.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-rangeAnalysis.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-simplifyControlFlowByRange.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-shrinkTypeByRange.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-estimatorSynthesisBackend/$(OBJECTEXTENSION)\
@@ -215,10 +215,10 @@ LIBNEWTONOBJS =\
 		newton-irPass-estimatorSynthesisBackend.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-dimension-check.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-livenessAnalysis.$(OBJECTEXTENSION)\
-		newton-irPass-LLVMIR-simplifyControlFlowByRange.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-optimizeByRange.$(OBJECTEXTENSION)\
-        newton-irPass-LLVMIR-rangeAnalysis.$(OBJECTEXTENSION)\
-        newton-irPass-LLVMIR-shrinkTypeByRange.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-rangeAnalysis.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-simplifyControlFlowByRange.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-shrinkTypeByRange.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-ipsaBackend.$(OBJECTEXTENSION)\
@@ -256,10 +256,7 @@ HEADERS		=\
 		newton-irPass-estimatorSynthesisBackend.h\
 		newton-irPass-LLVMIR-dimension-check.h\
 		newton-irPass-LLVMIR-livenessAnalysis.h\
-		newton-irPass-LLVMIR-simplifyControlFlowByRange.h\
 		newton-irPass-LLVMIR-optimizeByRange.h\
-		newton-irPass-LLVMIR-rangeAnalysis.h\
-		newton-irPass-LLVMIR-shrinkTypeByRange.h\
 		newton-irPass-invariantSignalAnnotation.h\
 		newton-irPass-piGroupsSignalAnnotation.h\
 		newton-irPass-ipsaBackend.h\
@@ -332,15 +329,15 @@ newton-irPass-LLVMIR-livenessAnalysis.$(OBJECTEXTENSION): newton-irPass-LLVMIR-l
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
-newton-irPass-LLVMIR-simplifyControlFlowByRange.$(OBJECTEXTENSION): newton-irPass-LLVMIR-simplifyControlFlowByRange.cpp
-	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
-	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
-
 newton-irPass-LLVMIR-optimizeByRange.$(OBJECTEXTENSION): newton-irPass-LLVMIR-optimizeByRange.cpp
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
 newton-irPass-LLVMIR-rangeAnalysis.$(OBJECTEXTENSION): newton-irPass-LLVMIR-rangeAnalysis.cpp
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
+
+newton-irPass-LLVMIR-simplifyControlFlowByRange.$(OBJECTEXTENSION): newton-irPass-LLVMIR-simplifyControlFlowByRange.cpp
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
