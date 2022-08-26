@@ -47,6 +47,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "llvm/Bitcode/BitcodeWriter.h"
 #include "llvm/IR/DebugInfoMetadata.h"

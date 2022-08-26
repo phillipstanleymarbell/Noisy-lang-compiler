@@ -129,6 +129,12 @@ irPassLLVMIROptimizeByRange(State * N)
 		simplifyControlFlow(N, boundInfo, mi);
 	}
 
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
+    for (auto & mi : *Mod)
+    {
+        shrinkType(N, boundInfo, mi);
+    }
+
 	dumpIR(N, "output", std::move(Mod));
 }
 }

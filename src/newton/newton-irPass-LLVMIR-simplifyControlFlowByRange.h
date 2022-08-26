@@ -42,7 +42,7 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-void
+bool
 simplifyControlFlow(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction);
 
 #ifdef __cplusplus

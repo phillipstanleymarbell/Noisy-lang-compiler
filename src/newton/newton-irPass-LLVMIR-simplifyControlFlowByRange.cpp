@@ -334,18 +334,12 @@ getTrue(Type *Ty) {
     return ConstantInt::getTrue(Ty);
 }
 
-void
+bool
 simplifyControlFlow(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
+    bool changed = false;
     for (BasicBlock &llvmIrBasicBlock: llvmIrFunction) {
         for (Instruction &llvmIrInstruction: llvmIrBasicBlock) {
             switch (llvmIrInstruction.getOpcode()) {
-                case Instruction::Call:
-                    if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction)) {
-                        Function *calledFunction = llvmIrCallInstruction->getCalledFunction();
-                        if (calledFunction->getName().str() == "extractFloat64Exp") {
-                            printf("extractFloat64Exp\n");
-                        }
-                    }
                 case Instruction::ICmp:
                     if (auto llvmIrICmpInstruction = dyn_cast<ICmpInst>(&llvmIrInstruction)) {
                         auto leftOperand = llvmIrICmpInstruction->getOperand(0);
@@ -384,9 +378,11 @@ simplifyControlFlow(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                                 if (compareResult == CmpRes::AlwaysTrue) {
                                     resValue = getTrue(retTy);
                                     llvmIrICmpInstruction->replaceAllUsesWith(resValue);
+                                    changed = true;
                                 } else if (compareResult == CmpRes::AlwaysFalse) {
                                     resValue = getFalse(retTy);
                                     llvmIrICmpInstruction->replaceAllUsesWith(resValue);
+                                    changed = true;
                                 } else if (compareResult == CmpRes::Unsupported) {
                                     flexprint(N->Fe, N->Fm, N->Fperr,
                                               "\tICmp: Current ICmp Predicate is not supported.\n");
@@ -423,9 +419,11 @@ simplifyControlFlow(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                                 if (compareResult == CmpRes::AlwaysTrue) {
                                     resValue = getTrue(retTy);
                                     llvmIrICmpInstruction->replaceAllUsesWith(resValue);
+                                    changed = true;
                                 } else if (compareResult == CmpRes::AlwaysFalse) {
                                     resValue = getFalse(retTy);
                                     llvmIrICmpInstruction->replaceAllUsesWith(resValue);
+                                    changed = true;
                                 } else if (compareResult == CmpRes::Unsupported) {
                                     flexprint(N->Fe, N->Fm, N->Fperr,
                                               "\tICmp: Current ICmp Predicate is not supported.\n");
@@ -475,9 +473,11 @@ simplifyControlFlow(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                                 if (compareResult == CmpRes::AlwaysTrue) {
                                     resValue = getTrue(retTy);
                                     llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+                                    changed = true;
                                 } else if (compareResult == CmpRes::AlwaysFalse) {
                                     resValue = getFalse(retTy);
                                     llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+                                    changed = true;
                                 } else if (compareResult == CmpRes::Unsupported) {
                                     flexprint(N->Fe, N->Fm, N->Fperr,
                                               "\tICmp: Current ICmp Predicate is not supported.\n");
@@ -517,9 +517,11 @@ simplifyControlFlow(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                                 if (compareResult == CmpRes::AlwaysTrue) {
                                     resValue = getTrue(retTy);
                                     llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+                                    changed = true;
                                 } else if (compareResult == CmpRes::AlwaysFalse) {
                                     resValue = getFalse(retTy);
                                     llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+                                    changed = true;
                                 }
                             } else {
                                 flexprint(N->Fe, N->Fm, N->Fperr, "\tFCmp: Unknown variable\n");
@@ -533,6 +535,7 @@ simplifyControlFlow(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
             }
         }
     }
+    return changed;
 }
 
 }
