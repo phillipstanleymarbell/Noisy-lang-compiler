@@ -182,8 +182,10 @@ shrinkInstructionType(State * N, Instruction *inInstruction, BasicBlock & llvmIr
             newType = getShrinkIntType(N, inInstruction, vrRangeIt->second, signFlag);
             break;
         case Type::FloatTyID:
+            // todo
             break;
         case Type::DoubleTyID:
+            // todo
             break;
         default:
             break;
@@ -208,7 +210,7 @@ shrinkInstructionType(State * N, Instruction *inInstruction, BasicBlock & llvmIr
 }
 
 void
-rollbackType(State * N, Value *inValue, BasicBlock & llvmIrBasicBlock,
+rollbackType(State * N, Instruction *inInstruction, Value *inValue, BasicBlock & llvmIrBasicBlock,
              std::map<Value*, Type*>& typeChangedInst)
 {
     auto tcInstIt = typeChangedInst.find(inValue);
@@ -217,13 +219,19 @@ rollbackType(State * N, Value *inValue, BasicBlock & llvmIrBasicBlock,
 
     Type* previousType = tcInstIt->second;
     if (isa<Instruction>(inValue)) {
-        Instruction *inInstruction = cast<Instruction>(inValue);
+        /*
+         * if it's an instruction that need to roll back, insert a cast
+         * */
+        Instruction *valueInst = cast<Instruction>(inValue);
         IRBuilder<> Builder(&llvmIrBasicBlock);
-        Builder.SetInsertPoint(inInstruction->getNextNode());
-        auto tmp = inInstruction->clone();
-        Value * intCast = Builder.CreateIntCast(tmp, previousType, false);
-        inInstruction->replaceAllUsesWith(intCast);
-        ReplaceInstWithInst(inInstruction, tmp);
+        Builder.SetInsertPoint(inInstruction);
+        Value * intCast = Builder.CreateIntCast(valueInst, previousType, false);
+        inInstruction->replaceUsesOfWith(valueInst, intCast);
+        int a = 0;
+//        auto tmp = valueInst->clone();
+//        Value * intCast = Builder.CreateIntCast(tmp, previousType, false);
+//        valueInst->replaceAllUsesWith(intCast);
+//        ReplaceInstWithInst(valueInst, tmp);
     } else if (isa<llvm::Constant>(inValue)) {
         inValue->mutateType(previousType);
     } else {
@@ -268,6 +276,14 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
     auto rightOperand = inInstruction->getOperand(1);
     auto leftType = leftOperand->getType();
     auto rightType = rightOperand->getType();
+    // debug
+    if (isa<AddOperator>(inInstruction)) {
+        Instruction *valueInst = cast<Instruction>(rightOperand);
+        auto tmpLeft = valueInst->getOperand(0);
+        auto tmpRight = valueInst->getOperand(1);
+        int a = 0;
+    }
+
     if (isa<StoreInst>(inInstruction))
         rightType = rightType->getPointerElementType();
 
@@ -285,12 +301,12 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
         if (typeChangedInst.find(leftOperand) != typeChangedInst.end())
         {
             // roll back
-            rollbackType(N, leftOperand, llvmIrBasicBlock, typeChangedInst);
+            rollbackType(N, inInstruction, leftOperand, llvmIrBasicBlock, typeChangedInst);
         }
         if (typeChangedInst.find(rightOperand) != typeChangedInst.end())
         {
             // roll back
-            rollbackType(N, rightOperand, llvmIrBasicBlock, typeChangedInst);
+            rollbackType(N, inInstruction, rightOperand, llvmIrBasicBlock, typeChangedInst);
         }
         return;
     }
@@ -298,12 +314,44 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
     /*
      * If one of them is constant, shrink the constant operand
      * */
+    auto rollBackConstantOperand = [N, inInstruction, &llvmIrBasicBlock, &typeChangedInst]
+            (Value* constOperand, Value* nonConstOperand) {
+        if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(constOperand))
+        {
+            /*
+             * 	both "float" and "double" type can use "convertToDouble"
+             */
+            auto constValue = (constFp->getValueAPF()).convertToDouble();
+            auto nonConstType = nonConstOperand->getType();
+            auto newConstant = ConstantFP::get(nonConstType, constValue);
+            bool signFlag;
+            auto realType = getShrinkIntType(N, constOperand, std::make_pair(constValue, constValue), signFlag);
+            if (realType->getTypeID() <= nonConstType->getTypeID()) {
+                typeChangedInst.emplace(constOperand, constOperand->getType());
+                inInstruction->replaceUsesOfWith(constOperand, newConstant);
+            } else {
+                rollbackType(N, inInstruction, nonConstOperand, llvmIrBasicBlock, typeChangedInst);
+            }
+        } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(constOperand))
+        {
+            auto constValue = constInt->getSExtValue();
+            auto nonConstType = nonConstOperand->getType();
+            auto newConstant = ConstantInt::get(nonConstType, constValue);
+            bool signFlag;
+            auto realType = getShrinkIntType(N, constOperand, std::make_pair(constValue, constValue), signFlag);
+            if (realType->getTypeID() <= nonConstType->getTypeID()) {
+                typeChangedInst.emplace(constOperand, constOperand->getType());
+                inInstruction->replaceUsesOfWith(constOperand, newConstant);
+            } else {
+                rollbackType(N, inInstruction, nonConstOperand, llvmIrBasicBlock, typeChangedInst);
+            }
+        }
+
+    };
     if (isa<llvm::Constant>(leftOperand)) {
-        typeChangedInst.emplace(leftOperand, leftOperand->getType());
-        leftOperand->mutateType(rightType);
+        rollBackConstantOperand(leftOperand, rightOperand);
     } else if (isa<llvm::Constant>(rightOperand)) {
-        typeChangedInst.emplace(rightOperand, rightOperand->getType());
-        rightOperand->mutateType(leftType);
+        rollBackConstantOperand(rightOperand, leftOperand);
     }
 }
 
@@ -340,13 +388,18 @@ matchDestType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasicBlo
     if (compareType(srcType, inInstType) == 0)
         return true;
 
+    if (isa<PHINode>(inInstruction)) {
+        typeChangedInst.emplace(inInstruction, inInstruction->getType());
+        inInstruction->mutateType(srcType);
+        return true;
+    }
     /*
      * Now the type of inInstruction hasn't changed, so we check if it will change in need
      * */
     auto vrRangeIt = virtualRegisterRange.find(inInstruction);
     if (vrRangeIt == virtualRegisterRange.end()) {
         for (size_t id = 0; id < inInstruction->getNumOperands(); id++) {
-            rollbackType(N, inInstruction->getOperand(id), llvmIrBasicBlock, typeChangedInst);
+            rollbackType(N, inInstruction, inInstruction->getOperand(id), llvmIrBasicBlock, typeChangedInst);
         }
         return true;
     }
@@ -358,7 +411,7 @@ matchDestType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasicBlo
      * */
     if ((realInstType == nullptr) || (compareType(srcType, realInstType) != 0)) {
         for (size_t id = 0; id < inInstruction->getNumOperands(); id++) {
-            rollbackType(N, inInstruction->getOperand(id), llvmIrBasicBlock, typeChangedInst);
+            rollbackType(N, inInstruction, inInstruction->getOperand(id), llvmIrBasicBlock, typeChangedInst);
         }
         return true;
     } else {
@@ -399,6 +452,8 @@ shrinkType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                 case Instruction::Or:
                 case Instruction::Xor:
                 case Instruction::Store:
+                case Instruction::ICmp:
+                case Instruction::FCmp:
                     /*
                      * For binary operator, check if two operands are of the same type
                      * */
@@ -417,22 +472,13 @@ shrinkType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                     changed = shrinkInstructionType(N, llvmIrInstruction, llvmIrBasicBlock,
                                                     boundInfo->virtualRegisterRange, typeChangedInst);
                     break;
-                case Instruction::ICmp:
-                case Instruction::FCmp:
+                case Instruction::PHI:
                     matchOperandType(N, llvmIrInstruction, llvmIrBasicBlock, typeChangedInst);
-                    break;
                 case Instruction::Load:
                 case Instruction::GetElementPtr:
                     /*
                      * Need further check the result type of GEP
                      * */
-                    if (!matchDestType(N, llvmIrInstruction, llvmIrBasicBlock,
-                                       boundInfo->virtualRegisterRange, typeChangedInst))
-                        changed = shrinkInstructionType(N, llvmIrInstruction, llvmIrBasicBlock,
-                                                        boundInfo->virtualRegisterRange, typeChangedInst);
-                    break;
-                case Instruction::PHI:
-                    matchOperandType(N, llvmIrInstruction, llvmIrBasicBlock, typeChangedInst);
                     if (!matchDestType(N, llvmIrInstruction, llvmIrBasicBlock,
                                        boundInfo->virtualRegisterRange, typeChangedInst))
                         changed = shrinkInstructionType(N, llvmIrInstruction, llvmIrBasicBlock,
