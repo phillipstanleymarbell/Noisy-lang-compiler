@@ -166,9 +166,10 @@ getShrinkIntType(State * N, Value *boundValue, const std::pair<double, double>& 
 }
 
 Type*
-rollbackType(State * N, Instruction *inInstruction, Value *inValue, BasicBlock & llvmIrBasicBlock,
+rollbackType(State * N, Instruction *inInstruction, unsigned operandIdx, BasicBlock & llvmIrBasicBlock,
              std::map<Value*, Type*>& typeChangedInst, Type* backType = nullptr)
 {
+    Value *inValue = inInstruction->getOperand(operandIdx);
     if (isa<GetElementPtrInst>(inInstruction) && isa<llvm::Constant>(inValue)) {
         return backType;
     }
@@ -179,16 +180,32 @@ rollbackType(State * N, Instruction *inInstruction, Value *inValue, BasicBlock &
         backType = tcInstIt->second;
     }
 
-    if (isa<Instruction>(inValue)) {
+    if (Instruction *valueInst = llvm::dyn_cast<llvm::Instruction>(inValue)) {
         /*
          * if it's an instruction that need to roll back, insert a cast
          * */
-        Instruction *valueInst = cast<Instruction>(inValue);
-        IRBuilder<> Builder(&llvmIrBasicBlock);
-        Builder.SetInsertPoint(inInstruction);
-        Value * intCast = Builder.CreateIntCast(valueInst, backType, false);
-        inInstruction->replaceUsesOfWith(valueInst, intCast);
-        int a = 0;
+        if (PHINode *inInstPhi = llvm::dyn_cast<llvm::PHINode>(inInstruction)) {
+            /*
+             * if it's a phi node, insert the cast instruction in the incoming basic block
+             * */
+            auto incomingBB = inInstPhi->getIncomingBlock(operandIdx);
+            IRBuilder<> Builder(incomingBB);
+            auto terminatorInst = incomingBB->getTerminator();
+            Instruction* insertPoint = nullptr;
+            if (isa<BranchInst>(terminatorInst)) {
+                insertPoint = terminatorInst->getPrevNode();
+            } else {
+                insertPoint = terminatorInst;
+            }
+            Builder.SetInsertPoint(insertPoint);
+            Value * intCast = Builder.CreateIntCast(valueInst, backType, false);
+            inInstruction->replaceUsesOfWith(valueInst, intCast);
+        } else {
+            IRBuilder<> Builder(&llvmIrBasicBlock);
+            Builder.SetInsertPoint(inInstruction);
+            Value * intCast = Builder.CreateIntCast(valueInst, backType, false);
+            inInstruction->replaceUsesOfWith(valueInst, intCast);
+        }
     } else if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(inValue)) {
         auto constValue = (constFp->getValueAPF()).convertToDouble();
         auto newConstant = ConstantFP::get(backType, constValue);
@@ -260,10 +277,6 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
     auto rightOperand = inInstruction->getOperand(1);
     auto leftType = leftOperand->getType();
     auto rightType = rightOperand->getType();
-    // debug
-    if (isa<ShlOperator>(inInstruction)) {
-        int a = 0;
-    }
 
     if (compareType(leftType, rightType) == 0)
         return;
@@ -278,13 +291,17 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
          * */
         if (typeChangedInst.find(leftOperand) != typeChangedInst.end())
         {
-            // roll back
-            rollbackType(N, inInstruction, leftOperand, llvmIrBasicBlock, typeChangedInst);
+            /*
+             * roll back left operand
+             * */
+            rollbackType(N, inInstruction, 0, llvmIrBasicBlock, typeChangedInst);
         }
         if (typeChangedInst.find(rightOperand) != typeChangedInst.end())
         {
-            // roll back
-            rollbackType(N, inInstruction, rightOperand, llvmIrBasicBlock, typeChangedInst);
+            /*
+             * roll back right operand
+             * */
+            rollbackType(N, inInstruction, 1, llvmIrBasicBlock, typeChangedInst);
         }
         return;
     }
@@ -293,7 +310,9 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
      * If one of them is constant, shrink the constant operand
      * */
     auto rollBackConstantOperand = [N, inInstruction, &llvmIrBasicBlock, &typeChangedInst]
-            (Value* constOperand, Value* nonConstOperand) {
+            (unsigned constOperandIdx, unsigned nonConstOperandIdx) {
+        Value* constOperand = inInstruction->getOperand(constOperandIdx);
+        Value* nonConstOperand = inInstruction->getOperand(nonConstOperandIdx);
         if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(constOperand))
         {
             /*
@@ -303,10 +322,10 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
             auto nonConstType = nonConstOperand->getType();
             typeInfo realType = getShrinkIntType(N, constOperand, std::make_pair(constValue, constValue));
             if (compareType(realType.valueType, nonConstType) <= 0) {
-                rollbackType(N, inInstruction, constOperand, llvmIrBasicBlock,
+                rollbackType(N, inInstruction, constOperandIdx, llvmIrBasicBlock,
                              typeChangedInst, nonConstType);
             } else {
-                rollbackType(N, inInstruction, nonConstOperand, llvmIrBasicBlock,
+                rollbackType(N, inInstruction, nonConstOperandIdx, llvmIrBasicBlock,
                              typeChangedInst);
             }
         } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(constOperand)) {
@@ -314,18 +333,24 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
             auto nonConstType = nonConstOperand->getType();
             typeInfo realType = getShrinkIntType(N, constOperand, std::make_pair(constValue, constValue));
             if (compareType(realType.valueType, nonConstType) <= 0) {
-                rollbackType(N, inInstruction, constOperand, llvmIrBasicBlock,
+                rollbackType(N, inInstruction, constOperandIdx, llvmIrBasicBlock,
                              typeChangedInst, nonConstType);
             } else {
-                rollbackType(N, inInstruction, nonConstOperand, llvmIrBasicBlock, typeChangedInst);
+                rollbackType(N, inInstruction, nonConstOperandIdx, llvmIrBasicBlock, typeChangedInst);
             }
         }
 
     };
     if (isa<llvm::Constant>(leftOperand)) {
-        rollBackConstantOperand(leftOperand, rightOperand);
+        /*
+         * leftOperand is constant, rightOperand is non-constant
+         * */
+        rollBackConstantOperand(0, 1);
     } else if (isa<llvm::Constant>(rightOperand)) {
-        rollBackConstantOperand(rightOperand, leftOperand);
+        /*
+         * rightOperand is constant, leftOperand is non-constant
+         * */
+        rollBackConstantOperand(1, 0);
     }
 }
 
@@ -396,7 +421,7 @@ matchDestType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasicBlo
         if (compareType(srcType, inInstType) != 0) {
             Type* operandBackType = nullptr;
             for (size_t id = 0; id < inInstruction->getNumOperands(); id++) {
-                operandBackType = rollbackType(N, inInstruction, inInstruction->getOperand(id), llvmIrBasicBlock,
+                operandBackType = rollbackType(N, inInstruction, id, llvmIrBasicBlock,
                                                typeChangedInst, operandBackType);
             }
         }
@@ -414,7 +439,7 @@ matchDestType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasicBlo
          * roll back operands to typeInformation.valueType
          * */
         for (size_t id = 0; id < inInstruction->getNumOperands(); id++) {
-            rollbackType(N, inInstruction, inInstruction->getOperand(id), llvmIrBasicBlock, typeChangedInst,
+            rollbackType(N, inInstruction, id, llvmIrBasicBlock, typeChangedInst,
                          typeInformation.valueType);
         }
         /*
@@ -462,12 +487,12 @@ shrinkType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
      * <Value to be shrink, old type>
      * */
     std::map<Value*, Type*> typeChangedInst;
-    typeInfo typeInformation;
-    typeInformation.signFlag = false;
-    typeInformation.valueType = nullptr;
     for (BasicBlock &llvmIrBasicBlock: llvmIrFunction) {
         for (BasicBlock::iterator itBB = llvmIrBasicBlock.begin(); itBB != llvmIrBasicBlock.end();) {
             Instruction *llvmIrInstruction = &*itBB++;
+            typeInfo typeInformation;
+            typeInformation.signFlag = false;
+            typeInformation.valueType = nullptr;
             switch (llvmIrInstruction->getOpcode()) {
                 case Instruction::Add:
                 case Instruction::FAdd:
