@@ -160,7 +160,7 @@ int main(int argc, char** argv) {
             "perf_acosh", "perf_j0",
             "perf_y0", "perf_rem_pio2", "perf_sincosf",
             "perf_float64_add", "perf_float64_div",
-            "perf_float64_mul", "perf_float64_sin"};
+            "perf_float64_mul"};
 
     if (argc >= 2) {
         test_cases.clear();
@@ -184,8 +184,8 @@ int main(int argc, char** argv) {
             {-134.5, -133.8},
             {-23.9, -23.1},
             {-5.4, -4.5},
-            {-1.8, -0.4},
-            {0.2, 0.9},
+            {-0.9, -0.4},
+            {0.2, 0.8},
             {9.7, 10.5},
             {35.75, 36.03},
             {476.84, 477.21},
