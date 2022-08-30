@@ -32,6 +32,7 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+import platform
 
 import matplotlib.pyplot as plt
 import os
@@ -40,6 +41,7 @@ import seaborn as sns
 import palettable
 import numpy as np
 from matplotlib.ticker import FuncFormatter
+import platform
 
 performance_data = []
 with open('perf.log', 'r') as f:
@@ -129,6 +131,8 @@ perf_data_speedup = [inst_speedup, time_speedup, ir_reduction, lib_size_reductio
 
 y_labels = ["instruction counts (million)", "time consumption (s)", "IR lines", "size of library (bytes)"]
 
+machine = platform.machine()
+
 fig_path = "fig/"
 folder = os.path.exists(fig_path)
 if folder:
@@ -183,8 +187,8 @@ for merit_id in range(1, merit_num, 2):
                     cbar_kws={'format': FuncFormatter(fmt)},
                     xticklabels=range_extend_list,
                     yticklabels=param_label)
-        plt.title(name_list[test_case_id*range_extend_num] + "-" + y_labels[merit_id])
-        file_name = fig_path + name_list[test_case_id*range_extend_num] + "-" + y_labels[merit_id] + ".png"
+        plt.title(machine + "-" + name_list[test_case_id*range_extend_num] + "-" + y_labels[merit_id])
+        file_name = fig_path + machine + "-" + name_list[test_case_id*range_extend_num] + "-" + y_labels[merit_id] + ".png"
         file_name = file_name.replace(" ", "_")
         plt.savefig(file_name)
         plt.close()
