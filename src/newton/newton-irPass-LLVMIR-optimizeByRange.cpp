@@ -135,6 +135,12 @@ irPassLLVMIROptimizeByRange(State * N)
         shrinkType(N, boundInfo, mi);
     }
 
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "merge cast\n");
+    for (auto & mi : *Mod)
+    {
+        mergeCast(N, mi);
+    }
+
 	dumpIR(N, "output", std::move(Mod));
 }
 }
