@@ -50,14 +50,13 @@ enum varType {
     INT64       = 5,
     FLOAT       = 6,
     DOUBLE      = 7,
-    UNCHANGED   = 8,
-    UNKNOWN   = 9,
+    UNKNOWN     = 8,
 };
 
 varType
-getTypeEnum(double min, double max, bool signFlag)
+getIntegerTypeEnum(double min, double max, bool signFlag)
 {
-    varType finalType = UNCHANGED;
+    varType finalType;
     if (!signFlag && max <= 1)
     {
         finalType = INT1;
@@ -84,7 +83,27 @@ getTypeEnum(double min, double max, bool signFlag)
     }
     else
     {
-        finalType = UNCHANGED;
+        finalType = UNKNOWN;
+    }
+    return finalType;
+}
+
+varType
+getFloatingTypeEnum(double min, double max)
+{
+    varType finalType;
+    if ((std::abs(min) < FLT_MAX) && (std::abs(max) < FLT_MAX))
+    {
+        finalType = FLOAT;
+    }
+    else if ((std::abs(min) < DBL_MAX) && (std::abs(max) < DBL_MAX))
+    {
+        finalType = DOUBLE;
+    }
+    else
+    {
+        // not support yet
+        finalType = UNKNOWN;
     }
     return finalType;
 }
@@ -109,7 +128,7 @@ getShrinkIntType(State * N, Value *boundValue, const std::pair<double, double>& 
      * */
     typeInformation.signFlag = boundRange.first < 0;
 
-    varType finalType = getTypeEnum(boundRange.first, boundRange.second, typeInformation.signFlag);
+    varType finalType = getIntegerTypeEnum(boundRange.first, boundRange.second, typeInformation.signFlag);
 
     auto previousType = boundValue->getType();
     auto typeId = previousType->getTypeID();
@@ -159,9 +178,46 @@ getShrinkIntType(State * N, Value *boundValue, const std::pair<double, double>& 
     }
 
     if (typeInformation.valueType != nullptr) {
-        typeInformation.valueType = isPointer ? typeInformation.valueType->getPointerTo(pointerAddr) : typeInformation.valueType;
-//        boundValue->mutateType(typeInformation.valueType);
+        typeInformation.valueType = isPointer ?
+                typeInformation.valueType->getPointerTo(pointerAddr) :
+                typeInformation.valueType;
     }
+
+    return typeInformation;
+}
+
+typeInfo getShrinkDoubleType(State * N, Value *boundValue, const std::pair<double, double>& boundRange) {
+    typeInfo typeInformation;
+    typeInformation.valueType = nullptr;
+    typeInformation.signFlag = boundRange.first < 0;
+
+    varType finalType = getFloatingTypeEnum(boundRange.first, boundRange.second);
+
+    auto previousType = boundValue->getType();
+    auto typeId = previousType->getTypeID();
+    auto& context = previousType->getContext();
+
+    bool isPointer = false;
+    unsigned pointerAddr;
+    if (typeId == Type::PointerTyID)
+    {
+        typeId = previousType->getPointerElementType()->getTypeID();
+        isPointer = true;
+        pointerAddr = previousType->getPointerAddressSpace();
+    }
+    assert(typeId == Type::DoubleTyID);
+
+    if (finalType == FLOAT) {
+        typeInformation.valueType = Type::getFloatTy(context);
+    } else if (finalType == DOUBLE) {
+        typeInformation.valueType = Type::getDoubleTy(context);
+    } else {
+        // todo: not support yet, like HalfTyID, BFloatTyID, X86_FP80TyID, FP128TyID, PPC_FP128TyID, etc.
+    }
+
+    typeInformation.valueType = isPointer ?
+            typeInformation.valueType->getPointerTo(pointerAddr) :
+            typeInformation.valueType;
 
     return typeInformation;
 }
@@ -186,10 +242,10 @@ getTypeInfo(State * N, Value *inValue,
             typeInformation = getShrinkIntType(N, inValue, vrRangeIt->second);
             break;
         case Type::FloatTyID:
-            // todo
+            // todo: convert floating point to integer
             break;
         case Type::DoubleTyID:
-            // todo
+            typeInformation = getShrinkDoubleType(N, inValue, vrRangeIt->second);
             break;
         default:
             break;
@@ -228,13 +284,23 @@ rollbackType(State * N, Instruction *inInstruction, unsigned operandIdx, BasicBl
             auto terminatorInst = incomingBB->getTerminator();
             Builder.SetInsertPoint(terminatorInst);
             auto tmp = inInstruction->clone();
-            Value * intCast = Builder.CreateIntCast(valueInst, backType, false);
-            inInstruction->replaceUsesOfWith(valueInst, intCast);
+            Value * castInst;
+            if (backType->isIntegerTy()) {
+                castInst = Builder.CreateIntCast(valueInst, backType, false);
+            } else {
+                castInst = Builder.CreateFPCast(valueInst, backType);
+            }
+            inInstruction->replaceUsesOfWith(valueInst, castInst);
         } else {
             IRBuilder<> Builder(&llvmIrBasicBlock);
             Builder.SetInsertPoint(inInstruction);
-            Value * intCast = Builder.CreateIntCast(valueInst, backType, false);
-            inInstruction->replaceUsesOfWith(valueInst, intCast);
+            Value * castInst;
+            if (backType->isIntegerTy()) {
+                castInst = Builder.CreateIntCast(valueInst, backType, false);
+            } else {
+                castInst = Builder.CreateFPCast(valueInst, backType);
+            }
+            inInstruction->replaceUsesOfWith(valueInst, castInst);
         }
     } else if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(inValue)) {
         auto constValue = (constFp->getValueAPF()).convertToDouble();
@@ -244,6 +310,8 @@ rollbackType(State * N, Instruction *inInstruction, unsigned operandIdx, BasicBl
         auto constValue = constInt->getSExtValue();
         auto newConstant = ConstantInt::get(backType, constValue);
         inInstruction->replaceUsesOfWith(inValue, newConstant);
+    } else if (isa<UndefValue>(inValue)) {
+
     } else {
         assert(false);
     }
@@ -257,18 +325,18 @@ rollbackType(State * N, Instruction *inInstruction, unsigned operandIdx, BasicBl
  * */
 int compareType(Type* firstType, Type* secondType)
 {
-    auto typeEnumConvert = [](Type* inputType) {
+    std::function<varType(Type* inputType)> typeEnumConvert;
+    typeEnumConvert = [&](Type* inputType) -> varType {
         /*
          * extract raw type from pointer or array
          * */
         Type* eleType;
         if (inputType->getTypeID() == Type::PointerTyID) {
-            auto pointerAddr = inputType->getPointerAddressSpace();
             eleType = inputType->getPointerElementType();
-            auto arrayType = dyn_cast<ArrayType>(eleType);
-            if (arrayType != nullptr) {
-                eleType = arrayType->getElementType();
-            }
+            return typeEnumConvert(eleType);
+        } else if (inputType->getTypeID() == Type::ArrayTyID) {
+            eleType = inputType->getArrayElementType();
+            return typeEnumConvert(eleType);
         } else {
             eleType = inputType;
         }
@@ -302,6 +370,69 @@ int compareType(Type* firstType, Type* secondType)
 }
 
 void
+matchPhiOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasicBlock,
+                    std::map<Value*, Type*>& typeChangedInst)
+{
+    std::vector<Value*> operands;
+    for (size_t id = 0; id < inInstruction->getNumOperands(); id++) {
+        operands.emplace_back(inInstruction->getOperand(id));
+    }
+    if (std::all_of(operands.begin(), operands.end(), [&](Value* const& v) {
+        return compareType(v->getType(), operands.front()->getType()) == 0;
+    }))
+        return;
+
+    /*
+     * If both are non-constant, roll back
+     * */
+    if (std::all_of(operands.begin(), operands.end(), [&](Value* const& v) {
+        return !isa<llvm::Constant>(v);
+    })) {
+        /*
+         * todo: can be further improved, by shrink both of them to a smaller type
+         * */
+        Type* backType = nullptr;
+        bool noPrevType = false;
+        for (size_t id = 0; id < operands.size(); id++) {
+            if (typeChangedInst.find(operands[id]) != typeChangedInst.end()) {
+                rollbackType(N, inInstruction, id, llvmIrBasicBlock,
+                             typeChangedInst);
+            } else {
+                /*
+                 * if current op didn't have previous type, reset all ops into this type
+                 * */
+                backType = operands[id]->getType();
+                noPrevType = true;
+                break;
+            }
+        }
+        if (noPrevType) {
+            assert(backType != nullptr && "backType is not set");
+            for (size_t id = 0; id < operands.size(); id++) {
+                rollbackType(N, inInstruction, id, llvmIrBasicBlock,
+                             typeChangedInst, backType);
+            }
+        }
+    } else {
+        /*
+         * If one of them is constant, shrink the constant operand
+         * */
+        auto opIt = std::find_if(operands.begin(), operands.end(), [&](Value* const& v) {
+            return isa<llvm::Constant>(v);
+        });
+        assert(opIt != operands.end() && "didn't find constant operand");
+        Type* constantType = (*opIt)->getType();
+        for (size_t id = 0; id < operands.size(); id++) {
+            /*
+             * todo: can be further improved, by shrink both of them to a smaller type
+             * */
+            rollbackType(N, inInstruction, id, llvmIrBasicBlock,
+                         typeChangedInst, constantType);
+        }
+    }
+}
+
+void
 matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasicBlock,
                  std::map<Value*, Type*>& typeChangedInst)
 {
@@ -328,7 +459,8 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
             /*
              * roll back left operand
              * */
-            rollbackType(N, inInstruction, 0, llvmIrBasicBlock, typeChangedInst);
+            rollbackType(N, inInstruction, 0, llvmIrBasicBlock,
+                         typeChangedInst);
         } else {
             backType = leftType;
         }
@@ -337,9 +469,18 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
             /*
              * roll back right operand
              * */
-            rollbackType(N, inInstruction, 1, llvmIrBasicBlock, typeChangedInst, backType);
+            rollbackType(N, inInstruction, 1, llvmIrBasicBlock,
+                         typeChangedInst, backType);
         } else {
-            rollbackType(N, inInstruction, 0, llvmIrBasicBlock, typeChangedInst, rightType);
+            /*
+             * Special for StoreInst, the leftOperand doesn't have '*' but the rightOperand have.
+             * e.g. store i32 %45, i32* %47
+             * */
+            if (isa<StoreInst>(inInstruction) && (rightType->getTypeID() == Type::PointerTyID)) {
+                rightType = rightType->getPointerElementType();
+            }
+            rollbackType(N, inInstruction, 0, llvmIrBasicBlock,
+                         typeChangedInst, rightType);
         }
         return;
     }
@@ -383,6 +524,8 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
         }
 
     };
+    // todo: if it's a storeInst, like store double 5.000000e+00, double* %2
+    //       the leftType should remove '*'
     if (isa<llvm::Constant>(leftOperand)) {
         /*
          * leftOperand is constant, rightOperand is non-constant
@@ -413,15 +556,6 @@ matchDestType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasicBlo
     auto srcOperand = inInstruction->getOperand(0);
     auto srcType = srcOperand->getType();
     auto inInstType = inInstruction->getType();
-
-    /*
-    * phi node is only a symbol and no real computation, so just mutate its type
-    * */
-    if (isa<PHINode>(inInstruction)) {
-        typeChangedInst.emplace(inInstruction, inInstruction->getType());
-        inInstruction->mutateType(srcType);
-        return;
-    }
 
     /*
      * Now the type of inInstruction hasn't changed, so we check if it can be further changed (has range information).
@@ -488,13 +622,18 @@ shrinkInstructionType(State * N, Instruction *inInstruction, BasicBlock & llvmIr
     IRBuilder<> Builder(&llvmIrBasicBlock);
     Builder.SetInsertPoint(inInstruction->getNextNode());
     auto tmp = inInstruction->clone();
-    Value * intCast = Builder.CreateIntCast(tmp, typeInformation.valueType, typeInformation.signFlag);
+    Value * castInst;
+    if (typeInformation.valueType->isIntegerTy()) {
+        castInst = Builder.CreateIntCast(tmp, typeInformation.valueType, typeInformation.signFlag);
+    } else {
+        castInst = Builder.CreateFPCast(tmp, typeInformation.valueType);
+    }
     /*
      * it must be the first meet inst, so it's safe to RAUW
      * */
-    inInstruction->replaceAllUsesWith(intCast);
+    inInstruction->replaceAllUsesWith(castInst);
     ReplaceInstWithInst(inInstruction, tmp);
-    typeChangedInst.emplace(intCast, valueType);
+    typeChangedInst.emplace(castInst, valueType);
     return changed;
 }
 
@@ -509,6 +648,13 @@ shrinkType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
         for (BasicBlock::iterator itBB = llvmIrBasicBlock.begin(); itBB != llvmIrBasicBlock.end();) {
             Instruction *llvmIrInstruction = &*itBB++;
             switch (llvmIrInstruction->getOpcode()) {
+                case Instruction::Call:
+                    
+                case Instruction::Alloca:
+                    /*
+                     * change alloca type based on the metedate of call
+                     * */
+                    break;
                 case Instruction::Add:
                 case Instruction::FAdd:
                 case Instruction::Sub:
@@ -527,17 +673,13 @@ shrinkType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                 case Instruction::And:
                 case Instruction::Or:
                 case Instruction::Xor:
-                case Instruction::PHI:
-                case Instruction::GetElementPtr:
                     /*
                      * For binary operator, check if two operands are of the same type
                      * */
                     matchOperandType(N, llvmIrInstruction, llvmIrBasicBlock, typeChangedInst);
                 case Instruction::FNeg:
                 case Instruction::Load:
-                    /*
-                     * Need further check the result type of GEP
-                     * */
+                case Instruction::GetElementPtr:
                     matchDestType(N, llvmIrInstruction, llvmIrBasicBlock,
                                   boundInfo->virtualRegisterRange, typeChangedInst);
 
@@ -567,7 +709,22 @@ shrinkType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                 case Instruction::FCmp:
                     matchOperandType(N, llvmIrInstruction, llvmIrBasicBlock, typeChangedInst);
                     break;
-                case Instruction::Call:
+                case Instruction::PHI:
+                    matchPhiOperandType(N, llvmIrInstruction, llvmIrBasicBlock, typeChangedInst);
+                    /*
+                     * match dest:
+                     * phi node is only a symbol and no real computation, so just mutate its type
+                     * */
+                    if (isa<PHINode>(llvmIrInstruction)) {
+                        auto srcOperand = llvmIrInstruction->getOperand(0);
+                        auto srcType = srcOperand->getType();
+                        auto inInstType = llvmIrInstruction->getType();
+                        if (compareType(inInstType, srcType) != 0) {
+                            typeChangedInst.emplace(llvmIrInstruction, llvmIrInstruction->getType());
+                            llvmIrInstruction->mutateType(srcType);
+                        }
+                    }
+                    break;
                 case Instruction::Br:
                 case Instruction::Select:
                 case Instruction::Switch:
@@ -614,11 +771,15 @@ mergeCast(State *N, Function &llvmIrFunction) {
      *   %a = castInst type1 %x to type2 // sourceInst
      *   ... (several instructions that don't contain %a)
      *   %b = castInst type2 %a to type3 // destInst
+     *   %c = someInst %b
      *   ============>
      *   %a = castInst type1 %x to type3
+     *
+     * If type1 is equal to type3, remove these two castInst, prototype:
+     *   ============>
+     *   %c = someInst %x
      * */
-    Instruction *sourceInst = nullptr;
-    Instruction *destInst = nullptr;
+    std::vector<Value *> sourceInstVec;
     for (BasicBlock &llvmIrBasicBlock: llvmIrFunction) {
         for (BasicBlock::iterator itBB = llvmIrBasicBlock.begin(); itBB != llvmIrBasicBlock.end();) {
             Instruction *llvmIrInstruction = &*itBB++;
@@ -629,29 +790,43 @@ mergeCast(State *N, Function &llvmIrFunction) {
                 case Instruction::Trunc:
                 case Instruction::FPTrunc:
                 case Instruction::BitCast:
-                    if (sourceInst == nullptr) {
-                        assert(destInst == nullptr && "destInst should be nullptr");
-                        sourceInst = llvmIrInstruction;
-                    } else if (llvmIrInstruction->getOperand(0) == sourceInst){
-                        destInst = llvmIrInstruction;
-                        /*
-                         * substitute destInst to sourceInst
-                         * */
-                        Instruction* sourceOperand = llvm::dyn_cast<llvm::Instruction>(sourceInst->getOperand(0));
-                        IRBuilder<> Builder(&llvmIrBasicBlock);
-                        Builder.SetInsertPoint(sourceInst->getNextNode());
-                        Value * intCast = Builder.CreateIntCast(sourceOperand, destInst->getType(),
-                                                                llvmIrInstruction->getOpcode() == Instruction::SExt);
-                        Instruction * newCastInst = llvm::dyn_cast<llvm::Instruction>(intCast);
-                        sourceInst->removeFromParent();
-                        destInst->replaceAllUsesWith(newCastInst);
-                        destInst->removeFromParent();
-                        sourceInst = newCastInst;
-                        destInst = nullptr;
-                    } else {
-                        sourceInst = llvmIrInstruction;
+                {
+                    if (isa<TruncInst>(llvmIrInstruction)) {
+                        int a = 0;
+                    }
+                    auto sourceInst = llvm::dyn_cast<llvm::Instruction>(llvmIrInstruction->getOperand(0));
+                    if (sourceInst != nullptr) {
+                        auto siIt = std::find(sourceInstVec.begin(), sourceInstVec.end(), sourceInst);
+                        if (siIt != sourceInstVec.end()) {
+                            /*
+                             * substitute destInst to sourceInst
+                             * */
+                            sourceInstVec.erase(siIt);
+                            Instruction* sourceOperand = llvm::dyn_cast<llvm::Instruction>(sourceInst->getOperand(0));
+                            IRBuilder<> Builder(&llvmIrBasicBlock);
+                            Builder.SetInsertPoint(sourceInst->getNextNode());
+                            if (compareType(sourceOperand->getType(), llvmIrInstruction->getType()) == 0) {
+                                llvmIrInstruction->replaceAllUsesWith(sourceOperand);
+                            } else {
+                                Value * castInst;
+                                if (llvmIrInstruction->getType()->isIntegerTy()) {
+                                    castInst = Builder.CreateIntCast(sourceOperand, llvmIrInstruction->getType(),
+                                                                     llvmIrInstruction->getOpcode() == Instruction::SExt);
+                                } else {
+                                    castInst = Builder.CreateFPCast(sourceOperand, llvmIrInstruction->getType());
+                                }
+                                Instruction * newCastInst = llvm::dyn_cast<llvm::Instruction>(castInst);
+                                llvmIrInstruction->replaceAllUsesWith(newCastInst);
+                                sourceInstVec.emplace_back(newCastInst);
+                            }
+                            sourceInst->removeFromParent();
+                            llvmIrInstruction->removeFromParent();
+                        } else {
+                            sourceInstVec.emplace_back(llvmIrInstruction);
+                        }
                     }
                     break;
+                }
                 case Instruction::Call:
                     if (auto llvmIrCallInstruction = dyn_cast<CallInst>(llvmIrInstruction)) {
                         Function * calledFunction = llvmIrCallInstruction->getCalledFunction();
@@ -660,25 +835,29 @@ mergeCast(State *N, Function &llvmIrFunction) {
                             auto firstOperator = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(0));
                             auto localVariableAddressAsMetadata = cast<ValueAsMetadata>(firstOperator->getMetadata());
                             auto localVariableAddress = localVariableAddressAsMetadata->getValue();
-                            if (localVariableAddress == sourceInst) {
-                                sourceInst = nullptr;
-                                destInst = nullptr;
+                            auto siIt = std::find(sourceInstVec.begin(), sourceInstVec.end(),
+                                                  localVariableAddress);
+                            if (siIt != sourceInstVec.end()) {
+                                sourceInstVec.erase(siIt);
                             }
                         } else {
                             for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
                             {
-                                if (llvmIrCallInstruction->getOperand(idx) == sourceInst) {
-                                    sourceInst = nullptr;
-                                    destInst = nullptr;
+                                auto siIt = std::find(sourceInstVec.begin(), sourceInstVec.end(),
+                                                      llvmIrCallInstruction->getOperand(idx));
+                                if (siIt != sourceInstVec.end()) {
+                                    sourceInstVec.erase(siIt);
                                 }
                             }
                         }
+                        break;
                     }
                 default:
                     for (size_t idx = 0; idx < llvmIrInstruction->getNumOperands(); idx++) {
-                        if (llvmIrInstruction->getOperand(idx) == sourceInst) {
-                            sourceInst = nullptr;
-                            destInst = nullptr;
+                        auto siIt = std::find(sourceInstVec.begin(), sourceInstVec.end(),
+                                              llvmIrInstruction->getOperand(idx));
+                        if (siIt != sourceInstVec.end()) {
+                            sourceInstVec.erase(siIt);
                         }
                     }
                     break;

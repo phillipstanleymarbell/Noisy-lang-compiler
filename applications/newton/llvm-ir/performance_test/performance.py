@@ -61,7 +61,7 @@ range_extend_num = 6
 range_extend_list = [1, 10, 100, 1000, 10000, 100000]
 param_label = []
 for i in range(params_num):
-    param_label.append("param_"+str(i+1))
+    param_label.append("param_" + str(i + 1))
 
 # prepare data for histogram
 name_list = []
@@ -109,22 +109,22 @@ opt_perf_data = [opt_inst_count, opt_time_consumption, opt_ir_lines, opt_lib_siz
 # prepare data for heatmap
 inst_speedup = []
 for i in range(3, len(performance_data), 3):
-    inst_speedup.append(float(performance_data[i][2].strip('%'))/100)
+    inst_speedup.append(float(performance_data[i][2].strip('%')) / 100)
 inst_speedup = np.reshape(inst_speedup, (test_case_num, range_extend_num, params_num))
 
 time_speedup = []
 for i in range(3, len(performance_data), 3):
-    time_speedup.append(float(performance_data[i][3].strip('%'))/100)
+    time_speedup.append(float(performance_data[i][3].strip('%')) / 100)
 time_speedup = np.reshape(time_speedup, (test_case_num, range_extend_num, params_num))
 
 ir_reduction = []
 for i in range(3, len(performance_data), 3):
-    ir_reduction.append(float(performance_data[i][4].strip('%'))/100)
+    ir_reduction.append(float(performance_data[i][4].strip('%')) / 100)
 ir_reduction = np.reshape(ir_reduction, (test_case_num, range_extend_num, params_num))
 
 lib_size_reduction = []
 for i in range(3, len(performance_data), 3):
-    lib_size_reduction.append(float(performance_data[i][5].strip('%'))/100)
+    lib_size_reduction.append(float(performance_data[i][5].strip('%')) / 100)
 lib_size_reduction = np.reshape(lib_size_reduction, (test_case_num, range_extend_num, params_num))
 
 perf_data_speedup = [inst_speedup, time_speedup, ir_reduction, lib_size_reduction]
@@ -145,7 +145,7 @@ os.mkdir(fig_path)
 #         for range_extend_id in range(range_extend_num):
 #             ax1 = plt.figure(num= merit_id * test_case_num * range_extend_num +
 #                              test_case_id * range_extend_num + range_extend_id + 1,
-#                              dpi=120)
+#                              dpi=300)
 #
 #             x = list(range(params_num))
 #             total_width, n = 0.5, 2
@@ -178,17 +178,21 @@ os.mkdir(fig_path)
 for merit_id in range(1, merit_num, 2):
     for test_case_id in range(test_case_num):
         plt.clf()
-        plt.figure(num=merit_id*test_case_num+test_case_id, dpi=120)
-        fmt = lambda x,pos: '{:.0%}'.format(x)
-        sns.heatmap(data=perf_data_speedup[merit_id][test_case_id].T,
-                    cmap=plt.get_cmap('Greens'),
-                    annot=True,
-                    fmt=".0%",
-                    cbar_kws={'format': FuncFormatter(fmt)},
-                    xticklabels=range_extend_list,
-                    yticklabels=param_label)
-        plt.title(machine + "-" + name_list[test_case_id*range_extend_num] + "-" + y_labels[merit_id])
-        file_name = fig_path + machine + "-" + name_list[test_case_id*range_extend_num] + "-" + y_labels[merit_id] + ".png"
+        plt.figure(num=merit_id * test_case_num + test_case_id, dpi=300,
+                   constrained_layout=True)
+        fmt = lambda x, pos: '{:.0%}'.format(x)
+        fig = sns.heatmap(data=perf_data_speedup[merit_id][test_case_id].T,
+                          cmap=plt.get_cmap('Greens'),
+                          annot=True,
+                          fmt=".0%",
+                          cbar_kws={'format': FuncFormatter(fmt)},
+                          xticklabels=range_extend_list,
+                          yticklabels=param_list[0:10])
+        fig.set_xlabel('range extend')
+        fig.set_ylabel('function parameters')
+        plt.title(machine + "-" + name_list[test_case_id * range_extend_num] + "-" + y_labels[merit_id])
+        file_name = fig_path + machine + "-" + name_list[test_case_id * range_extend_num] + "-" + y_labels[
+            merit_id] + ".png"
         file_name = file_name.replace(" ", "_")
         plt.savefig(file_name)
         plt.close()
