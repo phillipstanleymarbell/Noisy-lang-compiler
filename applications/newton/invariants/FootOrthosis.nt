@@ -63,3 +63,39 @@ temperatureOperatingRange : invariant(measuredTemperature : temperature) {
     measuredTemperature > 273.15,   # 0  deg C
     measuredTemperature < 323.15    # 50 deg C
 }
+
+StateSitting: invariant (kneeAngle: angle, ankleAngle:angle) {
+    kneeAngle >= 30,
+    kneeAngle <= 180,
+    ankle angle >= 75,
+    ankleAngle >= 120
+}
+
+StateStanding: invariant (kneeAngle: angle, ankleAngle:angle) {
+    kneeAngle >= 160,
+    kneeAngle <= 180,
+    ankle angle >= 85,
+    ankleAngle >= 95
+}
+
+StateWalking: invariant (kneeAngle: angle, ankleAngle:angle) {
+    kneeAngle >= 65,
+    kneeAngle <= 69,
+    ankle angle >= 60,
+    ankleAngle >= 110
+}
+
+StateRunning: invariant (kneeAngle: angle, ankleAngle:angle) {
+    kneeAngle >= 45,
+    kneeAngle <= 180,
+    ankle angle >= 60,
+    ankleAngle>= 110
+}
+
+StateLyingDown  : invariant (kneeAngle: angle, ankleAngle:angle){
+    kneeAngle >= 90,
+    kneeAngle <= 180,
+    ankle angle >= 90,
+    ankleAngle >= 120
+}
+
