@@ -95,7 +95,7 @@ StateRunning: invariant (kneeAngle: angle, ankleAngle:angle) {
 StateLyingDown  : invariant (kneeAngle: angle, ankleAngle:angle){
     kneeAngle >= 90,
     kneeAngle <= 180,
-    ankle angle >= 90,
+    ankleAngle >= 90,
     ankleAngle >= 120
 }
 
