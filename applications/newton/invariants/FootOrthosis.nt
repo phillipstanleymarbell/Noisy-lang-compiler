@@ -81,7 +81,7 @@ StateStanding: invariant (kneeAngle: angle, ankleAngle:angle) {
 StateWalking: invariant (kneeAngle: angle, ankleAngle:angle) {
     kneeAngle >= 65,
     kneeAngle <= 69,
-    ankle angle >= 60,
+    ankleAngle >= 60,
     ankleAngle >= 110
 }
 
