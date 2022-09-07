@@ -67,7 +67,7 @@ temperatureOperatingRange : invariant(measuredTemperature : temperature) {
 StateSitting: invariant (kneeAngle: angle, ankleAngle:angle) {
     kneeAngle >= 30,
     kneeAngle <= 180,
-    ankle angle >= 75,
+    ankleAngle >= 75,
     ankleAngle >= 120
 }
 
