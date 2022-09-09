@@ -49,6 +49,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "llvm/Bitcode/BitcodeWriter.h"

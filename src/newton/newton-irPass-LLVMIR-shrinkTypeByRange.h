@@ -45,11 +45,8 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-bool
-shrinkType(State *N, BoundInfo *boundInfo, llvm::Function &llvmIrFunction);
-
 void
-mergeCast(State *N, llvm::Function &llvmIrFunction);
+shrinkType(State *N, BoundInfo *boundInfo, llvm::Function &llvmIrFunction);
 
 #ifdef __cplusplus
 } /* extern "C" */
