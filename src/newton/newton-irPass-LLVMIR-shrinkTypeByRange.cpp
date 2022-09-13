@@ -670,6 +670,10 @@ matchDestType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasicBlo
                 && "destInst can only be mutated once");
         typeChangedInst.emplace(inInstruction, instPrevTypeInfo);
         inInstruction->mutateType(tmpType);
+        if (auto gepInst = dyn_cast<GetElementPtrInst>(inInstruction)) {
+            gepInst->setSourceElementType(srcType->getPointerElementType());
+            gepInst->setResultElementType(srcType->getPointerElementType());
+        }
     } else {
         /*
          * roll back operands to typeInformation.valueType
@@ -689,6 +693,10 @@ matchDestType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasicBlo
                 && "destInst can only be mutated once");
         typeChangedInst.emplace(inInstruction, instPrevTypeInfo);
         inInstruction->mutateType(typeInformation.valueType);
+        if (auto gepInst = dyn_cast<GetElementPtrInst>(inInstruction)) {
+            gepInst->setSourceElementType(typeInformation.valueType->getPointerElementType());
+            gepInst->setResultElementType(typeInformation.valueType->getPointerElementType());
+        }
     }
     return;
 }
@@ -750,6 +758,17 @@ void rollBackBasicBlock(State *N, BasicBlock & llvmIrBasicBlock, std::map<Value*
     }
 }
 
+/*
+ * Some special instructions that need to pay attention:
+ * %i = alloca type, instType is type*
+ * %i = call retType @func_name (type %p1, ...)
+ * call void @llvm.dbg.declare/value (metadata type %p, ...)
+ * %i = load type, type* %op, instType is type
+ * %i = gep type, type1* %op1, type2 %op2, (type3 %op3)
+ * %i = castInst type1 %op1 to type2
+ * store type %op1, type* %op2
+ * %.i = phi type [%op1, %bb1], [%op2, %bb2], ...
+ * */
 std::map<Value*, typeInfo>
 shrinkInstType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
     /*
@@ -764,19 +783,20 @@ shrinkInstType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
         for (BasicBlock::iterator itBB = llvmIrBasicBlock.begin(); itBB != llvmIrBasicBlock.end();) {
             Instruction *llvmIrInstruction = &*itBB++;
             switch (llvmIrInstruction->getOpcode()) {
-//                case Instruction::Alloca:
-//                    if (auto llvmIrAllocaInstruction = dyn_cast<AllocaInst>(llvmIrInstruction)) {
-//                        typeInfo realType = getTypeInfo(N, llvmIrAllocaInstruction,
-//                                                        boundInfo->virtualRegisterRange);
-//                        if (realType.valueType != nullptr) {
-//                            typeChangedInst.emplace(llvmIrAllocaInstruction,
-//                                                    llvmIrAllocaInstruction->getType());
-//                            llvmIrAllocaInstruction->setAllocatedType(
-//                                    realType.valueType->getPointerElementType());
-//                            llvmIrAllocaInstruction->mutateType(realType.valueType);
-//                        }
-//                    }
-//                    break;
+                case Instruction::Alloca:
+                    if (auto llvmIrAllocaInstruction = dyn_cast<AllocaInst>(llvmIrInstruction)) {
+                        typeInfo realType = getTypeInfo(N, llvmIrAllocaInstruction,
+                                                        boundInfo->virtualRegisterRange);
+                        if (realType.valueType != nullptr) {
+                            typeInfo instPrevTypeInfo{llvmIrAllocaInstruction->getType(), realType.signFlag};
+                            typeChangedInst.emplace(llvmIrAllocaInstruction,
+                                                    instPrevTypeInfo);
+                            llvmIrAllocaInstruction->setAllocatedType(
+                                    realType.valueType->getPointerElementType());
+                            llvmIrAllocaInstruction->mutateType(realType.valueType);
+                        }
+                    }
+                    break;
                 case Instruction::Call:
                     if (auto llvmIrCallInstruction = dyn_cast<CallInst>(llvmIrInstruction)) {
                         Function *calledFunction = llvmIrCallInstruction->getCalledFunction();
@@ -871,6 +891,43 @@ shrinkInstType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                         }
                     }
                     break;
+                case Instruction::Ret:
+                    if (auto llvmIrReturnInstruction = dyn_cast<ReturnInst>(llvmIrInstruction))
+                    {
+                        /*
+                         * If the function return type not match, roll back the returnType
+                         * e.g.
+                         *  define i32* @funcName {
+                         *    ...
+                         *    ret i8* %x
+                         *  }
+                         *  ======================>
+                         *  define i32* @funcName {
+                         *    ...
+                         *    %y = bitcast i8* %x to i32*
+                         *    ret i32* %y
+                         *  }
+                         * */
+                        auto funcRetType = llvmIrFunction.getReturnType();
+                        auto retInstType = llvmIrReturnInstruction->getType();
+                        if (compareType(funcRetType, retInstType) != 0) {
+                            IRBuilder<> Builder(&llvmIrBasicBlock);
+                            Builder.SetInsertPoint(llvmIrReturnInstruction->getPrevNode());
+                            Value * castInst;
+                            auto retValue = llvmIrReturnInstruction->getReturnValue();
+                            assert(retValue != nullptr && "return void");
+                            if (funcRetType->isIntegerTy()) {
+                                castInst = Builder.CreateIntCast(retValue, funcRetType, false);
+                            } else {
+                                castInst = Builder.CreateFPCast(retValue, funcRetType);
+                            }
+                            ReturnInst::Create(llvmIrReturnInstruction->getContext(),
+                                               castInst,
+                                               llvmIrReturnInstruction->getParent());
+                            llvmIrReturnInstruction->removeFromParent();
+                        }
+                    }
+                    break;
                 case Instruction::Br:
                 case Instruction::Select:
                 case Instruction::Switch:
@@ -900,7 +957,6 @@ shrinkInstType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                 case Instruction::InsertValue:
                 case Instruction::LandingPad:
                 case Instruction::Freeze:
-                case Instruction::Ret:
                     break;
                 default:
                     break;
@@ -938,15 +994,23 @@ mergeCast(State *N, Function &llvmIrFunction, std::map<Value*, typeInfo>& typeCh
                 case Instruction::BitCast:
                 {
                     /*
-                     * if the operand(0) is equal to operand(1), remove this inst
+                     * if the operand(0) is equal to operand(1), remove this inst,
+                     * except array time cast like
+                     * %a = bitcast [100 x i8]* %b to i8*
                      * */
-                    if (compareType(llvmIrInstruction->getOperand(0)->getType(),
+                    auto sourceOp = llvmIrInstruction->getOperand(0);
+                    auto pointerSrcTy = dyn_cast<PointerType>(sourceOp->getType());
+                    if (pointerSrcTy != nullptr &&
+                            pointerSrcTy->getPointerElementType()->isArrayTy()) {
+                        break;
+                    }
+                    if (compareType(sourceOp->getType(),
                                     llvmIrInstruction->getType()) == 0) {
-                        llvmIrInstruction->replaceAllUsesWith(llvmIrInstruction->getOperand(0));
+                        llvmIrInstruction->replaceAllUsesWith(sourceOp);
                         llvmIrInstruction->removeFromParent();
                         break;
                     }
-                    auto sourceInst = llvm::dyn_cast<llvm::Instruction>(llvmIrInstruction->getOperand(0));
+                    auto sourceInst = llvm::dyn_cast<llvm::Instruction>(sourceOp);
                     if (sourceInst != nullptr) {
                         auto siIt = std::find(sourceInstVec.begin(), sourceInstVec.end(), sourceInst);
                         if (siIt != sourceInstVec.end()) {
@@ -1063,9 +1127,10 @@ countCastInst(State *N, Function &llvmIrFunction) {
 void
 shrinkType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
     /*
-     * We first store the status of all basic blocks, and count how many castInst.
-     * Then we compare the castInst number after our algorithm.
-     * If the algorithm increases more than one castInst, we restore to thr previous status.
+     * 1. construct instruction dependency block
+     * 2. store the status of all insDepend blocks, and count how many castInst.
+     * 3. compare the castInst number after our algorithm.
+     *    3.1 If the algorithm increases more than one castInst, we restore to the previous status.
      * */
     std::map<uint32_t, uint32_t> prevCastCount = countCastInst(N, llvmIrFunction);
     std::map<Value*, typeInfo> typeChangedInst = shrinkInstType(N, boundInfo, llvmIrFunction);
@@ -1077,14 +1142,14 @@ shrinkType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
      * roll back basic block
      * todo: have a better and more complex strategy
      * */
-    size_t idx = 0;
-    for (BasicBlock & llvmIrBasicBlock : llvmIrFunction) {
-//        if (nowCastCount[idx] > prevCastCount[idx] + 1) {
-            rollBackBasicBlock(N, llvmIrBasicBlock, typeChangedInst);
-//        }
-        idx++;
-    }
-    mergeCast(N, llvmIrFunction, typeChangedInst);
+//    size_t idx = 0;
+//    for (BasicBlock & llvmIrBasicBlock : llvmIrFunction) {
+////        if (nowCastCount[idx] > prevCastCount[idx] + 1) {
+//            rollBackBasicBlock(N, llvmIrBasicBlock, typeChangedInst);
+////        }
+//        idx++;
+//    }
+//    mergeCast(N, llvmIrFunction, typeChangedInst);
 }
 
 }

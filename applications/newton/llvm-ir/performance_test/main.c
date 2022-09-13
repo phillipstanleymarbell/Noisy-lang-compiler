@@ -36,6 +36,7 @@
 */
 
 #include <stdio.h>
+#include "stdint.h"
 #include <stdlib.h>
 #include "../c-files/fdlibm.h"
 
@@ -43,15 +44,30 @@
  * Definitions generated from Newton
  */
 typedef double bmx055xAcceleration;  // [-16, 16]
+typedef int bmx055xMagneto;      // [0, 127]
+#define iteration_num 5
 
 /*
  * random floating point, [min, max]
  * */
 bmx055xAcceleration
-randomFloat(float min, float max)
+randomFloat(bmx055xAcceleration min, bmx055xAcceleration max)
 {
     bmx055xAcceleration randFpValue = min + 1.0 * rand() / RAND_MAX * (max - min);
 	return randFpValue;
+}
+
+/*
+ * random integer, [min, max]
+ * */
+static bmx055xMagneto randIntValue[iteration_num];
+bmx055xMagneto*
+randomInt(bmx055xMagneto min, bmx055xMagneto max)
+{
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        randIntValue[idx] = (rand() % max) + 1;
+    }
+    return randIntValue;
 }
 
 int
@@ -102,6 +118,8 @@ main(int argc, char** argv)
         result = float64_mul(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 0.6, parameters[1] + 0.3));
 #elif defined(FLOAT64_SIN)
         result = float64_sin(randomFloat(parameters[0], parameters[1]));
+#elif defined(BENCHMARK_SUITE)
+        result = uint8_add_test(randomInt(0, 127), randomInt(0, 127));
 #else
 	#error "Benchmark function not defined"
 #endif
