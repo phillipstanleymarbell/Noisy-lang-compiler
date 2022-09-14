@@ -78,8 +78,11 @@ test: sensor (
     					},
 
 	accuracy bmx055xAcceleration == {
-					(150 n, 312)
+					(0.15 n, 312)
 				},
+    accuracy bmx055yAcceleration == {
+                    (0.15 n, 312)
+                },
     accuracy bmx055xMagneto == {
     						(1.0 uT, 408),
     						(0.6 uT, 1200),
