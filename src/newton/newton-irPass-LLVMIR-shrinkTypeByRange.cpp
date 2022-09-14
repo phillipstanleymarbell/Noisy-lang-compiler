@@ -408,7 +408,6 @@ rollbackType(State * N, Instruction *inInstruction, unsigned operandIdx, BasicBl
             } else {
                 assert(false && "unknown floating type");
             }
-//            auto newConstant = ConstantFP::get(backType.valueType, constFp->getValueAPF());
         } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(inValue)) {
             if (backType.signFlag) {
                 auto constValue = constInt->getSExtValue();
@@ -559,6 +558,14 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
             /*
              * roll back right operand
              * */
+            /*
+             * Special for StoreInst, the leftOperand doesn't have '*' but the rightOperand have.
+             * e.g. store i32 %45, i32* %47
+             * */
+            if (isa<StoreInst>(inInstruction) && (backType.valueType->getTypeID() != Type::PointerTyID)) {
+                unsigned pointerAddr = rightOperand->getType()->getPointerAddressSpace();
+                backType.valueType = backType.valueType->getPointerTo(pointerAddr);
+            }
             rollbackType(N, inInstruction, 1, llvmIrBasicBlock,
                          typeChangedInst, backType);
         } else {
@@ -678,10 +685,6 @@ matchDestType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasicBlo
      * If not, roll back all operands
      * */
     assert(compareType(srcType, inInstType) <= 0 && "srcType must <= inInstType");
-    // debug
-    if (isa<llvm::Constant>(inInstruction->getOperand(0))) {
-        int a = 0;
-    }
     typeInformation = getTypeInfo(N, inInstruction, virtualRegisterRange);
     if (typeInformation.valueType == nullptr) {
         if (compareType(srcType, inInstType) != 0) {
@@ -828,6 +831,36 @@ shrinkInstType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
      * */
     std::map<Value*, typeInfo> typeChangedInst;
     std::vector<AllocaInst*> allocaVec;
+
+    /*
+     * Shrink the type of function parameters
+     * e.g.
+     *  define i32* @func_name(i32* %0, i32* %1) {
+     *  ======================>
+     *  define i32* @func_name(i32* %0, i32* %1) {
+     *      %2 = bitcast i32* %0 to i8*
+     *      %3 = bitcast i32* %1 to i8*
+     * */
+//    for (auto funcIt = llvmIrFunction.arg_begin(); funcIt != llvmIrFunction.arg_end(); funcIt++) {
+//
+//    }
+    for (int idx = 0; idx < llvmIrFunction.arg_size(); idx++) {
+        auto paramOp = llvmIrFunction.getArg(idx);
+        typeInfo typeInformation = getTypeInfo(N, paramOp, boundInfo->virtualRegisterRange);
+        if (typeInformation.valueType != nullptr) {
+            IRBuilder<> Builder(&llvmIrFunction.getEntryBlock(), llvmIrFunction.getEntryBlock().begin());
+            Value * castValue;
+            if (typeInformation.valueType->isIntegerTy()) {
+                castValue = Builder.CreateIntCast(paramOp, typeInformation.valueType, typeInformation.signFlag);
+            } else {
+                castValue = Builder.CreateFPCast(paramOp, typeInformation.valueType);
+            }
+            paramOp->replaceAllUsesWith(castValue);
+            if (auto castInst = dyn_cast<CastInst>(castValue)) {
+                castInst->setOperand(0, paramOp);
+            }
+        }
+    }
     for (BasicBlock &llvmIrBasicBlock: llvmIrFunction) {
         /*
          * Strategy to decide whether to do ShrinkType or not

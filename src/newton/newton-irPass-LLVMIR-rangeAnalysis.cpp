@@ -46,6 +46,7 @@ std::pair<Value *, std::pair<double, double>>
 rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 {
     std::map<Value *, Value *> unionAddress;
+    std::map<Value *, Value *> storeParamMap;
     for (BasicBlock & llvmIrBasicBlock : llvmIrFunction)
     {
         for (Instruction & llvmIrInstruction : llvmIrBasicBlock)
@@ -84,6 +85,10 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                     if (typeRangeIt != boundInfo->typeRange.end())
                                     {
                                         boundInfo->virtualRegisterRange.emplace(localVariableAddress, typeRangeIt->second);
+                                        auto spIt = storeParamMap.find(localVariableAddress);
+                                        if (spIt != storeParamMap.end()) {
+                                            boundInfo->virtualRegisterRange.emplace(spIt->second, typeRangeIt->second);
+                                        }
                                     }
                                     else {
                                         //todo: other DIDerivedType, like size_t
@@ -904,6 +909,14 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                             {
                                 boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), vrRangeIt->second);
+                            } else {
+                                /*
+                                 * llvmIrStoreInstruction->getOperand(0) is the param of function
+                                 * */
+                                if (isa<Argument>(llvmIrStoreInstruction->getOperand(0))) {
+                                    storeParamMap.emplace(llvmIrStoreInstruction->getOperand(1),
+                                                          llvmIrStoreInstruction->getOperand(0));
+                                }
                             }
                             /*
                              * Each time if there's a StorInst assign to the unionAddress, it updates the value of union.
