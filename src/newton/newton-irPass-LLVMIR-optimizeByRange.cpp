@@ -117,6 +117,97 @@ irPassLLVMIROptimizeByRange(State * N)
 		}
 	}
 
+    /*
+     * get static global variables
+     * static constant value is in the code
+     * */
+//    for (const auto & compileUnit : Mod->debug_compile_units()) {
+//        for (const auto & globalVar : compileUnit->getGlobalVariables()) {
+//            const DIGlobalVariable *diGV = globalVar->getVariable();
+//            const DIExpression *diExpr = globalVar->getExpression();
+//            Value* diValue = cast<ValueAsMetadata>(globalVar->getRawVariable())->getValue();
+//            for (size_t idx = 0; idx < diExpr->getNumElements(); idx++) {
+//                /*
+//                 * get variable type
+//                 * */
+//                auto diType = diGV->getType();
+//                std::string baseTypeName;
+//                if (const auto * derivedType = dyn_cast<DIDerivedType>(diType)) {
+//                    if (derivedType->getTag() == llvm::dwarf::DW_TAG_pointer_type) {
+//                        baseTypeName = derivedType->getBaseType()->getName().str();
+//                    } else {
+//                        baseTypeName = derivedType->getName().str();
+//                    }
+//                } else {
+//                    baseTypeName = derivedType->getName().str();
+//                }
+//                /*
+//                 * it's a constant value
+//                 * */
+//                if (diExpr->getElement(idx) == dwarf::DW_OP_constu) {
+//                    uint64_t u64Value = diExpr->getElement(idx+1);
+//                    double realValue = 0;
+//                    if (baseTypeName == "double") {
+//                        memcpy(&realValue, &u64Value, sizeof(uint64_t));
+//                    } else if (baseTypeName == "float") {
+//                        memcpy(&realValue, &u64Value, sizeof(uint64_t));
+//                    } else {
+//                        realValue = u64Value;
+//                    }
+//                    boundInfo->virtualRegisterRange.emplace(diValue, std::make_pair(realValue, realValue));
+//                }
+//            }
+//        }
+//    }
+
+    /*
+     * get const global variables
+     * */
+    for (auto & globalVar : Mod->getGlobalList()) {
+        auto constValue = globalVar.getInitializer();
+        if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(constValue)) {
+            if (constValue->getType()->isFloatTy()) {
+                float constValue = constFp->getValueAPF().convertToFloat();
+                boundInfo->virtualRegisterRange.emplace(&globalVar, std::make_pair(constValue, constValue));
+            } else if (constValue->getType()->isDoubleTy()) {
+                double constValue = constFp->getValueAPF().convertToDouble();
+                boundInfo->virtualRegisterRange.emplace(&globalVar, std::make_pair(constValue, constValue));
+            }
+        } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(constValue)) {
+            auto constValue = constInt->getSExtValue();
+            boundInfo->virtualRegisterRange.emplace(&globalVar, std::make_pair(static_cast<double>(constValue),
+                                                                            static_cast<double>(constValue)));
+        } else if (ConstantDataArray * constArr = llvm::dyn_cast<llvm::ConstantDataArray>(constValue)) {
+            auto arrType = constArr->getElementType();
+            // todo: check use 'globalVar' or constArr->getElementAsConstant(idx)
+            if (arrType->isDoubleTy()) {
+                for (size_t idx = 0; idx < constArr->getNumElements(); idx++) {
+                    double dbValue = constArr->getElementAsDouble(idx);
+                    boundInfo->virtualRegisterRange.emplace(constArr->getElementAsConstant(idx),
+                                                            std::make_pair(dbValue, dbValue));
+                }
+            } else if (arrType->isFloatTy()) {
+                for (size_t idx = 0; idx < constArr->getNumElements(); idx++) {
+                    double ftValue = constArr->getElementAsFloat(idx);
+                    boundInfo->virtualRegisterRange.emplace(constArr->getElementAsConstant(idx),
+                                                            std::make_pair(ftValue, ftValue));
+                }
+            } else if (arrType->isIntegerTy()) {
+                for (size_t idx = 0; idx < constArr->getNumElements(); idx++) {
+                    uint64_t intValue = constArr->getElementAsInteger(idx);
+                    boundInfo->virtualRegisterRange.emplace(constArr->getElementAsConstant(idx),
+                                                            std::make_pair(static_cast<double>(intValue),
+                                                                           static_cast<double>(intValue)));
+                }
+            } else if (arrType->isPointerTy()) {
+                // todo when meet
+            } else {
+                // todo when meet: other type
+            }
+        } else {
+            // todo when meet: other type
+        }
+    }
     flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
     for (auto & mi : *Mod)
     {

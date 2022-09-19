@@ -23,7 +23,7 @@ default: application.ll simple_control_flow.ll inferBound.ll inferBoundControlFl
 %.ll : %.c
 	@echo Compiling $*.c
 	$(QUIET)$(CC) $(TARGET_FLAG) -g -O0 -Xclang -disable-O0-optnone -S -emit-llvm $(COMMON_FLAGS) -o $@ $<
-	opt $@ --mem2reg -S -o $@
+	opt $@ --mem2reg --instsimplify -S -o $@
 
 clean::
 	$(QUIET)rm -f *.ll *.bc

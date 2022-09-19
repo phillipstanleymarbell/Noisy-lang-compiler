@@ -18,3 +18,23 @@ bmx055xMagneto* uint8_add_test(bmx055xMagneto* leftOp, bmx055xMagneto* rightOp) 
     }
     return result;
 }
+
+typedef double bmx055zAcceleration;
+
+bmx055zAcceleration* double_add_test(bmx055zAcceleration* leftOp, bmx055zAcceleration* rightOp) {
+    bmx055zAcceleration result[iteration_num];
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = leftOp[idx] + rightOp[idx];
+    }
+    return result;
+}
+
+typedef float bmx055fAcceleration;
+
+bmx055fAcceleration* float_add_test(bmx055fAcceleration* leftOp, bmx055fAcceleration* rightOp) {
+    bmx055fAcceleration result[iteration_num];
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = leftOp[idx] + rightOp[idx];
+    }
+    return result;
+}

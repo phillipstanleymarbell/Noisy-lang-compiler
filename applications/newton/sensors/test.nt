@@ -25,11 +25,15 @@ kBMX055xMagnetoStdev			: constant = -1;
 test: sensor (
 			bmx055xAcceleration: acceleration,
             bmx055yAcceleration: acceleration,
+            bmx055zAcceleration: acceleration,
+            bmx055fAcceleration: acceleration,
 			bmx055xMagneto: magneticFluxDensity
 			) =
 {
 	range bmx055xAcceleration == [3 mjf, 10 mjf],
     range bmx055yAcceleration == [1 mjf, 16 mjf],
+    range bmx055zAcceleration == [0 mjf, 127 mjf],
+    range bmx055fAcceleration == [0 mjf, 127 mjf],
 	range bmx055xMagneto == [0 uT, 127 uT],
 
 	#
@@ -81,6 +85,12 @@ test: sensor (
 					(0.15 n, 312)
 				},
     accuracy bmx055yAcceleration == {
+                    (0.15 n, 312)
+                },
+    accuracy bmx055zAcceleration == {
+                    (0.15 n, 312)
+                },
+    accuracy bmx055fAcceleration == {
                     (0.15 n, 312)
                 },
     accuracy bmx055xMagneto == {

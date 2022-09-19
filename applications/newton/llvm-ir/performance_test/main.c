@@ -44,6 +44,8 @@
  * Definitions generated from Newton
  */
 typedef double bmx055xAcceleration;  // [-16, 16]
+typedef double bmx055zAcceleration;  // [0, 127]
+typedef float bmx055fAcceleration;  // [0, 127]
 typedef int bmx055xMagneto;      // [0, 127]
 #define iteration_num 5
 
@@ -58,16 +60,42 @@ randomFloat(bmx055xAcceleration min, bmx055xAcceleration max)
 }
 
 /*
- * random integer, [min, max]
+ * random integer array, [min, max]
  * */
 static bmx055xMagneto randIntValue[iteration_num];
 bmx055xMagneto*
-randomInt(bmx055xMagneto min, bmx055xMagneto max)
+randomIntArr(bmx055xMagneto min, bmx055xMagneto max)
 {
     for (size_t idx = 0; idx < iteration_num; idx++) {
         randIntValue[idx] = (rand() % max) + 1;
     }
     return randIntValue;
+}
+
+/*
+ * random double array, [min, max]
+ * */
+static bmx055zAcceleration randDoubleValue[iteration_num];
+bmx055zAcceleration*
+randomDoubleArr(bmx055zAcceleration min, bmx055zAcceleration max)
+{
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        randDoubleValue[idx] = min + 1.0 * rand() / RAND_MAX * (max - min);
+    }
+    return randDoubleValue;
+}
+
+/*
+ * random float array, [min, max]
+ * */
+static bmx055fAcceleration randFloatValue[iteration_num];
+bmx055fAcceleration*
+randomFloatArr(bmx055fAcceleration min, bmx055fAcceleration max)
+{
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        randFloatValue[idx] = min + 1.0 * rand() / RAND_MAX * (max - min);
+    }
+    return randFloatValue;
 }
 
 int
@@ -118,8 +146,12 @@ main(int argc, char** argv)
         result = float64_mul(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 0.6, parameters[1] + 0.3));
 #elif defined(FLOAT64_SIN)
         result = float64_sin(randomFloat(parameters[0], parameters[1]));
-#elif defined(BENCHMARK_SUITE)
-        result = uint8_add_test(randomInt(0, 127), randomInt(0, 127));
+#elif defined(BENCHMARK_SUITE_INT)
+        result = uint8_add_test(randomIntArr(0, 127), randomIntArr(0, 127));
+#elif defined(BENCHMARK_SUITE_DOUBLE)
+        result = double_add_test(randomDoubleArr(0, 127), randomDoubleArr(0, 127));
+#elif defined(BENCHMARK_SUITE_FLOAT)
+        result = float_add_test(randomFloatArr(0, 127), randomFloatArr(0, 127));
 #else
 	#error "Benchmark function not defined"
 #endif

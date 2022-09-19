@@ -42,10 +42,73 @@ using namespace llvm;
 extern "C"
 {
 
+const bool valueRangeDebug = true;
+
+/*
+ * infer the result range of instruction based on the incoming value of Phi node.
+ * e.g.
+ *  %x = phi double [%a, %bb0], [5, %bb1], [undef, %bb2]
+ *  %y = sub double %x, 10
+ * if we know the range of %a, then the range of %x should be [min(min_a, 5), max(max_a, 5)]
+ *
+ * but it could be more accuracy for IntSet.
+ * */
+bool
+checkPhiRange(State * N, PHINode* phiNode,
+              const std::vector<Value*>& incomingValueVec,
+              std::map<llvm::Value *, std::pair<double, double>>& virtualRegisterRange) {
+//    auto pnIt = phiNodeValues.find(phiNode);
+//    assert(pnIt != phiNodeValues.end() && "didn't store such phi node");
+    std::vector<double> minValueVec, maxValueVec;
+    for (auto phiValue : incomingValueVec) {
+        if (isa<llvm::Constant>(phiValue)) {
+            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(phiValue)) {
+                if (phiValue->getType()->isFloatTy()) {
+                    float constValue = constFp->getValueAPF().convertToFloat();
+                    minValueVec.emplace_back(constValue);
+                    maxValueVec.emplace_back(constValue);
+                } else if (phiValue->getType()->isDoubleTy()) {
+                    double constValue = constFp->getValueAPF().convertToDouble();
+                    minValueVec.emplace_back(constValue);
+                    maxValueVec.emplace_back(constValue);
+                }
+            } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(phiValue)) {
+                auto constValue = constInt->getSExtValue();
+                minValueVec.emplace_back(static_cast<double>(constValue));
+                maxValueVec.emplace_back(static_cast<double>(constValue));
+            } else {
+                assert(valueRangeDebug && "implement when meet");
+            }
+        } else if (isa<UndefValue>(phiValue) || isa<PoisonValue>(phiValue)) {
+            /*do nothing*/
+        } else {
+            auto vrRangeIt = virtualRegisterRange.find(phiValue);
+            if (vrRangeIt != virtualRegisterRange.end())
+            {
+                minValueVec.emplace_back(vrRangeIt->second.first);
+                maxValueVec.emplace_back(vrRangeIt->second.second);
+            } else {
+                assert(!valueRangeDebug && "failed to get range");
+                return false;
+            }
+        }
+    }
+    double minRes = *std::min_element(minValueVec.begin(), minValueVec.end());
+    double maxRes = *std::max_element(maxValueVec.begin(), maxValueVec.end());
+    virtualRegisterRange.emplace(phiNode, std::make_pair(minRes, maxRes));
+    return true;
+}
+
 std::pair<Value *, std::pair<double, double>>
 rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 {
+    /*
+     * information for the union data structure
+     * */
     std::map<Value *, Value *> unionAddress;
+    /*
+     * function arguments
+     * */
     std::map<Value *, Value *> storeParamMap;
     for (BasicBlock & llvmIrBasicBlock : llvmIrFunction)
     {
@@ -130,7 +193,6 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 }
                                 else if (typeTag == dwarf::DW_TAG_array_type)
                                 {
-                                    // todo
                                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: DW_TAG_array_type\n");
                                     const DIType *ElemType = compositeVariableType->getBaseType();
                                     recordType(ElemType);
@@ -255,6 +317,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                              * 	e.g. x1+x2
                              * 	btw, I don't think we should check type here, which should be done in other pass like dimension-check
                              * 	find left operand from the boundInfo->virtualRegisterRange
+                             * 	range: [x1_min+x2_min, x1_max+x2_max]
                              */
                             auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
@@ -262,6 +325,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 lowerBound = vrRangeIt->second.first;
                                 upperBound = vrRangeIt->second.second;
                             } else {
+                                assert(!valueRangeDebug && "failed to get range");
                                 break;
                             }
                             /*
@@ -270,13 +334,10 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                             {
-                                // todo: the type of result might be inflated,
-                                //       which should shrink by its basic type
-                                //       e.g. (uint8)%a = (uint8)%b[0, 255] + (uint8)%c[0, 255]
-                                //       the inferred range of %a is [0, 510], but it cannot exceed 255.
                                 lowerBound += vrRangeIt->second.first;
                                 upperBound += vrRangeIt->second.second;
                             } else {
+                                assert(!valueRangeDebug && "failed to get range");
                                 break;
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
@@ -303,11 +364,14 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(vrRangeIt->second.first + constValue,
                                                                                        vrRangeIt->second.second + constValue));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
                         }
                         else
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tUnexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                     }
                     break;
@@ -318,13 +382,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         Value * leftOperand = llvmIrInstruction.getOperand(0);
                         Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        // todo: we cannot swap it
-                        if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
-                        {
-                            std::swap(leftOperand, rightOperand);
-                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tSub: swap left and right\n");
-                        }
-                        else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tSub: Expression normalization needed.\n");
                         }
@@ -336,6 +394,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                              * 	e.g. x1-x2
                              * 	btw, I don't think we should check type here, which should be done in other pass like dimension-check
                              * 	find left operand from the boundInfo->virtualRegisterRange
+                             * 	range: [x1_min-x2_max, x1_max-x2_min]
                              */
                             auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
@@ -343,6 +402,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 lowerBound = vrRangeIt->second.first;
                                 upperBound = vrRangeIt->second.second;
                             } else {
+                                assert(!valueRangeDebug && "failed to get range");
                                 break;
                             }
                             vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
@@ -351,6 +411,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 lowerBound -= vrRangeIt->second.second;
                                 upperBound -= vrRangeIt->second.first;
                             } else {
+                                assert(!valueRangeDebug && "failed to get range");
                                 break;
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
@@ -374,6 +435,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(vrRangeIt->second.first - constValue,
                                                                                        vrRangeIt->second.second - constValue));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
                         }
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
@@ -395,11 +458,14 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(constValue - vrRangeIt->second.second,
                                                                                        constValue - vrRangeIt->second.first));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
                         }
                         else
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tSub: Unexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                     }
                     break;
@@ -419,14 +485,45 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tMul: Expression normalization needed.\n");
                         }
-                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
+                            double lowerBound = 0.0;
+                            double upperBound = 0.0;
                             /*
-                             * 	todo: let's measure the "var * var" the next time...
+                             * 	e.g. x1*x2
+                             * 	range: [min(x1_min*x2_min, x1_min*x2_max, x1_max*x2_min, x1_max*x2_max),
+                             * 	        max(x1_min*x2_min, x1_min*x2_max, x1_max*x2_min, x1_max*x2_max)]
                              */
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tMul: It's a var * var expression, which is not supported yet.\n");
-                        }
-                        if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = vrRangeIt->second.first;
+                                upperBound = vrRangeIt->second.second;
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                auto leftMin = lowerBound;
+                                auto leftMax = upperBound;
+                                auto rightMin = vrRangeIt->second.first;
+                                auto rightMax = vrRangeIt->second.second;
+                                lowerBound = min(min(min(leftMin * rightMin,
+                                                         leftMin * rightMax),
+                                                     leftMax * rightMin),
+                                                 leftMax * rightMax);
+                                upperBound = max(max(max(leftMin * rightMin,
+                                                         leftMin * rightMax),
+                                                     leftMax * rightMin),
+                                                 leftMax * rightMax);
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
+                        } else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
                             /*
                              * 	eg. x*2
@@ -445,11 +542,13 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(vrRangeIt->second.first * constValue,
                                                                                        vrRangeIt->second.second * constValue));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
-                        }
-                        else
+                        } else
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tMul: Unexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                     }
                     break;
@@ -465,12 +564,44 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tDiv: Expression normalization needed.\n");
                         }
-                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
+                            double lowerBound = 0.0;
+                            double upperBound = 0.0;
                             /*
-                             * 	todo: let's measure the "var / var" the next time...
+                             * 	e.g. x1/x2
+                             * 	range: [min(x1_min/x2_min, x1_min/x2_max, x1_max/x2_min, x1_max/x2_max),
+                             * 	        max(x1_min/x2_min, x1_min/x2_max, x1_max/x2_min, x1_max/x2_max)]
                              */
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tDiv: It's a var / var expression, which is not supported yet.\n");
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = vrRangeIt->second.first;
+                                upperBound = vrRangeIt->second.second;
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                auto leftMin = lowerBound;
+                                auto leftMax = upperBound;
+                                auto rightMin = vrRangeIt->second.first;
+                                auto rightMax = vrRangeIt->second.second;
+                                lowerBound = min(min(min(leftMin / rightMin,
+                                                         leftMin / rightMax),
+                                                     leftMax / rightMin),
+                                                 leftMax / rightMax);
+                                upperBound = max(max(max(leftMin / rightMin,
+                                                         leftMin / rightMax),
+                                                     leftMax / rightMin),
+                                                 leftMax / rightMax);
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
                         }
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
@@ -479,6 +610,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                              * 	like 2/x. if x in [-4, 4], then the range of 2/x is (-inf, -0.5] and [0.5, inf)
                              */
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tDiv: It's a const / var expression, which is not supported yet.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                         else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
@@ -499,11 +631,14 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair(vrRangeIt->second.first / constValue,
                                                                                        vrRangeIt->second.second / constValue));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
                         }
                         else
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tDiv: Unexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                     }
                     break;
@@ -519,12 +654,13 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: Expression normalization needed.\n");
                         }
-                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
                             /*
                              * 	todo: let's measure the "var % var" the next time...
                              */
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: It's a var % var expression, which is not supported yet.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
@@ -532,6 +668,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                              * 	todo: I don't know if we need to deal with "const % var" here, like 2%x.
                              */
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: It's a const % var expression, which is not supported yet.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                         else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
@@ -553,11 +690,14 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                         std::make_pair(remainder(vrRangeIt->second.first, constValue),
                                                        remainder(vrRangeIt->second.second, constValue)));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
                         }
                         else
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: Unexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                     }
                 break;
@@ -571,12 +711,44 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tShl: Expression normalization needed.\n");
                         }
-                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
+                            double lowerBound = 0.0;
+                            double upperBound = 0.0;
                             /*
-                             * 	todo: I don't know if we need to concern the "var << var"
+                             * 	e.g. x1 << x2
+                             * 	range: [min(x1_min<<x2_min, x1_min<<x2_max, x1_max<<x2_min, x1_max<<x2_max),
+                             * 	        max(x1_min<<x2_min, x1_min<<x2_max, x1_max<<x2_min, x1_max<<x2_max)]
                              */
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tShl: It's a var << var expression, which is not supported yet.\n");
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = vrRangeIt->second.first;
+                                upperBound = vrRangeIt->second.second;
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                auto leftMin = lowerBound;
+                                auto leftMax = upperBound;
+                                auto rightMin = vrRangeIt->second.first;
+                                auto rightMax = vrRangeIt->second.second;
+                                lowerBound = min(min(min((int)leftMin << (int)rightMin,
+                                                         (int)leftMin << (int)rightMax),
+                                                     (int)leftMax << (int)rightMin),
+                                                 (int)leftMax << (int)rightMax);
+                                upperBound = max(max(max((int)leftMin << (int)rightMin,
+                                                         (int)leftMin << (int)rightMax),
+                                                     (int)leftMax << (int)rightMin),
+                                                 (int)leftMax << (int)rightMax);
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
                         }
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
@@ -584,6 +756,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                              * 	todo: I don't know if we need to deal with "const << var" here,
                              */
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tShl: It's a const << var expression, which is not supported yet.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                         else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
@@ -601,11 +774,14 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first << constValue,
                                                                                        (int)vrRangeIt->second.second << constValue));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
                         }
                         else
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tShl: Unexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                     }
                     break;
@@ -620,12 +796,44 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tShr: Expression normalization needed.\n");
                         }
-                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
+                            double lowerBound = 0.0;
+                            double upperBound = 0.0;
                             /*
-                             * 	todo: I don't know if we need to concern the "var >> var"
+                             * 	e.g. x1 >> x2
+                             * 	range: [min(x1_min>>x2_min, x1_min>>x2_max, x1_max>>x2_min, x1_max>>x2_max),
+                             * 	        max(x1_min>>x2_min, x1_min>>x2_max, x1_max>>x2_min, x1_max>>x2_max)]
                              */
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tShr: It's a var << var expression, which is not supported yet.\n");
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = vrRangeIt->second.first;
+                                upperBound = vrRangeIt->second.second;
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                auto leftMin = lowerBound;
+                                auto leftMax = upperBound;
+                                auto rightMin = vrRangeIt->second.first;
+                                auto rightMax = vrRangeIt->second.second;
+                                lowerBound = min(min(min((int)leftMin >> (int)rightMin,
+                                                         (int)leftMin >> (int)rightMax),
+                                                     (int)leftMax >> (int)rightMin),
+                                                 (int)leftMax >> (int)rightMax);
+                                upperBound = max(max(max((int)leftMin >> (int)rightMin,
+                                                         (int)leftMin >> (int)rightMax),
+                                                     (int)leftMax >> (int)rightMin),
+                                                 (int)leftMax >> (int)rightMax);
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
                         }
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
@@ -650,11 +858,14 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first >> constValue,
                                                                                        (int)vrRangeIt->second.second >> constValue));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
                         }
                         else
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tShr: Unexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                     }
                     break;
@@ -664,49 +875,55 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         Value * leftOperand = llvmIrInstruction.getOperand(0);
                         Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
+                        if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            std::swap(leftOperand, rightOperand);
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tAnd: swap left and right\n");
+                        }
+                        else if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tAnd: Expression normalization needed.\n");
                         }
-                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
                             double lowerBound = 0.0;
                             double upperBound = 0.0;
                             /*
-                             * 	eg. x1 & x2
+                             * 	e.g. x1 & x2
+                             * 	range: [min(x1_min&x2_min, x1_min&x2_max, x1_max&x2_min, x1_max&x2_max),
+                             * 	        max(x1_min&x2_min, x1_min&x2_max, x1_max&x2_min, x1_max&x2_max)]
                              */
                             auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                             {
                                 lowerBound = vrRangeIt->second.first;
                                 upperBound = vrRangeIt->second.second;
-                                if (lowerBound < 0 || upperBound < 0)
-                                {
-                                    break;
-                                }
                             } else {
+                                assert(!valueRangeDebug && "failed to get range");
                                 break;
                             }
                             vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                             {
-                                lowerBound = (int)lowerBound & (int)vrRangeIt->second.second;
-                                upperBound = (int)upperBound & (int)vrRangeIt->second.first;
-                                if (lowerBound < 0 || upperBound < 0)
-                                {
-                                    break;
-                                }
+                                auto leftMin = lowerBound;
+                                auto leftMax = upperBound;
+                                auto rightMin = vrRangeIt->second.first;
+                                auto rightMax = vrRangeIt->second.second;
+                                lowerBound = min(min(min((int)leftMin & (int)rightMin,
+                                                         (int)leftMin & (int)rightMax),
+                                                     (int)leftMax & (int)rightMin),
+                                                 (int)leftMax & (int)rightMax);
+                                upperBound = max(max(max((int)leftMin & (int)rightMin,
+                                                         (int)leftMin & (int)rightMax),
+                                                     (int)leftMax & (int)rightMin),
+                                                 (int)leftMax & (int)rightMax);
                             } else {
+                                assert(!valueRangeDebug && "failed to get range");
                                 break;
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
                         }
-                        else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
-                        {
-                            std::swap(leftOperand, rightOperand);
-                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tAnd: swap left and right\n");
-                        }
-                        if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
                             /*
                              *	eg. x&2
@@ -722,11 +939,14 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first & constValue,
                                                                                        (int)vrRangeIt->second.second & constValue));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
                         }
                         else
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tAnd: Unexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                     }
                     break;
@@ -736,49 +956,55 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         Value * leftOperand = llvmIrInstruction.getOperand(0);
                         Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
+                        if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            std::swap(leftOperand, rightOperand);
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tOr: swap left and right\n");
+                        }
+                        else if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tOr: Expression normalization needed.\n");
                         }
-                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
                             double lowerBound = 0.0;
                             double upperBound = 0.0;
                             /*
-                             * 	eg. x1 | x2
+                             * 	e.g. x1 | x2
+                             * 	range: [min(x1_min|x2_min, x1_min|x2_max, x1_max|x2_min, x1_max|x2_max),
+                             * 	        max(x1_min|x2_min, x1_min|x2_max, x1_max|x2_min, x1_max|x2_max)]
                              */
                             auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                             {
                                 lowerBound = vrRangeIt->second.first;
                                 upperBound = vrRangeIt->second.second;
-                                if (lowerBound < 0 || upperBound < 0)
-                                {
-                                    break;
-                                }
                             } else {
+                                assert(!valueRangeDebug && "failed to get range");
                                 break;
                             }
                             vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                             {
-                                lowerBound = (int)lowerBound | (int)vrRangeIt->second.second;
-                                upperBound = (int)upperBound | (int) vrRangeIt->second.first;
-                                if (lowerBound < 0 || upperBound < 0)
-                                {
-                                    break;
-                                }
+                                auto leftMin = lowerBound;
+                                auto leftMax = upperBound;
+                                auto rightMin = vrRangeIt->second.first;
+                                auto rightMax = vrRangeIt->second.second;
+                                lowerBound = min(min(min((int)leftMin | (int)rightMin,
+                                                         (int)leftMin | (int)rightMax),
+                                                     (int)leftMax | (int)rightMin),
+                                                 (int)leftMax | (int)rightMax);
+                                upperBound = max(max(max((int)leftMin | (int)rightMin,
+                                                         (int)leftMin | (int)rightMax),
+                                                     (int)leftMax | (int)rightMin),
+                                                 (int)leftMax | (int)rightMax);
                             } else {
+                                assert(!valueRangeDebug && "failed to get range");
                                 break;
                             }
                             boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
                         }
-                        else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
-                        {
-                            std::swap(leftOperand, rightOperand);
-                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tOr: swap left and right\n");
-                        }
-                        if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
                             /*
                              *	eg. x|2
@@ -794,11 +1020,14 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first | constValue,
                                                                                        (int)vrRangeIt->second.second | constValue));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
                         }
                         else
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tOr: Unexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                     }
                     break;
@@ -808,23 +1037,55 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         Value * leftOperand = llvmIrInstruction.getOperand(0);
                         Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
-                        {
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tXor: Expression normalization needed.\n");
-                        }
-                        else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
-                        {
-                            /*
-                             * 	todo: I don't know if we need to concern the "var ^ var"
-                             */
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tXor: It's a var ^ var expression, which is not supported yet.\n");
-                        }
-                        else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
                             std::swap(leftOperand, rightOperand);
                             flexprint(N->Fe, N->Fm, N->Fpinfo, "\tXor: swap left and right\n");
                         }
-                        if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        else if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tXor: Expression normalization needed.\n");
+                        }
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            double lowerBound = 0.0;
+                            double upperBound = 0.0;
+                            /*
+                             * 	e.g. x1 ^ x2
+                             * 	range: [min(x1_min^x2_min, x1_min^x2_max, x1_max^x2_min, x1_max^x2_max),
+                             * 	        max(x1_min^x2_min, x1_min^x2_max, x1_max^x2_min, x1_max^x2_max)]
+                             */
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = vrRangeIt->second.first;
+                                upperBound = vrRangeIt->second.second;
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                auto leftMin = lowerBound;
+                                auto leftMax = upperBound;
+                                auto rightMin = vrRangeIt->second.first;
+                                auto rightMax = vrRangeIt->second.second;
+                                lowerBound = min(min(min((int)leftMin ^ (int)rightMin,
+                                                         (int)leftMin ^ (int)rightMax),
+                                                     (int)leftMax ^ (int)rightMin),
+                                                 (int)leftMax ^ (int)rightMax);
+                                upperBound = max(max(max((int)leftMin ^ (int)rightMin,
+                                                         (int)leftMin ^ (int)rightMax),
+                                                     (int)leftMax ^ (int)rightMin),
+                                                 (int)leftMax ^ (int)rightMax);
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
                             /*
                              *	eg. x^2
@@ -840,11 +1101,14 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
                                                                         std::make_pair((int)vrRangeIt->second.first ^ constValue,
                                                                                        (int)vrRangeIt->second.second ^ constValue));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
                         }
                         else
                         {
                             flexprint(N->Fe, N->Fm, N->Fperr, "\tXor: Unexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                     }
                     break;
@@ -865,6 +1129,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         boundInfo->virtualRegisterRange.emplace(&llvmIrInstruction,
                                                                 vrRangeIt->second);
+                    } else {
+                        assert(!valueRangeDebug && "failed to get range");
                     }
                 }
                     break;
@@ -877,6 +1143,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         {
                             boundInfo->virtualRegisterRange.emplace(llvmIrLoadInstruction, vrRangeIt->second);
 
+                        } else {
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                     }
                     break;
@@ -916,6 +1184,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 if (isa<Argument>(llvmIrStoreInstruction->getOperand(0))) {
                                     storeParamMap.emplace(llvmIrStoreInstruction->getOperand(1),
                                                           llvmIrStoreInstruction->getOperand(0));
+                                } else {
+                                    assert(!valueRangeDebug && "failed to get range");
                                 }
                             }
                             /*
@@ -1085,6 +1355,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             } else {
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, vrRangeIt->second);
                             }
+                        } else {
+                            assert(!valueRangeDebug && "failed to get range");
                         }
                     }
                     break;
@@ -1210,22 +1482,97 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                             boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, vrRangeIt->second);
                                             continue;
                                     }
+                                } else {
+                                    assert(!valueRangeDebug && "failed to get range");
                                 }
                             }
                         }
                         /*
                          * infer the range from structure or array
                          * */
-                        else if (llvmIrGetElePtrInstruction->getPointerOperandType()->getPointerElementType()->isArrayTy()) {
-                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(
-                                    llvmIrGetElePtrInstruction->getOperand(0));
-                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
-                            {
-                                boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction,
-                                                                        vrRangeIt->second);
+                        else if (llvmIrGetElePtrInstruction->getPointerOperandType()
+                                    ->getPointerElementType()->isArrayTy()) {
+                            /*
+                             * if it's a constant
+                             * */
+                            if (auto * constVar = dyn_cast<llvm::Constant>(llvmIrGetElePtrInstruction->getOperand(0))) {
+                                auto ptrIndexValue = llvmIrGetElePtrInstruction->getOperand(1);
+                                int ptrIndex = 0;
+                                if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(ptrIndexValue)) {
+                                    ptrIndex = constInt->getZExtValue();
+                                } else {
+                                    assert("gep pointer index is not constant int");
+                                }
+                                auto realVar = constVar->getOperand(ptrIndex);
+                                if (auto * constArr = dyn_cast<ConstantDataArray>(realVar)) {
+                                    auto arrIndexValue = llvmIrGetElePtrInstruction->getOperand(2);
+                                    auto dynRangeRes = [&](std::vector<uint32_t> idxVec) {
+                                        auto arrType = constArr->getElementType();
+                                        double minRes = 0, maxRes = 0;
+                                        if (arrType->isDoubleTy()) {
+                                            std::vector<double> dbResVec;
+                                            for (auto idx : idxVec) {
+                                                dbResVec.emplace_back(constArr->getElementAsDouble(idx));
+                                            }
+                                            minRes = *std::min_element(std::begin(dbResVec), std::end(dbResVec));
+                                            maxRes = *std::max_element(std::begin(dbResVec), std::end(dbResVec));
+                                        } else if (arrType->isFloatTy()) {
+                                            std::vector<float> ftResVec;
+                                            for (auto idx : idxVec) {
+                                                ftResVec.emplace_back(constArr->getElementAsFloat(idx));
+                                            }
+                                            minRes = *std::min_element(std::begin(ftResVec), std::end(ftResVec));
+                                            maxRes = *std::max_element(std::begin(ftResVec), std::end(ftResVec));
+                                        } else if (arrType->isIntegerTy()) {
+                                            std::vector<uint64_t> intResVec;
+                                            for (auto idx : idxVec) {
+                                                intResVec.emplace_back(constArr->getElementAsInteger(idx));
+                                            }
+                                            minRes = static_cast<double>(
+                                                    *std::min_element(std::begin(intResVec), std::end(intResVec)));
+                                            maxRes = static_cast<double>(
+                                                    *std::max_element(std::begin(intResVec), std::end(intResVec)));
+                                        } else if (arrType->isPointerTy()) {
+                                            assert(!valueRangeDebug && "pointer: implement when meet");
+                                        } else {
+                                            assert(!valueRangeDebug && "other type: implement when meet");
+                                        }
+                                        return std::make_pair(minRes, maxRes);
+                                    };
+                                    if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(arrIndexValue)) {
+                                        /*
+                                         * this also should be done in "--instsimplify"
+                                         * */
+                                        int arrIndex = constInt->getZExtValue();
+                                        auto resVec = dynRangeRes({arrIndex});
+                                        boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction,
+                                                std::make_pair(resVec.first, resVec.second));
+                                    } else {
+                                        std::vector<uint32_t> dynIdx;
+                                        auto vrRangeIt = boundInfo->virtualRegisterRange.find(arrIndexValue);
+                                        if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                                        {
+                                            // todo: if we need assert or other check here?
+                                            uint32_t min = vrRangeIt->second.first < 0 ? 0 : ceil(vrRangeIt->second.first);
+                                            uint32_t max = vrRangeIt->second.second < 0 ? 0 : floor(vrRangeIt->second.second);
+                                            for (size_t idx = min; idx <= max; idx++) {
+                                                dynIdx.emplace_back(idx);
+                                            }
+                                        } else {
+                                            /*the range is [min(arr_elements), max(arr_elements)]*/
+                                            for (size_t idx = 0; idx < constArr->getNumElements(); idx++) {
+                                                dynIdx.emplace_back(idx);
+                                            }
+                                        }
+                                        auto resVec = dynRangeRes(dynIdx);
+                                        boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction,
+                                                std::make_pair(resVec.first, resVec.second));
+                                    }
+                                }
                             }
                         } else if (llvmIrGetElePtrInstruction->getPointerOperandType()->getPointerElementType()->isStructTy()) {
                             // todo
+                            assert(!valueRangeDebug && "failed to get range");
                         } else {
                             /*
                              * e.g. getelementptr inbounds i8, i8* %0, i64 0
@@ -1236,6 +1583,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             {
                                 boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction,
                                                                         vrRangeIt->second);
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
                         }
                     }
@@ -1249,6 +1598,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                             {
                                 return {llvmIrReturnInstruction, vrRangeIt->second};
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
                         }
                     }
@@ -1264,6 +1615,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 boundInfo->virtualRegisterRange.emplace(
                                         llvmIrFNegInstruction, std::make_pair(-vrRangeIt->second.first,
                                                                               -vrRangeIt->second.second));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
                             }
                         }
                     }
@@ -1276,6 +1629,14 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     break;
 
                 case Instruction::PHI:
+                    if (auto llvmIRPhiNode = dyn_cast<PHINode>(&llvmIrInstruction)) {
+                        std::vector<Value*> incomingValueVec;
+                        for (size_t idx = 0; idx < llvmIRPhiNode->getNumIncomingValues(); idx++) {
+                            auto incomingValue = llvmIRPhiNode->getIncomingValue(idx);
+                            incomingValueVec.emplace_back(incomingValue);
+                        }
+                        checkPhiRange(N, llvmIRPhiNode, incomingValueVec, boundInfo->virtualRegisterRange);
+                    }
                     break;
 
                 case Instruction::Select:
