@@ -605,7 +605,8 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
             std::map<Value*, std::pair<double, double>> constOperandRange =
                     {{constOperand, std::make_pair(constValue, constValue)}};
             typeInfo realType = getTypeInfo(N, constOperand, constOperandRange);
-            if (compareType(realType.valueType, nonConstType) <= 0) {
+            if ((realType.valueType != nullptr) &&
+                (compareType(realType.valueType, nonConstType) <= 0)) {
                 typeInfo backType;
                 backType.valueType = nonConstType;
                 backType.signFlag = realType.signFlag;
@@ -617,16 +618,12 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
             }
         } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(constOperand)) {
             std::map<Value*, std::pair<double, double>> constOperandRange;
-            if (constInt->isNegative()) {
-                auto constValue = constInt->getSExtValue();
-                constOperandRange = {{constOperand, std::make_pair(constValue, constValue)}};
-            } else {
-                auto constValue = constInt->getZExtValue();
-                constOperandRange = {{constOperand, std::make_pair(constValue, constValue)}};
-            }
+            auto constValue = constInt->getSExtValue();
+            constOperandRange = {{constOperand, std::make_pair(constValue, constValue)}};
             typeInfo realType = getTypeInfo(N, constOperand, constOperandRange);
             auto nonConstType = nonConstOperand->getType();
-            if (compareType(realType.valueType, nonConstType) <= 0) {
+            if ((realType.valueType != nullptr) &&
+                (compareType(realType.valueType, nonConstType) <= 0)) {
                 typeInfo backType;
                 backType.valueType = nonConstType;
                 backType.signFlag = realType.signFlag;
@@ -927,6 +924,7 @@ shrinkInstType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                 case Instruction::FNeg:
                 case Instruction::Load:
                 case Instruction::GetElementPtr:
+                    // todo: check if some operation don't need match dest type
                     matchDestType(N, llvmIrInstruction, llvmIrBasicBlock,
                                   boundInfo->virtualRegisterRange, typeChangedInst);
 

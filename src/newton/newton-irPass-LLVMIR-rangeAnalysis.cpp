@@ -606,11 +606,29 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
                             /*
-                             * 	todo: I don't know if we need to deal with "const / var" here,
-                             * 	like 2/x. if x in [-4, 4], then the range of 2/x is (-inf, -0.5] and [0.5, inf)
+                             * 	eg. 2/x
                              */
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tDiv: It's a const / var expression, which is not supported yet.\n");
-                            assert(!valueRangeDebug && "failed to get range");
+                            double constValue = 1.0;
+                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(leftOperand))
+                            {
+                                constValue = (constFp->getValueAPF()).convertToDouble();
+                            } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(leftOperand))
+                            {
+                                constValue = constInt->getSExtValue();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                auto rightMin = vrRangeIt->second.first;
+                                auto rightMax = vrRangeIt->second.second;
+                                double lowerBound = min(constValue / rightMin, constValue / rightMax);
+                                double upperBound = max(constValue / rightMin, constValue / rightMax);
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                                                        std::make_pair(lowerBound, upperBound));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
                         }
                         else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
@@ -753,10 +771,32 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
                             /*
-                             * 	todo: I don't know if we need to deal with "const << var" here,
+                             * 	e.g. 2 << x
+                             * 	range: [min(2<<x2_min, 2<<x2_max),
+                             * 	        max(2<<x2_min, 2<<x2_max)]
                              */
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tShl: It's a const << var expression, which is not supported yet.\n");
-                            assert(!valueRangeDebug && "failed to get range");
+                            uint64_t constValue = 1.0;
+                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(leftOperand))
+                            {
+                                constValue = static_cast<uint64_t>((constFp->getValueAPF()).convertToDouble());
+                            } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(leftOperand))
+                            {
+                                constValue = constInt->getSExtValue();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                // todo: if we need assert or other check here?
+                                uint64_t rightMin = vrRangeIt->second.first < 0 ? 0 : ceil(vrRangeIt->second.first);
+                                uint64_t rightMax = vrRangeIt->second.second < 0 ? 0 : floor(vrRangeIt->second.second);
+                                double lowerBound = min(constValue << rightMin, constValue << rightMax);
+                                double upperBound = max(constValue << rightMin, constValue << rightMax);
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                        std::make_pair(lowerBound, upperBound));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
                         }
                         else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
@@ -838,9 +878,32 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                         else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
                         {
                             /*
-                             * 	todo: I don't know if we need to deal with "const >> var" here,
+                             * 	e.g. 2 >> x
+                             * 	range: [min(2>>x2_min, 2>>x2_max),
+                             * 	        max(2>>x2_min, 2>>x2_max)]
                              */
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tShr: It's a const << var expression, which is not supported yet.\n");
+                            uint64_t constValue = 1.0;
+                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(leftOperand))
+                            {
+                                constValue = static_cast<uint64_t>((constFp->getValueAPF()).convertToDouble());
+                            } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(leftOperand))
+                            {
+                                constValue = constInt->getSExtValue();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                // todo: if we need assert or other check here?
+                                uint64_t rightMin = vrRangeIt->second.first < 0 ? 0 : ceil(vrRangeIt->second.first);
+                                uint64_t rightMax = vrRangeIt->second.second < 0 ? 0 : floor(vrRangeIt->second.second);
+                                double lowerBound = min(constValue >> rightMin, constValue >> rightMax);
+                                double upperBound = max(constValue >> rightMin, constValue >> rightMax);
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                        std::make_pair(lowerBound, upperBound));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
                         }
                         else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
                         {
