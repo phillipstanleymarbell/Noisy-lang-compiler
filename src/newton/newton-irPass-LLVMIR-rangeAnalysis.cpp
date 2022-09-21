@@ -42,7 +42,7 @@ using namespace llvm;
 extern "C"
 {
 
-const bool valueRangeDebug = true;
+const bool valueRangeDebug = false;
 
 std::pair<double, double>
 getGEPArrayRange(State* N, GetElementPtrInst* llvmIrGetElePtrInstruction,
@@ -173,8 +173,8 @@ bool checkPhiRange(State * N, PHINode* phiNode,
                 } else {
                     // todo: get range from other type
                     assert(!valueRangeDebug && "implement when meet");
-                    return false;
                 }
+                return false;
             } else if (auto gepValue = llvm::dyn_cast<llvm::GetElementPtrInst>(phiValue)) {
                 auto resVec = getGEPArrayRange(N, gepValue, virtualRegisterRange);
                 minValueVec.emplace_back(resVec.first);

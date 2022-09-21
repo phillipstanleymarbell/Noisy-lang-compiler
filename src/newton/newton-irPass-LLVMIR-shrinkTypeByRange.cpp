@@ -695,9 +695,25 @@ matchDestType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasicBlo
     typeInfo typeInformation;
     typeInformation.valueType = nullptr;
     typeInformation.signFlag = false;
+    auto inInstType = inInstruction->getType();
     auto srcOperand = inInstruction->getOperand(0);
     auto srcType = srcOperand->getType();
-    auto inInstType = inInstruction->getType();
+    if (isa<GetElementPtrInst>(inInstruction)) {
+        unsigned ptAddressSpace = srcType->getPointerAddressSpace();
+        srcType = srcType->getPointerElementType();
+        if (srcType->getTypeID() == Type::StructTyID) {
+            /*
+             * special case:
+             *  %12 = getelementptr inbounds %struct.sincos_t, %struct.sincos_t* %2, i32 0, i32 6
+             *
+             * */
+            auto stType = cast<StructType>(srcType);
+            assert(inInstruction->getNumOperands() == 3);
+            srcType = stType->getTypeAtIndex(inInstruction->getOperand(2));
+        }
+        srcType = srcType->getPointerTo(ptAddressSpace);
+    }
+
 
     /*
      * if operand type < dest type
