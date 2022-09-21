@@ -44,6 +44,95 @@ extern "C"
 
 const bool valueRangeDebug = true;
 
+std::pair<double, double>
+getGEPArrayRange(State* N, GetElementPtrInst* llvmIrGetElePtrInstruction,
+                 std::map<llvm::Value *, std::pair<double, double>> virtualRegisterRange)
+{
+    /*
+     * if it's a constant
+     * */
+    if (auto * constVar = dyn_cast<llvm::Constant>(llvmIrGetElePtrInstruction->getOperand(0))) {
+        auto ptrIndexValue = llvmIrGetElePtrInstruction->getOperand(1);
+        int ptrIndex = 0;
+        if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(ptrIndexValue)) {
+            ptrIndex = constInt->getZExtValue();
+        } else {
+            assert(false && "gep pointer index is not constant int");
+        }
+        auto realVar = constVar->getOperand(ptrIndex);
+        if (auto *constArr = dyn_cast<ConstantDataArray>(realVar)) {
+            auto arrIndexValue = llvmIrGetElePtrInstruction->getOperand(2);
+            auto dynRangeRes = [&](std::vector <uint32_t> idxVec) {
+                auto arrType = constArr->getElementType();
+                double minRes = 0, maxRes = 0;
+                if (arrType->isDoubleTy()) {
+                    std::vector<double> dbResVec;
+                    for (auto idx: idxVec) {
+                        dbResVec.emplace_back(constArr->getElementAsDouble(idx));
+                    }
+                    minRes = *std::min_element(std::begin(dbResVec), std::end(dbResVec));
+                    maxRes = *std::max_element(std::begin(dbResVec), std::end(dbResVec));
+                } else if (arrType->isFloatTy()) {
+                    std::vector<float> ftResVec;
+                    for (auto idx: idxVec) {
+                        ftResVec.emplace_back(constArr->getElementAsFloat(idx));
+                    }
+                    minRes = *std::min_element(std::begin(ftResVec), std::end(ftResVec));
+                    maxRes = *std::max_element(std::begin(ftResVec), std::end(ftResVec));
+                } else if (arrType->isIntegerTy()) {
+                    std::vector <uint64_t> intResVec;
+                    for (auto idx: idxVec) {
+                        intResVec.emplace_back(constArr->getElementAsInteger(idx));
+                    }
+                    minRes = static_cast<double>(
+                            *std::min_element(std::begin(intResVec), std::end(intResVec)));
+                    maxRes = static_cast<double>(
+                            *std::max_element(std::begin(intResVec), std::end(intResVec)));
+                } else if (arrType->isPointerTy()) {
+                    assert(!valueRangeDebug && "pointer: implement when meet");
+                } else {
+                    assert(!valueRangeDebug && "other type: implement when meet");
+                }
+                return std::make_pair(minRes, maxRes);
+            };
+            if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(arrIndexValue)) {
+                /*
+                 * this also should be done in "--instsimplify"
+                 * */
+                int arrIndex = constInt->getZExtValue();
+                auto resVec = dynRangeRes({arrIndex});
+                return resVec;
+            } else {
+                std::vector <uint32_t> dynIdx;
+                auto vrRangeIt = virtualRegisterRange.find(arrIndexValue);
+                if (vrRangeIt != virtualRegisterRange.end()) {
+                    // todo: if we need assert or other check here?
+                    uint32_t min = vrRangeIt->second.first < 0 ? 0 : ceil(vrRangeIt->second.first);
+                    uint32_t max = vrRangeIt->second.second < 0 ? 0 : floor(vrRangeIt->second.second);
+                    for (size_t idx = min; idx <= max; idx++) {
+                        dynIdx.emplace_back(idx);
+                    }
+                } else {
+                    /*the range is [min(arr_elements), max(arr_elements)]*/
+                    for (size_t idx = 0; idx < constArr->getNumElements(); idx++) {
+                        dynIdx.emplace_back(idx);
+                    }
+                }
+                auto resVec = dynRangeRes(dynIdx);
+                return resVec;
+            }
+        } else {
+            // todo: get range other type of array
+            assert(!valueRangeDebug && "implement when meet");
+            return std::make_pair(0, 0);
+        }
+    } else {
+        // todo: get range from variable array
+        assert(!valueRangeDebug && "implement when meet");
+        return std::make_pair(0, 0);
+    }
+}
+
 /*
  * infer the result range of instruction based on the incoming value of Phi node.
  * e.g.
@@ -53,12 +142,9 @@ const bool valueRangeDebug = true;
  *
  * but it could be more accuracy for IntSet.
  * */
-bool
-checkPhiRange(State * N, PHINode* phiNode,
-              const std::vector<Value*>& incomingValueVec,
-              std::map<llvm::Value *, std::pair<double, double>>& virtualRegisterRange) {
-//    auto pnIt = phiNodeValues.find(phiNode);
-//    assert(pnIt != phiNodeValues.end() && "didn't store such phi node");
+bool checkPhiRange(State * N, PHINode* phiNode,
+                   const std::vector<Value*>& incomingValueVec,
+                   std::map<llvm::Value *, std::pair<double, double>>& virtualRegisterRange) {
     std::vector<double> minValueVec, maxValueVec;
     for (auto phiValue : incomingValueVec) {
         if (isa<llvm::Constant>(phiValue)) {
@@ -76,8 +162,26 @@ checkPhiRange(State * N, PHINode* phiNode,
                 auto constValue = constInt->getSExtValue();
                 minValueVec.emplace_back(static_cast<double>(constValue));
                 maxValueVec.emplace_back(static_cast<double>(constValue));
+            } else if (auto pointerPhi = dyn_cast<PointerType>(phiValue->getType())) {
+                // todo: don't know how to get the element type from pointer
+                int a = 0;
+                if (pointerPhi->getPointerElementType()->isArrayTy()) {
+                    int a = 0;
+                } else if (pointerPhi->getPointerElementType()->isStructTy()) {
+                    // todo: get range from structure
+                    assert(!valueRangeDebug && "implement when meet");
+                } else {
+                    // todo: get range from other type
+                    assert(!valueRangeDebug && "implement when meet");
+                    return false;
+                }
+            } else if (auto gepValue = llvm::dyn_cast<llvm::GetElementPtrInst>(phiValue)) {
+                auto resVec = getGEPArrayRange(N, gepValue, virtualRegisterRange);
+                minValueVec.emplace_back(resVec.first);
+                maxValueVec.emplace_back(resVec.second);
+                int a = 0;
             } else {
-                assert(valueRangeDebug && "implement when meet");
+                assert(!valueRangeDebug && "implement when meet");
             }
         } else if (isa<UndefValue>(phiValue) || isa<PoisonValue>(phiValue)) {
             /*do nothing*/
@@ -211,83 +315,144 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                          * */
                         else
                         {
-                            if (!calledFunction || calledFunction->isDeclaration())
+                            if (!calledFunction)
                             {
                                 flexprint(N->Fe, N->Fm, N->Fperr, "\tCall: CalledFunction %s is nullptr or undeclared.\n",
                                           calledFunction->getName().str().c_str());
                                 continue;
-                            }
-                            /*
-                             * Algorithm to infer the range of CallInst's result:
-                             * 1. find the CallInst (caller).
-                             * 2. check if the CallInst's operands is a variable with range.
-                             * 3. infer the range of the operands (if needed).
-                             * 4. look into the called function (callee), and get its operands with range in step 3.
-                             * 5. if there's a CallInst in the body of called function, go to step 1.
-                             *    else infer the range of the return value.
-                             * 6. set the range of the result of the CallInst.
-                             * */
-                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect CalledFunction %s.\n",
-                                      calledFunction->getName().str().c_str());
-                            auto innerBoundInfo = new BoundInfo();
-                            for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
-                            {
+                            } else if (calledFunction->isDeclaration()) {
                                 /*
-                                 * First, we check if it's a constant value
+                                 * the primary definition of this global value is outside the current translation unit.
                                  * */
-                                if (ConstantInt* cInt = dyn_cast<ConstantInt>(llvmIrCallInstruction->getOperand(idx)))
+                                std::string funcName = calledFunction->getName().str();
+//                                std::vector<std::string> monotonicLibFunc = {"log", "sqrt", "log1p", "exp", "scalbn"};
+//                                std::vector<std::string> trigonometircFunc = {"sin", "cos"};
+//                                std::vector<std::string> monotonicLLVMFunc = {"llvm.floor", "llvm.ceil"};
+                                std::map<uint32_t, std::pair<double, double>> argRanges;
+                                for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
                                 {
-                                    int64_t constIntValue = cInt->getSExtValue();
-                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant int value: %d.\n", constIntValue);
-                                    innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
-                                                                                 std::make_pair(static_cast<double>(constIntValue), static_cast<double>(constIntValue)));
-                                }
-                                else if (ConstantFP * constFp = dyn_cast<ConstantFP>(llvmIrCallInstruction->getOperand(idx)))
-                                {
-                                    double constDoubleValue = (constFp->getValueAPF()).convertToDouble();
-                                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant double value: %f.\n", constDoubleValue);
-                                    innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
-                                                                                 std::make_pair(constDoubleValue, constDoubleValue));
-                                }
-                                else
-                                {
-                                    /*
-                                    *	if we find the operand in boundInfo->virtualRegisterRange,
-                                    *	we know it's a variable with range.
-                                    */
-                                    auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrCallInstruction->getOperand(idx));
+                                    auto vrRangeIt = boundInfo->virtualRegisterRange.find(
+                                            llvmIrCallInstruction->getOperand(idx));
                                     if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                                     {
-                                        flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
-                                        vrRangeIt->second.first, vrRangeIt->second.second);
-                                        innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx), vrRangeIt->second);
+                                        argRanges.emplace(idx, vrRangeIt->second);
+                                    } else {
+                                        assert(!valueRangeDebug && "failed to get range");
+                                        break;
                                     }
                                 }
-                            }
-                            auto returnRange = rangeAnalysis(N, innerBoundInfo, *calledFunction);
-                            if (returnRange.first != nullptr)
-                            {
-                                boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
-                            }
-                            boundInfo->virtualRegisterRange.insert(innerBoundInfo->virtualRegisterRange.begin(),
-                                                                   innerBoundInfo->virtualRegisterRange.end());
-                            /*
-                             * Check the return type of the function,
-                             * if it's a physical type that records in `boundInfo.typeRange`
-                             * but didn't match the range we inferred from `rangeAnalysis` algorithm,
-                             * we give a warning to the programmer.
-                             * But we still believe in the range we inferred from the function body.
-                             * */
-                            DISubprogram *subProgram = calledFunction->getSubprogram();
-                            DITypeRefArray typeArray = subProgram->getType()->getTypeArray();
-                            if (typeArray[0] != nullptr) {
-                                StringRef returnTypeName = typeArray[0]->getName();
-                                auto vrRangeIt = boundInfo->typeRange.find(returnTypeName.str());
-                                if (vrRangeIt != boundInfo->typeRange.end() &&
-                                (vrRangeIt->second.first != returnRange.second.first || vrRangeIt->second.second != returnRange.second.second))
+                                double lowRange, highRange;
+                                // todo: reconstruct by MACRO or template
+                                if (funcName == "log") {
+                                    lowRange = log(argRanges[0].first);
+                                    highRange = log(argRanges[0].second);
+                                } else if (funcName == "exp") {
+                                    lowRange = exp(argRanges[0].first);
+                                    highRange = exp(argRanges[0].second);
+                                } else if (funcName == "sqrt") {
+                                    lowRange = sqrt(argRanges[0].first);
+                                    highRange = sqrt(argRanges[0].second);
+                                } else if (funcName == "log1p") {
+                                    lowRange = log1p(argRanges[0].first);
+                                    highRange = log1p(argRanges[0].second);
+                                } else if (funcName == "scalbn") {
+                                    lowRange = scalbn(argRanges[0].first, argRanges[1].first);
+                                    highRange = scalbn(argRanges[0].second, argRanges[1].second);
+                                } else if (funcName == "sin" || funcName == "cos") {
+                                    lowRange = -1;
+                                    highRange = 1;
+                                } else if (calledFunction->getName().startswith("llvm.fabs")) {
+                                    lowRange = min(fabs(argRanges[0].first),
+                                                   fabs(argRanges[0].second));
+                                    highRange = max(fabs(argRanges[0].first),
+                                                    fabs(argRanges[0].second));
+                                } else if (calledFunction->getName().startswith("llvm.floor")) {
+                                    lowRange = floor(argRanges[0].first);
+                                    highRange = floor(argRanges[0].second);
+                                } else if (calledFunction->getName().startswith("llvm.ceil")) {
+                                    lowRange = ceil(argRanges[0].first);
+                                    highRange = ceil(argRanges[0].second);
+                                } else {
+                                    assert(!valueRangeDebug && "didn't support such function yet");
+                                    break;
+                                }
+                                boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction,
+                                                                        std::make_pair(lowRange, highRange));
+                            } else {
+                                /*
+                                 * Algorithm to infer the range of CallInst's result:
+                                 * 1. find the CallInst (caller).
+                                 * 2. check if the CallInst's operands is a variable with range.
+                                 * 3. infer the range of the operands (if needed).
+                                 * 4. look into the called function (callee), and get its operands with range in step 3.
+                                 * 5. if there's a CallInst in the body of called function, go to step 1.
+                                 *    else infer the range of the return value.
+                                 * 6. set the range of the result of the CallInst.
+                                 * */
+                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect CalledFunction %s.\n",
+                                          calledFunction->getName().str().c_str());
+                                auto innerBoundInfo = new BoundInfo();
+                                for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
                                 {
-                                    flexprint(N->Fe, N->Fm, N->Fperr, "\tCall: the range of the function's return type is: %f - %f, but we inferred as: %f - %f\n",
-                                              vrRangeIt->second.first, vrRangeIt->second.second, returnRange.second.first, returnRange.second.second);
+                                    /*
+                                     * First, we check if it's a constant value
+                                     * */
+                                    if (ConstantInt* cInt = dyn_cast<ConstantInt>(llvmIrCallInstruction->getOperand(idx)))
+                                    {
+                                        int64_t constIntValue = cInt->getSExtValue();
+                                        flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant int value: %d.\n", constIntValue);
+                                        innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
+                                                std::make_pair(static_cast<double>(constIntValue), static_cast<double>(constIntValue)));
+                                    }
+                                    else if (ConstantFP * constFp = dyn_cast<ConstantFP>(llvmIrCallInstruction->getOperand(idx)))
+                                    {
+                                        double constDoubleValue = (constFp->getValueAPF()).convertToDouble();
+                                        flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant double value: %f.\n", constDoubleValue);
+                                        innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
+                                                std::make_pair(constDoubleValue, constDoubleValue));
+                                    }
+                                    else
+                                    {
+                                        /*
+                                        *	if we find the operand in boundInfo->virtualRegisterRange,
+                                        *	we know it's a variable with range.
+                                        */
+                                        auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrCallInstruction->getOperand(idx));
+                                        if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                                        {
+                                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
+                                            vrRangeIt->second.first, vrRangeIt->second.second);
+                                            innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx), vrRangeIt->second);
+                                        } else {
+                                            assert(!valueRangeDebug && "failed to get range");
+                                        }
+                                    }
+                                }
+                                auto returnRange = rangeAnalysis(N, innerBoundInfo, *calledFunction);
+                                if (returnRange.first != nullptr)
+                                {
+                                    boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
+                                }
+                                boundInfo->virtualRegisterRange.insert(innerBoundInfo->virtualRegisterRange.begin(),
+                                        innerBoundInfo->virtualRegisterRange.end());
+                                /*
+                                 * Check the return type of the function,
+                                 * if it's a physical type that records in `boundInfo.typeRange`
+                                 * but didn't match the range we inferred from `rangeAnalysis` algorithm,
+                                 * we give a warning to the programmer.
+                                 * But we still believe in the range we inferred from the function body.
+                                 * */
+                                DISubprogram *subProgram = calledFunction->getSubprogram();
+                                DITypeRefArray typeArray = subProgram->getType()->getTypeArray();
+                                if (typeArray[0] != nullptr) {
+                                    StringRef returnTypeName = typeArray[0]->getName();
+                                    auto vrRangeIt = boundInfo->typeRange.find(returnTypeName.str());
+                                    if (vrRangeIt != boundInfo->typeRange.end() &&
+                                        (vrRangeIt->second.first != returnRange.second.first || vrRangeIt->second.second != returnRange.second.second))
+                                    {
+                                        flexprint(N->Fe, N->Fm, N->Fperr, "\tCall: the range of the function's return type is: %f - %f, but we inferred as: %f - %f\n",
+                                        vrRangeIt->second.first, vrRangeIt->second.second, returnRange.second.first, returnRange.second.second);
+                                    }
                                 }
                             }
                         }
@@ -1555,87 +1720,14 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                          * */
                         else if (llvmIrGetElePtrInstruction->getPointerOperandType()
                                     ->getPointerElementType()->isArrayTy()) {
-                            /*
-                             * if it's a constant
-                             * */
-                            if (auto * constVar = dyn_cast<llvm::Constant>(llvmIrGetElePtrInstruction->getOperand(0))) {
-                                auto ptrIndexValue = llvmIrGetElePtrInstruction->getOperand(1);
-                                int ptrIndex = 0;
-                                if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(ptrIndexValue)) {
-                                    ptrIndex = constInt->getZExtValue();
-                                } else {
-                                    assert("gep pointer index is not constant int");
-                                }
-                                auto realVar = constVar->getOperand(ptrIndex);
-                                if (auto * constArr = dyn_cast<ConstantDataArray>(realVar)) {
-                                    auto arrIndexValue = llvmIrGetElePtrInstruction->getOperand(2);
-                                    auto dynRangeRes = [&](std::vector<uint32_t> idxVec) {
-                                        auto arrType = constArr->getElementType();
-                                        double minRes = 0, maxRes = 0;
-                                        if (arrType->isDoubleTy()) {
-                                            std::vector<double> dbResVec;
-                                            for (auto idx : idxVec) {
-                                                dbResVec.emplace_back(constArr->getElementAsDouble(idx));
-                                            }
-                                            minRes = *std::min_element(std::begin(dbResVec), std::end(dbResVec));
-                                            maxRes = *std::max_element(std::begin(dbResVec), std::end(dbResVec));
-                                        } else if (arrType->isFloatTy()) {
-                                            std::vector<float> ftResVec;
-                                            for (auto idx : idxVec) {
-                                                ftResVec.emplace_back(constArr->getElementAsFloat(idx));
-                                            }
-                                            minRes = *std::min_element(std::begin(ftResVec), std::end(ftResVec));
-                                            maxRes = *std::max_element(std::begin(ftResVec), std::end(ftResVec));
-                                        } else if (arrType->isIntegerTy()) {
-                                            std::vector<uint64_t> intResVec;
-                                            for (auto idx : idxVec) {
-                                                intResVec.emplace_back(constArr->getElementAsInteger(idx));
-                                            }
-                                            minRes = static_cast<double>(
-                                                    *std::min_element(std::begin(intResVec), std::end(intResVec)));
-                                            maxRes = static_cast<double>(
-                                                    *std::max_element(std::begin(intResVec), std::end(intResVec)));
-                                        } else if (arrType->isPointerTy()) {
-                                            assert(!valueRangeDebug && "pointer: implement when meet");
-                                        } else {
-                                            assert(!valueRangeDebug && "other type: implement when meet");
-                                        }
-                                        return std::make_pair(minRes, maxRes);
-                                    };
-                                    if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(arrIndexValue)) {
-                                        /*
-                                         * this also should be done in "--instsimplify"
-                                         * */
-                                        int arrIndex = constInt->getZExtValue();
-                                        auto resVec = dynRangeRes({arrIndex});
-                                        boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction,
-                                                std::make_pair(resVec.first, resVec.second));
-                                    } else {
-                                        std::vector<uint32_t> dynIdx;
-                                        auto vrRangeIt = boundInfo->virtualRegisterRange.find(arrIndexValue);
-                                        if (vrRangeIt != boundInfo->virtualRegisterRange.end())
-                                        {
-                                            // todo: if we need assert or other check here?
-                                            uint32_t min = vrRangeIt->second.first < 0 ? 0 : ceil(vrRangeIt->second.first);
-                                            uint32_t max = vrRangeIt->second.second < 0 ? 0 : floor(vrRangeIt->second.second);
-                                            for (size_t idx = min; idx <= max; idx++) {
-                                                dynIdx.emplace_back(idx);
-                                            }
-                                        } else {
-                                            /*the range is [min(arr_elements), max(arr_elements)]*/
-                                            for (size_t idx = 0; idx < constArr->getNumElements(); idx++) {
-                                                dynIdx.emplace_back(idx);
-                                            }
-                                        }
-                                        auto resVec = dynRangeRes(dynIdx);
-                                        boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction,
-                                                std::make_pair(resVec.first, resVec.second));
-                                    }
-                                }
-                            }
-                        } else if (llvmIrGetElePtrInstruction->getPointerOperandType()->getPointerElementType()->isStructTy()) {
-                            // todo
-                            assert(!valueRangeDebug && "failed to get range");
+                            auto resVec = getGEPArrayRange(N, llvmIrGetElePtrInstruction,
+                                                           boundInfo->virtualRegisterRange);
+                            boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction,
+                                                                    std::make_pair(resVec.first, resVec.second));
+                        } else if (llvmIrGetElePtrInstruction->getPointerOperandType()
+                                    ->getPointerElementType()->isStructTy()) {
+                            // todo: get range from structure
+                            assert(!valueRangeDebug && "implement when meet");
                         } else {
                             /*
                              * e.g. getelementptr inbounds i8, i8* %0, i64 0
