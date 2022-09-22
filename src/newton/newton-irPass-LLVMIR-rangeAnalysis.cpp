@@ -163,23 +163,8 @@ bool checkPhiRange(State * N, PHINode* phiNode,
                 minValueVec.emplace_back(static_cast<double>(constValue));
                 maxValueVec.emplace_back(static_cast<double>(constValue));
             } else if (auto pointerPhi = dyn_cast<PointerType>(phiValue->getType())) {
-                // todo: don't know how to get the element type from pointer
-                int a = 0;
-                if (pointerPhi->getPointerElementType()->isArrayTy()) {
-                    int a = 0;
-                } else if (pointerPhi->getPointerElementType()->isStructTy()) {
-                    // todo: get range from structure
-                    assert(!valueRangeDebug && "implement when meet");
-                } else {
-                    // todo: get range from other type
-                    assert(!valueRangeDebug && "implement when meet");
-                }
+                // todo: get the constant GEP from PhiNode by create a loadInst then remove it.
                 return false;
-            } else if (auto gepValue = llvm::dyn_cast<llvm::GetElementPtrInst>(phiValue)) {
-                auto resVec = getGEPArrayRange(N, gepValue, virtualRegisterRange);
-                minValueVec.emplace_back(resVec.first);
-                maxValueVec.emplace_back(resVec.second);
-                int a = 0;
             } else {
                 assert(!valueRangeDebug && "implement when meet");
             }
@@ -833,55 +818,11 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         Value * leftOperand = llvmIrInstruction.getOperand(0);
                         Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
-                        {
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: Expression normalization needed.\n");
-                        }
-                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
-                        {
-                            /*
-                             * 	todo: let's measure the "var % var" the next time...
-                             */
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: It's a var % var expression, which is not supported yet.\n");
-                            assert(!valueRangeDebug && "failed to get range");
-                        }
-                        else if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
-                        {
-                            /*
-                             * 	todo: I don't know if we need to deal with "const % var" here, like 2%x.
-                             */
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: It's a const % var expression, which is not supported yet.\n");
-                            assert(!valueRangeDebug && "failed to get range");
-                        }
-                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
-                        {
-                            /*
-                             * 	eg. x%2
-                             */
-                            double constValue = 1.0;
-                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
-                            {
-                                constValue = (constFp->getValueAPF()).convertToDouble();
-                            }
-                            else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
-                            {
-                                constValue = constInt->getSExtValue();
-                            }
-                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
-                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
-                            {
-                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
-                                        std::make_pair(remainder(vrRangeIt->second.first, constValue),
-                                                       remainder(vrRangeIt->second.second, constValue)));
-                            } else {
-                                assert(!valueRangeDebug && "failed to get range");
-                            }
-                        }
-                        else
-                        {
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: Unexpected error. Might have an invalid operand.\n");
-                            assert(!valueRangeDebug && "failed to get range");
-                        }
+                        /*
+                         * todo:
+                         * for positive: [0, rhs]
+                         * for negative: [rhs, 0]
+                         * */
                     }
                 break;
 
@@ -1101,243 +1042,27 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                 case Instruction::And:
                     if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
                     {
-                        Value * leftOperand = llvmIrInstruction.getOperand(0);
-                        Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
-                        {
-                            std::swap(leftOperand, rightOperand);
-                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tAnd: swap left and right\n");
-                        }
-                        else if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
-                        {
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tAnd: Expression normalization needed.\n");
-                        }
-                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
-                        {
-                            double lowerBound = 0.0;
-                            double upperBound = 0.0;
-                            /*
-                             * 	e.g. x1 & x2
-                             * 	range: [min(x1_min&x2_min, x1_min&x2_max, x1_max&x2_min, x1_max&x2_max),
-                             * 	        max(x1_min&x2_min, x1_min&x2_max, x1_max&x2_min, x1_max&x2_max)]
-                             */
-                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
-                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
-                            {
-                                lowerBound = vrRangeIt->second.first;
-                                upperBound = vrRangeIt->second.second;
-                            } else {
-                                assert(!valueRangeDebug && "failed to get range");
-                                break;
-                            }
-                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
-                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
-                            {
-                                auto leftMin = lowerBound;
-                                auto leftMax = upperBound;
-                                auto rightMin = vrRangeIt->second.first;
-                                auto rightMax = vrRangeIt->second.second;
-                                lowerBound = min(min(min((int)leftMin & (int)rightMin,
-                                                         (int)leftMin & (int)rightMax),
-                                                     (int)leftMax & (int)rightMin),
-                                                 (int)leftMax & (int)rightMax);
-                                upperBound = max(max(max((int)leftMin & (int)rightMin,
-                                                         (int)leftMin & (int)rightMax),
-                                                     (int)leftMax & (int)rightMin),
-                                                 (int)leftMax & (int)rightMax);
-                            } else {
-                                assert(!valueRangeDebug && "failed to get range");
-                                break;
-                            }
-                            boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
-                        }
-                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
-                        {
-                            /*
-                             *	eg. x&2
-                             */
-                            int constValue = 1.0;
-                            if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
-                            {
-                                constValue = constInt->getZExtValue();
-                            }
-                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
-                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
-                            {
-                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
-                                                                        std::make_pair((int)vrRangeIt->second.first & constValue,
-                                                                                       (int)vrRangeIt->second.second & constValue));
-                            } else {
-                                assert(!valueRangeDebug && "failed to get range");
-                            }
-                        }
-                        else
-                        {
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tAnd: Unexpected error. Might have an invalid operand.\n");
-                            assert(!valueRangeDebug && "failed to get range");
-                        }
+                        /*
+                         * todo: it's non-linear function for decimal, but might get range in binary
+                         * */
                     }
                     break;
 
                 case Instruction::Or:
                     if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
                     {
-                        Value * leftOperand = llvmIrInstruction.getOperand(0);
-                        Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
-                        {
-                            std::swap(leftOperand, rightOperand);
-                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tOr: swap left and right\n");
-                        }
-                        else if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
-                        {
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tOr: Expression normalization needed.\n");
-                        }
-                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
-                        {
-                            double lowerBound = 0.0;
-                            double upperBound = 0.0;
-                            /*
-                             * 	e.g. x1 | x2
-                             * 	range: [min(x1_min|x2_min, x1_min|x2_max, x1_max|x2_min, x1_max|x2_max),
-                             * 	        max(x1_min|x2_min, x1_min|x2_max, x1_max|x2_min, x1_max|x2_max)]
-                             */
-                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
-                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
-                            {
-                                lowerBound = vrRangeIt->second.first;
-                                upperBound = vrRangeIt->second.second;
-                            } else {
-                                assert(!valueRangeDebug && "failed to get range");
-                                break;
-                            }
-                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
-                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
-                            {
-                                auto leftMin = lowerBound;
-                                auto leftMax = upperBound;
-                                auto rightMin = vrRangeIt->second.first;
-                                auto rightMax = vrRangeIt->second.second;
-                                lowerBound = min(min(min((int)leftMin | (int)rightMin,
-                                                         (int)leftMin | (int)rightMax),
-                                                     (int)leftMax | (int)rightMin),
-                                                 (int)leftMax | (int)rightMax);
-                                upperBound = max(max(max((int)leftMin | (int)rightMin,
-                                                         (int)leftMin | (int)rightMax),
-                                                     (int)leftMax | (int)rightMin),
-                                                 (int)leftMax | (int)rightMax);
-                            } else {
-                                assert(!valueRangeDebug && "failed to get range");
-                                break;
-                            }
-                            boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
-                        }
-                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
-                        {
-                            /*
-                             *	eg. x|2
-                             */
-                            int constValue = 1.0;
-                            if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
-                            {
-                                constValue = constInt->getZExtValue();
-                            }
-                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
-                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
-                            {
-                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
-                                                                        std::make_pair((int)vrRangeIt->second.first | constValue,
-                                                                                       (int)vrRangeIt->second.second | constValue));
-                            } else {
-                                assert(!valueRangeDebug && "failed to get range");
-                            }
-                        }
-                        else
-                        {
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tOr: Unexpected error. Might have an invalid operand.\n");
-                            assert(!valueRangeDebug && "failed to get range");
-                        }
+                        /*
+                         * todo: it's non-linear function for decimal, but might get range in binary
+                         * */
                     }
                     break;
 
                 case Instruction::Xor:
                     if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
                     {
-                        Value * leftOperand = llvmIrInstruction.getOperand(0);
-                        Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        if (isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
-                        {
-                            std::swap(leftOperand, rightOperand);
-                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tXor: swap left and right\n");
-                        }
-                        else if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
-                        {
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tXor: Expression normalization needed.\n");
-                        }
-                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
-                        {
-                            double lowerBound = 0.0;
-                            double upperBound = 0.0;
-                            /*
-                             * 	e.g. x1 ^ x2
-                             * 	range: [min(x1_min^x2_min, x1_min^x2_max, x1_max^x2_min, x1_max^x2_max),
-                             * 	        max(x1_min^x2_min, x1_min^x2_max, x1_max^x2_min, x1_max^x2_max)]
-                             */
-                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
-                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
-                            {
-                                lowerBound = vrRangeIt->second.first;
-                                upperBound = vrRangeIt->second.second;
-                            } else {
-                                assert(!valueRangeDebug && "failed to get range");
-                                break;
-                            }
-                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
-                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
-                            {
-                                auto leftMin = lowerBound;
-                                auto leftMax = upperBound;
-                                auto rightMin = vrRangeIt->second.first;
-                                auto rightMax = vrRangeIt->second.second;
-                                lowerBound = min(min(min((int)leftMin ^ (int)rightMin,
-                                                         (int)leftMin ^ (int)rightMax),
-                                                     (int)leftMax ^ (int)rightMin),
-                                                 (int)leftMax ^ (int)rightMax);
-                                upperBound = max(max(max((int)leftMin ^ (int)rightMin,
-                                                         (int)leftMin ^ (int)rightMax),
-                                                     (int)leftMax ^ (int)rightMin),
-                                                 (int)leftMax ^ (int)rightMax);
-                            } else {
-                                assert(!valueRangeDebug && "failed to get range");
-                                break;
-                            }
-                            boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator, std::make_pair(lowerBound, upperBound));
-                        }
-                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
-                        {
-                            /*
-                             *	eg. x^2
-                             */
-                            int constValue = 1.0;
-                            if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
-                            {
-                                constValue = constInt->getZExtValue();
-                            }
-                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
-                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
-                            {
-                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
-                                                                        std::make_pair((int)vrRangeIt->second.first ^ constValue,
-                                                                                       (int)vrRangeIt->second.second ^ constValue));
-                            } else {
-                                assert(!valueRangeDebug && "failed to get range");
-                            }
-                        }
-                        else
-                        {
-                            flexprint(N->Fe, N->Fm, N->Fperr, "\tXor: Unexpected error. Might have an invalid operand.\n");
-                            assert(!valueRangeDebug && "failed to get range");
-                        }
+                        /*
+                         * todo: it's non-linear function for decimal, but might get range in binary
+                         * */
                     }
                     break;
 

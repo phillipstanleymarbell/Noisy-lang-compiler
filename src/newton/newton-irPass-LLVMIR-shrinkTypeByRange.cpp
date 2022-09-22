@@ -377,7 +377,8 @@ rollbackType(State * N, Instruction *inInstruction, unsigned operandIdx, BasicBl
             } else {
                 castInst = Builder.CreateFPCast(valueInst, instPrevTypeInfo.valueType);
             }
-            inInstruction->replaceUsesOfWith(valueInst, castInst);
+            inInstruction->setOperand(operandIdx, castInst);
+//            inInstruction->replaceUsesOfWith(valueInst, castInst);
             typeChangedInst.emplace(castInst, instPrevTypeInfo);
         } else {
             IRBuilder<> Builder(&llvmIrBasicBlock);
@@ -431,6 +432,9 @@ rollbackType(State * N, Instruction *inInstruction, unsigned operandIdx, BasicBl
                 inInstruction->replaceUsesOfWith(inValue, newConstant);
                 typeChangedInst.emplace(newConstant, constTypeInfo);
             }
+        } else {
+            // todo: implement when meet
+            assert(false && "implement when meet");
         }
     } else if (isa<UndefValue>(inValue)) {
         // do nothing
@@ -519,9 +523,6 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
                  const std::map<llvm::Value *, std::pair<double, double>>& virtualRegisterRange,
                  std::map<Value*, typeInfo>& typeChangedInst)
 {
-    if (isa<AShrOperator>(inInstruction)) {
-        int a = 0;
-    }
     auto leftOperand = inInstruction->getOperand(0);
     auto rightOperand = inInstruction->getOperand(1);
     auto leftType = leftOperand->getType();
@@ -605,6 +606,26 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
         Value* nonConstOperand = inInstruction->getOperand(nonConstOperandIdx);
         auto constType = constOperand->getType();
         auto nonConstType = nonConstOperand->getType();
+        if (!isa<llvm::ConstantData>(constOperand)) {
+            /*
+             * rollback the non-constant operand
+             *
+             * todo: improve by use runtime information
+             *       to get the range and real type dynamically
+             *       for GlobalValue etc.
+             * */
+            typeInfo backType;
+            backType.valueType = constType;
+            // todo: get the signFlag
+            backType.signFlag = false;
+            if (isa<StoreInst>(inInstruction)) {
+                backType.valueType = changeStoreInstSiblingType(backType.valueType, nonConstType);
+            }
+            rollbackType(N, inInstruction, nonConstOperandIdx, llvmIrBasicBlock,
+                         typeChangedInst, backType);
+            return;
+        }
+
         if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(constOperand))
         {
             double constValue;
@@ -629,8 +650,15 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
                 rollbackType(N, inInstruction, constOperandIdx, llvmIrBasicBlock,
                              typeChangedInst, backType);
             } else {
+                typeInfo backType;
+                backType.valueType = constType;
+                // todo: get the signFlag
+                backType.signFlag = false;
+                if (isa<StoreInst>(inInstruction)) {
+                    backType.valueType = changeStoreInstSiblingType(backType.valueType, nonConstType);
+                }
                 rollbackType(N, inInstruction, nonConstOperandIdx, llvmIrBasicBlock,
-                             typeChangedInst);
+                             typeChangedInst, backType);
             }
         } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(constOperand)) {
             std::map<Value*, std::pair<double, double>> constOperandRange;
@@ -650,6 +678,7 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
             } else {
                 typeInfo backType;
                 backType.valueType = constType;
+                // todo: get the signFlag
                 backType.signFlag = false;
                 if (isa<StoreInst>(inInstruction)) {
                     backType.valueType = changeStoreInstSiblingType(backType.valueType, nonConstType);
@@ -657,8 +686,10 @@ matchOperandType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasic
                 rollbackType(N, inInstruction, nonConstOperandIdx, llvmIrBasicBlock,
                              typeChangedInst, backType);
             }
+        } else {
+            // todo: implement when meet
+            assert(false && "implement when meet");
         }
-
     };
     if (isa<llvm::Constant>(leftOperand)) {
         /*
@@ -805,7 +836,11 @@ shrinkInstructionType(State * N, Instruction *inInstruction, BasicBlock & llvmIr
     changed = true;
     auto valueType = inInstruction->getType();
     IRBuilder<> Builder(&llvmIrBasicBlock);
-    Builder.SetInsertPoint(inInstruction->getNextNode());
+    Instruction *insertPoint = inInstruction->getNextNode();
+    while(isa<PHINode>(insertPoint)) {
+        insertPoint = insertPoint->getNextNode();
+    }
+    Builder.SetInsertPoint(insertPoint);
     auto cloneInst = inInstruction->clone();
     /*
      * update the typeChangedInst with cloneInst
@@ -1012,22 +1047,27 @@ shrinkInstType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                                      boundInfo->virtualRegisterRange, typeChangedInst);
                     break;
                 case Instruction::PHI:
-                    matchPhiOperandType(N, llvmIrInstruction, llvmIrBasicBlock, typeChangedInst);
-                    /*
-                     * match dest:
-                     * phi node is only a symbol and no real computation, so just mutate its type
-                     * */
                     if (isa<PHINode>(llvmIrInstruction)) {
-                        auto srcOperand = llvmIrInstruction->getOperand(0);
-                        auto srcType = srcOperand->getType();
-                        auto inInstType = llvmIrInstruction->getType();
-                        if (compareType(inInstType, srcType) != 0) {
-                            typeInfo instPrevTypeInfo{llvmIrInstruction->getType(), false};
-                            assert(typeChangedInst.find(llvmIrInstruction) == typeChangedInst.end()
-                                   && "destInst can only be mutated once");
-                            typeChangedInst.emplace(llvmIrInstruction, instPrevTypeInfo);
-                            llvmIrInstruction->mutateType(srcType);
-                        }
+                        matchPhiOperandType(N, llvmIrInstruction, llvmIrBasicBlock, typeChangedInst);
+                        /*
+                         * match dest:
+                         * phi node is only a symbol and no real computation, so just mutate its type
+                         * */
+                        matchDestType(N, llvmIrInstruction, llvmIrBasicBlock,
+                                      boundInfo->virtualRegisterRange, typeChangedInst);
+                        shrinkInstructionType(N, llvmIrInstruction, llvmIrBasicBlock,
+                                              boundInfo->virtualRegisterRange,
+                                              typeChangedInst);
+//                        auto srcOperand = llvmIrInstruction->getOperand(0);
+//                        auto srcType = srcOperand->getType();
+//                        auto inInstType = llvmIrInstruction->getType();
+//                        if (compareType(inInstType, srcType) != 0) {
+//                            typeInfo instPrevTypeInfo{llvmIrInstruction->getType(), false};
+//                            assert(typeChangedInst.find(llvmIrInstruction) == typeChangedInst.end()
+//                                   && "destInst can only be mutated once");
+//                            typeChangedInst.emplace(llvmIrInstruction, instPrevTypeInfo);
+//                            llvmIrInstruction->mutateType(srcType);
+//                        }
                     }
                     break;
                 case Instruction::Ret:
@@ -1086,7 +1126,6 @@ shrinkInstType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                             auto newConstant = ConstantInt::get(condType, constValue, false);
                             llvmIrSwitchInstruction->replaceUsesOfWith(labelValue, newConstant);
                             typeChangedInst.emplace(newConstant, constTypeInfo);
-                            int a = 0;
                         }
                         break;
                     }

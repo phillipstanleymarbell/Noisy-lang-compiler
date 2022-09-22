@@ -179,7 +179,6 @@ irPassLLVMIROptimizeByRange(State * N)
                                                                             static_cast<double>(constValue)));
         } else if (ConstantDataArray * constArr = llvm::dyn_cast<llvm::ConstantDataArray>(constValue)) {
             auto arrType = constArr->getElementType();
-            // todo: check use 'globalVar' or constArr->getElementAsConstant(idx)
             if (arrType->isDoubleTy()) {
                 for (size_t idx = 0; idx < constArr->getNumElements(); idx++) {
                     double dbValue = constArr->getElementAsDouble(idx);
@@ -211,6 +210,7 @@ irPassLLVMIROptimizeByRange(State * N)
     flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
     for (auto & mi : *Mod)
     {
+        // todo: only analyze the function with Newton info
         rangeAnalysis(N, boundInfo, mi);
     }
 
@@ -219,6 +219,8 @@ irPassLLVMIROptimizeByRange(State * N)
 //	{
 //		simplifyControlFlow(N, boundInfo, mi);
 //	}
+
+    // todo: constant substitution
 
     flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
     for (auto & mi : *Mod)
