@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - name: install LLVM
-      run: sudo apt-get --assume-yes install llvm
+      run: sudo apt-get --assume-yes install llvm-12
     - uses: actions/checkout@v2
       with:
         submodules: recursive
@@ -30,4 +30,4 @@ jobs:
         echo "OSTYPE=linux" >> config.local
         echo "MACHTYPE=x86_64" >> config.local
     - name: make
-      run: make
+      run: make LLVM_CONFIG=llvm-config-12
