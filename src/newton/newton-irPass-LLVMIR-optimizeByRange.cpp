@@ -223,10 +223,10 @@ irPassLLVMIROptimizeByRange(State * N)
 		simplifyControlFlow(N, boundInfo, mi);
 	}
 
-    passManager.add(createCFGSimplificationPass());
-    passManager.add(createInstSimplifyLegacyPass());
-    passManager.add(createInstructionCombiningPass());
-    passManager.run(*Mod);
+//    passManager.add(createCFGSimplificationPass());
+//    passManager.add(createInstSimplifyLegacyPass());
+//    passManager.add(createInstructionCombiningPass());
+//    passManager.run(*Mod);
 
     // todo: constant substitution
 
