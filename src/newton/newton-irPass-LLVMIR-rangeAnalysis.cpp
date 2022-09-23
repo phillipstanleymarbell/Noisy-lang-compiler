@@ -107,8 +107,8 @@ getGEPArrayRange(State* N, GetElementPtrInst* llvmIrGetElePtrInstruction,
                 auto vrRangeIt = virtualRegisterRange.find(arrIndexValue);
                 if (vrRangeIt != virtualRegisterRange.end()) {
                     // todo: if we need assert or other check here?
-                    uint32_t min = vrRangeIt->second.first < 0 ? 0 : ceil(vrRangeIt->second.first);
-                    uint32_t max = vrRangeIt->second.second < 0 ? 0 : floor(vrRangeIt->second.second);
+                    uint32_t min = vrRangeIt->second.first < 0 ? 0 : vrRangeIt->second.first;
+                    uint32_t max = vrRangeIt->second.second < 0 ? 0 : vrRangeIt->second.second;
                     for (size_t idx = min; idx <= max; idx++) {
                         dynIdx.emplace_back(idx);
                     }
@@ -165,11 +165,11 @@ bool checkPhiRange(State * N, PHINode* phiNode,
             } else if (auto pointerPhi = dyn_cast<PointerType>(phiValue->getType())) {
                 // todo: get the constant GEP from PhiNode by create a loadInst then remove it.
                 return false;
+            } else if (isa<UndefValue>(phiValue) || isa<PoisonValue>(phiValue)) {
+                /*do nothing*/
             } else {
                 assert(!valueRangeDebug && "implement when meet");
             }
-        } else if (isa<UndefValue>(phiValue) || isa<PoisonValue>(phiValue)) {
-            /*do nothing*/
         } else {
             auto vrRangeIt = virtualRegisterRange.find(phiValue);
             if (vrRangeIt != virtualRegisterRange.end())
@@ -893,8 +893,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                             {
                                 // todo: if we need assert or other check here?
-                                uint64_t rightMin = vrRangeIt->second.first < 0 ? 0 : ceil(vrRangeIt->second.first);
-                                uint64_t rightMax = vrRangeIt->second.second < 0 ? 0 : floor(vrRangeIt->second.second);
+                                uint64_t rightMin = vrRangeIt->second.first < 0 ? 0 : vrRangeIt->second.first;
+                                uint64_t rightMax = vrRangeIt->second.second < 0 ? 0 : vrRangeIt->second.second;
                                 double lowerBound = min(constValue << rightMin, constValue << rightMax);
                                 double upperBound = max(constValue << rightMin, constValue << rightMax);
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
@@ -1000,8 +1000,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                             {
                                 // todo: if we need assert or other check here?
-                                uint64_t rightMin = vrRangeIt->second.first < 0 ? 0 : ceil(vrRangeIt->second.first);
-                                uint64_t rightMax = vrRangeIt->second.second < 0 ? 0 : floor(vrRangeIt->second.second);
+                                uint64_t rightMin = vrRangeIt->second.first < 0 ? 0 : vrRangeIt->second.first;
+                                uint64_t rightMax = vrRangeIt->second.second < 0 ? 0 : vrRangeIt->second.second;
                                 double lowerBound = min(constValue >> rightMin, constValue >> rightMax);
                                 double upperBound = max(constValue >> rightMin, constValue >> rightMax);
                                 boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,

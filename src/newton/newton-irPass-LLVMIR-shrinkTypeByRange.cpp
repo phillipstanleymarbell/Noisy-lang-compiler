@@ -209,15 +209,15 @@ typeInfo getShrinkDoubleType(State * N, Value *boundValue, const std::pair<doubl
 
     if (finalType == FLOAT) {
         typeInformation.valueType = Type::getFloatTy(context);
-    } else if (finalType == DOUBLE) {
-        typeInformation.valueType = Type::getDoubleTy(context);
     } else {
         // todo: not support yet, like HalfTyID, BFloatTyID, X86_FP80TyID, FP128TyID, PPC_FP128TyID, etc.
     }
 
-    typeInformation.valueType = isPointer ?
-            typeInformation.valueType->getPointerTo(pointerAddr) :
-            typeInformation.valueType;
+    if (typeInformation.valueType != nullptr) {
+        typeInformation.valueType = isPointer ?
+                typeInformation.valueType->getPointerTo(pointerAddr) :
+                typeInformation.valueType;
+    }
 
     return typeInformation;
 }
@@ -252,6 +252,36 @@ getTypeInfo(State * N, Value *inValue,
     }
     return typeInformation;
 }
+/*
+ * extract raw type from pointer or array
+ * */
+Type* getRawType(Type* inputType, std::vector<Value*> indexValue = std::vector<Value*>(),
+        unsigned* opId = nullptr) {
+    if (opId != nullptr) {
+        (*opId)++;
+    }
+    Type* eleType = nullptr;
+    if (inputType->getTypeID() == Type::PointerTyID) {
+        eleType = inputType->getPointerElementType();
+        return getRawType(eleType, indexValue, opId);
+    } else if (inputType->getTypeID() == Type::ArrayTyID) {
+        eleType = inputType->getArrayElementType();
+        return getRawType(eleType, indexValue, opId);
+    } else if (inputType->getTypeID() == Type::StructTyID) {
+        /*
+         * special case:
+         *  %12 = getelementptr inbounds %struct.sincos_t, %struct.sincos_t* %2, i32 0, i32 6
+         *
+         * */
+        auto stType = cast<StructType>(inputType);
+        eleType = stType->getTypeAtIndex(indexValue[*opId]);
+        return getRawType(eleType, indexValue, opId);
+    } else {
+        eleType = inputType;
+    }
+    assert(eleType != nullptr && "get raw type failed or input type is nullptr");
+    return eleType;
+}
 
 /*
  * first > second: greater than 0,
@@ -260,21 +290,8 @@ getTypeInfo(State * N, Value *inValue,
  * */
 int compareType(Type* firstType, Type* secondType)
 {
-    std::function<varType(Type* inputType)> typeEnumConvert;
-    typeEnumConvert = [&](Type* inputType) -> varType {
-        /*
-         * extract raw type from pointer or array
-         * */
-        Type* eleType;
-        if (inputType->getTypeID() == Type::PointerTyID) {
-            eleType = inputType->getPointerElementType();
-            return typeEnumConvert(eleType);
-        } else if (inputType->getTypeID() == Type::ArrayTyID) {
-            eleType = inputType->getArrayElementType();
-            return typeEnumConvert(eleType);
-        } else {
-            eleType = inputType;
-        }
+    auto typeEnumConvert = [&](Type* inputType) -> varType {
+        Type* eleType = getRawType(inputType);
         uint64_t intBitWidth;
         switch (eleType->getTypeID()) {
             case Type::FloatTyID:
@@ -732,16 +749,12 @@ matchDestType(State * N, Instruction *inInstruction, BasicBlock & llvmIrBasicBlo
     if (isa<GetElementPtrInst>(inInstruction)) {
         unsigned ptAddressSpace = srcType->getPointerAddressSpace();
         srcType = srcType->getPointerElementType();
-        if (srcType->getTypeID() == Type::StructTyID) {
-            /*
-             * special case:
-             *  %12 = getelementptr inbounds %struct.sincos_t, %struct.sincos_t* %2, i32 0, i32 6
-             *
-             * */
-            auto stType = cast<StructType>(srcType);
-            assert(inInstruction->getNumOperands() == 3);
-            srcType = stType->getTypeAtIndex(inInstruction->getOperand(2));
+        std::vector<Value*> indexValue;
+        for (size_t idx = 0; idx < inInstruction->getNumOperands()-1; idx++) {
+            indexValue.emplace_back(inInstruction->getOperand(idx));
         }
+        unsigned opId = 0;
+        srcType = getRawType(srcType, indexValue, &opId);
         srcType = srcType->getPointerTo(ptAddressSpace);
     }
 

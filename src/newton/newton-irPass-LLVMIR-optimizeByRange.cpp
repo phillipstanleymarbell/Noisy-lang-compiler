@@ -207,6 +207,9 @@ irPassLLVMIROptimizeByRange(State * N)
             // todo when meet: other type
         }
     }
+
+    legacy::PassManager passManager;
+
     flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
     for (auto & mi : *Mod)
     {
@@ -214,11 +217,16 @@ irPassLLVMIROptimizeByRange(State * N)
         rangeAnalysis(N, boundInfo, mi);
     }
 
-//    flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
-//	for (auto & mi : *Mod)
-//	{
-//		simplifyControlFlow(N, boundInfo, mi);
-//	}
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
+	for (auto & mi : *Mod)
+	{
+		simplifyControlFlow(N, boundInfo, mi);
+	}
+
+    passManager.add(createCFGSimplificationPass());
+    passManager.add(createInstSimplifyLegacyPass());
+    passManager.add(createInstructionCombiningPass());
+    passManager.run(*Mod);
 
     // todo: constant substitution
 
