@@ -38,6 +38,7 @@
 #ifdef __cplusplus
 #include "newton-irPass-LLVMIR-rangeAnalysis.h"
 #include "newton-irPass-LLVMIR-simplifyControlFlowByRange.h"
+#include "newton-irPass-LLVMIR-constantSubstitution.h"
 #include "newton-irPass-LLVMIR-shrinkTypeByRange.h"
 #endif /* __cplusplus */
 
@@ -218,10 +219,10 @@ irPassLLVMIROptimizeByRange(State * N)
     }
 
     flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
-	for (auto & mi : *Mod)
-	{
+    for (auto & mi : *Mod)
+    {
 		simplifyControlFlow(N, boundInfo, mi);
-	}
+    }
 
 //    passManager.add(createCFGSimplificationPass());
 //    passManager.add(createInstSimplifyLegacyPass());
@@ -229,6 +230,11 @@ irPassLLVMIROptimizeByRange(State * N)
 //    passManager.run(*Mod);
 
     // todo: constant substitution
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
+    for (auto & mi : *Mod)
+    {
+		constantSubstitution(N, boundInfo, mi);
+    }
 
     flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
     for (auto & mi : *Mod)
@@ -236,6 +242,6 @@ irPassLLVMIROptimizeByRange(State * N)
         shrinkType(N, boundInfo, mi);
     }
 
-	dumpIR(N, "output", std::move(Mod));
+    dumpIR(N, "output", std::move(Mod));
 }
 }
