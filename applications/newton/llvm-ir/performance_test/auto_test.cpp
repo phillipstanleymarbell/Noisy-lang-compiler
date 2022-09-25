@@ -38,7 +38,7 @@ std::pair<int64_t, int64_t> processData(const std::string test_case, const std::
     std::string cmd = "make " + test_case;
     system(cmd.data());
     cmd.clear();
-    cmd = "cset shield --exec -- perf stat -B ./main_out " + params;
+    cmd = "perf stat -B ./main_out " + params;
 
     cmd += "if=/dev/zero of=/dev/null count=1000000";
     cmd += " 2>&1 | tee tmp.log";
@@ -133,7 +133,7 @@ struct perfData {
 };
 
 struct perfData recordData(const std::string& test_cases, const std::string& param_str, std::ofstream& ofs) {
-    const size_t iteration_num = 5;
+    const size_t iteration_num = 10;
 
     perfData perf_data = {0, 0, 0, 0};
 

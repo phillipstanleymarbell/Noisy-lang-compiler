@@ -24,7 +24,7 @@ endif
 
 max_opt_fn = opt ../$(1).ll --O3 -S -o $(OUT_FILE)
 non_opt_fn = cp ../$(1).ll $(OUT_FILE)
-necessary_opt_fn = opt ../$(1).ll --simplifycfg --instsimplify --instcombine -S -o $(OUT_FILE)
+necessary_opt_fn = opt ../$(1).ll --simplifycfg -S -o $(OUT_FILE)
 
 newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
 
@@ -42,133 +42,133 @@ compile_lib:
 	ar -rc $(OUT_LIB) $(OUT_OBJ)
 
 exp_non_opt:
-	$(call necessary_opt_fn,e_exp)
+	$(call max_opt_fn,e_exp)
 
 exp_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,e_exp)
 	llvm-dis ../e_exp_output.bc
-	$(call necessary_opt_fn,e_exp_output)
+	$(call max_opt_fn,e_exp_output)
 
 compile_exp:
 	$(call compile_main_fn,LIBC_EXP)
 
 log_non_opt:
-	$(call necessary_opt_fn,e_log)
+	$(call max_opt_fn,e_log)
 
 log_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,e_log)
 	llvm-dis ../e_log_output.bc
-	$(call necessary_opt_fn,e_log_output)
+	$(call max_opt_fn,e_log_output)
 
 compile_log:
 	$(call compile_main_fn,LIBC_LOG)
 
 acosh_non_opt:
-	$(call necessary_opt_fn,e_acosh)
+	$(call max_opt_fn,e_acosh)
 
 acosh_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,e_acosh)
 	llvm-dis ../e_acosh_output.bc
-	$(call necessary_opt_fn,e_acosh_output)
+	$(call max_opt_fn,e_acosh_output)
 
 compile_acosh:
 	$(call compile_main_fn,LIBC_ACOSH)
 
 j0_non_opt:
-	$(call necessary_opt_fn,e_j0)
+	$(call max_opt_fn,e_j0)
 
 j0_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,e_j0)
 	llvm-dis ../e_j0_output.bc
-	$(call necessary_opt_fn,e_j0_output)
+	$(call max_opt_fn,e_j0_output)
 
 compile_j0:
 	$(call compile_main_fn,LIBC_J0)
 
 y0_non_opt:
-	$(call necessary_opt_fn,e_y0)
+	$(call max_opt_fn,e_y0)
 
 y0_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,e_y0)
 	llvm-dis ../e_y0_output.bc
-	$(call necessary_opt_fn,e_y0_output)
+	$(call max_opt_fn,e_y0_output)
 
 compile_y0:
 	$(call compile_main_fn,LIBC_Y0)
 
 rem_pio2_non_opt:
-	$(call necessary_opt_fn,e_rem_pio2)
+	$(call max_opt_fn,e_rem_pio2)
 
 rem_pio2_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,e_rem_pio2)
 	llvm-dis ../e_rem_pio2_output.bc
-	$(call necessary_opt_fn,e_rem_pio2_output)
+	$(call max_opt_fn,e_rem_pio2_output)
 
 compile_rem_pio2:
 	$(call compile_main_fn,LIBC_REM_PIO2)
 
 sincosf_non_opt:
-	$(call necessary_opt_fn,sincosf)
+	$(call max_opt_fn,sincosf)
 
 sincosf_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,sincosf)
 	llvm-dis ../sincosf_output.bc
-	$(call necessary_opt_fn,sincosf_output)
+	$(call max_opt_fn,sincosf_output)
 
 compile_sincosf:
 	$(call compile_main_fn,LIBC_SINCOSF)
 
 float64_add_non_opt:
-	$(call necessary_opt_fn,float64_add)
+	$(call max_opt_fn,float64_add)
 
 float64_add_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,float64_add)
 	llvm-dis ../float64_add_output.bc
-	$(call necessary_opt_fn,float64_add_output)
+	$(call max_opt_fn,float64_add_output)
 
 compile_float64_add:
 	$(call compile_main_fn,FLOAT64_ADD)
 
 float64_div_non_opt:
-	$(call necessary_opt_fn,float64_div)
+	$(call max_opt_fn,float64_div)
 
 float64_div_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,float64_div)
 	llvm-dis ../float64_div_output.bc
-	$(call necessary_opt_fn,float64_div_output)
+	$(call max_opt_fn,float64_div_output)
 
 compile_float64_div:
 	$(call compile_main_fn,FLOAT64_DIV)
 
 float64_mul_non_opt:
-	$(call necessary_opt_fn,float64_mul)
+	$(call max_opt_fn,float64_mul)
 
 float64_mul_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,float64_mul)
 	llvm-dis ../float64_mul_output.bc
-	$(call necessary_opt_fn,float64_mul_output)
+	$(call max_opt_fn,float64_mul_output)
 
 compile_float64_mul:
 	$(call compile_main_fn,FLOAT64_MUL)
 
 float64_sin_non_opt:
-	$(call necessary_opt_fn,float64_sin)
+	$(call max_opt_fn,float64_sin)
 
 float64_sin_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,float64_sin)
 	llvm-dis ../float64_sin_output.bc
-	$(call necessary_opt_fn,float64_sin_output)
+	$(call max_opt_fn,float64_sin_output)
 
 compile_float64_sin:
 	$(call compile_main_fn,FLOAT64_SIN)
 
 benchmark_suite_non_opt:
-	$(call necessary_opt_fn,benchmark_suite)
+	$(call max_opt_fn,benchmark_suite)
 
 benchmark_suite_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,benchmark_suite)
 	llvm-dis ../benchmark_suite_output.bc
-	$(call necessary_opt_fn,benchmark_suite_output)
+	$(call max_opt_fn,benchmark_suite_output)
 
 compile_benchmark_suite_int:
 	$(call compile_main_fn,BENCHMARK_SUITE_INT)

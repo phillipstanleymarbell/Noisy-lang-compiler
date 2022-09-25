@@ -96,6 +96,7 @@ SOURCES		=\
 		newton-irPass-LLVMIR-optimizeByRange.cpp\
 		newton-irPass-LLVMIR-rangeAnalysis.cpp\
 		newton-irPass-LLVMIR-simplifyControlFlowByRange.cpp\
+		newton-irPass-LLVMIR-constantSubstitution.cpp\
 		newton-irPass-LLVMIR-shrinkTypeByRange.cpp\
 
 
@@ -129,6 +130,7 @@ OBJS		=\
 		newton-irPass-LLVMIR-optimizeByRange.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-rangeAnalysis.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-simplifyControlFlowByRange.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-constantSubstitution.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-shrinkTypeByRange.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
@@ -174,6 +176,7 @@ CGIOBJS		=\
 		newton-irPass-LLVMIR-optimizeByRange.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-rangeAnalysis.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-simplifyControlFlowByRange.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-constantSubstitution.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-shrinkTypeByRange.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
@@ -218,6 +221,7 @@ LIBNEWTONOBJS =\
 		newton-irPass-LLVMIR-optimizeByRange.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-rangeAnalysis.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-simplifyControlFlowByRange.$(OBJECTEXTENSION)\
+		newton-irPass-LLVMIR-constantSubstitution.$(OBJECTEXTENSION)\
 		newton-irPass-LLVMIR-shrinkTypeByRange.$(OBJECTEXTENSION)\
 		newton-irPass-invariantSignalAnnotation.$(OBJECTEXTENSION)\
 		newton-irPass-piGroupsSignalAnnotation.$(OBJECTEXTENSION)\
@@ -338,6 +342,10 @@ newton-irPass-LLVMIR-rangeAnalysis.$(OBJECTEXTENSION): newton-irPass-LLVMIR-rang
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
 newton-irPass-LLVMIR-simplifyControlFlowByRange.$(OBJECTEXTENSION): newton-irPass-LLVMIR-simplifyControlFlowByRange.cpp
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
+	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
+
+newton-irPass-LLVMIR-constantSubstitution.$(OBJECTEXTENSION): newton-irPass-LLVMIR-constantSubstitution.cpp
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $(LINTFLAGS) $<
 	$(CXX) $(FLEXFLAGS) $(INCDIRS) $(CXXFLAGS) $(WFLAGS) $(OPTFLAGS) $<
 
