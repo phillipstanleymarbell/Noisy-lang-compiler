@@ -101,11 +101,10 @@ void constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llv
                          * check the type of instruction
                          * */
                         Value* newConstant = nullptr;
+                        uint64_t intBitWidth;
                         switch (llvmIrInstruction->getType()->getTypeID()) {
                             case Type::IntegerTyID:
-                                /*
-                                 * todo: further check the bits
-                                 * */
+                                newConstant = ConstantInt::get(llvmIrInstruction->getType(), lowerBound, lowerBound <= 0);
                                 break;
                             case Type::FloatTyID:
                             case Type::DoubleTyID:
