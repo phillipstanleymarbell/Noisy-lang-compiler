@@ -142,12 +142,11 @@ getGEPArrayRange(State* N, GetElementPtrInst* llvmIrGetElePtrInstruction,
  *
  * but it could be more accuracy for IntSet.
  * */
-bool checkPhiRange(State * N, PHINode* phiNode,
-                   const std::vector<Value*>& incomingValueVec,
-                   std::map<llvm::Value *, std::pair<double, double>>& virtualRegisterRange) {
+bool checkPhiRange(State * N, PHINode * phiNode, BoundInfo * boundInfo) {
     std::vector<double> minValueVec, maxValueVec;
-    for (auto phiValue : incomingValueVec) {
-        if (isa<llvm::Constant>(phiValue)) {
+	for (size_t idx = 0; idx < phiNode->getNumIncomingValues(); idx++) {
+		auto phiValue = phiNode->getIncomingValue(idx);
+			if (isa<llvm::Constant>(phiValue)) {
             if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(phiValue)) {
                 if (phiValue->getType()->isFloatTy()) {
                     float constValue = constFp->getValueAPF().convertToFloat();
@@ -171,8 +170,8 @@ bool checkPhiRange(State * N, PHINode* phiNode,
                 assert(!valueRangeDebug && "implement when meet");
             }
         } else {
-            auto vrRangeIt = virtualRegisterRange.find(phiValue);
-            if (vrRangeIt != virtualRegisterRange.end())
+            auto vrRangeIt = boundInfo->virtualRegisterRange.find(phiValue);
+            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
             {
                 minValueVec.emplace_back(vrRangeIt->second.first);
                 maxValueVec.emplace_back(vrRangeIt->second.second);
@@ -184,7 +183,7 @@ bool checkPhiRange(State * N, PHINode* phiNode,
     }
     double minRes = *std::min_element(minValueVec.begin(), minValueVec.end());
     double maxRes = *std::max_element(maxValueVec.begin(), maxValueVec.end());
-    virtualRegisterRange.emplace(phiNode, std::make_pair(minRes, maxRes));
+    boundInfo->virtualRegisterRange.emplace(phiNode, std::make_pair(minRes, maxRes));
     return true;
 }
 
@@ -1510,12 +1509,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 
                 case Instruction::PHI:
                     if (auto llvmIRPhiNode = dyn_cast<PHINode>(&llvmIrInstruction)) {
-                        std::vector<Value*> incomingValueVec;
-                        for (size_t idx = 0; idx < llvmIRPhiNode->getNumIncomingValues(); idx++) {
-                            auto incomingValue = llvmIRPhiNode->getIncomingValue(idx);
-                            incomingValueVec.emplace_back(incomingValue);
-                        }
-                        checkPhiRange(N, llvmIRPhiNode, incomingValueVec, boundInfo->virtualRegisterRange);
+                        checkPhiRange(N, llvmIRPhiNode, boundInfo);
                     }
                     break;
 
