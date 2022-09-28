@@ -100,6 +100,7 @@ extern "C"
 typedef struct BoundInfo {
     std::map<std::string, std::pair<double, double>> typeRange;
     std::map<llvm::Value *, std::pair<double, double>> virtualRegisterRange;
+	std::map<llvm::Value *, std::vector<std::pair<double, double>>> virtualRegisterVectorRange;
 } BoundInfo;
 
 std::pair<llvm::Value *, std::pair<double, double>>

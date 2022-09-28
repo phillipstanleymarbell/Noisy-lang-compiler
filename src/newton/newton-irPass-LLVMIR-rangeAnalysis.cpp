@@ -144,6 +144,7 @@ getGEPArrayRange(State* N, GetElementPtrInst* llvmIrGetElePtrInstruction,
  * */
 bool checkPhiRange(State * N, PHINode * phiNode, BoundInfo * boundInfo) {
     std::vector<double> minValueVec, maxValueVec;
+	std::vector<std::vector<std::pair<double, double>>> minPHIValueVectors, maxPHIValueVectors;
 	for (size_t idx = 0; idx < phiNode->getNumIncomingValues(); idx++) {
 		auto phiValue = phiNode->getIncomingValue(idx);
 			if (isa<llvm::Constant>(phiValue)) {
@@ -161,9 +162,15 @@ bool checkPhiRange(State * N, PHINode * phiNode, BoundInfo * boundInfo) {
                 auto constValue = constInt->getSExtValue();
                 minValueVec.emplace_back(static_cast<double>(constValue));
                 maxValueVec.emplace_back(static_cast<double>(constValue));
-            } else if (auto pointerPhi = dyn_cast<PointerType>(phiValue->getType())) {
+            } else if (auto pointerPhi = dyn_cast<GEPOperator>(phiValue)) {
                 // todo: get the constant GEP from PhiNode by create a loadInst then remove it.
-                return false;
+				auto pointerOperand = pointerPhi->getPointerOperand();
+				auto vrRangeIt = boundInfo->virtualRegisterVectorRange.find(pointerOperand);
+				if (vrRangeIt != boundInfo->virtualRegisterVectorRange.end())
+				{
+					minPHIValueVectors.emplace_back(vrRangeIt->second);
+					maxPHIValueVectors.emplace_back(vrRangeIt->second);
+				}
             } else if (isa<UndefValue>(phiValue) || isa<PoisonValue>(phiValue)) {
                 /*do nothing*/
             } else {
@@ -181,10 +188,63 @@ bool checkPhiRange(State * N, PHINode * phiNode, BoundInfo * boundInfo) {
             }
         }
     }
-    double minRes = *std::min_element(minValueVec.begin(), minValueVec.end());
-    double maxRes = *std::max_element(maxValueVec.begin(), maxValueVec.end());
-    boundInfo->virtualRegisterRange.emplace(phiNode, std::make_pair(minRes, maxRes));
-    return true;
+
+	/*
+	 * Single Values
+	 */
+	if (!minValueVec.empty()){
+		assert(!maxValueVec.empty() && "Vector of max values empty!");
+		double minRes = *std::min_element(minValueVec.begin(), minValueVec.end());
+		double maxRes = *std::max_element(maxValueVec.begin(), maxValueVec.end());
+		boundInfo->virtualRegisterRange.emplace(phiNode, std::make_pair(minRes, maxRes));
+	}
+
+	/*
+	 * Vectors of values (for PHI nodes with GEP instructions), e.g.:
+	 *
+	 * %.0 = phi double* [ getelementptr inbounds ([5 x double], [5 x double]* @pR2, i64 0, i64 0), %3 ], [ getelementptr inbounds ([5 x double], [5 x double]* @pS2, i64 0, i64 0), %4 ], !dbg !35
+	 *
+	 */
+	if (!minPHIValueVectors.empty()) {
+
+		assert(!maxPHIValueVectors.empty() && "Vector of max PHI values empty!");
+
+		std::vector<double> vectorWithMinValues(minPHIValueVectors.begin()->size(), DBL_MAX);
+		std::vector<double> vectorWithMaxValues(minPHIValueVectors.begin()->size(), DBL_MIN);
+
+		/*
+		 * Find the min of all phi operands at every location in GEP.
+		 */
+		for (auto& vec : minPHIValueVectors) {
+			auto itA = vec.begin();
+			auto itB = vectorWithMinValues.begin();
+			for (; (itA != vec.end()) && (itB != vectorWithMinValues.end()); (++itA, ++itB)) {
+				*itB = (itA->first < *itB)? (itA->first) : (*itB);
+			}
+		}
+		/*
+		 * Find the max of all phi operands at every location in GEP.
+		 */
+		for (auto& vec : minPHIValueVectors) {
+			auto itA = vec.begin();
+			auto itB = vectorWithMaxValues.begin();
+			for (; (itA != vec.end()) && (itB != vectorWithMaxValues.end()); (++itA, ++itB)) {
+				*itB = (itA->second > *itB)? (itA->second) : (*itB);
+			}
+		}
+		/*
+		 * Pair the (min, max) for every location in GEP.
+		 */
+		auto itMin = vectorWithMinValues.begin();
+		auto itMax = vectorWithMaxValues.begin();
+		std::vector<std::pair<double, double>> vectorOfPairs;
+		for (; (itMin != vectorWithMinValues.end()) && (itMax != vectorWithMaxValues.end()); (++itMin, ++itMax)) {
+			vectorOfPairs.emplace_back(std::make_pair(*itMin, *itMax));
+		}
+		boundInfo->virtualRegisterVectorRange.emplace(phiNode, vectorOfPairs);
+	}
+
+	return true;
 }
 
 std::pair<Value *, std::pair<double, double>>
@@ -376,6 +436,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect CalledFunction %s.\n",
                                           calledFunction->getName().str().c_str());
                                 auto innerBoundInfo = new BoundInfo();
+								innerBoundInfo->virtualRegisterVectorRange = boundInfo->virtualRegisterVectorRange;
                                 for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
                                 {
                                     /*
@@ -1454,9 +1515,24 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             assert(!valueRangeDebug && "implement when meet");
                         } else {
                             /*
-                             * e.g. getelementptr inbounds i8, i8* %0, i64 0
-                             * */
-                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(
+                             * E.g.,
+                             * %8 = getelementptr inbounds double, double* %.0, i64 2, !dbg !39
+                             */
+							if (auto llvmIrPHIOperand = dyn_cast<PHINode>(llvmIrGetElePtrInstruction->getPointerOperand())) {
+								/*
+								 * E.g.,
+								 * %.0 = phi double* [ getelementptr inbounds ([5 x double], [5 x double]* @pR2, i64 0, i64 0), %3 ], [ getelementptr inbounds ([5 x double], [5 x double]* @pS2, i64 0, i64 0), %4 ], !dbg !35
+								 */
+								auto it = boundInfo->virtualRegisterVectorRange.find(llvmIrPHIOperand);
+								if (it != boundInfo->virtualRegisterVectorRange.end())
+								{
+									if (auto index = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(1))) {
+										boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, (it->second)[index->getSExtValue()]);
+										break;
+									}
+								}
+							}
+							auto vrRangeIt = boundInfo->virtualRegisterRange.find(
                                     llvmIrGetElePtrInstruction->getOperand(0));
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                             {

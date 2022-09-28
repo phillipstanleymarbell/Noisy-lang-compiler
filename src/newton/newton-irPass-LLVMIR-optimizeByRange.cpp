@@ -183,21 +183,17 @@ irPassLLVMIROptimizeByRange(State * N)
             if (arrType->isDoubleTy()) {
                 for (size_t idx = 0; idx < constArr->getNumElements(); idx++) {
                     double dbValue = constArr->getElementAsDouble(idx);
-                    boundInfo->virtualRegisterRange.emplace(constArr->getElementAsConstant(idx),
-                                                            std::make_pair(dbValue, dbValue));
+					boundInfo->virtualRegisterVectorRange[&globalVar].emplace_back(std::make_pair(dbValue, dbValue));
                 }
             } else if (arrType->isFloatTy()) {
                 for (size_t idx = 0; idx < constArr->getNumElements(); idx++) {
                     double ftValue = constArr->getElementAsFloat(idx);
-                    boundInfo->virtualRegisterRange.emplace(constArr->getElementAsConstant(idx),
-                                                            std::make_pair(ftValue, ftValue));
+					boundInfo->virtualRegisterVectorRange[&globalVar].emplace_back(std::make_pair(ftValue, ftValue));
                 }
             } else if (arrType->isIntegerTy()) {
                 for (size_t idx = 0; idx < constArr->getNumElements(); idx++) {
                     uint64_t intValue = constArr->getElementAsInteger(idx);
-                    boundInfo->virtualRegisterRange.emplace(constArr->getElementAsConstant(idx),
-                                                            std::make_pair(static_cast<double>(intValue),
-                                                                           static_cast<double>(intValue)));
+					boundInfo->virtualRegisterVectorRange[&globalVar].emplace_back(std::make_pair(intValue, intValue));
                 }
             } else if (arrType->isPointerTy()) {
                 // todo when meet
