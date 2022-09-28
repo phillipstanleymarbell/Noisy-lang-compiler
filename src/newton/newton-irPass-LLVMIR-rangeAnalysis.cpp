@@ -192,7 +192,7 @@ bool checkPhiRange(State * N, PHINode * phiNode, BoundInfo * boundInfo) {
 	/*
 	 * Single Values
 	 */
-	if (!minValueVec.empty()){
+	if (!minValueVec.empty()) {
 		assert(!maxValueVec.empty() && "Vector of max values empty!");
 		double minRes = *std::min_element(minValueVec.begin(), minValueVec.end());
 		double maxRes = *std::max_element(maxValueVec.begin(), maxValueVec.end());
@@ -225,7 +225,7 @@ bool checkPhiRange(State * N, PHINode * phiNode, BoundInfo * boundInfo) {
 		/*
 		 * Find the max of all phi operands at every location in GEP.
 		 */
-		for (auto& vec : minPHIValueVectors) {
+		for (auto& vec : maxPHIValueVectors) {
 			auto itA = vec.begin();
 			auto itB = vectorWithMaxValues.begin();
 			for (; (itA != vec.end()) && (itB != vectorWithMaxValues.end()); (++itA, ++itB)) {
@@ -242,6 +242,10 @@ bool checkPhiRange(State * N, PHINode * phiNode, BoundInfo * boundInfo) {
 			vectorOfPairs.emplace_back(std::make_pair(*itMin, *itMax));
 		}
 		boundInfo->virtualRegisterVectorRange.emplace(phiNode, vectorOfPairs);
+	}
+
+	if (minValueVec.empty() && minPHIValueVectors.empty()) {
+		flexprint(N->Fe, N->Fm, N->Fperr, "Error: min value vectors are both empty.");
 	}
 
 	return true;
@@ -480,13 +484,15 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                 }
                                 boundInfo->virtualRegisterRange.insert(innerBoundInfo->virtualRegisterRange.begin(),
                                         innerBoundInfo->virtualRegisterRange.end());
-                                /*
-                                 * Check the return type of the function,
-                                 * if it's a physical type that records in `boundInfo.typeRange`
-                                 * but didn't match the range we inferred from `rangeAnalysis` algorithm,
-                                 * we give a warning to the programmer.
-                                 * But we still believe in the range we inferred from the function body.
-                                 * */
+								boundInfo->virtualRegisterVectorRange.insert(innerBoundInfo->virtualRegisterVectorRange.begin(),
+																	   innerBoundInfo->virtualRegisterVectorRange.end());
+								/*
+								 * Check the return type of the function,
+								 * if it's a physical type that records in `boundInfo.typeRange`
+								 * but didn't match the range we inferred from `rangeAnalysis` algorithm,
+								 * we give a warning to the programmer.
+								 * But we still believe in the range we inferred from the function body.
+								 */
                                 DISubprogram *subProgram = calledFunction->getSubprogram();
                                 DITypeRefArray typeArray = subProgram->getType()->getTypeArray();
                                 if (typeArray[0] != nullptr) {
@@ -1527,7 +1533,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 								if (it != boundInfo->virtualRegisterVectorRange.end())
 								{
 									if (auto index = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(1))) {
-										boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, (it->second)[index->getSExtValue()]);
+										boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, (it->second)[index->getZExtValue()]);
 										break;
 									}
 								}
