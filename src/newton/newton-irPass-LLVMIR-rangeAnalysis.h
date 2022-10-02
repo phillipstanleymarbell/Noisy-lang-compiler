@@ -38,6 +38,10 @@
 #define NEWTON_IR_PASS_LLVM_IR_RANGE_ANALYSIS
 
 #include <algorithm>
+#include <assert.h>
+#include <bitset>
+#include <boost/dynamic_bitset.hpp>
+#include <numeric>
 #include <cmath>
 #include <float.h>
 #include <limits>
@@ -96,10 +100,10 @@ extern "C"
 #include "newton-irPass-estimatorSynthesisBackend.h"
 #include "newton-irPass-invariantSignalAnnotation.h"
 
-
 typedef struct BoundInfo {
     std::map<std::string, std::pair<double, double>> typeRange;
     std::map<llvm::Value *, std::pair<double, double>> virtualRegisterRange;
+    // todo: move it to another data structure, as its only used for pass the static global value
 	std::map<llvm::Value *, std::vector<std::pair<double, double>>> virtualRegisterVectorRange;
 } BoundInfo;
 

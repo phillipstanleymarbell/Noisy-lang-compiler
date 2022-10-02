@@ -133,7 +133,7 @@ struct perfData {
 };
 
 struct perfData recordData(const std::string& test_cases, const std::string& param_str, std::ofstream& ofs) {
-    const size_t iteration_num = 10;
+    const size_t iteration_num = 5;
 
     perfData perf_data = {0, 0, 0, 0};
 

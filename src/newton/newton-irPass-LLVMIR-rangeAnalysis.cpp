@@ -39,6 +39,12 @@
 
 using namespace llvm;
 
+#define BOOST_NO_EXCEPTIONS
+#include <boost/throw_exception.hpp>
+void boost::throw_exception(std::exception const&, boost::source_location const&){
+//do nothing
+}
+
 extern "C"
 {
 
@@ -232,16 +238,21 @@ bool checkPhiRange(State * N, PHINode * phiNode, BoundInfo * boundInfo) {
 				*itB = (itA->second > *itB)? (itA->second) : (*itB);
 			}
 		}
-		/*
-		 * Pair the (min, max) for every location in GEP.
-		 */
-		auto itMin = vectorWithMinValues.begin();
-		auto itMax = vectorWithMaxValues.begin();
-		std::vector<std::pair<double, double>> vectorOfPairs;
-		for (; (itMin != vectorWithMinValues.end()) && (itMax != vectorWithMaxValues.end()); (++itMin, ++itMax)) {
-			vectorOfPairs.emplace_back(std::make_pair(*itMin, *itMax));
-		}
-		boundInfo->virtualRegisterVectorRange.emplace(phiNode, vectorOfPairs);
+//		/*
+//		 * Pair the (min, max) for every location in GEP.
+//		 */
+//		auto itMin = vectorWithMinValues.begin();
+//		auto itMax = vectorWithMaxValues.begin();
+//		std::vector<std::pair<double, double>> vectorOfPairs;
+//		for (; (itMin != vectorWithMinValues.end()) && (itMax != vectorWithMaxValues.end()); (++itMin, ++itMax)) {
+//			vectorOfPairs.emplace_back(std::make_pair(*itMin, *itMax));
+//		}
+        vectorWithMinValues.insert(vectorWithMinValues.end(),
+                                   vectorWithMaxValues.begin(),
+                                   vectorWithMaxValues.end());
+        auto minValue = std::min_element(vectorWithMinValues.begin(), vectorWithMinValues.end());
+        auto maxValue = std::max_element(vectorWithMinValues.begin(), vectorWithMinValues.end());
+		boundInfo->virtualRegisterRange.emplace(phiNode, std::make_pair(*minValue, *maxValue));
 	}
 
 	if (minValueVec.empty() && minPHIValueVectors.empty()) {
@@ -249,6 +260,562 @@ bool checkPhiRange(State * N, PHINode * phiNode, BoundInfo * boundInfo) {
 	}
 
 	return true;
+}
+
+/*
+ * stand-alone algorithm to get the range of remainder operation
+ * */
+std::pair<int64_t, int64_t>
+modInterval(const int64_t lhs_low, const int64_t lhs_high, const int64_t rhs_low, const int64_t rhs_high);
+
+std::pair<int64_t, int64_t>
+modConstDivisorInterval(const int64_t lhs_low, const int64_t lhs_high, const int64_t m)
+{
+    // empty interval
+    if (lhs_low > lhs_high || m == 0)
+        return std::make_pair(0, 0);
+        // compute modulo with positive interval and negate
+    else if (lhs_high < 0)
+        return std::make_pair(-modConstDivisorInterval(-lhs_high, -lhs_low, m).second,
+                              -modConstDivisorInterval(-lhs_high, -lhs_low, m).first);
+        // split into negative and non-negative interval, compute and join
+    else if (lhs_low < 0)
+    {
+        auto negative_part = modConstDivisorInterval(lhs_low, -1, m);
+        auto positive_part = modConstDivisorInterval(0, lhs_high, m);
+        return std::make_pair(min(negative_part.first, positive_part.first),
+                              max(negative_part.second, positive_part.second));
+    }
+        // there is no k > 0 such that a < k*m <= b
+    else if ((lhs_high - lhs_low) < std::abs(m) && (lhs_low % m <= lhs_high % m))
+        return std::make_pair(lhs_low % m, lhs_high % m);
+    else
+        return std::make_pair(0, std::abs(m) - 1);
+}
+
+std::pair<int64_t, int64_t>
+modConstDividendInterval(const int64_t lhs, const int64_t rhs_low, const int64_t rhs_high)
+{
+    // empty interval
+    if (rhs_low > rhs_high || lhs == 0)
+        return std::make_pair(0, 0);
+        // compute modulo with positive interval and negate
+    else if (lhs < 0)
+        return std::make_pair(-modConstDividendInterval(-lhs, rhs_low, rhs_high).second,
+                              -modConstDividendInterval(-lhs, rhs_low, rhs_high).first);
+        // use only non-negative m and n
+    else if (rhs_high <= 0)
+        return modConstDividendInterval(lhs, -rhs_high, -rhs_low);
+        // split into negative and non-negative interval, compute and join
+    else if (rhs_low <= 0)
+        return modConstDividendInterval(lhs, 1, max(-rhs_low, rhs_high));
+        // modulo has no effect
+    else if (rhs_low > lhs)
+        return std::make_pair(lhs, lhs);
+        // there is some overlapping of [a,b] and [n,m]
+    else if (rhs_high > lhs)
+        return std::make_pair(0, lhs);
+        // max value appears at [a/2] + 1
+    else if (lhs / 2 + 1 <= rhs_low)
+        return std::make_pair(lhs % rhs_high, lhs % rhs_low);
+    else if (lhs / 2 + 1 <= rhs_high) {
+        int64_t min = lhs;
+        if (rhs_high != lhs) {
+            for (int64_t min_idx = rhs_low; min_idx < lhs / 2 + 1; min_idx++) {
+                min = lhs % min_idx < min ? lhs % min_idx : min;
+            }
+        } else {
+            min = 0;
+        }
+        return std::make_pair(min, lhs % (lhs / 2 + 1));
+    }
+        // either compute all possibilities and join, or be imprecise
+    else
+    {
+        int64_t min = lhs;
+        int64_t max = 0;
+        for (int64_t min_idx = rhs_low; min_idx <= rhs_high; min_idx++) {
+            min = lhs % min_idx < min ? lhs % min_idx : min;
+        }
+        for (int64_t max_idx = rhs_low; max_idx <= rhs_high; max_idx++) {
+            max = lhs % max_idx > max ? lhs % max_idx : max;
+        }
+        return std::make_pair(min, max);
+    }
+}
+
+std::pair<int64_t, int64_t>
+modInterval(const int64_t lhs_low, const int64_t lhs_high, const int64_t rhs_low, const int64_t rhs_high)
+{
+    // empty interval
+    if (lhs_low > lhs_high || rhs_low > rhs_high)
+        return std::make_pair(0, 0);
+        // compute modulo with positive interval and negate
+    else if (lhs_high < 0)
+        return std::make_pair(-modInterval(-lhs_high, -lhs_low, rhs_low, rhs_high).second,
+                              -modInterval(-lhs_high, -lhs_low, rhs_low, rhs_high).first);
+        // split into negative and non-negative interval, compute, and join
+    else if (lhs_low < 0)
+    {
+        auto negative_part = modInterval(lhs_low, -1, rhs_low, rhs_high);
+        auto positive_part = modInterval(0, lhs_high, rhs_low, rhs_high);
+        return std::make_pair(min(negative_part.first, positive_part.first),
+                              max(negative_part.second, positive_part.second));
+    }
+        // use the simpler function from before
+    else if (lhs_low == lhs_high)
+        return modConstDividendInterval(lhs_low, rhs_low, rhs_high);
+        // use the simpler function from before
+    else if (rhs_low == rhs_high)
+        return modConstDivisorInterval(lhs_low, lhs_high, rhs_low);
+        // use only non-negative m and n
+    else if (rhs_high <= 0)
+        return modInterval(lhs_low, lhs_high, -rhs_high, -rhs_low);
+        // make modulus non-negative
+    else if (rhs_low <= 0)
+        return modInterval(lhs_low, lhs_high, 1, max(-rhs_low, rhs_high));
+        // check b-a < |modulus|
+    else if (lhs_high - lhs_low >= rhs_high)
+        return std::make_pair(0, rhs_high - 1);
+        // split interval, compute, and join
+    else if (lhs_high - lhs_low >= rhs_low)
+    {
+        auto part = modInterval(lhs_low, lhs_high, lhs_high-lhs_low+1, rhs_high);
+        return std::make_pair(min((int64_t)0, part.first), (lhs_high-lhs_low-1, part.second));
+    }
+        // modulo has no effect
+    else if (rhs_low > lhs_high)
+        return std::make_pair(lhs_low, lhs_high);
+        // there is some overlapping of [a,b] and [n,m]
+    else if (rhs_high > lhs_high)
+        return std::make_pair(0, lhs_high);
+        // either compute all possibilities and join, or be imprecise
+    else {
+        auto dist_lhs = lhs_high - lhs_low + 1;
+        auto dist_rhs = rhs_high - rhs_low + 1;
+        std::vector<std::pair<int64_t, int64_t>> res;
+        if (dist_lhs < dist_rhs) {
+            for (int64_t lhs = lhs_low; lhs <= lhs_high; lhs++) {
+                res.emplace_back(modConstDividendInterval(lhs, rhs_low, rhs_high));
+            }
+        } else {
+            for (int64_t rhs = rhs_low; rhs <= rhs_high; rhs++) {
+                res.emplace_back(modConstDivisorInterval(lhs_low, lhs_high, rhs));
+            }
+        }
+        auto min_res = std::min_element(res.begin(), res.end(), [](auto a, auto b) {
+            return a.first < b.first;
+        });
+        auto max_res = std::max_element(res.begin(), res.end(), [](auto a, auto b) {
+            return a.second < b.second;
+        });
+        return std::make_pair(min_res->first, max_res->second);
+    }
+
+}
+
+std::vector<std::string> getDisjointUnionSet(const boost::dynamic_bitset<>& lower_bin_set,
+                                             const boost::dynamic_bitset<>& upper_bin_set) {
+    std::string lower_bin, upper_bin;
+    to_string(lower_bin_set, lower_bin);
+    to_string(upper_bin_set, upper_bin);
+    const uint8_t bit_size = lower_bin.length();
+    std::vector<std::string> disjoint_union_set;
+    std::string bin_str_ele;
+
+    /*
+     * the turning point is where lower_bin different from upper_bin
+     * */
+    std::string xor_str;
+    to_string((lower_bin_set ^ upper_bin_set), xor_str);
+    if (xor_str.find_first_of('1') == std::string::npos) {
+        /*
+         * lower bound == higher bound, return with itself
+         * */
+        disjoint_union_set.emplace_back(lower_bin);
+        return disjoint_union_set;
+    }
+    const auto turning_point = xor_str.find_first_of('1');
+    /*
+     * for the right-most continuously bit of lower bound,
+     *  if they're '0', then change them to 'x'
+     *  if it's '1', then emplace '1'
+     */
+    const auto lower_start_pos = lower_bin.substr(1).find_last_of('1') + 1;
+    if (lower_start_pos == bit_size-1) {
+        disjoint_union_set.emplace_back(lower_bin);
+    } else {
+        /* substitute all of the right most '0' in lower_bin to 'x'
+         *  e.g.
+         *  ([010100], [011101]) -> {[0101xx], ...}
+         * but if the turning point is righter than 'lower_start_pos'
+         * only substitute bits right after the turning point
+         *  e.g.
+         *  ([01000], [01110]) -> {[010xx], ...}
+         * */
+        const auto substitute_bit = lower_start_pos > turning_point ? lower_start_pos : turning_point;
+        bin_str_ele = lower_bin.substr(0, substitute_bit + 1);
+        bin_str_ele.append(bit_size-substitute_bit - 1, 'x');
+        disjoint_union_set.emplace_back(bin_str_ele);
+        bin_str_ele.clear();
+    }
+    /*
+     * when splitting the lower bound, iterate from right to left
+     * */
+    for (int idx = lower_start_pos-1; idx > turning_point; idx--) {
+        if (idx < 0)
+            break;
+        /*
+         * substitute the '0' to '1' and append with 'x' to get the large number
+         * */
+        if (lower_bin[idx] == '0') {
+            bin_str_ele = lower_bin.substr(0, idx) + '1';
+            bin_str_ele.append(bit_size-idx-1, 'x');
+            disjoint_union_set.emplace_back(bin_str_ele);
+            bin_str_ele.clear();
+        }
+    }
+
+    /*
+     * for the right-most continuously bit of upper bound,
+     *  if they're '1', then change them to 'x'
+     *  if it's '0', then emplace '0'
+     * */
+    const auto upper_end_pos = upper_bin.substr(1).find_last_of('0') + 1;
+    if (upper_end_pos == bit_size-1) {
+        disjoint_union_set.emplace_back(upper_bin);
+    } else {
+        /* substitute all of the right most '1' in upper_bin to 'x'.
+         *  e.g.
+         *  ([010001], [011011]) -> {[0110xx], ...}
+         * but if the turning point is righter than 'upper_end_pos'
+         * only substitute bits right after the turning point
+         *  e.g.
+         *  ([010001], [011111]) -> {[011xxx], ...}
+         * */
+        const auto substitute_bit = upper_end_pos > turning_point ? upper_end_pos : turning_point;
+        bin_str_ele = upper_bin.substr(0, substitute_bit + 1);
+        bin_str_ele.append(bit_size-substitute_bit - 1, 'x');
+        disjoint_union_set.emplace_back(bin_str_ele);
+        bin_str_ele.clear();
+    }
+    /*
+     * when splitting the upper bound, iterate from left to right
+     * */
+    for (int idx = turning_point+1; idx < upper_end_pos; idx++) {
+        /*
+         * substitute the '1' to '0' and append with 'x' to get the smaller number
+         * */
+        if (upper_bin[idx] == '1') {
+            bin_str_ele = upper_bin.substr(0, idx) + '0';
+            bin_str_ele.append(bit_size-idx-1, 'x');
+            disjoint_union_set.emplace_back(bin_str_ele);
+            bin_str_ele.clear();
+        }
+    }
+
+    return disjoint_union_set;
+}
+
+enum BitSetType {
+    HAS_BIT = 1,
+    ALL_SAME = 2,
+    ALL_DIFF = 3,
+};
+
+using bitSets = std::vector<std::vector<size_t>>;
+using signedBit = std::pair<bool, std::vector<size_t>>;
+struct hashFunc {
+    size_t operator()(const signedBit& x) const {
+        size_t second_xor;
+        for (const auto& s : x.second) {
+            if (s == SIZE_MAX)
+                return x.first;
+            second_xor ^= s;
+        }
+        return x.first ^ second_xor;
+    }
+};
+using signedBitSets = std::unordered_set<signedBit, hashFunc>;
+
+signedBitSets getBitPos(bitSets lhs_vecs, bitSets rhs_vecs,
+                        std::vector<std::string> lhs_dus,
+                        std::vector<std::string> rhs_dus,
+                        const std::string& bitwise_func,
+                        BitSetType bsType) {
+    signedBitSets res;
+    const std::vector<size_t> non_exit(1, SIZE_MAX);
+    for (size_t lhs_idx = 0; lhs_idx < lhs_vecs.size(); lhs_idx++) {
+        for (size_t rhs_idx = 0; rhs_idx < rhs_vecs.size(); rhs_idx++) {
+            std::vector<size_t> tmp_same_pos;
+            if (bsType == BitSetType::HAS_BIT) {
+                std::set_union(lhs_vecs[lhs_idx].begin(), lhs_vecs[lhs_idx].end(),
+                               rhs_vecs[rhs_idx].begin(), rhs_vecs[rhs_idx].end(),
+                               std::back_inserter(tmp_same_pos));
+            } else if (bsType == BitSetType::ALL_SAME) {
+                std::set_intersection(lhs_vecs[lhs_idx].begin(), lhs_vecs[lhs_idx].end(),
+                                      rhs_vecs[rhs_idx].begin(), rhs_vecs[rhs_idx].end(),
+                                      std::back_inserter(tmp_same_pos));
+            } else if (bsType == BitSetType::ALL_DIFF) {
+                std::set_difference(lhs_vecs[lhs_idx].begin(), lhs_vecs[lhs_idx].end(),
+                                    rhs_vecs[rhs_idx].begin(), rhs_vecs[rhs_idx].end(),
+                                    std::back_inserter(tmp_same_pos));
+            } else
+            assert(false && "unknown enum of BitSetType");
+            tmp_same_pos = tmp_same_pos.empty() ? non_exit : tmp_same_pos;
+            if (bitwise_func == "and") {
+                res.emplace(std::make_pair(lhs_dus[lhs_idx][0]-48 & rhs_dus[rhs_idx][0]-48,
+                                           tmp_same_pos));
+            } else if (bitwise_func == "or") {
+                res.emplace(std::make_pair(lhs_dus[lhs_idx][0]-48 | rhs_dus[rhs_idx][0]-48,
+                                           tmp_same_pos));
+            } else {
+                res.emplace(std::make_pair(lhs_dus[lhs_idx][0]-48 ^ rhs_dus[rhs_idx][0]-48,
+                                           tmp_same_pos));
+            }
+        }
+    }
+    return res;
+}
+
+int64_t convertBin2Dec(const std::string& min_res_str, const uint8_t bit_size) {
+    int64_t res;
+    if (min_res_str[0] == '1') {
+        auto tmp_res = min_res_str;
+        /*
+         * minus 1
+         * */
+        if (tmp_res.back() == '1') {
+            tmp_res.back() = '0';
+        } else {
+            const size_t last_one = tmp_res.find_last_of('1');
+            std::string append_one(bit_size-last_one-1, '1');
+            tmp_res[last_one] = '0';
+            tmp_res = tmp_res.substr(0, last_one+1) + append_one;
+        }
+        /*
+         * negate
+         * */
+        boost::dynamic_bitset<> min_res_db(tmp_res);
+        res = -min_res_db.flip().to_ulong();
+    } else {
+        boost::dynamic_bitset<> min_res_db(min_res_str);
+        res = min_res_db.to_ulong();
+    }
+    return res;
+}
+
+std::pair<int64_t, int64_t>
+bitwiseInterval(const int64_t lhs_low, const int64_t lhs_high,
+                const int64_t rhs_low, const int64_t rhs_high,
+                const std::string& bitwise_func)
+{
+    /*
+     * 1. get the max bit size
+     *  for negative number, it has the same or smaller remaining bit size with its positive,
+     *  like -8="1...1000", 8="0...1000"; -14="1...0010", 14="0...1110"
+     *  so when meet negative number, we get its max bit size with its absolute value.
+     *  PS: the first bit is a sign bit.
+     * */
+    std::vector<int64_t> ranges{std::abs(lhs_low), std::abs(lhs_high),
+                                std::abs(rhs_low), std::abs(rhs_high)};
+    auto max_abs_value = std::max_element(ranges.begin(), ranges.end());
+    uint8_t bit_size = 64 - std::bitset<64>(*max_abs_value).to_string().find('1') + 1;
+
+    /*
+     * 2. convert to binary number
+     * */
+    boost::dynamic_bitset<> ll_bin(bit_size, lhs_low);
+    boost::dynamic_bitset<> lh_bin(bit_size, lhs_high);
+    boost::dynamic_bitset<> rl_bin(bit_size, rhs_low);
+    boost::dynamic_bitset<> rh_bin(bit_size, rhs_high);
+
+    /*
+     * 3. construct disjoint union set of each binary number
+     * */
+    auto lhs_dus = getDisjointUnionSet(ll_bin, lh_bin);
+    auto rhs_dus = getDisjointUnionSet(rl_bin, rh_bin);
+
+    /*
+     * 4. for different bit_wise operation, we have different formulas and purpose
+     * */
+    /*collect all bits index with '0' and '1'*/
+    bitSets lhs_zero_vecs, lhs_one_vecs;
+    for (const auto& lhs: lhs_dus) {
+        std::vector<size_t> match_zero, match_one;
+        /*no need to check the sign bit*/
+        std::vector<size_t> index_vec(bit_size-1);
+        std::iota(index_vec.begin(), index_vec.end(), 1);
+        std::copy_if(index_vec.begin(), index_vec.end(), std::back_inserter(match_zero), [lhs](size_t v){
+            return lhs[v] == '0';
+        });
+        lhs_zero_vecs.emplace_back(match_zero);
+        std::copy_if(index_vec.begin(), index_vec.end(), std::back_inserter(match_one), [lhs](size_t v){
+            return lhs[v] == '1';
+        });
+        lhs_one_vecs.emplace_back(match_one);
+    }
+    bitSets rhs_zero_vecs, rhs_one_vecs;
+    for (const auto& rhs: rhs_dus) {
+        std::vector<size_t> match_zero, match_one;
+        /*no need to check the sign bit*/
+        std::vector<size_t> index_vec(bit_size-1);
+        std::iota(index_vec.begin(), index_vec.end(), 1);
+        std::copy_if(index_vec.begin(), index_vec.end(), std::back_inserter(match_zero), [rhs](size_t v){
+            return rhs[v] == '0';
+        });
+        rhs_zero_vecs.emplace_back(match_zero);
+        std::copy_if(index_vec.begin(), index_vec.end(), std::back_inserter(match_one), [rhs](size_t v){
+            return rhs[v] == '1';
+        });
+        rhs_one_vecs.emplace_back(match_one);
+    }
+
+    signedBitSets same_one_pos = getBitPos(lhs_one_vecs, rhs_one_vecs, lhs_dus, rhs_dus,
+                                           bitwise_func, BitSetType::ALL_SAME);
+    signedBitSets same_zero_pos = getBitPos(lhs_zero_vecs, rhs_zero_vecs, lhs_dus, rhs_dus,
+                                            bitwise_func, BitSetType::ALL_SAME);
+    signedBitSets exist_one_pos = getBitPos(lhs_one_vecs, rhs_one_vecs, lhs_dus, rhs_dus,
+                                            bitwise_func, BitSetType::HAS_BIT);
+    signedBitSets exist_zero_pos = getBitPos(lhs_zero_vecs, rhs_zero_vecs, lhs_dus, rhs_dus,
+                                             bitwise_func, BitSetType::HAS_BIT);
+    signedBitSets diff_first_pos = getBitPos(lhs_one_vecs, rhs_zero_vecs, lhs_dus, rhs_dus,
+                                             bitwise_func, BitSetType::ALL_SAME);
+    signedBitSets diff_second_pos = getBitPos(lhs_zero_vecs, rhs_one_vecs, lhs_dus, rhs_dus,
+                                              bitwise_func, BitSetType::ALL_SAME);
+    signedBitSets union_min, union_max;
+    // todo: there's a bug of xor: [-5, -4, 0, 1]
+    std::set_union(diff_first_pos.begin(), diff_first_pos.end(),
+                   diff_second_pos.begin(), diff_second_pos.end(),
+                   std::inserter(union_min, union_min.begin()));
+    std::set_union(same_zero_pos.begin(), same_zero_pos.end(),
+                   same_one_pos.begin(), same_one_pos.end(),
+                   std::inserter(union_max, union_max.begin()));
+
+    signedBitSets::iterator min_res_it, max_res_it;
+    auto compSingBit = [](const signedBit& a, const signedBit& b) {
+        auto it_a = a.second.begin();
+        auto it_b = b.second.begin();
+        while (it_a != a.second.end() && it_b != b.second.end()) {
+            if ((*it_a) < (*it_b))
+                return true;
+            else if ((*it_a) > (*it_b)){
+                return false;
+            } else {
+                it_a++;
+                it_b++;
+            }
+        }
+        return it_a!=a.second.end();
+    };
+    if (bitwise_func == "and") {
+        /*
+         * and:
+         *  0 & 0 = 0, 0 & 1 = 0, 0 & x = 0
+         *  1 & 1 = 1, 1 & x = x, x & x = x
+         *   min: find the same '1', the larger the better, others are '0'
+         *   max: find '0' exist, the larger the better, others are '1'
+         * */
+        min_res_it = std::max_element(same_one_pos.begin(), same_one_pos.end(),
+                                      [compSingBit](const signedBit& a, const signedBit& b) {
+                                          if (a.first < b.first)
+                                              return true;
+                                          else if (a.first > b.first)
+                                              return false;
+                                          else {
+                                              return compSingBit(a, b);
+                                          }
+                                      });
+        max_res_it = std::max_element(exist_zero_pos.begin(), exist_zero_pos.end(),
+                                      [compSingBit](const signedBit& a, const signedBit& b) {
+                                          if (a.first > b.first)
+                                              return true;
+                                          else if (a.first < b.first)
+                                              return false;
+                                          else {
+                                              return compSingBit(a, b);
+                                          }
+                                      });
+    } else if (bitwise_func == "or") {
+        /*
+         *  or:
+         *  1 | 1 = 1, 1 | 0 = 1, 1 | x = 1
+         *  0 | 0 = 0, 0 | x = x, x | x = x
+         *   min: find '1' exist, the larger the better, others are '0'
+         *   max: find the same '0', the larger the better, others are '1'
+         * */
+        min_res_it = std::max_element(exist_one_pos.begin(), exist_one_pos.end(),
+                                      [compSingBit](const signedBit& a, const signedBit& b) {
+                                          if (a.first < b.first)
+                                              return true;
+                                          else if (a.first > b.first)
+                                              return false;
+                                          else {
+                                              return compSingBit(a, b);
+                                          }
+                                      });
+        max_res_it = std::max_element(same_zero_pos.begin(), same_zero_pos.end(),
+                                      [compSingBit](const signedBit& a, const signedBit& b) {
+                                          if (a.first > b.first)
+                                              return true;
+                                          else if (a.first < b.first)
+                                              return false;
+                                          else {
+                                              return compSingBit(a, b);
+                                          }
+                                      });
+    } else if (bitwise_func == "xor") {
+        /*
+         *  xor:
+         *  0 ^ 0 = 0, 0 ^ 1 = 1, 1 ^ 1 = 0
+         *  x ^ 0 = x, x ^ 1 = x, x ^ x = x
+         *   min: find the different '0' + different '1', the larger the better, others are '0'
+         *   max: find the same '0' + same '1', the larger the better, others are '1'
+         * */
+        min_res_it = std::max_element(union_min.begin(), union_min.end(),
+                                      [compSingBit](const signedBit& a, const signedBit& b) {
+                                          if (a.first < b.first)
+                                              return true;
+                                          else if (a.first > b.first)
+                                              return false;
+                                          else {
+                                              return compSingBit(a, b);
+                                          }
+                                      });
+        max_res_it = std::max_element(union_max.begin(), union_max.end(),
+                                      [compSingBit](const signedBit& a, const signedBit& b) {
+                                          if (a.first > b.first)
+                                              return true;
+                                          else if (a.first < b.first)
+                                              return false;
+                                          else {
+                                              return compSingBit(a, b);
+                                          }
+                                      });
+    } else {
+        assert(false && "unknown bit_wise operation");
+    }
+
+    std::string min_res_str(bit_size, '0'), max_res_str(bit_size, '1');
+    min_res_str[0] = min_res_it->first ? '1' : '0';
+    for (const auto& bit : min_res_it->second) {
+        if (bit != SIZE_MAX) {
+            min_res_str[bit] = '1';
+        }
+    }
+    max_res_str[0] = max_res_it->first ? '1' : '0';
+    for (const auto& bit : max_res_it->second) {
+        if (bit != SIZE_MAX) {
+            max_res_str[bit] = '0';
+        }
+    }
+
+    /*
+     * 5. convert binary string to decimal int64_t
+     * */
+    int64_t min_res = convertBin2Dec(min_res_str, bit_size);
+    int64_t max_res = convertBin2Dec(max_res_str, bit_size);
+    return std::make_pair(min_res, max_res);
 }
 
 std::pair<Value *, std::pair<double, double>>
@@ -410,8 +977,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                     lowRange = -1;
                                     highRange = 1;
                                 } else if (calledFunction->getName().startswith("llvm.fabs")) {
-                                    lowRange = min(fabs(argRanges[0].first),
-                                                   fabs(argRanges[0].second));
+                                    lowRange = min(min(fabs(argRanges[0].first),
+                                                   fabs(argRanges[0].second)), 0);
                                     highRange = max(fabs(argRanges[0].first),
                                                     fabs(argRanges[0].second));
                                 } else if (calledFunction->getName().startswith("llvm.floor")) {
@@ -884,13 +1451,75 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     {
                         Value * leftOperand = llvmIrInstruction.getOperand(0);
                         Value * rightOperand = llvmIrInstruction.getOperand(1);
-                        /*
-                         * todo:
-                         * for positive: [0, rhs]
-                         * for negative: [rhs, 0]
-                         * */
+                        if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
+                        {
+                            std::swap(leftOperand, rightOperand);
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tRem: swap left and right\n");
+                        }
+                        else if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tRem: Expression normalization needed.\n");
+                        }
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            double lowerBound = 0.0;
+                            double upperBound = 0.0;
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = vrRangeIt->second.first;
+                                upperBound = vrRangeIt->second.second;
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                            int64_t leftMin = lowerBound;
+                            int64_t leftMax = upperBound;
+                            int64_t rightMin = vrRangeIt->second.first;
+                            int64_t rightMax = vrRangeIt->second.second;
+                            auto res = modInterval(leftMin, leftMax, rightMin, rightMax);
+                            boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                                                    std::make_pair(res.first, res.second));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                            {
+                            /*
+                             * 	eg. x%2
+                             */
+                            double constValue = 1.0;
+                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+                            {
+                                constValue = (constFp->getValueAPF()).convertToDouble();
+                            } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getSExtValue();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                auto res = modInterval(vrRangeIt->second.first, vrRangeIt->second.second,
+                                                       constValue, constValue);
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                        std::make_pair(res.first, res.second));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                            }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tDiv: Unexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
+                        }
+
                     }
-                break;
+                    break;
 
                 case Instruction::Shl:
                     if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
@@ -1108,27 +1737,243 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                 case Instruction::And:
                     if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
                     {
-                        /*
-                         * todo: it's non-linear function for decimal, but might get range in binary
-                         * */
+                        Value * leftOperand = llvmIrInstruction.getOperand(0);
+                        Value * rightOperand = llvmIrInstruction.getOperand(1);
+                        if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
+                        {
+                            std::swap(leftOperand, rightOperand);
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tAnd: swap left and right\n");
+                        }
+                        else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tAnd: Expression normalization needed.\n");
+                        }
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            double lowerBound = 0.0;
+                            double upperBound = 0.0;
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = vrRangeIt->second.first;
+                                upperBound = vrRangeIt->second.second;
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            /*
+                             * 	find right operand from the boundInfo->virtualRegisterRange
+                             */
+                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                std::pair<int64_t, int64_t> and_res = bitwiseInterval(lowerBound, upperBound,
+                                                                                      vrRangeIt->second.first,
+                                                                                      vrRangeIt->second.second,
+                                                                                      "and");
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                                                        std::make_pair(and_res.first, and_res.second));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	eg. x&2
+                             */
+                            double constValue = 0.0;
+                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+                            {
+                                /*
+                                 * 	both "float" and "double" type can use "convertToDouble"
+                                 */
+                                constValue = (constFp->getValueAPF()).convertToDouble();
+                            } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getSExtValue();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                std::pair<int64_t, int64_t> and_res = bitwiseInterval(constValue, constValue,
+                                                                                      vrRangeIt->second.first,
+                                                                                      vrRangeIt->second.second,
+                                                                                      "and");
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                        std::make_pair(and_res.first, and_res.second));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                            }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tUnexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
+                        }
                     }
                     break;
 
                 case Instruction::Or:
                     if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
                     {
-                        /*
-                         * todo: it's non-linear function for decimal, but might get range in binary
-                         * */
+                        Value * leftOperand = llvmIrInstruction.getOperand(0);
+                        Value * rightOperand = llvmIrInstruction.getOperand(1);
+                        if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
+                        {
+                            std::swap(leftOperand, rightOperand);
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tOr: swap left and right\n");
+                        }
+                        else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tOr: Expression normalization needed.\n");
+                        }
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            double lowerBound = 0.0;
+                            double upperBound = 0.0;
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = vrRangeIt->second.first;
+                                upperBound = vrRangeIt->second.second;
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            /*
+                             * 	find right operand from the boundInfo->virtualRegisterRange
+                             */
+                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                std::pair<int64_t, int64_t> and_res = bitwiseInterval(lowerBound, upperBound,
+                                                                                      vrRangeIt->second.first,
+                                                                                      vrRangeIt->second.second,
+                                                                                      "or");
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                        std::make_pair(and_res.first, and_res.second));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	eg. x|2
+                             */
+                            double constValue = 0.0;
+                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+                            {
+                                /*
+                                 * 	both "float" and "double" type can use "convertToDouble"
+                                 */
+                                constValue = (constFp->getValueAPF()).convertToDouble();
+                            } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getSExtValue();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                std::pair<int64_t, int64_t> and_res = bitwiseInterval(constValue, constValue,
+                                                                                      vrRangeIt->second.first,
+                                                                                      vrRangeIt->second.second,
+                                                                                      "or");
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                        std::make_pair(and_res.first, and_res.second));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tUnexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
+                        }
                     }
                     break;
 
                 case Instruction::Xor:
                     if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
                     {
-                        /*
-                         * todo: it's non-linear function for decimal, but might get range in binary
-                         * */
+                        Value * leftOperand = llvmIrInstruction.getOperand(0);
+                        Value * rightOperand = llvmIrInstruction.getOperand(1);
+                        if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
+                        {
+                            std::swap(leftOperand, rightOperand);
+                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tXor: swap left and right\n");
+                        }
+                        else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tXor: Expression normalization needed.\n");
+                        }
+                        if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
+                        {
+                            double lowerBound = 0.0;
+                            double upperBound = 0.0;
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                lowerBound = vrRangeIt->second.first;
+                                upperBound = vrRangeIt->second.second;
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                            /*
+                             * 	find right operand from the boundInfo->virtualRegisterRange
+                             */
+                            vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                std::pair<int64_t, int64_t> and_res = bitwiseInterval(lowerBound, upperBound,
+                                                                                      vrRangeIt->second.first,
+                                                                                      vrRangeIt->second.second,
+                                                                                      "xor");
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                        std::make_pair(and_res.first, and_res.second));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                                break;
+                            }
+                        }
+                        else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+                        {
+                            /*
+                             * 	eg. x^2
+                             */
+                            double constValue = 0.0;
+                            if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+                            {
+                                /*
+                                 * 	both "float" and "double" type can use "convertToDouble"
+                                 */
+                                constValue = (constFp->getValueAPF()).convertToDouble();
+                            } else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+                            {
+                                constValue = constInt->getSExtValue();
+                            }
+                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+                            {
+                                std::pair<int64_t, int64_t> and_res = bitwiseInterval(constValue, constValue,
+                                                                                      vrRangeIt->second.first,
+                                                                                      vrRangeIt->second.second,
+                                                                                      "xor");
+                                boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
+                                        std::make_pair(and_res.first, and_res.second));
+                            } else {
+                                assert(!valueRangeDebug && "failed to get range");
+                            }
+                        }
+                        else
+                        {
+                            flexprint(N->Fe, N->Fm, N->Fperr, "\tUnexpected error. Might have an invalid operand.\n");
+                            assert(!valueRangeDebug && "failed to get range");
+                        }
                     }
                     break;
 
@@ -1524,20 +2369,20 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                              * E.g.,
                              * %8 = getelementptr inbounds double, double* %.0, i64 2, !dbg !39
                              */
-							if (auto llvmIrPHIOperand = dyn_cast<PHINode>(llvmIrGetElePtrInstruction->getPointerOperand())) {
-								/*
-								 * E.g.,
-								 * %.0 = phi double* [ getelementptr inbounds ([5 x double], [5 x double]* @pR2, i64 0, i64 0), %3 ], [ getelementptr inbounds ([5 x double], [5 x double]* @pS2, i64 0, i64 0), %4 ], !dbg !35
-								 */
-								auto it = boundInfo->virtualRegisterVectorRange.find(llvmIrPHIOperand);
-								if (it != boundInfo->virtualRegisterVectorRange.end())
-								{
-									if (auto index = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(1))) {
-										boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, (it->second)[index->getZExtValue()]);
-										break;
-									}
-								}
-							}
+//							if (auto llvmIrPHIOperand = dyn_cast<PHINode>(llvmIrGetElePtrInstruction->getPointerOperand())) {
+//								/*
+//								 * E.g.,
+//								 * %.0 = phi double* [ getelementptr inbounds ([5 x double], [5 x double]* @pR2, i64 0, i64 0), %3 ], [ getelementptr inbounds ([5 x double], [5 x double]* @pS2, i64 0, i64 0), %4 ], !dbg !35
+//								 */
+//								auto it = boundInfo->virtualRegisterVectorRange.find(llvmIrPHIOperand);
+//								if (it != boundInfo->virtualRegisterVectorRange.end())
+//								{
+//									if (auto index = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(1))) {
+//										boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, (it->second)[index->getZExtValue()]);
+//										break;
+//									}
+//								}
+//							}
 							auto vrRangeIt = boundInfo->virtualRegisterRange.find(
                                     llvmIrGetElePtrInstruction->getOperand(0));
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
