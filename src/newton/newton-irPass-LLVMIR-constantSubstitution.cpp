@@ -62,7 +62,6 @@ void constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llv
             Instruction *llvmIrInstruction = &*itBB++;
             switch (llvmIrInstruction->getOpcode()) {
                 case Instruction::Call:
-                    break;
                 case Instruction::Add:
                 case Instruction::FAdd:
                 case Instruction::Sub:
@@ -82,10 +81,20 @@ void constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llv
                 case Instruction::Or:
                 case Instruction::Xor:
                 case Instruction::FNeg:
+                case Instruction::FPToUI:
+                case Instruction::FPToSI:
+                case Instruction::SIToFP:
+                case Instruction::UIToFP:
+                case Instruction::ZExt:
+                case Instruction::SExt:
+                case Instruction::FPExt:
+                case Instruction::Trunc:
+                case Instruction::FPTrunc:
+                case Instruction::BitCast:
+                case Instruction::Load:
+                case Instruction::GetElementPtr:
+                case Instruction::PHI:
                 {
-                    /*
-                     * todo: binary operator is the easiest case, start from here
-                     * */
                     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tconstantSubstitution::binaryOp: start from here!\n");
                     auto vrIt = boundInfo->virtualRegisterRange.find(llvmIrInstruction);
                     if (vrIt == boundInfo->virtualRegisterRange.end()) {
@@ -120,27 +129,10 @@ void constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llv
                     }
                 }
                     break;
-                case Instruction::Load:
-                    break;
-                case Instruction::GetElementPtr:
-                    break;
-                case Instruction::FPToUI:
-                case Instruction::FPToSI:
-                case Instruction::SIToFP:
-                case Instruction::UIToFP:
-                case Instruction::ZExt:
-                case Instruction::SExt:
-                case Instruction::FPExt:
-                case Instruction::Trunc:
-                case Instruction::FPTrunc:
-                case Instruction::BitCast:
-                    break;
                 case Instruction::Store:
                     break;
                 case Instruction::ICmp:
                 case Instruction::FCmp:
-                    break;
-                case Instruction::PHI:
                     break;
                 case Instruction::Ret:
                     break;

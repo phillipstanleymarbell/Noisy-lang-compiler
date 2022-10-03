@@ -108,7 +108,7 @@ typedef struct BoundInfo {
 } BoundInfo;
 
 std::pair<llvm::Value *, std::pair<double, double>>
-rangeAnalysis(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction);
+rangeAnalysis(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction, bool standaloneFunc = true);
 
 #ifdef __cplusplus
 } /* extern "C" */

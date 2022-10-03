@@ -819,8 +819,30 @@ bitwiseInterval(const int64_t lhs_low, const int64_t lhs_high,
 }
 
 std::pair<Value *, std::pair<double, double>>
-rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
+rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool standaloneFunc)
 {
+    /*
+     * We only search the function with Newton Information
+     * */
+    bool nonNewtonInfo = standaloneFunc;
+    DISubprogram *irFuncSubProgram = llvmIrFunction.getSubprogram();
+    if (irFuncSubProgram != nullptr) {
+        auto funcType = irFuncSubProgram->getType();
+        if (funcType != nullptr) {
+            DITypeRefArray typeArray = irFuncSubProgram->getType()->getTypeArray();
+            for (size_t typeIdx = 1; typeIdx < typeArray.size(); typeIdx++) {
+                StringRef paramTypeName = typeArray[typeIdx]->getName();
+                if (boundInfo->typeRange.find(paramTypeName.str()) != boundInfo->typeRange.end()) {
+                    nonNewtonInfo = false;
+                    break;
+                }
+            }
+        }
+    }
+    if (nonNewtonInfo) {
+        return std::make_pair(nullptr, std::make_pair(DBL_MIN, DBL_MAX));
+    }
+
     /*
      * information for the union data structure
      * */
@@ -1046,15 +1068,28 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                                         }
                                     }
                                 }
-                                auto returnRange = rangeAnalysis(N, innerBoundInfo, *calledFunction);
+                                auto returnRange = rangeAnalysis(N, innerBoundInfo, *calledFunction, false);
                                 if (returnRange.first != nullptr)
                                 {
                                     boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
                                 }
-                                boundInfo->virtualRegisterRange.insert(innerBoundInfo->virtualRegisterRange.begin(),
-                                        innerBoundInfo->virtualRegisterRange.end());
-								boundInfo->virtualRegisterVectorRange.insert(innerBoundInfo->virtualRegisterVectorRange.begin(),
-																	   innerBoundInfo->virtualRegisterVectorRange.end());
+                                /*
+                                 * if variables of innerBoundInfo has been stored in boundInfo,
+                                 * we get the union set of them
+                                 * */
+                                for (const auto& vrRange : innerBoundInfo->virtualRegisterRange) {
+                                    auto ibIt = boundInfo->virtualRegisterRange.find(vrRange.first);
+                                    if (ibIt != boundInfo->virtualRegisterRange.end()) {
+                                    auto innerLowerBound = vrRange.second.first < ibIt->second.first ?
+                                            vrRange.second.first : ibIt->second.first;
+                                    auto innerUpperBound = vrRange.second.second > ibIt->second.second ?
+                                            vrRange.second.second : ibIt->second.second;
+                                    boundInfo->virtualRegisterRange[ibIt->first] = std::make_pair(innerLowerBound,
+                                                                                                  innerUpperBound);
+                                    } else {
+                                        boundInfo->virtualRegisterRange.emplace(vrRange.first, vrRange.second);
+                                    }
+                                }
 								/*
 								 * Check the return type of the function,
 								 * if it's a physical type that records in `boundInfo.typeRange`
@@ -2035,13 +2070,24 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             {
                                 constValue = constInt->getSExtValue();
                             }
-                            boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), std::make_pair(constValue, constValue));
+                            auto rhsIt = boundInfo->virtualRegisterRange.find(llvmIrStoreInstruction->getOperand(1));
+                            if (rhsIt != boundInfo->virtualRegisterRange.end()) {
+                                rhsIt->second = std::make_pair(constValue, constValue);
+                            } else {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), std::make_pair(constValue, constValue));
+                            }
                         }
                         else
                         {
                             auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrStoreInstruction->getOperand(0));
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())
                             {
+                                auto rhsIt = boundInfo->virtualRegisterRange.find(llvmIrStoreInstruction->getOperand(1));
+                                if (rhsIt != boundInfo->virtualRegisterRange.end()) {
+                                    rhsIt->second = vrRangeIt->second;
+                                } else {
+                                    boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), vrRangeIt->second);
+                                }
                                 boundInfo->virtualRegisterRange.emplace(llvmIrStoreInstruction->getOperand(1), vrRangeIt->second);
                             } else {
                                 /*
@@ -2371,20 +2417,20 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                              * E.g.,
                              * %8 = getelementptr inbounds double, double* %.0, i64 2, !dbg !39
                              */
-//							if (auto llvmIrPHIOperand = dyn_cast<PHINode>(llvmIrGetElePtrInstruction->getPointerOperand())) {
-//								/*
-//								 * E.g.,
-//								 * %.0 = phi double* [ getelementptr inbounds ([5 x double], [5 x double]* @pR2, i64 0, i64 0), %3 ], [ getelementptr inbounds ([5 x double], [5 x double]* @pS2, i64 0, i64 0), %4 ], !dbg !35
-//								 */
-//								auto it = boundInfo->virtualRegisterVectorRange.find(llvmIrPHIOperand);
-//								if (it != boundInfo->virtualRegisterVectorRange.end())
-//								{
-//									if (auto index = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(1))) {
-//										boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, (it->second)[index->getZExtValue()]);
-//										break;
-//									}
-//								}
-//							}
+							if (auto llvmIrPHIOperand = dyn_cast<PHINode>(llvmIrGetElePtrInstruction->getPointerOperand())) {
+								/*
+								 * E.g.,
+								 * %.0 = phi double* [ getelementptr inbounds ([5 x double], [5 x double]* @pR2, i64 0, i64 0), %3 ], [ getelementptr inbounds ([5 x double], [5 x double]* @pS2, i64 0, i64 0), %4 ], !dbg !35
+								 */
+								auto it = boundInfo->virtualRegisterVectorRange.find(llvmIrPHIOperand);
+								if (it != boundInfo->virtualRegisterVectorRange.end())
+								{
+									if (auto index = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(1))) {
+										boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, (it->second)[index->getZExtValue()]);
+										break;
+									}
+								}
+							}
 							auto vrRangeIt = boundInfo->virtualRegisterRange.find(
                                     llvmIrGetElePtrInstruction->getOperand(0));
                             if (vrRangeIt != boundInfo->virtualRegisterRange.end())

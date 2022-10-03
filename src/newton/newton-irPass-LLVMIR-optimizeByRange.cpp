@@ -221,7 +221,7 @@ irPassLLVMIROptimizeByRange(State * N)
 	}
 
     passManager.add(createCFGSimplificationPass());
-//    passManager.add(createInstSimplifyLegacyPass());
+    passManager.add(createInstSimplifyLegacyPass());
 //    passManager.add(createInstructionCombiningPass());
     passManager.run(*Mod);
 
