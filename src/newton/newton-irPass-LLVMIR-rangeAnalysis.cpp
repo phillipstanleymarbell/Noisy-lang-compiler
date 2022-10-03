@@ -839,6 +839,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                     if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction))
                     {
                         Function * calledFunction = llvmIrCallInstruction->getCalledFunction();
+                        if (calledFunction == nullptr || !calledFunction->hasName() || calledFunction->getName().empty())
+                            break;
                         if (calledFunction->getName().startswith("llvm.dbg.value") ||
                             calledFunction->getName().startswith("llvm.dbg.declare"))
                         {

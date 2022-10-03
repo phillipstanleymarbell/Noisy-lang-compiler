@@ -179,6 +179,8 @@ initBasicBlock(LivenessState *  livenessState, BasicBlock &  llvmIrBasicBlock)
 			{
 				if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction)) {
 					Function *calledFunction = llvmIrCallInstruction->getCalledFunction();
+                    if (calledFunction == nullptr || !calledFunction->hasName() || calledFunction->getName().empty())
+                        continue;
 					if (calledFunction->getName().startswith("llvm.dbg.declare")) {
 						continue;
 					}
