@@ -911,8 +911,6 @@ shrinkInstructionType(State * N, Instruction *inInstruction, BasicBlock & llvmIr
                       std::map<Value*, typeInfo>& typeChangedInst)
 {
     bool changed = false;
-    if (!shrinkStrategy(N, inInstruction))
-        return changed;
     typeInfo typeInformation = getTypeInfo(N, inInstruction, virtualRegisterRange);
     if (typeInformation.valueType == nullptr)
         return changed;
@@ -1017,29 +1015,29 @@ shrinkInstType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
      *      %2 = bitcast i32* %0 to i8*
      *      %3 = bitcast i32* %1 to i8*
      * */
-//    for (int idx = 0; idx < llvmIrFunction.arg_size(); idx++) {
-//        auto paramOp = llvmIrFunction.getArg(idx);
-//        typeInfo typeInformation = getTypeInfo(N, paramOp, boundInfo->virtualRegisterRange);
-//        if (typeInformation.valueType != nullptr) {
-//            typeInfo instPrevTypeInfo{paramOp->getType(), typeInformation.signFlag};
-//            IRBuilder<> Builder(&llvmIrFunction.getEntryBlock(), llvmIrFunction.getEntryBlock().begin());
-//            Value * castValue;
-//            if (typeInformation.valueType->isIntegerTy()) {
-//                castValue = Builder.CreateIntCast(paramOp, typeInformation.valueType, typeInformation.signFlag);
-//            } else {
-//                castValue = Builder.CreateFPCast(paramOp, typeInformation.valueType);
-//            }
-//            auto vrIt = boundInfo->virtualRegisterRange.find(paramOp);
-//            if (castValue != nullptr && vrIt != boundInfo->virtualRegisterRange.end()) {
-//                boundInfo->virtualRegisterRange.emplace(castValue, vrIt->second);
-//            }
-//            paramOp->replaceAllUsesWith(castValue);
-//            if (auto castInst = dyn_cast<CastInst>(castValue)) {
-//                castInst->setOperand(0, paramOp);
-//            }
-//            typeChangedInst.emplace(castValue, instPrevTypeInfo);
-//        }
-//    }
+    for (int idx = 0; idx < llvmIrFunction.arg_size(); idx++) {
+        auto paramOp = llvmIrFunction.getArg(idx);
+        typeInfo typeInformation = getTypeInfo(N, paramOp, boundInfo->virtualRegisterRange);
+        if (typeInformation.valueType != nullptr) {
+            typeInfo instPrevTypeInfo{paramOp->getType(), typeInformation.signFlag};
+            IRBuilder<> Builder(&llvmIrFunction.getEntryBlock(), llvmIrFunction.getEntryBlock().begin());
+            Value * castValue;
+            if (typeInformation.valueType->isIntegerTy()) {
+                castValue = Builder.CreateIntCast(paramOp, typeInformation.valueType, typeInformation.signFlag);
+            } else {
+                castValue = Builder.CreateFPCast(paramOp, typeInformation.valueType);
+            }
+            auto vrIt = boundInfo->virtualRegisterRange.find(paramOp);
+            if (castValue != nullptr && vrIt != boundInfo->virtualRegisterRange.end()) {
+                boundInfo->virtualRegisterRange.emplace(castValue, vrIt->second);
+            }
+            paramOp->replaceAllUsesWith(castValue);
+            if (auto castInst = dyn_cast<CastInst>(castValue)) {
+                castInst->setOperand(0, paramOp);
+            }
+            typeChangedInst.emplace(castValue, instPrevTypeInfo);
+        }
+    }
     for (BasicBlock &llvmIrBasicBlock: llvmIrFunction) {
         for (BasicBlock::iterator itBB = llvmIrBasicBlock.begin(); itBB != llvmIrBasicBlock.end();) {
             Instruction *llvmIrInstruction = &*itBB++;

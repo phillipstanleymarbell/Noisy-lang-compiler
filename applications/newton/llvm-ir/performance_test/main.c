@@ -46,7 +46,7 @@
 typedef double bmx055xAcceleration;  // [-16, 16]
 typedef double bmx055zAcceleration;  // [0, 127]
 typedef float bmx055fAcceleration;  // [0, 127]
-typedef int bmx055xMagneto;      // [0, 127]
+typedef int64_t bmx055xMagneto;      // [0, 127]
 #define iteration_num 5
 
 /*

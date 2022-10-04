@@ -831,7 +831,15 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
         if (funcType != nullptr) {
             DITypeRefArray typeArray = irFuncSubProgram->getType()->getTypeArray();
             for (size_t typeIdx = 1; typeIdx < typeArray.size(); typeIdx++) {
-                StringRef paramTypeName = typeArray[typeIdx]->getName();
+                StringRef paramTypeName;
+                if (const auto *derivedVariableType = dyn_cast<DIDerivedType>(typeArray[typeIdx]))
+                {
+                    if (derivedVariableType->getTag() == llvm::dwarf::DW_TAG_pointer_type) {
+                        paramTypeName = derivedVariableType->getBaseType()->getName();
+                    } else {
+                        paramTypeName = derivedVariableType->getName();
+                    }
+                }
                 if (boundInfo->typeRange.find(paramTypeName.str()) != boundInfo->typeRange.end()) {
                     nonNewtonInfo = false;
                     break;
