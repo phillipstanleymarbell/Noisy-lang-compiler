@@ -43,12 +43,6 @@ import numpy as np
 from matplotlib.ticker import FuncFormatter
 import platform
 
-performance_data = []
-with open('perf.log', 'r') as f:
-    for line in f.readlines():
-        line_list = line.strip('\n').split('\t')
-        performance_data.append(line_list)
-
 # [instruction counts (million)", "time consumption (s)", "IR lines", "size of library (bytes)"]
 y_units = [1000, 1000, 1, 1]
 
@@ -59,9 +53,39 @@ range_extend_num = 6
 
 # changed with auto_test.cpp
 range_extend_list = [1, 10, 100, 1000, 10000, 100000]
-param_label = []
-for i in range(params_num):
-    param_label.append("param_" + str(i + 1))
+
+average_data = []
+with open('average_speedup.log', 'r') as f:
+    for line in f.readlines():
+        line_list = line.strip('\n').split('\t')
+        average_data.append(line_list)
+
+average_name_list = []
+for i in range(1, len(average_data), range_extend_num):
+    name = average_data[i][0][5:]
+    average_name_list.append(name)
+
+average_time_speedup = []
+average_libsize_reduce = []
+for i in range(1, len(average_data), range_extend_num):
+    time_speedup = 0
+    libsize_reduce = 0
+    for j in range(i, i+range_extend_num):
+        time_speedup += float(average_data[j][3].strip('%')) / 100
+        libsize_reduce += float(average_data[j][5].strip('%')) / 100
+    average_time_speedup.append(time_speedup / range_extend_num * 100)
+    average_libsize_reduce.append(libsize_reduce / range_extend_num * 100)
+
+assert(len(average_name_list) == len(average_time_speedup))
+for i in range(0, len(average_name_list)):
+    print(average_name_list[i], "with time speed up: ", format(average_time_speedup[i], '.2f'),
+          "%, lib size reduce: ", format(average_libsize_reduce[i], '.2f'), "%")
+
+performance_data = []
+with open('perf.log', 'r') as f:
+    for line in f.readlines():
+        line_list = line.strip('\n').split('\t')
+        performance_data.append(line_list)
 
 # prepare data for histogram
 name_list = []

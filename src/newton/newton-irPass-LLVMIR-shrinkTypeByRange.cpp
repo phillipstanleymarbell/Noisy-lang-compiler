@@ -1059,6 +1059,8 @@ shrinkInstType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                 case Instruction::Call:
                     if (auto llvmIrCallInstruction = dyn_cast<CallInst>(llvmIrInstruction)) {
                         Function *calledFunction = llvmIrCallInstruction->getCalledFunction();
+                        if (calledFunction == nullptr || !calledFunction->hasName() || calledFunction->getName().empty())
+                            break;
                         if (!calledFunction->getName().startswith("llvm.dbg.value") &&
                             !calledFunction->getName().startswith("llvm.dbg.declare") &&
                             !calledFunction->getName().startswith("llvm.dbg.label"))
