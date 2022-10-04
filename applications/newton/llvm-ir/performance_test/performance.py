@@ -66,14 +66,18 @@ for i in range(params_num):
 # prepare data for histogram
 name_list = []
 for i in range(1, len(performance_data), 3 * params_num):
-    name_list.append(performance_data[i][0])
+    name = performance_data[i][0][5:]
+    name_list.append(name)
 opt_name_list = []
 for i in range(2, len(performance_data), 3):
     opt_name_list.append(performance_data[i][0])
 
 param_list = []
 for i in range(1, 3 * params_num * range_extend_num, 3):
-    param_list.append(performance_data[i][1])
+    lower, upper = map(float, performance_data[i][1].split( ))
+    lower_r1 = round(lower, 1)
+    upper_r1 = round(upper, 1)
+    param_list.append('[' + str(lower_r1) + ', ' + str(upper_r1) + ']')
 
 inst_count = []
 for i in range(1, len(performance_data), 3):
@@ -129,9 +133,10 @@ lib_size_reduction = np.reshape(lib_size_reduction, (test_case_num, range_extend
 
 perf_data_speedup = [inst_speedup, time_speedup, ir_reduction, lib_size_reduction]
 
-y_labels = ["instruction counts (million)", "time consumption (s)", "IR lines", "size of library (bytes)"]
+y_labels = ["instruction counts (million)", "time (s)", "IR lines", "size (bytes)"]
 
 machine = platform.machine()
+# machine = "aarch64"
 
 fig_path = "fig/"
 folder = os.path.exists(fig_path)
@@ -188,8 +193,8 @@ for merit_id in range(1, merit_num, 2):
                           cbar_kws={'format': FuncFormatter(fmt)},
                           xticklabels=range_extend_list,
                           yticklabels=param_list[0:10])
-        fig.set_xlabel('range extend')
-        fig.set_ylabel('function parameters')
+        fig.set_xlabel('Range Extent')
+        fig.set_ylabel('Function Parameters')
         plt.title(machine + "-" + name_list[test_case_id * range_extend_num] + "-" + y_labels[merit_id])
         file_name = fig_path + machine + "-" + name_list[test_case_id * range_extend_num] + "-" + y_labels[
             merit_id] + ".png"
