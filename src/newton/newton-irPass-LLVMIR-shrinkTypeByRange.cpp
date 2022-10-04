@@ -1352,7 +1352,11 @@ mergeCast(State *N, Function &llvmIrFunction,
                         Function * calledFunction = llvmIrCallInstruction->getCalledFunction();
                         if (calledFunction->getName().startswith("llvm.dbg.value") ||
                             calledFunction->getName().startswith("llvm.dbg.declare")) {
+                            if (!isa<MetadataAsValue>(llvmIrCallInstruction->getOperand(0)))
+                                break;
                             auto firstOperator = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(0));
+                            if (!isa<ValueAsMetadata>(firstOperator->getMetadata()))
+                                break;
                             auto localVariableAddressAsMetadata = cast<ValueAsMetadata>(firstOperator->getMetadata());
                             auto localVariableAddress = localVariableAddressAsMetadata->getValue();
                             auto siIt = std::find(sourceInstVec.begin(), sourceInstVec.end(),
