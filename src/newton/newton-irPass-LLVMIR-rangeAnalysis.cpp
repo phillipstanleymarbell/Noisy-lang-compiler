@@ -866,11 +866,17 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
                         if (calledFunction->getName().startswith("llvm.dbg.value") ||
                             calledFunction->getName().startswith("llvm.dbg.declare"))
                         {
+                            if (!isa<MetadataAsValue>(llvmIrCallInstruction->getOperand(0)))
+                                break;
                             auto firstOperator = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(0));
+                            if (!isa<ValueAsMetadata>(firstOperator->getMetadata()))
+                                break;
                             auto localVariableAddressAsMetadata = cast<ValueAsMetadata>(firstOperator->getMetadata());
                             auto localVariableAddress = localVariableAddressAsMetadata->getValue();
 
                             auto variableMetadata = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(1));
+                            if (!isa<DIVariable>(variableMetadata->getMetadata()))
+                                break;
                             auto debugInfoVariable = cast<DIVariable>(variableMetadata->getMetadata());
                             const DIType * variableType = debugInfoVariable->getType();
 

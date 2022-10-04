@@ -24,7 +24,7 @@ endif
 
 max_opt_fn = opt ../$(1).ll --O3 -S -o $(OUT_FILE)
 non_opt_fn = cp ../$(1).ll $(OUT_FILE)
-necessary_opt_fn = opt ../$(1).ll --simplifycfg -S -o $(OUT_FILE)
+necessary_opt_fn = opt ../$(1).ll --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
 newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
 

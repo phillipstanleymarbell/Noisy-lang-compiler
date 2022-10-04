@@ -288,14 +288,14 @@ irPassLLVMIRLivenessAnalysis(State *  N)
 		livenessAnalysis(N, livenessState, mi);
 	}
 
-    outs() << "kill: killedVariables\n";
-    printBasicBlockSets(livenessState->killedVariables);
-
-    outs() << "gen: liveOutVariables\n";
-	printBasicBlockSets(livenessState->liveOutVariables);
-
-    outs() << "update: upwardExposedVariables\n";
-    printBasicBlockSets(livenessState->upwardExposedVariables);
+//    outs() << "kill: killedVariables\n";
+//    printBasicBlockSets(livenessState->killedVariables);
+//
+//    outs() << "gen: liveOutVariables\n";
+//	printBasicBlockSets(livenessState->liveOutVariables);
+//
+//    outs() << "update: upwardExposedVariables\n";
+//    printBasicBlockSets(livenessState->upwardExposedVariables);
 }
 
 }

@@ -95,7 +95,6 @@ void constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llv
                 case Instruction::GetElementPtr:
                 case Instruction::PHI:
                 {
-                    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tconstantSubstitution::binaryOp: start from here!\n");
                     auto vrIt = boundInfo->virtualRegisterRange.find(llvmIrInstruction);
                     if (vrIt == boundInfo->virtualRegisterRange.end()) {
                         break;
