@@ -21,7 +21,7 @@ SOBJ = $(SRCS:.c=.a)
 
 all: default
 
-default: make_ll get_o libInterface.a
+default: make_ll libInterface.a
 
 make_ll:
 	cd $(SUB_DIR) && make interface_lib
@@ -39,11 +39,13 @@ make_ll:
 #%.a : %.o
 #	@echo ar -rc $@ $<
 
-get_o: e_acosh_output.ll e_exp_output.ll e_j0_output.ll e_log_output.ll e_rem_pio2_output.ll e_y0_output.ll float64_add_output.ll float64_div_output.ll float64_mul_output.ll float64_sin_output.ll
-	$(CC) -c $^ -no-pie -fPIC
+soft_float_api.o: soft_float_api_output.ll
+	$(CC) -o $@ -c $^ -no-pie -fPIC
 
-libInterface.a: e_acosh_output.o e_exp_output.o e_j0_output.o e_log_output.o e_rem_pio2_output.o e_y0_output.o float64_add_output.o float64_div_output.o float64_mul_output.o float64_sin_output.o
+libInterface.a: soft_float_api.o
+	#$(CC) -shared -o $@ -ldl $^
 	ar -rc $@ $^
+	cp $@ ../../fusion/.
 
 clean::
 	$(QUIET)rm -f *.ll *.bc *.a *.out *.o

@@ -179,6 +179,14 @@ compile_benchmark_suite_double:
 compile_benchmark_suite_float:
 	$(call compile_main_fn,BENCHMARK_SUITE_FLOAT)
 
+soft_float_api_non_opt:
+	$(call max_opt_fn,soft_float_api)
+
+soft_float_api_opt:
+	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,soft_float_api)
+	llvm-dis ../soft_float_api_output.bc
+	$(call max_opt_fn,soft_float_api_output)
+
 perf_exp: clean make_ll exp_non_opt compile_lib compile_exp
 
 perf_exp_opt: clean make_ll exp_opt compile_lib compile_exp
@@ -235,7 +243,7 @@ perf_benchmark_suite_float: clean make_ll benchmark_suite_non_opt compile_lib co
 
 perf_benchmark_suite_float_opt: clean make_ll benchmark_suite_opt compile_lib compile_benchmark_suite_float
 
-interface_lib: clean make_ll exp_opt log_opt acosh_opt j0_opt y0_opt rem_pio2_opt sincosf_opt float64_add_opt float64_div_opt float64_mul_opt float64_sin_opt
+interface_lib: clean make_ll soft_float_api_opt compile_lib
 
 auto_test_compile:
 	clang++ auto_test.cpp -g -o auto_test

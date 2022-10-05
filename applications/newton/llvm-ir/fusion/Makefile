@@ -39,4 +39,4 @@ fusion_opt.ll: fusion_output.bc
 	llvm-dis -o $@ $<
 
 clean::
-	$(QUIET)rm -f *.ll *.bc *.a *.out
+	$(QUIET)rm -f *.ll *.bc *.out

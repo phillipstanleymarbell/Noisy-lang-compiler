@@ -7,14 +7,14 @@ endif
 LLVM_CONFIG:=llvm-config
 CC:=clang++ # Currently tested with clang-12/clang-13
 
-vpath %.cpp adpcm dfadd dfdiv dfmul dfsin gsm motion
+vpath %.cpp adpcm dfadd dfdiv dfmul soft_float_api dfsin gsm motion
 
 BIN?=application
 COMMON_FLAGS=-Wall -Wextra
 
 all: default
 
-default: float64_add.ll float64_div.ll float64_mul.ll float64_sin.ll
+default: float64_add.ll float64_div.ll float64_mul.ll float64_sin.ll soft_float_api.ll
 
 %.ll : %.cpp
 	@echo Compiling $*.c
