@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/time.h>
 #include <printf.h>
 #include <string.h>
 #include <math.h>
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
 	char	charBuffer[150];
 	FILE *	inputFile;
 
-	printf("Input filename: %s\n", argv[1]);
+//	printf("Input filename: %s\n", argv[1]);
 
 	inputFile = fopen(argv[1], "r");
 	if (inputFile == NULL)
@@ -64,7 +65,7 @@ int main(int argc, char *argv[])
 		Ignore labels of first .csv line
 	 */
 	while (fgetc(inputFile) != '\n');
-	printf("Reading from file...\n");
+//	printf("Reading from file...\n");
 
 	int reachedEOF = 0;
 
@@ -128,7 +129,12 @@ int main(int argc, char *argv[])
 
 	float zRange;
 
-	printf("Performing measurements...\n");
+//	printf("Performing measurements...\n");
+
+	struct timeval tv;                                                     \
+    gettimeofday(&tv, (void *)0);                                          \
+    double t1 = tv.tv_sec + 1.0e-6 * tv.tv_usec;
+
 	while (!reachedEOF)
 	{
 		/*
@@ -296,8 +302,12 @@ int main(int argc, char *argv[])
 		measurementCount++;
 	}
 
-	printf("They took %d steps, %d strides.\n", steps, strides);
-	printf("Measurement count total : %d.\n", measurementCount);
+	gettimeofday(&tv, (void *)0);                                          \
+    double t2 = tv.tv_sec + 1.0e-6 * tv.tv_usec;
+
+	printf("%lf\n", t2 - t1);
+//	printf("They took %d steps, %d strides.\n", steps, strides);
+//	printf("Measurement count total : %d.\n", measurementCount);
 
 	fclose(inputFile);
 

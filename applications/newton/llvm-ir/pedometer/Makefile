@@ -26,6 +26,9 @@ run: main.out
 main.out: main.ll
 	$(CC) -lm -O2 -g -o $@ $^
 
+main_opt.out: main_opt.ll
+	$(CC) -lm -O2 -g -o $@ $^
+
 %.ll : %.c
 	@echo Compiling $*.c
 	$(QUIET)$(CC) $(TARGET_FLAG) -g -O0 -Xclang -disable-O0-optnone -S -emit-llvm $(COMMON_FLAGS) -o $@ $<
@@ -33,6 +36,9 @@ main.out: main.ll
 
 %.bc : %.ll
 	llvm-as -o $@ $<
+
+main_opt.ll: main_output.bc
+	llvm-dis -o $@ $<
 
 clean::
 	$(QUIET)rm -f *.ll *.bc *.out
