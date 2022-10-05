@@ -20,8 +20,8 @@ all: default
 
 default: main.out
 
-main.out: main.ll FusionAhrs.ll FusionCompass.ll FusionOffset.ll
-	$(CC) -g -lm -o $@ $^
+main.out: FusionAhrs.ll FusionCompass.ll FusionOffset.ll
+	$(CC) main.c -no-pie -L. -lInterface -O2 -g -o $@ $^ -lm
 
 fusion.ll: main.bc FusionAhrs.bc FusionCompass.bc FusionOffset.bc
 	llvm-link -o fusion.bc $^
@@ -39,4 +39,4 @@ fusion_opt.ll: fusion_output.bc
 	llvm-dis -o $@ $<
 
 clean::
-	$(QUIET)rm -f *.ll *.bc
+	$(QUIET)rm -f *.ll *.bc *.a *.out

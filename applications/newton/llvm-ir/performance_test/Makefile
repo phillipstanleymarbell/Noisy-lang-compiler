@@ -235,6 +235,8 @@ perf_benchmark_suite_float: clean make_ll benchmark_suite_non_opt compile_lib co
 
 perf_benchmark_suite_float_opt: clean make_ll benchmark_suite_opt compile_lib compile_benchmark_suite_float
 
+interface_lib: clean make_ll exp_opt log_opt acosh_opt j0_opt y0_opt rem_pio2_opt sincosf_opt float64_add_opt float64_div_opt float64_mul_opt float64_sin_opt
+
 auto_test_compile:
 	clang++ auto_test.cpp -g -o auto_test
 
