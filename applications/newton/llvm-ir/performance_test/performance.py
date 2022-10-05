@@ -226,6 +226,6 @@ for merit_id in range(1, merit_num, 2):
         plt.savefig(file_name)
         plt.close()
 
-os.system('cp perf.log fig/')
-os.system('cp average_speedup.log fig/')
+os.system('cp perf.log fig/' + machine + "_perf.log")
+os.system('cp average_speedup.log fig/' + machine + "_average_speedup.log")
 os.system('tar -zvcf fig.tar.gz fig/')

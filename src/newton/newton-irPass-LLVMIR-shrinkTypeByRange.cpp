@@ -1066,7 +1066,7 @@ shrinkInstType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
                             !calledFunction->getName().startswith("llvm.dbg.label"))
                         {
                             /*
-                             * don't change the type of lib function call's params
+                             * don't change the type of function call's params
                              * */
                             for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
                             {
@@ -1352,6 +1352,8 @@ mergeCast(State *N, Function &llvmIrFunction,
                 case Instruction::Call:
                     if (auto llvmIrCallInstruction = dyn_cast<CallInst>(llvmIrInstruction)) {
                         Function * calledFunction = llvmIrCallInstruction->getCalledFunction();
+                        if (calledFunction == nullptr || !calledFunction->hasName() || calledFunction->getName().empty())
+                            break;
                         if (calledFunction->getName().startswith("llvm.dbg.value") ||
                             calledFunction->getName().startswith("llvm.dbg.declare")) {
                             if (!isa<MetadataAsValue>(llvmIrCallInstruction->getOperand(0)))
@@ -1415,6 +1417,126 @@ countCastInst(State *N, Function &llvmIrFunction) {
         bbId++;
     }
     return castCountVec;
+}
+
+using dpLink = std::vector<std::vector<Value*>>;
+/*
+ * get the index of the node if found, or return "-1"
+ * */
+int findNode(const dpLink& dependencyLink, Value* node) {
+    auto dlIt = std::find_if(dependencyLink.begin(), dependencyLink.end(), [node](const auto& v) {
+        return std::find(v.begin(), v.end(), node) != v.end();
+    });
+    if (dlIt != dependencyLink.end()) {
+        return std::distance(dependencyLink.begin(), dlIt) - 1;
+    } else {
+        return -1;
+    }
+}
+
+void insertLink(dpLink& dependencyLink, Value* aimNode, Value* siblingNode) {
+    auto aimPos = findNode(dependencyLink, aimNode);
+    auto siblingPos = findNode(dependencyLink, siblingNode);
+    if (aimPos != -1) {
+        /*aimNode in dependencyLink*/
+        if (siblingPos != -1) {
+            /*
+             * sibling is also in dependencyLink, merge them
+             * */
+            auto newPos = aimPos < siblingPos ? aimPos : siblingPos;
+            auto deletePos = aimPos > siblingPos ? aimPos : siblingPos;
+            dependencyLink[newPos].insert(dependencyLink[newPos].end(),
+                                          dependencyLink[deletePos].begin(),
+                                          dependencyLink[deletePos].end());
+        } else {
+            /*
+             * sibling is not in dependencyLink, insert to aimPos
+             * */
+            dependencyLink[aimPos].emplace_back(siblingNode);
+        }
+    } else {
+        /*aimNode not in dependencyLink*/
+        if (siblingPos == -1) {
+            siblingPos = dependencyLink.capacity();
+        }
+        dependencyLink[siblingPos].emplace_back(aimNode);
+    }
+}
+
+std::vector<std::vector<Value*>>
+getDependencyLink(State *N, Function &llvmIrFunction) {
+    std::vector<std::vector<Value*>> dependencyLink;
+    for (BasicBlock & llvmIrBasicBlock : llvmIrFunction) {
+        for (Instruction &llvmIrInstruction: llvmIrBasicBlock) {
+            switch (llvmIrInstruction.getOpcode()) {
+//                case Instruction::Call:
+//                    if (auto llvmIrCallInstruction = dyn_cast<CallInst>(llvmIrInstruction)) {
+//                        Function *calledFunction = llvmIrCallInstruction->getCalledFunction();
+//                        if (calledFunction == nullptr || !calledFunction->hasName() ||
+//                            calledFunction->getName().empty())
+//                            break;
+//                        if (!calledFunction->getName().startswith("llvm.dbg.value") &&
+//                            !calledFunction->getName().startswith("llvm.dbg.declare") &&
+//                            !calledFunction->getName().startswith("llvm.dbg.label")) {
+//                            for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
+//                            {
+//                                insertLink(llvmIrCallInstruction->getOperand(idx));
+//                            }
+//                            insertLink(llvmIrCallInstruction);
+//                        }
+//                    }
+//                    break;
+                case Instruction::Add:
+                case Instruction::FAdd:
+                case Instruction::Sub:
+                case Instruction::FSub:
+                case Instruction::Mul:
+                case Instruction::FMul:
+                case Instruction::SDiv:
+                case Instruction::FDiv:
+                case Instruction::UDiv:
+                case Instruction::URem:
+                case Instruction::SRem:
+                case Instruction::FRem:
+                case Instruction::Shl:
+                case Instruction::LShr:
+                case Instruction::AShr:
+                case Instruction::And:
+                case Instruction::Or:
+                case Instruction::Xor:
+                    /*match binary operands*/
+                    insertLink(dependencyLink, llvmIrInstruction.getOperand(0),
+                               llvmIrInstruction.getOperand(1));
+                case Instruction::PHI:
+                    if (isa<PHINode>(llvmIrInstruction)) {
+                        /*match multi operands*/
+                    }
+                case Instruction::FNeg:
+                case Instruction::Load:
+                case Instruction::GetElementPtr:
+                    /*match dest with operands*/
+                case Instruction::FPToUI:
+                case Instruction::FPToSI:
+                case Instruction::SIToFP:
+                case Instruction::UIToFP:
+                case Instruction::ZExt:
+                case Instruction::SExt:
+                case Instruction::FPExt:
+                case Instruction::Trunc:
+                case Instruction::FPTrunc:
+                case Instruction::BitCast:
+                    /*check dest*/
+                    break;
+                case Instruction::Store:
+                case Instruction::ICmp:
+                case Instruction::FCmp:
+                    /*match operands*/
+                default:
+                    continue;
+            }
+        }
+    }
+    return dependencyLink;
 }
 
 void
