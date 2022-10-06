@@ -27,10 +27,10 @@ run: perf_main.out
 	./perf_main.out inputs/Acceleration_with_g_2020-09-25_19-09-09_ROI.csv
 
 perf_main.out: perf_main.ll
-	$(CC) -lm -O2 -g -o $@ $^ -no-pie -L. -lInterface
+	$(CC) -lm -O2 -g -o $@ $^
 
 perf_main_opt.out: perf_main_opt.ll
-	$(CC) -lm -O2 -g -o $@ $^ -no-pie -L. -lInterface
+	$(CC) -lm -O2 -g -o $@ $^
 
 perf_main.ll : main.c
 	@echo Compiling $*.c
@@ -56,4 +56,4 @@ auto_test_compile:
 	clang++ auto_test.cpp -g -o auto_test
 
 clean::
-	$(QUIET)rm -f *.ll *.bc *.out
+	$(QUIET)rm -f *.ll *.bc *.out *.a

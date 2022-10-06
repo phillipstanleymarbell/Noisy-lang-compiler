@@ -33,6 +33,7 @@
 #include <printf.h>
 #include <string.h>
 #include <math.h>
+#include "../CHStone_test/soft_float_api/soft_float_api.cpp"
 
 #define SAMPLES_PER_MEASUREMENT 4
 #define DC_SAMPLES_FACTOR (12)

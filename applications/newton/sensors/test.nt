@@ -32,7 +32,7 @@ test: sensor (
 {
 	range bmx055xAcceleration == [3 mjf, 10 mjf],
     range bmx055yAcceleration == [1 mjf, 16 mjf],
-    range bmx055zAcceleration == [0 mjf, 127 mjf],
+    range bmx055zAcceleration == [90 mjf, 102 mjf],
     range bmx055fAcceleration == [0 mjf, 127 mjf],
 	range bmx055xMagneto == [0 uT, 127 uT],
 
