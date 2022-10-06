@@ -17,7 +17,7 @@ TARGET_FLAG=-target aarch64
 endif
 
 NEWTON_BIN_DIR = ../../../../src/newton
-newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/pedometer/perf_main.ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
+newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/pedometer/perf_main.ll --llvm-ir-liveness-check ../../applications/newton/sensors/BMX055.nt
 
 all: default
 
@@ -47,10 +47,10 @@ perf_main_opt.ll: perf_main_output.bc
 	llvm-dis -o $@ $<
 
 perf_main:
-	perf stat -B ./perf_main.out inputs/Acceleration_with_g_2020-09-25_19-09-09_ROI.csv if=/dev/zero of=/dev/null count=1000000
+	./perf_main.out inputs/Acceleration_with_g_2020-09-25_19-09-09_ROI.csv if=/dev/zero of=/dev/null count=1000000
 
 perf_main_opt:
-	perf stat -B ./perf_main_opt.out inputs/Acceleration_with_g_2020-09-25_19-09-09_ROI.csv if=/dev/zero of=/dev/null count=1000000
+	./perf_main_opt.out inputs/Acceleration_with_g_2020-09-25_19-09-09_ROI.csv if=/dev/zero of=/dev/null count=1000000
 
 auto_test_compile:
 	clang++ auto_test.cpp -g -o auto_test

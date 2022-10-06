@@ -17,7 +17,7 @@ TARGET_FLAG=-target aarch64
 endif
 
 NEWTON_BIN_DIR = ../../../../src/newton
-newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/fusion/fusion.ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
+newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/fusion/fusion.ll --llvm-ir-liveness-check ../../applications/newton/sensors/BMX055.nt
 
 all: default
 
@@ -29,7 +29,13 @@ main.out: fusion.ll
 main_opt.out: fusion_opt.ll
 	$(CC) -O2 -g -o $@ $^ -lm
 
-fusion.ll: main.bc FusionAhrs.bc FusionCompass.bc FusionOffset.bc
+perf_main: main.out
+	perf stat -B ./main.out if=/dev/zero of=/dev/null count=1000000
+
+perf_main_opt: main_opt.out
+	perf stat -B ./main_opt.out if=/dev/zero of=/dev/null count=1000000
+
+fusion.ll: main.bc FusionAhrs.bc FusionCompass.bc FusionOffset.bc soft_float_api.bc
 	llvm-link -o fusion.bc $^
 	llvm-dis -o $@ fusion.bc
 

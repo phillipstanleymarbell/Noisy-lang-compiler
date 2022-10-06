@@ -14,6 +14,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+
+#include "../CHStone_test/soft_float_api/include/softfloat.h"
+
 //------------------------------------------------------------------------------
 // Definitions
 
@@ -126,6 +129,7 @@ typedef union {
  */
 static inline float FusionDegreesToRadians(const float degrees) {
     return degrees * ((float) M_PI / 180.0f);
+//    return float64_mul(degrees, float64_div(M_PI, 180));
 }
 
 /**
@@ -134,7 +138,8 @@ static inline float FusionDegreesToRadians(const float degrees) {
  * @return Degrees.
  */
 static inline float FusionRadiansToDegrees(const float radians) {
-    return radians * (180.0f / (float) M_PI);
+//    return radians * (180.0f / (float) M_PI);
+    return float64_mul(radians, float64_div(180, M_PI));
 }
 
 //------------------------------------------------------------------------------
@@ -148,9 +153,11 @@ static inline float FusionRadiansToDegrees(const float radians) {
 static inline float FusionAsin(const float value) {
     if (value <= -1.0f) {
         return (float) M_PI / -2.0f;
+//        return float64_div(M_PI, -2.0);
     }
     if (value >= 1.0f) {
         return (float) M_PI / 2.0f;
+//        return float64_div(M_PI, 2.0);
     }
     return asinf(value);
 }
@@ -176,6 +183,8 @@ static inline float FusionFastInverseSqrt(const float x) {
     Union32 union32 = {.f = x};
     union32.i = 0x5F1F1412 - (union32.i >> 1);
     return union32.f * (1.69000231f - 0.714158168f * x * union32.f * union32.f);
+//    union32.i = float64_add(0x5F1F1412, -(union32.i >> 1));
+//    return union32.f * float64_mul(float64_add(1.69000231, -0.714158168), x) * union32.f * union32.f;
 }
 
 #endif
@@ -203,6 +212,9 @@ static inline FusionVector FusionVectorAdd(const FusionVector vectorA, const Fus
     result.axis.x = vectorA.axis.x + vectorB.axis.x;
     result.axis.y = vectorA.axis.y + vectorB.axis.y;
     result.axis.z = vectorA.axis.z + vectorB.axis.z;
+//    result.axis.x = float64_add(vectorA.axis.x, vectorB.axis.x);
+//    result.axis.y = float64_add(vectorA.axis.y, vectorB.axis.y);
+//    result.axis.z = float64_add(vectorA.axis.z, vectorB.axis.z);
     return result;
 }
 
@@ -217,6 +229,9 @@ static inline FusionVector FusionVectorSubtract(const FusionVector vectorA, cons
     result.axis.x = vectorA.axis.x - vectorB.axis.x;
     result.axis.y = vectorA.axis.y - vectorB.axis.y;
     result.axis.z = vectorA.axis.z - vectorB.axis.z;
+//    result.axis.x = float64_add(vectorA.axis.x, -vectorB.axis.x);
+//    result.axis.y = float64_add(vectorA.axis.y, -vectorB.axis.y);
+//    result.axis.z = float64_add(vectorA.axis.z, -vectorB.axis.z);
     return result;
 }
 
@@ -227,6 +242,7 @@ static inline FusionVector FusionVectorSubtract(const FusionVector vectorA, cons
  */
 static inline float FusionVectorSum(const FusionVector vector) {
     return vector.axis.x + vector.axis.y + vector.axis.z;
+//    return float64_add(float64_add(vector.axis.x, vector.axis.y), vector.axis.z);
 }
 
 /**
@@ -240,6 +256,9 @@ static inline FusionVector FusionVectorMultiplyScalar(const FusionVector vector,
     result.axis.x = vector.axis.x * scalar;
     result.axis.y = vector.axis.y * scalar;
     result.axis.z = vector.axis.z * scalar;
+//    result.axis.x = float64_mul(vector.axis.x, scalar);
+//    result.axis.y = float64_mul(vector.axis.y, scalar);
+//    result.axis.z = float64_mul(vector.axis.z, scalar);
     return result;
 }
 
@@ -254,6 +273,9 @@ static inline FusionVector FusionVectorHadamardProduct(const FusionVector vector
     result.axis.x = vectorA.axis.x * vectorB.axis.x;
     result.axis.y = vectorA.axis.y * vectorB.axis.y;
     result.axis.z = vectorA.axis.z * vectorB.axis.z;
+//    result.axis.x = float64_mul(vectorA.axis.x, vectorB.axis.x);
+//    result.axis.y = float64_mul(vectorA.axis.y, vectorB.axis.y);
+//    result.axis.z = float64_mul(vectorA.axis.z, vectorB.axis.z);
     return result;
 }
 
@@ -270,6 +292,9 @@ static inline FusionVector FusionVectorCrossProduct(const FusionVector vectorA, 
     result.axis.x = A.y * B.z - A.z * B.y;
     result.axis.y = A.z * B.x - A.x * B.z;
     result.axis.z = A.x * B.y - A.y * B.x;
+//    result.axis.x = float64_add(float64_mul(A.y, B.z), -float64_mul(A.z, B.y));
+//    result.axis.y = float64_add(float64_mul(A.z, B.x), -float64_mul(A.x, B.z));
+//    result.axis.z = float64_add(float64_mul(A.x, B.y), -float64_mul(A.y, B.x));
     return result;
 #undef A
 #undef B
@@ -322,6 +347,10 @@ static inline FusionQuaternion FusionQuaternionAdd(const FusionQuaternion quater
     result.element.x = quaternionA.element.x + quaternionB.element.x;
     result.element.y = quaternionA.element.y + quaternionB.element.y;
     result.element.z = quaternionA.element.z + quaternionB.element.z;
+//    result.element.w = float64_add(quaternionA.element.w, quaternionB.element.w);
+//    result.element.x = float64_add(quaternionA.element.x, quaternionB.element.x);
+//    result.element.y = float64_add(quaternionA.element.y, quaternionB.element.y);
+//    result.element.z = float64_add(quaternionA.element.z, quaternionB.element.z);
     return result;
 }
 

@@ -37,7 +37,7 @@
 #
 #	Description: Base signals used in most Newton descriptions.
 #
-include "applications/newton/include/NewtonBaseSignals.nt"
+include "NewtonBaseSignals.nt"
 
 #
 #	Description: Additional signals used in this particular newton description.
@@ -142,8 +142,8 @@ bmx055: sensor (
 	#
 	#	Range of Acceleration can be found in Table 2 on page 11.
 	#
-	range bmx055xAcceleration == [-16 mjf, 16 mjf],
-	range bmx055yAcceleration == [-16 mjf, 16 mjf],
+	range bmx055xAcceleration == [-2 mjf, 2 mjf],
+	range bmx055yAcceleration == [-4 mjf, 4 mjf],
 	range bmx055zAcceleration == [-16 mjf, 16 mjf],
 
 	#

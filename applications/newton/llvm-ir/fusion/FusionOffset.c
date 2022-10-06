@@ -39,7 +39,9 @@
  */
 void FusionOffsetInitialise(FusionOffset *const offset, const unsigned int sampleRate) {
     offset->filterCoefficient = 2.0f * (float) M_PI * CUTOFF_FREQUENCY * (1.0f / (float) sampleRate);
+//    offset->filterCoefficient = float64_mul(float64_mul(float64_mul(2.0, M_PI), CUTOFF_FREQUENCY), float64_div(1.0, sampleRate));
     offset->timeout = TIMEOUT * sampleRate;
+//    offset->timeout = float64_mul(TIMEOUT, sampleRate);
     offset->timer = 0;
     offset->gyroscopeOffset = FUSION_VECTOR_ZERO;
 }

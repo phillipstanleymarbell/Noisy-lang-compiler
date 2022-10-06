@@ -51,8 +51,8 @@ these four paragraphs for those parts of this code that are retained.
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-#include "include/milieu.h"
-#include "include/softfloat.h"
+#include "../CHStone_test/soft_float_api/include/milieu.h"
+#include "../CHStone_test/soft_float_api/include/softfloat.h"
 
 /*----------------------------------------------------------------------------
 | Floating-point rounding mode, extended double-precision rounding precision,
@@ -66,7 +66,7 @@ int8 float_exception_flags = 0;
 | division and square root approximations.  (Can be specialized to target if
 | desired.)
 *----------------------------------------------------------------------------*/
-#include "include/softfloat-macros"
+#include "../CHStone_test/soft_float_api/include/softfloat-macros"
 
 /*----------------------------------------------------------------------------
 | Functions and definitions to determine:  (1) whether tininess for underflow
@@ -76,7 +76,7 @@ int8 float_exception_flags = 0;
 | are propagated from function inputs to output.  These details are target-
 | specific.
 *----------------------------------------------------------------------------*/
-#include "include/softfloat-specialize"
+#include "../CHStone_test/soft_float_api/include/softfloat-specialize"
 
 
 /*----------------------------------------------------------------------------

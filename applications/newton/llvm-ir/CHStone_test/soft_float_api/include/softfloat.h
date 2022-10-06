@@ -47,6 +47,7 @@ these four paragraphs for those parts of this code that are retained.
 
 =============================================================================*/
 
+//#pragma once
 /*----------------------------------------------------------------------------
 | Software IEC/IEEE floating-point types.
 *----------------------------------------------------------------------------*/
@@ -75,3 +76,10 @@ typedef unsigned long long float64;
 #define float_flag_underflow   4
 #define float_flag_overflow    8
 #define float_flag_invalid    16
+
+typedef float64 bmx055xAcceleration;
+typedef float64 bmx055yAcceleration;
+
+float64 float64_mul (bmx055xAcceleration a, bmx055yAcceleration b);
+float64 float64_div (bmx055xAcceleration a, bmx055yAcceleration b);
+float64 float64_add (bmx055xAcceleration a, bmx055yAcceleration b);
