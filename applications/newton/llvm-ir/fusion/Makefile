@@ -16,12 +16,18 @@ ifdef CROSS_COMPILE
 TARGET_FLAG=-target aarch64
 endif
 
+NEWTON_BIN_DIR = ../../../../src/newton
+newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/fusion/fusion.ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
+
 all: default
 
-default: main.out
+default: main.out newton_compile main_opt.out
 
-main.out: FusionAhrs.ll FusionCompass.ll FusionOffset.ll
-	$(CC) main.c -no-pie -L. -lInterface -O2 -g -o $@ $^ -lm
+main.out: fusion.ll
+	$(CC) -O2 -g -o $@ $^ -lm
+
+main_opt.out: fusion_opt.ll
+	$(CC) -O2 -g -o $@ $^ -lm
 
 fusion.ll: main.bc FusionAhrs.bc FusionCompass.bc FusionOffset.bc
 	llvm-link -o fusion.bc $^
@@ -35,8 +41,11 @@ fusion.ll: main.bc FusionAhrs.bc FusionCompass.bc FusionOffset.bc
 %.bc : %.ll
 	llvm-as -o $@ $<
 
+newton_compile:
+	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn)
+
 fusion_opt.ll: fusion_output.bc
 	llvm-dis -o $@ $<
 
 clean::
-	$(QUIET)rm -f *.ll *.bc *.out
+	$(QUIET)rm -f *.ll *.bc *.out *.a

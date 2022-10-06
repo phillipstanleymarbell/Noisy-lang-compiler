@@ -1,8 +1,7 @@
 #include "Fusion.h"
 #include <stdbool.h>
 #include <stdio.h>
-#include "../CHStone_test/dfadd/include/milieu.h"
-#include "../CHStone_test/dfadd/include/softfloat.h"
+#include "../CHStone_test/soft_float_api/soft_float_api.cpp"
 
 #define SAMPLE_PERIOD (0.01f) // replace this with actual sample period
 
@@ -17,9 +16,6 @@ int main() {
         FusionAhrsUpdateNoMagnetometer(&ahrs, gyroscope, accelerometer, SAMPLE_PERIOD);
 
         const FusionEuler euler = FusionQuaternionToEuler(FusionAhrsGetQuaternion(&ahrs));
-        printf("float_add: %ld\n", float64_add(0x3FF0000000000000ULL, 0x3FF0000000000000ULL));
-        printf("float_mul: %ld\n", float64_mul(0x3FF0000000000000ULL, 0x3FF0000000000000ULL));
-        printf("float_div: %ld\n", float64_div(0x3FF0000000000000ULL, 0x3FF0000000000000ULL));
 
 //        printf("Roll %0.1f, Pitch %0.1f, Yaw %0.1f\n", euler.angle.roll, euler.angle.pitch, euler.angle.yaw);
     }
