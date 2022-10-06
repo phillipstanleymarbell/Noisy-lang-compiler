@@ -102,9 +102,9 @@ int main(int argc, char *argv[])
 	typedef float bmx055yAcceleration;
 	typedef float bmx055zAcceleration;
 
-	bmx055xAcceleration acc_x;
-	bmx055yAcceleration acc_y;
-	bmx055zAcceleration acc_z;
+	bmx055xAcceleration acc_x = 3.4;
+	bmx055yAcceleration acc_y = 3.4;
+	bmx055zAcceleration acc_z = 3.4;
 
 	float max_x = -10000;
 	float max_y = -10000;
@@ -116,12 +116,12 @@ int main(int argc, char *argv[])
 	float threshold_y = 0;
 	float threshold_z = 0;
 
-	bmx055xAcceleration measurementOld_x = 0;
-	bmx055yAcceleration measurementOld_y = 0;
-	bmx055zAcceleration measurementOld_z = 0;
-	bmx055xAcceleration measurementNew_x = 0;
-	bmx055yAcceleration measurementNew_y = 0;
-	bmx055zAcceleration measurementNew_z = 0;
+	bmx055xAcceleration measurementOld_x = 1.2;
+	bmx055yAcceleration measurementOld_y = 1.2;
+	bmx055zAcceleration measurementOld_z = 1.2;
+	bmx055xAcceleration measurementNew_x = 1.2;
+	bmx055yAcceleration measurementNew_y = 1.2;
+	bmx055zAcceleration measurementNew_z = 1.2;
 
 	float xDC = 0;
 	float yDC = 0;
@@ -167,26 +167,35 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Unable to read row. Possible problem with input data format.\n");
 			}
 			// printf("%G,%G,%G,%G\n", timestampSamples[i], xSamples[i], ySamples[i], zSamples[i]);
-			timestampAccum += timestamp;
-			samplesTaken++;
+//            timestampAccum += timestamp;
+            timestampAccum = float64_add(timestampAccum, timestamp);
+            samplesTaken++;
 
 			/*
 				Smoothen (Figure 4)
 			*/
-			acc_x += xSamples[i];
-			acc_y += ySamples[i];
-			acc_z += zSamples[i];
+//			acc_x += xSamples[i];
+            acc_x = float64_add(acc_x, xSamples[i]);
+//			acc_y += ySamples[i];
+            acc_y = float64_add(acc_y, ySamples[i]);
+//			acc_z += zSamples[i];
+            acc_z = float64_add(acc_z, zSamples[i]);
 			timestamp = timestampSamples[i];
 		}
 
-		// acc_x /= SAMPLES_PER_MEASUREMENT;
-		// acc_y /= SAMPLES_PER_MEASUREMENT;
-		// acc_z /= SAMPLES_PER_MEASUREMENT;
+//		 acc_x /= SAMPLES_PER_MEASUREMENT;
+        acc_x = float64_div(acc_x, SAMPLES_PER_MEASUREMENT);
+//		 acc_y /= SAMPLES_PER_MEASUREMENT;
+        acc_y = float64_div(acc_y, SAMPLES_PER_MEASUREMENT);
+//		 acc_z /= SAMPLES_PER_MEASUREMENT;
+        acc_z = float64_div(acc_z, SAMPLES_PER_MEASUREMENT);
 
 		/*
 			Optionally combine all axes together.
 		 */
-		// acc_z = acc_z + acc_x + acc_y;
+//		 acc_z = acc_z + acc_x + acc_y;
+        acc_z = float64_add(acc_z, acc_x);
+        acc_z = float64_add(acc_z, acc_y);
 
 		/*
 			PROCESSING SECTION
@@ -208,9 +217,9 @@ int main(int argc, char *argv[])
 			Uncomment if every sensor measurement is a measurement.
 			See below.
 		 */
-		// measurementNew_x = acc_x;
-		// measurementNew_y = acc_y;
-		// measurementNew_z = acc_z;
+		 measurementNew_x = acc_x;
+		 measurementNew_y = acc_y;
+		 measurementNew_z = acc_z;
 
 		/*
 			The next part essentially skips measurements that are not
@@ -226,7 +235,7 @@ int main(int argc, char *argv[])
 		/*
 			Check if change is significant
 		 */
-		if (fabsf(acc_y - measurementNew_z) > PRECISION)
+		if (fabsf(float64_add(acc_y, -measurementNew_z)) > PRECISION)
 		{
 			measurementNew_z = acc_y;
 			// printf("New measurement is %f.\n", measurementNew_z);
@@ -257,11 +266,14 @@ int main(int argc, char *argv[])
 		/*
 			Update threshold value for Z-axis every 30 measurements.
 		 */
-		zRange = max_z - min_z;
+//		zRange = max_z - min_z;
+        zRange = float64_add(max_z, -min_z);
 		// printf("zRange=%f\n", zRange);
 		if (measurementCount < 10 || measurementCount % 50)
 		{
-			threshold_z = (max_z + min_z) / 2;
+//			threshold_z = (max_z + min_z) / 2;
+            float tmp_z = float64_add(max_z, min_z);
+            threshold_z = float64_div(tmp_z, 2);
 
 			/*
 				"Reset" min and max so they change at next
@@ -277,9 +289,10 @@ int main(int argc, char *argv[])
 		/*
 			Deterministic steps.
 		 */
+        float tmp_time = float64_add(timestamp, -timestampPrevious);
 		if (measurementOld_z > measurementNew_z
 		    	&&	threshold_z > measurementNew_z
-			&&	timestamp - timestampPrevious > 0.3
+			&&	tmp_time > 0.3
 			&&	zRange > 2 && zRange < 8)
 		{
 			steps++;
@@ -288,7 +301,8 @@ int main(int argc, char *argv[])
 			// printf("Deterministic step registered at %f. Step count: %d.\n", timestamp, steps);
 		}
 
-		if (timestamp - timestampPrevious > 2 && reset == 0)
+        tmp_time = float64_add(timestamp, -timestampPrevious);
+		if (tmp_time > 2 && reset == 0)
 		{
 			/*
 				Finished a stride.

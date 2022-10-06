@@ -45,7 +45,8 @@ soft_float_api.o: soft_float_api_output.ll
 libInterface.a: soft_float_api.o
 	#$(CC) -shared -o $@ -ldl $^
 	ar -rc $@ $^
-	cp $@ ../../fusion/.
+	cp $@ ../../fusion/. 
+	cp $@ ../../pedometer/.
 
 clean::
 	$(QUIET)rm -f *.ll *.bc *.a *.out *.o

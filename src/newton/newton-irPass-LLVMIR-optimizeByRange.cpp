@@ -165,6 +165,9 @@ irPassLLVMIROptimizeByRange(State * N)
      * get const global variables
      * */
     for (auto & globalVar : Mod->getGlobalList()) {
+        if (!globalVar.hasInitializer()) {
+            continue;
+        }
         auto constValue = globalVar.getInitializer();
         if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(constValue)) {
             if (constValue->getType()->isFloatTy()) {
