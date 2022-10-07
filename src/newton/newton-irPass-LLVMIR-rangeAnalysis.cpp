@@ -381,7 +381,7 @@ modInterval(const int64_t lhs_low, const int64_t lhs_high, const int64_t rhs_low
     else if (lhs_high - lhs_low >= rhs_low)
     {
         auto part = modInterval(lhs_low, lhs_high, lhs_high-lhs_low+1, rhs_high);
-        return std::make_pair(min((int64_t)0, part.first), (lhs_high-lhs_low-1, part.second));
+        return std::make_pair(min((int64_t)0, part.first), max(lhs_high-lhs_low-1, part.second));
     }
         // modulo has no effect
     else if (rhs_low > lhs_high)
