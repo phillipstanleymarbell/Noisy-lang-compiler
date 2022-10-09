@@ -217,36 +217,36 @@ irPassLLVMIROptimizeByRange(State * N)
         rangeAnalysis(N, boundInfo, mi);
     }
 
-    flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
-	for (auto & mi : *Mod)
-	{
-		simplifyControlFlow(N, boundInfo, mi);
-	}
-
-    passManager.add(createCFGSimplificationPass());
-    passManager.add(createInstSimplifyLegacyPass());
-//    passManager.add(createInstructionCombiningPass());
-    passManager.run(*Mod);
-
-    flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
-    for (auto & mi : *Mod)
-    {
-        // todo: only analyze the function with Newton info
-        rangeAnalysis(N, boundInfo, mi);
-    }
-
-    // todo: constant substitution
-    flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
-    for (auto & mi : *Mod)
-    {
-        constantSubstitution(N, boundInfo, mi);
-    }
-
-//    flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
+//    flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
+//	for (auto & mi : *Mod)
+//	{
+//		simplifyControlFlow(N, boundInfo, mi);
+//	}
+//
+//    passManager.add(createCFGSimplificationPass());
+//    passManager.add(createInstSimplifyLegacyPass());
+////    passManager.add(createInstructionCombiningPass());
+//    passManager.run(*Mod);
+//
+//    flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 //    for (auto & mi : *Mod)
 //    {
-//        shrinkType(N, boundInfo, mi);
+//        // todo: only analyze the function with Newton info
+//        rangeAnalysis(N, boundInfo, mi);
 //    }
+//
+//    // todo: constant substitution
+//    flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
+//    for (auto & mi : *Mod)
+//    {
+//        constantSubstitution(N, boundInfo, mi);
+//    }
+
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
+    for (auto & mi : *Mod)
+    {
+        shrinkType(N, boundInfo, mi);
+    }
 
 	dumpIR(N, "output", std::move(Mod));
 }

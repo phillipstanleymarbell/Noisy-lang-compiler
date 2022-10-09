@@ -80,6 +80,16 @@ typedef unsigned long long float64;
 typedef float64 bmx055xAcceleration;
 typedef float64 bmx055yAcceleration;
 
-float64 float64_mul (bmx055xAcceleration a, bmx055yAcceleration b);
-float64 float64_div (bmx055xAcceleration a, bmx055yAcceleration b);
-float64 float64_add (bmx055xAcceleration a, bmx055yAcceleration b);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+float64 float64_mul(bmx055xAcceleration a, bmx055yAcceleration b);
+
+float64 float64_div(bmx055xAcceleration a, bmx055yAcceleration b);
+
+float64 float64_add(bmx055xAcceleration a, bmx055yAcceleration b);
+
+#ifdef __cplusplus
+}
+#endif

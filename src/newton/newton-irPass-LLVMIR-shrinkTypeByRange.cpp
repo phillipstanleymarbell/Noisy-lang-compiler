@@ -987,6 +987,51 @@ void rollBackBasicBlock(State *N, BasicBlock & llvmIrBasicBlock,
     }
 }
 
+bool rollBackStrategy(State *N, const std::vector<Value*>& depLink) {
+    bool willBack = true;
+    for (Value *value : depLink) {
+        if (isa<ConstantFP>(value)) {
+            willBack = false;
+            break;
+        }
+    }
+    return willBack;
+}
+
+void rollBackDependencyLink(State *N, const std::vector<Value*>& depLink,
+                            std::map<llvm::Value *, std::pair<double, double>>& virtualRegisterRange,
+                            std::map<Value*, typeInfo> typeChangedInst) {
+    for (Value *value : depLink) {
+        if (Instruction *valueInst = dyn_cast<Instruction>(value)) {
+            /*
+             * roll back operands
+             * */
+            for (size_t idx = 0; idx < valueInst->getNumOperands(); idx++) {
+                auto tcInstIt = typeChangedInst.find(valueInst->getOperand(idx));
+                if (tcInstIt != typeChangedInst.end()) {
+                    auto newTypeValue = rollbackType(N, valueInst, idx, *valueInst->getParent(),
+                                                     typeChangedInst);
+                    auto vrIt = virtualRegisterRange.find(valueInst->getOperand(idx));
+                    if (newTypeValue != nullptr && vrIt != virtualRegisterRange.end()) {
+                        virtualRegisterRange.emplace(newTypeValue, vrIt->second);
+                    }
+                }
+            }
+        }
+        /*
+         * roll back destination
+         * */
+        auto tcInstIt = typeChangedInst.find(value);
+        if (tcInstIt != typeChangedInst.end()) {
+            value->mutateType(tcInstIt->second.valueType);
+            if (auto llvmIrAllocaInstruction = dyn_cast<AllocaInst>(value)) {
+                llvmIrAllocaInstruction->setAllocatedType(
+                        tcInstIt->second.valueType->getPointerElementType());
+            }
+        }
+    }
+}
+
 /*
  * Some special instructions that need to pay attention:
  * %i = alloca type, instType is type*
@@ -1428,7 +1473,7 @@ int findNode(const dpLink& dependencyLink, Value* node) {
         return std::find(v.begin(), v.end(), node) != v.end();
     });
     if (dlIt != dependencyLink.end()) {
-        return std::distance(dependencyLink.begin(), dlIt) - 1;
+        return std::distance(dependencyLink.begin(), dlIt);
     } else {
         return -1;
     }
@@ -1437,6 +1482,12 @@ int findNode(const dpLink& dependencyLink, Value* node) {
 void insertLink(dpLink& dependencyLink, Value* aimNode, Value* siblingNode) {
     auto aimPos = findNode(dependencyLink, aimNode);
     auto siblingPos = findNode(dependencyLink, siblingNode);
+    if (isa<ConstantFP>(aimNode)) {
+        int a = 0;
+    }
+    if (isa<ConstantFP>(siblingNode)) {
+        int a = 0;
+    }
     if (aimPos != -1) {
         /*aimNode in dependencyLink*/
         if (siblingPos != -1) {
@@ -1448,6 +1499,7 @@ void insertLink(dpLink& dependencyLink, Value* aimNode, Value* siblingNode) {
             dependencyLink[newPos].insert(dependencyLink[newPos].end(),
                                           dependencyLink[deletePos].begin(),
                                           dependencyLink[deletePos].end());
+            dependencyLink.erase(dependencyLink.begin() + deletePos);
         } else {
             /*
              * sibling is not in dependencyLink, insert to aimPos
@@ -1458,6 +1510,8 @@ void insertLink(dpLink& dependencyLink, Value* aimNode, Value* siblingNode) {
         /*aimNode not in dependencyLink*/
         if (siblingPos == -1) {
             siblingPos = dependencyLink.capacity();
+            dependencyLink.resize(siblingPos+1);
+            dependencyLink[siblingPos].emplace_back(siblingNode);
         }
         dependencyLink[siblingPos].emplace_back(aimNode);
     }
@@ -1469,23 +1523,25 @@ getDependencyLink(State *N, Function &llvmIrFunction) {
     for (BasicBlock & llvmIrBasicBlock : llvmIrFunction) {
         for (Instruction &llvmIrInstruction: llvmIrBasicBlock) {
             switch (llvmIrInstruction.getOpcode()) {
-//                case Instruction::Call:
-//                    if (auto llvmIrCallInstruction = dyn_cast<CallInst>(llvmIrInstruction)) {
-//                        Function *calledFunction = llvmIrCallInstruction->getCalledFunction();
-//                        if (calledFunction == nullptr || !calledFunction->hasName() ||
-//                            calledFunction->getName().empty())
-//                            break;
-//                        if (!calledFunction->getName().startswith("llvm.dbg.value") &&
-//                            !calledFunction->getName().startswith("llvm.dbg.declare") &&
-//                            !calledFunction->getName().startswith("llvm.dbg.label")) {
-//                            for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
-//                            {
-//                                insertLink(llvmIrCallInstruction->getOperand(idx));
-//                            }
-//                            insertLink(llvmIrCallInstruction);
-//                        }
-//                    }
-//                    break;
+                case Instruction::Call:
+                    if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction)) {
+                        Function *calledFunction = llvmIrCallInstruction->getCalledFunction();
+                        if (calledFunction == nullptr || !calledFunction->hasName() ||
+                            calledFunction->getName().empty())
+                            break;
+                        if (!calledFunction->getName().startswith("llvm.dbg.value") &&
+                            !calledFunction->getName().startswith("llvm.dbg.declare") &&
+                            !calledFunction->getName().startswith("llvm.dbg.label")) {
+                            for (size_t idx = 1; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
+                            {
+                                insertLink(dependencyLink, llvmIrCallInstruction->getOperand(0),
+                                           llvmIrCallInstruction->getOperand(idx));
+                            }
+                            insertLink(dependencyLink, llvmIrCallInstruction->getOperand(0),
+                                       llvmIrCallInstruction);
+                        }
+                    }
+                    break;
                 case Instruction::Add:
                 case Instruction::FAdd:
                 case Instruction::Sub:
@@ -1510,11 +1566,17 @@ getDependencyLink(State *N, Function &llvmIrFunction) {
                 case Instruction::PHI:
                     if (isa<PHINode>(llvmIrInstruction)) {
                         /*match multi operands*/
+                        for (size_t id = 1; id < llvmIrInstruction.getNumOperands(); id++) {
+                            insertLink(dependencyLink, llvmIrInstruction.getOperand(0),
+                                       llvmIrInstruction.getOperand(id));
+                        }
                     }
                 case Instruction::FNeg:
                 case Instruction::Load:
                 case Instruction::GetElementPtr:
                     /*match dest with operands*/
+                    insertLink(dependencyLink, llvmIrInstruction.getOperand(0),
+                               &llvmIrInstruction);
                 case Instruction::FPToUI:
                 case Instruction::FPToSI:
                 case Instruction::SIToFP:
@@ -1531,6 +1593,8 @@ getDependencyLink(State *N, Function &llvmIrFunction) {
                 case Instruction::ICmp:
                 case Instruction::FCmp:
                     /*match operands*/
+                    insertLink(dependencyLink, llvmIrInstruction.getOperand(0),
+                               llvmIrInstruction.getOperand(1));
                 default:
                     continue;
             }
@@ -1542,28 +1606,21 @@ getDependencyLink(State *N, Function &llvmIrFunction) {
 void
 shrinkType(State *N, BoundInfo *boundInfo, Function &llvmIrFunction) {
     /*
-     * 1. construct instruction dependency block
-     * 2. store the status of all insDepend blocks, and count how many castInst.
-     * 3. compare the castInst number after our algorithm.
-     *    3.1 If the algorithm increases more than one castInst, we restore to the previous status.
+     * 1. construct instruction dependency link
+     * 2. work with roll back strategies
      * */
-    std::map<uint32_t, uint32_t> prevCastCount = countCastInst(N, llvmIrFunction);
+    std::vector<std::vector<Value*>> prevDepLink = getDependencyLink(N, llvmIrFunction);
     std::map<Value*, typeInfo> typeChangedInst = shrinkInstType(N, boundInfo, llvmIrFunction);
     mergeCast(N, llvmIrFunction, boundInfo->virtualRegisterRange, typeChangedInst);
-    std::map<uint32_t, uint32_t> nowCastCount = countCastInst(N, llvmIrFunction);
+    std::vector<std::vector<Value*>> newDepLink = getDependencyLink(N, llvmIrFunction);
 
-    /*
-     * roll back basic block
-     * todo: have a better and more complex strategy
-     * */
-//    size_t idx = 0;
-//    for (BasicBlock & llvmIrBasicBlock : llvmIrFunction) {
-////        if (nowCastCount[idx] > prevCastCount[idx] + 1) {
-//            rollBackBasicBlock(N, llvmIrBasicBlock, boundInfo->virtualRegisterRange, typeChangedInst);
-////        }
-//        idx++;
-//    }
-//    mergeCast(N, llvmIrFunction, typeChangedInst);
+    for (auto &depLink: newDepLink) {
+        if (rollBackStrategy(N, depLink)) {
+            rollBackDependencyLink(N, depLink, boundInfo->virtualRegisterRange, typeChangedInst);
+        }
+    }
+
+    mergeCast(N, llvmIrFunction, boundInfo->virtualRegisterRange, typeChangedInst);
 }
 
 }
