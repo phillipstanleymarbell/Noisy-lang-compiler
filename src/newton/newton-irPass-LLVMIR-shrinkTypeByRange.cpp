@@ -1690,14 +1690,6 @@ insertLink(dpLink & dependencyLink, Value * aimNode, Value * siblingNode)
 {
 	auto aimPos	= findNode(dependencyLink, aimNode);
 	auto siblingPos = findNode(dependencyLink, siblingNode);
-	if (isa<ConstantFP>(aimNode))
-	{
-		int a = 0;
-	}
-	if (isa<ConstantFP>(siblingNode))
-	{
-		int a = 0;
-	}
 	if (aimPos != -1)
 	{
 		/*aimNode in dependencyLink*/

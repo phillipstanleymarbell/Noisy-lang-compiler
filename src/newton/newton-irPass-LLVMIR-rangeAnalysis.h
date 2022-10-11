@@ -40,7 +40,6 @@
 #include <algorithm>
 #include <assert.h>
 #include <bitset>
-#include <boost/dynamic_bitset.hpp>
 #include <numeric>
 #include <cmath>
 #include <float.h>

@@ -39,7 +39,8 @@
 
 using namespace llvm;
 
-extern "C" {
+extern "C"
+{
 
 const bool valueRangeDebug = false;
 
@@ -116,8 +117,8 @@ getGEPArrayRange(State * N, GetElementPtrInst * llvmIrGetElePtrInstruction,
 				/*
 				 * this also should be done in "--instsimplify"
 				 * */
-				int  arrIndex = constInt->getZExtValue();
-				auto resVec   = dynRangeRes({arrIndex});
+				unsigned int arrIndex = constInt->getZExtValue();
+				auto	     resVec   = dynRangeRes({arrIndex});
 				return resVec;
 			}
 			else
@@ -479,9 +480,9 @@ getDisjointUnionSet(const std::bitset<64> & lowerBinSet,
 		    const std::bitset<64> & upperBinSet, uint8_t bitSize)
 {
 	std::string lowerBin = lowerBinSet.to_string();
-    std::string upperBin = upperBinSet.to_string();
-    lowerBin = lowerBin.substr(lowerBin.size() - bitSize);
-    upperBin = upperBin.substr(upperBin.size() - bitSize);
+	std::string upperBin = upperBinSet.to_string();
+	lowerBin	     = lowerBin.substr(lowerBin.size() - bitSize);
+	upperBin	     = upperBin.substr(upperBin.size() - bitSize);
 	std::vector<std::string> disjointUnionSet;
 	std::string		 binStrEle;
 
@@ -489,7 +490,7 @@ getDisjointUnionSet(const std::bitset<64> & lowerBinSet,
 	 * the turning point is where lowerBin different from upperBin
 	 * */
 	std::string xorStr = (lowerBinSet ^ upperBinSet).to_string();
-    xorStr = xorStr.substr(xorStr.size() - bitSize);
+	xorStr		   = xorStr.substr(xorStr.size() - bitSize);
 	if (xorStr.find_first_of('1') == std::string::npos)
 	{
 		/*
@@ -651,17 +652,17 @@ getBitPos(bitSets lhsVecs, bitSets rhsVecs,
 			tmpSamePos = tmpSamePos.empty() ? nonExit : tmpSamePos;
 			if (bitwiseFunc == "and")
 			{
-				res.emplace(std::make_pair(lhsDus[lhsIdx][0] - 48 & rhsDus[rhsIdx][0] - 48,
+				res.emplace(std::make_pair((lhsDus[lhsIdx][0] - 48) & (rhsDus[rhsIdx][0] - 48),
 							   tmpSamePos));
 			}
 			else if (bitwiseFunc == "or")
 			{
-				res.emplace(std::make_pair(lhsDus[lhsIdx][0] - 48 | rhsDus[rhsIdx][0] - 48,
+				res.emplace(std::make_pair((lhsDus[lhsIdx][0] - 48) | (rhsDus[rhsIdx][0] - 48),
 							   tmpSamePos));
 			}
 			else
 			{
-				res.emplace(std::make_pair(lhsDus[lhsIdx][0] - 48 ^ rhsDus[rhsIdx][0] - 48,
+				res.emplace(std::make_pair((lhsDus[lhsIdx][0] - 48) ^ (rhsDus[rhsIdx][0] - 48),
 							   tmpSamePos));
 			}
 		}
@@ -698,7 +699,7 @@ convertBin2Dec(const std::string & binResStr, const uint8_t bitSize)
 	}
 	else
 	{
-        std::bitset<64> resDb(binResStr);
+		std::bitset<64> resDb(binResStr);
 		res = resDb.to_ulong();
 	}
 	return res;
@@ -719,16 +720,16 @@ bitwiseInterval(const int64_t lhsLow, const int64_t lhsHigh,
 	std::vector<int64_t> ranges{std::abs(lhsLow), std::abs(lhsHigh),
 				    std::abs(rhsLow), std::abs(rhsHigh)};
 	auto		     maxAbsValue = std::max_element(ranges.begin(), ranges.end());
-    const auto maxSizePos = std::bitset<64>(*maxAbsValue).to_string().find('1');
-    const uint8_t bitSize	 = 64 - (maxSizePos == std::string::npos ? 63 : maxSizePos) + 1;
+	const auto	     maxSizePos	 = std::bitset<64>(*maxAbsValue).to_string().find('1');
+	const uint8_t	     bitSize	 = 64 - (maxSizePos == std::string::npos ? 63 : maxSizePos) + 1;
 
 	/*
 	 * 2. convert to binary number
 	 * */
 	std::bitset<64> llBin(lhsLow);
-    std::bitset<64> lhBin(lhsHigh);
-    std::bitset<64> rlBin(rhsLow);
-    std::bitset<64> rhBin(rhsHigh);
+	std::bitset<64> lhBin(lhsHigh);
+	std::bitset<64> rlBin(rhsLow);
+	std::bitset<64> rhBin(rhsHigh);
 
 	/*
 	 * 3. construct disjoint union set of each binary number
@@ -1017,7 +1018,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 									/*
 									 * if it's a basic type, insert the basic
 									 * */
-									//                                boundInfo->virtualRegisterRange.emplace(localVariableAddress, size);
+									flexprint(N->Fe, N->Fm, N->Fperr, "\tTODO: Call: Didn't support basic type!\n");
 								}
 							};
 
@@ -2509,35 +2510,35 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 									 * uint32_t lsw = static_cast<uint32_t>(long_word);
 									 * uint32_t msw = static_cast<uint32_t>(long_word >> 32);
 									 * */
-									int element_offset = 0, pointer_offset = 0;
+									int elementOffset = 0, pointerOffset = 0;
 									if (llvmIrGetElePtrInstruction->getNumIndices() == 1)
 									{
 										/*
 										 * It's reference
 										 * */
-										element_offset = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(1))->getZExtValue();
+										elementOffset = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(1))->getZExtValue();
 									}
 									else
 									{
 										/*
 										 * It's array or structure
 										 * */
-										pointer_offset = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(1))->getZExtValue();
-										element_offset = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(2))->getZExtValue();
+										pointerOffset = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(1))->getZExtValue();
+										elementOffset = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(2))->getZExtValue();
 									}
 									auto resEleTy = llvmIrGetElePtrInstruction->getResultElementType();
 									switch (resEleTy->getTypeID())
 									{
 										case Type::FloatTyID:
-											lowRange  = static_cast<double>(static_cast<float>(originLowWord >> (32 * element_offset)));
-											highRange = static_cast<double>(static_cast<float>(originHighWord >> (32 * element_offset)));
+											lowRange  = static_cast<double>(static_cast<float>(originLowWord >> (32 * elementOffset)));
+											highRange = static_cast<double>(static_cast<float>(originHighWord >> (32 * elementOffset)));
 											flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::FloatTyID, %f - %f to %f - %f\n",
 												  vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
 											boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange));
 											break;
 										case Type::DoubleTyID:
-											lowRange  = static_cast<double>(originLowWord >> (32 * element_offset));
-											highRange = static_cast<double>(originHighWord >> (32 * element_offset));
+											lowRange  = static_cast<double>(originLowWord >> (32 * elementOffset));
+											highRange = static_cast<double>(originHighWord >> (32 * elementOffset));
 											flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::DoubleTyID, %f - %f to %f - %f\n",
 												  vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
 											boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, std::make_pair(lowRange, highRange));
@@ -2546,8 +2547,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 											switch (resEleTy->getPrimitiveSizeInBits())
 											{
 												case 32:
-													lowRange  = static_cast<double>(static_cast<int32_t>(originLowWord >> (32 * element_offset)));
-													highRange = static_cast<double>(static_cast<int32_t>(originHighWord >> (32 * element_offset)));
+													lowRange  = static_cast<double>(static_cast<int32_t>(originLowWord >> (32 * elementOffset)));
+													highRange = static_cast<double>(static_cast<int32_t>(originHighWord >> (32 * elementOffset)));
 													break;
 												case 64:
 													lowRange  = static_cast<double>(static_cast<int64_t>(originLowWord));
