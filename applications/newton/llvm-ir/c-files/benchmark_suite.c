@@ -43,6 +43,10 @@ bmx055fAcceleration* float_add_test(bmx055fAcceleration* leftOp, bmx055fAccelera
     bmx055fAcceleration result[iteration_num];
     for (size_t idx = 0; idx < iteration_num; idx++) {
         result[idx] = leftOp[idx] + rightOp[idx];
+        auto x = leftOp[idx] + 12.789;
+        auto y = rightOp[idx] + 15.653;
+        auto z = x + y;
+        result[idx] = result[idx] * ((int)z%100);
     }
     return result;
 }
