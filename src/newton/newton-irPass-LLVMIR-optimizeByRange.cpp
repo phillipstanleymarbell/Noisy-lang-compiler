@@ -65,8 +65,7 @@
 
 using namespace llvm;
 
-extern "C"
-{
+extern "C"{
 
 void
 dumpIR(State * N, std::string fileSuffix, std::unique_ptr<Module> Mod)

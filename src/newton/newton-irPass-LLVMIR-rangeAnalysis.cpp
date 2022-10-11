@@ -39,14 +39,6 @@
 
 using namespace llvm;
 
-#define BOOST_NO_EXCEPTIONS
-#include <boost/throw_exception.hpp>
-void
-boost::throw_exception(std::exception const &, boost::source_location const &)
-{
-	// do nothing
-}
-
 extern "C" {
 
 const bool valueRangeDebug = false;
@@ -483,21 +475,21 @@ modInterval(const int64_t lhsLow, const int64_t lhsHigh, const int64_t rhsLow, c
 }
 
 std::vector<std::string>
-getDisjointUnionSet(const boost::dynamic_bitset<> & lowerBinSet,
-		    const boost::dynamic_bitset<> & upperBinSet)
+getDisjointUnionSet(const std::bitset<64> & lowerBinSet,
+		    const std::bitset<64> & upperBinSet, uint8_t bitSize)
 {
-	std::string lowerBin, upperBin;
-	to_string(lowerBinSet, lowerBin);
-	to_string(upperBinSet, upperBin);
-	const uint8_t		 bitSize = lowerBin.length();
+	std::string lowerBin = lowerBinSet.to_string();
+    std::string upperBin = upperBinSet.to_string();
+    lowerBin = lowerBin.substr(lowerBin.size() - bitSize);
+    upperBin = upperBin.substr(upperBin.size() - bitSize);
 	std::vector<std::string> disjointUnionSet;
 	std::string		 binStrEle;
 
 	/*
 	 * the turning point is where lowerBin different from upperBin
 	 * */
-	std::string xorStr;
-	to_string((lowerBinSet ^ upperBinSet), xorStr);
+	std::string xorStr = (lowerBinSet ^ upperBinSet).to_string();
+    xorStr = xorStr.substr(xorStr.size() - bitSize);
 	if (xorStr.find_first_of('1') == std::string::npos)
 	{
 		/*
@@ -701,12 +693,12 @@ convertBin2Dec(const std::string & binResStr, const uint8_t bitSize)
 		/*
 		 * negate
 		 * */
-		boost::dynamic_bitset<> resDb(tmpRes);
+		std::bitset<64> resDb(tmpRes);
 		res = -resDb.flip().to_ulong();
 	}
 	else
 	{
-		boost::dynamic_bitset<> resDb(binResStr);
+        std::bitset<64> resDb(binResStr);
 		res = resDb.to_ulong();
 	}
 	return res;
@@ -727,21 +719,22 @@ bitwiseInterval(const int64_t lhsLow, const int64_t lhsHigh,
 	std::vector<int64_t> ranges{std::abs(lhsLow), std::abs(lhsHigh),
 				    std::abs(rhsLow), std::abs(rhsHigh)};
 	auto		     maxAbsValue = std::max_element(ranges.begin(), ranges.end());
-	uint8_t		     bitSize	 = 64 - std::bitset<64>(*maxAbsValue).to_string().find('1') + 1;
+    const auto maxSizePos = std::bitset<64>(*maxAbsValue).to_string().find('1');
+    const uint8_t bitSize	 = 64 - (maxSizePos == std::string::npos ? 63 : maxSizePos) + 1;
 
 	/*
 	 * 2. convert to binary number
 	 * */
-	boost::dynamic_bitset<> llBin(bitSize, lhsLow);
-	boost::dynamic_bitset<> lhBin(bitSize, lhsHigh);
-	boost::dynamic_bitset<> rlBin(bitSize, rhsLow);
-	boost::dynamic_bitset<> rhBin(bitSize, rhsHigh);
+	std::bitset<64> llBin(lhsLow);
+    std::bitset<64> lhBin(lhsHigh);
+    std::bitset<64> rlBin(rhsLow);
+    std::bitset<64> rhBin(rhsHigh);
 
 	/*
 	 * 3. construct disjoint union set of each binary number
 	 * */
-	auto lhsDus = getDisjointUnionSet(llBin, lhBin);
-	auto rhsDus = getDisjointUnionSet(rlBin, rhBin);
+	auto lhsDus = getDisjointUnionSet(llBin, lhBin, bitSize);
+	auto rhsDus = getDisjointUnionSet(rlBin, rhBin, bitSize);
 
 	/*
 	 * 4. for different bit_wise operation, we have different formulas and purpose
