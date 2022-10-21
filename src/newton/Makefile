@@ -29,7 +29,7 @@ LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libpr
 LDFLAGS+=$(shell $(LLVM_CONFIG) --ldflags)
 CXXFLAGS+=$(COMMON_FLAGS) $(shell $(LLVM_CONFIG) --cxxflags) -fno-rtti
 CPPFLAGS+=$(shell $(LLVM_CONFIG) --cppflags) -I$(shell $(LLVM_CONFIG) --includedir)
-LLVMLIBS=$(shell $(LLVM_CONFIG) --libs all)
+LLVMLIBS=$(shell $(LLVM_CONFIG) --libs irreader support)
 SYSTEMLIBS=$(shell $(LLVM_CONFIG) --system-libs)
 
 
