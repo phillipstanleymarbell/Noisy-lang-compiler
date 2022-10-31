@@ -1,134 +1,179 @@
-/* @(#)fdlibm.h 5.1 93/09/24 */
+
+/* @(#)fdlibm.h 1.5 04/04/22 */
 /*
  * ====================================================
- * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ * Copyright (C) 2004 by Sun Microsystems, Inc. All rights reserved.
  *
- * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice
+ * software is freely granted, provided that this notice 
  * is preserved.
  * ====================================================
  */
 
-/* REDHAT LOCAL: Include files.  */
-#include <math.h>
-#include <sys/types.h>
-//#include <machine/ieeefp.h>
-#include "math_config.h"
-
-/* Most routines need to check whether a float is finite, infinite, or not a
-   number, and many need to know whether the result of an operation will
-   overflow.  These conditions depend on whether the largest exponent is
-   used for NaNs & infinities, or whether it's used for finite numbers.  The
-   macros below wrap up that kind of information:
-   FLT_UWORD_IS_FINITE(X)
-	True if a positive float with bitmask X is finite.
-   FLT_UWORD_IS_NAN(X)
-	True if a positive float with bitmask X is not a number.
-   FLT_UWORD_IS_INFINITE(X)
-	True if a positive float with bitmask X is +infinity.
-   FLT_UWORD_MAX
-	The bitmask of FLT_MAX.
-   FLT_UWORD_HALF_MAX
-	The bitmask of FLT_MAX/2.
-   FLT_UWORD_EXP_MAX
-	The bitmask of the largest finite exponent (129 if the largest
-	exponent is used for finite numbers, 128 otherwise).
-   FLT_UWORD_LOG_MAX
-	The bitmask of log(FLT_MAX), rounded down.  This value is the largest
-	input that can be passed to exp() without producing overflow.
-   FLT_UWORD_LOG_2MAX
-	The bitmask of log(2*FLT_MAX), rounded down.  This value is the
-	largest input than can be passed to cosh() without producing
-	overflow.
-   FLT_LARGEST_EXP
-	The largest biased exponent that can be used for finite numbers
-	(255 if the largest exponent is used for finite numbers, 254
-	otherwise) */
-
-#ifdef _FLT_LARGEST_EXPONENT_IS_NORMAL
-#define FLT_UWORD_IS_FINITE(x) 1
-#define FLT_UWORD_IS_NAN(x) 0
-#define FLT_UWORD_IS_INFINITE(x) 0
-#define FLT_UWORD_MAX 0x7fffffff
-#define FLT_UWORD_EXP_MAX 0x43010000
-#define FLT_UWORD_LOG_MAX 0x42b2d4fc
-#define FLT_UWORD_LOG_2MAX 0x42b437e0
-#define HUGE ((float)0X1.FFFFFEP128)
-#else
-#define FLT_UWORD_IS_FINITE(x) ((x)<0x7f800000L)
-#define FLT_UWORD_IS_NAN(x) ((x)>0x7f800000L)
-#define FLT_UWORD_IS_INFINITE(x) ((x)==0x7f800000L)
-#define FLT_UWORD_MAX 0x7f7fffffL
-#define FLT_UWORD_EXP_MAX 0x43000000
-#define FLT_UWORD_LOG_MAX 0x42b17217
-#define FLT_UWORD_LOG_2MAX 0x42b2d4fc
-#define HUGE ((float)3.40282346638528860e+38)
+/* Sometimes it's necessary to define __LITTLE_ENDIAN explicitly
+   but these catch some common cases. */
+#include "th_cfg.h"
+#if defined(i386) || defined(i486) || \
+	defined(intel) || defined(x86) || defined(i86pc) || \
+	defined(__alpha) || defined(__osf__) || defined(__x86_64__) || (EE_LITTLE_ENDIAN==1)
+#define __LITTLE_ENDIAN 1
 #endif
-#define FLT_UWORD_HALF_MAX (FLT_UWORD_MAX-(1L<<23))
-#define FLT_LARGEST_EXP (FLT_UWORD_MAX>>23)
 
-/* Many routines check for zero and subnormal numbers.  Such things depend
-   on whether the target supports denormals or not:
-   FLT_UWORD_IS_ZERO(X)
-	True if a positive float with bitmask X is +0.	Without denormals,
-	any float with a zero exponent is a +0 representation.	With
-	denormals, the only +0 representation is a 0 bitmask.
-   FLT_UWORD_IS_SUBNORMAL(X)
-	True if a non-zero positive float with bitmask X is subnormal.
-	(Routines should check for zeros first.)
-   FLT_UWORD_MIN
-	The bitmask of the smallest float above +0.  Call this number
-	REAL_FLT_MIN...
-   FLT_UWORD_EXP_MIN
-	The bitmask of the float representation of REAL_FLT_MIN's exponent.
-   FLT_UWORD_LOG_MIN
-	The bitmask of |log(REAL_FLT_MIN)|, rounding down.
-   FLT_SMALLEST_EXP
-	REAL_FLT_MIN's exponent - EXP_BIAS (1 if denormals are not supported,
-	-22 if they are).
-*/
-
-#ifdef _FLT_NO_DENORMALS
-#define FLT_UWORD_IS_ZERO(x) ((x)<0x00800000L)
-#define FLT_UWORD_IS_SUBNORMAL(x) 0
-#define FLT_UWORD_MIN 0x00800000
-#define FLT_UWORD_EXP_MIN 0x42fc0000
-#define FLT_UWORD_LOG_MIN 0x42aeac50
-#define FLT_SMALLEST_EXP 1
+#ifdef __LITTLE_ENDIAN
+#define __HI(x) *(1+(int*)&x)
+#define __LO(x) *(int*)&x
+#define __HIp(x) *(1+(int*)x)
+#define __LOp(x) *(int*)x
 #else
-#define FLT_UWORD_IS_ZERO(x) ((x)==0)
-#define FLT_UWORD_IS_SUBNORMAL(x) ((x)<0x00800000L)
-#define FLT_UWORD_MIN 0x00000001
-#define FLT_UWORD_EXP_MIN 0x43160000
-#define FLT_UWORD_LOG_MIN 0x42cff1b5
-#define FLT_SMALLEST_EXP -22
+#define __HI(x) *(int*)&x
+#define __LO(x) *(1+(int*)&x)
+#define __HIp(x) *(int*)x
+#define __LOp(x) *(1+(int*)x)
 #endif
 
 #ifdef __STDC__
-#undef __P
 #define	__P(p)	p
 #else
 #define	__P(p)	()
 #endif
 
 /*
+ * ANSI/POSIX
+ */
+
+extern int signgam;
+
+#define	MAXFLOAT	((float)3.40282346638528860e+38)
+
+enum fdversion {fdlibm_ieee = -1, fdlibm_svid, fdlibm_xopen, fdlibm_posix};
+
+#define _LIB_VERSION_TYPE enum fdversion
+#define _LIB_VERSION _fdlib_version
+
+/* if global variable _LIB_VERSION is not desirable, one may 
+ * change the following to be a constant by: 
+ *	#define _LIB_VERSION_TYPE const enum version
+ * In that case, after one initializes the value _LIB_VERSION (see
+ * s_lib_version.c) during compile time, it cannot be modified
+ * in the middle of a program
+ */
+extern  _LIB_VERSION_TYPE  _LIB_VERSION;
+
+#define _IEEE_  fdlibm_ieee
+#define _SVID_  fdlibm_svid
+#define _XOPEN_ fdlibm_xopen
+#define _POSIX_ fdlibm_posix
+
+struct exception {
+    int type;
+    char *name;
+    double arg1;
+    double arg2;
+    double retval;
+};
+
+#define	HUGE		MAXFLOAT
+
+/* 
  * set X_TLOSS = pi*2**52, which is possibly defined in <values.h>
  * (one may replace the following line by "#include <values.h>")
  */
 
 #define X_TLOSS		1.41484755040568800000e+16
 
-/* Functions that are not documented, and are not in <math.h>.  */
+#define	DOMAIN		1
+#define	SING		2
+#define	OVERFLOW	3
+#define	UNDERFLOW	4
+#define	TLOSS		5
+#define	PLOSS		6
 
+/*
+ * ANSI/POSIX
+ */
+extern double acos __P((double));
+extern double asin __P((double));
+extern double atan __P((double));
+extern double atan2 __P((double, double));
+extern double cos __P((double));
+extern double sin __P((double));
+extern double tan __P((double));
+
+extern double cosh __P((double));
+extern double sinh __P((double));
+extern double tanh __P((double));
+
+extern double exp __P((double));
+extern double frexp __P((double, int *));
+extern double ldexp __P((double, int));
+extern double log __P((double));
+extern double log10 __P((double));
+extern double modf __P((double, double *));
+
+extern double pow __P((double, double));
+extern double sqrt __P((double));
+
+extern double ceil __P((double));
+extern double fabs __P((double));
+extern double floor __P((double));
+extern double fmod __P((double, double));
+
+extern double erf __P((double));
+extern double erfc __P((double));
+extern double gamma __P((double));
+extern double hypot __P((double, double));
+extern int isnan __P((double));
+extern int finite __P((double));
+extern double j0 __P((double));
+extern double j1 __P((double));
+extern double jn __P((int, double));
+extern double lgamma __P((double));
+extern double y0 __P((double));
+extern double y1 __P((double));
+extern double yn __P((int, double));
+
+extern double acosh __P((double));
+extern double asinh __P((double));
+extern double atanh __P((double));
+extern double cbrt __P((double));
+extern double logb __P((double));
+extern double nextafter __P((double, double));
+extern double remainder __P((double, double));
 #ifdef _SCALB_INT
 extern double scalb __P((double, int));
 #else
 extern double scalb __P((double, double));
 #endif
+
+extern int matherr __P((struct exception *));
+
+/*
+ * IEEE Test Vector
+ */
 extern double significand __P((double));
 
-extern long double __ieee754_hypotl __P((long double, long double));
+/*
+ * Functions callable from C, intended to support IEEE arithmetic.
+ */
+extern double copysign __P((double, double));
+extern int ilogb __P((double));
+extern double rint __P((double));
+extern double scalbn __P((double, int));
+
+/*
+ * BSD math library entry points
+ */
+extern double expm1 __P((double));
+extern double log1p __P((double));
+
+/*
+ * Reentrant version of gamma & lgamma; passes signgam back by reference
+ * as the second argument; user must allocate space for signgam.
+ */
+#ifdef _REENTRANT
+extern double gamma_r __P((double, int *));
+extern double lgamma_r __P((double, int *));
+#endif	/* _REENTRANT */
 
 /* ieee style elementary functions */
 extern double __ieee754_sqrt __P((double));
@@ -144,7 +189,8 @@ extern double __ieee754_fmod __P((double,double));
 extern double __ieee754_pow __P((double,double));
 extern double __ieee754_lgamma_r __P((double,int *));
 extern double __ieee754_gamma_r __P((double,int *));
-extern double __ieee754_tgamma __P((double));
+extern double __ieee754_lgamma __P((double));
+extern double __ieee754_gamma __P((double));
 extern double __ieee754_log10 __P((double));
 extern double __ieee754_sinh __P((double));
 extern double __ieee754_hypot __P((double,double));
@@ -155,7 +201,7 @@ extern double __ieee754_y1 __P((double));
 extern double __ieee754_jn __P((int,double));
 extern double __ieee754_yn __P((int,double));
 extern double __ieee754_remainder __P((double,double));
-extern __int32_t __ieee754_rem_pio2 __P((double,double*));
+extern int    __ieee754_rem_pio2 __P((double,double*));
 #ifdef _SCALB_INT
 extern double __ieee754_scalb __P((double,int));
 #else
@@ -167,220 +213,4 @@ extern double __kernel_standard __P((double,double,int));
 extern double __kernel_sin __P((double,double,int));
 extern double __kernel_cos __P((double,double));
 extern double __kernel_tan __P((double,double,int));
-extern int    __kernel_rem_pio2 __P((double*,double*,int,int,int,const __int32_t*));
-
-/* Undocumented float functions.  */
-#ifdef _SCALB_INT
-extern float scalbf __P((float, int));
-#else
-extern float scalbf __P((float, float));
-#endif
-extern float significandf __P((float));
-
-/* ieee style elementary float functions */
-extern float __ieee754_sqrtf __P((float));
-extern float __ieee754_acosf __P((float));
-extern float __ieee754_acoshf __P((float));
-extern float __ieee754_logf __P((float));
-extern float __ieee754_atanhf __P((float));
-extern float __ieee754_asinf __P((float));
-extern float __ieee754_atan2f __P((float,float));
-extern float __ieee754_expf __P((float));
-extern float __ieee754_coshf __P((float));
-extern float __ieee754_fmodf __P((float,float));
-extern float __ieee754_powf __P((float,float));
-extern float __ieee754_lgammaf_r __P((float,int *));
-extern float __ieee754_gammaf_r __P((float,int *));
-extern float __ieee754_tgammaf __P((float));
-extern float __ieee754_log10f __P((float));
-extern float __ieee754_sinhf __P((float));
-extern float __ieee754_hypotf __P((float,float));
-extern float __ieee754_j0f __P((float));
-extern float __ieee754_j1f __P((float));
-extern float __ieee754_y0f __P((float));
-extern float __ieee754_y1f __P((float));
-extern float __ieee754_jnf __P((int,float));
-extern float __ieee754_ynf __P((int,float));
-extern float __ieee754_remainderf __P((float,float));
-extern __int32_t __ieee754_rem_pio2f __P((float,float*));
-#ifdef _SCALB_INT
-extern float __ieee754_scalbf __P((float,int));
-#else
-extern float __ieee754_scalbf __P((float,float));
-#endif
-
-#if !__OBSOLETE_MATH
-/* The new math code does not provide separate wrapper function
-   for error handling, so the extern symbol is called directly.
-   This is valid as long as there are no namespace issues (the
-   extern symbol is reserved whenever the caller is reserved)
-   and there are no observable error handling side effects.  */
-# define __ieee754_exp(x) exp(x)
-# define __ieee754_log(x) log(x)
-# define __ieee754_pow(x,y) pow(x,y)
-# define __ieee754_expf(x) expf(x)
-# define __ieee754_logf(x) logf(x)
-# define __ieee754_powf(x,y) powf(x,y)
-#endif
-
-/* float versions of fdlibm kernel functions */
-extern float __kernel_sinf __P((float,float,int));
-extern float __kernel_cosf __P((float,float));
-extern float __kernel_tanf __P((float,float,int));
-extern int   __kernel_rem_pio2f __P((float*,float*,int,int,int,const __int32_t*));
-
-/* The original code used statements like
-	n0 = ((*(int*)&one)>>29)^1;		* index of high word *
-	ix0 = *(n0+(int*)&x);			* high word of x *
-	ix1 = *((1-n0)+(int*)&x);		* low word of x *
-   to dig two 32 bit words out of the 64 bit IEEE floating point
-   value.  That is non-ANSI, and, moreover, the gcc instruction
-   scheduler gets it wrong.  We instead use the following macros.
-   Unlike the original code, we determine the endianness at compile
-   time, not at run time; I don't see much benefit to selecting
-   endianness at run time.  */
-
-//#ifndef __IEEE_BIG_ENDIAN
-//#ifndef __IEEE_LITTLE_ENDIAN
-//#error Must define endianness
-//#endif
-//#endif
-
-/* A union which permits us to convert between a double and two 32 bit
-   ints.  */
-
-typedef union
-{
-  double value;
-  struct
-  {
-    __uint32_t lsw;
-    __uint32_t msw;
-  } parts;
-} ieee_double_shape_type;
-
-
-/* Get two 32 bit ints from a double.  */
-
-#define EXTRACT_WORDS(ix0,ix1,d)				\
-do {								\
-  ieee_double_shape_type ew_u;					\
-  ew_u.value = (d);						\
-  (ix0) = ew_u.parts.msw;					\
-  (ix1) = ew_u.parts.lsw;					\
-} while (0)
-
-/* Get the more significant 32 bit int from a double.  */
-
-#define GET_HIGH_WORD(i,d)					\
-do {								\
-  ieee_double_shape_type gh_u;					\
-  gh_u.value = (d);						\
-  (i) = gh_u.parts.msw;						\
-} while (0)
-
-/* Get the less significant 32 bit int from a double.  */
-
-#define GET_LOW_WORD(i,d)					\
-do {								\
-  ieee_double_shape_type gl_u;					\
-  gl_u.value = (d);						\
-  (i) = gl_u.parts.lsw;						\
-} while (0)
-
-/* Set a double from two 32 bit ints.  */
-
-#define INSERT_WORDS(d,ix0,ix1)					\
-do {								\
-  ieee_double_shape_type iw_u;					\
-  iw_u.parts.msw = (ix0);					\
-  iw_u.parts.lsw = (ix1);					\
-  (d) = iw_u.value;						\
-} while (0)
-
-/* Set the more significant 32 bits of a double from an int.  */
-
-#define SET_HIGH_WORD(d,v)					\
-do {								\
-  ieee_double_shape_type sh_u;					\
-  sh_u.value = (d);						\
-  sh_u.parts.msw = (v);						\
-  (d) = sh_u.value;						\
-} while (0)
-
-/* Set the less significant 32 bits of a double from an int.  */
-
-#define SET_LOW_WORD(d,v)					\
-do {								\
-  ieee_double_shape_type sl_u;					\
-  sl_u.value = (d);						\
-  sl_u.parts.lsw = (v);						\
-  (d) = sl_u.value;						\
-} while (0)
-
-/* A union which permits us to convert between a float and a 32 bit
-   int.  */
-
-typedef union
-{
-  float value;
-  __uint32_t word;
-} ieee_float_shape_type;
-
-/* Get a 32 bit int from a float.  */
-
-#define GET_FLOAT_WORD(i,d)					\
-do {								\
-  ieee_float_shape_type gf_u;					\
-  gf_u.value = (d);						\
-  (i) = gf_u.word;						\
-} while (0)
-
-/* Set a float from a 32 bit int.  */
-
-#define SET_FLOAT_WORD(d,i)					\
-do {								\
-  ieee_float_shape_type sf_u;					\
-  sf_u.word = (i);						\
-  (d) = sf_u.value;						\
-} while (0)
-
-/* Macros to avoid undefined behaviour that can arise if the amount
-   of a shift is exactly equal to the size of the shifted operand.  */
-
-#define SAFE_LEFT_SHIFT(op,amt)					\
-  (((amt) < 8 * sizeof(op)) ? ((op) << (amt)) : 0)
-
-#define SAFE_RIGHT_SHIFT(op,amt)				\
-  (((amt) < 8 * sizeof(op)) ? ((op) >> (amt)) : 0)
-
-#ifdef  _COMPLEX_H
-
-/*
- * Quoting from ISO/IEC 9899:TC2:
- *
- * 6.2.5.13 Types
- * Each complex type has the same representation and alignment requirements as
- * an array type containing exactly two elements of the corresponding real type;
- * the first element is equal to the real part, and the second element to the
- * imaginary part, of the complex number.
- */
-typedef union {
-        float complex z;
-        float parts[2];
-} float_complex;
-
-typedef union {
-        double complex z;
-        double parts[2];
-} double_complex;
-
-typedef union {
-        long double complex z;
-        long double parts[2];
-} long_double_complex;
-
-#define REAL_PART(z)    ((z).parts[0])
-#define IMAG_PART(z)    ((z).parts[1])
-
-#endif  /* _COMPLEX_H */
+extern int    __kernel_rem_pio2 __P((double*,double*,int,int,int,const int*));

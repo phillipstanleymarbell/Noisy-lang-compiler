@@ -34,13 +34,17 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+
+#include "newton-irPass-LLVMIR-rangeAnalysis.h"
+
 #ifdef __cplusplus
 extern "C"
 {
-#	endif /* __cplusplus */
+#endif /* __cplusplus */
 
-void    irPassLLVMIRSimplifyControlFlowByRange(State *  N);
+bool
+simplifyControlFlow(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction);
 
-#	ifdef __cplusplus
+#ifdef __cplusplus
 } /* extern "C" */
-#	endif /* __cplusplus */
+#endif /* __cplusplus */

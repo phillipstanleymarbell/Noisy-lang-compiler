@@ -117,7 +117,7 @@ converttoint (double_t x)
 #endif
 
 static inline uint32_t
-asuint (float f)
+asuint (double f)
 {
 	union
 	{

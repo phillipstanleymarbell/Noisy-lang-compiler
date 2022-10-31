@@ -31,12 +31,17 @@
 #include "math_config.h"
 #include "sincosf.h"
 
+/*
+* Definitions generated from Newton
+*/
+typedef double bmx055xAcceleration;
+
 /* Fast sincosf implementation.  Worst-case ULP is 0.5607, maximum relative
    error is 0.5303 * 2^-23.  A single-step range reduction is used for
    small values.  Large inputs have their range reduced using fast integer
    arithmetic.  */
 void
-libc_sincosf (float y, float *sinp, float *cosp)
+libc_sincosf (bmx055xAcceleration y, float *sinp, float *cosp)
 {
     double x = y;
     double s;
@@ -102,8 +107,8 @@ libc_sincosf (float y, float *sinp, float *cosp)
 
 //#endif
 
-int main() {
-    float sinp, cosp;
-    libc_sincosf (35.85, &sinp, &cosp);
-    printf("sinp: %f, cosp: %f\n", sinp, cosp);
-}
+//int main() {
+//    float sinp, cosp;
+//    libc_sincosf (35.85, &sinp, &cosp);
+//    printf("sinp: %f, cosp: %f\n", sinp, cosp);
+//}

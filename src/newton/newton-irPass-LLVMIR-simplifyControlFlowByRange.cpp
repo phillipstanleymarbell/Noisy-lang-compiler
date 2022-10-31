@@ -34,59 +34,13 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-#include <stdio.h>
-#include <stdlib.h>
-#include <setjmp.h>
-#include <stdint.h>
-#include <string.h>
-#include <set>
-#include <algorithm>
 
-#include "llvm/Bitcode/BitcodeWriter.h"
-#include "llvm/IR/DebugInfoMetadata.h"
-#include "llvm/IR/Metadata.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/InstIterator.h"
-#include "llvm/IRReader/IRReader.h"
-#include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Path.h"
+#include "newton-irPass-LLVMIR-simplifyControlFlowByRange.h"
 
 using namespace llvm;
 
-
 extern "C"
 {
-
-#include "flextypes.h"
-#include "flexerror.h"
-#include "flex.h"
-#include "common-errors.h"
-#include "version.h"
-#include "newton-timeStamps.h"
-#include "common-timeStamps.h"
-#include "common-data-structures.h"
-#include "noisy-parser.h"
-#include "newton-parser.h"
-#include "noisy-lexer.h"
-#include "newton-lexer.h"
-#include "common-irPass-helpers.h"
-#include "common-lexers-helpers.h"
-#include "common-irHelpers.h"
-#include "common-symbolTable.h"
-#include "newton-types.h"
-#include "newton-symbolTable.h"
-#include "newton-irPass-cBackend.h"
-#include "newton-irPass-autoDiff.h"
-#include "newton-irPass-estimatorSynthesisBackend.h"
-#include "newton-irPass-invariantSignalAnnotation.h"
-
-typedef struct BoundInfo {
-	std::map<std::string, std::pair<double, double>> variableBound;
-	std::map<std::string, std::pair<double, double>> typeRange;
-} BoundInfo;
 
 enum CmpRes {
 	Depends	    = 1,
@@ -95,24 +49,9 @@ enum CmpRes {
 	Unsupported = 6,
 };
 
-void
-dumpIR(State * N, std::string fileSuffix, std::unique_ptr<Module> Mod)
-{
-	StringRef   filePath(N->llvmIR);
-	std::string dirPath	= std::string(sys::path::parent_path(filePath)) + "/";
-	std::string fileName	= std::string(sys::path::stem(filePath)) + "_" + fileSuffix + ".bc";
-	std::string filePathStr = dirPath + fileName;
-	filePath		= StringRef(filePathStr);
-
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "Dump IR of: %s\n", filePath.str().c_str());
-	std::error_code errorCode(errno, std::generic_category());
-	raw_fd_ostream	dumpedFile(filePath, errorCode);
-	WriteBitcodeToFile(*Mod, dumpedFile);
-	dumpedFile.close();
-}
-
 CmpRes
-compareFCmpWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLowerBound, double variableUpperBound, double constValue)
+compareFCmpConstWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLowerBound, double variableUpperBound,
+				  double constValue)
 {
 	switch (llvmIrFCmpInstruction->getPredicate())
 	{
@@ -206,14 +145,113 @@ compareFCmpWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLo
 }
 
 CmpRes
-compareICmpWithVariableRange(ICmpInst * llvmIrICmpInstruction, double variableLowerBound, double variableUpperBound, double constValue)
+compareFCmpWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double leftVariableLowerBound,
+			     double leftVariableUpperBound,
+			     double rightVariableLowerBound, double rightVariableUpperBound)
+{
+	switch (llvmIrFCmpInstruction->getPredicate())
+	{
+		case FCmpInst::FCMP_TRUE:
+			return CmpRes::AlwaysTrue;
+		case FCmpInst::FCMP_FALSE:
+			return CmpRes::AlwaysFalse;
+			/*
+			 * Ordered means that neither operand is a QNAN while unordered means that either operand may be a QNAN.
+			 * More details in https://llvm.org/docs/LangRef.html#fcmp-instruction
+			 * */
+		case FCmpInst::FCMP_OEQ:
+		case FCmpInst::FCMP_UEQ:
+			if ((leftVariableLowerBound == rightVariableLowerBound) &&
+			    (leftVariableUpperBound == rightVariableUpperBound))
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else
+			{
+				return CmpRes::AlwaysFalse;
+			}
+		case FCmpInst::FCMP_OGT:
+		case FCmpInst::FCMP_UGT:
+			if (leftVariableLowerBound > rightVariableUpperBound)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (leftVariableUpperBound <= rightVariableLowerBound)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+		case FCmpInst::FCMP_OGE:
+		case FCmpInst::FCMP_UGE:
+			if (leftVariableLowerBound >= rightVariableUpperBound)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (leftVariableUpperBound < rightVariableLowerBound)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+		case FCmpInst::FCMP_OLT:
+		case FCmpInst::FCMP_ULT:
+			if (leftVariableUpperBound < rightVariableLowerBound)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (leftVariableLowerBound >= rightVariableUpperBound)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+		case FCmpInst::FCMP_OLE:
+		case FCmpInst::FCMP_ULE:
+			if (leftVariableUpperBound <= rightVariableLowerBound)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (leftVariableLowerBound > rightVariableUpperBound)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+		case FCmpInst::FCMP_ONE:
+		case FCmpInst::FCMP_UNE:
+			if ((leftVariableUpperBound < rightVariableLowerBound) ||
+			    (leftVariableLowerBound > rightVariableUpperBound))
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else
+			{
+				return CmpRes::AlwaysFalse;
+			}
+		default:
+			return CmpRes::Unsupported;
+	}
+}
+
+CmpRes
+compareICmpConstWithVariableRange(ICmpInst * llvmIrICmpInstruction, double variableLowerBound, double variableUpperBound,
+				  double constValue)
 {
 	switch (llvmIrICmpInstruction->getPredicate())
 	{
-			/*
-			 * Ordered means that neither operand is a QNAN while unordered means that either operand may be a QNAN.
-			 * More details in https://llvm.org/docs/LangRef.html#icmp-instruction
-			 * */
+		/*
+		 * Ordered means that neither operand is a QNAN while unordered means that either operand may be a QNAN.
+		 * More details in https://llvm.org/docs/LangRef.html#icmp-instruction
+		 * */
 		case ICmpInst::ICMP_EQ:
 			if ((variableLowerBound == variableUpperBound) && (variableUpperBound == constValue))
 			{
@@ -293,6 +331,97 @@ compareICmpWithVariableRange(ICmpInst * llvmIrICmpInstruction, double variableLo
 	}
 }
 
+CmpRes
+compareICmpWithVariableRange(ICmpInst * llvmIrICmpInstruction, double leftVariableLowerBound,
+			     double leftVariableUpperBound,
+			     double rightVariableLowerBound, double rightVariableUpperBound)
+{
+	switch (llvmIrICmpInstruction->getPredicate())
+	{
+		/*
+		 * Ordered means that neither operand is a QNAN while unordered means that either operand may be a QNAN.
+		 * More details in https://llvm.org/docs/LangRef.html#icmp-instruction
+		 * */
+		case ICmpInst::ICMP_EQ:
+			if ((leftVariableLowerBound == rightVariableLowerBound) &&
+			    (leftVariableUpperBound == rightVariableUpperBound))
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else
+			{
+				return CmpRes::AlwaysFalse;
+			}
+		case ICmpInst::ICMP_NE:
+			if (leftVariableUpperBound < rightVariableLowerBound || leftVariableLowerBound > rightVariableUpperBound)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else
+			{
+				return CmpRes::AlwaysFalse;
+			}
+		case ICmpInst::ICMP_UGT:
+		case ICmpInst::ICMP_SGT:
+			if (leftVariableLowerBound > rightVariableUpperBound)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (leftVariableUpperBound <= rightVariableLowerBound)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+		case ICmpInst::ICMP_UGE:
+		case ICmpInst::ICMP_SGE:
+			if (leftVariableLowerBound >= rightVariableUpperBound)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (leftVariableUpperBound < rightVariableLowerBound)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+		case ICmpInst::ICMP_ULT:
+		case ICmpInst::ICMP_SLT:
+			if (leftVariableUpperBound < rightVariableLowerBound)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (leftVariableLowerBound >= rightVariableUpperBound)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+		case ICmpInst::ICMP_ULE:
+		case ICmpInst::ICMP_SLE:
+			if (leftVariableUpperBound <= rightVariableLowerBound)
+			{
+				return CmpRes::AlwaysTrue;
+			}
+			else if (leftVariableLowerBound > rightVariableUpperBound)
+			{
+				return CmpRes::AlwaysFalse;
+			}
+			else
+			{
+				return CmpRes::Depends;
+			}
+		default:
+			return CmpRes::Unsupported;
+	}
+}
+
 static Type *
 GetCompareTy(Value * Op)
 {
@@ -319,60 +448,16 @@ getTrue(Type * Ty)
 	return ConstantInt::getTrue(Ty);
 }
 
-void
+bool
 simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 {
-	/*
-	 * Change attr of the function
-	 * */
-	llvmIrFunction.removeFnAttr(Attribute::OptimizeNone);
-
-	std::map<Value *, std::pair<double, double>> virtualRegisterRange;
+	bool changed = false;
 	for (BasicBlock & llvmIrBasicBlock : llvmIrFunction)
 	{
 		for (Instruction & llvmIrInstruction : llvmIrBasicBlock)
 		{
 			switch (llvmIrInstruction.getOpcode())
 			{
-				case Instruction::Call:
-					if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction))
-					{
-						Function * calledFunction = llvmIrCallInstruction->getCalledFunction();
-						if (calledFunction->getName().startswith("llvm.dbg.declare"))
-						{
-							auto firstOperator		    = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(0));
-							auto localVariableAddressAsMetadata = cast<ValueAsMetadata>(firstOperator->getMetadata());
-							auto localVariableAddress	    = localVariableAddressAsMetadata->getValue();
-
-							auto variableMetadata  = cast<MetadataAsValue>(llvmIrCallInstruction->getOperand(1));
-							auto debugInfoVariable = cast<DIVariable>(variableMetadata->getMetadata());
-							auto variableType      = debugInfoVariable->getType();
-
-							/*
-							 * if we find such type in boundInfo->typeRange,
-							 * we get its range and bind the var with it in boundInfo->variableBound
-							 * and record it in the virtualRegisterRange
-							 * */
-							auto typeRangeIt = boundInfo->typeRange.find(variableType->getName().str());
-							if (typeRangeIt != boundInfo->typeRange.end())
-							{
-								boundInfo->variableBound.emplace(debugInfoVariable->getName().str(), typeRangeIt->second);
-								virtualRegisterRange.emplace(localVariableAddress, typeRangeIt->second);
-							}
-						}
-					}
-					break;
-
-				case Instruction::Load:
-					if (auto llvmIrLoadInstruction = dyn_cast<LoadInst>(&llvmIrInstruction))
-					{
-						auto vrRangeIt = virtualRegisterRange.find(llvmIrLoadInstruction->getOperand(0));
-						if (vrRangeIt != virtualRegisterRange.end())
-						{
-							virtualRegisterRange.emplace(llvmIrLoadInstruction, vrRangeIt->second);
-						}
-					}
-					break;
 				case Instruction::ICmp:
 					if (auto llvmIrICmpInstruction = dyn_cast<ICmpInst>(&llvmIrInstruction))
 					{
@@ -381,7 +466,7 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
 							std::swap(leftOperand, rightOperand);
-							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: swap left and right\n");
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tICmp: swap left and right, need to change the type of prediction\n");
 						}
 						else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
@@ -389,8 +474,49 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
+							auto vrLeftRangeIt  = boundInfo->virtualRegisterRange.find(leftOperand);
+							auto vrRightRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+							if (vrLeftRangeIt != boundInfo->virtualRegisterRange.end() &&
+							    vrRightRangeIt != boundInfo->virtualRegisterRange.end())
+							{
+								flexprint(N->Fe, N->Fm, N->Fpinfo,
+									  "\tICmp: left operand's lower bound: %f, upper bound: %f\n",
+									  vrLeftRangeIt->second.first, vrLeftRangeIt->second.second);
+								flexprint(N->Fe, N->Fm, N->Fpinfo,
+									  "\tICmp: right operand's lower bound: %f, upper bound: %f\n",
+									  vrRightRangeIt->second.first, vrRightRangeIt->second.second);
+								CmpRes compareResult = compareICmpWithVariableRange(llvmIrICmpInstruction,
+														    vrLeftRangeIt->second.first,
+														    vrLeftRangeIt->second.second,
+														    vrRightRangeIt->second.first,
+														    vrRightRangeIt->second.second);
+								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: the comparison result is %d\n",
+									  compareResult);
+								/*
+								 * Fold trivial predicates.
+								 * */
+								Type *	retTy	 = GetCompareTy(leftOperand);
+								Value * resValue = nullptr;
+								if (compareResult == CmpRes::AlwaysTrue)
+								{
+									resValue = getTrue(retTy);
+									llvmIrICmpInstruction->replaceAllUsesWith(resValue);
+									changed = true;
+								}
+								else if (compareResult == CmpRes::AlwaysFalse)
+								{
+									resValue = getFalse(retTy);
+									llvmIrICmpInstruction->replaceAllUsesWith(resValue);
+									changed = true;
+								}
+								else if (compareResult == CmpRes::Unsupported)
+								{
+									flexprint(N->Fe, N->Fm, N->Fperr,
+										  "\tICmp: Current ICmp Predicate is not supported.\n");
+								}
+							}
 						}
-						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+						if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
 							double constValue = 0.0;
 							if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
@@ -403,16 +529,20 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							}
 							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: right operand: %f\n", constValue);
 							/*
-							 * find the variable from the virtualRegisterRange
+							 * find the variable from the boundInfo->virtualRegisterRange
 							 * */
-							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
-							if (vrRangeIt != virtualRegisterRange.end())
+							auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+							if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 							{
-								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: varibale's lower bound: %f, upper bound: %f\n",
+								flexprint(N->Fe, N->Fm, N->Fpinfo,
+									  "\tICmp: varibale's lower bound: %f, upper bound: %f\n",
 									  vrRangeIt->second.first, vrRangeIt->second.second);
-								CmpRes compareResult = compareICmpWithVariableRange(llvmIrICmpInstruction,
-														    vrRangeIt->second.first, vrRangeIt->second.second, constValue);
-								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: the comparison result is %d\n", compareResult);
+								CmpRes compareResult = compareICmpConstWithVariableRange(llvmIrICmpInstruction,
+															 vrRangeIt->second.first,
+															 vrRangeIt->second.second,
+															 constValue);
+								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: the comparison result is %d\n",
+									  compareResult);
 								/*
 								 * Fold trivial predicates.
 								 * */
@@ -422,15 +552,18 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 								{
 									resValue = getTrue(retTy);
 									llvmIrICmpInstruction->replaceAllUsesWith(resValue);
+									changed = true;
 								}
 								else if (compareResult == CmpRes::AlwaysFalse)
 								{
 									resValue = getFalse(retTy);
 									llvmIrICmpInstruction->replaceAllUsesWith(resValue);
+									changed = true;
 								}
 								else if (compareResult == CmpRes::Unsupported)
 								{
-									flexprint(N->Fe, N->Fm, N->Fperr, "\tICmp: Current ICmp Predicate is not supported.\n");
+									flexprint(N->Fe, N->Fm, N->Fperr,
+										  "\tICmp: Current ICmp Predicate is not supported.\n");
 								}
 							}
 							else
@@ -449,7 +582,7 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
 							std::swap(leftOperand, rightOperand);
-							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: swap left and right\n");
+							flexprint(N->Fe, N->Fm, N->Fperr, "\tFCmp: swap left and right, need to change the type of prediction\n");
 						}
 						else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
@@ -457,29 +590,24 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						}
 						else if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
-						}
-						else if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
-						{
-							double constValue = 0.0;
-							if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+							auto vrLeftRangeIt  = boundInfo->virtualRegisterRange.find(leftOperand);
+							auto vrRightRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
+							if (vrLeftRangeIt != boundInfo->virtualRegisterRange.end() &&
+							    vrRightRangeIt != boundInfo->virtualRegisterRange.end())
 							{
-								/*
-								 * both "float" and "double" type can use "convertToDouble"
-								 * */
-								constValue = (constFp->getValueAPF()).convertToDouble();
-							}
-							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: right operand: %f\n", constValue);
-							/*
-							 * find the variable from the virtualRegisterRange
-							 * */
-							auto vrRangeIt = virtualRegisterRange.find(leftOperand);
-							if (vrRangeIt != virtualRegisterRange.end())
-							{
-								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: varibale's lower bound: %f, upper bound: %f\n",
-									  vrRangeIt->second.first, vrRangeIt->second.second);
+								flexprint(N->Fe, N->Fm, N->Fpinfo,
+									  "\tICmp: left operand's lower bound: %f, upper bound: %f\n",
+									  vrLeftRangeIt->second.first, vrLeftRangeIt->second.second);
+								flexprint(N->Fe, N->Fm, N->Fpinfo,
+									  "\tICmp: right operand's lower bound: %f, upper bound: %f\n",
+									  vrRightRangeIt->second.first, vrRightRangeIt->second.second);
 								CmpRes compareResult = compareFCmpWithVariableRange(llvmIrFCmpInstruction,
-														    vrRangeIt->second.first, vrRangeIt->second.second, constValue);
-								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: the comparison result is %d\n", compareResult);
+														    vrLeftRangeIt->second.first,
+														    vrLeftRangeIt->second.second,
+														    vrRightRangeIt->second.first,
+														    vrRightRangeIt->second.second);
+								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: the comparison result is %d\n",
+									  compareResult);
 								/*
 								 * Fold trivial predicates.
 								 * */
@@ -489,11 +617,67 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 								{
 									resValue = getTrue(retTy);
 									llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+									changed = true;
 								}
 								else if (compareResult == CmpRes::AlwaysFalse)
 								{
 									resValue = getFalse(retTy);
 									llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+									changed = true;
+								}
+								else if (compareResult == CmpRes::Unsupported)
+								{
+									flexprint(N->Fe, N->Fm, N->Fperr,
+										  "\tICmp: Current ICmp Predicate is not supported.\n");
+								}
+							}
+						}
+						if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
+						{
+							double constValue = 0.0;
+							if (ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(rightOperand))
+							{
+								/*
+								 * both "float" and "double" type can use "convertToDouble"
+								 * */
+								constValue = (constFp->getValueAPF()).convertToDouble();
+							}
+							else
+							{
+								flexprint(N->Fe, N->Fm, N->Fperr, "\tFCmp: it's not a const fp!!!!!!!!!!!\n");
+							}
+							flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: right operand: %f\n", constValue);
+							/*
+							 * find the variable from the boundInfo->virtualRegisterRange
+							 * */
+							auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
+							if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+							{
+								flexprint(N->Fe, N->Fm, N->Fpinfo,
+									  "\tFCmp: varibale's lower bound: %f, upper bound: %f\n",
+									  vrRangeIt->second.first, vrRangeIt->second.second);
+								CmpRes compareResult = compareFCmpConstWithVariableRange(llvmIrFCmpInstruction,
+															 vrRangeIt->second.first,
+															 vrRangeIt->second.second,
+															 constValue);
+								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: the comparison result is %d\n",
+									  compareResult);
+								/*
+								 * Fold trivial predicates.
+								 * */
+								Type *	retTy	 = GetCompareTy(leftOperand);
+								Value * resValue = nullptr;
+								if (compareResult == CmpRes::AlwaysTrue)
+								{
+									resValue = getTrue(retTy);
+									llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+									changed = true;
+								}
+								else if (compareResult == CmpRes::AlwaysFalse)
+								{
+									resValue = getFalse(retTy);
+									llvmIrFCmpInstruction->replaceAllUsesWith(resValue);
+									changed = true;
 								}
 							}
 							else
@@ -509,48 +693,6 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 			}
 		}
 	}
-}
-
-void
-irPassLLVMIRSimplifyControlFlowByRange(State * N)
-{
-	if (N->llvmIR == nullptr)
-	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "Please specify the LLVM IR input file\n");
-		fatal(N, Esanity);
-	}
-
-	SMDiagnostic		Err;
-	LLVMContext		Context;
-	std::unique_ptr<Module> Mod(parseIRFile(N->llvmIR, Err, Context));
-	if (!Mod)
-	{
-		flexprint(N->Fe, N->Fm, N->Fperr, "Error: Couldn't parse IR file.");
-		fatal(N, Esanity);
-	}
-
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
-	auto boundInfo = new BoundInfo();
-
-	/*
-	 * get sensor info, we only concern the id and range here
-	 * */
-	if (N->sensorList != NULL)
-	{
-		for (Modality * currentModality = N->sensorList->modalityList; currentModality != NULL; currentModality = currentModality->next)
-		{
-			flexprint(N->Fe, N->Fm, N->Fpinfo, "\tModality: %s\n", currentModality->identifier);
-			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeLowerBound: %f\n", currentModality->rangeLowerBound);
-			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeUpperBound: %f\n", currentModality->rangeUpperBound);
-			boundInfo->typeRange.emplace(currentModality->identifier, std::make_pair(currentModality->rangeLowerBound, currentModality->rangeUpperBound));
-		}
-	}
-
-	for (auto & mi : *Mod)
-	{
-		simplifyControlFlow(N, boundInfo, mi);
-	}
-
-	dumpIR(N, "output", std::move(Mod));
+	return changed;
 }
 }
