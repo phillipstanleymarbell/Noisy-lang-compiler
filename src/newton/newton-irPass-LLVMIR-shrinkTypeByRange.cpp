@@ -1553,7 +1553,17 @@ mergeCast(State * N, Function & llvmIrFunction,
 								 * */
 								Value * castInst;
 								auto	valueType = llvmIrInstruction->getType();
-								if (valueType->isIntegerTy())
+                                if (valueType->isFloatTy() && sourceOperand->getType()->isIntegerTy()) {
+                                    // float fa = (float)ia;
+                                    bool isSinged = sourceInst->getOpcode() == Instruction::SIToFP;
+                                    castInst = isSinged ? Builder.CreateSIToFP(sourceOperand, valueType)
+                                            : Builder.CreateUIToFP(sourceOperand, valueType);
+                                } else if (valueType->isIntegerTy() && sourceOperand->getType()->isFloatTy()) {
+                                    // int iq = (int)fq;
+                                    bool isSinged = sourceInst->getOpcode() == Instruction::FPToSI;
+                                    castInst = isSinged ? Builder.CreateFPToSI(sourceOperand, valueType)
+                                            : Builder.CreateFPToUI(sourceOperand, valueType);
+                                } else if (valueType->isIntegerTy())
 								{
 									castInst = Builder.CreateIntCast(sourceOperand, valueType,
 													 llvmIrInstruction->getOpcode() == Instruction::SExt);
