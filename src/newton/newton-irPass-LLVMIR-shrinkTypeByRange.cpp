@@ -245,7 +245,7 @@ getTypeInfo(State * N, Value * inValue,
 	switch (inInstType->getTypeID())
 	{
 		case Type::IntegerTyID:
-			typeInformation = getShrinkIntType(N, inValue, vrRangeIt->second);
+//			typeInformation = getShrinkIntType(N, inValue, vrRangeIt->second);
 			break;
 		case Type::FloatTyID:
 			break;
@@ -1505,12 +1505,16 @@ mergeCast(State * N, Function & llvmIrFunction,
 			Instruction * llvmIrInstruction = &*itBB++;
 			switch (llvmIrInstruction->getOpcode())
 			{
-				case Instruction::ZExt:
-				case Instruction::SExt:
-				case Instruction::FPExt:
-				case Instruction::Trunc:
-				case Instruction::FPTrunc:
-				case Instruction::BitCast:
+                case Instruction::FPToUI:
+                case Instruction::FPToSI:
+                case Instruction::SIToFP:
+                case Instruction::UIToFP:
+                case Instruction::ZExt:
+                case Instruction::SExt:
+                case Instruction::FPExt:
+                case Instruction::Trunc:
+                case Instruction::FPTrunc:
+                case Instruction::BitCast:
 				{
 					/*
 					 * if the operand(0) is equal to operand(1), remove this inst,
@@ -1657,12 +1661,16 @@ countCastInst(State * N, Function & llvmIrFunction)
 		{
 			switch (llvmIrInstruction.getOpcode())
 			{
-				case Instruction::ZExt:
-				case Instruction::SExt:
-				case Instruction::FPExt:
-				case Instruction::Trunc:
-				case Instruction::FPTrunc:
-				case Instruction::BitCast:
+                case Instruction::FPToUI:
+                case Instruction::FPToSI:
+                case Instruction::SIToFP:
+                case Instruction::UIToFP:
+                case Instruction::ZExt:
+                case Instruction::SExt:
+                case Instruction::FPExt:
+                case Instruction::Trunc:
+                case Instruction::FPTrunc:
+                case Instruction::BitCast:
 					castCountVec[bbId]++;
 					break;
 				default:
@@ -1803,16 +1811,16 @@ getDependencyLink(State * N, Function & llvmIrFunction)
 					/*match dest with operands*/
 					insertLink(dependencyLink, llvmIrInstruction.getOperand(0),
 						   &llvmIrInstruction);
-				case Instruction::FPToUI:
-				case Instruction::FPToSI:
-				case Instruction::SIToFP:
-				case Instruction::UIToFP:
-				case Instruction::ZExt:
-				case Instruction::SExt:
-				case Instruction::FPExt:
-				case Instruction::Trunc:
-				case Instruction::FPTrunc:
-				case Instruction::BitCast:
+                case Instruction::FPToUI:
+                case Instruction::FPToSI:
+                case Instruction::SIToFP:
+                case Instruction::UIToFP:
+                case Instruction::ZExt:
+                case Instruction::SExt:
+                case Instruction::FPExt:
+                case Instruction::Trunc:
+                case Instruction::FPTrunc:
+                case Instruction::BitCast:
 					/*check dest*/
 					break;
 				case Instruction::Store:
