@@ -925,6 +925,10 @@ matchDestType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasicBl
 			typeInfo backType;
 			backType.signFlag  = isSignedValue(inInstruction);
 			backType.valueType = inInstType;
+            if (isa<LoadInst>(inInstruction)) {
+                unsigned ptAddressSpace = srcType->getPointerAddressSpace();
+                backType.valueType = backType.valueType->getPointerTo(ptAddressSpace);
+            }
 			for (size_t id = 0; id < inInstruction->getNumOperands(); id++)
 			{
 				auto newTypeValue = rollbackType(N, inInstruction, id, llvmIrBasicBlock, typeChangedInst, backType);
@@ -974,6 +978,10 @@ matchDestType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasicBl
 		/*
 		 * roll back operands to typeInformation.valueType
 		 * */
+        if (isa<LoadInst>(inInstruction)) {
+            unsigned ptAddressSpace = srcType->getPointerAddressSpace();
+            typeInformation.valueType = typeInformation.valueType->getPointerTo(ptAddressSpace);
+        }
         size_t roll_backed_op_num = isa<GetElementPtrInst>(inInstruction) ? 1 : inInstruction->getNumOperands();
 		for (size_t id = 0; id < roll_backed_op_num; id++)
 		{
