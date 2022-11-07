@@ -974,7 +974,8 @@ matchDestType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasicBl
 		/*
 		 * roll back operands to typeInformation.valueType
 		 * */
-		for (size_t id = 0; id < inInstruction->getNumOperands(); id++)
+        size_t roll_backed_op_num = isa<GetElementPtrInst>(inInstruction) ? 1 : inInstruction->getNumOperands();
+		for (size_t id = 0; id < roll_backed_op_num; id++)
 		{
 			typeInfo operandPrevTypeInfo{typeInformation.valueType,
 						     isSignedValue(inInstruction->getOperand(id))};
@@ -1827,19 +1828,19 @@ shrinkType(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 	 * 1. construct instruction dependency link
 	 * 2. work with roll back strategies
 	 * */
-	std::vector<std::vector<Value *>> prevDepLink	  = getDependencyLink(N, llvmIrFunction);
+//	std::vector<std::vector<Value *>> prevDepLink	  = getDependencyLink(N, llvmIrFunction);
 	std::map<Value *, typeInfo>	  typeChangedInst = shrinkInstType(N, boundInfo, llvmIrFunction);
 	mergeCast(N, llvmIrFunction, boundInfo->virtualRegisterRange, typeChangedInst);
-	std::vector<std::vector<Value *>> newDepLink = getDependencyLink(N, llvmIrFunction);
+//	std::vector<std::vector<Value *>> newDepLink = getDependencyLink(N, llvmIrFunction);
 
-	for (auto & depLink : newDepLink)
-	{
-		if (rollBackStrategy(N, depLink))
-		{
-			rollBackDependencyLink(N, depLink, boundInfo->virtualRegisterRange, typeChangedInst);
-		}
-	}
+//	for (auto & depLink : newDepLink)
+//	{
+//		if (rollBackStrategy(N, depLink))
+//		{
+//			rollBackDependencyLink(N, depLink, boundInfo->virtualRegisterRange, typeChangedInst);
+//		}
+//	}
 
-	mergeCast(N, llvmIrFunction, boundInfo->virtualRegisterRange, typeChangedInst);
+//	mergeCast(N, llvmIrFunction, boundInfo->virtualRegisterRange, typeChangedInst);
 }
 }
