@@ -868,10 +868,6 @@ matchOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasi
 	}
 	else if (isa<llvm::Constant>(rightOperand))
 	{
-        // debug
-        if (inInstruction->getOpcode() == Instruction::FMul) {
-            int a = 0;
-        }
 		/*
 		 * rightOperand is constant, leftOperand is non-constant
 		 * */

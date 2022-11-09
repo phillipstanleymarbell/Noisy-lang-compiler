@@ -133,7 +133,7 @@ struct perfData {
 };
 
 struct perfData recordData(const std::string& test_cases, const std::string& param_str, std::ofstream& ofs) {
-    const size_t iteration_num = 5;
+    const size_t iteration_num = 1;
 
     perfData perf_data = {0, 0, 0, 0};
 
@@ -180,19 +180,19 @@ int main(int argc, char** argv) {
     }
 
     std::vector<std::vector<double>> normalParameters{
-            {-1000.3, -999.2},
-            {-134.5, -133.8},
-            {-23.9, -23.1},
-            {-5.4, -4.5},
-            {-0.9, -0.4},
+//            {-1000.3, -999.2},
+//            {-134.5, -133.8},
+//            {-23.9, -23.1},
+//            {-5.4, -4.5},
+//            {-0.9, -0.4},
             {0.2, 0.8},
-            {9.7, 10.5},
-            {35.75, 36.03},
-            {476.84, 477.21},
-            {999.8, 1000.9}
+//            {9.7, 10.5},
+//            {35.75, 36.03},
+//            {476.84, 477.21},
+//            {999.8, 1000.9}
     };
 
-    std::vector<double> range_extend{1, 10, 100, 1000, 10000, 100000};
+    std::vector<double> range_extend{1};
 
     if (argc == 3) {
         range_extend.clear();
