@@ -92,11 +92,13 @@ varType
 getFloatingTypeEnum(double min, double max)
 {
 	varType finalType;
-	if ((std::abs(min) < FLT_MAX) && (std::abs(max) < FLT_MAX))
+	if ((FLT_EPSILON < std::abs(min) && std::abs(min) < FLT_MAX) &&
+    (FLT_EPSILON < std::abs(max) && std::abs(max) < FLT_MAX))
 	{
 		finalType = FLOAT;
 	}
-	else if ((std::abs(min) < DBL_MAX) && (std::abs(max) < DBL_MAX))
+	else if ((DBL_EPSILON < std::abs(min) && std::abs(min) < DBL_MAX) &&
+    (DBL_EPSILON < std::abs(max) && std::abs(max) < DBL_MAX))
 	{
 		finalType = DOUBLE;
 	}
@@ -866,6 +868,10 @@ matchOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasi
 	}
 	else if (isa<llvm::Constant>(rightOperand))
 	{
+        // debug
+        if (inInstruction->getOpcode() == Instruction::FMul) {
+            int a = 0;
+        }
 		/*
 		 * rightOperand is constant, leftOperand is non-constant
 		 * */
