@@ -40,6 +40,7 @@
 #include "newton-irPass-LLVMIR-simplifyControlFlowByRange.h"
 #include "newton-irPass-LLVMIR-constantSubstitution.h"
 #include "newton-irPass-LLVMIR-shrinkTypeByRange.h"
+#include "newton-irPass-LLVMIR-quantization.h"
 #endif /* __cplusplus */
 
 #include <algorithm>
@@ -218,11 +219,17 @@ irPassLLVMIROptimizeByRange(State * N)
 		constantSubstitution(N, boundInfo, mi);
 	}
 
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
-	for (auto & mi : *Mod)
-	{
-		shrinkType(N, boundInfo, mi);
-	}
+//	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
+//	for (auto & mi : *Mod)
+//	{
+//		shrinkType(N, boundInfo, mi);
+//	}
+
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "auto quantize data by precision\n");
+    for (auto & mi : *Mod)
+    {
+        autoQuantization(N, boundInfo, mi);
+    }
 
 	dumpIR(N, "output", std::move(Mod));
 }
