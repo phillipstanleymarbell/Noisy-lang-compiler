@@ -196,33 +196,35 @@ irPassLLVMIROptimizeByRange(State * N)
 		rangeAnalysis(N, boundInfo, mi);
 	}
 
-//	flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
-//	for (auto & mi : *Mod)
-//	{
-//		simplifyControlFlow(N, boundInfo, mi);
-//	}
-//
-//	passManager.add(createCFGSimplificationPass());
-//	passManager.add(createInstSimplifyLegacyPass());
-//	passManager.run(*Mod);
-//
-//	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
-//	for (auto & mi : *Mod)
-//	{
-//		rangeAnalysis(N, boundInfo, mi);
-//	}
-//
-//	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
-//	for (auto & mi : *Mod)
-//	{
-//		constantSubstitution(N, boundInfo, mi);
-//	}
+#ifdef DEBUG_TS
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
+	for (auto & mi : *Mod)
+	{
+		simplifyControlFlow(N, boundInfo, mi);
+	}
 
+	passManager.add(createCFGSimplificationPass());
+	passManager.add(createInstSimplifyLegacyPass());
+	passManager.run(*Mod);
+
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
+	for (auto & mi : *Mod)
+	{
+		rangeAnalysis(N, boundInfo, mi);
+	}
+
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
+	for (auto & mi : *Mod)
+	{
+		constantSubstitution(N, boundInfo, mi);
+	}
+#else
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
 	for (auto & mi : *Mod)
 	{
 		shrinkType(N, boundInfo, mi);
 	}
+#endif
 
 	dumpIR(N, "output", std::move(Mod));
 }

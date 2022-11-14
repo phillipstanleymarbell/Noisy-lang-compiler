@@ -246,7 +246,7 @@ perf_benchmark_suite_float_opt: clean make_ll benchmark_suite_opt compile_lib co
 interface_lib: clean make_ll soft_float_api_opt compile_lib
 
 auto_test_compile:
-	clang++ auto_test.cpp -g -o auto_test
+	clang++ auto_test.cpp -D DEBUG_TS -g -o auto_test
 
 all: default
 

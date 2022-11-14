@@ -247,7 +247,6 @@ getTypeInfo(State * N, Value * inValue,
 	switch (inInstType->getTypeID())
 	{
 		case Type::IntegerTyID:
-//			typeInformation = getShrinkIntType(N, inValue, vrRangeIt->second);
 			break;
 		case Type::FloatTyID:
 			break;
@@ -1858,19 +1857,7 @@ shrinkType(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 	 * 1. construct instruction dependency link
 	 * 2. work with roll back strategies
 	 * */
-//	std::vector<std::vector<Value *>> prevDepLink	  = getDependencyLink(N, llvmIrFunction);
 	std::map<Value *, typeInfo>	  typeChangedInst = shrinkInstType(N, boundInfo, llvmIrFunction);
 	mergeCast(N, llvmIrFunction, boundInfo->virtualRegisterRange, typeChangedInst);
-//	std::vector<std::vector<Value *>> newDepLink = getDependencyLink(N, llvmIrFunction);
-
-//	for (auto & depLink : newDepLink)
-//	{
-//		if (rollBackStrategy(N, depLink))
-//		{
-//			rollBackDependencyLink(N, depLink, boundInfo->virtualRegisterRange, typeChangedInst);
-//		}
-//	}
-
-//	mergeCast(N, llvmIrFunction, boundInfo->virtualRegisterRange, typeChangedInst);
 }
 }
