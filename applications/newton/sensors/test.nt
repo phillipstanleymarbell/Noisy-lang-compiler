@@ -31,9 +31,9 @@ test: sensor (
 			) =
 {
 	range bmx055xAcceleration == [3 mjf, 10 mjf],
-    range bmx055yAcceleration == [1 mjf, 16 mjf],
-    range bmx055zAcceleration == [90 mjf, 102 mjf],
-    range bmx055fAcceleration == [0 mjf, 127 mjf],
+	range bmx055yAcceleration == [1 mjf, 16 mjf],
+	range bmx055zAcceleration == [90 mjf, 102 mjf],
+	range bmx055fAcceleration == [0 mjf, 127 mjf],
 	range bmx055xMagneto == [0 uT, 127 uT],
 
 	#
@@ -74,29 +74,83 @@ test: sensor (
 	erasureToken bmx055xAcceleration == 16rFEFE,
 	erasureToken bmx055xMagneto == 16rFEFE,
 
+	#
+	#	Precision settings list for the sensor. This is a list of (precision, cost) pairs.
+	#
+	#	The cost is a power or latency (or energy=power*time) cost for accessing values.
+	#
+	#	Cost has a unit of microwatts.
+	#
+	#	Could not find the relevant information in data sheet so I left the cost as 0.
+	#
 	precision bmx055xAcceleration == {
 					(12, -1)
 				},
-    precision bmx055xMagneto == {
-    						(13, -1)
-    					},
 
-	accuracy bmx055xAcceleration == {
-					(0.15 n, 312)
+	precision bmx055yAcceleration == {
+					(12, -1)
 				},
-    accuracy bmx055yAcceleration == {
-                    (0.15 n, 312)
-                },
-    accuracy bmx055zAcceleration == {
-                    (0.15 n, 312)
-                },
-    accuracy bmx055fAcceleration == {
-                    (0.15 n, 312)
-                },
-    accuracy bmx055xMagneto == {
-    						(1.0 uT, 408),
-    						(0.6 uT, 1200),
-    						(0.5 uT, 1920),
-    						(0.3 uT, 11760)
-    					}
+
+	precision bmx055zAcceleration == {
+					(12, -1)
+				},
+				
+	precision bmx055xMagneto == {
+						(13, -1)
+					},
+
+	precision bmx055yMagneto == {
+						(13, -1)
+					},
+
+	precision bmx055zMagneto == {
+						(15, -1)
+					},
+
+	#
+	#	Accuracy settings list for the sensor. This is a list of (accuracy, cost) pairs.
+	#
+	#	Noise and offset values are used here for accuracy.
+	#
+	#	Noise values of Accelerometer can be found in Table 2 of document 1.2 on page 12.
+	#
+	#	Product of the total supply current and supply voltage in normal mode is used as the cost value.
+	#
+	#	Supply voltage is 2.4 V which is stated in the footnote on page 11.
+	#
+	#	Current values (normal mode) of Accelerometer can be found in Table 2 of document 1.2 on page 11.
+	#
+	
+	accuracy bmx055xAcceleration == {
+					(150 n, 312)
+				},
+
+	accuracy bmx055yAcceleration == {
+					(150 n, 312)
+				},
+
+	accuracy bmx055zAcceleration == {
+					(150 n, 312)
+				},
+				
+	accuracy bmx055xMagneto == {
+						(1.0 uT, 408),
+						(0.6 uT, 1200),
+						(0.5 uT, 1920),
+						(0.3 uT, 11760)
+					},
+
+	accuracy bmx055yMagneto == {
+						(1.0 uT, 408),
+						(0.6 uT, 1200),
+						(0.5 uT, 1920),
+						(0.3 uT, 11760)
+					},
+
+	accuracy bmx055zMagneto == {
+						(1.4 uT, 408),
+						(0.6 uT, 1200),
+						(0.5 uT, 1920),
+						(0.3 uT, 11760)
+					}
 }
