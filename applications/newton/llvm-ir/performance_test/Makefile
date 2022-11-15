@@ -26,7 +26,7 @@ max_opt_fn = opt ../$(1).ll --O3 -S -o $(OUT_FILE)
 non_opt_fn = cp ../$(1).ll $(OUT_FILE)
 necessary_opt_fn = opt ../$(1).ll --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
-newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
+newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check --llvm-ir-auto-quantization ../../applications/newton/sensors/test.nt
 
 compile_main_fn = $(CC) $(TARGET_FLAG) main.c -no-pie -L. -lout -D $(1) -O2 -g -o main_out -lm
 

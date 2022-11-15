@@ -36,8 +36,9 @@ using namespace llvm;
 extern "C"
 {
 void
-autoQuantization(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction)
+irPassLLVMIRAutoQuantization(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction)
 {
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tauto quantization.\n");
 	/*
 	 * Some special instructions that need to pay attention:
 	 * %i = alloca type, the type of this instruction is "type*"
