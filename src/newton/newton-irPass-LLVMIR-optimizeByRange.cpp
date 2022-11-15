@@ -219,11 +219,11 @@ irPassLLVMIROptimizeByRange(State * N)
 		constantSubstitution(N, boundInfo, mi);
 	}
 
-//	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
-//	for (auto & mi : *Mod)
-//	{
-//		shrinkType(N, boundInfo, mi);
-//	}
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
+	for (auto & mi : *Mod)
+	{
+		shrinkType(N, boundInfo, mi);
+	}
 
     flexprint(N->Fe, N->Fm, N->Fpinfo, "auto quantize data by precision\n");
     for (auto & mi : *Mod)
