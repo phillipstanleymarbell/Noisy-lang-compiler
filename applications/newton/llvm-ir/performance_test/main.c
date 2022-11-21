@@ -45,10 +45,10 @@
  * random floating point, [min, max]
  * */
 bmx055xAcceleration
-randomFloat(bmx055xAcceleration min, bmx055xAcceleration max)
+randomDouble(bmx055xAcceleration min, bmx055xAcceleration max)
 {
-    bmx055xAcceleration randFpValue = min + 1.0 * rand() / RAND_MAX * (max - min);
-	return randFpValue;
+    bmx055xAcceleration randDbValue = min + 1.0 * rand() / RAND_MAX * (max - min);
+	return randDbValue;
 }
 
 /*
@@ -143,6 +143,12 @@ main(int argc, char** argv)
         uint8_add_test(randomIntArr(0, 127), randomIntArr(0, 127), result);
 #elif defined(BENCHMARK_SUITE_DOUBLE)
         bmx055zAcceleration result[iteration_num];
+        bmx055zAcceleration leftOps[iteration_num];
+        bmx055zAcceleration rightOps[iteration_num];
+        for (size_t idx = 0; idx < iteration_num; idx++) {
+            leftOps[idx] = randomDouble(0, 127);
+            rightOps[idx] = randomDouble(0, 127);
+        }
         double_add_test(randomDoubleArr(0, 127), randomDoubleArr(0, 127), result);
 //        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
 #elif defined(BENCHMARK_SUITE_FLOAT)
@@ -153,8 +159,8 @@ main(int argc, char** argv)
         uint64_t leftOps[iteration_num];
         uint64_t rightOps[iteration_num];
         for (size_t idx = 0; idx < iteration_num; idx++) {
-            leftOps[idx] = asuint(randomDoubleArr(0, 127)[idx]);
-            rightOps[idx] = asuint(randomDoubleArr(0, 127)[idx]);
+            leftOps[idx] = asuint(randomDouble(0, 127));
+            rightOps[idx] = asuint(randomDouble(0, 127));
         }
         asuint_add_test(leftOps, rightOps, result);
 //        printf("%f\t%f\t%f\t%f\t%f\n", asdouble(result[0]), asdouble(result[1]),
@@ -165,8 +171,8 @@ main(int argc, char** argv)
         int leftOps[iteration_num];
         int rightOps[iteration_num];
         for (size_t idx = 0; idx < iteration_num; idx++) {
-            leftOps[idx] = (int)(randomDoubleArr(0, 127)[idx] / 0.98 + 0.5);
-            rightOps[idx] = (int)(randomDoubleArr(0, 127)[idx] / 0.98 + 0.5);
+            leftOps[idx] = (int)(randomDouble(0, 127) / 0.98 + 0.5);
+            rightOps[idx] = (int)(randomDouble(0, 127) / 0.98 + 0.5);
         }
         quant_add_test(leftOps, rightOps, result);
         for (size_t idx = 0; idx < iteration_num; idx++) {

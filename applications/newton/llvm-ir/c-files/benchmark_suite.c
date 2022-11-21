@@ -113,10 +113,12 @@ double combineRealNumber(bool sign, uint16_t exponent, uint16_t fraction) {
 }
 
 void asuint_add_test(uint64_t* leftOp, uint64_t* rightOp, uint64_t* result) {
-    uint64_t long_word = asuint(12.789);
-    bool sign = extractSign(long_word);
-    uint16_t exponent = extractExponent(long_word);
-    uint16_t fraction = extractFraction(long_word);
+//    uint64_t long_word = asuint(12.789);
+//    bool sign = extractSign(long_word);
+//    uint16_t exponent = extractExponent(long_word);
+//    uint16_t fraction = extractFraction(long_word);
+//    printf("extract:::::%u\t%u\t%u\t%f\n", sign, exponent, fraction,
+//           combineRealNumber(sign, exponent, fraction));
     for (size_t idx = 0; idx < iteration_num; idx++) {
         result[idx] = leftOp[idx] + rightOp[idx];
 //        uint32_t test_msw = extractMSW(long_word);
@@ -125,24 +127,23 @@ void asuint_add_test(uint64_t* leftOp, uint64_t* rightOp, uint64_t* result) {
 //        printf("test::::::%x\t%x\t%lx\t%f\n", test_msw, test_lsw, test_long_word,
 //               asdouble(test_long_word));
 //        printf("convert:::::%f\t%f\n", asfloat(test_msw), asfloat(test_lsw));
-//        printf("extract:::::%u\t%u\t%u\t%f\n", sign, exponent, fraction,
-//               combineRealNumber(sign, exponent, fraction));
 
         bool leftOpSign = extractSign(leftOp[idx]);
         uint16_t leftOpExponent = extractExponent(leftOp[idx]);
         uint16_t leftOpFraction = extractFraction(leftOp[idx]);
+        uint16_t rightOpExponent = extractExponent(rightOp[idx]);
+        uint16_t rightOpFraction = extractFraction(rightOp[idx]);
 //        printf("extract:::::%f\t%u\t%u\t%u\t%f\n", asdouble(leftOp[idx]), leftOpSign, leftOpExponent,
 //               leftOpFraction, combineRealNumber(leftOpSign, leftOpExponent, leftOpFraction));
 
 //        printf("test:::::%x\t%x\n", ((1<<12)+fraction)<<(exponent-1023),
 //               ((1<<12)+leftOpFraction)<<(leftOpExponent-1023));
-        uint16_t exponent_res = exponent + leftOpExponent;
-        uint16_t fraction_res = fraction + leftOpFraction;
-        uint64_t x = combineRealNumber(sign, exponent_res, fraction_res);
+        uint64_t x = combineRealNumber(0, leftOpExponent, 2451 + leftOpFraction);
+        uint64_t y = combineRealNumber(0, rightOpExponent, 3918 + leftOpFraction);
 
 
 //        uint64_t x = leftOp[idx] + asuint(12.789);
-        uint64_t y = rightOp[idx] + asuint(15.653);
+//        uint64_t y = rightOp[idx] + asuint(15.653);
         uint64_t z = x + y;
         result[idx] = result[idx] * ((int)z%100);
 //        printf("%lu\t%lu\t%lu\t%lu\t%lu\t%lu\t%lu\t%lu\n",
@@ -160,8 +161,8 @@ void quant_add_test(int* leftOp, int* rightOp,
                     int* result) {
     for (size_t idx = 0; idx < iteration_num; idx++) {
         result[idx] = leftOp[idx] + rightOp[idx];
-        int x = leftOp[idx] + (int)(12.789 / 0.98 + 0.5);
-        int y = rightOp[idx] + (int)(15.653 / 0.98 + 0.5);
+        int x = leftOp[idx] + 13;
+        int y = rightOp[idx] + 16;
         int z = x + y;
         result[idx] = result[idx] * ((int)z%100);
     }
