@@ -179,6 +179,12 @@ compile_benchmark_suite_double:
 compile_benchmark_suite_float:
 	$(call compile_main_fn,BENCHMARK_SUITE_FLOAT)
 
+compile_benchmark_suite_asuint:
+	$(call compile_main_fn,BENCHMARK_SUITE_ASUINT)
+
+compile_benchmark_suite_asuint:
+	$(call compile_main_fn,BENCHMARK_SUITE_QUANT)
+
 soft_float_api_non_opt:
 	$(call max_opt_fn,soft_float_api)
 
@@ -242,6 +248,12 @@ perf_benchmark_suite_double_opt: clean make_ll benchmark_suite_opt compile_lib c
 perf_benchmark_suite_float: clean make_ll benchmark_suite_non_opt compile_lib compile_benchmark_suite_float
 
 perf_benchmark_suite_float_opt: clean make_ll benchmark_suite_opt compile_lib compile_benchmark_suite_float
+
+perf_benchmark_suite_asuint: clean make_ll benchmark_suite_non_opt compile_lib compile_benchmark_suite_asuint
+
+perf_benchmark_suite_asuint_opt: clean make_ll benchmark_suite_opt compile_lib compile_benchmark_suite_asuint
+
+perf_benchmark_suite_quant: clean make_ll benchmark_suite_non_opt compile_lib compile_benchmark_suite_asuint
 
 interface_lib: clean make_ll soft_float_api_opt compile_lib
 

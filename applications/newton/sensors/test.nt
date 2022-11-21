@@ -99,14 +99,6 @@ test: sensor (
 						(13, -1)
 					},
 
-	precision bmx055yMagneto == {
-						(13, -1)
-					},
-
-	precision bmx055zMagneto == {
-						(15, -1)
-					},
-
 	#
 	#	Accuracy settings list for the sensor. This is a list of (accuracy, cost) pairs.
 	#
@@ -135,20 +127,6 @@ test: sensor (
 				
 	accuracy bmx055xMagneto == {
 						(1.0 uT, 408),
-						(0.6 uT, 1200),
-						(0.5 uT, 1920),
-						(0.3 uT, 11760)
-					},
-
-	accuracy bmx055yMagneto == {
-						(1.0 uT, 408),
-						(0.6 uT, 1200),
-						(0.5 uT, 1920),
-						(0.3 uT, 11760)
-					},
-
-	accuracy bmx055zMagneto == {
-						(1.4 uT, 408),
 						(0.6 uT, 1200),
 						(0.5 uT, 1920),
 						(0.3 uT, 11760)

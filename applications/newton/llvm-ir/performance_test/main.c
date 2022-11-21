@@ -38,16 +38,8 @@
 #include <stdio.h>
 #include "stdint.h"
 #include <stdlib.h>
+#include "../c-files/perf_test_api.h"
 #include "../c-files/fdlibm.h"
-
-/*
- * Definitions generated from Newton
- */
-typedef double bmx055xAcceleration;  // [-16, 16]
-typedef double bmx055zAcceleration;  // [0, 127]
-typedef float bmx055fAcceleration;  // [0, 127]
-typedef int64_t bmx055xMagneto;      // [0, 127]
-#define iteration_num 5
 
 /*
  * random floating point, [min, max]
@@ -147,11 +139,39 @@ main(int argc, char** argv)
 #elif defined(FLOAT64_SIN)
         result = float64_sin(randomFloat(parameters[0], parameters[1]));
 #elif defined(BENCHMARK_SUITE_INT)
-        result = uint8_add_test(randomIntArr(0, 127), randomIntArr(0, 127));
+        bmx055xMagneto result[iteration_num];
+        uint8_add_test(randomIntArr(0, 127), randomIntArr(0, 127), result);
 #elif defined(BENCHMARK_SUITE_DOUBLE)
-        result = double_add_test(randomDoubleArr(0, 127), randomDoubleArr(0, 127));
+        bmx055zAcceleration result[iteration_num];
+        double_add_test(randomDoubleArr(0, 127), randomDoubleArr(0, 127), result);
+//        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
 #elif defined(BENCHMARK_SUITE_FLOAT)
-        result = float_add_test(randomFloatArr(0, 127), randomFloatArr(0, 127));
+        bmx055fAcceleration result[iteration_num];
+        float_add_test(randomFloatArr(0, 127), randomFloatArr(0, 127), result);
+#elif defined(BENCHMARK_SUITE_ASUINT)
+        uint64_t result[iteration_num];
+        uint64_t leftOps[iteration_num];
+        uint64_t rightOps[iteration_num];
+        for (size_t idx = 0; idx < iteration_num; idx++) {
+            leftOps[idx] = asuint(randomDoubleArr(0, 127)[idx]);
+            rightOps[idx] = asuint(randomDoubleArr(0, 127)[idx]);
+        }
+        asuint_add_test(leftOps, rightOps, result);
+//        printf("%f\t%f\t%f\t%f\t%f\n", asdouble(result[0]), asdouble(result[1]),
+//               asdouble(result[2]), asdouble(result[3]), asdouble(result[4]));
+#elif defined(BENCHMARK_SUITE_QUANT)
+        int result[iteration_num];
+        double result_res[iteration_num];
+        int leftOps[iteration_num];
+        int rightOps[iteration_num];
+        for (size_t idx = 0; idx < iteration_num; idx++) {
+            leftOps[idx] = (int)(randomDoubleArr(0, 127)[idx] / 0.98 + 0.5);
+            rightOps[idx] = (int)(randomDoubleArr(0, 127)[idx] / 0.98 + 0.5);
+        }
+        quant_add_test(leftOps, rightOps, result);
+        for (size_t idx = 0; idx < iteration_num; idx++) {
+            result_res[idx] = result[idx] * 0.98;
+        }
 #else
 	#error "Benchmark function not defined"
 #endif
