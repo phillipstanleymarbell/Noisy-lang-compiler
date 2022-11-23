@@ -50,6 +50,11 @@ void uint8_add_test(bmx055xMagneto* leftOp, bmx055xMagneto* rightOp,
     return;
 }
 
+/*
+ * a common case testsuite,
+ * this example test code wants to show the performance of computation sensitive program.
+ * the magic numbers and operators in this function are random and meaningless.
+ * */
 void double_add_test(bmx055zAcceleration* leftOp, bmx055zAcceleration* rightOp,
                      bmx055zAcceleration* result) {
     for (size_t idx = 0; idx < iteration_num; idx++) {
@@ -157,10 +162,18 @@ void asuint_add_test(uint64_t* leftOp, uint64_t* rightOp, uint64_t* result) {
     return;
 }
 
+/*
+ * a quantization testsuite for the "double_add_test"
+ * they have same computation pattern.
+ * */
 void quant_add_test(int* leftOp, int* rightOp,
                     int* result) {
     for (size_t idx = 0; idx < iteration_num; idx++) {
         result[idx] = leftOp[idx] + rightOp[idx];
+        /* the resolution of 'bmx055zAcceleration' is 0.98, so
+         * (int)(12.789/0.98) = 13;
+         * (int)(15.653/0.98) = 16;
+         * */
         int x = leftOp[idx] + 13;
         int y = rightOp[idx] + 16;
         int z = x + y;
