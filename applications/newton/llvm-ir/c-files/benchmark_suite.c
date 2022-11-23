@@ -1,12 +1,18 @@
 /*
  * Benchmark Suite for the time consumption of LLVM instructions
  * */
-#include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include "perf_test_api.h"
 
-uint64_t asuint(double t) {
+#define DB_FRACTION_BIT 52
+#define DB_EXPONENT_BIT 11
+#define SIGN_BIT        1
+
+/* we assume to use bmx055xMagneto here,
+ * which means 12 bits in Fraction of IEEE 754 double-precision format
+ * */
+const int useful_bit_num = 10;
+
+static inline uint64_t asUint(double t) {
     union {
         double f;
         uint64_t k;
@@ -14,7 +20,7 @@ uint64_t asuint(double t) {
     return u.k;
 }
 
-uint32_t asuint32(float t) {
+uint32_t asUint32(float t) {
     union {
         float f;
         uint32_t k;
@@ -83,33 +89,49 @@ uint64_t combineWord(uint32_t msw, uint32_t lsw) {
     return long_word;
 }
 
-bool extractSign(uint64_t long_word) {
-    bool sign = long_word >> 63;
+static inline bool extractSign(uint64_t long_word) {
+    bool sign = long_word >> (DB_FRACTION_BIT + DB_EXPONENT_BIT);
     return sign;
 }
 
-uint16_t extractExponent(uint64_t long_word) {
-    uint16_t exponent = long_word >> 52;
-    exponent = exponent << 5;
-    exponent = exponent >> 5;
+static inline uint16_t extractExponent(uint64_t long_word) {
+    // remove sign bit
+    uint64_t exponent = long_word << SIGN_BIT;
+    exponent = exponent >> (SIGN_BIT + DB_FRACTION_BIT);
     return exponent;
 }
 
-uint16_t extractFraction(uint64_t long_word) {
-    // we assume to use bmx055xMagneto here,
-    // which means 12 bits in Fraction of IEEE 754 double-precision format
-    const int useful_bit_num = 12;
+static inline uint16_t extractFraction(uint64_t long_word) {
 //    printf("long_word: %lx\n", long_word);
     // remove sign bit and exponent bits
-    uint64_t shift_left_word = long_word << 12;
+    uint64_t shift_left_word = long_word << (SIGN_BIT + DB_EXPONENT_BIT);
 //    printf("shift left word: %lx\n", shift_left_word);
     uint16_t fraction = shift_left_word >> (64-useful_bit_num);
 //    printf("fraction: %x\n", fraction);
     return fraction;
 }
 
-double combineRealNumber(bool sign, uint16_t exponent, uint16_t fraction) {
-    // (-1)^sign * (1.fraction) * 2^(exponent-1023)
+/*
+ * split a double value into several parts based on IEEE 754 (https://en.wikipedia.org/wiki/IEEE_754).
+ * double: 1 bit sign + 11 bits exponent + 52 bits fraction
+ * */
+partsOfFP splitDouble(double value) {
+    partsOfFP res;
+    uint64_t intValue = asUint(value);
+    res.signBit = extractSign(intValue);
+    res.fractionPart = extractFraction(intValue);
+    res.exponentPart = extractExponent(intValue);
+    return res;
+}
+
+/*
+ * combine three parts to a double value based on IEEE 754 (https://en.wikipedia.org/wiki/IEEE_754).
+ * double = (-1)^sign * (1.fraction) * 2^(exponent-1023)
+ * */
+double combineRealNumber(partsOfFP value) {
+    bool sign = value.signBit;
+    uint16_t exponent = value.exponentPart;
+    uint16_t fraction = value.fractionPart;
     int integer_part =(1-sign*2) * (2 << (exponent - 1023 - 1));
 //    printf("integer_part = %d\n", integer_part);
     double fraction_part = (double)fraction / (1 << 12) + 1;
@@ -117,47 +139,44 @@ double combineRealNumber(bool sign, uint16_t exponent, uint16_t fraction) {
     return integer_part * fraction_part;
 }
 
-void asuint_add_test(uint64_t* leftOp, uint64_t* rightOp, uint64_t* result) {
-//    uint64_t long_word = asuint(12.789);
-//    bool sign = extractSign(long_word);
-//    uint16_t exponent = extractExponent(long_word);
-//    uint16_t fraction = extractFraction(long_word);
-//    printf("extract:::::%u\t%u\t%u\t%f\n", sign, exponent, fraction,
-//           combineRealNumber(sign, exponent, fraction));
+static inline partsOfFP partsOfFPMul(partsOfFP lhs, partsOfFP rhs) {
+    partsOfFP res;
+    res.signBit = lhs.signBit * rhs.signBit;
+    res.fractionPart = lhs.fractionPart * rhs.fractionPart;
+    res.exponentPart = lhs.exponentPart + rhs.exponentPart;
+    return res;
+}
+
+static inline partsOfFP partsOfFPAdd(partsOfFP lhs, partsOfFP rhs) {
+    partsOfFP res;
+    if (lhs.signBit == rhs.signBit) {
+
+    } else {
+        /*
+         * need to check
+         * */
+    }
+    return res;
+}
+
+/*
+ * nonsense, it's just another version of soft-float arithmetic
+ * */
+void asUint_add_test(bmx055zAcceleration* leftOp, bmx055zAcceleration* rightOp,
+                     bmx055zAcceleration* result) {
     for (size_t idx = 0; idx < iteration_num; idx++) {
-        result[idx] = leftOp[idx] + rightOp[idx];
-//        uint32_t test_msw = extractMSW(long_word);
-//        uint32_t test_lsw = extractLSW(long_word);
-//        uint64_t test_long_word = combineWord(test_msw, test_lsw);
-//        printf("test::::::%x\t%x\t%lx\t%f\n", test_msw, test_lsw, test_long_word,
-//               asdouble(test_long_word));
-//        printf("convert:::::%f\t%f\n", asfloat(test_msw), asfloat(test_lsw));
-
-        bool leftOpSign = extractSign(leftOp[idx]);
-        uint16_t leftOpExponent = extractExponent(leftOp[idx]);
-        uint16_t leftOpFraction = extractFraction(leftOp[idx]);
-        uint16_t rightOpExponent = extractExponent(rightOp[idx]);
-        uint16_t rightOpFraction = extractFraction(rightOp[idx]);
-//        printf("extract:::::%f\t%u\t%u\t%u\t%f\n", asdouble(leftOp[idx]), leftOpSign, leftOpExponent,
-//               leftOpFraction, combineRealNumber(leftOpSign, leftOpExponent, leftOpFraction));
-
-//        printf("test:::::%x\t%x\n", ((1<<12)+fraction)<<(exponent-1023),
-//               ((1<<12)+leftOpFraction)<<(leftOpExponent-1023));
-        uint64_t x = combineRealNumber(0, leftOpExponent, 2451 + leftOpFraction);
-        uint64_t y = combineRealNumber(0, rightOpExponent, 3918 + leftOpFraction);
-
-
-//        uint64_t x = leftOp[idx] + asuint(12.789);
-//        uint64_t y = rightOp[idx] + asuint(15.653);
-        uint64_t z = x + y;
-        result[idx] = result[idx] * ((int)z%100);
-//        printf("%lu\t%lu\t%lu\t%lu\t%lu\t%lu\t%lu\t%lu\n",
-//               leftOp[idx], rightOp[idx], asuint(12.789), asuint(15.653),
-//               x, y, z, result[idx]);
-//        printf("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", asdouble(leftOp[idx]),
-//               asdouble(rightOp[idx]), asdouble(asuint(12.789)),
-//               asdouble(asuint(15.653)), asdouble(x), asdouble(y),
-//               asdouble(z), asdouble(result[idx]));
+        partsOfFP partsOfLeft = splitDouble(leftOp[idx]);
+        partsOfFP partsOfRight = splitDouble(rightOp[idx]);
+        partsOfFP partsOfConst1 = splitDouble(12.789);
+        partsOfFP partsOfConst2 = splitDouble(15.653);
+        partsOfFP res = partsOfFPAdd(partsOfLeft, partsOfRight);
+        partsOfFP x = partsOfFPAdd(partsOfLeft, partsOfConst1);
+        partsOfFP y = partsOfFPAdd(partsOfRight, partsOfConst2);
+        partsOfFP z = partsOfFPAdd(x, y);
+        int int_z = (int) combineRealNumber(z) % 100;
+        z = splitDouble((double)int_z);
+        res = partsOfFPMul(res, z);
+        result[idx] = combineRealNumber(res);
     }
     return;
 }

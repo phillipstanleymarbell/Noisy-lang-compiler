@@ -34,9 +34,6 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
-
-#include <stdio.h>
-#include "stdint.h"
 #include <stdlib.h>
 #include "../c-files/perf_test_api.h"
 #include "../c-files/fdlibm.h"
@@ -48,7 +45,7 @@ bmx055xAcceleration
 randomDouble(bmx055xAcceleration min, bmx055xAcceleration max)
 {
     bmx055xAcceleration randDbValue = min + 1.0 * rand() / RAND_MAX * (max - min);
-	return randDbValue;
+	return 3.97;
 }
 
 /*
@@ -110,7 +107,7 @@ main(int argc, char** argv)
 	 * but it's seemingly forbidden in C/C++.
 	 * So we need to write the function name manually here.
 	 * */
-	for (int i = 0; i < 1000000; i++)
+	for (int i = 0; i < 1; i++)
 	{
 #ifdef CONTROL_FLOW_FUNC
 		result = controlFlowFunc(randomFloat(-16.0, 16.0));
@@ -149,22 +146,21 @@ main(int argc, char** argv)
             leftOps[idx] = randomDouble(0, 127);
             rightOps[idx] = randomDouble(0, 127);
         }
-        double_add_test(randomDoubleArr(0, 127), randomDoubleArr(0, 127), result);
-//        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+        double_add_test(leftOps, rightOps, result);
+        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
 #elif defined(BENCHMARK_SUITE_FLOAT)
         bmx055fAcceleration result[iteration_num];
         float_add_test(randomFloatArr(0, 127), randomFloatArr(0, 127), result);
 #elif defined(BENCHMARK_SUITE_ASUINT)
-        uint64_t result[iteration_num];
-        uint64_t leftOps[iteration_num];
-        uint64_t rightOps[iteration_num];
+        bmx055zAcceleration result[iteration_num];
+        bmx055zAcceleration leftOps[iteration_num];
+        bmx055zAcceleration rightOps[iteration_num];
         for (size_t idx = 0; idx < iteration_num; idx++) {
-            leftOps[idx] = asuint(randomDouble(0, 127));
-            rightOps[idx] = asuint(randomDouble(0, 127));
+            leftOps[idx] = randomDouble(0, 127);
+            rightOps[idx] = randomDouble(0, 127);
         }
-        asuint_add_test(leftOps, rightOps, result);
-//        printf("%f\t%f\t%f\t%f\t%f\n", asdouble(result[0]), asdouble(result[1]),
-//               asdouble(result[2]), asdouble(result[3]), asdouble(result[4]));
+        asUint_add_test(leftOps, rightOps, result);
+        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
 #elif defined(BENCHMARK_SUITE_QUANT)
         int result[iteration_num];
         double result_res[iteration_num];
@@ -178,6 +174,8 @@ main(int argc, char** argv)
         for (size_t idx = 0; idx < iteration_num; idx++) {
             result_res[idx] = result[idx] * 0.98;
         }
+        printf("%f\t%f\t%f\t%f\t%f\n", result_res[0], result_res[1],
+               result_res[2], result_res[3], result_res[4]);
 #else
 	#error "Benchmark function not defined"
 #endif
