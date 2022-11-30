@@ -45,7 +45,7 @@ bmx055xAcceleration
 randomDouble(bmx055xAcceleration min, bmx055xAcceleration max)
 {
     bmx055xAcceleration randDbValue = min + 1.0 * rand() / RAND_MAX * (max - min);
-	return 3.97;
+	return randDbValue;
 }
 
 /*
@@ -107,7 +107,7 @@ main(int argc, char** argv)
 	 * but it's seemingly forbidden in C/C++.
 	 * So we need to write the function name manually here.
 	 * */
-	for (int i = 0; i < 1; i++)
+	for (int i = 0; i < 1000000; i++)
 	{
 #ifdef CONTROL_FLOW_FUNC
 		result = controlFlowFunc(randomFloat(-16.0, 16.0));
@@ -147,7 +147,7 @@ main(int argc, char** argv)
             rightOps[idx] = randomDouble(0, 127);
         }
         double_add_test(leftOps, rightOps, result);
-        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+//        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
 #elif defined(BENCHMARK_SUITE_FLOAT)
         bmx055fAcceleration result[iteration_num];
         float_add_test(randomFloatArr(0, 127), randomFloatArr(0, 127), result);
@@ -160,7 +160,7 @@ main(int argc, char** argv)
             rightOps[idx] = randomDouble(0, 127);
         }
         asUint_add_test(leftOps, rightOps, result);
-        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+//        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
 #elif defined(BENCHMARK_SUITE_QUANT)
         int result[iteration_num];
         double result_res[iteration_num];
@@ -176,6 +176,16 @@ main(int argc, char** argv)
         }
         printf("%f\t%f\t%f\t%f\t%f\n", result_res[0], result_res[1],
                result_res[2], result_res[3], result_res[4]);
+//        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+#elif defined(BENCHMARK_SUITE_FIXEDPOINT)
+        bmx055zAcceleration result[iteration_num];
+        bmx055zAcceleration leftOps[iteration_num];
+        bmx055zAcceleration rightOps[iteration_num];
+        for (size_t idx = 0; idx < iteration_num; idx++) {
+            leftOps[idx] = randomDouble(0, 127);
+            rightOps[idx] = randomDouble(0, 127);
+        }
+        fixed_point_add_test(leftOps, rightOps, result);
 #else
 	#error "Benchmark function not defined"
 #endif

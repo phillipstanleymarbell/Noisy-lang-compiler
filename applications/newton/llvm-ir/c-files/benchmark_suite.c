@@ -2,6 +2,8 @@
  * Benchmark Suite for the time consumption of LLVM instructions
  * */
 #include "perf_test_api.h"
+#include <math.h>
+#include <assert.h>
 
 #define DB_FRACTION_BIT 52
 #define DB_EXPONENT_BIT 11
@@ -185,8 +187,7 @@ void asUint_add_test(bmx055zAcceleration* leftOp, bmx055zAcceleration* rightOp,
  * a quantization testsuite for the "double_add_test"
  * they have same computation pattern.
  * */
-void quant_add_test(int* leftOp, int* rightOp,
-                    int* result) {
+void quant_add_test(int* leftOp, int* rightOp, int* result) {
     for (size_t idx = 0; idx < iteration_num; idx++) {
         result[idx] = leftOp[idx] + rightOp[idx];
         /* the resolution of 'bmx055zAcceleration' is 0.98, so
@@ -209,6 +210,152 @@ void float_add_test(bmx055fAcceleration* leftOp, bmx055fAcceleration* rightOp,
         float y = rightOp[idx] + 15.653;
         float z = x + y;
         result[idx] = result[idx] * ((int)z%100);
+    }
+    return;
+}
+
+// precomputed value:
+#define Q   8
+#define K   (1 << (Q - 1))
+
+// saturate to range of int16_t
+int16_t sat16(int32_t x)
+{
+    if (x > INT16_MAX || x < INT16_MIN)
+        /*
+         * In the real code, it changes to a higher bit number
+         * */
+        assert(false && "overflow!!!");
+    else
+        return (int16_t)x;
+}
+
+// saturate to range of int32_t
+int32_t sat32(int64_t x)
+{
+    if (x > INT32_MAX || x < INT32_MIN)
+        /*
+         * In the real code, it changes to a higher bit number
+         * */
+        assert(false && "overflow!!!");
+    else
+        return (int32_t)x;
+}
+
+int16_t q_add_sat(int16_t a, int16_t b)
+{
+    int32_t tmp;
+
+    tmp = (int32_t)a + (int32_t)b;
+
+    return sat16(tmp);
+}
+
+int16_t q_sub(int16_t a, int16_t b)
+{
+    return (int16_t)(a - b);
+}
+
+int16_t q_mul(int16_t a, int16_t b)
+{
+    int16_t result;
+    int32_t temp;
+
+    temp = (int32_t)a * (int32_t)b; // result type is operand's type
+    // Rounding; mid-values are rounded up
+    /*
+     * Rounding is possible by adding a 'rounding addend' of
+     * half of the scaling factor before shifting;
+     *
+     * The proof:
+     * Res = round(x/y) = (int)(x/y +/- 0.5) = (int)((x +/- y/2)/y)
+     * let y = 2^Q,
+     * Res = (int)((x +/- 2^(Q-1))/2^Q) = (x +/- 2^(Q-1)) >> Q
+     * */
+    if ((temp >> 31))
+        temp -= K;
+    else
+        temp += K;
+    // Correct by dividing by base and saturate result
+    result = sat16(temp >> Q);
+
+    return result;
+}
+
+int32_t q_mul_32(int32_t a, int32_t b)
+{
+    int32_t result;
+    int64_t temp;
+
+    temp = (int64_t)a * (int64_t)b; // result type is operand's type
+    // Rounding; mid-values are rounded up
+    /*
+     * Rounding is possible by adding a 'rounding addend' of
+     * half of the scaling factor before shifting;
+     *
+     * The proof:
+     * Res = round(x/y) = (int)(x/y +/- 0.5) = (int)((x +/- y/2)/y)
+     * let y = 2^Q,
+     * Res = (int)((x +/- 2^(Q-1))/2^Q) = (x +/- 2^(Q-1)) >> Q
+     * */
+    if ((temp >> 63))
+        temp -= K;
+    else
+        temp += K;
+    // Correct by dividing by base and saturate result
+    result = sat32(temp >> Q);
+
+    return result;
+}
+
+int16_t q_div(int16_t a, int16_t b)
+{
+    /* pre-multiply by the base (Upscale to Q16 so that the result will be in Q8 format) */
+    int32_t temp = (int32_t)a << Q;
+    /* Rounding: mid-values are rounded up (down for negative values). */
+    /*
+     * The proof:
+     * Res = round(a/b)
+     * Because trunc negative remove the fraction, e.g. (int)(-1.833) = -1
+     * if a and b have the same sign bit, Res = (int)(a/b + 0.5) = floor((a+b/2)/b)
+     * else Res = (int)(a/b - 0.5) = floor((a-b/2)/b)
+     * */
+    if ((temp >> 31) ^ (b >> 15)) {
+        temp -= (b >> 1);
+    } else {
+        temp += (b >> 1);
+    }
+    return (int16_t)(temp / b);
+}
+
+/*
+ * a testsuite for q-format-fixed-point-quantization,
+ * this example test code wants to show the performance of computation sensitive program.
+ * the magic numbers and operators in this function are random and meaningless.
+ * */
+void fixed_point_add_test(bmx055zAcceleration* leftOp, bmx055zAcceleration* rightOp,
+                          bmx055zAcceleration* result) {
+    int16_t c1 = (int16_t)round(12.789 * (1 << Q));
+    int16_t c2 = (int16_t)round(15.653 * (1 << Q));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        int16_t leftOpQuant = (int16_t)round(leftOp[idx] * (1 << Q));
+        int16_t rightOpQuant = (int16_t)round(rightOp[idx] * (1 << Q));
+        int16_t resultQuant = q_add_sat(leftOpQuant, rightOpQuant);
+        int16_t x = q_add_sat(leftOpQuant, c1);
+        int16_t y = q_add_sat(rightOpQuant, c2);
+        int16_t z = q_add_sat(x, y);
+        /*
+         * For non-linear operator, change back to floating-point
+         * */
+        double fp_z = (double)(z >> Q);
+        int16_t temp_z = (int)fp_z%100;
+        temp_z = temp_z << Q;
+        /*
+         * When the range analyzer find the range of result might need 32 bits,
+         * it changes to upper precision
+         * */
+        int32_t resultQuant_32 = q_mul_32(resultQuant, temp_z);
+        result[idx] = (double)resultQuant_32 / (1<<Q);
     }
     return;
 }

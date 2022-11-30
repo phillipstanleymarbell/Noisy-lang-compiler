@@ -36,6 +36,10 @@ void asUint_add_test(bmx055zAcceleration* leftOp, bmx055zAcceleration* rightOp,
                      bmx055zAcceleration* result);
 void float_add_test(bmx055fAcceleration* leftOp, bmx055fAcceleration* rightOp,
                     bmx055fAcceleration* result);
+void quant_add_test(int* leftOp, int* rightOp, int* result);
+
+void fixed_point_add_test(bmx055zAcceleration* leftOp, bmx055zAcceleration* rightOp,
+                          bmx055zAcceleration* result);
 
 partsOfFP splitDouble(double value);
 double combineRealNumber(partsOfFP value);
