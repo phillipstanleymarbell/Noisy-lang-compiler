@@ -1,0 +1,102 @@
+#
+#	Authored 2021, Orestis Kaparounakis, Divya Thekke Kanapram. 
+#
+#	All rights reserved.
+#
+#	Redistribution and use in source and binary forms, with or without
+#	modification, are permitted provided that the following conditions
+#	are met:
+#
+#	*	Redistributions of source code must retain the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer.
+#
+#	*	Redistributions in binary form must reproduce the above
+#		copyright notice, this list of conditions and the following
+#		disclaimer in the documentation and/or other materials
+#		provided with the distribution.
+#
+#	*	Neither the name of the author nor the names of its
+#		contributors may be used to endorse or promote products
+#		derived from this software without specific prior written
+#		permission.
+#
+#	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#	FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#	COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#	INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+#	BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#	CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+#	LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+#	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+#	POSSIBILITY OF SUCH DAMAGE.
+#
+
+include "NewtonBaseSignals.nt"
+
+electricPotential : signal = {
+	name = "Electric Potential" English;
+	symbol = V;
+	derivation = work / charge;
+}
+
+batteryVoltage : invariant(voltageDifference : electricPotential) {
+    # Battery is rated at 3.7V
+    electricPotential < 4.0,
+    electricPotential > 3.0
+}
+
+speedLessThanLight : invariant(wearerSpeed : speed) {
+    # Speed of wearer is less than the speed of light
+    wearerSpeed < kNewtonUnithave_SpeedOfLight
+}
+
+temperaturePossibleRange : invariant(measuredTemperature : temperature) {
+    measuredTemperature > 0,                 # pessimistic lower bound   
+    measuredTemperature < 5_500_000_000_000  # pessimistic upper bound
+}
+
+temperatureOperatingRange : invariant(measuredTemperature : temperature) {
+    measuredTemperature > 273.15,   # 0  deg C
+    measuredTemperature < 323.15    # 50 deg C
+}
+
+StateSitting: invariant (kneeAngle: angle, ankleAngle:angle) {
+    kneeAngle >= 30,
+    kneeAngle <= 180,
+    ankleAngle >= 75,
+    ankleAngle >= 120
+}
+
+StateStanding: invariant (kneeAngle: angle, ankleAngle:angle) {
+    kneeAngle >= 160,
+    kneeAngle <= 180,
+    ankleAngle >= 85,
+    ankleAngle >= 95
+}
+
+StateWalking: invariant (kneeAngle: angle, ankleAngle:angle) {
+    kneeAngle >= 65,
+    kneeAngle <= 69,
+    ankleAngle >= 60,
+    ankleAngle >= 110
+}
+
+StateRunning: invariant (kneeAngle: angle, ankleAngle:angle) {
+    kneeAngle >= 45,
+    kneeAngle <= 180,
+    ankleAngle >= 60,
+    ankleAngle>= 110
+}
+
+StateLyingDown  : invariant (kneeAngle: angle, ankleAngle:angle){
+    kneeAngle >= 90,
+    kneeAngle <= 180,
+    ankleAngle >= 90,
+    ankleAngle >= 120
+}
+
+
