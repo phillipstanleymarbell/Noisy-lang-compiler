@@ -945,6 +945,7 @@ bitwiseInterval(const int64_t lhsLow, const int64_t lhsHigh,
 std::pair<Value *, std::pair<double, double>>
 rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool standaloneFunc)
 {
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: Analyze function %s.\n", llvmIrFunction.getName());
 	/*
 	 * information for the union data structure
 	 * */
@@ -1066,7 +1067,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 								/*
 								 * the primary definition of this global value is outside the current translation unit.
 								 * */
-								std::string				      funcName = calledFunction->getName().str();
+								std::string funcName = calledFunction->getName().str();
 								std::map<uint32_t, std::pair<double, double>> argRanges;
 								for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
 								{
@@ -1082,6 +1083,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 										break;
 									}
 								}
+                                if (argRanges.empty()) {
+                                    break;
+                                }
 								double lowRange, highRange;
 								// todo: reconstruct by MACRO or template
 								if (funcName == "log")
@@ -1106,6 +1110,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 								}
 								else if (funcName == "scalbn")
 								{
+                                    if (argRanges.size() != 2) {
+                                        break;
+                                    }
 									lowRange  = scalbn(argRanges[0].first, argRanges[1].first);
 									highRange = scalbn(argRanges[0].second, argRanges[1].second);
 								}
@@ -1116,11 +1123,16 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 								}
 								else if (calledFunction->getName().startswith("llvm.fabs"))
 								{
-									lowRange  = min(min(fabs(argRanges[0].first),
-											    fabs(argRanges[0].second)),
-											0);
-									highRange = max(fabs(argRanges[0].first),
-											fabs(argRanges[0].second));
+                                    if (argRanges[0].first * argRanges[0].second > 0) {
+                                        lowRange  = min(fabs(argRanges[0].first),
+                                                            fabs(argRanges[0].second));
+                                        highRange = max(fabs(argRanges[0].first),
+                                                        fabs(argRanges[0].second));
+                                    } else {
+                                        lowRange = 0;
+                                        highRange = max(fabs(argRanges[0].first),
+                                                        fabs(argRanges[0].second));
+                                    }
 								}
 								else if (calledFunction->getName().startswith("llvm.floor"))
 								{
@@ -1154,7 +1166,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 								 * */
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect CalledFunction %s.\n",
 									  calledFunction->getName().str().c_str());
-								auto innerBoundInfo			   = new BoundInfo();
+								auto innerBoundInfo = new BoundInfo();
 								innerBoundInfo->virtualRegisterVectorRange = boundInfo->virtualRegisterVectorRange;
 								for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
 								{
@@ -1208,8 +1220,10 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 									auto ibIt = boundInfo->virtualRegisterRange.find(vrRange.first);
 									if (ibIt != boundInfo->virtualRegisterRange.end())
 									{
-										auto innerLowerBound			     = vrRange.second.first < ibIt->second.first ? vrRange.second.first : ibIt->second.first;
-										auto innerUpperBound			     = vrRange.second.second > ibIt->second.second ? vrRange.second.second : ibIt->second.second;
+										auto innerLowerBound    = vrRange.second.first < ibIt->second.first ?
+                                                vrRange.second.first : ibIt->second.first;
+										auto innerUpperBound    = vrRange.second.second > ibIt->second.second ?
+                                                vrRange.second.second : ibIt->second.second;
 										boundInfo->virtualRegisterRange[ibIt->first] = std::make_pair(innerLowerBound,
 																	      innerUpperBound);
 									}
