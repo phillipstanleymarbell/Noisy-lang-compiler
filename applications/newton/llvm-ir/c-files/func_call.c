@@ -106,7 +106,8 @@ double funcA(bmx055xAcceleration x, bmx055yAcceleration y) {
     double ret1, ret2;
     for (size_t i = 0; i < 1000000; i++) {
         ret1 += __ieee754_exp(x+0.0000001*i)/10000;
-        ret2 += __ieee754_exp(y+0.000000*i)/10000;
+        ret2 += __ieee754_exp(y+0.0000001*i)/10000;
+//        ret2 += __ieee754_exp(y+0.000000*i)/10000;
     }
     return ret1 + ret2;
 }

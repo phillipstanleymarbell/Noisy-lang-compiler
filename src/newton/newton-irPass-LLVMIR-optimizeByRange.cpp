@@ -206,23 +206,23 @@ irPassLLVMIROptimizeByRange(State * N)
 	passManager.add(createInstSimplifyLegacyPass());
 	passManager.run(*Mod);
 
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
-	for (auto & mi : *Mod)
-	{
-		rangeAnalysis(N, boundInfo, mi);
-	}
-
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
-	for (auto & mi : *Mod)
-	{
-		constantSubstitution(N, boundInfo, mi);
-	}
-
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
-	for (auto & mi : *Mod)
-	{
-		shrinkType(N, boundInfo, mi);
-	}
+//	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
+//	for (auto & mi : *Mod)
+//	{
+//		rangeAnalysis(N, boundInfo, mi);
+//	}
+//
+//	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
+//	for (auto & mi : *Mod)
+//	{
+//		constantSubstitution(N, boundInfo, mi);
+//	}
+//
+//	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
+//	for (auto & mi : *Mod)
+//	{
+//		shrinkType(N, boundInfo, mi);
+//	}
 
 	dumpIR(N, "output", std::move(Mod));
 }
