@@ -63,3 +63,19 @@ opt vec_add_8.ll --O1 --loop-vectorize -S -o vec_add_8_opt.ll
 clang --target=aarch64-arm-none-eabi vec_add_8_opt.ll -o vec_add_8_opt
 ./vec_add_8_opt # 0.000227494 s
 ```
+
+## Run with Newton Compiler
+```bash
+cd ../../../../src/newton
+./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/vec_add.ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
+cd -
+llvm-dis ../vec_add_output.bc
+
+opt ../vec_add.ll --O1 --loop-vectorize -S -o vec_add_opt.ll
+clang vec_add_opt.ll -o vec_add_opt
+./vec_add_opt # 0.000318110 s
+
+opt ../vec_add_output.ll --O1 --loop-vectorize -S -o vec_add_output_opt.ll
+clang vec_add_output_opt.ll -o vec_add_output_opt
+./vec_add_output_opt # 0.000205080 s
+```

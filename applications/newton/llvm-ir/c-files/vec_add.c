@@ -53,9 +53,11 @@ void toc( timespec* start_time, const char* prefix )
     *start_time = current_time;
 }
 
+typedef int32_t bmx055fAcceleration;
+
 #define NUM 102400
 
-void vec_add(int32_t *vec_A, int32_t *vec_B, int32_t *vec_C, int len_vec) {
+void vec_add(bmx055fAcceleration *vec_A, bmx055fAcceleration *vec_B, bmx055fAcceleration *vec_C, int len_vec) {
   int i;
   for (i=0; i<len_vec; i++) {
     vec_C[i] = vec_A[i] + vec_B[i];
