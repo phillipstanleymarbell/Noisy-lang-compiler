@@ -247,6 +247,7 @@ getTypeInfo(State * N, Value * inValue,
 	switch (inInstType->getTypeID())
 	{
 		case Type::IntegerTyID:
+            typeInformation = getShrinkIntType(N, inValue, vrRangeIt->second);
 			break;
 		case Type::FloatTyID:
 			break;

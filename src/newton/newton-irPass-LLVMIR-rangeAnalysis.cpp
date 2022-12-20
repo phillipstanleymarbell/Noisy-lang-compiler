@@ -151,14 +151,14 @@ getGEPArrayRange(State * N, GetElementPtrInst * llvmIrGetElePtrInstruction,
 		{
 			// todo: get range other type of array
 			assert(!valueRangeDebug && "implement when meet");
-			return std::make_pair(0, 0);
+			return std::make_pair(-INFINITY, INFINITY);
 		}
 	}
 	else
 	{
 		// todo: get range from variable array
 		assert(!valueRangeDebug && "implement when meet");
-		return std::make_pair(0, 0);
+		return std::make_pair(-INFINITY, INFINITY);
 	}
 }
 
@@ -1082,6 +1082,9 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 										break;
 									}
 								}
+                                if (argRanges.empty()) {
+                                    break;
+                                }
 								double lowRange, highRange;
 								// todo: reconstruct by MACRO or template
 								if (funcName == "log")
@@ -2583,8 +2586,10 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 						{
 							auto resVec = getGEPArrayRange(N, llvmIrGetElePtrInstruction,
 										       boundInfo->virtualRegisterRange);
-							boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction,
-												std::make_pair(resVec.first, resVec.second));
+                            if (!isinf(resVec.first) || !isinf(resVec.second)) {
+                                boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction,
+                                                                        std::make_pair(resVec.first, resVec.second));
+                            }
 						}
 						else if (llvmIrGetElePtrInstruction->getPointerOperandType()
 							     ->getPointerElementType()
