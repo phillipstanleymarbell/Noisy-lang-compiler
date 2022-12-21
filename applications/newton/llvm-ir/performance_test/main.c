@@ -34,18 +34,88 @@
 	ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
+#include <time.h>
 #include "../c-files/perf_test_api.h"
 #include "../c-files/fdlibm.h"
+
+typedef struct timespec timespec;
+timespec diff(timespec start, timespec end)
+{
+    timespec temp;
+    if ((end.tv_nsec-start.tv_nsec)<0) {
+        temp.tv_sec = end.tv_sec-start.tv_sec-1;
+        temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+    } else {
+        temp.tv_sec = end.tv_sec-start.tv_sec;
+        temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+    }
+    return temp;
+}
+
+timespec sum(timespec t1, timespec t2) {
+    timespec temp;
+    if (t1.tv_nsec + t2.tv_nsec >= 1000000000) {
+        temp.tv_sec = t1.tv_sec + t2.tv_sec + 1;
+        temp.tv_nsec = t1.tv_nsec + t2.tv_nsec - 1000000000;
+    } else {
+        temp.tv_sec = t1.tv_sec + t2.tv_sec;
+        temp.tv_nsec = t1.tv_nsec + t2.tv_nsec;
+    }
+    return temp;
+}
+
+void printTimeSpec(timespec t, const char* prefix) {
+    printf("%s: %d.%09d\n", prefix, (int)t.tv_sec, (int)t.tv_nsec);
+}
+
+timespec tic( )
+{
+    timespec start_time;
+    clock_gettime(CLOCK_REALTIME, &start_time);
+    return start_time;
+}
+
+void toc( timespec* start_time, const char* prefix )
+{
+    timespec current_time;
+    clock_gettime(CLOCK_REALTIME, &current_time);
+    printTimeSpec( diff( *start_time, current_time ), prefix );
+    *start_time = current_time;
+}
+
+static bmx055xMagneto
+randomInt(bmx055xMagneto min, bmx055xMagneto max)
+{
+    bmx055xMagneto randIntValue = (rand() % max) + 1;
+    return randIntValue;
+}
+
+static bmx055yMagneto
+randomInt_8(bmx055yMagneto min, bmx055yMagneto max)
+{
+    bmx055yMagneto randIntValue = (rand() % max) + 1;
+    return randIntValue;
+}
 
 /*
  * random floating point, [min, max]
  * */
-bmx055xAcceleration
+static bmx055xAcceleration
 randomDouble(bmx055xAcceleration min, bmx055xAcceleration max)
 {
     bmx055xAcceleration randDbValue = min + 1.0 * rand() / RAND_MAX * (max - min);
 	return randDbValue;
+}
+
+static bmx055fAcceleration
+randomFloat(bmx055fAcceleration min, bmx055fAcceleration max)
+{
+    bmx055fAcceleration randDbValue = min + 1.0 * rand() / RAND_MAX * (max - min);
+    return randDbValue;
 }
 
 /*
@@ -107,7 +177,7 @@ main(int argc, char** argv)
 	 * but it's seemingly forbidden in C/C++.
 	 * So we need to write the function name manually here.
 	 * */
-	for (int i = 0; i < 1000000; i++)
+	for (int i = 0; i < 1; i++)
 	{
 #ifdef CONTROL_FLOW_FUNC
 		result = controlFlowFunc(randomFloat(-16.0, 16.0));
@@ -137,7 +207,28 @@ main(int argc, char** argv)
         result = float64_sin(randomFloat(parameters[0], parameters[1]));
 #elif defined(BENCHMARK_SUITE_INT)
         bmx055xMagneto result[iteration_num];
-        uint8_add_test(randomIntArr(0, 127), randomIntArr(0, 127), result);
+        bmx055xMagneto leftOps[iteration_num];
+        bmx055xMagneto rightOps[iteration_num];
+        for (size_t idx = 0; idx < iteration_num; idx++) {
+            leftOps[idx] = randomInt(0, 127);
+            rightOps[idx] = randomInt(0, 127);
+        }
+        timespec timer = tic();
+        int32_add_test(leftOps, rightOps, result);
+        toc(&timer, "computation delay");
+        printf("%d\t%d\t%d\t%d\t%d\n", result[0], result[1], result[2], result[3], result[4]);
+#elif defined(BENCHMARK_SUITE_INT_8)
+        bmx055yMagneto result[iteration_num];
+        bmx055yMagneto leftOps[iteration_num];
+        bmx055yMagneto rightOps[iteration_num];
+        for (size_t idx = 0; idx < iteration_num; idx++) {
+            leftOps[idx] = randomInt_8(0, 127);
+            rightOps[idx] = randomInt_8(0, 127);
+        }
+        timespec timer = tic();
+        int8_add_test(leftOps, rightOps, result);
+        toc(&timer, "computation delay");
+        printf("%d\t%d\t%d\t%d\t%d\n", result[0], result[1], result[2], result[3], result[4]);
 #elif defined(BENCHMARK_SUITE_DOUBLE)
         bmx055zAcceleration result[iteration_num];
         bmx055zAcceleration leftOps[iteration_num];
@@ -146,11 +237,22 @@ main(int argc, char** argv)
             leftOps[idx] = randomDouble(0, 127);
             rightOps[idx] = randomDouble(0, 127);
         }
+        timespec timer = tic();
         double_add_test(leftOps, rightOps, result);
-//        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+        toc(&timer, "computation delay");
+        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
 #elif defined(BENCHMARK_SUITE_FLOAT)
         bmx055fAcceleration result[iteration_num];
-        float_add_test(randomFloatArr(0, 127), randomFloatArr(0, 127), result);
+        bmx055fAcceleration leftOps[iteration_num];
+        bmx055fAcceleration rightOps[iteration_num];
+        for (size_t idx = 0; idx < iteration_num; idx++) {
+            leftOps[idx] = randomFloat(0, 127);
+            rightOps[idx] = randomFloat(0, 127);
+        }
+        timespec timer = tic();
+        float_add_test(leftOps, rightOps, result);
+        toc(&timer, "computation delay");
+        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
 #elif defined(BENCHMARK_SUITE_ASUINT)
         bmx055zAcceleration result[iteration_num];
         bmx055zAcceleration leftOps[iteration_num];
@@ -179,13 +281,25 @@ main(int argc, char** argv)
 //        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
 #elif defined(BENCHMARK_SUITE_FIXEDPOINT)
         bmx055zAcceleration result[iteration_num];
+        int fixed_result[iteration_num];
         bmx055zAcceleration leftOps[iteration_num];
         bmx055zAcceleration rightOps[iteration_num];
+        int fixed_leftOps[iteration_num];
+        int fixed_rightOps[iteration_num];
         for (size_t idx = 0; idx < iteration_num; idx++) {
             leftOps[idx] = randomDouble(0, 127);
             rightOps[idx] = randomDouble(0, 127);
+            fixed_leftOps[idx] = (int) (leftOps[idx] * (1 << Q) + 0.5);
+            fixed_rightOps[idx] = (int) (rightOps[idx] * (1 << Q) + 0.5);
         }
-        fixed_point_add_test(leftOps, rightOps, result);
+        timespec timer = tic();
+//        fixed_point_add_test(leftOps, rightOps, result);
+        fixed_point_add_test_simplified(fixed_leftOps, fixed_rightOps, fixed_result);
+        toc(&timer, "computation delay");
+        for (size_t idx = 0; idx < iteration_num; idx++) {
+            result[idx] = (double)fixed_result[idx] / (1<<Q);
+        }
+        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
 #else
 	#error "Benchmark function not defined"
 #endif

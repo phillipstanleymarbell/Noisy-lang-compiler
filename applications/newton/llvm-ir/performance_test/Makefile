@@ -173,6 +173,9 @@ benchmark_suite_opt:
 compile_benchmark_suite_int:
 	$(call compile_main_fn,BENCHMARK_SUITE_INT)
 
+compile_benchmark_suite_int_8:
+	$(call compile_main_fn,BENCHMARK_SUITE_INT_8)
+
 compile_benchmark_suite_double:
 	$(call compile_main_fn,BENCHMARK_SUITE_DOUBLE)
 
@@ -241,6 +244,8 @@ perf_float64_sin: clean make_ll float64_sin_non_opt compile_lib compile_float64_
 perf_float64_sin_opt: clean make_ll float64_sin_opt compile_lib compile_float64_sin
 
 perf_benchmark_suite_int: clean make_ll benchmark_suite_non_opt compile_lib compile_benchmark_suite_int
+
+perf_benchmark_suite_int_8: clean make_ll benchmark_suite_non_opt compile_lib compile_benchmark_suite_int_8
 
 perf_benchmark_suite_int_opt: clean make_ll benchmark_suite_opt compile_lib compile_benchmark_suite_int
 

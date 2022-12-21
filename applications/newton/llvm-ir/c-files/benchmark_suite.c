@@ -46,13 +46,25 @@ float asfloat(uint32_t t) {
     return u.f;
 }
 
-void uint8_add_test(bmx055xMagneto* leftOp, bmx055xMagneto* rightOp,
+void int32_add_test(bmx055xMagneto* leftOp, bmx055xMagneto* rightOp,
                     bmx055xMagneto* result) {
     for (size_t idx = 0; idx < iteration_num; idx++) {
         result[idx] = leftOp[idx] + rightOp[idx];
-        int64_t x = leftOp[idx] + 12;
-        int64_t y = rightOp[idx] + 15;
-        int64_t z = x + y;
+        int32_t x = leftOp[idx] + 12;
+        int32_t y = rightOp[idx] + 15;
+        int32_t z = x + y;
+        result[idx] = result[idx] * (z%100);
+    }
+    return;
+}
+
+void int8_add_test(bmx055yMagneto* leftOp, bmx055yMagneto* rightOp,
+                    bmx055yMagneto* result) {
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = leftOp[idx] + rightOp[idx];
+        int8_t x = leftOp[idx] + 12;
+        int8_t y = rightOp[idx] + 15;
+        int8_t z = x + y;
         result[idx] = result[idx] * (z%100);
     }
     return;
@@ -214,10 +226,6 @@ void float_add_test(bmx055fAcceleration* leftOp, bmx055fAcceleration* rightOp,
     return;
 }
 
-// precomputed value:
-#define Q   8
-#define K   (1 << (Q - 1))
-
 // saturate to range of int16_t
 int16_t sat16(int32_t x)
 {
@@ -358,4 +366,31 @@ void fixed_point_add_test(bmx055zAcceleration* leftOp, bmx055zAcceleration* righ
         result[idx] = (double)resultQuant_32 / (1<<Q);
     }
     return;
+}
+
+/*
+ * simplified version of fixed_point_add_test function.
+ * */
+const int c1 = (int)(12.789 * (1 << Q)+0.5);
+const int c2 = (int)(15.653 * (1 << Q)+0.5);
+
+void fixed_point_add_test_simplified(const int* leftOp, const int* rightOp, int* result) {
+    printf("left: %d\tright: %d\n", leftOp[0], rightOp[0]);
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        int result_round = leftOp[idx] + rightOp[idx];
+        int x = leftOp[idx] + c1;
+        int y = rightOp[idx] + c2;
+        int z = x + y;
+        /*
+         * For non-linear operator, change back to floating-point
+         * */
+        int temp_z = (z >> Q)%100;
+        temp_z = temp_z << Q;
+        /*
+         * When the range analyzer find the range of result might need 32 bits,
+         * it changes to upper precision
+         * */
+        result[idx] = (result_round * temp_z + K) >> Q;
+    }
+    printf("result: %d\n", result[0]);
 }

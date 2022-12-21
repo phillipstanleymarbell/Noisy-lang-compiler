@@ -15,7 +15,8 @@
 typedef double bmx055xAcceleration;  // [-16, 16]
 typedef double bmx055zAcceleration;  // [0, 127]
 typedef float bmx055fAcceleration;  // [0, 127]
-typedef int64_t bmx055xMagneto;      // [0, 127]
+typedef int32_t bmx055xMagneto;      // [0, 127]
+typedef int8_t bmx055yMagneto;      // [0, 127]
 
 typedef struct partsOfFP {
     bool signBit;
@@ -23,13 +24,18 @@ typedef struct partsOfFP {
     uint16_t exponentPart;
 } partsOfFP;
 
-#define iteration_num 5
+#define iteration_num 50000
+// precomputed value:
+#define Q   6
+#define K   (1 << (Q - 1))
 
 //uint64_t asUint(double t);
 //double asdouble(uint64_t t);
 
-void uint8_add_test(bmx055xMagneto* leftOp, bmx055xMagneto* rightOp,
+void int32_add_test(bmx055xMagneto* leftOp, bmx055xMagneto* rightOp,
                     bmx055xMagneto* result);
+void int8_add_test(bmx055yMagneto* leftOp, bmx055yMagneto* rightOp,
+                   bmx055yMagneto* result);
 void double_add_test(bmx055zAcceleration* leftOp, bmx055zAcceleration* rightOp,
                      bmx055zAcceleration* result);
 void asUint_add_test(bmx055zAcceleration* leftOp, bmx055zAcceleration* rightOp,
@@ -40,6 +46,7 @@ void quant_add_test(int* leftOp, int* rightOp, int* result);
 
 void fixed_point_add_test(bmx055zAcceleration* leftOp, bmx055zAcceleration* rightOp,
                           bmx055zAcceleration* result);
+void fixed_point_add_test_simplified(const int* leftOp, const int* rightOp, int* result);
 
 partsOfFP splitDouble(double value);
 double combineRealNumber(partsOfFP value);
