@@ -172,7 +172,8 @@ getGEPArrayRange(State * N, GetElementPtrInst * llvmIrGetElePtrInstruction,
  * but it could be more accuracy for IntSet.
  * */
 bool
-checkPhiRange(State * N, PHINode * phiNode, BoundInfo * boundInfo)
+checkPhiRange(State * N, PHINode * phiNode, BoundInfo * boundInfo,
+              const std::map<llvm::Value *, std::vector<std::pair<double, double>>>& virtualRegisterVectorRange)
 {
 	std::vector<double>				    minValueVec, maxValueVec;
 	std::vector<std::vector<std::pair<double, double>>> minPHIValueVectors, maxPHIValueVectors;
@@ -206,8 +207,8 @@ checkPhiRange(State * N, PHINode * phiNode, BoundInfo * boundInfo)
 			{
 				// todo: get the constant GEP from PhiNode by create a loadInst then remove it.
 				auto pointerOperand = pointerPhi->getPointerOperand();
-				auto vrRangeIt	    = boundInfo->virtualRegisterVectorRange.find(pointerOperand);
-				if (vrRangeIt != boundInfo->virtualRegisterVectorRange.end())
+				auto vrRangeIt	    = virtualRegisterVectorRange.find(pointerOperand);
+				if (vrRangeIt != virtualRegisterVectorRange.end())
 				{
 					minPHIValueVectors.emplace_back(vrRangeIt->second);
 					maxPHIValueVectors.emplace_back(vrRangeIt->second);
@@ -945,7 +946,9 @@ bitwiseInterval(const int64_t lhsLow, const int64_t lhsHigh,
 std::map<std::string, int> calleeCounter;
 
 std::pair<Value *, std::pair<double, double>>
-rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool standaloneFunc)
+rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>& typeRange,
+              const std::map<llvm::Value *, std::vector<std::pair<double, double>>>& virtualRegisterVectorRange,
+              BoundInfo * boundInfo, Function & llvmIrFunction)
 {
     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: Analyze function %s.\n", llvmIrFunction.getName());
 	/*
@@ -990,7 +993,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 								{
 									std::string baseTypeName;
 									/*
-									 *	if we find such type in boundInfo->typeRange,
+									 *	if we find such type in typeRange,
 									 *	we record it in the boundInfo->virtualRegisterRange
 									 */
 									if (derivedVariableType->getTag() == llvm::dwarf::DW_TAG_pointer_type)
@@ -1001,8 +1004,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 									{
 										baseTypeName = derivedVariableType->getName().str();
 									}
-									auto typeRangeIt = boundInfo->typeRange.find(baseTypeName);
-									if (typeRangeIt != boundInfo->typeRange.end())
+									auto typeRangeIt = typeRange.find(baseTypeName);
+									if (typeRangeIt != typeRange.end())
 									{
 										boundInfo->virtualRegisterRange.emplace(localVariableAddress, typeRangeIt->second);
 										auto spIt = storeParamMap.find(localVariableAddress);
@@ -1169,7 +1172,6 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect CalledFunction %s.\n",
 									  calledFunction->getName().str().c_str());
 								auto innerBoundInfo = new BoundInfo();
-								innerBoundInfo->virtualRegisterVectorRange = boundInfo->virtualRegisterVectorRange;
 								for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
 								{
 									/*
@@ -1208,7 +1210,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 										}
 									}
 								}
-								auto returnRange = rangeAnalysis(N, innerBoundInfo, *calledFunction, false);
+								auto returnRange = rangeAnalysis(N, typeRange, virtualRegisterVectorRange,
+                                                                 innerBoundInfo, *calledFunction);
 								if (returnRange.first != nullptr)
 								{
 									boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
@@ -1222,11 +1225,11 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
                                 } else {
                                     calleeCounter.emplace(calledFunction->getName().str(), 0);
                                 }
-                                auto newFuncName = calledFunction->getName().str() + std::to_string(calleeCounterIt->second);
+                                auto newFuncName = calledFunction->getName().str() + "#_#" + std::to_string(calleeCounterIt->second);
                                 boundInfo->calleeBound.emplace(newFuncName, innerBoundInfo);
 								/*
 								 * Check the return type of the function,
-								 * if it's a physical type that records in `boundInfo.typeRange`
+								 * if it's a physical type that records in `typeRange`
 								 * but didn't match the range we inferred from `rangeAnalysis` algorithm,
 								 * we give a warning to the programmer.
 								 * But we still believe in the range we inferred from the function body.
@@ -1236,8 +1239,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 								if (typeArray[0] != nullptr)
 								{
 									StringRef returnTypeName = typeArray[0]->getName();
-									auto	  vrRangeIt	 = boundInfo->typeRange.find(returnTypeName.str());
-									if (vrRangeIt != boundInfo->typeRange.end() &&
+									auto	  vrRangeIt	 = typeRange.find(returnTypeName.str());
+									if (vrRangeIt != typeRange.end() &&
 									    (vrRangeIt->second.first != returnRange.second.first || vrRangeIt->second.second != returnRange.second.second))
 									{
 										flexprint(N->Fe, N->Fm, N->Fperr, "\tCall: the range of the function's return type is: %f - %f, but we inferred as: %f - %f\n",
@@ -2611,8 +2614,8 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 								 * E.g.,
 								 * %.0 = phi double* [ getelementptr inbounds ([5 x double], [5 x double]* @pR2, i64 0, i64 0), %3 ], [ getelementptr inbounds ([5 x double], [5 x double]* @pS2, i64 0, i64 0), %4 ], !dbg !35
 								 */
-								auto it = boundInfo->virtualRegisterVectorRange.find(llvmIrPHIOperand);
-								if (it != boundInfo->virtualRegisterVectorRange.end())
+								auto it = virtualRegisterVectorRange.find(llvmIrPHIOperand);
+								if (it != virtualRegisterVectorRange.end())
 								{
 									if (auto index = dyn_cast<ConstantInt>(llvmIrGetElePtrInstruction->getOperand(1)))
 									{
@@ -2680,7 +2683,7 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 				case Instruction::PHI:
 					if (auto llvmIRPhiNode = dyn_cast<PHINode>(&llvmIrInstruction))
 					{
-						checkPhiRange(N, llvmIRPhiNode, boundInfo);
+						checkPhiRange(N, llvmIRPhiNode, boundInfo, virtualRegisterVectorRange);
 					}
 					break;
 

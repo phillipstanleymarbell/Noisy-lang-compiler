@@ -83,6 +83,12 @@ dumpIR(State * N, std::string fileSuffix, std::unique_ptr<Module> Mod)
 	dumpedFile.close();
 }
 
+void mergeBoundInfo(BoundInfo* dst, const BoundInfo* src) {
+    dst->virtualRegisterRange.insert(src->virtualRegisterRange.begin(),
+                                     src->virtualRegisterRange.end());
+    return;
+}
+
 void
 irPassLLVMIROptimizeByRange(State * N)
 {
@@ -101,11 +107,13 @@ irPassLLVMIROptimizeByRange(State * N)
 		fatal(N, Esanity);
 	}
 
-	auto boundInfo = new BoundInfo();
+	auto globalBoundInfo = new BoundInfo();
+    std::map<std::string, BoundInfo*> funcBoundInfo;
 
 	/*
 	 * get sensor info, we only concern the id and range here
 	 * */
+    std::map<std::string, std::pair<double, double>> typeRange;
 	if (N->sensorList != NULL)
 	{
 		for (Modality * currentModality = N->sensorList->modalityList; currentModality != NULL; currentModality = currentModality->next)
@@ -113,13 +121,14 @@ irPassLLVMIROptimizeByRange(State * N)
 			flexprint(N->Fe, N->Fm, N->Fpinfo, "\tModality: %s\n", currentModality->identifier);
 			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeLowerBound: %f\n", currentModality->rangeLowerBound);
 			flexprint(N->Fe, N->Fm, N->Fpinfo, "\t\trangeUpperBound: %f\n", currentModality->rangeUpperBound);
-			boundInfo->typeRange.emplace(currentModality->identifier, std::make_pair(currentModality->rangeLowerBound, currentModality->rangeUpperBound));
+			typeRange.emplace(currentModality->identifier, std::make_pair(currentModality->rangeLowerBound, currentModality->rangeUpperBound));
 		}
 	}
 
 	/*
 	 * get const global variables
 	 * */
+    std::map<llvm::Value *, std::vector<std::pair<double, double>>> virtualRegisterVectorRange;
 	for (auto & globalVar : Mod->getGlobalList())
 	{
 		if (!globalVar.hasInitializer())
@@ -132,18 +141,18 @@ irPassLLVMIROptimizeByRange(State * N)
 			if (constValue->getType()->isFloatTy())
 			{
 				float constValue = constFp->getValueAPF().convertToFloat();
-				boundInfo->virtualRegisterRange.emplace(&globalVar, std::make_pair(constValue, constValue));
+				globalBoundInfo->virtualRegisterRange.emplace(&globalVar, std::make_pair(constValue, constValue));
 			}
 			else if (constValue->getType()->isDoubleTy())
 			{
 				double constValue = constFp->getValueAPF().convertToDouble();
-				boundInfo->virtualRegisterRange.emplace(&globalVar, std::make_pair(constValue, constValue));
+				globalBoundInfo->virtualRegisterRange.emplace(&globalVar, std::make_pair(constValue, constValue));
 			}
 		}
 		else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(constValue))
 		{
 			auto constValue = constInt->getSExtValue();
-			boundInfo->virtualRegisterRange.emplace(&globalVar, std::make_pair(static_cast<double>(constValue),
+			globalBoundInfo->virtualRegisterRange.emplace(&globalVar, std::make_pair(static_cast<double>(constValue),
 											   static_cast<double>(constValue)));
 		}
 		else if (ConstantDataArray * constArr = llvm::dyn_cast<llvm::ConstantDataArray>(constValue))
@@ -154,7 +163,7 @@ irPassLLVMIROptimizeByRange(State * N)
 				for (size_t idx = 0; idx < constArr->getNumElements(); idx++)
 				{
 					double dbValue = constArr->getElementAsDouble(idx);
-					boundInfo->virtualRegisterVectorRange[&globalVar].emplace_back(std::make_pair(dbValue, dbValue));
+					virtualRegisterVectorRange[&globalVar].emplace_back(std::make_pair(dbValue, dbValue));
 				}
 			}
 			else if (arrType->isFloatTy())
@@ -162,7 +171,7 @@ irPassLLVMIROptimizeByRange(State * N)
 				for (size_t idx = 0; idx < constArr->getNumElements(); idx++)
 				{
 					double ftValue = constArr->getElementAsFloat(idx);
-					boundInfo->virtualRegisterVectorRange[&globalVar].emplace_back(std::make_pair(ftValue, ftValue));
+					virtualRegisterVectorRange[&globalVar].emplace_back(std::make_pair(ftValue, ftValue));
 				}
 			}
 			else if (arrType->isIntegerTy())
@@ -170,7 +179,7 @@ irPassLLVMIROptimizeByRange(State * N)
 				for (size_t idx = 0; idx < constArr->getNumElements(); idx++)
 				{
 					uint64_t intValue = constArr->getElementAsInteger(idx);
-					boundInfo->virtualRegisterVectorRange[&globalVar].emplace_back(std::make_pair(intValue, intValue));
+					virtualRegisterVectorRange[&globalVar].emplace_back(std::make_pair(intValue, intValue));
 				}
 			}
 			else if (arrType->isPointerTy())
@@ -193,13 +202,25 @@ irPassLLVMIROptimizeByRange(State * N)
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 	for (auto & mi : *Mod)
 	{
-		rangeAnalysis(N, boundInfo, mi);
+        auto boundInfo = new BoundInfo();
+        mergeBoundInfo(boundInfo, globalBoundInfo);
+		rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi);
+        funcBoundInfo.emplace(mi.getName(), boundInfo);
+        for (auto & calleeInfo : boundInfo->calleeBound) {
+            funcBoundInfo.emplace(calleeInfo.first, calleeInfo.second);
+            // todo: clone the corresponding function
+        }
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
 	for (auto & mi : *Mod)
 	{
-		simplifyControlFlow(N, boundInfo, mi);
+        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+        if (boundInfoIt != funcBoundInfo.end()) {
+            simplifyControlFlow(N, boundInfoIt->second, mi);
+        } else {
+            assert(false);
+        }
 	}
 
 	passManager.add(createCFGSimplificationPass());
