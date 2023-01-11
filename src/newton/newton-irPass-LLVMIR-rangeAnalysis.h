@@ -104,6 +104,7 @@ typedef struct BoundInfo {
 	std::map<llvm::Value *, std::pair<double, double>> virtualRegisterRange;
 	// todo: move it to another data structure, as its only used for pass the static global value
 	std::map<llvm::Value *, std::vector<std::pair<double, double>>> virtualRegisterVectorRange;
+	std::map<std::string, BoundInfo *> calleeBound;
 } BoundInfo;
 
 std::pair<llvm::Value *, std::pair<double, double>>

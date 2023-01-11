@@ -942,6 +942,8 @@ bitwiseInterval(const int64_t lhsLow, const int64_t lhsHigh,
 	return std::make_pair(minRes, maxRes);
 }
 
+std::map<std::string, int> calleeCounter;
+
 std::pair<Value *, std::pair<double, double>>
 rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool standaloneFunc)
 {
@@ -1211,27 +1213,17 @@ rangeAnalysis(State * N, BoundInfo * boundInfo, Function & llvmIrFunction, bool 
 								{
 									boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
 								}
-								/*
-								 * if variables of innerBoundInfo has been stored in boundInfo,
-								 * we get the union set of them
-								 * */
-								for (const auto & vrRange : innerBoundInfo->virtualRegisterRange)
-								{
-									auto ibIt = boundInfo->virtualRegisterRange.find(vrRange.first);
-									if (ibIt != boundInfo->virtualRegisterRange.end())
-									{
-										auto innerLowerBound    = vrRange.second.first < ibIt->second.first ?
-                                                vrRange.second.first : ibIt->second.first;
-										auto innerUpperBound    = vrRange.second.second > ibIt->second.second ?
-                                                vrRange.second.second : ibIt->second.second;
-										boundInfo->virtualRegisterRange[ibIt->first] = std::make_pair(innerLowerBound,
-																	      innerUpperBound);
-									}
-									else
-									{
-										boundInfo->virtualRegisterRange.emplace(vrRange.first, vrRange.second);
-									}
-								}
+                                /*
+                                 * collect the inner bound info for each callee function.
+                                 */
+                                auto calleeCounterIt = calleeCounter.find(calledFunction->getName().str());
+                                if (calleeCounterIt != calleeCounter.end()) {
+                                    calleeCounterIt->second++;
+                                } else {
+                                    calleeCounter.emplace(calledFunction->getName().str(), 0);
+                                }
+                                auto newFuncName = calledFunction->getName().str() + std::to_string(calleeCounterIt->second);
+                                boundInfo->calleeBound.emplace(newFuncName, innerBoundInfo);
 								/*
 								 * Check the return type of the function,
 								 * if it's a physical type that records in `boundInfo.typeRange`

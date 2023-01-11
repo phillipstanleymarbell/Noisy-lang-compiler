@@ -6,6 +6,26 @@
 
 #include "fdlibm.h"
 
+typedef double bmx055xAcceleration; // [3 mjf, 10 mjf]
+typedef double bmx055yAcceleration; // [15 mjf, 36 mjf]
+
+double testCallee(double param1) {
+    double ret;
+    if (param1 > 15) {
+        ret = param1 + 100;
+    } else {
+        ret = param1 * 100;
+    }
+    return ret;
+}
+
+double test(bmx055xAcceleration x, double y) {
+    double ret1 = testCallee(x); // keep else
+    double ret2 = testCallee(y+x); // keep all
+    double ret3 = testCallee(x+15.786); // keep if
+    return ret1 + ret2 + ret3;
+}
+
 #ifdef __STDC__
 static const double
 #else
@@ -85,24 +105,7 @@ double __ieee754_exp(x)	/* default IEEE double exp */
     }
 }
 
-typedef double bmx055xAcceleration; // [3 mjf, 10 mjf]
-typedef double bmx055yAcceleration; // [15 mjf, 36 mjf]
-
-double funcB(double param1) {
-    double ret;
-    if (param1 > 15) {
-        ret = param1 + 100;
-    } else {
-        ret = param1 * 100;
-    }
-    return ret;
-}
-
 double funcA(bmx055xAcceleration x, bmx055yAcceleration y) {
-//    double ret1 = funcB(x);
-//    double ret2 = funcB(y+x);
-//    double ret3 = funcB(x+15.786);
-//    return ret1 + ret2 + ret3;
     double ret1, ret2;
     for (size_t i = 0; i < 1000000; i++) {
         ret1 += __ieee754_exp(x+0.0000001*i)/10000;
