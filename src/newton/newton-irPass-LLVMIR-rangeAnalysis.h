@@ -55,6 +55,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "llvm/Analysis/MemorySSAUpdater.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/LegacyPassManager.h"
@@ -70,6 +71,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 
 #ifdef __cplusplus
 extern "C"

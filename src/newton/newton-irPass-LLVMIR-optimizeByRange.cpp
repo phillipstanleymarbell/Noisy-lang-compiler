@@ -89,6 +89,14 @@ void mergeBoundInfo(BoundInfo* dst, const BoundInfo* src) {
     return;
 }
 
+void collectCalleeBoundInfo(std::map<std::string, BoundInfo*>& funcBoundInfo, const BoundInfo* boundInfo) {
+    for (auto & calleeInfo : boundInfo->calleeBound) {
+        funcBoundInfo.emplace(calleeInfo.first, calleeInfo.second);
+        collectCalleeBoundInfo(funcBoundInfo, calleeInfo.second);
+    }
+    return;
+}
+
 void
 irPassLLVMIROptimizeByRange(State * N)
 {
@@ -206,10 +214,7 @@ irPassLLVMIROptimizeByRange(State * N)
         mergeBoundInfo(boundInfo, globalBoundInfo);
 		rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi);
         funcBoundInfo.emplace(mi.getName(), boundInfo);
-        for (auto & calleeInfo : boundInfo->calleeBound) {
-            funcBoundInfo.emplace(calleeInfo.first, calleeInfo.second);
-            // todo: clone the corresponding function
-        }
+        collectCalleeBoundInfo(funcBoundInfo, boundInfo);
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");

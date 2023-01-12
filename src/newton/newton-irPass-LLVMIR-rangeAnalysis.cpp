@@ -1159,6 +1159,51 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 							}
 							else
 							{
+                                /*
+                                 * collect the inner bound info for each callee function.
+                                 */
+                                auto calleeCounterIt = calleeCounter.find(calledFunction->getName().str());
+                                if (calleeCounterIt != calleeCounter.end()) {
+                                    calleeCounterIt->second++;
+                                } else {
+                                    calleeCounter.emplace(calledFunction->getName().str(), 0);
+                                }
+                                std::string newFuncName = calledFunction->getName().str() + '_' + std::to_string(calleeCounterIt->second);
+                                /*
+                                 * rename the llvmIrCallInstruction to the new function name
+                                 */
+                                ValueToValueMapTy vMap;
+                                auto overloadFunc = Function::Create(calledFunction->getFunctionType(),
+                                                                     calledFunction->getLinkage(),
+                                                                     calledFunction->getAddressSpace(),
+                                                                     newFuncName);
+                                auto *newFuncArgIt = overloadFunc->arg_begin();
+                                for (auto &arg : calledFunction->args()) {
+                                    auto argName = arg.getName();
+                                    newFuncArgIt->setName(argName);
+                                    vMap[&arg] = &(*newFuncArgIt++);
+                                }
+                                SmallVector<ReturnInst*, 8> Returns;
+                                CloneFunctionInto(overloadFunc, calledFunction, vMap,
+                                                  CloneFunctionChangeType::LocalChangesOnly, Returns);
+                                // Set the linkage and visibility late as CloneFunctionInto has some
+                                // implicit requirements.
+                                overloadFunc->setVisibility(GlobalValue::DefaultVisibility);
+                                overloadFunc->setLinkage(GlobalValue::PrivateLinkage);
+
+                                // Copy metadata
+                                SmallVector<std::pair<unsigned, MDNode *>, 1> MDs;
+                                calledFunction->getAllMetadata(MDs);
+                                for (auto MDIt : MDs) {
+                                    if (!overloadFunc->hasMetadata()) {
+                                        overloadFunc->addMetadata(MDIt.first, *MDIt.second);
+                                    }
+                                }
+
+                                Module &funcModule = *calledFunction->getParent();
+                                funcModule.getFunctionList().insert(calledFunction->getIterator(), overloadFunc);
+                                overloadFunc->setDSOLocal(true);
+                                llvmIrCallInstruction->setCalledFunction(overloadFunc);
 								/*
 								 * Algorithm to infer the range of CallInst's result:
 								 * 1. find the CallInst (caller).
@@ -1212,21 +1257,11 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 								}
 								auto returnRange = rangeAnalysis(N, typeRange, virtualRegisterVectorRange,
                                                                  innerBoundInfo, *calledFunction);
+                                boundInfo->calleeBound.emplace(newFuncName, innerBoundInfo);
 								if (returnRange.first != nullptr)
 								{
 									boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
 								}
-                                /*
-                                 * collect the inner bound info for each callee function.
-                                 */
-                                auto calleeCounterIt = calleeCounter.find(calledFunction->getName().str());
-                                if (calleeCounterIt != calleeCounter.end()) {
-                                    calleeCounterIt->second++;
-                                } else {
-                                    calleeCounter.emplace(calledFunction->getName().str(), 0);
-                                }
-                                auto newFuncName = calledFunction->getName().str() + "#_#" + std::to_string(calleeCounterIt->second);
-                                boundInfo->calleeBound.emplace(newFuncName, innerBoundInfo);
 								/*
 								 * Check the return type of the function,
 								 * if it's a physical type that records in `typeRange`
