@@ -120,13 +120,14 @@ double __ieee754_exp_opt(x)	/* default IEEE double exp */
     return one-((x*c)/(c-2.0)-x);
 }
 
-double funcA(bmx055xAcceleration x, double y) {
+double funcA(double x, double y) {
     double ret1, ret2;
-    for (size_t i = 0; i < 1000000; i++) {
-        ret1 += __ieee754_exp_opt(x+0.000000*i)/10000;
-//        ret2 += __ieee754_exp_opt(y+0.000000*i)/10000;
-        ret2 += __ieee754_exp(y+0.000000*i)/10000;
-    }
+//    for (size_t i = 0; i < 1000000; i++) {
+//        ret1 += __ieee754_exp_opt(x+0.0000001*i)/10000;
+//        ret2 += __ieee754_exp(y+0.0000001*i)/10000;
+//    }
+    ret1 += __ieee754_exp_opt(x)/10000;
+    ret2 += __ieee754_exp(y)/10000;
     return ret1 + ret2;
 }
 
@@ -142,6 +143,6 @@ int main(int argc, char** argv) {
         y = 15.781;
     }
     double res = funcA(x, y);
-//    printf("res = %f\n", res);
+    printf("res = %f\n", res);
     return res;
 }

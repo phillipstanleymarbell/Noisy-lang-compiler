@@ -1214,8 +1214,8 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 								 *    else infer the range of the return value.
 								 * 6. set the range of the result of the CallInst.
 								 * */
-								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect CalledFunction %s.\n",
-									  calledFunction->getName().str().c_str());
+								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect overloadFunc %s.\n",
+                                          overloadFunc->getName().str().c_str());
 								auto innerBoundInfo = new BoundInfo();
 								for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
 								{
@@ -1226,14 +1226,14 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 									{
 										int64_t constIntValue = cInt->getSExtValue();
 										flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant int value: %d.\n", constIntValue);
-										innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
+										innerBoundInfo->virtualRegisterRange.emplace(overloadFunc->getArg(idx),
 															     std::make_pair(static_cast<double>(constIntValue), static_cast<double>(constIntValue)));
 									}
 									else if (ConstantFP * constFp = dyn_cast<ConstantFP>(llvmIrCallInstruction->getOperand(idx)))
 									{
 										double constDoubleValue = (constFp->getValueAPF()).convertToDouble();
 										flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant double value: %f.\n", constDoubleValue);
-										innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
+										innerBoundInfo->virtualRegisterRange.emplace(overloadFunc->getArg(idx),
 															     std::make_pair(constDoubleValue, constDoubleValue));
 									}
 									else
@@ -1247,7 +1247,7 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 										{
 											flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
 												  vrRangeIt->second.first, vrRangeIt->second.second);
-											innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx), vrRangeIt->second);
+											innerBoundInfo->virtualRegisterRange.emplace(overloadFunc->getArg(idx), vrRangeIt->second);
 										}
 										else
 										{
@@ -1256,7 +1256,7 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 									}
 								}
 								auto returnRange = rangeAnalysis(N, typeRange, virtualRegisterVectorRange,
-                                                                 innerBoundInfo, *calledFunction);
+                                                                 innerBoundInfo, *overloadFunc);
                                 boundInfo->calleeBound.emplace(newFuncName, innerBoundInfo);
 								if (returnRange.first != nullptr)
 								{
@@ -1269,7 +1269,7 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 								 * we give a warning to the programmer.
 								 * But we still believe in the range we inferred from the function body.
 								 */
-								DISubprogram * subProgram = calledFunction->getSubprogram();
+								DISubprogram * subProgram = overloadFunc->getSubprogram();
 								DITypeRefArray typeArray  = subProgram->getType()->getTypeArray();
 								if (typeArray[0] != nullptr)
 								{
