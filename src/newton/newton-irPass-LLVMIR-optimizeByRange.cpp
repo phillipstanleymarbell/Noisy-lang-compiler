@@ -97,6 +97,35 @@ void collectCalleeBoundInfo(std::map<std::string, BoundInfo*>& funcBoundInfo, co
     return;
 }
 
+class FunctionNode {
+    mutable AssertingVH <Function> F;
+    FunctionComparator::FunctionHash Hash;
+
+public:
+    // Note the hash is recalculated potentially multiple times, but it is cheap.
+    FunctionNode(Function *F)
+            : F(F), Hash(FunctionComparator::functionHash(*F)) {}
+
+    Function *getFunc() const { return F; }
+
+    FunctionComparator::FunctionHash getHash() const { return Hash; }
+};
+
+GlobalNumberState GlobalNumbers;
+
+class FunctionNodeCmp {
+public:
+    bool operator()(const FunctionNode &LHS, const FunctionNode &RHS) const {
+        // Order first by hashes, then full function comparison.
+        if (LHS.getHash() != RHS.getHash())
+            return LHS.getHash() < RHS.getHash();
+        FunctionComparator FCmp(LHS.getFunc(), RHS.getFunc(), &GlobalNumbers);
+        return FCmp.compare() == -1;
+    }
+};
+
+using hashFuncSet = std::set<FunctionNode, FunctionNodeCmp>;
+
 void
 irPassLLVMIROptimizeByRange(State * N)
 {
@@ -231,6 +260,21 @@ irPassLLVMIROptimizeByRange(State * N)
 	passManager.add(createCFGSimplificationPass());
 	passManager.add(createInstSimplifyLegacyPass());
 	passManager.run(*Mod);
+
+    /*
+     * Compare the functions and remove the redundant one
+     * */
+    hashFuncSet baseFuncs;
+    for (auto & mi : Mod->getFunctionList()) {
+        if (!mi.hasName() || mi.getName().empty())
+            continue;
+        if (mi.getName().startswith("llvm.dbg.value") ||
+            mi.getName().startswith("llvm.dbg.declare"))
+            continue;
+        if (mi.isDeclaration())
+            continue;
+        baseFuncs.emplace(FunctionNode(&mi));
+    }
 
 //	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 //	for (auto & mi : *Mod)
