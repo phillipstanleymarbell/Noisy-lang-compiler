@@ -97,6 +97,11 @@ void collectCalleeBoundInfo(std::map<std::string, BoundInfo*>& funcBoundInfo, co
     return;
 }
 
+void collectCallerMap(std::map<std::string, CallInst *>& callerMap, const BoundInfo* boundInfo) {
+    callerMap.insert(boundInfo->callerMap.begin(), boundInfo->callerMap.end());
+    return;
+}
+
 class FunctionNode {
     mutable AssertingVH <Function> F;
     FunctionComparator::FunctionHash Hash;
@@ -237,6 +242,7 @@ irPassLLVMIROptimizeByRange(State * N)
 	legacy::PassManager passManager;
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
+    std::map<std::string, CallInst *> callerMap;
 	for (auto & mi : *Mod)
 	{
         auto boundInfo = new BoundInfo();
@@ -244,6 +250,7 @@ irPassLLVMIROptimizeByRange(State * N)
 		rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi);
         funcBoundInfo.emplace(mi.getName(), boundInfo);
         collectCalleeBoundInfo(funcBoundInfo, boundInfo);
+        collectCallerMap(callerMap, boundInfo);
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
@@ -265,15 +272,54 @@ irPassLLVMIROptimizeByRange(State * N)
      * Compare the functions and remove the redundant one
      * */
     hashFuncSet baseFuncs;
-    for (auto & mi : Mod->getFunctionList()) {
-        if (!mi.hasName() || mi.getName().empty())
+    auto baseFuncNum = baseFuncs.size();
+    for (auto itFunc = Mod->getFunctionList().rbegin(); itFunc != Mod->getFunctionList().rend(); itFunc++) {
+        if (!itFunc->hasName() || itFunc->getName().empty())
             continue;
-        if (mi.getName().startswith("llvm.dbg.value") ||
-            mi.getName().startswith("llvm.dbg.declare"))
+        if (itFunc->getName().startswith("llvm.dbg.value") ||
+            itFunc->getName().startswith("llvm.dbg.declare"))
             continue;
-        if (mi.isDeclaration())
+        if (itFunc->isDeclaration())
             continue;
-        baseFuncs.emplace(FunctionNode(&mi));
+        baseFuncs.emplace(FunctionNode(&(*itFunc)));
+        /*
+         * find the function with the same implementation and change the callInst
+         * */
+        if (baseFuncNum == baseFuncs.size()) {
+            auto callerIt = callerMap.find(itFunc->getName().str());
+            assert(callerIt != callerMap.end());
+            auto currentCallerInst = callerIt->second;
+            auto currentFuncNode = FunctionNode(&(*itFunc));
+            GlobalNumberState cmpGlobalNumbers;
+            auto sameImplIt = std::find_if(baseFuncs.begin(), baseFuncs.end(),
+                                           [currentFuncNode, &cmpGlobalNumbers](const FunctionNode &func) {
+                FunctionComparator FCmp(func.getFunc(), currentFuncNode.getFunc(), &cmpGlobalNumbers);
+                return func.getHash() == currentFuncNode.getHash() && FCmp.compare() == 0;
+            });
+            assert(sameImplIt != baseFuncs.end());
+            currentCallerInst->setCalledFunction(sameImplIt->getFunc());
+        } else
+            baseFuncNum = baseFuncs.size();
+    }
+
+    std::set<std::string> baseFuncNames;
+    for (auto f : baseFuncs) {
+        baseFuncNames.emplace(f.getFunc()->getName().str());
+    }
+
+    // iterate functions in Mod, if it cannot be found in baseFuncs, delete it.
+    for (auto itFunc = Mod->getFunctionList().begin(); itFunc != Mod->getFunctionList().end(); itFunc++) {
+        if (!itFunc->hasName() || itFunc->getName().empty())
+            continue;
+        if (itFunc->getName().startswith("llvm.dbg.value") ||
+            itFunc->getName().startswith("llvm.dbg.declare"))
+            continue;
+        if (itFunc->isDeclaration())
+            continue;
+        if (baseFuncNames.find(itFunc->getName().str()) == baseFuncNames.end() && itFunc->hasLocalLinkage()) {
+            Mod->getFunctionList().remove(itFunc);
+            itFunc--;
+        }
     }
 
 //	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");

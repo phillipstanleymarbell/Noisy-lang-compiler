@@ -105,6 +105,7 @@ extern "C"
 typedef struct BoundInfo {
 	std::map<llvm::Value *, std::pair<double, double>> virtualRegisterRange;
 	std::map<std::string, BoundInfo *> calleeBound;
+    std::map<std::string, llvm::CallInst *> callerMap;
 } BoundInfo;
 
 std::pair<llvm::Value *, std::pair<double, double>>

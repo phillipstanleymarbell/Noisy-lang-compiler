@@ -1204,6 +1204,7 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
                                 funcModule.getFunctionList().insert(calledFunction->getIterator(), overloadFunc);
                                 overloadFunc->setDSOLocal(true);
                                 llvmIrCallInstruction->setCalledFunction(overloadFunc);
+                                 boundInfo->callerMap.emplace(overloadFunc->getName().str(), llvmIrCallInstruction);
 								/*
 								 * Algorithm to infer the range of CallInst's result:
 								 * 1. find the CallInst (caller).
