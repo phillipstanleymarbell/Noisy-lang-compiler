@@ -111,7 +111,7 @@ typedef struct BoundInfo {
 std::pair<llvm::Value *, std::pair<double, double>>
 rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>& typeRange,
               const std::map<llvm::Value *, std::vector<std::pair<double, double>>>& virtualRegisterVectorRange,
-              BoundInfo * boundInfo, llvm::Function & llvmIrFunction);
+              BoundInfo * boundInfo, llvm::Function & llvmIrFunction, bool overLoadFunc);
 
 #ifdef __cplusplus
 } /* extern "C" */
