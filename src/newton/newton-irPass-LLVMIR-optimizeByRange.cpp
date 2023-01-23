@@ -369,12 +369,9 @@ irPassLLVMIROptimizeByRange(State * N)
         }
     }
 
-    flexprint(N->Fe, N->Fm, N->Fpinfo, "auto quantize data by precision\n");
-    for (auto & mi : *Mod)
-    {
-        irPassLLVMIRAutoQuantization(N, boundInfo, mi);
-    }
-
+    /*
+     * Dump BC file to a file.
+     * */
 	dumpIR(N, "output", std::move(Mod));
 }
 }
