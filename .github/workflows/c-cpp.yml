@@ -30,4 +30,4 @@ jobs:
         echo "OSTYPE=linux" >> config.local
         echo "MACHTYPE=x86_64" >> config.local
     - name: make
-      run: make LLVM_CONFIG=llvm-config-12
+      run: make LLVM_CONFIG=llvm-config-13
