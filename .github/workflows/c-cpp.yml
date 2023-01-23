@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - name: install LLVM
-      run: sudo apt-get --assume-yes install llvm-13.0.1
+      run: sudo apt-get --assume-yes install llvm-13
     - uses: actions/checkout@v2
       with:
         submodules: recursive
