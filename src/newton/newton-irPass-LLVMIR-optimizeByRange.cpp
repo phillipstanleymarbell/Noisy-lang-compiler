@@ -323,28 +323,50 @@ irPassLLVMIROptimizeByRange(State * N)
         }
     }
 
-//	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
-//	for (auto & mi : *Mod)
-//	{
-//		rangeAnalysis(N, boundInfo, mi);
-//	}
-//
-//	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
-//	for (auto & mi : *Mod)
-//	{
-//		constantSubstitution(N, boundInfo, mi);
-//	}
-//
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
+    callerMap.clear();
+    funcBoundInfo.clear();
+    for (auto & mi : *Mod)
+    {
+        auto boundInfo = new BoundInfo();
+        mergeBoundInfo(boundInfo, globalBoundInfo);
+        rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi);
+        funcBoundInfo.emplace(mi.getName(), boundInfo);
+        collectCalleeBoundInfo(funcBoundInfo, boundInfo);
+        collectCallerMap(callerMap, boundInfo);
+    }
+
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
+    for (auto & mi : *Mod)
+    {
+        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+        if (boundInfoIt != funcBoundInfo.end()) {
+            constantSubstitution(N, boundInfoIt->second, mi);
+        } else {
+            assert(false);
+        }
+    }
+
 //	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
-//	for (auto & mi : *Mod)
-//	{
-//		shrinkType(N, boundInfo, mi);
-//	}
+//    for (auto & mi : *Mod)
+//    {
+//        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+//        if (boundInfoIt != funcBoundInfo.end()) {
+//            shrinkType(N, boundInfoIt->second, mi);
+//        } else {
+//            assert(false);
+//        }
+//    }
 
     flexprint(N->Fe, N->Fm, N->Fpinfo, "auto quantize data by precision\n");
     for (auto & mi : *Mod)
     {
-        irPassLLVMIRAutoQuantization(N, boundInfo, mi);
+        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+        if (boundInfoIt != funcBoundInfo.end()) {
+            irPassLLVMIRAutoQuantization(N, boundInfoIt->second, mi);
+        } else {
+            assert(false);
+        }
     }
 
 	dumpIR(N, "output", std::move(Mod));
