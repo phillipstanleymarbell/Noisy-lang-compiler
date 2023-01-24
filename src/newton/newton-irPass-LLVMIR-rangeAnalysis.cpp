@@ -1170,22 +1170,36 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
                                           calledFunction->getName().str().c_str());
 								auto innerBoundInfo = new BoundInfo();
                                 /*
-                                 * get the range of args and rename the called function with args' range
+                                 * get the range of args and rename the called function with args range
                                  * */
                                 std::string newFuncName = calledFunction->getName().str();
+                                /*
+                                 * check if the ranges have been set to the function name
+                                 * */
 								for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
 								{
-									/*
-									 * First, we check if it's a constant value
-									 * */
+                                    std::vector<std::string> argRanges;
+                                    std::regex regexp("_([0-9]{1,})_([0-9]{1,})*");
+                                    std::smatch match;
+                                    regex_search(newFuncName, match, regexp);
+                                    for (size_t i = 1; i < match.size(); i++) {
+                                        argRanges.emplace_back(match[i]);
+                                    }
+                                    /*
+                                     * First, we check if it's a constant value
+                                     * */
 									if (ConstantInt * cInt = dyn_cast<ConstantInt>(llvmIrCallInstruction->getOperand(idx)))
 									{
 										int64_t constIntValue = cInt->getSExtValue();
 										flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant int value: %d.\n", constIntValue);
 										innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
-															     std::make_pair(static_cast<double>(constIntValue), static_cast<double>(constIntValue)));
+															     std::make_pair(static_cast<double>(constIntValue),
+                                                                                static_cast<double>(constIntValue)));
                                         std::string argVal = std::to_string(constIntValue);
-                                        newFuncName = newFuncName + "_" + argVal+ "_" + argVal;
+                                        if (argRanges.empty())
+                                            newFuncName = newFuncName + "_" + argVal+ "_" + argVal;
+                                        else if (argVal != argRanges[0] || argVal != argRanges[1])
+                                            newFuncName = match.prefix().str() + "_" + argVal+ "_" + argVal;
                                     }
 									else if (ConstantFP * constFp = dyn_cast<ConstantFP>(llvmIrCallInstruction->getOperand(idx)))
 									{
@@ -1194,7 +1208,10 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 										innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
 															     std::make_pair(constDoubleValue, constDoubleValue));
                                         std::string argVal = std::to_string((int)constDoubleValue);
-                                        newFuncName = newFuncName + "_" + argVal+ "_" + argVal;
+                                        if (argRanges.empty())
+                                            newFuncName = newFuncName + "_" + argVal+ "_" + argVal;
+                                        else if (argVal != argRanges[0] || argVal != argRanges[1])
+                                            newFuncName = match.prefix().str() + "_" + argVal+ "_" + argVal;
 									}
 									else
 									{
@@ -1210,7 +1227,10 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 											innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx), vrRangeIt->second);
                                             std::string argLowVal = std::to_string((int)vrRangeIt->second.first);
                                             std::string argHighVal = std::to_string((int)vrRangeIt->second.second);
-                                            newFuncName = newFuncName + "_" + argLowVal+ "_" + argHighVal;
+                                            if (argRanges.empty())
+                                                newFuncName = newFuncName + "_" + argLowVal+ "_" + argHighVal;
+                                            else if (argLowVal != argRanges[0] || argHighVal != argRanges[1])
+                                                newFuncName = match.prefix().str() + "_" + argLowVal+ "_" + argHighVal;
 										}
 										else
 										{
@@ -1220,17 +1240,8 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 								}
                                 Function * realCallee;
                                 std::pair<llvm::Value *, std::pair<double, double>> returnRange;
-                                if (useOverLoad && newFuncName != calledFunction->getName().str()) {
-                                    /*
-                                     * collect the inner bound info for each callee function.
-                                     */
-//                                    auto calleeCounterIt = calleeCounter.find(calledFunction->getName().str());
-//                                    if (calleeCounterIt != calleeCounter.end()) {
-//                                        calleeCounterIt->second++;
-//                                    } else {
-//                                        calleeCounter.emplace(calledFunction->getName().str(), 0);
-//                                    }
-//                                    newFuncName = calledFunction->getName().str() + '_' + std::to_string(calleeCounterIt->second);
+                                auto uniqueNewFunc = boundInfo->callerMap.find(newFuncName) != boundInfo->callerMap.end();
+                                if (useOverLoad && newFuncName != calledFunction->getName().str() && uniqueNewFunc) {
                                     /*
                                      * rename the llvmIrCallInstruction to the new function name
                                      */

@@ -336,73 +336,73 @@ irPassLLVMIROptimizeByRange(State * N)
     if (useOverLoad)
         overloadFunc(Mod, callerMap);
 
-//	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
-//    callerMap.clear();
-//    funcBoundInfo.clear();
-//    for (auto & mi : *Mod)
-//    {
-//        auto boundInfo = new BoundInfo();
-//        mergeBoundInfo(boundInfo, globalBoundInfo);
-//        rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi, useOverLoad);
-//        funcBoundInfo.emplace(mi.getName(), boundInfo);
-//        collectCalleeBoundInfo(funcBoundInfo, boundInfo);
-//        collectCallerMap(callerMap, boundInfo);
-//    }
-//
-//	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
-//    for (auto & mi : *Mod)
-//    {
-//        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-//        if (boundInfoIt != funcBoundInfo.end()) {
-//            constantSubstitution(N, boundInfoIt->second, mi);
-//        } else {
-//            assert(false);
-//        }
-//    }
-//
-////	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
-////    for (auto & mi : *Mod)
-////    {
-////        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-////        if (boundInfoIt != funcBoundInfo.end()) {
-////            shrinkType(N, boundInfoIt->second, mi);
-////        } else {
-////            assert(false);
-////        }
-////    }
-//
-//    if (useOverLoad)
-//        overloadFunc(Mod, callerMap);
-//
-//    flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
-//    callerMap.clear();
-//    funcBoundInfo.clear();
-//    for (auto & mi : *Mod)
-//    {
-//        auto boundInfo = new BoundInfo();
-//        mergeBoundInfo(boundInfo, globalBoundInfo);
-//        rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi, useOverLoad);
-//        funcBoundInfo.emplace(mi.getName(), boundInfo);
-//        collectCalleeBoundInfo(funcBoundInfo, boundInfo);
-//        collectCallerMap(callerMap, boundInfo);
-//    }
-//
-//    /*
-//     *
-//     * */
-//    flexprint(N->Fe, N->Fm, N->Fpinfo, "auto quantize data by precision\n");
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
+    callerMap.clear();
+    funcBoundInfo.clear();
+    for (auto & mi : *Mod)
+    {
+        auto boundInfo = new BoundInfo();
+        mergeBoundInfo(boundInfo, globalBoundInfo);
+        rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi, useOverLoad);
+        funcBoundInfo.emplace(mi.getName(), boundInfo);
+        collectCalleeBoundInfo(funcBoundInfo, boundInfo);
+        collectCallerMap(callerMap, boundInfo);
+    }
+
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
+    for (auto & mi : *Mod)
+    {
+        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+        if (boundInfoIt != funcBoundInfo.end()) {
+            constantSubstitution(N, boundInfoIt->second, mi);
+        } else {
+            assert(false);
+        }
+    }
+
+//	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
 //    for (auto & mi : *Mod)
 //    {
 //        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
 //        if (boundInfoIt != funcBoundInfo.end()) {
-//            irPassLLVMIRAutoQuantization(N, boundInfoIt->second, mi);
+//            shrinkType(N, boundInfoIt->second, mi);
 //        } else {
 //            assert(false);
 //        }
 //    }
-//
-//    if (useOverLoad)
-//        overloadFunc(Mod, callerMap);
+
+    if (useOverLoad)
+        overloadFunc(Mod, callerMap);
+
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
+    callerMap.clear();
+    funcBoundInfo.clear();
+    for (auto & mi : *Mod)
+    {
+        auto boundInfo = new BoundInfo();
+        mergeBoundInfo(boundInfo, globalBoundInfo);
+        rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi, useOverLoad);
+        funcBoundInfo.emplace(mi.getName(), boundInfo);
+        collectCalleeBoundInfo(funcBoundInfo, boundInfo);
+        collectCallerMap(callerMap, boundInfo);
+    }
+
+    /*
+     *
+     * */
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "auto quantize data by precision\n");
+    for (auto & mi : *Mod)
+    {
+        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+        if (boundInfoIt != funcBoundInfo.end()) {
+            irPassLLVMIRAutoQuantization(N, boundInfoIt->second, mi);
+        } else {
+            assert(false);
+        }
+    }
+
+    if (useOverLoad)
+        overloadFunc(Mod, callerMap);
 
     /*
      * Dump BC file to a file.

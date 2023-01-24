@@ -21,7 +21,8 @@ double test(bmx055xAcceleration x, double y) {
     double ret1 = testCallee(x); // keep else
     double ret2 = testCallee(y+x); // keep all
     double ret3 = testCallee(x+15.786); // keep if
-    return ret1 + ret2 + ret3;
+    double ret = testCallee(x);
+    return ret1 + ret2 + ret3 + ret;
 }
 
 #ifdef __STDC__
