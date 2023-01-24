@@ -1,13 +1,11 @@
 /*
  * Unit testcase of function call
  * */
+#include "fdlibm.h"
+#include "perf_test_api.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "fdlibm.h"
-
-typedef double bmx055xAcceleration; // [3 mjf, 10 mjf]
-typedef double bmx055yAcceleration; // [15 mjf, 36 mjf]
 
 double testCallee(double param1) {
     double ret;
@@ -105,29 +103,9 @@ double __ieee754_exp(x)	/* default IEEE double exp */
     }
 }
 
-double funcA(double x, double y) {
+double funcA(bmx055xAcceleration x, bmx055yAcceleration y) {
     double ret1, ret2;
-//    for (size_t i = 0; i < 1000000; i++) {
-//        ret1 += __ieee754_exp(x+0.0000001*i)/10000;
-//        ret2 += __ieee754_exp(y+0.0000001*i)/10000;
-//    }
-    ret1 += __ieee754_exp(x)/10000;
-    ret2 += __ieee754_exp(y)/10000;
+    ret1 = __ieee754_exp(x);
+    ret2 = __ieee754_exp(y);
     return ret1 + ret2;
-}
-
-int main(int argc, char** argv) {
-    char* pEnd;
-    bmx055xAcceleration x;
-    bmx055yAcceleration y;
-    if (argc == 3) {
-        x = strtod(argv[1], &pEnd);
-        y = strtod(argv[2], &pEnd);
-    } else {
-        x = 0.15;
-        y = 15.781;
-    }
-    double res = funcA(x, y);
-    printf("res = %f\n", res);
-    return res;
 }

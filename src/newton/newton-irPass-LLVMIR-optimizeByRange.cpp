@@ -359,20 +359,20 @@ irPassLLVMIROptimizeByRange(State * N)
 //            assert(false);
 //        }
 //    }
-
-//	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
-//    for (auto & mi : *Mod)
-//    {
-//        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-//        if (boundInfoIt != funcBoundInfo.end()) {
-//            shrinkType(N, boundInfoIt->second, mi);
-//        } else {
-//            assert(false);
-//        }
-//    }
-
+//
+////	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
+////    for (auto & mi : *Mod)
+////    {
+////        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+////        if (boundInfoIt != funcBoundInfo.end()) {
+////            shrinkType(N, boundInfoIt->second, mi);
+////        } else {
+////            assert(false);
+////        }
+////    }
+//
 //    if (useOverLoad)
-//        overloadFunc(std::move(Mod), callerMap);
+//        overloadFunc(Mod, callerMap);
 //
 //    flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 //    callerMap.clear();
@@ -402,7 +402,7 @@ irPassLLVMIROptimizeByRange(State * N)
 //    }
 //
 //    if (useOverLoad)
-//        overloadFunc(std::move(Mod), callerMap);
+//        overloadFunc(Mod, callerMap);
 
     /*
      * Dump BC file to a file.

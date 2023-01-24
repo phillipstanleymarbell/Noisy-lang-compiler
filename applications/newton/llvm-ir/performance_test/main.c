@@ -300,6 +300,16 @@ main(int argc, char** argv)
             result[idx] = (double)fixed_result[idx] / (1<<Q);
         }
         printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+#elif defined(FUNC_CALL)
+        bmx055xAcceleration x;
+        bmx055yAcceleration y;
+        double result[iteration_num];
+        timespec timer = tic();
+        for (size_t idx = 0; idx < iteration_num; idx++) {
+            result[idx] = funcA(randomDouble(3, 10), randomDouble(15, 36));
+        }
+        toc(&timer, "computation delay");
+        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
 #else
 	#error "Benchmark function not defined"
 #endif

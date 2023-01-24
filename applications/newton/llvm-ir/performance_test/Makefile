@@ -26,7 +26,7 @@ max_opt_fn = opt ../$(1).ll --O3 -S -o $(OUT_FILE)
 non_opt_fn = cp ../$(1).ll $(OUT_FILE)
 necessary_opt_fn = opt ../$(1).ll --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
-newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check --llvm-ir-auto-quantization ../../applications/newton/sensors/test.nt
+newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
 
 compile_main_fn = $(CC) $(TARGET_FLAG) main.c -no-pie -L. -lout -D $(1) -O2 -o main_out -lm
 
@@ -188,8 +188,16 @@ compile_benchmark_suite_asuint:
 compile_benchmark_suite_quant:
 	$(call compile_main_fn,BENCHMARK_SUITE_QUANT)
 
-compile_benchmark_suite_quant:
+compile_benchmark_suite_fixed_point:
 	$(call compile_main_fn,BENCHMARK_SUITE_FIXEDPOINT)
+
+func_call_opt:
+	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,func_call)
+	llvm-dis ../func_call_output.bc
+	$(call max_opt_fn,func_call_output)
+
+compile_func_call:
+	$(call compile_main_fn,FUNC_CALL)
 
 soft_float_api_non_opt:
 	$(call max_opt_fn,soft_float_api)
@@ -263,7 +271,9 @@ perf_benchmark_suite_asuint_opt: clean make_ll benchmark_suite_opt compile_lib c
 
 perf_benchmark_suite_quant: clean make_ll benchmark_suite_non_opt compile_lib compile_benchmark_suite_quant
 
-perf_benchmark_suite_fixedpoint: clean make_ll benchmark_suite_non_opt compile_lib compile_benchmark_suite_quant
+perf_benchmark_suite_fixedpoint: clean make_ll benchmark_suite_non_opt compile_lib compile_benchmark_suite_fixed_point
+
+perf_func_call: clean make_ll func_call_opt compile_lib compile_func_call
 
 interface_lib: clean make_ll soft_float_api_opt compile_lib
 
