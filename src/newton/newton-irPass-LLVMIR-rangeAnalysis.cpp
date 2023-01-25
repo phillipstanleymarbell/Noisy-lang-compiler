@@ -173,7 +173,7 @@ getGEPArrayRange(State * N, GetElementPtrInst * llvmIrGetElePtrInstruction,
  * */
 bool
 checkPhiRange(State * N, PHINode * phiNode, BoundInfo * boundInfo,
-              const std::map<llvm::Value *, std::vector<std::pair<double, double>>>& virtualRegisterVectorRange)
+	      const std::map<llvm::Value *, std::vector<std::pair<double, double>>> & virtualRegisterVectorRange)
 {
 	std::vector<double>				    minValueVec, maxValueVec;
 	std::vector<std::vector<std::pair<double, double>>> minPHIValueVectors, maxPHIValueVectors;
@@ -943,11 +943,11 @@ bitwiseInterval(const int64_t lhsLow, const int64_t lhsHigh,
 }
 
 std::pair<Value *, std::pair<double, double>>
-rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>& typeRange,
-              const std::map<llvm::Value *, std::vector<std::pair<double, double>>>& virtualRegisterVectorRange,
-              BoundInfo * boundInfo, Function & llvmIrFunction, bool useOverLoad)
+rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> & typeRange,
+	      const std::map<llvm::Value *, std::vector<std::pair<double, double>>> & virtualRegisterVectorRange,
+	      BoundInfo * boundInfo, Function & llvmIrFunction, bool useOverLoad)
 {
-    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: Analyze function %s.\n", llvmIrFunction.getName());
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: Analyze function %s.\n", llvmIrFunction.getName());
 	/*
 	 * information for the union data structure
 	 * */
@@ -1069,7 +1069,7 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 								/*
 								 * the primary definition of this global value is outside the current translation unit.
 								 * */
-								std::string funcName = calledFunction->getName().str();
+								std::string				      funcName = calledFunction->getName().str();
 								std::map<uint32_t, std::pair<double, double>> argRanges;
 								for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
 								{
@@ -1085,9 +1085,10 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 										break;
 									}
 								}
-                                if (argRanges.empty()) {
-                                    break;
-                                }
+								if (argRanges.empty())
+								{
+									break;
+								}
 								double lowRange, highRange;
 								// todo: reconstruct by MACRO or template
 								if (funcName == "log")
@@ -1112,9 +1113,10 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 								}
 								else if (funcName == "scalbn")
 								{
-                                    if (argRanges.size() != 2) {
-                                        break;
-                                    }
+									if (argRanges.size() != 2)
+									{
+										break;
+									}
 									lowRange  = scalbn(argRanges[0].first, argRanges[1].first);
 									highRange = scalbn(argRanges[0].second, argRanges[1].second);
 								}
@@ -1125,16 +1127,19 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 								}
 								else if (calledFunction->getName().startswith("llvm.fabs"))
 								{
-                                    if (argRanges[0].first * argRanges[0].second > 0) {
-                                        lowRange  = min(fabs(argRanges[0].first),
-                                                            fabs(argRanges[0].second));
-                                        highRange = max(fabs(argRanges[0].first),
-                                                        fabs(argRanges[0].second));
-                                    } else {
-                                        lowRange = 0;
-                                        highRange = max(fabs(argRanges[0].first),
-                                                        fabs(argRanges[0].second));
-                                    }
+									if (argRanges[0].first * argRanges[0].second > 0)
+									{
+										lowRange  = min(fabs(argRanges[0].first),
+												fabs(argRanges[0].second));
+										highRange = max(fabs(argRanges[0].first),
+												fabs(argRanges[0].second));
+									}
+									else
+									{
+										lowRange  = 0;
+										highRange = max(fabs(argRanges[0].first),
+												fabs(argRanges[0].second));
+									}
 								}
 								else if (calledFunction->getName().startswith("llvm.floor"))
 								{
@@ -1167,51 +1172,52 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 								 * 6. set the range of the result of the CallInst.
 								 * */
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect calledFunction %s.\n",
-                                          calledFunction->getName().str().c_str());
+									  calledFunction->getName().str().c_str());
 								auto innerBoundInfo = new BoundInfo();
-                                /*
-                                 * get the range of args and rename the called function with args range
-                                 * */
-                                std::string newFuncName = calledFunction->getName().str();
-                                /*
-                                 * check if the ranges have been set to the function name
-                                 * */
+								/*
+								 * get the range of args and rename the called function with args range
+								 * */
+								std::string newFuncName = calledFunction->getName().str();
+								/*
+								 * check if the ranges have been set to the function name
+								 * */
 								for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
 								{
-                                    std::vector<std::string> argRanges;
-                                    std::regex regexp("_([0-9]{1,})_([0-9]{1,})*");
-                                    std::smatch match;
-                                    regex_search(newFuncName, match, regexp);
-                                    for (size_t i = 1; i < match.size(); i++) {
-                                        argRanges.emplace_back(match[i]);
-                                    }
-                                    /*
-                                     * First, we check if it's a constant value
-                                     * */
+									std::vector<std::string> argRanges;
+									std::regex		 regexp("_([0-9]{1,})_([0-9]{1,})*");
+									std::smatch		 match;
+									regex_search(newFuncName, match, regexp);
+									for (size_t i = 1; i < match.size(); i++)
+									{
+										argRanges.emplace_back(match[i]);
+									}
+									/*
+									 * First, we check if it's a constant value
+									 * */
 									if (ConstantInt * cInt = dyn_cast<ConstantInt>(llvmIrCallInstruction->getOperand(idx)))
 									{
 										int64_t constIntValue = cInt->getSExtValue();
 										flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant int value: %d.\n", constIntValue);
 										innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
 															     std::make_pair(static_cast<double>(constIntValue),
-                                                                                static_cast<double>(constIntValue)));
-                                        std::string argVal = std::to_string(constIntValue);
-                                        if (argRanges.empty())
-                                            newFuncName = newFuncName + "_" + argVal+ "_" + argVal;
-                                        else if (argVal != argRanges[0] || argVal != argRanges[1])
-                                            newFuncName = match.prefix().str() + "_" + argVal+ "_" + argVal;
-                                    }
+																	    static_cast<double>(constIntValue)));
+										std::string argVal = std::to_string(constIntValue);
+										if (argRanges.empty())
+											newFuncName = newFuncName + "_" + argVal + "_" + argVal;
+										else if (argVal != argRanges[0] || argVal != argRanges[1])
+											newFuncName = match.prefix().str() + "_" + argVal + "_" + argVal;
+									}
 									else if (ConstantFP * constFp = dyn_cast<ConstantFP>(llvmIrCallInstruction->getOperand(idx)))
 									{
 										double constDoubleValue = (constFp->getValueAPF()).convertToDouble();
 										flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant double value: %f.\n", constDoubleValue);
 										innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
 															     std::make_pair(constDoubleValue, constDoubleValue));
-                                        std::string argVal = std::to_string((int)constDoubleValue);
-                                        if (argRanges.empty())
-                                            newFuncName = newFuncName + "_" + argVal+ "_" + argVal;
-                                        else if (argVal != argRanges[0] || argVal != argRanges[1])
-                                            newFuncName = match.prefix().str() + "_" + argVal+ "_" + argVal;
+										std::string argVal = std::to_string((int)constDoubleValue);
+										if (argRanges.empty())
+											newFuncName = newFuncName + "_" + argVal + "_" + argVal;
+										else if (argVal != argRanges[0] || argVal != argRanges[1])
+											newFuncName = match.prefix().str() + "_" + argVal + "_" + argVal;
 									}
 									else
 									{
@@ -1225,12 +1231,12 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 											flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
 												  vrRangeIt->second.first, vrRangeIt->second.second);
 											innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx), vrRangeIt->second);
-                                            std::string argLowVal = std::to_string((int)vrRangeIt->second.first);
-                                            std::string argHighVal = std::to_string((int)vrRangeIt->second.second);
-                                            if (argRanges.empty())
-                                                newFuncName = newFuncName + "_" + argLowVal+ "_" + argHighVal;
-                                            else if (argLowVal != argRanges[0] || argHighVal != argRanges[1])
-                                                newFuncName = match.prefix().str() + "_" + argLowVal+ "_" + argHighVal;
+											std::string argLowVal  = std::to_string((int)vrRangeIt->second.first);
+											std::string argHighVal = std::to_string((int)vrRangeIt->second.second);
+											if (argRanges.empty())
+												newFuncName = newFuncName + "_" + argLowVal + "_" + argHighVal;
+											else if (argLowVal != argRanges[0] || argHighVal != argRanges[1])
+												newFuncName = match.prefix().str() + "_" + argLowVal + "_" + argHighVal;
 										}
 										else
 										{
@@ -1238,130 +1244,134 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>>&
 										}
 									}
 								}
-                                Function * realCallee;
-                                std::pair<llvm::Value *, std::pair<double, double>> returnRange;
-                                auto uniqueNewFunc = boundInfo->callerMap.find(newFuncName) != boundInfo->callerMap.end();
-                                if (useOverLoad && newFuncName != calledFunction->getName().str() && uniqueNewFunc) {
-                                    /*
-                                     * rename the llvmIrCallInstruction to the new function name
-                                     */
-                                    ValueToValueMapTy vMap;
-                                    realCallee = Function::Create(calledFunction->getFunctionType(),
-                                                                  calledFunction->getLinkage(),
-                                                                  calledFunction->getAddressSpace(),
-                                                                  newFuncName);
-                                    auto *newFuncArgIt = realCallee->arg_begin();
-                                    for (auto &arg : calledFunction->args()) {
-                                        auto argName = arg.getName();
-                                        newFuncArgIt->setName(argName);
-                                        vMap[&arg] = &(*newFuncArgIt++);
-                                    }
-                                    SmallVector<ReturnInst*, 8> Returns;
-                                    CloneFunctionInto(realCallee, calledFunction, vMap,
-                                                      CloneFunctionChangeType::LocalChangesOnly, Returns);
-                                    // Set the linkage and visibility late as CloneFunctionInto has some
-                                    // implicit requirements.
-                                    realCallee->setVisibility(GlobalValue::DefaultVisibility);
-                                    realCallee->setLinkage(GlobalValue::PrivateLinkage);
+								Function *					    realCallee;
+								std::pair<llvm::Value *, std::pair<double, double>> returnRange;
+								auto						    uniqueNewFunc = boundInfo->callerMap.find(newFuncName) != boundInfo->callerMap.end();
+								if (useOverLoad && newFuncName != calledFunction->getName().str() && uniqueNewFunc)
+								{
+									/*
+									 * rename the llvmIrCallInstruction to the new function name
+									 */
+									ValueToValueMapTy vMap;
+									realCallee	    = Function::Create(calledFunction->getFunctionType(),
+													       calledFunction->getLinkage(),
+													       calledFunction->getAddressSpace(),
+													       newFuncName);
+									auto * newFuncArgIt = realCallee->arg_begin();
+									for (auto & arg : calledFunction->args())
+									{
+										auto argName = arg.getName();
+										newFuncArgIt->setName(argName);
+										vMap[&arg] = &(*newFuncArgIt++);
+									}
+									SmallVector<ReturnInst *, 8> Returns;
+									CloneFunctionInto(realCallee, calledFunction, vMap,
+											  CloneFunctionChangeType::LocalChangesOnly, Returns);
+									// Set the linkage and visibility late as CloneFunctionInto has some
+									// implicit requirements.
+									realCallee->setVisibility(GlobalValue::DefaultVisibility);
+									realCallee->setLinkage(GlobalValue::PrivateLinkage);
 
-                                    // Copy metadata
-                                    SmallVector<std::pair<unsigned, MDNode *>, 1> MDs;
-                                    calledFunction->getAllMetadata(MDs);
-                                    for (auto MDIt : MDs) {
-                                        if (!realCallee->hasMetadata()) {
-                                            realCallee->addMetadata(MDIt.first, *MDIt.second);
-                                        }
-                                    }
+									// Copy metadata
+									SmallVector<std::pair<unsigned, MDNode *>, 1> MDs;
+									calledFunction->getAllMetadata(MDs);
+									for (auto MDIt : MDs)
+									{
+										if (!realCallee->hasMetadata())
+										{
+											realCallee->addMetadata(MDIt.first, *MDIt.second);
+										}
+									}
 
-                                    Module &funcModule = *calledFunction->getParent();
-                                    funcModule.getFunctionList().insert(calledFunction->getIterator(), realCallee);
-                                    realCallee->setDSOLocal(true);
-                                    llvmIrCallInstruction->setCalledFunction(realCallee);
-                                    boundInfo->callerMap.emplace(realCallee->getName().str(), llvmIrCallInstruction);
-                                    /*
-                                     * update the inner bound info with the new function.
-                                     * // todo: this code is a bit wired, maybe can be improved
-                                     * */
-                                    auto innerBoundInfo = new BoundInfo();
-                                    for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
-                                    {
-                                        /*
-                                         * First, we check if it's a constant value
-                                         * */
-                                        if (ConstantInt * cInt = dyn_cast<ConstantInt>(llvmIrCallInstruction->getOperand(idx)))
-                                        {
-                                            int64_t constIntValue = cInt->getSExtValue();
-                                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant int value: %d.\n", constIntValue);
-                                            innerBoundInfo->virtualRegisterRange.emplace(realCallee->getArg(idx),
-                                                                                         std::make_pair(static_cast<double>(constIntValue),
-                                                                                                        static_cast<double>(constIntValue)));
-                                        }
-                                        else if (ConstantFP * constFp = dyn_cast<ConstantFP>(llvmIrCallInstruction->getOperand(idx)))
-                                        {
-                                            double constDoubleValue = (constFp->getValueAPF()).convertToDouble();
-                                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant double value: %f.\n", constDoubleValue);
-                                            innerBoundInfo->virtualRegisterRange.emplace(realCallee->getArg(idx),
-                                                                                         std::make_pair(constDoubleValue,
-                                                                                                        constDoubleValue));
-                                        }
-                                        else
-                                        {
-                                            /*
-                                             *	if we find the operand in boundInfo->virtualRegisterRange,
-                                             *	we know it's a variable with range.
-                                             */
-                                            auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrCallInstruction->getOperand(idx));
-                                            if (vrRangeIt != boundInfo->virtualRegisterRange.end())
-                                            {
-                                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
-                                                vrRangeIt->second.first, vrRangeIt->second.second);
-                                                innerBoundInfo->virtualRegisterRange.emplace(realCallee->getArg(idx),
-                                                                                             vrRangeIt->second);
-                                            }
-                                            else
-                                            {
-                                                assert(!valueRangeDebug && "failed to get range");
-                                            }
-                                        }
-                                    }
+									Module & funcModule = *calledFunction->getParent();
+									funcModule.getFunctionList().insert(calledFunction->getIterator(), realCallee);
+									realCallee->setDSOLocal(true);
+									llvmIrCallInstruction->setCalledFunction(realCallee);
+									boundInfo->callerMap.emplace(realCallee->getName().str(), llvmIrCallInstruction);
+									/*
+									 * update the inner bound info with the new function.
+									 * // todo: this code is a bit wired, maybe can be improved
+									 * */
+									auto innerBoundInfo = new BoundInfo();
+									for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
+									{
+										/*
+										 * First, we check if it's a constant value
+										 * */
+										if (ConstantInt * cInt = dyn_cast<ConstantInt>(llvmIrCallInstruction->getOperand(idx)))
+										{
+											int64_t constIntValue = cInt->getSExtValue();
+											flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant int value: %d.\n", constIntValue);
+											innerBoundInfo->virtualRegisterRange.emplace(realCallee->getArg(idx),
+																     std::make_pair(static_cast<double>(constIntValue),
+																		    static_cast<double>(constIntValue)));
+										}
+										else if (ConstantFP * constFp = dyn_cast<ConstantFP>(llvmIrCallInstruction->getOperand(idx)))
+										{
+											double constDoubleValue = (constFp->getValueAPF()).convertToDouble();
+											flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant double value: %f.\n", constDoubleValue);
+											innerBoundInfo->virtualRegisterRange.emplace(realCallee->getArg(idx),
+																     std::make_pair(constDoubleValue,
+																		    constDoubleValue));
+										}
+										else
+										{
+											/*
+											 *	if we find the operand in boundInfo->virtualRegisterRange,
+											 *	we know it's a variable with range.
+											 */
+											auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrCallInstruction->getOperand(idx));
+											if (vrRangeIt != boundInfo->virtualRegisterRange.end())
+											{
+												flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
+													  vrRangeIt->second.first, vrRangeIt->second.second);
+												innerBoundInfo->virtualRegisterRange.emplace(realCallee->getArg(idx),
+																	     vrRangeIt->second);
+											}
+											else
+											{
+												assert(!valueRangeDebug && "failed to get range");
+											}
+										}
+									}
 
-                                    returnRange = rangeAnalysis(N, typeRange, virtualRegisterVectorRange,
-                                                                innerBoundInfo, *realCallee, useOverLoad);
-                                    if (returnRange.first != nullptr)
-                                    {
-                                        boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
-                                    }
-                                    boundInfo->calleeBound.emplace(newFuncName, innerBoundInfo);
-                                } else {
-                                    /*
-                                     * if we don't use overload function here, for variables of innerBoundInfo
-                                     * that has been stored in boundInfo, we get the union set of them
-                                     * */
-                                    realCallee = calledFunction;
-                                    returnRange = rangeAnalysis(N, typeRange, virtualRegisterVectorRange,
-                                                                innerBoundInfo, *realCallee, useOverLoad);
-                                    if (returnRange.first != nullptr)
-                                    {
-                                        boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
-                                    }
-                                    for (const auto & vrRange : innerBoundInfo->virtualRegisterRange)
-                                    {
-                                        auto ibIt = boundInfo->virtualRegisterRange.find(vrRange.first);
-                                        if (ibIt != boundInfo->virtualRegisterRange.end())
-                                        {
-                                            auto innerLowerBound = vrRange.second.first < ibIt->second.first ?
-                                                    vrRange.second.first : ibIt->second.first;
-                                            auto innerUpperBound = vrRange.second.second > ibIt->second.second ?
-                                                    vrRange.second.second : ibIt->second.second;
-                                            boundInfo->virtualRegisterRange[ibIt->first] = std::make_pair(innerLowerBound,
-                                                                                                          innerUpperBound);
-                                        }
-                                        else
-                                        {
-                                            boundInfo->virtualRegisterRange.emplace(vrRange.first, vrRange.second);
-                                        }
-                                    }
-                                }
+									returnRange = rangeAnalysis(N, typeRange, virtualRegisterVectorRange,
+												    innerBoundInfo, *realCallee, useOverLoad);
+									if (returnRange.first != nullptr)
+									{
+										boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
+									}
+									boundInfo->calleeBound.emplace(newFuncName, innerBoundInfo);
+								}
+								else
+								{
+									/*
+									 * if we don't use overload function here, for variables of innerBoundInfo
+									 * that has been stored in boundInfo, we get the union set of them
+									 * */
+									realCallee  = calledFunction;
+									returnRange = rangeAnalysis(N, typeRange, virtualRegisterVectorRange,
+												    innerBoundInfo, *realCallee, useOverLoad);
+									if (returnRange.first != nullptr)
+									{
+										boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
+									}
+									for (const auto & vrRange : innerBoundInfo->virtualRegisterRange)
+									{
+										auto ibIt = boundInfo->virtualRegisterRange.find(vrRange.first);
+										if (ibIt != boundInfo->virtualRegisterRange.end())
+										{
+											auto innerLowerBound			     = vrRange.second.first < ibIt->second.first ? vrRange.second.first : ibIt->second.first;
+											auto innerUpperBound			     = vrRange.second.second > ibIt->second.second ? vrRange.second.second : ibIt->second.second;
+											boundInfo->virtualRegisterRange[ibIt->first] = std::make_pair(innerLowerBound,
+																		      innerUpperBound);
+										}
+										else
+										{
+											boundInfo->virtualRegisterRange.emplace(vrRange.first, vrRange.second);
+										}
+									}
+								}
 								/*
 								 * Check the return type of the function,
 								 * if it's a physical type that records in `typeRange`

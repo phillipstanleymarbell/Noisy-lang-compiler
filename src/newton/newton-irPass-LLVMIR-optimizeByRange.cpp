@@ -84,110 +84,135 @@ dumpIR(State * N, std::string fileSuffix, std::unique_ptr<Module> Mod)
 	dumpedFile.close();
 }
 
-void mergeBoundInfo(BoundInfo* dst, const BoundInfo* src) {
-    dst->virtualRegisterRange.insert(src->virtualRegisterRange.begin(),
-                                     src->virtualRegisterRange.end());
-    return;
+void
+mergeBoundInfo(BoundInfo * dst, const BoundInfo * src)
+{
+	dst->virtualRegisterRange.insert(src->virtualRegisterRange.begin(),
+					 src->virtualRegisterRange.end());
+	return;
 }
 
-void collectCalleeBoundInfo(std::map<std::string, BoundInfo*>& funcBoundInfo, const BoundInfo* boundInfo) {
-    for (auto & calleeInfo : boundInfo->calleeBound) {
-        funcBoundInfo.emplace(calleeInfo.first, calleeInfo.second);
-        collectCalleeBoundInfo(funcBoundInfo, calleeInfo.second);
-    }
-    return;
+void
+collectCalleeBoundInfo(std::map<std::string, BoundInfo *> & funcBoundInfo, const BoundInfo * boundInfo)
+{
+	for (auto & calleeInfo : boundInfo->calleeBound)
+	{
+		funcBoundInfo.emplace(calleeInfo.first, calleeInfo.second);
+		collectCalleeBoundInfo(funcBoundInfo, calleeInfo.second);
+	}
+	return;
 }
 
-void collectCallerMap(std::map<std::string, CallInst *>& callerMap, const BoundInfo* boundInfo) {
-    callerMap.insert(boundInfo->callerMap.begin(), boundInfo->callerMap.end());
-    return;
+void
+collectCallerMap(std::map<std::string, CallInst *> & callerMap, const BoundInfo * boundInfo)
+{
+	callerMap.insert(boundInfo->callerMap.begin(), boundInfo->callerMap.end());
+	return;
 }
 
 class FunctionNode {
-    mutable AssertingVH <Function> F;
-    FunctionComparator::FunctionHash Hash;
+	mutable AssertingVH<Function>	 F;
+	FunctionComparator::FunctionHash Hash;
 
-public:
-    // Note the hash is recalculated potentially multiple times, but it is cheap.
-    FunctionNode(Function *F)
-            : F(F), Hash(FunctionComparator::functionHash(*F)) {}
+	public:
+	// Note the hash is recalculated potentially multiple times, but it is cheap.
+	FunctionNode(Function * F)
+	    : F(F), Hash(FunctionComparator::functionHash(*F)) {}
 
-    Function *getFunc() const { return F; }
+	Function *
+	getFunc() const
+	{
+		return F;
+	}
 
-    FunctionComparator::FunctionHash getHash() const { return Hash; }
+	FunctionComparator::FunctionHash
+	getHash() const
+	{
+		return Hash;
+	}
 };
 
 GlobalNumberState GlobalNumbers;
 
 class FunctionNodeCmp {
-public:
-    bool operator()(const FunctionNode &LHS, const FunctionNode &RHS) const {
-        // Order first by hashes, then full function comparison.
-        if (LHS.getHash() != RHS.getHash())
-            return LHS.getHash() < RHS.getHash();
-        FunctionComparator FCmp(LHS.getFunc(), RHS.getFunc(), &GlobalNumbers);
-        return FCmp.compare() == -1;
-    }
+	public:
+	bool
+	operator()(const FunctionNode & LHS, const FunctionNode & RHS) const
+	{
+		// Order first by hashes, then full function comparison.
+		if (LHS.getHash() != RHS.getHash())
+			return LHS.getHash() < RHS.getHash();
+		FunctionComparator FCmp(LHS.getFunc(), RHS.getFunc(), &GlobalNumbers);
+		return FCmp.compare() == -1;
+	}
 };
 
 using hashFuncSet = std::set<FunctionNode, FunctionNodeCmp>;
 
-void overloadFunc(std::unique_ptr<Module>& Mod, std::map<std::string, CallInst *> callerMap) {
-    /*
-     * compare the functions and remove the redundant one
-     * */
-    hashFuncSet baseFuncs;
-    auto baseFuncNum = baseFuncs.size();
-    for (auto itFunc = Mod->getFunctionList().rbegin(); itFunc != Mod->getFunctionList().rend(); itFunc++) {
-        if (!itFunc->hasName() || itFunc->getName().empty())
-            continue;
-        if (itFunc->getName().startswith("llvm.dbg.value") ||
-            itFunc->getName().startswith("llvm.dbg.declare"))
-            continue;
-        if (itFunc->isDeclaration())
-            continue;
-        baseFuncs.emplace(FunctionNode(&(*itFunc)));
-        /*
-         * find the function with the same implementation and change the callInst
-         * */
-        if (baseFuncNum == baseFuncs.size()) {
-            auto callerIt = callerMap.find(itFunc->getName().str());
-            assert(callerIt != callerMap.end());
-            auto currentCallerInst = callerIt->second;
-            auto currentFuncNode = FunctionNode(&(*itFunc));
-            GlobalNumberState cmpGlobalNumbers;
-            auto sameImplIt = std::find_if(baseFuncs.begin(), baseFuncs.end(),
-                                           [currentFuncNode, &cmpGlobalNumbers](const FunctionNode &func) {
-                                               FunctionComparator FCmp(func.getFunc(), currentFuncNode.getFunc(), &cmpGlobalNumbers);
-                                               return func.getHash() == currentFuncNode.getHash() && FCmp.compare() == 0;
-                                           });
-            assert(sameImplIt != baseFuncs.end());
-            currentCallerInst->setCalledFunction(sameImplIt->getFunc());
-        } else
-            baseFuncNum = baseFuncs.size();
-    }
+void
+overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> callerMap)
+{
+	/*
+	 * compare the functions and remove the redundant one
+	 * */
+	hashFuncSet baseFuncs;
+	auto	    baseFuncNum = baseFuncs.size();
+	for (auto itFunc = Mod->getFunctionList().rbegin(); itFunc != Mod->getFunctionList().rend(); itFunc++)
+	{
+		if (!itFunc->hasName() || itFunc->getName().empty())
+			continue;
+		if (itFunc->getName().startswith("llvm.dbg.value") ||
+		    itFunc->getName().startswith("llvm.dbg.declare"))
+			continue;
+		if (itFunc->isDeclaration())
+			continue;
+		baseFuncs.emplace(FunctionNode(&(*itFunc)));
+		/*
+		 * find the function with the same implementation and change the callInst
+		 * */
+		if (baseFuncNum == baseFuncs.size())
+		{
+			auto callerIt = callerMap.find(itFunc->getName().str());
+			assert(callerIt != callerMap.end());
+			auto		  currentCallerInst = callerIt->second;
+			auto		  currentFuncNode   = FunctionNode(&(*itFunc));
+			GlobalNumberState cmpGlobalNumbers;
+			auto		  sameImplIt = std::find_if(baseFuncs.begin(), baseFuncs.end(),
+								    [currentFuncNode, &cmpGlobalNumbers](const FunctionNode & func) {
+								    FunctionComparator FCmp(func.getFunc(), currentFuncNode.getFunc(), &cmpGlobalNumbers);
+								    return func.getHash() == currentFuncNode.getHash() && FCmp.compare() == 0;
+							    });
+			assert(sameImplIt != baseFuncs.end());
+			currentCallerInst->setCalledFunction(sameImplIt->getFunc());
+		}
+		else
+			baseFuncNum = baseFuncs.size();
+	}
 
-    std::set<std::string> baseFuncNames;
-    for (auto f : baseFuncs) {
-        baseFuncNames.emplace(f.getFunc()->getName().str());
-    }
+	std::set<std::string> baseFuncNames;
+	for (auto f : baseFuncs)
+	{
+		baseFuncNames.emplace(f.getFunc()->getName().str());
+	}
 
-    /*
-     * iterate functions in Mod, if it cannot be found in baseFuncs, delete it.
-     * */
-    for (auto itFunc = Mod->getFunctionList().begin(); itFunc != Mod->getFunctionList().end(); itFunc++) {
-        if (!itFunc->hasName() || itFunc->getName().empty())
-            continue;
-        if (itFunc->getName().startswith("llvm.dbg.value") ||
-            itFunc->getName().startswith("llvm.dbg.declare"))
-            continue;
-        if (itFunc->isDeclaration())
-            continue;
-        if (baseFuncNames.find(itFunc->getName().str()) == baseFuncNames.end() && itFunc->hasLocalLinkage()) {
-            Mod->getFunctionList().remove(itFunc);
-            itFunc--;
-        }
-    }
+	/*
+	 * iterate functions in Mod, if it cannot be found in baseFuncs, delete it.
+	 * */
+	for (auto itFunc = Mod->getFunctionList().begin(); itFunc != Mod->getFunctionList().end(); itFunc++)
+	{
+		if (!itFunc->hasName() || itFunc->getName().empty())
+			continue;
+		if (itFunc->getName().startswith("llvm.dbg.value") ||
+		    itFunc->getName().startswith("llvm.dbg.declare"))
+			continue;
+		if (itFunc->isDeclaration())
+			continue;
+		if (baseFuncNames.find(itFunc->getName().str()) == baseFuncNames.end() && itFunc->hasLocalLinkage())
+		{
+			Mod->getFunctionList().remove(itFunc);
+			itFunc--;
+		}
+	}
 }
 
 void
@@ -208,13 +233,13 @@ irPassLLVMIROptimizeByRange(State * N)
 		fatal(N, Esanity);
 	}
 
-	auto globalBoundInfo = new BoundInfo();
-    std::map<std::string, BoundInfo*> funcBoundInfo;
+	auto				   globalBoundInfo = new BoundInfo();
+	std::map<std::string, BoundInfo *> funcBoundInfo;
 
 	/*
 	 * get sensor info, we only concern the id and range here
 	 * */
-    std::map<std::string, std::pair<double, double>> typeRange;
+	std::map<std::string, std::pair<double, double>> typeRange;
 	if (N->sensorList != NULL)
 	{
 		for (Modality * currentModality = N->sensorList->modalityList; currentModality != NULL; currentModality = currentModality->next)
@@ -229,7 +254,7 @@ irPassLLVMIROptimizeByRange(State * N)
 	/*
 	 * get const global variables
 	 * */
-    std::map<llvm::Value *, std::vector<std::pair<double, double>>> virtualRegisterVectorRange;
+	std::map<llvm::Value *, std::vector<std::pair<double, double>>> virtualRegisterVectorRange;
 	for (auto & globalVar : Mod->getGlobalList())
 	{
 		if (!globalVar.hasInitializer())
@@ -254,7 +279,7 @@ irPassLLVMIROptimizeByRange(State * N)
 		{
 			auto constValue = constInt->getSExtValue();
 			globalBoundInfo->virtualRegisterRange.emplace(&globalVar, std::make_pair(static_cast<double>(constValue),
-											   static_cast<double>(constValue)));
+												 static_cast<double>(constValue)));
 		}
 		else if (ConstantDataArray * constArr = llvm::dyn_cast<llvm::ConstantDataArray>(constValue))
 		{
@@ -298,115 +323,124 @@ irPassLLVMIROptimizeByRange(State * N)
 		}
 	}
 
-    /*
-     * analyze the range of all local variables in each function
-     * */
+	/*
+	 * analyze the range of all local variables in each function
+	 * */
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
-    std::map<std::string, CallInst *> callerMap;
-    const bool useOverLoad = true;
+	std::map<std::string, CallInst *> callerMap;
+	const bool			  useOverLoad = true;
 	for (auto & mi : *Mod)
 	{
-        auto boundInfo = new BoundInfo();
-        mergeBoundInfo(boundInfo, globalBoundInfo);
+		auto boundInfo = new BoundInfo();
+		mergeBoundInfo(boundInfo, globalBoundInfo);
 		rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi, useOverLoad);
-        funcBoundInfo.emplace(mi.getName(), boundInfo);
-        collectCalleeBoundInfo(funcBoundInfo, boundInfo);
-        collectCallerMap(callerMap, boundInfo);
+		funcBoundInfo.emplace(mi.getName(), boundInfo);
+		collectCalleeBoundInfo(funcBoundInfo, boundInfo);
+		collectCallerMap(callerMap, boundInfo);
 	}
 
-    /*
-     * simplify the condition of each branch
-     * */
+	/*
+	 * simplify the condition of each branch
+	 * */
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
 	for (auto & mi : *Mod)
 	{
-        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-        if (boundInfoIt != funcBoundInfo.end()) {
-            simplifyControlFlow(N, boundInfoIt->second, mi);
-        } else {
-            assert(false);
-        }
+		auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+		if (boundInfoIt != funcBoundInfo.end())
+		{
+			simplifyControlFlow(N, boundInfoIt->second, mi);
+		}
+		else
+		{
+			assert(false);
+		}
 	}
 
-    legacy::PassManager passManager;
+	legacy::PassManager passManager;
 	passManager.add(createCFGSimplificationPass());
 	passManager.add(createInstSimplifyLegacyPass());
 	passManager.run(*Mod);
 
-    if (useOverLoad)
-        overloadFunc(Mod, callerMap);
+	if (useOverLoad)
+		overloadFunc(Mod, callerMap);
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
-    callerMap.clear();
-    funcBoundInfo.clear();
-    for (auto & mi : *Mod)
-    {
-        auto boundInfo = new BoundInfo();
-        mergeBoundInfo(boundInfo, globalBoundInfo);
-        rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi, useOverLoad);
-        funcBoundInfo.emplace(mi.getName(), boundInfo);
-        collectCalleeBoundInfo(funcBoundInfo, boundInfo);
-        collectCallerMap(callerMap, boundInfo);
-    }
+	callerMap.clear();
+	funcBoundInfo.clear();
+	for (auto & mi : *Mod)
+	{
+		auto boundInfo = new BoundInfo();
+		mergeBoundInfo(boundInfo, globalBoundInfo);
+		rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi, useOverLoad);
+		funcBoundInfo.emplace(mi.getName(), boundInfo);
+		collectCalleeBoundInfo(funcBoundInfo, boundInfo);
+		collectCallerMap(callerMap, boundInfo);
+	}
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
-    for (auto & mi : *Mod)
-    {
-        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-        if (boundInfoIt != funcBoundInfo.end()) {
-            constantSubstitution(N, boundInfoIt->second, mi);
-        } else {
-            assert(false);
-        }
-    }
+	for (auto & mi : *Mod)
+	{
+		auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+		if (boundInfoIt != funcBoundInfo.end())
+		{
+			constantSubstitution(N, boundInfoIt->second, mi);
+		}
+		else
+		{
+			assert(false);
+		}
+	}
 
-//	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
-//    for (auto & mi : *Mod)
-//    {
-//        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-//        if (boundInfoIt != funcBoundInfo.end()) {
-//            shrinkType(N, boundInfoIt->second, mi);
-//        } else {
-//            assert(false);
-//        }
-//    }
+	//	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
+	//    for (auto & mi : *Mod)
+	//    {
+	//        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+	//        if (boundInfoIt != funcBoundInfo.end()) {
+	//            shrinkType(N, boundInfoIt->second, mi);
+	//        } else {
+	//            assert(false);
+	//        }
+	//    }
 
-    if (useOverLoad)
-        overloadFunc(Mod, callerMap);
+	if (useOverLoad)
+		overloadFunc(Mod, callerMap);
 
-    flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
-    callerMap.clear();
-    funcBoundInfo.clear();
-    for (auto & mi : *Mod)
-    {
-        auto boundInfo = new BoundInfo();
-        mergeBoundInfo(boundInfo, globalBoundInfo);
-        rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi, useOverLoad);
-        funcBoundInfo.emplace(mi.getName(), boundInfo);
-        collectCalleeBoundInfo(funcBoundInfo, boundInfo);
-        collectCallerMap(callerMap, boundInfo);
-    }
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
+	callerMap.clear();
+	funcBoundInfo.clear();
+	for (auto & mi : *Mod)
+	{
+		auto boundInfo = new BoundInfo();
+		mergeBoundInfo(boundInfo, globalBoundInfo);
+		rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi, useOverLoad);
+		funcBoundInfo.emplace(mi.getName(), boundInfo);
+		collectCalleeBoundInfo(funcBoundInfo, boundInfo);
+		collectCallerMap(callerMap, boundInfo);
+	}
 
-    /*
-     *
-     * */
-    flexprint(N->Fe, N->Fm, N->Fpinfo, "auto quantize data by precision\n");
-    for (auto & mi : *Mod)
-    {
-        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-        if (boundInfoIt != funcBoundInfo.end()) {
-            irPassLLVMIRAutoQuantization(N, boundInfoIt->second, mi);
-        } else {
-            assert(false);
-        }
-    }
+	/*
+	 *
+	 * */
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "auto quantize data by precision\n");
+	for (auto & mi : *Mod)
+	{
+		auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+		if (boundInfoIt != funcBoundInfo.end())
+		{
+			irPassLLVMIRAutoQuantization(N, boundInfoIt->second, mi);
+		}
+		else
+		{
+			assert(false);
+		}
+	}
 
-    if (useOverLoad)
-        overloadFunc(Mod, callerMap);
+	if (useOverLoad)
+		overloadFunc(Mod, callerMap);
 
-    /*
-     * Dump BC file to a file.
-     * */
+	/*
+	 * Dump BC file to a file.
+	 * */
 	dumpIR(N, "output", std::move(Mod));
 }
 }
