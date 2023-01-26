@@ -126,6 +126,9 @@ constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFu
 							case Type::DoubleTyID:
 								newConstant = ConstantFP::get(llvmIrInstruction->getType(), lowerBound);
 								break;
+                            case Type::PointerTyID:
+                                llvmIrInstruction->eraseFromParent();
+                                break;
 							default:
 								break;
 						}
