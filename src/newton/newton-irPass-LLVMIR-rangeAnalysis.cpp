@@ -2098,8 +2098,8 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 							if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 							{
 								boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
-													std::make_pair((int)vrRangeIt->second.first >> constValue,
-														       (int)vrRangeIt->second.second >> constValue));
+													std::make_pair((uint)vrRangeIt->second.first >> constValue,
+														       (uint)vrRangeIt->second.second >> constValue));
 							}
 							else
 							{
@@ -2701,12 +2701,12 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 											switch (resEleTy->getPrimitiveSizeInBits())
 											{
 												case 32:
-													lowRange  = static_cast<double>(static_cast<int32_t>(originLowWord >> (32 * elementOffset)));
-													highRange = static_cast<double>(static_cast<int32_t>(originHighWord >> (32 * elementOffset)));
+													lowRange  = static_cast<double>(static_cast<uint32_t>(originLowWord >> (32 * elementOffset)));
+													highRange = static_cast<double>(static_cast<uint32_t>(originHighWord >> (32 * elementOffset)));
 													break;
 												case 64:
-													lowRange  = static_cast<double>(static_cast<int64_t>(originLowWord));
-													highRange = static_cast<double>(static_cast<int64_t>(originHighWord));
+													lowRange  = static_cast<double>(static_cast<uint64_t>(originLowWord));
+													highRange = static_cast<double>(static_cast<uint64_t>(originHighWord));
 													break;
 												default:
 													flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
