@@ -12,7 +12,8 @@
 /*
  * Definitions generated from Newton
  */
-typedef double bmx055xAcceleration;  // [-16, 16]
+typedef double bmx055xAcceleration;  // [3, 10]
+typedef double bmx055yAcceleration; // [15, 36]
 typedef double bmx055zAcceleration;  // [0, 127]
 typedef float bmx055fAcceleration;  // [0, 127]
 typedef int32_t bmx055xMagneto;      // [0, 127]
@@ -47,6 +48,8 @@ void quant_add_test(int* leftOp, int* rightOp, int* result);
 void fixed_point_add_test(bmx055zAcceleration* leftOp, bmx055zAcceleration* rightOp,
                           bmx055zAcceleration* result);
 void fixed_point_add_test_simplified(const int* leftOp, const int* rightOp, int* result);
+
+double funcA(double x, double y);
 
 partsOfFP splitDouble(double value);
 double combineRealNumber(partsOfFP value);
