@@ -117,18 +117,21 @@ constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFu
 						 * */
 						Value *	 newConstant = nullptr;
 						uint64_t intBitWidth;
-						switch (llvmIrInstruction->getType()->getTypeID())
+                        auto instType = llvmIrInstruction->getType();
+                        auto typeId = instType->getTypeID();
+                        if (typeId == Type::PointerTyID) {
+                            instType = instType->getPointerElementType();
+                            typeId = instType->getTypeID();
+                        }
+						switch (typeId)
 						{
 							case Type::IntegerTyID:
-								newConstant = ConstantInt::get(llvmIrInstruction->getType(), lowerBound, lowerBound <= 0);
+								newConstant = ConstantInt::get(instType, lowerBound, lowerBound < 0);
 								break;
 							case Type::FloatTyID:
 							case Type::DoubleTyID:
-								newConstant = ConstantFP::get(llvmIrInstruction->getType(), lowerBound);
+								newConstant = ConstantFP::get(instType, lowerBound);
 								break;
-                            case Type::PointerTyID:
-                                llvmIrInstruction->eraseFromParent();
-                                break;
 							default:
 								break;
 						}
