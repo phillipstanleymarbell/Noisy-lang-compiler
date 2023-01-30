@@ -44,7 +44,7 @@ extern "C"
 
 const bool valueRangeDebug = false;
 
-std::pair<double, double>
+std::pair<bool, std::pair<double, double>>
 getGEPArrayRange(State * N, GetElementPtrInst * llvmIrGetElePtrInstruction,
 		 std::map<llvm::Value *, std::pair<double, double>> virtualRegisterRange)
 {
@@ -119,7 +119,7 @@ getGEPArrayRange(State * N, GetElementPtrInst * llvmIrGetElePtrInstruction,
 				 * */
 				unsigned int arrIndex = constInt->getZExtValue();
 				auto	     resVec   = dynRangeRes({arrIndex});
-				return resVec;
+				return std::make_pair(true, resVec);
 			}
 			else
 			{
@@ -144,21 +144,21 @@ getGEPArrayRange(State * N, GetElementPtrInst * llvmIrGetElePtrInstruction,
 					}
 				}
 				auto resVec = dynRangeRes(dynIdx);
-				return resVec;
+				return std::make_pair(true, resVec);
 			}
 		}
 		else
 		{
 			// todo: get range other type of array
 			assert(!valueRangeDebug && "implement when meet");
-			return std::make_pair(0, 0);
+			return std::make_pair(false, std::make_pair(0, 0));
 		}
 	}
 	else
 	{
 		// todo: get range from variable array
 		assert(!valueRangeDebug && "implement when meet");
-		return std::make_pair(0, 0);
+		return std::make_pair(false, std::make_pair(0, 0));
 	}
 }
 
@@ -2737,8 +2737,8 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 						{
 							auto resVec = getGEPArrayRange(N, llvmIrGetElePtrInstruction,
 										       boundInfo->virtualRegisterRange);
-							boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction,
-												std::make_pair(resVec.first, resVec.second));
+                            if (resVec.first)
+                                boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, resVec.second);
 						}
 						else if (llvmIrGetElePtrInstruction->getPointerOperandType()
 							     ->getPointerElementType()
