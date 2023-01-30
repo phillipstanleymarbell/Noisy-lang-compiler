@@ -42,6 +42,10 @@
 #include "../c-files/perf_test_api.h"
 #include "../c-files/fdlibm.h"
 
+/***************************************
+ * Timer functions of the test framework
+ ***************************************/
+
 typedef struct timespec timespec;
 timespec diff(timespec start, timespec end)
 {
@@ -87,6 +91,10 @@ void toc( timespec* start_time, const char* prefix )
     *start_time = current_time;
 }
 
+/**********************************************
+ * Random value generator of the test framework
+ **********************************************/
+
 static bmx055xMagneto
 randomInt(bmx055xMagneto min, bmx055xMagneto max)
 {
@@ -121,46 +129,43 @@ randomFloat(bmx055fAcceleration min, bmx055fAcceleration max)
 /*
  * random integer array, [min, max]
  * */
-static bmx055xMagneto randIntValue[iteration_num];
-bmx055xMagneto*
-randomIntArr(bmx055xMagneto min, bmx055xMagneto max)
+static void
+randomIntArr(bmx055xMagneto *randIntValue, bmx055xMagneto min, bmx055xMagneto max)
 {
     for (size_t idx = 0; idx < iteration_num; idx++) {
         randIntValue[idx] = (rand() % max) + 1;
     }
-    return randIntValue;
 }
 
 /*
  * random double array, [min, max]
  * */
-static bmx055zAcceleration randDoubleValue[iteration_num];
-bmx055zAcceleration*
-randomDoubleArr(bmx055zAcceleration min, bmx055zAcceleration max)
+static void
+randomDoubleArr(bmx055zAcceleration *randDoubleValue, bmx055zAcceleration min, bmx055zAcceleration max)
 {
     for (size_t idx = 0; idx < iteration_num; idx++) {
         randDoubleValue[idx] = min + 1.0 * rand() / RAND_MAX * (max - min);
     }
-    return randDoubleValue;
 }
 
 /*
  * random float array, [min, max]
  * */
-static bmx055fAcceleration randFloatValue[iteration_num];
-bmx055fAcceleration*
-randomFloatArr(bmx055fAcceleration min, bmx055fAcceleration max)
+static void
+randomFloatArr(bmx055fAcceleration *randFloatValue, bmx055fAcceleration min, bmx055fAcceleration max)
 {
     for (size_t idx = 0; idx < iteration_num; idx++) {
         randFloatValue[idx] = min + 1.0 * rand() / RAND_MAX * (max - min);
     }
-    return randFloatValue;
 }
+
+/************************************
+ * Main process of the test framework
+ ************************************/
 
 int
 main(int argc, char** argv)
 {
-	double result = 0;
     double parameters[2];
     char* pEnd;
     if (argc == 3) {
@@ -172,148 +177,141 @@ main(int argc, char** argv)
         parameters[0] = 3.0;
         parameters[1] = 10.0;
     }
-	/*
+    double result[iteration_num];
+    bmx055xAcceleration xOps[iteration_num];
+    bmx055yAcceleration yOps[iteration_num];
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        xOps[idx] = randomDouble(parameters[0], parameters[1]);
+        yOps[idx] = randomDouble(parameters[0] + 0.6, parameters[1] + 0.3);
+    }
+
+    bmx055fAcceleration fpResult[iteration_num];
+    bmx055fAcceleration fpXOps[iteration_num];
+    bmx055fAcceleration fpYOps[iteration_num];
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        fpXOps[idx] = randomFloat(parameters[0], parameters[1]);
+        fpYOps[idx] = randomFloat(parameters[0] + 0.6, parameters[1] + 0.3);
+    }
+
+    bmx055xMagneto intResult[iteration_num];
+    bmx055xMagneto intXOps[iteration_num];
+    bmx055xMagneto intYOps[iteration_num];
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        intXOps[idx] = randomInt(0, 127);
+        intYOps[idx] = randomInt(0, 127);
+    }
+
+    bmx055yMagneto int8Result[iteration_num];
+    bmx055yMagneto int8XOps[iteration_num];
+    bmx055yMagneto int8YOps[iteration_num];
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        int8XOps[idx] = randomInt_8(0, 127);
+        int8YOps[idx] = randomInt_8(0, 127);
+    }
+
+    // pre-processing of quantization
+    int fixedResult[iteration_num];
+    int fixedLeftOps[iteration_num];
+    int fixedRightOps[iteration_num];
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+#if defined(BENCHMARK_SUITE_QUANT)
+        fixedLeftOps[idx] = (int) (intXOps[idx] * (1 << Q) + 0.5);
+        fixedRightOps[idx] = (int) (intYOps[idx] * (1 << Q) + 0.5);
+#elif defined(BENCHMARK_SUITE_FIXEDPOINT)
+        fixedLeftOps[idx] = (int) (intXOps[idx] / 0.98 + 0.5);
+        fixedRightOps[idx] = (int) (intYOps[idx] / 0.98 + 0.5);
+#endif
+    }
+
+    /*
 	 * I try to pass the function name from command line to make it more automatic,
 	 * but it's seemingly forbidden in C/C++.
 	 * So we need to write the function name manually here.
 	 * */
-	for (int i = 0; i < 1; i++)
-	{
-#ifdef CONTROL_FLOW_FUNC
-		result = controlFlowFunc(randomFloat(-16.0, 16.0));
+    timespec timer = tic();
+#if defined(CONTROL_FLOW_FUNC)
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = controlFlowFunc(xOps[idx]);
+    }
 #elif defined(LIBC_EXP)
-        result = __ieee754_exp(randomFloat(parameters[0], parameters[1]));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = __ieee754_exp(xOps[idx]);
+    }
 #elif defined(LIBC_LOG)
-        result = __ieee754_log(randomFloat(parameters[0], parameters[1]));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = __ieee754_log(xOps[idx]);
+    }
 #elif defined(LIBC_ACOSH)
-		result = __ieee754_acosh(randomFloat(parameters[0], parameters[1]));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = __ieee754_acosh(xOps[idx]);
+    }
 #elif defined(LIBC_J0)
-        result = __ieee754_j0(randomFloat(parameters[0], parameters[1]));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = __ieee754_j0(xOps[idx]);
+    }
 #elif defined(LIBC_Y0)
-		result = __ieee754_y0(randomFloat(parameters[0], parameters[1]));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = __ieee754_y0(xOps[idx]);
+    }
 #elif defined(LIBC_REM_PIO2)
-        bmx055xAcceleration y[2];
-        result = __ieee754_rem_pio2(randomFloat(parameters[0], parameters[1]), y);
+    bmx055xAcceleration y[2];
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = __ieee754_rem_pio2(xOps[idx], y);
+    }
 #elif defined(LIBC_SINCOSF)
-        float sinp, cosp;
-        result = libc_sincosf(randomFloat(parameters[0], parameters[1]), &sinp, &cosp);
+    float sinp, cosp;
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = libc_sincosf(xOps[idx], &sinp, &cosp);
+    }
 #elif defined(FLOAT64_ADD)
-        result = float64_add(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 0.6, parameters[1] + 0.3));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = float64_add(xOps[idx], yOps[idx]);
+    }
 #elif defined(FLOAT64_DIV)
-        result = float64_div(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 0.6, parameters[1] + 0.3));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = float64_div(xOps[idx], yOps[idx]);
+    }
 #elif defined(FLOAT64_MUL)
-        result = float64_mul(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 0.6, parameters[1] + 0.3));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = float64_mul(xOps[idx], yOps[idx]);
+    }
 #elif defined(FLOAT64_SIN)
-        result = float64_sin(randomFloat(parameters[0], parameters[1]));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = float64_sin(xOps[idx], yOps[idx]);
+    }
 #elif defined(BENCHMARK_SUITE_INT)
-        bmx055xMagneto result[iteration_num];
-        bmx055xMagneto leftOps[iteration_num];
-        bmx055xMagneto rightOps[iteration_num];
-        for (size_t idx = 0; idx < iteration_num; idx++) {
-            leftOps[idx] = randomInt(0, 127);
-            rightOps[idx] = randomInt(0, 127);
-        }
-        timespec timer = tic();
-        int32_add_test(leftOps, rightOps, result);
-        toc(&timer, "computation delay");
-        printf("%d\t%d\t%d\t%d\t%d\n", result[0], result[1], result[2], result[3], result[4]);
+    int32_add_test(intXOps, intYOps, intResult);
 #elif defined(BENCHMARK_SUITE_INT_8)
-        bmx055yMagneto result[iteration_num];
-        bmx055yMagneto leftOps[iteration_num];
-        bmx055yMagneto rightOps[iteration_num];
-        for (size_t idx = 0; idx < iteration_num; idx++) {
-            leftOps[idx] = randomInt_8(0, 127);
-            rightOps[idx] = randomInt_8(0, 127);
-        }
-        timespec timer = tic();
-        int8_add_test(leftOps, rightOps, result);
-        toc(&timer, "computation delay");
-        printf("%d\t%d\t%d\t%d\t%d\n", result[0], result[1], result[2], result[3], result[4]);
+    int8_add_test(int8XOps, int8YOps, int8Result);
 #elif defined(BENCHMARK_SUITE_DOUBLE)
-        bmx055zAcceleration result[iteration_num];
-        bmx055zAcceleration leftOps[iteration_num];
-        bmx055zAcceleration rightOps[iteration_num];
-        for (size_t idx = 0; idx < iteration_num; idx++) {
-            leftOps[idx] = randomDouble(0, 127);
-            rightOps[idx] = randomDouble(0, 127);
-        }
-        timespec timer = tic();
-        double_add_test(leftOps, rightOps, result);
-        toc(&timer, "computation delay");
-        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+    double_add_test(xOps, yOps, result);
 #elif defined(BENCHMARK_SUITE_FLOAT)
-        bmx055fAcceleration result[iteration_num];
-        bmx055fAcceleration leftOps[iteration_num];
-        bmx055fAcceleration rightOps[iteration_num];
-        for (size_t idx = 0; idx < iteration_num; idx++) {
-            leftOps[idx] = randomFloat(0, 127);
-            rightOps[idx] = randomFloat(0, 127);
-        }
-        timespec timer = tic();
-        float_add_test(leftOps, rightOps, result);
-        toc(&timer, "computation delay");
-        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+    float_add_test(fpXOps, fpYOps, fpResult);
 #elif defined(BENCHMARK_SUITE_ASUINT)
-        bmx055zAcceleration result[iteration_num];
-        bmx055zAcceleration leftOps[iteration_num];
-        bmx055zAcceleration rightOps[iteration_num];
-        for (size_t idx = 0; idx < iteration_num; idx++) {
-            leftOps[idx] = randomDouble(0, 127);
-            rightOps[idx] = randomDouble(0, 127);
-        }
-        asUint_add_test(leftOps, rightOps, result);
-//        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+    asUint_add_test(xOps, yOps, result);
 #elif defined(BENCHMARK_SUITE_QUANT)
-        int result[iteration_num];
-        double result_res[iteration_num];
-        int leftOps[iteration_num];
-        int rightOps[iteration_num];
-        for (size_t idx = 0; idx < iteration_num; idx++) {
-            leftOps[idx] = (int)(randomDouble(0, 127) / 0.98 + 0.5);
-            rightOps[idx] = (int)(randomDouble(0, 127) / 0.98 + 0.5);
-        }
-        quant_add_test(leftOps, rightOps, result);
-        for (size_t idx = 0; idx < iteration_num; idx++) {
-            result_res[idx] = result[idx] * 0.98;
-        }
-        printf("%f\t%f\t%f\t%f\t%f\n", result_res[0], result_res[1],
-               result_res[2], result_res[3], result_res[4]);
-//        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+    quant_add_test(fixedLeftOps, fixedRightOps, fixedResult);
 #elif defined(BENCHMARK_SUITE_FIXEDPOINT)
-        bmx055zAcceleration result[iteration_num];
-        int fixed_result[iteration_num];
-        bmx055zAcceleration leftOps[iteration_num];
-        bmx055zAcceleration rightOps[iteration_num];
-        int fixed_leftOps[iteration_num];
-        int fixed_rightOps[iteration_num];
-        for (size_t idx = 0; idx < iteration_num; idx++) {
-            leftOps[idx] = randomDouble(0, 127);
-            rightOps[idx] = randomDouble(0, 127);
-            fixed_leftOps[idx] = (int) (leftOps[idx] * (1 << Q) + 0.5);
-            fixed_rightOps[idx] = (int) (rightOps[idx] * (1 << Q) + 0.5);
-        }
-        timespec timer = tic();
-//        fixed_point_add_test(leftOps, rightOps, result);
-        fixed_point_add_test_simplified(fixed_leftOps, fixed_rightOps, fixed_result);
-        toc(&timer, "computation delay");
-        for (size_t idx = 0; idx < iteration_num; idx++) {
-            result[idx] = (double)fixed_result[idx] / (1<<Q);
-        }
-        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+    fixed_point_add_test_simplified(fixedLeftOps, fixedRightOps, fixedResult);
 #elif defined(FUNC_CALL)
-        bmx055xAcceleration x;
-        bmx055yAcceleration y;
-        double result[iteration_num];
-        timespec timer = tic();
-        for (size_t idx = 0; idx < iteration_num; idx++) {
-            result[idx] = funcA(randomDouble(3, 10), randomDouble(15, 36));
-        }
-        toc(&timer, "computation delay");
-        printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = funcA(xOps[idx], yOps[idx]);
+    }
 #else
 	#error "Benchmark function not defined"
 #endif
-	}
+    toc(&timer, "computation delay");
+
+    // post-processing of quantization
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+#if defined(BENCHMARK_SUITE_QUANT)
+        result[idx] = fixedResult[idx] * 0.98;
+#elif defined(BENCHMARK_SUITE_FIXEDPOINT)
+        result[idx] = (double)fixedResult[idx] / (1<<Q);
+#endif
+    }
+
+    printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
 
 	return 0;
 }
