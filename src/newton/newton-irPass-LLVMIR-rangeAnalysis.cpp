@@ -943,9 +943,11 @@ bitwiseInterval(const int64_t lhsLow, const int64_t lhsHigh,
 }
 
 std::pair<Value *, std::pair<double, double>>
-rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> & typeRange,
-	      const std::map<llvm::Value *, std::vector<std::pair<double, double>>> & virtualRegisterVectorRange,
-	      BoundInfo * boundInfo, Function & llvmIrFunction, bool useOverLoad)
+rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
+              std::map<std::string, llvm::CallInst *>& callerMap,
+              const std::map<std::string, std::pair<double, double>> & typeRange,
+              const std::map<llvm::Value *, std::vector<std::pair<double, double>>> & virtualRegisterVectorRange,
+              bool useOverLoad)
 {
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: Analyze function %s.\n", llvmIrFunction.getName());
 	/*
@@ -1173,11 +1175,18 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 								 * */
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect calledFunction %s.\n",
 									  calledFunction->getName().str().c_str());
-								auto innerBoundInfo = new BoundInfo();
-								/*
-								 * get the range of args and rename the called function with args range
-								 * */
 								std::string newFuncName = calledFunction->getName().str();
+                                /*
+                                 * TBH it's wried to use two "innerBoundInfo" here.
+                                 * The key point is the "realCallee" would be different.
+                                 * To whom may concern in the future, sorry for this piece of shit and the hell disaster.
+                                 * It's really worth to re-construct with the "innerBoundInfo" and "calleeBound",
+                                 * like summarize a function for getting the "innerBoundInfo" and
+                                 * collect the "calleeBound" together here.
+                                 * But I indeed have no time to do that...
+                                 * */
+                                auto innerBoundInfo = new BoundInfo();
+                                bool hasSpecificRange = false;
 								/*
 								 * check if the ranges have been set to the function name
 								 * */
@@ -1196,6 +1205,7 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 									 * */
 									if (ConstantInt * cInt = dyn_cast<ConstantInt>(llvmIrCallInstruction->getOperand(idx)))
 									{
+                                        hasSpecificRange = true;
 										int64_t constIntValue = cInt->getSExtValue();
 										flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant int value: %d.\n", constIntValue);
 										innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
@@ -1209,6 +1219,7 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 									}
 									else if (ConstantFP * constFp = dyn_cast<ConstantFP>(llvmIrCallInstruction->getOperand(idx)))
 									{
+                                        hasSpecificRange = true;
 										double constDoubleValue = (constFp->getValueAPF()).convertToDouble();
 										flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant double value: %f.\n", constDoubleValue);
 										innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
@@ -1228,6 +1239,7 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 										auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrCallInstruction->getOperand(idx));
 										if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 										{
+                                            hasSpecificRange = true;
 											flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
 												  vrRangeIt->second.first, vrRangeIt->second.second);
 											innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx), vrRangeIt->second);
@@ -1246,48 +1258,59 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 								}
 								Function *					    realCallee;
 								std::pair<llvm::Value *, std::pair<double, double>> returnRange;
-								auto						    uniqueNewFunc = boundInfo->callerMap.find(newFuncName) != boundInfo->callerMap.end();
-								if (useOverLoad && newFuncName != calledFunction->getName().str() && uniqueNewFunc)
-								{
+                                if (useOverLoad && hasSpecificRange) {
+                                    /*
+                                     * If it has a specific range, generate a new function or just change the caller
+                                     * Else, we only collect "real" new functions in callerMap
+                                     * */
+                                    if (callerMap.find(newFuncName) != callerMap.end()) {
+                                        newFuncName += "_dummy_";
+                                        newFuncName += std::to_string(std::rand());
+                                    }
+                                    callerMap.emplace(newFuncName, llvmIrCallInstruction);
+                                    /*
+                                     * if the function has not been generated before,
+                                     * which means it's not in the CallerMap,
+                                     * create a new function and insert it to the CallerMap
+                                     * */
+                                    ValueToValueMapTy vMap;
+                                    realCallee	    = Function::Create(calledFunction->getFunctionType(),
+                                                                         calledFunction->getLinkage(),
+                                                                         calledFunction->getAddressSpace(),
+                                                                         newFuncName);
+                                    auto * newFuncArgIt = realCallee->arg_begin();
+                                    for (auto & arg : calledFunction->args())
+                                    {
+                                        auto argName = arg.getName();
+                                        newFuncArgIt->setName(argName);
+                                        vMap[&arg] = &(*newFuncArgIt++);
+                                    }
+                                    SmallVector<ReturnInst *, 8> Returns;
+                                    CloneFunctionInto(realCallee, calledFunction, vMap,
+                                            CloneFunctionChangeType::LocalChangesOnly, Returns);
+                                    // Set the linkage and visibility late as CloneFunctionInto has some
+                                    // implicit requirements.
+                                    realCallee->setVisibility(GlobalValue::DefaultVisibility);
+                                    realCallee->setLinkage(GlobalValue::PrivateLinkage);
+
+                                    // Copy metadata
+                                    SmallVector<std::pair<unsigned, MDNode *>, 1> MDs;
+                                    calledFunction->getAllMetadata(MDs);
+                                    for (auto MDIt : MDs)
+                                    {
+                                        if (!realCallee->hasMetadata())
+                                        {
+                                            realCallee->addMetadata(MDIt.first, *MDIt.second);
+                                        }
+                                    }
+
+                                    Module & funcModule = *calledFunction->getParent();
+                                    funcModule.getFunctionList().insert(calledFunction->getIterator(), realCallee);
+                                    realCallee->setDSOLocal(true);
 									/*
 									 * rename the llvmIrCallInstruction to the new function name
 									 */
-									ValueToValueMapTy vMap;
-									realCallee	    = Function::Create(calledFunction->getFunctionType(),
-													       calledFunction->getLinkage(),
-													       calledFunction->getAddressSpace(),
-													       newFuncName);
-									auto * newFuncArgIt = realCallee->arg_begin();
-									for (auto & arg : calledFunction->args())
-									{
-										auto argName = arg.getName();
-										newFuncArgIt->setName(argName);
-										vMap[&arg] = &(*newFuncArgIt++);
-									}
-									SmallVector<ReturnInst *, 8> Returns;
-									CloneFunctionInto(realCallee, calledFunction, vMap,
-											  CloneFunctionChangeType::LocalChangesOnly, Returns);
-									// Set the linkage and visibility late as CloneFunctionInto has some
-									// implicit requirements.
-									realCallee->setVisibility(GlobalValue::DefaultVisibility);
-									realCallee->setLinkage(GlobalValue::PrivateLinkage);
-
-									// Copy metadata
-									SmallVector<std::pair<unsigned, MDNode *>, 1> MDs;
-									calledFunction->getAllMetadata(MDs);
-									for (auto MDIt : MDs)
-									{
-										if (!realCallee->hasMetadata())
-										{
-											realCallee->addMetadata(MDIt.first, *MDIt.second);
-										}
-									}
-
-									Module & funcModule = *calledFunction->getParent();
-									funcModule.getFunctionList().insert(calledFunction->getIterator(), realCallee);
-									realCallee->setDSOLocal(true);
 									llvmIrCallInstruction->setCalledFunction(realCallee);
-									boundInfo->callerMap.emplace(realCallee->getName().str(), llvmIrCallInstruction);
 									/*
 									 * update the inner bound info with the new function.
 									 * // todo: this code is a bit wired, maybe can be improved
@@ -1335,8 +1358,8 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 										}
 									}
 
-									returnRange = rangeAnalysis(N, typeRange, virtualRegisterVectorRange,
-												    innerBoundInfo, *realCallee, useOverLoad);
+									returnRange = rangeAnalysis(N, *realCallee, innerBoundInfo, callerMap,
+                                                                typeRange, virtualRegisterVectorRange, useOverLoad);
 									if (returnRange.first != nullptr)
 									{
 										boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
@@ -1350,8 +1373,8 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 									 * that has been stored in boundInfo, we get the union set of them
 									 * */
 									realCallee  = calledFunction;
-									returnRange = rangeAnalysis(N, typeRange, virtualRegisterVectorRange,
-												    innerBoundInfo, *realCallee, useOverLoad);
+                                    returnRange = rangeAnalysis(N, *realCallee, innerBoundInfo, callerMap,
+                                                                typeRange, virtualRegisterVectorRange, useOverLoad);
 									if (returnRange.first != nullptr)
 									{
 										boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);

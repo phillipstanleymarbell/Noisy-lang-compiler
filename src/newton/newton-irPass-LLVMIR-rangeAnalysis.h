@@ -106,13 +106,14 @@ extern "C"
 typedef struct BoundInfo {
 	std::map<llvm::Value *, std::pair<double, double>> virtualRegisterRange;
 	std::map<std::string, BoundInfo *>		   calleeBound;
-	std::map<std::string, llvm::CallInst *>		   callerMap;
 } BoundInfo;
 
 std::pair<llvm::Value *, std::pair<double, double>>
-rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> & typeRange,
-	      const std::map<llvm::Value *, std::vector<std::pair<double, double>>> & virtualRegisterVectorRange,
-	      BoundInfo * boundInfo, llvm::Function & llvmIrFunction, bool overLoadFunc);
+rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
+              std::map<std::string, llvm::CallInst *>& callerMap,
+              const std::map<std::string, std::pair<double, double>> & typeRange,
+              const std::map<llvm::Value *, std::vector<std::pair<double, double>>> & virtualRegisterVectorRange,
+              bool overLoadFunc);
 
 #ifdef __cplusplus
 } /* extern "C" */

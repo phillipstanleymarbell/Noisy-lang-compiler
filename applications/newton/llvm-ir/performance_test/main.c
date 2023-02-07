@@ -261,7 +261,9 @@ main(int argc, char** argv)
 #elif defined(LIBC_SINCOSF)
     float sinp, cosp;
     for (size_t idx = 0; idx < iteration_num; idx++) {
-        result[idx] = libc_sincosf(xOps[idx], &sinp, &cosp);
+        sinp = cosp = 0;
+        libc_sincosf(xOps[idx], &sinp, &cosp);
+        result[idx] = sinp;
     }
 #elif defined(FLOAT64_ADD)
     for (size_t idx = 0; idx < iteration_num; idx++) {
