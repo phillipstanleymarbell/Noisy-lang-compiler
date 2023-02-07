@@ -69,7 +69,7 @@ using namespace llvm;
 extern "C"{
 
 void
-dumpIR(State * N, std::string fileSuffix, std::unique_ptr<Module> Mod)
+dumpIR(State * N, std::string fileSuffix, const std::unique_ptr<Module>& Mod)
 {
 	StringRef   filePath(N->llvmIR);
 	std::string dirPath	= std::string(sys::path::parent_path(filePath)) + "/";
@@ -93,12 +93,15 @@ mergeBoundInfo(BoundInfo * dst, const BoundInfo * src)
 }
 
 void
-collectCalleeBoundInfo(std::map<std::string, BoundInfo *> & funcBoundInfo, const BoundInfo * boundInfo)
+collectCalleeInfo(std::vector<std::string>& calleeNames,
+                  std::map<std::string, BoundInfo *> & funcBoundInfo,
+                  const BoundInfo * boundInfo)
 {
 	for (auto & calleeInfo : boundInfo->calleeBound)
 	{
+        calleeNames.emplace_back(calleeInfo.first);
 		funcBoundInfo.emplace(calleeInfo.first, calleeInfo.second);
-		collectCalleeBoundInfo(funcBoundInfo, calleeInfo.second);
+		collectCalleeInfo(calleeNames, funcBoundInfo, calleeInfo.second);
 	}
 	return;
 }
@@ -143,7 +146,8 @@ class FunctionNodeCmp {
 using hashFuncSet = std::set<FunctionNode, FunctionNodeCmp>;
 
 void
-overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> callerMap)
+overloadFunc(std::unique_ptr<Module> & Mod, const std::map<std::string, CallInst *>& callerMap,
+             const std::unordered_map<std::string, std::vector<std::string>>& funcCallTree)
 {
 	/*
 	 * compare the functions and remove the redundant one
@@ -203,6 +207,16 @@ overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> ca
 		if (baseFuncNames.find(itFunc->getName().str()) == baseFuncNames.end() && itFunc->hasLocalLinkage())
 		{
 			Mod->getFunctionList().remove(itFunc);
+            /*
+             * delete its children functions
+             * */
+            auto itFoundParent = funcCallTree.find(itFunc->getName().str());
+            if (itFoundParent != funcCallTree.end()) {
+                for (const auto& calleeName : itFoundParent->second) {
+                    Mod->getFunctionList().remove(Mod->getFunction(calleeName));
+                    itFunc--;
+                }
+            }
 			itFunc--;
 		}
 	}
@@ -322,14 +336,18 @@ irPassLLVMIROptimizeByRange(State * N)
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 	std::map<std::string, CallInst *> callerMap;
     callerMap.clear();
+    std::unordered_map<std::string, std::vector<std::string>> funcCallTree;
+    funcCallTree.clear();
 	const bool			  useOverLoad = true;
 	for (auto & mi : *Mod)
 	{
 		auto boundInfo = new BoundInfo();
 		mergeBoundInfo(boundInfo, globalBoundInfo);
 		rangeAnalysis(N, mi, boundInfo, callerMap, typeRange, virtualRegisterVectorRange, useOverLoad);
-		funcBoundInfo.emplace(mi.getName(), boundInfo);
-		collectCalleeBoundInfo(funcBoundInfo, boundInfo);
+		funcBoundInfo.emplace(mi.getName().str(), boundInfo);
+        std::vector<std::string> calleeNames;
+		collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
+        funcCallTree.emplace(mi.getName().str(), calleeNames);
 	}
 
 	/*
@@ -355,17 +373,20 @@ irPassLLVMIROptimizeByRange(State * N)
 	passManager.run(*Mod);
 
 	if (useOverLoad)
-		overloadFunc(Mod, callerMap);
+		overloadFunc(Mod, callerMap, funcCallTree);
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 	funcBoundInfo.clear();
+    funcCallTree.clear();
 	for (auto & mi : *Mod)
 	{
 		auto boundInfo = new BoundInfo();
 		mergeBoundInfo(boundInfo, globalBoundInfo);
 		rangeAnalysis(N, mi, boundInfo, callerMap, typeRange, virtualRegisterVectorRange, useOverLoad);
-		funcBoundInfo.emplace(mi.getName(), boundInfo);
-		collectCalleeBoundInfo(funcBoundInfo, boundInfo);
+		funcBoundInfo.emplace(mi.getName().str(), boundInfo);
+        std::vector<std::string> calleeNames;
+        collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
+        funcCallTree.emplace(mi.getName().str(), calleeNames);
 	}
 
 //	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
@@ -394,17 +415,20 @@ irPassLLVMIROptimizeByRange(State * N)
 	//    }
 
 	if (useOverLoad)
-		overloadFunc(Mod, callerMap);
+		overloadFunc(Mod, callerMap, funcCallTree);
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 	funcBoundInfo.clear();
+    funcCallTree.clear();
 	for (auto & mi : *Mod)
 	{
 		auto boundInfo = new BoundInfo();
 		mergeBoundInfo(boundInfo, globalBoundInfo);
 		rangeAnalysis(N, mi, boundInfo, callerMap, typeRange, virtualRegisterVectorRange, useOverLoad);
-		funcBoundInfo.emplace(mi.getName(), boundInfo);
-		collectCalleeBoundInfo(funcBoundInfo, boundInfo);
+		funcBoundInfo.emplace(mi.getName().str(), boundInfo);
+        std::vector<std::string> calleeNames;
+        collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
+        funcCallTree.emplace(mi.getName().str(), calleeNames);
 	}
 
 	/*
@@ -425,11 +449,11 @@ irPassLLVMIROptimizeByRange(State * N)
 	}
 
 	if (useOverLoad)
-		overloadFunc(Mod, callerMap);
+		overloadFunc(Mod, callerMap, funcCallTree);
 
 	/*
 	 * Dump BC file to a file.
 	 * */
-	dumpIR(N, "output", std::move(Mod));
+	dumpIR(N, "output", Mod);
 }
 }
