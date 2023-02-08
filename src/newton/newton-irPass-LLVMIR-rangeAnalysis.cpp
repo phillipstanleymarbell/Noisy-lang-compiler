@@ -1184,6 +1184,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
                                  * like summarize a function for getting the "innerBoundInfo" and
                                  * collect the "calleeBound" together here.
                                  * But I indeed have no time to do that...
+                                 * todo: collect function information and generate new functions in another pass
                                  * */
                                 auto innerBoundInfo = new BoundInfo();
                                 bool hasSpecificRange = false;
@@ -1259,11 +1260,14 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								Function *					    realCallee;
 								std::pair<llvm::Value *, std::pair<double, double>> returnRange;
                                 if (useOverLoad && hasSpecificRange) {
+                                    auto newFuncPos = calledFunction->getIterator();
+                                    Module & funcModule = *calledFunction->getParent();
                                     /*
                                      * If it has a specific range, generate a new function or just change the caller
                                      * Else, we only collect "real" new functions in callerMap
                                      * */
                                     if (callerMap.find(newFuncName) != callerMap.end()) {
+                                        newFuncPos = funcModule.getFunction(newFuncName)->getIterator();
                                         newFuncName += "_dummy_";
                                         newFuncName += std::to_string(std::rand());
                                     }
@@ -1304,8 +1308,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
                                         }
                                     }
 
-                                    Module & funcModule = *calledFunction->getParent();
-                                    funcModule.getFunctionList().insert(calledFunction->getIterator(), realCallee);
+                                    funcModule.getFunctionList().insert(newFuncPos, realCallee);
                                     realCallee->setDSOLocal(true);
 									/*
 									 * rename the llvmIrCallInstruction to the new function name

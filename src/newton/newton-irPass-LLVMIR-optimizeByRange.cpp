@@ -146,7 +146,7 @@ class FunctionNodeCmp {
 using hashFuncSet = std::set<FunctionNode, FunctionNodeCmp>;
 
 void
-overloadFunc(std::unique_ptr<Module> & Mod, const std::map<std::string, CallInst *>& callerMap,
+overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *>& callerMap,
              const std::unordered_map<std::string, std::vector<std::string>>& funcCallTree)
 {
 	/*
@@ -206,13 +206,16 @@ overloadFunc(std::unique_ptr<Module> & Mod, const std::map<std::string, CallInst
 			continue;
 		if (baseFuncNames.find(itFunc->getName().str()) == baseFuncNames.end() && itFunc->hasLocalLinkage())
 		{
+            callerMap.erase(itFunc->getName().str());
 			Mod->getFunctionList().remove(itFunc);
             /*
              * delete its children functions
+             * PS: if we delete some functions, we should also remove it from the "callerMap"
              * */
             auto itFoundParent = funcCallTree.find(itFunc->getName().str());
             if (itFoundParent != funcCallTree.end()) {
                 for (const auto& calleeName : itFoundParent->second) {
+                    callerMap.erase(calleeName);
                     Mod->getFunctionList().remove(Mod->getFunction(calleeName));
                     itFunc--;
                 }
