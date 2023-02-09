@@ -442,17 +442,17 @@ irPassLLVMIROptimizeByRange(State * N)
 	//        }
 	//    }
 
-    passManager.add(createGlobalDCEPass());
-    passManager.run(*Mod);
+//    passManager.add(createGlobalDCEPass());
+//    passManager.run(*Mod);
 
-    /*
-     * remove the functions that are optimized by passes.
-     * */
-    if (useOverLoad)
-        cleanFunctionMap(Mod, callerMap, funcCallTree);
-
-	if (useOverLoad)
-		overloadFunc(Mod, callerMap, funcCallTree);
+//    /*
+//     * remove the functions that are optimized by passes.
+//     * */
+//    if (useOverLoad)
+//        cleanFunctionMap(Mod, callerMap, funcCallTree);
+//
+//	if (useOverLoad)
+//		overloadFunc(Mod, callerMap, funcCallTree);
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 	funcBoundInfo.clear();
@@ -485,17 +485,17 @@ irPassLLVMIROptimizeByRange(State * N)
 //		}
 	}
 
-    passManager.add(createGlobalDCEPass());
-    passManager.run(*Mod);
-
-    /*
-     * remove the functions that are optimized by passes.
-     * */
-    if (useOverLoad)
-        cleanFunctionMap(Mod, callerMap, funcCallTree);
-
-	if (useOverLoad)
-		overloadFunc(Mod, callerMap, funcCallTree);
+//    passManager.add(createGlobalDCEPass());
+//    passManager.run(*Mod);
+//
+//    /*
+//     * remove the functions that are optimized by passes.
+//     * */
+//    if (useOverLoad)
+//        cleanFunctionMap(Mod, callerMap, funcCallTree);
+//
+//	if (useOverLoad)
+//		overloadFunc(Mod, callerMap, funcCallTree);
 
 	/*
 	 * Dump BC file to a file.

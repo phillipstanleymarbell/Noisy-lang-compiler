@@ -2123,9 +2123,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 							{
+                                uint64_t rightMin   = vrRangeIt->second.first < 0 ? 0 : vrRangeIt->second.first;
+                                uint64_t rightMax   = vrRangeIt->second.second < 0 ? 0 : vrRangeIt->second.second;
 								boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
-													std::make_pair((uint)vrRangeIt->second.first >> constValue,
-														       (uint)vrRangeIt->second.second >> constValue));
+													std::make_pair(rightMin >> constValue, rightMax >> constValue));
 							}
 							else
 							{
@@ -2677,8 +2678,8 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								{
 									double	 originLow	= vrRangeIt->second.first;
 									double	 originHigh	= vrRangeIt->second.second;
-									uint64_t originLowWord	= *reinterpret_cast<uint64_t *>(&originLow);
-									uint64_t originHighWord = *reinterpret_cast<uint64_t *>(&originHigh);
+									int64_t originLowWord	= *reinterpret_cast<int64_t *>(&originLow);
+									int64_t originHighWord = *reinterpret_cast<int64_t *>(&originHigh);
 									double	 lowRange, highRange;
 									flexprint(N->Fe, N->Fm, N->Fpinfo, "\tGetElementPtr: find the value holder.");
 									auto valueHolderBitcast = dyn_cast<BitCastInst>(it->first);
@@ -2727,12 +2728,12 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 											switch (resEleTy->getPrimitiveSizeInBits())
 											{
 												case 32:
-													lowRange  = static_cast<double>(static_cast<uint32_t>(originLowWord >> (32 * elementOffset)));
-													highRange = static_cast<double>(static_cast<uint32_t>(originHighWord >> (32 * elementOffset)));
+													lowRange  = static_cast<double>(static_cast<int32_t>(originLowWord >> (32 * elementOffset)));
+													highRange = static_cast<double>(static_cast<int32_t>(originHighWord >> (32 * elementOffset)));
 													break;
 												case 64:
-													lowRange  = static_cast<double>(static_cast<uint64_t>(originLowWord));
-													highRange = static_cast<double>(static_cast<uint64_t>(originHighWord));
+													lowRange  = static_cast<double>(static_cast<int64_t>(originLowWord));
+													highRange = static_cast<double>(static_cast<int64_t>(originHighWord));
 													break;
 												default:
 													flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
