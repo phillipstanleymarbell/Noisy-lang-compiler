@@ -146,6 +146,24 @@ class FunctionNodeCmp {
 using hashFuncSet = std::set<FunctionNode, FunctionNodeCmp>;
 
 void
+cleanFunctionMap(const std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *>& callerMap,
+                 std::unordered_map<std::string, std::vector<std::string>>& funcCallTree)
+{
+    for (auto itFunc = callerMap.begin(); itFunc != callerMap.end();) {
+        if (nullptr == Mod->getFunction(itFunc->first))
+            itFunc = callerMap.erase(itFunc);
+        else
+            ++itFunc;
+    }
+    for (auto itFunc = funcCallTree.begin(); itFunc != funcCallTree.end();) {
+        if (nullptr == Mod->getFunction(itFunc->first))
+            itFunc = funcCallTree.erase(itFunc);
+        else
+            ++itFunc;
+    }
+}
+
+void
 overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *>& callerMap,
              const std::unordered_map<std::string, std::vector<std::string>>& funcCallTree)
 {
@@ -373,7 +391,14 @@ irPassLLVMIROptimizeByRange(State * N)
 	legacy::PassManager passManager;
 	passManager.add(createCFGSimplificationPass());
 	passManager.add(createInstSimplifyLegacyPass());
+    passManager.add(createGlobalDCEPass());
 	passManager.run(*Mod);
+
+    /*
+     * remove the functions that are optimized by passes.
+     * */
+    if (useOverLoad)
+        cleanFunctionMap(Mod, callerMap, funcCallTree);
 
 	if (useOverLoad)
 		overloadFunc(Mod, callerMap, funcCallTree);
@@ -400,10 +425,10 @@ irPassLLVMIROptimizeByRange(State * N)
 //		{
 //			constantSubstitution(N, boundInfoIt->second, mi);
 //		}
-//		else
-//		{
-//			assert(false);
-//		}
+////		else
+////		{
+////			assert(false);
+////		}
 //	}
 
 	//	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
@@ -416,6 +441,15 @@ irPassLLVMIROptimizeByRange(State * N)
 	//            assert(false);
 	//        }
 	//    }
+
+    passManager.add(createGlobalDCEPass());
+    passManager.run(*Mod);
+
+    /*
+     * remove the functions that are optimized by passes.
+     * */
+    if (useOverLoad)
+        cleanFunctionMap(Mod, callerMap, funcCallTree);
 
 	if (useOverLoad)
 		overloadFunc(Mod, callerMap, funcCallTree);
@@ -450,6 +484,15 @@ irPassLLVMIROptimizeByRange(State * N)
 //			assert(false);
 //		}
 	}
+
+    passManager.add(createGlobalDCEPass());
+    passManager.run(*Mod);
+
+    /*
+     * remove the functions that are optimized by passes.
+     * */
+    if (useOverLoad)
+        cleanFunctionMap(Mod, callerMap, funcCallTree);
 
 	if (useOverLoad)
 		overloadFunc(Mod, callerMap, funcCallTree);
