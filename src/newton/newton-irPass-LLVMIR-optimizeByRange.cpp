@@ -359,7 +359,7 @@ irPassLLVMIROptimizeByRange(State * N)
     callerMap.clear();
     std::unordered_map<std::string, std::vector<std::string>> funcCallTree;
     funcCallTree.clear();
-	const bool			  useOverLoad = true;
+	bool			  useOverLoad = true;
 	for (auto & mi : *Mod)
 	{
 		auto boundInfo = new BoundInfo();
@@ -417,19 +417,19 @@ irPassLLVMIROptimizeByRange(State * N)
         funcCallTree.emplace(mi.getName().str(), calleeNames);
 	}
 
-//	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
-//	for (auto & mi : *Mod)
-//	{
-//		auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-//		if (boundInfoIt != funcBoundInfo.end())
+	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
+	for (auto & mi : *Mod)
+	{
+		auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+		if (boundInfoIt != funcBoundInfo.end())
+		{
+			constantSubstitution(N, boundInfoIt->second, mi);
+		}
+//		else
 //		{
-//			constantSubstitution(N, boundInfoIt->second, mi);
+//			assert(false);
 //		}
-////		else
-////		{
-////			assert(false);
-////		}
-//	}
+	}
 
 	//	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
 	//    for (auto & mi : *Mod)
@@ -442,17 +442,24 @@ irPassLLVMIROptimizeByRange(State * N)
 	//        }
 	//    }
 
+    /*
+     * todo: there's a bug when running gbDCE after `overloadFunc`
+     * GUESS: 1. related to GlobalNumberState
+     *        2. related to setCalledFunction
+     * test cases: `float_add`, `float_mul`
+     * */
 //    passManager.add(createGlobalDCEPass());
 //    passManager.run(*Mod);
 
-//    /*
-//     * remove the functions that are optimized by passes.
-//     * */
-//    if (useOverLoad)
-//        cleanFunctionMap(Mod, callerMap, funcCallTree);
-//
-//	if (useOverLoad)
-//		overloadFunc(Mod, callerMap, funcCallTree);
+    useOverLoad = false;
+    /*
+     * remove the functions that are optimized by passes.
+     * */
+    if (useOverLoad)
+        cleanFunctionMap(Mod, callerMap, funcCallTree);
+
+	if (useOverLoad)
+		overloadFunc(Mod, callerMap, funcCallTree);
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 	funcBoundInfo.clear();
@@ -487,15 +494,15 @@ irPassLLVMIROptimizeByRange(State * N)
 
 //    passManager.add(createGlobalDCEPass());
 //    passManager.run(*Mod);
-//
-//    /*
-//     * remove the functions that are optimized by passes.
-//     * */
-//    if (useOverLoad)
-//        cleanFunctionMap(Mod, callerMap, funcCallTree);
-//
-//	if (useOverLoad)
-//		overloadFunc(Mod, callerMap, funcCallTree);
+
+    /*
+     * remove the functions that are optimized by passes.
+     * */
+    if (useOverLoad)
+        cleanFunctionMap(Mod, callerMap, funcCallTree);
+
+	if (useOverLoad)
+		overloadFunc(Mod, callerMap, funcCallTree);
 
 	/*
 	 * Dump BC file to a file.
