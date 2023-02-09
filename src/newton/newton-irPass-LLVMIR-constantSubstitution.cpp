@@ -105,6 +105,18 @@ constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFu
 					{
 						break;
 					}
+
+                    /*
+                     * there's one case the GEP cannot be substituted
+                     * define dso_local i32 @__ieee754_rem_pio2(double %0, double* %1) #0 !dbg !568 {
+                     *   ...
+                     *   %12 = getelementptr inbounds double, double* %1, i64 1, !dbg !594
+                     *   store double 0.000000e+00, double* %12, align 8, !dbg !595
+                     *   ...
+                     * */
+                    if (isa<GetElementPtrInst>(llvmIrInstruction) && isa<Argument>(llvmIrInstruction->getOperand(0)))
+                        break;
+
 					auto lowerBound = vrIt->second.first;
 					auto upperBound = vrIt->second.second;
 					/*
@@ -144,6 +156,15 @@ constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFu
 				}
 				break;
 				case Instruction::Store:
+                    if (auto llvmIrStoreInstruction = dyn_cast<StoreInst>(llvmIrInstruction))
+                    {
+                        /*
+                         * remove the const store inst, e.g.
+                         * store double 0.000000e+00, double 0.000000e+00, align 8
+                         * */
+                        if (isa<llvm::Constant>(llvmIrStoreInstruction->getPointerOperand()))
+                            llvmIrStoreInstruction->removeFromParent();
+                    }
 					break;
 				case Instruction::ICmp:
 				case Instruction::FCmp:

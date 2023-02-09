@@ -403,6 +403,8 @@ irPassLLVMIROptimizeByRange(State * N)
 	if (useOverLoad)
 		overloadFunc(Mod, callerMap, funcCallTree);
 
+    useOverLoad = false;
+
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 	funcBoundInfo.clear();
     funcCallTree.clear();
@@ -451,7 +453,6 @@ irPassLLVMIROptimizeByRange(State * N)
 //    passManager.add(createGlobalDCEPass());
 //    passManager.run(*Mod);
 
-    useOverLoad = false;
     /*
      * remove the functions that are optimized by passes.
      * */

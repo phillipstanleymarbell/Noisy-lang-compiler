@@ -59,6 +59,7 @@
 
 #include "llvm/Analysis/MemorySSAUpdater.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
+#include "llvm/IR/Constant.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Metadata.h"
