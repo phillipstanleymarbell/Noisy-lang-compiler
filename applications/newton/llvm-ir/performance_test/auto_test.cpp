@@ -258,7 +258,7 @@ int main(int argc, char** argv) {
                 // reset test.nt
                 change_nt_range("sed -i 's/", "/3 mjf, 10 mjf/g' ../../sensors/test.nt",
                                 {p.front(), p.back()-1+extend});
-                change_nt_range("sed -i 's/", "/1 mjf, 16 mjf/g' ../../sensors/test.nt", {p1, p2-1+extend});
+                change_nt_range("sed -i 's/", "/15 mjf, 36 mjf/g' ../../sensors/test.nt", {p1, p2-1+extend});
             }
             avg_inst_speedup = round(avg_inst_speedup / parameters.size());
             avg_time_speedup = round(avg_time_speedup / parameters.size());
