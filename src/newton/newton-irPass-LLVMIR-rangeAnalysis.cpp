@@ -2560,7 +2560,8 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							 * if it's a structure type, we use reinterpret_cast
 							 * todo: not very sure, need further check
 							 * */
-							if (llvmIrBitCastInstruction->getSrcTy()->isStructTy())
+							if (llvmIrBitCastInstruction->getSrcTy()->isStructTy() ||
+                            llvmIrBitCastInstruction->getSrcTy()->getPointerElementType()->isStructTy())
 							{
 								switch (DestEleType->getTypeID())
 								{
@@ -2579,32 +2580,42 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 										boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
 										break;
 									case Type::IntegerTyID:
-										switch (DestEleType->getIntegerBitWidth())
-										{
-											case 8:
-												lowRange  = static_cast<double>(*reinterpret_cast<int8_t *>(&originLow));
-												highRange = static_cast<double>(*reinterpret_cast<int8_t *>(&originHigh));
-												break;
-											case 16:
-												lowRange  = static_cast<double>(*reinterpret_cast<int16_t *>(&originLow));
-												highRange = static_cast<double>(*reinterpret_cast<int16_t *>(&originHigh));
-												break;
-											case 32:
-												lowRange  = static_cast<double>(*reinterpret_cast<int32_t *>(&originLow));
-												highRange = static_cast<double>(*reinterpret_cast<int32_t *>(&originHigh));
-												break;
-											case 64:
-												lowRange  = static_cast<double>(*reinterpret_cast<int64_t *>(&originLow));
-												highRange = static_cast<double>(*reinterpret_cast<int64_t *>(&originHigh));
-												break;
-											default:
-												flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
-										}
+                                    {
+                                        /*
+                                         * Currently, I have no idea why only 64 bits work
+                                         * Check Issue 641.
+                                         * */
+                                        bool canGetRange = false;
+                                        switch (DestEleType->getIntegerBitWidth())
+                                        {
+                                            case 8:
+                                                lowRange  = static_cast<double>(*reinterpret_cast<int8_t *>(&originLow));
+                                                highRange = static_cast<double>(*reinterpret_cast<int8_t *>(&originHigh));
+                                                break;
+                                            case 16:
+                                                lowRange  = static_cast<double>(*reinterpret_cast<int16_t *>(&originLow));
+                                                highRange = static_cast<double>(*reinterpret_cast<int16_t *>(&originHigh));
+                                                break;
+                                            case 32:
+                                                lowRange  = static_cast<double>(*reinterpret_cast<int32_t *>(&originLow));
+                                                highRange = static_cast<double>(*reinterpret_cast<int32_t *>(&originHigh));
+                                                break;
+                                            case 64:
+                                                lowRange  = static_cast<double>(*reinterpret_cast<int64_t *>(&originLow));
+                                                highRange = static_cast<double>(*reinterpret_cast<int64_t *>(&originHigh));
+                                                canGetRange = true;
+                                                break;
+                                            default:
+                                                flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
+                                        }
 
-										flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::IntegerTyID, %f - %f to %f - %f\n",
-											  vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
-										boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
-										break;
+                                        if (canGetRange) {
+                                            flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::IntegerTyID, %f - %f to %f - %f\n",
+                                                      vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
+                                            boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
+                                        }
+                                        break;
+                                    }
 									case Type::StructTyID:
 										flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::StructTyID, %f - %f to %f - %f\n",
 											  vrRangeIt->second.first, vrRangeIt->second.second, originLow, originHigh);
