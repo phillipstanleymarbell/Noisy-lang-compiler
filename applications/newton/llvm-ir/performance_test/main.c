@@ -313,7 +313,7 @@ main(int argc, char** argv)
 #endif
     }
 
-    printf("%f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+    printf("results: %f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
 
 	return 0;
 }

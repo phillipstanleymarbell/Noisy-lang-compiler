@@ -11,9 +11,34 @@
 #include <iostream>
 #include <fstream>
 #include <math.h>
+#include <sstream>
 #include <vector>
 
-int64_t getCount(const std::string& string, size_t position) {
+const size_t iteration_num = 5;
+const size_t result_num = 5;
+
+struct perfData {
+    int64_t inst_count_avg;
+    int64_t time_consumption_avg;
+    int64_t ir_lines;
+    int64_t library_size;
+};
+
+struct timerData {
+    int64_t inst_count_avg = 0;
+    double time_consumption_avg;
+    std::vector<double> ms_time_consumption;
+    int64_t ir_lines;
+    int64_t library_size;
+    std::vector<double> function_results;
+};
+
+/*
+ * Get number from:
+ *  36,200,478      instructions
+ *  0.013535825 seconds time elapsed
+ * */
+int64_t getPerfCount(const std::string& string, size_t position) {
     std::string substring;
     substring = string.substr(0, position);
     substring.erase(
@@ -29,7 +54,35 @@ int64_t getCount(const std::string& string, size_t position) {
     return std::stoi(substring);
 }
 
-std::pair<int64_t, int64_t> processData(const std::string test_case, const std::string params) {
+/*
+ * Get number from:
+ *  computation delay: 0.001342399
+ * */
+double getTimerConsumption(const std::string& string, size_t position) {
+    std::string substring;
+    substring = string.substr(position, string.size());
+    return std::stod(substring);
+}
+
+/*
+ * Get number from:
+ *  results: 0.517104	0.809373	0.043233	-0.805564	-0.973201
+ * */
+std::vector<double> getFunctionResults(const std::string& string, size_t position) {
+    std::vector<double> res;
+    std::stringstream ss;
+    std::string tmp;
+    ss << string;
+    double number;
+    while (!ss.eof()) {
+        ss >> tmp;
+        if (std::stringstream(tmp) >> number)
+            res.emplace_back(number);
+    }
+    return res;
+}
+
+std::pair<int64_t, int64_t> processDataPerf(const std::string test_case, const std::string params) {
     std::string line;
     size_t position;
     int64_t inst_count, time_consumption;
@@ -53,11 +106,11 @@ std::pair<int64_t, int64_t> processData(const std::string test_case, const std::
     while (getline(ifs, line)) {
         position = line.find("instructions");
         if (position != std::string::npos) {
-            inst_count = getCount(line, position);
+            inst_count = getPerfCount(line, position);
         }
         position = line.find("seconds time elapsed");
         if (position != std::string::npos) {
-            time_consumption = getCount(line, position);
+            time_consumption = getPerfCount(line, position);
             continue;
         }
     }
@@ -67,6 +120,46 @@ std::pair<int64_t, int64_t> processData(const std::string test_case, const std::
     ifs.close();
 
     return std::make_pair(inst_count, time_consumption);
+}
+
+std::pair<double, std::vector<double>> processDataTimer(const std::string test_case, const std::string params) {
+    std::string line;
+    size_t position;
+    double time_consumption;
+    std::vector<double> function_results;
+
+    // perf command
+    std::string cmd = "make " + test_case;
+    system(cmd.data());
+    cmd.clear();
+    cmd = "./main_out " + params;
+    cmd += " 2>&1 | tee tmp.log";
+    system(cmd.data());
+    std::ifstream ifs("tmp.log");
+    if (!ifs.is_open()) {
+        std::cout << "error opening tmp.log";
+        assert(false);
+    }
+
+    // process
+    while (getline(ifs, line)) {
+        std::string key = "computation delay: ";
+        position = line.find(key);
+        if (position != std::string::npos) {
+            time_consumption = getTimerConsumption(line, position+key.size());
+        }
+        key = "results: ";
+        position = line.find(key);
+        if (position != std::string::npos) {
+            function_results = getFunctionResults(line, position+key.size());
+        }
+    }
+
+    printf("%f\n", time_consumption);
+
+    ifs.close();
+
+    return std::make_pair(time_consumption, function_results);
 }
 
 std::string change_nt_range(const std::string& cmd1, const std::string& cmd2, const std::vector<double>& params) {
@@ -125,33 +218,48 @@ int64_t getLibSize() {
     return exactNumber();
 }
 
-struct perfData {
-    int64_t inst_count_avg;
-    int64_t time_consumption_avg;
-    int64_t ir_lines;
-    int64_t library_size;
-};
-
 struct perfData recordData(const std::string& test_cases, const std::string& param_str, std::ofstream& ofs) {
-    const size_t iteration_num = 5;
-
     perfData perf_data = {0, 0, 0, 0};
 
     for (size_t idx = 0; idx < iteration_num; idx++) {
-        const std::pair<int64_t, int64_t> inst_time_data = processData(test_cases, param_str);
+        const std::pair<int64_t, int64_t> inst_time_data = processDataPerf(test_cases, param_str);
         perf_data.inst_count_avg += (inst_time_data.first/1000);
         perf_data.time_consumption_avg += (inst_time_data.second/1000);
     }
     perf_data.inst_count_avg /= iteration_num;
     perf_data.time_consumption_avg /= iteration_num;
 
+    // check library size
     perf_data.ir_lines = getIrLines();
     perf_data.library_size = getLibSize();
+
+    // todo: check the function result
 
     ofs << test_cases << "\t" << param_str << "\t" << perf_data.inst_count_avg
         << "\t" << perf_data.time_consumption_avg << "\t" << perf_data.ir_lines << "\t" << perf_data.library_size << std::endl;
 
     return perf_data;
+}
+
+struct timerData recordTimerData(const std::string& test_cases, const std::string& param_str, std::ofstream& ofs) {
+    timerData timer_data;
+
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        const std::pair<double, std::vector<double>> data_timer_res = processDataTimer(test_cases, param_str);
+        timer_data.ms_time_consumption.emplace_back(data_timer_res.first);
+        std::copy(data_timer_res.second.begin(), data_timer_res.second.end(),
+                  std::back_inserter(timer_data.function_results));
+    }
+    // check library size
+    timer_data.ir_lines = getIrLines();
+    timer_data.library_size = getLibSize();
+
+    // check the function result
+
+//    ofs << test_cases << "\t" << param_str << "\t" << perf_data.inst_count_avg
+//        << "\t" << perf_data.time_consumption_avg << "\t" << perf_data.ir_lines << "\t" << perf_data.library_size << std::endl;
+
+    return timer_data;
 }
 
 int main(int argc, char** argv) {
@@ -240,8 +348,10 @@ int main(int argc, char** argv) {
                 const double p2 = p.back() + 0.3;
                 change_nt_range("sed -i 's/15 mjf, 36 mjf/", "/g' ../../sensors/test.nt", {p1, p2-1+extend});
 
-                perfData ori_perf_data = recordData(test_cases[case_id], param_str, ofs);
-                perfData opt_perf_data = recordData(test_cases[case_id] + "_opt", param_str, ofs);
+//                perfData ori_perf_data = recordData(test_cases[case_id], param_str, ofs);
+//                perfData opt_perf_data = recordData(test_cases[case_id] + "_opt", param_str, ofs);
+                timerData ori_perf_data = recordTimerData(test_cases[case_id], param_str, ofs);
+                timerData opt_perf_data = recordTimerData(test_cases[case_id] + "_opt", param_str, ofs);
 
                 int inst_speedup = round((ori_perf_data.inst_count_avg - opt_perf_data.inst_count_avg) * 100 / opt_perf_data.inst_count_avg);
                 int time_speedup = round((ori_perf_data.time_consumption_avg - opt_perf_data.time_consumption_avg) * 100 / opt_perf_data.time_consumption_avg);
