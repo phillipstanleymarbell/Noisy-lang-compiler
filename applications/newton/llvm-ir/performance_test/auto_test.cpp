@@ -8,9 +8,10 @@
 #include <cstdint>
 #include <cstdlib>
 #include <ctype.h>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <math.h>
+#include <numeric>
 #include <sstream>
 #include <vector>
 
@@ -25,7 +26,7 @@ struct perfData {
 };
 
 struct timerData {
-    int64_t inst_count_avg = 0;
+    int64_t inst_count_avg = -1;
     double time_consumption_avg;
     std::vector<double> ms_time_consumption;
     int64_t ir_lines;
@@ -88,7 +89,7 @@ std::pair<int64_t, int64_t> processDataPerf(const std::string test_case, const s
     int64_t inst_count, time_consumption;
 
     // perf command
-    std::string cmd = "make " + test_case;
+    std::string cmd = "make " + test_case + " >& compile.log";
     system(cmd.data());
     cmd.clear();
     cmd = "perf stat -B ./main_out " + params;
@@ -115,7 +116,7 @@ std::pair<int64_t, int64_t> processDataPerf(const std::string test_case, const s
         }
     }
 
-    printf("%lu\t%lu\n", inst_count, time_consumption);
+//    printf("%lu\t%lu\n", inst_count, time_consumption);
 
     ifs.close();
 
@@ -129,7 +130,7 @@ std::pair<double, std::vector<double>> processDataTimer(const std::string test_c
     std::vector<double> function_results;
 
     // perf command
-    std::string cmd = "make " + test_case;
+    std::string cmd = "make " + test_case + " >& compile.log";
     system(cmd.data());
     cmd.clear();
     cmd = "./main_out " + params;
@@ -155,7 +156,7 @@ std::pair<double, std::vector<double>> processDataTimer(const std::string test_c
         }
     }
 
-    printf("%f\n", time_consumption);
+//    printf("%f\n", time_consumption);
 
     ifs.close();
 
@@ -205,14 +206,14 @@ int64_t exactNumber() {
 }
 
 int64_t getIrLines() {
-    std::string cmd = "wc -l out.ll 2>&1 | tee tmp.log";
+    std::string cmd = "wc -l out.ll >& | tee tmp.log";
     system(cmd.data());
 
     return exactNumber();
 }
 
 int64_t getLibSize() {
-    std::string cmd = "wc -c libout.a 2>&1 | tee tmp.log";
+    std::string cmd = "wc -c libout.a >& | tee tmp.log";
     system(cmd.data());
 
     return exactNumber();
@@ -233,8 +234,6 @@ struct perfData recordData(const std::string& test_cases, const std::string& par
     perf_data.ir_lines = getIrLines();
     perf_data.library_size = getLibSize();
 
-    // todo: check the function result
-
     ofs << test_cases << "\t" << param_str << "\t" << perf_data.inst_count_avg
         << "\t" << perf_data.time_consumption_avg << "\t" << perf_data.ir_lines << "\t" << perf_data.library_size << std::endl;
 
@@ -247,17 +246,27 @@ struct timerData recordTimerData(const std::string& test_cases, const std::strin
     for (size_t idx = 0; idx < iteration_num; idx++) {
         const std::pair<double, std::vector<double>> data_timer_res = processDataTimer(test_cases, param_str);
         timer_data.ms_time_consumption.emplace_back(data_timer_res.first);
-        std::copy(data_timer_res.second.begin(), data_timer_res.second.end(),
-                  std::back_inserter(timer_data.function_results));
+        std::copy_if(data_timer_res.second.begin(), data_timer_res.second.end(),
+                  std::back_inserter(timer_data.function_results), [timer_data, data_timer_res](double val) {
+            if (!timer_data.function_results.empty()) {
+                if (std::equal(timer_data.function_results.begin(), timer_data.function_results.end(),
+                               data_timer_res.second.begin()))
+                    return false;
+                else
+                    assert(false && "different function results");
+            } else
+                return true;
+        });
     }
     // check library size
     timer_data.ir_lines = getIrLines();
     timer_data.library_size = getLibSize();
 
-    // check the function result
-
-//    ofs << test_cases << "\t" << param_str << "\t" << perf_data.inst_count_avg
-//        << "\t" << perf_data.time_consumption_avg << "\t" << perf_data.ir_lines << "\t" << perf_data.library_size << std::endl;
+    ofs << test_cases << "\t" << param_str << "\t" << timer_data.inst_count_avg
+        << "\t" << std::accumulate(timer_data.ms_time_consumption.begin(),
+                                   timer_data.ms_time_consumption.end(),
+                                   0.0) / timer_data.ms_time_consumption.size()
+        << "\t" << timer_data.ir_lines << "\t" << timer_data.library_size << std::endl;
 
     return timer_data;
 }
@@ -352,6 +361,8 @@ int main(int argc, char** argv) {
 //                perfData opt_perf_data = recordData(test_cases[case_id] + "_opt", param_str, ofs);
                 timerData ori_perf_data = recordTimerData(test_cases[case_id], param_str, ofs);
                 timerData opt_perf_data = recordTimerData(test_cases[case_id] + "_opt", param_str, ofs);
+
+                // todo: check function results
 
                 int inst_speedup = round((ori_perf_data.inst_count_avg - opt_perf_data.inst_count_avg) * 100 / opt_perf_data.inst_count_avg);
                 int time_speedup = round((ori_perf_data.time_consumption_avg - opt_perf_data.time_consumption_avg) * 100 / opt_perf_data.time_consumption_avg);
