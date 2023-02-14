@@ -1,6 +1,8 @@
-//
-// Created by pei on 30/07/22.
-//
+/*
+ * Auto test framework of performance and correctness.
+ *
+ * Run with: `./auto_test 2> err.log`
+ * */
 
 #include <algorithm>
 #include <assert.h>
@@ -23,6 +25,7 @@ struct perfData {
     int64_t time_consumption_avg;
     int64_t ir_lines;
     int64_t library_size;
+    std::vector<double> function_results;
 };
 
 struct timerData {
@@ -206,14 +209,14 @@ int64_t exactNumber() {
 }
 
 int64_t getIrLines() {
-    std::string cmd = "wc -l out.ll >& | tee tmp.log";
+    std::string cmd = "wc -l out.ll >& tmp.log";
     system(cmd.data());
 
     return exactNumber();
 }
 
 int64_t getLibSize() {
-    std::string cmd = "wc -c libout.a >& | tee tmp.log";
+    std::string cmd = "wc -c libout.a >& tmp.log";
     system(cmd.data());
 
     return exactNumber();
@@ -247,13 +250,13 @@ struct timerData recordTimerData(const std::string& test_cases, const std::strin
         const std::pair<double, std::vector<double>> data_timer_res = processDataTimer(test_cases, param_str);
         timer_data.ms_time_consumption.emplace_back(data_timer_res.first);
         std::copy_if(data_timer_res.second.begin(), data_timer_res.second.end(),
-                  std::back_inserter(timer_data.function_results), [timer_data, data_timer_res](double val) {
+                  std::back_inserter(timer_data.function_results),
+                  [test_cases, param_str, timer_data, data_timer_res](double val) {
             if (!timer_data.function_results.empty()) {
-                if (std::equal(timer_data.function_results.begin(), timer_data.function_results.end(),
+                if (!std::equal(timer_data.function_results.begin(), timer_data.function_results.end(),
                                data_timer_res.second.begin()))
-                    return false;
-                else
-                    assert(false && "different function results");
+                    std::cerr << "result error: " << test_cases << " with parameters: " << param_str << std::endl;
+                return false;
             } else
                 return true;
         });
@@ -362,13 +365,40 @@ int main(int argc, char** argv) {
                 timerData ori_perf_data = recordTimerData(test_cases[case_id], param_str, ofs);
                 timerData opt_perf_data = recordTimerData(test_cases[case_id] + "_opt", param_str, ofs);
 
-                // todo: check function results
+                // check function results
+                if (!std::equal(ori_perf_data.function_results.begin(), ori_perf_data.function_results.end(),
+                                opt_perf_data.function_results.begin())) {
+                    std::cerr << "result error: " << test_cases[case_id] << " with parameters: " << param_str << std::endl;
+                }
+
+                // remove element if ori < opt
+                assert(ori_perf_data.ms_time_consumption.size() == opt_perf_data.ms_time_consumption.size());
+                auto itOri = ori_perf_data.ms_time_consumption.begin();
+                for (auto itOpt = opt_perf_data.ms_time_consumption.begin();
+                        itOpt != opt_perf_data.ms_time_consumption.end();) {
+                    if (*itOri < *itOpt) {
+                        itOri = ori_perf_data.ms_time_consumption.erase(itOri);
+                        itOpt = opt_perf_data.ms_time_consumption.erase(itOpt);
+                    } else {
+                        itOri++;
+                        itOpt++;
+                    }
+                }
+
+                ori_perf_data.time_consumption_avg = std::accumulate(ori_perf_data.ms_time_consumption.begin(),
+                                                                     ori_perf_data.ms_time_consumption.end(),
+                                                                     0.0) / ori_perf_data.ms_time_consumption.size();
+                opt_perf_data.time_consumption_avg = std::accumulate(opt_perf_data.ms_time_consumption.begin(),
+                                                                     opt_perf_data.ms_time_consumption.end(),
+                                                                     0.0) / opt_perf_data.ms_time_consumption.size();
 
                 int inst_speedup = round((ori_perf_data.inst_count_avg - opt_perf_data.inst_count_avg) * 100 / opt_perf_data.inst_count_avg);
                 int time_speedup = round((ori_perf_data.time_consumption_avg - opt_perf_data.time_consumption_avg) * 100 / opt_perf_data.time_consumption_avg);
                 int ir_reduce = round((ori_perf_data.ir_lines - opt_perf_data.ir_lines) * 100 / opt_perf_data.ir_lines);
                 int lib_size_reduce = round((ori_perf_data.library_size - opt_perf_data.library_size) * 100 / opt_perf_data.library_size);
                 ofs << "speed up after optimization\t" << param_str << "\t" << inst_speedup << "%\t" << time_speedup << "%\t"
+                    << ir_reduce << "%\t" << lib_size_reduce << "%" << std::endl;
+                std::cout << test_cases[case_id] << ": speed up after optimization\t" << param_str << "\t" << inst_speedup << "%\t" << time_speedup << "%\t"
                     << ir_reduce << "%\t" << lib_size_reduce << "%" << std::endl;
 
                 avg_inst_speedup += inst_speedup;
