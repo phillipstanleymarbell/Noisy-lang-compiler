@@ -409,7 +409,6 @@ irPassLLVMIROptimizeByRange(State * N)
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 	callerMap.clear();
 	funcBoundInfo.clear();
->>>>>>> master
 	for (auto & mi : *Mod)
 	{
 		auto boundInfo = new BoundInfo();
@@ -419,7 +418,6 @@ irPassLLVMIROptimizeByRange(State * N)
 		collectCalleeBoundInfo(funcBoundInfo, boundInfo);
 		collectCallerMap(callerMap, boundInfo);
 	}
-#endif
 
 	/*
 	 *
