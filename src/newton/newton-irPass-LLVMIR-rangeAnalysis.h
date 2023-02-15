@@ -45,6 +45,7 @@
 #include <float.h>
 #include <limits>
 #include <math.h>
+#include <regex>
 #include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
@@ -56,6 +57,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "llvm/Analysis/MemorySSAUpdater.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/LegacyPassManager.h"
@@ -71,6 +73,8 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/Utils/FunctionComparator.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -101,14 +105,15 @@ extern "C"
 #include "newton-irPass-invariantSignalAnnotation.h"
 
 typedef struct BoundInfo {
-	std::map<std::string, std::pair<double, double>>   typeRange;
 	std::map<llvm::Value *, std::pair<double, double>> virtualRegisterRange;
-	// todo: move it to another data structure, as its only used for pass the static global value
-	std::map<llvm::Value *, std::vector<std::pair<double, double>>> virtualRegisterVectorRange;
+	std::map<std::string, BoundInfo *>		   calleeBound;
+	std::map<std::string, llvm::CallInst *>		   callerMap;
 } BoundInfo;
 
 std::pair<llvm::Value *, std::pair<double, double>>
-rangeAnalysis(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction, bool standaloneFunc = true);
+rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> & typeRange,
+	      const std::map<llvm::Value *, std::vector<std::pair<double, double>>> & virtualRegisterVectorRange,
+	      BoundInfo * boundInfo, llvm::Function & llvmIrFunction, bool overLoadFunc);
 
 #ifdef __cplusplus
 } /* extern "C" */

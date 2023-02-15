@@ -29,23 +29,16 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "newton-irPass-LLVMIR-constantSubstitution.h"
+#include "newton-irPass-LLVMIR-quantization.h"
 
 using namespace llvm;
 
 extern "C"
 {
-/*
- * Steps of constantSubstitution:
- *  1. for each instruction (that is the case statement), get the range of current instruction from boundInfo
- *  2. check if the lower range and upper range is the same value, then it means this is a constant value instruction
- *  3. get the type of current constant value instruction, mainly float/double/integer (with different bits)
- *  4. use llvm API to create a new constant value
- *  5. substitute current instruction with the constant value
- * */
 void
-constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction)
+irPassLLVMIRAutoQuantization(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction)
 {
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "\tauto quantization.\n");
 	/*
 	 * Some special instructions that need to pay attention:
 	 * %i = alloca type, the type of this instruction is "type*"
@@ -99,59 +92,11 @@ constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFu
 				case Instruction::Load:
 				case Instruction::GetElementPtr:
 				case Instruction::PHI:
-				{
-					auto vrIt = boundInfo->virtualRegisterRange.find(llvmIrInstruction);
-					if (vrIt == boundInfo->virtualRegisterRange.end())
-					{
-						break;
-					}
-					auto lowerBound = vrIt->second.first;
-					auto upperBound = vrIt->second.second;
-					/*
-					 * if it's a constant
-					 * */
-					if (fabs(lowerBound - upperBound) < DBL_EPSILON)
-					{
-						/*
-						 * check the type of instruction
-						 * */
-						Value *	 newConstant = nullptr;
-						uint64_t intBitWidth;
-                        auto instType = llvmIrInstruction->getType();
-                        auto typeId = instType->getTypeID();
-                        if (typeId == Type::PointerTyID) {
-                            instType = instType->getPointerElementType();
-                            typeId = instType->getTypeID();
-                        }
-						switch (typeId)
-						{
-							case Type::IntegerTyID:
-								newConstant = ConstantInt::get(instType, lowerBound, lowerBound < 0);
-								break;
-							case Type::FloatTyID:
-							case Type::DoubleTyID:
-								newConstant = ConstantFP::get(instType, lowerBound);
-								break;
-							default:
-								break;
-						}
-						if (newConstant != nullptr)
-						{
-							llvmIrInstruction->replaceAllUsesWith(newConstant);
-							llvmIrInstruction->removeFromParent();
-						}
-					}
-				}
-				break;
 				case Instruction::Store:
-					break;
 				case Instruction::ICmp:
 				case Instruction::FCmp:
-					break;
 				case Instruction::Ret:
-					break;
 				case Instruction::Switch:
-					break;
 				case Instruction::Br:
 				case Instruction::Select:
 				case Instruction::IndirectBr:
