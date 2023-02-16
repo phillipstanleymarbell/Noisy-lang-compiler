@@ -1593,7 +1593,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							{
 								constValue = (constFp->getValueAPF()).convertToDouble();
 							}
-							else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
+							else if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(leftOperand))
 							{
 								constValue = constInt->getSExtValue();
 							}
@@ -2587,6 +2587,8 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 										 * Check Issue 641.
 										 * */
 										bool canGetRange = false;
+                                        float f_originLow = (float)originLow;
+                                        float f_originHigh = (float)originHigh;
 										switch (DestEleType->getIntegerBitWidth())
 										{
 											case 8:
@@ -2598,8 +2600,9 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 												highRange = static_cast<double>(*reinterpret_cast<int16_t *>(&originHigh));
 												break;
 											case 32:
-												lowRange  = static_cast<double>(*reinterpret_cast<int32_t *>(&originLow));
-												highRange = static_cast<double>(*reinterpret_cast<int32_t *>(&originHigh));
+												lowRange  = static_cast<double>(*reinterpret_cast<int32_t *>(&f_originLow));
+												highRange = static_cast<double>(*reinterpret_cast<int32_t *>(&f_originHigh));
+                                                canGetRange = true;
 												break;
 											case 64:
 												lowRange    = static_cast<double>(*reinterpret_cast<int64_t *>(&originLow));
