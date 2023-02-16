@@ -1175,16 +1175,6 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect calledFunction %s.\n",
 									  calledFunction->getName().str().c_str());
 								std::string newFuncName = calledFunction->getName().str();
-								/*
-								 * TBH it's wried to use two "innerBoundInfo" here.
-								 * The key point is the "realCallee" would be different.
-								 * To whom may concern in the future, sorry for this piece of shit and the hell disaster.
-								 * It's really worth to re-construct with the "innerBoundInfo" and "calleeBound",
-								 * like summarize a function for getting the "innerBoundInfo" and
-								 * collect the "calleeBound" together here.
-								 * But I indeed have no time to do that...
-								 * todo: collect function information and generate new functions in another pass
-								 * */
 								auto innerBoundInfo   = new BoundInfo();
 								bool hasSpecificRange = false;
 								/*
@@ -2582,10 +2572,6 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 										break;
 									case Type::IntegerTyID:
 									{
-										/*
-										 * Currently, I have no idea why only 64 bits work
-										 * Check Issue 641.
-										 * */
 										bool canGetRange = false;
 										switch (DestEleType->getIntegerBitWidth())
 										{
