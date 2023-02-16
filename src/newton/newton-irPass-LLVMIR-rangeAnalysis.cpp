@@ -1104,8 +1104,14 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								}
 								else if (funcName == "sqrt")
 								{
-									lowRange  = sqrt(argRanges[0].first);
-									highRange = sqrt(argRanges[0].second);
+                                    if (argRanges[0].first < 0)
+                                        lowRange = 0;
+                                    else
+									    lowRange  = sqrt(argRanges[0].first);
+                                    if (argRanges[0].second < 0)
+                                        highRange = 0;
+                                    else
+									    highRange = sqrt(argRanges[0].second);
 								}
 								else if (funcName == "log1p")
 								{
