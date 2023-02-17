@@ -449,7 +449,7 @@ getTrue(Type * Ty)
 }
 
 bool
-simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
+simplifyControlFlow(State * N, const std::unique_ptr<BoundInfo> & boundInfo, Function & llvmIrFunction)
 {
 	bool changed = false;
 	for (BasicBlock & llvmIrBasicBlock : llvmIrFunction)

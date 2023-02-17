@@ -46,7 +46,7 @@ extern "C"
 #endif /* __cplusplus */
 
 void
-shrinkType(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction);
+shrinkType(State * N, const std::unique_ptr<BoundInfo> & boundInfo, llvm::Function & llvmIrFunction);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -198,13 +198,21 @@ main(int argc, char** argv)
         float sinp, cosp;
         result = libc_sincosf(randomFloat(parameters[0], parameters[1]), &sinp, &cosp);
 #elif defined(FLOAT64_ADD)
-        result = float64_add(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 0.6, parameters[1] + 0.3));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = float64_add(*(unsigned long*)(&xOps[idx]), *(unsigned long*)(&yOps[idx]));
+    }
 #elif defined(FLOAT64_DIV)
-        result = float64_div(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 0.6, parameters[1] + 0.3));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = float64_div(*(unsigned long*)(&xOps[idx]), *(unsigned long*)(&yOps[idx]));
+    }
 #elif defined(FLOAT64_MUL)
-        result = float64_mul(randomFloat(parameters[0], parameters[1]), randomFloat(parameters[0] + 0.6, parameters[1] + 0.3));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = float64_mul(*(unsigned long*)(&xOps[idx]), *(unsigned long*)(&yOps[idx]));
+    }
 #elif defined(FLOAT64_SIN)
-        result = float64_sin(randomFloat(parameters[0], parameters[1]));
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = float64_sin(*(unsigned long*)(&xOps[idx]), *(unsigned long*)(&yOps[idx]));
+    }
 #elif defined(BENCHMARK_SUITE_INT)
         bmx055xMagneto result[iteration_num];
         bmx055xMagneto leftOps[iteration_num];

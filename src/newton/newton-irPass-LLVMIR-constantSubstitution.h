@@ -37,7 +37,7 @@ extern "C"
 #endif /* __cplusplus */
 
 void
-constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction);
+constantSubstitution(State * N, const std::unique_ptr<BoundInfo> & boundInfo, llvm::Function & llvmIrFunction);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -44,7 +44,7 @@ extern "C"
  *  5. substitute current instruction with the constant value
  * */
 void
-constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction)
+constantSubstitution(State * N, const std::unique_ptr<BoundInfo> & boundInfo, llvm::Function & llvmIrFunction)
 {
 	/*
 	 * Some special instructions that need to pay attention:

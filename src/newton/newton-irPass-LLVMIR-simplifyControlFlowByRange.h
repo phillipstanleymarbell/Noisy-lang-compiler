@@ -43,7 +43,7 @@ extern "C"
 #endif /* __cplusplus */
 
 bool
-simplifyControlFlow(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction);
+simplifyControlFlow(State * N, const std::unique_ptr<BoundInfo> & boundInfo, llvm::Function & llvmIrFunction);
 
 #ifdef __cplusplus
 } /* extern "C" */

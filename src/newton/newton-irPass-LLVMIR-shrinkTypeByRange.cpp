@@ -1196,7 +1196,7 @@ rollBackDependencyLink(State * N, const std::vector<Value *> & depLink,
  * %.i = phi type [%op1, %bb1], [%op2, %bb2], ...
  * */
 std::map<Value *, typeInfo>
-shrinkInstType(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
+shrinkInstType(State * N, const std::unique_ptr<BoundInfo> & boundInfo, Function & llvmIrFunction)
 {
 	/*
 	 * <Value to be shrink, old type>
@@ -1821,7 +1821,7 @@ getDependencyLink(State * N, Function & llvmIrFunction)
 }
 
 void
-shrinkType(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
+shrinkType(State * N, const std::unique_ptr<BoundInfo> & boundInfo, Function & llvmIrFunction)
 {
 	/*
 	 * 1. construct instruction dependency link

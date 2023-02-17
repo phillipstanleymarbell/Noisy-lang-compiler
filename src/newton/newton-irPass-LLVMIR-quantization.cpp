@@ -36,7 +36,7 @@ using namespace llvm;
 extern "C"
 {
 void
-irPassLLVMIRAutoQuantization(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction)
+irPassLLVMIRAutoQuantization(State * N, const std::unique_ptr<BoundInfo> & boundInfo, llvm::Function & llvmIrFunction)
 {
     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tauto quantization.\n");
 	/*
