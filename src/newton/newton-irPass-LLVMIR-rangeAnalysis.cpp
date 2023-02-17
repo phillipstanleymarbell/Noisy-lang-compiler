@@ -1325,7 +1325,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 									 * update the inner bound info with the new function.
 									 * // todo: this code is a bit wired, maybe can be improved
 									 * */
-									auto innerBoundInfo = new BoundInfo();
+									auto overloadBoundInfo = new BoundInfo();
 									for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
 									{
 										/*
@@ -1335,7 +1335,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 										{
 											int64_t constIntValue = cInt->getSExtValue();
 											flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant int value: %d.\n", constIntValue);
-											innerBoundInfo->virtualRegisterRange.emplace(realCallee->getArg(idx),
+											overloadBoundInfo->virtualRegisterRange.emplace(realCallee->getArg(idx),
 																     std::make_pair(static_cast<double>(constIntValue),
 																		    static_cast<double>(constIntValue)));
 										}
@@ -1343,7 +1343,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 										{
 											double constDoubleValue = (constFp->getValueAPF()).convertToDouble();
 											flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant double value: %f.\n", constDoubleValue);
-											innerBoundInfo->virtualRegisterRange.emplace(realCallee->getArg(idx),
+											overloadBoundInfo->virtualRegisterRange.emplace(realCallee->getArg(idx),
 																     std::make_pair(constDoubleValue,
 																		    constDoubleValue));
 										}
@@ -1358,7 +1358,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 											{
 												flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
 													  vrRangeIt->second.first, vrRangeIt->second.second);
-												innerBoundInfo->virtualRegisterRange.emplace(realCallee->getArg(idx),
+												overloadBoundInfo->virtualRegisterRange.emplace(realCallee->getArg(idx),
 																	     vrRangeIt->second);
 											}
 											else
@@ -1368,13 +1368,13 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 										}
 									}
 
-									returnRange = rangeAnalysis(N, *realCallee, innerBoundInfo, callerMap,
+									returnRange = rangeAnalysis(N, *realCallee, overloadBoundInfo, callerMap,
 												    typeRange, virtualRegisterVectorRange, useOverLoad);
 									if (returnRange.first != nullptr)
 									{
 										boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
 									}
-									boundInfo->calleeBound.emplace(newFuncName, innerBoundInfo);
+									boundInfo->calleeBound.emplace(newFuncName, overloadBoundInfo);
 								}
 								else
 								{

@@ -146,8 +146,7 @@ class FunctionNodeCmp {
 using hashFuncSet = std::set<FunctionNode, FunctionNodeCmp>;
 
 void
-cleanFunctionMap(const std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> & callerMap,
-		 std::unordered_map<std::string, std::vector<std::string>> & funcCallTree)
+cleanFunctionMap(const std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> & callerMap)
 {
 	for (auto itFunc = callerMap.begin(); itFunc != callerMap.end();)
 	{
@@ -156,18 +155,10 @@ cleanFunctionMap(const std::unique_ptr<Module> & Mod, std::map<std::string, Call
 		else
 			++itFunc;
 	}
-	for (auto itFunc = funcCallTree.begin(); itFunc != funcCallTree.end();)
-	{
-		if (nullptr == Mod->getFunction(itFunc->first))
-			itFunc = funcCallTree.erase(itFunc);
-		else
-			++itFunc;
-	}
 }
 
 void
-overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> & callerMap,
-	     const std::unordered_map<std::string, std::vector<std::string>> & funcCallTree)
+overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> & callerMap)
 {
 	/*
 	 * compare the functions and remove the redundant one
@@ -204,46 +195,6 @@ overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> & 
 		}
 		else
 			baseFuncNum = baseFuncs.size();
-	}
-
-	std::set<std::string> baseFuncNames;
-	for (auto f : baseFuncs)
-	{
-		baseFuncNames.emplace(f.getFunc()->getName().str());
-	}
-
-	/*
-	 * iterate functions in Mod, if it cannot be found in baseFuncs, delete it.
-	 * */
-	for (auto itFunc = Mod->getFunctionList().begin(); itFunc != Mod->getFunctionList().end(); itFunc++)
-	{
-		if (!itFunc->hasName() || itFunc->getName().empty())
-			continue;
-		if (itFunc->getName().startswith("llvm.dbg.value") ||
-		    itFunc->getName().startswith("llvm.dbg.declare"))
-			continue;
-		if (itFunc->isDeclaration())
-			continue;
-		if (baseFuncNames.find(itFunc->getName().str()) == baseFuncNames.end() && itFunc->hasLocalLinkage())
-		{
-			callerMap.erase(itFunc->getName().str());
-			Mod->getFunctionList().remove(itFunc);
-			/*
-			 * delete its children functions
-			 * PS: if we delete some functions, we should also remove it from the "callerMap"
-			 * */
-			auto itFoundParent = funcCallTree.find(itFunc->getName().str());
-			if (itFoundParent != funcCallTree.end())
-			{
-				for (const auto & calleeName : itFoundParent->second)
-				{
-					callerMap.erase(calleeName);
-					Mod->getFunctionList().remove(Mod->getFunction(calleeName));
-					itFunc--;
-				}
-			}
-			itFunc--;
-		}
 	}
 }
 
@@ -361,8 +312,6 @@ irPassLLVMIROptimizeByRange(State * N)
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 	std::map<std::string, CallInst *> callerMap;
 	callerMap.clear();
-	std::unordered_map<std::string, std::vector<std::string>> funcCallTree;
-	funcCallTree.clear();
 	bool useOverLoad = true;
 	for (auto & mi : *Mod)
 	{
@@ -372,7 +321,6 @@ irPassLLVMIROptimizeByRange(State * N)
 		funcBoundInfo.emplace(mi.getName().str(), boundInfo);
 		std::vector<std::string> calleeNames;
 		collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
-		funcCallTree.emplace(mi.getName().str(), calleeNames);
 	}
 
 	/*
@@ -402,16 +350,15 @@ irPassLLVMIROptimizeByRange(State * N)
 	 * remove the functions that are optimized by passes.
 	 * */
 	if (useOverLoad)
-		cleanFunctionMap(Mod, callerMap, funcCallTree);
+		cleanFunctionMap(Mod, callerMap);
 
 	if (useOverLoad)
-		overloadFunc(Mod, callerMap, funcCallTree);
+		overloadFunc(Mod, callerMap);
 
 	useOverLoad = false;
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 	funcBoundInfo.clear();
-	funcCallTree.clear();
 	for (auto & mi : *Mod)
 	{
 		auto boundInfo = new BoundInfo();
@@ -420,7 +367,6 @@ irPassLLVMIROptimizeByRange(State * N)
 		funcBoundInfo.emplace(mi.getName().str(), boundInfo);
 		std::vector<std::string> calleeNames;
 		collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
-		funcCallTree.emplace(mi.getName().str(), calleeNames);
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
@@ -461,14 +407,13 @@ irPassLLVMIROptimizeByRange(State * N)
 	 * remove the functions that are optimized by passes.
 	 * */
 	if (useOverLoad)
-		cleanFunctionMap(Mod, callerMap, funcCallTree);
+		cleanFunctionMap(Mod, callerMap);
 
 	if (useOverLoad)
-		overloadFunc(Mod, callerMap, funcCallTree);
+		overloadFunc(Mod, callerMap);
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 	funcBoundInfo.clear();
-	funcCallTree.clear();
 	for (auto & mi : *Mod)
 	{
 		auto boundInfo = new BoundInfo();
@@ -477,7 +422,6 @@ irPassLLVMIROptimizeByRange(State * N)
 		funcBoundInfo.emplace(mi.getName().str(), boundInfo);
 		std::vector<std::string> calleeNames;
 		collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
-		funcCallTree.emplace(mi.getName().str(), calleeNames);
 	}
 
 	/*
@@ -504,10 +448,10 @@ irPassLLVMIROptimizeByRange(State * N)
 	 * remove the functions that are optimized by passes.
 	 * */
 	if (useOverLoad)
-		cleanFunctionMap(Mod, callerMap, funcCallTree);
+		cleanFunctionMap(Mod, callerMap);
 
 	if (useOverLoad)
-		overloadFunc(Mod, callerMap, funcCallTree);
+		overloadFunc(Mod, callerMap);
 
 	/*
 	 * Dump BC file to a file.
