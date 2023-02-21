@@ -2035,6 +2035,11 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 				case Instruction::AShr:
 					if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
 					{
+                        Type * instType = llvmIrBinaryOperator->getType();
+                        uint bitWidth = 64;
+                        if (instType->isIntegerTy()) {
+                            bitWidth = cast<IntegerType>(instType)->getBitWidth();
+                        }
 						Value * leftOperand  = llvmIrInstruction.getOperand(0);
 						Value * rightOperand = llvmIrInstruction.getOperand(1);
 						if ((isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)))
@@ -2043,8 +2048,8 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 						}
 						if (!isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand))
 						{
-							double lowerBound = 0.0;
-							double upperBound = 0.0;
+							double leftMin = 0.0;
+							double leftMax = 0.0;
 							/*
 							 * 	e.g. x1 >> x2
 							 * 	range: [min(x1_min>>x2_min, x1_min>>x2_max, x1_max>>x2_min, x1_max>>x2_max),
@@ -2053,21 +2058,53 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 							{
-								lowerBound = vrRangeIt->second.first;
-								upperBound = vrRangeIt->second.second;
+                                switch (bitWidth) {
+                                case 8:
+                                    leftMin = (uint8_t)vrRangeIt->second.first;
+                                    leftMax = (uint8_t)vrRangeIt->second.second;
+                                    break;
+                                case 16:
+                                    leftMin = (uint16_t)vrRangeIt->second.first;
+                                    leftMax = (uint16_t)vrRangeIt->second.second;
+                                    break;
+                                case 32:
+                                    leftMin = (uint32_t)vrRangeIt->second.first;
+                                    leftMax = (uint32_t)vrRangeIt->second.second;
+                                    break;
+                                case 64:
+                                    leftMin = (uint64_t)vrRangeIt->second.first;
+                                    leftMax = (uint64_t)vrRangeIt->second.second;
+                                    break;
+                                }
 							}
 							else
 							{
 								assert(!valueRangeDebug && "failed to get range");
 								break;
 							}
+                            double lowerBound, upperBound;
 							vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
 							if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 							{
-								auto leftMin  = lowerBound;
-								auto leftMax  = upperBound;
-								auto rightMin = vrRangeIt->second.first;
-								auto rightMax = vrRangeIt->second.second;
+                                double rightMin = 0, rightMax = 0;
+                                switch (bitWidth) {
+                                case 8:
+                                    rightMin = (uint8_t)vrRangeIt->second.first;
+                                    rightMax = (uint8_t)vrRangeIt->second.second;
+                                    break;
+                                case 16:
+                                    rightMin = (uint16_t)vrRangeIt->second.first;
+                                    rightMax = (uint16_t)vrRangeIt->second.second;
+                                    break;
+                                case 32:
+                                    rightMin = (uint32_t)vrRangeIt->second.first;
+                                    rightMax = (uint32_t)vrRangeIt->second.second;
+                                    break;
+                                case 64:
+                                    rightMin = (uint64_t)vrRangeIt->second.first;
+                                    rightMax = (uint64_t)vrRangeIt->second.second;
+                                    break;
+                                }
 								lowerBound    = min(min(min((int)leftMin >> (int)rightMin,
 											    (int)leftMin >> (int)rightMax),
 											(int)leftMax >> (int)rightMin),
@@ -2103,11 +2140,27 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							auto vrRangeIt = boundInfo->virtualRegisterRange.find(rightOperand);
 							if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 							{
-								// todo: if we need assert or other check here?
-								uint64_t rightMin   = vrRangeIt->second.first < 0 ? 0 : vrRangeIt->second.first;
-								uint64_t rightMax   = vrRangeIt->second.second < 0 ? 0 : vrRangeIt->second.second;
-								double	 lowerBound = min(constValue >> rightMin, constValue >> rightMax);
-								double	 upperBound = max(constValue >> rightMin, constValue >> rightMax);
+                                double resMin = 0, resMax = 0;
+                                switch (bitWidth) {
+                                case 8:
+                                    resMin = constValue >> (uint8_t)vrRangeIt->second.first;
+                                    resMax = constValue >> (uint8_t)vrRangeIt->second.second;
+                                    break;
+                                case 16:
+                                    resMin = constValue >> (uint16_t)vrRangeIt->second.first;
+                                    resMax = constValue >> (uint16_t)vrRangeIt->second.second;
+                                    break;
+                                case 32:
+                                    resMin = constValue >> (uint32_t)vrRangeIt->second.first;
+                                    resMax = constValue >> (uint32_t)vrRangeIt->second.second;
+                                    break;
+                                case 64:
+                                    resMin = constValue >> (uint64_t)vrRangeIt->second.first;
+                                    resMax = constValue >> (uint64_t)vrRangeIt->second.second;
+                                    break;
+                                }
+								double	 lowerBound = min(resMin, resMax);
+								double	 upperBound = max(resMin, resMax);
 								boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
 													std::make_pair(lowerBound, upperBound));
 							}
@@ -2130,10 +2183,27 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 							{
-								uint64_t rightMin = vrRangeIt->second.first < 0 ? 0 : vrRangeIt->second.first;
-								uint64_t rightMax = vrRangeIt->second.second < 0 ? 0 : vrRangeIt->second.second;
+                                double resMin = 0, resMax = 0;
+                                switch (bitWidth) {
+                                    case 8:
+                                        resMin = (uint8_t)vrRangeIt->second.first >> constValue;
+                                        resMax = (uint8_t)vrRangeIt->second.second >> constValue;
+                                        break;
+                                    case 16:
+                                        resMin = (uint16_t)vrRangeIt->second.first >> constValue;
+                                        resMax = (uint16_t)vrRangeIt->second.second >> constValue;
+                                        break;
+                                    case 32:
+                                        resMin = (uint32_t)vrRangeIt->second.first >> constValue;
+                                        resMax = (uint32_t)vrRangeIt->second.second >> constValue;
+                                        break;
+                                    case 64:
+                                        resMin = (uint64_t)vrRangeIt->second.first >> constValue;
+                                        resMax = (uint64_t)vrRangeIt->second.second >> constValue;
+                                        break;
+                                }
 								boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
-													std::make_pair(rightMin >> constValue, rightMax >> constValue));
+													std::make_pair(min(resMin, resMax), max(resMin, resMax)));
 							}
 							else
 							{
@@ -2519,7 +2589,8 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							if (uaIt != unionAddress.end())
 							{
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tStore Union: %f - %f\n", vrRangeIt->second.first, vrRangeIt->second.second);
-								boundInfo->virtualRegisterRange.emplace(uaIt->second, vrRangeIt->second);
+                                if (nullptr != vrRangeIt->first)
+                                    boundInfo->virtualRegisterRange.emplace(uaIt->second, vrRangeIt->second);
 							}
 						}
 					}
