@@ -465,7 +465,7 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						auto rightOperand = llvmIrICmpInstruction->getOperand(1);
 						if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
-							std::swap(leftOperand, rightOperand);
+                            llvmIrICmpInstruction->swapOperands();
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tICmp: swap left and right, need to change the type of prediction\n");
 						}
 						else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
@@ -581,7 +581,7 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						auto rightOperand = llvmIrFCmpInstruction->getOperand(1);
 						if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
-							std::swap(leftOperand, rightOperand);
+                            llvmIrFCmpInstruction->swapOperands();
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tFCmp: swap left and right, need to change the type of prediction\n");
 						}
 						else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
