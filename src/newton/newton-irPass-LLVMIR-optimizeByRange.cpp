@@ -196,6 +196,10 @@ overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> & 
 		else
 			baseFuncNum = baseFuncs.size();
 	}
+
+    legacy::PassManager passManager;
+    passManager.add(createGlobalDCEPass());
+    passManager.run(*Mod);
 }
 
 void
