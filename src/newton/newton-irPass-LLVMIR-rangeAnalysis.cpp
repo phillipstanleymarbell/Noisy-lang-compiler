@@ -2079,8 +2079,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 										assert(false);
 								}
 								boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
-													std::make_pair((int)vrRangeIt->second.first << constValue,
-														       (int)vrRangeIt->second.second << constValue));
+                                                                        std::make_pair(resMin, resMax));
 							}
 							else
 							{
@@ -2148,7 +2147,6 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
                                                          static_cast<int64_t>(leftMin) >> static_cast<uint64_t>(rightMax)),
                                                      static_cast<int64_t>(leftMax) >> static_cast<uint64_t>(rightMin)),
                                                  static_cast<int64_t>(leftMax) >> static_cast<uint64_t>(rightMax));
-                                int a = 0;
 							}
 							else
 							{
@@ -2320,37 +2318,35 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 							{
 								double rightMin = 0, rightMax = 0;
-                                rightMin = vrRangeIt->second.first;
-                                rightMax = vrRangeIt->second.second;
-//								switch (bitWidth)
-//								{
-//									case 8:
-//										rightMin = static_cast<uint8_t>(vrRangeIt->second.first);
-//										rightMax = static_cast<uint8_t>(vrRangeIt->second.second);
-//										break;
-//									case 16:
-//										rightMin = static_cast<uint16_t>(vrRangeIt->second.first);
-//										rightMax = static_cast<uint16_t>(vrRangeIt->second.second);
-//										break;
-//									case 32:
-//										rightMin = static_cast<uint32_t>(vrRangeIt->second.first);
-//										rightMax = static_cast<uint32_t>(vrRangeIt->second.second);
-//										break;
-//									case 64:
-//										rightMin = static_cast<uint64_t>(vrRangeIt->second.first);
-//										rightMax = static_cast<uint64_t>(vrRangeIt->second.second);
-//										break;
-//									default:
-//										assert(false);
-//								}
-								lowerBound = min(min(min((int64_t)leftMin >> (uint64_t)rightMin,
-											 (int64_t)leftMin >> (uint64_t)rightMax),
+								switch (bitWidth)
+								{
+									case 8:
+										rightMin = static_cast<uint8_t>(vrRangeIt->second.first);
+										rightMax = static_cast<uint8_t>(vrRangeIt->second.second);
+										break;
+									case 16:
+										rightMin = static_cast<uint16_t>(vrRangeIt->second.first);
+										rightMax = static_cast<uint16_t>(vrRangeIt->second.second);
+										break;
+									case 32:
+										rightMin = static_cast<uint32_t>(vrRangeIt->second.first);
+										rightMax = static_cast<uint32_t>(vrRangeIt->second.second);
+										break;
+									case 64:
+										rightMin = static_cast<uint64_t>(vrRangeIt->second.first);
+										rightMax = static_cast<uint64_t>(vrRangeIt->second.second);
+										break;
+									default:
+										assert(false);
+								}
+								lowerBound = min(min(min((uint64_t)leftMin >> (uint64_t)rightMin,
+											 (uint64_t)leftMin >> (uint64_t)rightMax),
+										     (uint64_t)leftMax >> (uint64_t)rightMin),
+										 (uint64_t)leftMax >> (uint64_t)rightMax);
+								upperBound = max(max(max((uint64_t)leftMin >> (uint64_t)rightMin,
+											 (uint64_t)leftMin >> (uint64_t)rightMax),
 										     (int64_t)leftMax >> (uint64_t)rightMin),
-										 (int64_t)leftMax >> (uint64_t)rightMax);
-								upperBound = max(max(max((int64_t)leftMin >> (uint64_t)rightMin,
-											 (int64_t)leftMin >> (uint64_t)rightMax),
-										     (int64_t)leftMax >> (uint64_t)rightMin),
-										 (int64_t)leftMax >> (uint64_t)rightMax);
+										 (uint64_t)leftMax >> (uint64_t)rightMax);
 							}
 							else
 							{
