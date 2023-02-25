@@ -399,15 +399,6 @@ irPassLLVMIROptimizeByRange(State * N)
 	//    }
 
 	/*
-	 * todo: there's a bug when running gbDCE after `overloadFunc`
-	 * GUESS: 1. related to GlobalNumberState
-	 *        2. related to setCalledFunction
-	 * test cases: `float_add`, `float_mul`
-	 * */
-	//    passManager.add(createGlobalDCEPass());
-	//    passManager.run(*Mod);
-
-	/*
 	 * remove the functions that are optimized by passes.
 	 * */
 	if (useOverLoad)

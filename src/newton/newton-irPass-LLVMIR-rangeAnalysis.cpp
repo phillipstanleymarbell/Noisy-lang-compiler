@@ -1181,8 +1181,6 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect calledFunction %s.\n",
 									  calledFunction->getName().str().c_str());
 								std::string newFuncName = calledFunction->getName().str();
-								if (calledFunction->getName().startswith("roundAndPackFloat64"))
-									int a = 0;
 								/*
 								 * TBH it's wried to use two "innerBoundInfo" here.
 								 * The key point is the "realCallee" would be different.
