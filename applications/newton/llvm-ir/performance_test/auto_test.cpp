@@ -369,7 +369,7 @@ int main(int argc, char** argv) {
                 if (!std::equal(ori_perf_data.function_results.begin(), ori_perf_data.function_results.end(),
                                 opt_perf_data.function_results.begin())) {
                     std::cerr << "result error: " << test_cases[case_id] << " with parameters: " << param_str <<
-                    "ori: " << ori_perf_data.function_results[0] << "opt: " << opt_perf_data.function_results[0] <<
+                    "ori: " << ori_perf_data.function_results[0] << ", opt: " << opt_perf_data.function_results[0] <<
                     std::endl;
                 }
 

@@ -2060,20 +2060,20 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								switch (bitWidth)
 								{
 									case 8:
-										resMin = static_cast<int8_t>(vrRangeIt->second.first) << constValue;
-										resMax = static_cast<int8_t>(vrRangeIt->second.second) << constValue;
+										resMin = static_cast<uint8_t>(vrRangeIt->second.first) << constValue;
+										resMax = static_cast<uint8_t>(vrRangeIt->second.second) << constValue;
 										break;
 									case 16:
-										resMin = static_cast<int16_t>(vrRangeIt->second.first) << constValue;
-										resMax = static_cast<int16_t>(vrRangeIt->second.second) << constValue;
+										resMin = static_cast<uint16_t>(vrRangeIt->second.first) << constValue;
+										resMax = static_cast<uint16_t>(vrRangeIt->second.second) << constValue;
 										break;
 									case 32:
-										resMin = static_cast<int32_t>(vrRangeIt->second.first) << constValue;
-										resMax = static_cast<int32_t>(vrRangeIt->second.second) << constValue;
+										resMin = static_cast<uint32_t>(vrRangeIt->second.first) << constValue;
+										resMax = static_cast<uint32_t>(vrRangeIt->second.second) << constValue;
 										break;
 									case 64:
-										resMin = static_cast<int64_t>(vrRangeIt->second.first) << constValue;
-										resMax = static_cast<int64_t>(vrRangeIt->second.second) << constValue;
+										resMin = static_cast<uint64_t>(vrRangeIt->second.first) << constValue;
+										resMax = static_cast<uint64_t>(vrRangeIt->second.second) << constValue;
 										break;
 									default:
 										assert(false);
