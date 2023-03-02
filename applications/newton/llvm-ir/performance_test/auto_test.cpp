@@ -253,9 +253,9 @@ struct timerData recordTimerData(const std::string& test_cases, const std::strin
                   std::back_inserter(timer_data.function_results),
                   [test_cases, param_str, timer_data, data_timer_res](double val) {
             if (!timer_data.function_results.empty()) {
-//                if (!std::equal(timer_data.function_results.begin(), timer_data.function_results.end(),
-//                               data_timer_res.second.begin()))
-//                    std::cerr << "result error: " << test_cases << " with parameters: " << param_str << std::endl;
+                if (!std::equal(timer_data.function_results.begin(), timer_data.function_results.end(),
+                               data_timer_res.second.begin()))
+                    std::cerr << "result error within iteration: " << test_cases << " with parameters: " << param_str << std::endl;
                 return false;
             } else
                 return true;

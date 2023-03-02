@@ -967,8 +967,6 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 					if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction))
 					{
 						Function * calledFunction = llvmIrCallInstruction->getCalledFunction();
-                        if (calledFunction->getName().startswith("normalizeFloat64Subnormal"))
-                            int a = 0;
 						if (calledFunction == nullptr || !calledFunction->hasName() || calledFunction->getName().empty())
 							break;
 						if (calledFunction->getName().startswith("llvm.dbg.value") ||
@@ -1988,20 +1986,20 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								switch (bitWidth)
 								{
 									case 8:
-										lowerBound = static_cast<double>(static_cast<int8_t>(vrRangeIt->second.first));
-										upperBound = static_cast<double>(static_cast<int8_t>(vrRangeIt->second.second));
+										lowerBound = static_cast<double>(static_cast<uint8_t>(vrRangeIt->second.first));
+										upperBound = static_cast<double>(static_cast<uint8_t>(vrRangeIt->second.second));
 										break;
 									case 16:
-										lowerBound = static_cast<double>(static_cast<int16_t>(vrRangeIt->second.first));
-										upperBound = static_cast<double>(static_cast<int16_t>(vrRangeIt->second.second));
+										lowerBound = static_cast<double>(static_cast<uint16_t>(vrRangeIt->second.first));
+										upperBound = static_cast<double>(static_cast<uint16_t>(vrRangeIt->second.second));
 										break;
 									case 32:
-										lowerBound = static_cast<double>(static_cast<int32_t>(vrRangeIt->second.first));
-										upperBound = static_cast<double>(static_cast<int32_t>(vrRangeIt->second.second));
+										lowerBound = static_cast<double>(static_cast<uint32_t>(vrRangeIt->second.first));
+										upperBound = static_cast<double>(static_cast<uint32_t>(vrRangeIt->second.second));
 										break;
 									case 64:
-										lowerBound = static_cast<double>(static_cast<int64_t>(vrRangeIt->second.first));
-										upperBound = static_cast<double>(static_cast<int64_t>(vrRangeIt->second.second));
+										lowerBound = static_cast<double>(static_cast<uint64_t>(vrRangeIt->second.first));
+										upperBound = static_cast<double>(static_cast<uint64_t>(vrRangeIt->second.second));
 										break;
 									default:
 										assert(false);
@@ -2019,14 +2017,14 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								auto   leftMax = upperBound;
                                 double rightMin = vrRangeIt->second.first;
                                 double rightMax = vrRangeIt->second.second;
-								lowerBound = min(min(min((int64_t)leftMin << (int64_t)rightMin,
-											 (int64_t)leftMin << (int64_t)rightMax),
-										     (int64_t)leftMax << (int64_t)rightMin),
-										 (int64_t)leftMax << (int64_t)rightMax);
-								upperBound = max(max(max((int64_t)leftMin << (int64_t)rightMin,
-											 (int64_t)leftMin << (int64_t)rightMax),
-										     (int64_t)leftMax << (int64_t)rightMin),
-										 (int64_t)leftMax << (int64_t)rightMax);
+								lowerBound = min(min(min((uint64_t)leftMin << (int64_t)rightMin,
+											 (uint64_t)leftMin << (int64_t)rightMax),
+										     (uint64_t)leftMax << (int64_t)rightMin),
+										 (uint64_t)leftMax << (int64_t)rightMax);
+								upperBound = max(max(max((uint64_t)leftMin << (int64_t)rightMin,
+											 (uint64_t)leftMin << (int64_t)rightMax),
+										     (uint64_t)leftMax << (int64_t)rightMin),
+										 (uint64_t)leftMax << (int64_t)rightMax);
 							}
 							else
 							{
