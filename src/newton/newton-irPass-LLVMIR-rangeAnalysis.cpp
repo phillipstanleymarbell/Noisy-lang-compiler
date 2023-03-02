@@ -967,6 +967,8 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 					if (auto llvmIrCallInstruction = dyn_cast<CallInst>(&llvmIrInstruction))
 					{
 						Function * calledFunction = llvmIrCallInstruction->getCalledFunction();
+                        if (calledFunction->getName().startswith("normalizeFloat64Subnormal"))
+                            int a = 0;
 						if (calledFunction == nullptr || !calledFunction->hasName() || calledFunction->getName().empty())
 							break;
 						if (calledFunction->getName().startswith("llvm.dbg.value") ||
@@ -1370,6 +1372,26 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 
 									returnRange = rangeAnalysis(N, *realCallee, overloadBoundInfo, callerMap,
 												    typeRange, virtualRegisterVectorRange, useOverLoad);
+                                    /*
+                                    * If the "realCallee" pass arguments by pointer, update the pointer argus.
+                                    * If the outer function have such operand value, but doesn't exist after the callee,
+                                    *  remove it from boundInfo->virtualRegisterRange
+                                    * If both exist before and after callee, then update its value.
+                                    * */
+                                    for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++) {
+                                        auto operand = llvmIrCallInstruction->getOperand(idx);
+                                        if (operand->getType()->getTypeID() == Type::PointerTyID) {
+                                            auto vrIt = boundInfo->virtualRegisterRange.find(operand);
+                                            if (vrIt != boundInfo->virtualRegisterRange.end()) {
+                                                auto ibIt = innerBoundInfo->virtualRegisterRange.find(operand);
+                                                if (ibIt != innerBoundInfo->virtualRegisterRange.end()) {
+                                                    vrIt->second = ibIt->second;
+                                                } else {
+                                                    boundInfo->virtualRegisterRange.erase(vrIt);
+                                                }
+                                            }
+                                        }
+                                    }
 									if (returnRange.first != nullptr)
 									{
 										boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
@@ -1385,6 +1407,26 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 									realCallee  = calledFunction;
 									returnRange = rangeAnalysis(N, *realCallee, innerBoundInfo, callerMap,
 												    typeRange, virtualRegisterVectorRange, useOverLoad);
+                                    /*
+                                     * If the "realCallee" pass arguments by pointer, update the pointer argus.
+                                     * If the outer function have such operand value, but doesn't exist after the callee,
+                                     *  remove it from boundInfo->virtualRegisterRange
+                                     * If both exist before and after callee, then update its value.
+                                     * */
+                                    for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++) {
+                                        auto operand = llvmIrCallInstruction->getOperand(idx);
+                                        if (operand->getType()->getTypeID() == Type::PointerTyID) {
+                                            auto vrIt = boundInfo->virtualRegisterRange.find(operand);
+                                            if (vrIt != boundInfo->virtualRegisterRange.end()) {
+                                                auto ibIt = innerBoundInfo->virtualRegisterRange.find(operand);
+                                                if (ibIt != innerBoundInfo->virtualRegisterRange.end()) {
+                                                    vrIt->second = ibIt->second;
+                                                } else {
+                                                    boundInfo->virtualRegisterRange.erase(vrIt);
+                                                }
+                                            }
+                                        }
+                                    }
 									if (returnRange.first != nullptr)
 									{
 										boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
