@@ -1,6 +1,8 @@
-//
-// Created by pei on 30/07/22.
-//
+/*
+ * Auto test framework of performance and correctness.
+ *
+ * Run with: `./auto_test 2> err.log`
+ * */
 
 #include <algorithm>
 #include <assert.h>
@@ -8,12 +10,39 @@
 #include <cstdint>
 #include <cstdlib>
 #include <ctype.h>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <math.h>
+#include <numeric>
+#include <sstream>
 #include <vector>
 
-int64_t getCount(const std::string& string, size_t position) {
+const size_t iteration_num = 5;
+const size_t result_num = 5;
+
+struct perfData {
+    int64_t inst_count_avg;
+    int64_t time_consumption_avg;
+    int64_t ir_lines;
+    int64_t library_size;
+    std::vector<double> function_results;
+};
+
+struct timerData {
+    int64_t inst_count_avg = -1;
+    double time_consumption_avg;
+    std::vector<double> ms_time_consumption;
+    int64_t ir_lines;
+    int64_t library_size;
+    std::vector<double> function_results;
+};
+
+/*
+ * Get number from:
+ *  36,200,478      instructions
+ *  0.013535825 seconds time elapsed
+ * */
+int64_t getPerfCount(const std::string& string, size_t position) {
     std::string substring;
     substring = string.substr(0, position);
     substring.erase(
@@ -29,13 +58,41 @@ int64_t getCount(const std::string& string, size_t position) {
     return std::stoi(substring);
 }
 
-std::pair<int64_t, int64_t> processData(const std::string test_case, const std::string params) {
+/*
+ * Get number from:
+ *  computation delay: 0.001342399
+ * */
+double getTimerConsumption(const std::string& string, size_t position) {
+    std::string substring;
+    substring = string.substr(position, string.size());
+    return std::stod(substring);
+}
+
+/*
+ * Get number from:
+ *  results: 0.517104	0.809373	0.043233	-0.805564	-0.973201
+ * */
+std::vector<double> getFunctionResults(const std::string& string, size_t position) {
+    std::vector<double> res;
+    std::stringstream ss;
+    std::string tmp;
+    ss << string;
+    double number;
+    while (!ss.eof()) {
+        ss >> tmp;
+        if (std::stringstream(tmp) >> number)
+            res.emplace_back(number);
+    }
+    return res;
+}
+
+std::pair<int64_t, int64_t> processDataPerf(const std::string test_case, const std::string params) {
     std::string line;
     size_t position;
     int64_t inst_count, time_consumption;
 
     // perf command
-    std::string cmd = "make " + test_case;
+    std::string cmd = "make " + test_case + " >& compile.log";
     system(cmd.data());
     cmd.clear();
     cmd = "perf stat -B ./main_out " + params;
@@ -53,20 +110,60 @@ std::pair<int64_t, int64_t> processData(const std::string test_case, const std::
     while (getline(ifs, line)) {
         position = line.find("instructions");
         if (position != std::string::npos) {
-            inst_count = getCount(line, position);
+            inst_count = getPerfCount(line, position);
         }
         position = line.find("seconds time elapsed");
         if (position != std::string::npos) {
-            time_consumption = getCount(line, position);
+            time_consumption = getPerfCount(line, position);
             continue;
         }
     }
 
-    printf("%lu\t%lu\n", inst_count, time_consumption);
+//    printf("%lu\t%lu\n", inst_count, time_consumption);
 
     ifs.close();
 
     return std::make_pair(inst_count, time_consumption);
+}
+
+std::pair<double, std::vector<double>> processDataTimer(const std::string test_case, const std::string params) {
+    std::string line;
+    size_t position;
+    double time_consumption;
+    std::vector<double> function_results;
+
+    // perf command
+    std::string cmd = "make " + test_case + " >& compile.log";
+    system(cmd.data());
+    cmd.clear();
+    cmd = "./main_out " + params;
+    cmd += " 2>&1 | tee tmp.log";
+    system(cmd.data());
+    std::ifstream ifs("tmp.log");
+    if (!ifs.is_open()) {
+        std::cout << "error opening tmp.log";
+        assert(false);
+    }
+
+    // process
+    while (getline(ifs, line)) {
+        std::string key = "computation delay: ";
+        position = line.find(key);
+        if (position != std::string::npos) {
+            time_consumption = getTimerConsumption(line, position+key.size());
+        }
+        key = "results: ";
+        position = line.find(key);
+        if (position != std::string::npos) {
+            function_results = getFunctionResults(line, position+key.size());
+        }
+    }
+
+//    printf("%f\n", time_consumption);
+
+    ifs.close();
+
+    return std::make_pair(time_consumption, function_results);
 }
 
 std::string change_nt_range(const std::string& cmd1, const std::string& cmd2, const std::vector<double>& params) {
@@ -112,39 +209,31 @@ int64_t exactNumber() {
 }
 
 int64_t getIrLines() {
-    std::string cmd = "wc -l out.ll 2>&1 | tee tmp.log";
+    std::string cmd = "wc -l out.ll >& tmp.log";
     system(cmd.data());
 
     return exactNumber();
 }
 
 int64_t getLibSize() {
-    std::string cmd = "wc -c libout.a 2>&1 | tee tmp.log";
+    std::string cmd = "wc -c libout.a >& tmp.log";
     system(cmd.data());
 
     return exactNumber();
 }
 
-struct perfData {
-    int64_t inst_count_avg;
-    int64_t time_consumption_avg;
-    int64_t ir_lines;
-    int64_t library_size;
-};
-
 struct perfData recordData(const std::string& test_cases, const std::string& param_str, std::ofstream& ofs) {
-    const size_t iteration_num = 5;
-
     perfData perf_data = {0, 0, 0, 0};
 
     for (size_t idx = 0; idx < iteration_num; idx++) {
-        const std::pair<int64_t, int64_t> inst_time_data = processData(test_cases, param_str);
+        const std::pair<int64_t, int64_t> inst_time_data = processDataPerf(test_cases, param_str);
         perf_data.inst_count_avg += (inst_time_data.first/1000);
         perf_data.time_consumption_avg += (inst_time_data.second/1000);
     }
     perf_data.inst_count_avg /= iteration_num;
     perf_data.time_consumption_avg /= iteration_num;
 
+    // check library size
     perf_data.ir_lines = getIrLines();
     perf_data.library_size = getLibSize();
 
@@ -152,6 +241,37 @@ struct perfData recordData(const std::string& test_cases, const std::string& par
         << "\t" << perf_data.time_consumption_avg << "\t" << perf_data.ir_lines << "\t" << perf_data.library_size << std::endl;
 
     return perf_data;
+}
+
+struct timerData recordTimerData(const std::string& test_cases, const std::string& param_str, std::ofstream& ofs) {
+    timerData timer_data;
+
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        const std::pair<double, std::vector<double>> data_timer_res = processDataTimer(test_cases, param_str);
+        timer_data.ms_time_consumption.emplace_back(data_timer_res.first);
+        std::copy_if(data_timer_res.second.begin(), data_timer_res.second.end(),
+                  std::back_inserter(timer_data.function_results),
+                  [test_cases, param_str, timer_data, data_timer_res](double val) {
+            if (!timer_data.function_results.empty()) {
+                if (!std::equal(timer_data.function_results.begin(), timer_data.function_results.end(),
+                               data_timer_res.second.begin()))
+                    std::cerr << "result error: " << test_cases << " with parameters: " << param_str << std::endl;
+                return false;
+            } else
+                return true;
+        });
+    }
+    // check library size
+    timer_data.ir_lines = getIrLines();
+    timer_data.library_size = getLibSize();
+
+    ofs << test_cases << "\t" << param_str << "\t" << timer_data.inst_count_avg
+        << "\t" << std::accumulate(timer_data.ms_time_consumption.begin(),
+                                   timer_data.ms_time_consumption.end(),
+                                   0.0) / timer_data.ms_time_consumption.size()
+        << "\t" << timer_data.ir_lines << "\t" << timer_data.library_size << std::endl;
+
+    return timer_data;
 }
 
 int main(int argc, char** argv) {
@@ -238,16 +358,47 @@ int main(int argc, char** argv) {
                                                               {p.front(), p.back()-1+extend});
                 const double p1 = p.front() + 0.6;
                 const double p2 = p.back() + 0.3;
-                change_nt_range("sed -i 's/1 mjf, 16 mjf/", "/g' ../../sensors/test.nt", {p1, p2-1+extend});
+                change_nt_range("sed -i 's/15 mjf, 36 mjf/", "/g' ../../sensors/test.nt", {p1, p2-1+extend});
 
-                perfData ori_perf_data = recordData(test_cases[case_id], param_str, ofs);
-                perfData opt_perf_data = recordData(test_cases[case_id] + "_opt", param_str, ofs);
+//                perfData ori_perf_data = recordData(test_cases[case_id], param_str, ofs);
+//                perfData opt_perf_data = recordData(test_cases[case_id] + "_opt", param_str, ofs);
+                timerData ori_perf_data = recordTimerData(test_cases[case_id], param_str, ofs);
+                timerData opt_perf_data = recordTimerData(test_cases[case_id] + "_opt", param_str, ofs);
+
+                // check function results
+                if (!std::equal(ori_perf_data.function_results.begin(), ori_perf_data.function_results.end(),
+                                opt_perf_data.function_results.begin())) {
+                    std::cerr << "result error: " << test_cases[case_id] << " with parameters: " << param_str << std::endl;
+                }
+
+                // remove element if ori < opt
+                assert(ori_perf_data.ms_time_consumption.size() == opt_perf_data.ms_time_consumption.size());
+                auto itOri = ori_perf_data.ms_time_consumption.begin();
+                for (auto itOpt = opt_perf_data.ms_time_consumption.begin();
+                        itOpt != opt_perf_data.ms_time_consumption.end();) {
+                    if (*itOri < *itOpt) {
+                        itOri = ori_perf_data.ms_time_consumption.erase(itOri);
+                        itOpt = opt_perf_data.ms_time_consumption.erase(itOpt);
+                    } else {
+                        itOri++;
+                        itOpt++;
+                    }
+                }
+
+                ori_perf_data.time_consumption_avg = std::accumulate(ori_perf_data.ms_time_consumption.begin(),
+                                                                     ori_perf_data.ms_time_consumption.end(),
+                                                                     0.0) / ori_perf_data.ms_time_consumption.size();
+                opt_perf_data.time_consumption_avg = std::accumulate(opt_perf_data.ms_time_consumption.begin(),
+                                                                     opt_perf_data.ms_time_consumption.end(),
+                                                                     0.0) / opt_perf_data.ms_time_consumption.size();
 
                 int inst_speedup = round((ori_perf_data.inst_count_avg - opt_perf_data.inst_count_avg) * 100 / opt_perf_data.inst_count_avg);
                 int time_speedup = round((ori_perf_data.time_consumption_avg - opt_perf_data.time_consumption_avg) * 100 / opt_perf_data.time_consumption_avg);
                 int ir_reduce = round((ori_perf_data.ir_lines - opt_perf_data.ir_lines) * 100 / opt_perf_data.ir_lines);
                 int lib_size_reduce = round((ori_perf_data.library_size - opt_perf_data.library_size) * 100 / opt_perf_data.library_size);
                 ofs << "speed up after optimization\t" << param_str << "\t" << inst_speedup << "%\t" << time_speedup << "%\t"
+                    << ir_reduce << "%\t" << lib_size_reduce << "%" << std::endl;
+                std::cout << test_cases[case_id] << ": speed up after optimization\t" << param_str << "\t" << inst_speedup << "%\t" << time_speedup << "%\t"
                     << ir_reduce << "%\t" << lib_size_reduce << "%" << std::endl;
 
                 avg_inst_speedup += inst_speedup;
@@ -258,7 +409,7 @@ int main(int argc, char** argv) {
                 // reset test.nt
                 change_nt_range("sed -i 's/", "/3 mjf, 10 mjf/g' ../../sensors/test.nt",
                                 {p.front(), p.back()-1+extend});
-                change_nt_range("sed -i 's/", "/1 mjf, 16 mjf/g' ../../sensors/test.nt", {p1, p2-1+extend});
+                change_nt_range("sed -i 's/", "/15 mjf, 36 mjf/g' ../../sensors/test.nt", {p1, p2-1+extend});
             }
             avg_inst_speedup = round(avg_inst_speedup / parameters.size());
             avg_time_speedup = round(avg_time_speedup / parameters.size());
@@ -268,7 +419,7 @@ int main(int argc, char** argv) {
                         << avg_time_speedup << "%\t" << avg_ir_reduce << "%\t" << avg_lib_size_reduce << "%" << std::endl;
 
             if (test_cases[case_id] == "perf_float64_sin") {
-                // trigonometricParams cannot have extend
+                // trigonometricParams cannot have extent
                 break;
             }
         }

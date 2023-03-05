@@ -54,10 +54,12 @@
 #include <map>
 #include <string>
 #include <unordered_set>
+#include <unordered_map>
 #include <vector>
 
 #include "llvm/Analysis/MemorySSAUpdater.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
+#include "llvm/IR/Constant.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Metadata.h"
@@ -70,14 +72,14 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/FunctionComparator.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif /* __cplusplus */
 
 #include "flextypes.h"
@@ -106,13 +108,14 @@ extern "C"
 typedef struct BoundInfo {
 	std::map<llvm::Value *, std::pair<double, double>> virtualRegisterRange;
 	std::map<std::string, BoundInfo *>		   calleeBound;
-	std::map<std::string, llvm::CallInst *>		   callerMap;
 } BoundInfo;
 
 std::pair<llvm::Value *, std::pair<double, double>>
-rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> & typeRange,
+rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
+	      std::map<std::string, llvm::CallInst *> &				      callerMap,
+	      const std::map<std::string, std::pair<double, double>> &		      typeRange,
 	      const std::map<llvm::Value *, std::vector<std::pair<double, double>>> & virtualRegisterVectorRange,
-	      BoundInfo * boundInfo, llvm::Function & llvmIrFunction, bool overLoadFunc);
+	      bool								      overLoadFunc);
 
 #ifdef __cplusplus
 } /* extern "C" */

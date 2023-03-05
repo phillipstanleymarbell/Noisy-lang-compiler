@@ -39,8 +39,7 @@
 
 using namespace llvm;
 
-extern "C"
-{
+extern "C" {
 
 const bool valueRangeDebug = false;
 
@@ -943,9 +942,11 @@ bitwiseInterval(const int64_t lhsLow, const int64_t lhsHigh,
 }
 
 std::pair<Value *, std::pair<double, double>>
-rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> & typeRange,
+rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
+	      std::map<std::string, llvm::CallInst *> &				      callerMap,
+	      const std::map<std::string, std::pair<double, double>> &		      typeRange,
 	      const std::map<llvm::Value *, std::vector<std::pair<double, double>>> & virtualRegisterVectorRange,
-	      BoundInfo * boundInfo, Function & llvmIrFunction, bool useOverLoad)
+	      bool								      useOverLoad)
 {
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: Analyze function %s.\n", llvmIrFunction.getName());
 	/*
@@ -1173,11 +1174,9 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 								 * */
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: detect calledFunction %s.\n",
 									  calledFunction->getName().str().c_str());
-								auto innerBoundInfo = new BoundInfo();
-								/*
-								 * get the range of args and rename the called function with args range
-								 * */
 								std::string newFuncName = calledFunction->getName().str();
+								auto innerBoundInfo   = new BoundInfo();
+								bool hasSpecificRange = false;
 								/*
 								 * check if the ranges have been set to the function name
 								 * */
@@ -1196,6 +1195,7 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 									 * */
 									if (ConstantInt * cInt = dyn_cast<ConstantInt>(llvmIrCallInstruction->getOperand(idx)))
 									{
+										hasSpecificRange      = true;
 										int64_t constIntValue = cInt->getSExtValue();
 										flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant int value: %d.\n", constIntValue);
 										innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
@@ -1209,6 +1209,7 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 									}
 									else if (ConstantFP * constFp = dyn_cast<ConstantFP>(llvmIrCallInstruction->getOperand(idx)))
 									{
+										hasSpecificRange	= true;
 										double constDoubleValue = (constFp->getValueAPF()).convertToDouble();
 										flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: It's a constant double value: %f.\n", constDoubleValue);
 										innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx),
@@ -1228,6 +1229,7 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 										auto vrRangeIt = boundInfo->virtualRegisterRange.find(llvmIrCallInstruction->getOperand(idx));
 										if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 										{
+											hasSpecificRange = true;
 											flexprint(N->Fe, N->Fm, N->Fpinfo, "\tCall: the range of the operand is: %f - %f.\n",
 												  vrRangeIt->second.first, vrRangeIt->second.second);
 											innerBoundInfo->virtualRegisterRange.emplace(calledFunction->getArg(idx), vrRangeIt->second);
@@ -1246,12 +1248,26 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 								}
 								Function *					    realCallee;
 								std::pair<llvm::Value *, std::pair<double, double>> returnRange;
-								auto						    uniqueNewFunc = boundInfo->callerMap.find(newFuncName) != boundInfo->callerMap.end();
-								if (useOverLoad && newFuncName != calledFunction->getName().str() && uniqueNewFunc)
+								if (useOverLoad && hasSpecificRange)
 								{
+									auto	 newFuncPos = calledFunction->getIterator();
+									Module & funcModule = *calledFunction->getParent();
 									/*
-									 * rename the llvmIrCallInstruction to the new function name
-									 */
+									 * If it has a specific range, generate a new function or just change the caller
+									 * Else, we only collect "real" new functions in callerMap
+									 * */
+									if (callerMap.find(newFuncName) != callerMap.end())
+									{
+										newFuncPos = funcModule.getFunction(newFuncName)->getIterator();
+										newFuncName += "_dummy_";
+										newFuncName += std::to_string(std::rand());
+									}
+									callerMap.emplace(newFuncName, llvmIrCallInstruction);
+									/*
+									 * if the function has not been generated before,
+									 * which means it's not in the CallerMap,
+									 * create a new function and insert it to the CallerMap
+									 * */
 									ValueToValueMapTy vMap;
 									realCallee	    = Function::Create(calledFunction->getFunctionType(),
 													       calledFunction->getLinkage(),
@@ -1283,11 +1299,12 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 										}
 									}
 
-									Module & funcModule = *calledFunction->getParent();
-									funcModule.getFunctionList().insert(calledFunction->getIterator(), realCallee);
+									funcModule.getFunctionList().insert(newFuncPos, realCallee);
 									realCallee->setDSOLocal(true);
+									/*
+									 * rename the llvmIrCallInstruction to the new function name
+									 */
 									llvmIrCallInstruction->setCalledFunction(realCallee);
-									boundInfo->callerMap.emplace(realCallee->getName().str(), llvmIrCallInstruction);
 									/*
 									 * update the inner bound info with the new function.
 									 * // todo: this code is a bit wired, maybe can be improved
@@ -1335,8 +1352,8 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 										}
 									}
 
-									returnRange = rangeAnalysis(N, typeRange, virtualRegisterVectorRange,
-												    innerBoundInfo, *realCallee, useOverLoad);
+									returnRange = rangeAnalysis(N, *realCallee, innerBoundInfo, callerMap,
+												    typeRange, virtualRegisterVectorRange, useOverLoad);
 									if (returnRange.first != nullptr)
 									{
 										boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
@@ -1350,8 +1367,8 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 									 * that has been stored in boundInfo, we get the union set of them
 									 * */
 									realCallee  = calledFunction;
-									returnRange = rangeAnalysis(N, typeRange, virtualRegisterVectorRange,
-												    innerBoundInfo, *realCallee, useOverLoad);
+									returnRange = rangeAnalysis(N, *realCallee, innerBoundInfo, callerMap,
+												    typeRange, virtualRegisterVectorRange, useOverLoad);
 									if (returnRange.first != nullptr)
 									{
 										boundInfo->virtualRegisterRange.emplace(llvmIrCallInstruction, returnRange.second);
@@ -2097,9 +2114,10 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 							auto vrRangeIt = boundInfo->virtualRegisterRange.find(leftOperand);
 							if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 							{
+								uint64_t rightMin = vrRangeIt->second.first < 0 ? 0 : vrRangeIt->second.first;
+								uint64_t rightMax = vrRangeIt->second.second < 0 ? 0 : vrRangeIt->second.second;
 								boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
-													std::make_pair((uint)vrRangeIt->second.first >> constValue,
-														       (uint)vrRangeIt->second.second >> constValue));
+													std::make_pair(rightMin >> constValue, rightMax >> constValue));
 							}
 							else
 							{
@@ -2533,7 +2551,8 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 							 * if it's a structure type, we use reinterpret_cast
 							 * todo: not very sure, need further check
 							 * */
-							if (llvmIrBitCastInstruction->getSrcTy()->isStructTy())
+							if (llvmIrBitCastInstruction->getSrcTy()->isStructTy() ||
+							    llvmIrBitCastInstruction->getSrcTy()->getPointerElementType()->isStructTy())
 							{
 								switch (DestEleType->getTypeID())
 								{
@@ -2552,6 +2571,8 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 										boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
 										break;
 									case Type::IntegerTyID:
+									{
+										bool canGetRange = false;
 										switch (DestEleType->getIntegerBitWidth())
 										{
 											case 8:
@@ -2567,17 +2588,22 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 												highRange = static_cast<double>(*reinterpret_cast<int32_t *>(&originHigh));
 												break;
 											case 64:
-												lowRange  = static_cast<double>(*reinterpret_cast<int64_t *>(&originLow));
-												highRange = static_cast<double>(*reinterpret_cast<int64_t *>(&originHigh));
+												lowRange    = static_cast<double>(*reinterpret_cast<int64_t *>(&originLow));
+												highRange   = static_cast<double>(*reinterpret_cast<int64_t *>(&originHigh));
+												canGetRange = true;
 												break;
 											default:
 												flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
 										}
 
-										flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::IntegerTyID, %f - %f to %f - %f\n",
-											  vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
-										boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
+										if (canGetRange)
+										{
+											flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::IntegerTyID, %f - %f to %f - %f\n",
+												  vrRangeIt->second.first, vrRangeIt->second.second, lowRange, highRange);
+											boundInfo->virtualRegisterRange.emplace(llvmIrBitCastInstruction, std::make_pair(lowRange, highRange));
+										}
 										break;
+									}
 									case Type::StructTyID:
 										flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::StructTyID, %f - %f to %f - %f\n",
 											  vrRangeIt->second.first, vrRangeIt->second.second, originLow, originHigh);
@@ -2649,11 +2675,11 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 								auto vrRangeIt = boundInfo->virtualRegisterRange.find(it->second);
 								if (vrRangeIt != boundInfo->virtualRegisterRange.end())
 								{
-									double	 originLow	= vrRangeIt->second.first;
-									double	 originHigh	= vrRangeIt->second.second;
-									uint64_t originLowWord	= *reinterpret_cast<uint64_t *>(&originLow);
-									uint64_t originHighWord = *reinterpret_cast<uint64_t *>(&originHigh);
-									double	 lowRange, highRange;
+									double	originLow      = vrRangeIt->second.first;
+									double	originHigh     = vrRangeIt->second.second;
+									int64_t originLowWord  = *reinterpret_cast<int64_t *>(&originLow);
+									int64_t originHighWord = *reinterpret_cast<int64_t *>(&originHigh);
+									double	lowRange, highRange;
 									flexprint(N->Fe, N->Fm, N->Fpinfo, "\tGetElementPtr: find the value holder.");
 									auto valueHolderBitcast = dyn_cast<BitCastInst>(it->first);
 									auto DestEleType	= valueHolderBitcast->getDestTy()->getPointerElementType();
@@ -2701,12 +2727,12 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 											switch (resEleTy->getPrimitiveSizeInBits())
 											{
 												case 32:
-													lowRange  = static_cast<double>(static_cast<uint32_t>(originLowWord >> (32 * elementOffset)));
-													highRange = static_cast<double>(static_cast<uint32_t>(originHighWord >> (32 * elementOffset)));
+													lowRange  = static_cast<double>(static_cast<int32_t>(originLowWord >> (32 * elementOffset)));
+													highRange = static_cast<double>(static_cast<int32_t>(originHighWord >> (32 * elementOffset)));
 													break;
 												case 64:
-													lowRange  = static_cast<double>(static_cast<uint64_t>(originLowWord));
-													highRange = static_cast<double>(static_cast<uint64_t>(originHighWord));
+													lowRange  = static_cast<double>(static_cast<int64_t>(originLowWord));
+													highRange = static_cast<double>(static_cast<int64_t>(originHighWord));
 													break;
 												default:
 													flexprint(N->Fe, N->Fm, N->Fpinfo, "\tBitCast: Type::SignedInteger, don't support such bit width yet.");
@@ -2737,8 +2763,8 @@ rangeAnalysis(State * N, const std::map<std::string, std::pair<double, double>> 
 						{
 							auto resVec = getGEPArrayRange(N, llvmIrGetElePtrInstruction,
 										       boundInfo->virtualRegisterRange);
-                            if (resVec.first)
-                                boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, resVec.second);
+							if (resVec.first)
+								boundInfo->virtualRegisterRange.emplace(llvmIrGetElePtrInstruction, resVec.second);
 						}
 						else if (llvmIrGetElePtrInstruction->getPointerOperandType()
 							     ->getPointerElementType()
