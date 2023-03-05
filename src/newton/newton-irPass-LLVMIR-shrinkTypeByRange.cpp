@@ -252,7 +252,7 @@ getTypeInfo(State * N, Value * inValue,
 		case Type::FloatTyID:
 			break;
 		case Type::DoubleTyID:
-			typeInformation = getShrinkDoubleType(N, inValue, vrRangeIt->second);
+//			typeInformation = getShrinkDoubleType(N, inValue, vrRangeIt->second);
 			break;
 		default:
 			break;
