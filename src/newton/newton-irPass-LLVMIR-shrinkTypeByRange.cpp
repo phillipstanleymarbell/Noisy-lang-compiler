@@ -92,11 +92,13 @@ varType
 getFloatingTypeEnum(double min, double max)
 {
 	varType finalType;
-	if ((std::abs(min) < FLT_MAX) && (std::abs(max) < FLT_MAX))
+    if ((FLT_EPSILON < std::abs(min) && std::abs(min) < FLT_MAX) &&
+        (FLT_EPSILON < std::abs(max) && std::abs(max) < FLT_MAX))
 	{
 		finalType = FLOAT;
 	}
-	else if ((std::abs(min) < DBL_MAX) && (std::abs(max) < DBL_MAX))
+    else if ((DBL_EPSILON < std::abs(min) && std::abs(min) < DBL_MAX) &&
+             (DBL_EPSILON < std::abs(max) && std::abs(max) < DBL_MAX))
 	{
 		finalType = DOUBLE;
 	}
@@ -925,6 +927,11 @@ matchDestType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasicBl
 			typeInfo backType;
 			backType.signFlag  = isSignedValue(inInstruction);
 			backType.valueType = inInstType;
+            if (isa<LoadInst>(inInstruction))
+            {
+                unsigned ptAddressSpace = srcType->getPointerAddressSpace();
+                backType.valueType	= backType.valueType->getPointerTo(ptAddressSpace);
+            }
 			for (size_t id = 0; id < inInstruction->getNumOperands(); id++)
 			{
 				auto newTypeValue = rollbackType(N, inInstruction, id, llvmIrBasicBlock, typeChangedInst, backType);
@@ -974,7 +981,13 @@ matchDestType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasicBl
 		/*
 		 * roll back operands to typeInformation.valueType
 		 * */
-		for (size_t id = 0; id < inInstruction->getNumOperands(); id++)
+        if (isa<LoadInst>(inInstruction))
+        {
+            unsigned ptAddressSpace	  = srcType->getPointerAddressSpace();
+            typeInformation.valueType = typeInformation.valueType->getPointerTo(ptAddressSpace);
+        }
+        size_t roll_backed_op_num = isa<GetElementPtrInst>(inInstruction) ? 1 : inInstruction->getNumOperands();
+        for (size_t id = 0; id < roll_backed_op_num; id++)
 		{
 			typeInfo operandPrevTypeInfo{typeInformation.valueType,
 						     isSignedValue(inInstruction->getOperand(id))};
@@ -1496,6 +1509,10 @@ mergeCast(State * N, Function & llvmIrFunction,
 			Instruction * llvmIrInstruction = &*itBB++;
 			switch (llvmIrInstruction->getOpcode())
 			{
+                case Instruction::FPToUI:
+                case Instruction::FPToSI:
+                case Instruction::SIToFP:
+                case Instruction::UIToFP:
 				case Instruction::ZExt:
 				case Instruction::SExt:
 				case Instruction::FPExt:
@@ -1540,7 +1557,23 @@ mergeCast(State * N, Function & llvmIrFunction,
 								 * */
 								Value * castInst;
 								auto	valueType = llvmIrInstruction->getType();
-								if (valueType->isIntegerTy())
+                                if ((valueType->isFloatTy() || valueType->isDoubleTy()) &&
+                                    sourceOperand->getType()->isIntegerTy())
+                                {
+                                    // float fa = (float)ia;
+                                    bool isSigned = sourceInst->getOpcode() == Instruction::SIToFP;
+                                    castInst      = isSigned ? Builder.CreateSIToFP(sourceOperand, valueType)
+                                                             : Builder.CreateUIToFP(sourceOperand, valueType);
+                                }
+                                else if (valueType->isIntegerTy() &&
+                                         (sourceOperand->getType()->isFloatTy() || sourceOperand->getType()->isDoubleTy()))
+                                {
+                                    // int iq = (int)fq;
+                                    bool isSigned = sourceInst->getOpcode() == Instruction::FPToSI;
+                                    castInst      = isSigned ? Builder.CreateFPToSI(sourceOperand, valueType)
+                                                             : Builder.CreateFPToUI(sourceOperand, valueType);
+                                }
+                                else if (valueType->isIntegerTy())
 								{
 									castInst = Builder.CreateIntCast(sourceOperand, valueType,
 													 llvmIrInstruction->getOpcode() == Instruction::SExt);
@@ -1648,6 +1681,10 @@ countCastInst(State * N, Function & llvmIrFunction)
 		{
 			switch (llvmIrInstruction.getOpcode())
 			{
+                case Instruction::FPToUI:
+                case Instruction::FPToSI:
+                case Instruction::SIToFP:
+                case Instruction::UIToFP:
 				case Instruction::ZExt:
 				case Instruction::SExt:
 				case Instruction::FPExt:
@@ -1827,18 +1864,7 @@ shrinkType(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 	 * 1. construct instruction dependency link
 	 * 2. work with roll back strategies
 	 * */
-	std::vector<std::vector<Value *>> prevDepLink	  = getDependencyLink(N, llvmIrFunction);
-	std::map<Value *, typeInfo>	  typeChangedInst = shrinkInstType(N, boundInfo, llvmIrFunction);
-	mergeCast(N, llvmIrFunction, boundInfo->virtualRegisterRange, typeChangedInst);
-	std::vector<std::vector<Value *>> newDepLink = getDependencyLink(N, llvmIrFunction);
-
-	for (auto & depLink : newDepLink)
-	{
-		if (rollBackStrategy(N, depLink))
-		{
-			rollBackDependencyLink(N, depLink, boundInfo->virtualRegisterRange, typeChangedInst);
-		}
-	}
+    std::map<Value *, typeInfo> typeChangedInst = shrinkInstType(N, boundInfo, llvmIrFunction);
 
 	mergeCast(N, llvmIrFunction, boundInfo->virtualRegisterRange, typeChangedInst);
 }
