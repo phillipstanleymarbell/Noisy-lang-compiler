@@ -255,7 +255,7 @@ struct timerData recordTimerData(const std::string& test_cases, const std::strin
             if (!timer_data.function_results.empty()) {
                 if (!std::equal(timer_data.function_results.begin(), timer_data.function_results.end(),
                                data_timer_res.second.begin()))
-                    std::cerr << "result error: " << test_cases << " with parameters: " << param_str << std::endl;
+                    std::cerr << "result error within iteration: " << test_cases << " with parameters: " << param_str << std::endl;
                 return false;
             } else
                 return true;
@@ -307,7 +307,7 @@ int main(int argc, char** argv) {
             {-0.9, -0.4},
             {0.2, 0.8},
             {9.7, 10.5},
-            {35.75, 36.03},
+            {35.75, 36.33},
             {476.84, 477.21},
             {999.8, 1000.9}
     };
@@ -368,7 +368,9 @@ int main(int argc, char** argv) {
                 // check function results
                 if (!std::equal(ori_perf_data.function_results.begin(), ori_perf_data.function_results.end(),
                                 opt_perf_data.function_results.begin())) {
-                    std::cerr << "result error: " << test_cases[case_id] << " with parameters: " << param_str << std::endl;
+                    std::cerr << "result error: " << test_cases[case_id] << " with parameters: " << param_str <<
+                    "ori: " << ori_perf_data.function_results[0] << ", opt: " << opt_perf_data.function_results[0] <<
+                    std::endl;
                 }
 
                 // remove element if ori < opt
@@ -385,15 +387,24 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                ori_perf_data.time_consumption_avg = std::accumulate(ori_perf_data.ms_time_consumption.begin(),
-                                                                     ori_perf_data.ms_time_consumption.end(),
-                                                                     0.0) / ori_perf_data.ms_time_consumption.size();
-                opt_perf_data.time_consumption_avg = std::accumulate(opt_perf_data.ms_time_consumption.begin(),
-                                                                     opt_perf_data.ms_time_consumption.end(),
-                                                                     0.0) / opt_perf_data.ms_time_consumption.size();
+                int inst_speedup, time_speedup;
+                if (ori_perf_data.ms_time_consumption.empty()) {
+                    assert(opt_perf_data.ms_time_consumption.empty() && "erase mis-match!");
+                    inst_speedup = 0;
+                    time_speedup = 0;
+                } else {
+                    ori_perf_data.time_consumption_avg = std::accumulate(ori_perf_data.ms_time_consumption.begin(),
+                                                                         ori_perf_data.ms_time_consumption.end(),
+                                                                         0.0) / ori_perf_data.ms_time_consumption.size();
+                    opt_perf_data.time_consumption_avg = std::accumulate(opt_perf_data.ms_time_consumption.begin(),
+                                                                         opt_perf_data.ms_time_consumption.end(),
+                                                                         0.0) / opt_perf_data.ms_time_consumption.size();
 
-                int inst_speedup = round((ori_perf_data.inst_count_avg - opt_perf_data.inst_count_avg) * 100 / opt_perf_data.inst_count_avg);
-                int time_speedup = round((ori_perf_data.time_consumption_avg - opt_perf_data.time_consumption_avg) * 100 / opt_perf_data.time_consumption_avg);
+                    inst_speedup = round((ori_perf_data.inst_count_avg - opt_perf_data.inst_count_avg)
+                            * 100 / opt_perf_data.inst_count_avg);
+                    time_speedup = round((ori_perf_data.time_consumption_avg - opt_perf_data.time_consumption_avg)
+                            * 100 / opt_perf_data.time_consumption_avg);
+                }
                 int ir_reduce = round((ori_perf_data.ir_lines - opt_perf_data.ir_lines) * 100 / opt_perf_data.ir_lines);
                 int lib_size_reduce = round((ori_perf_data.library_size - opt_perf_data.library_size) * 100 / opt_perf_data.library_size);
                 ofs << "speed up after optimization\t" << param_str << "\t" << inst_speedup << "%\t" << time_speedup << "%\t"

@@ -267,19 +267,19 @@ main(int argc, char** argv)
     }
 #elif defined(FLOAT64_ADD)
     for (size_t idx = 0; idx < iteration_num; idx++) {
-        result[idx] = float64_add(xOps[idx], yOps[idx]);
+        result[idx] = float64_add((uint64_t)(xOps[idx]), (uint64_t)(yOps[idx]));
     }
 #elif defined(FLOAT64_DIV)
     for (size_t idx = 0; idx < iteration_num; idx++) {
-        result[idx] = float64_div(xOps[idx], yOps[idx]);
+        result[idx] = float64_div((uint64_t)(xOps[idx]), (uint64_t)(yOps[idx]));
     }
 #elif defined(FLOAT64_MUL)
     for (size_t idx = 0; idx < iteration_num; idx++) {
-        result[idx] = float64_mul(xOps[idx], yOps[idx]);
+        result[idx] = float64_mul((uint64_t)(xOps[idx]), (uint64_t)(yOps[idx]));
     }
 #elif defined(FLOAT64_SIN)
     for (size_t idx = 0; idx < iteration_num; idx++) {
-        result[idx] = float64_sin(xOps[idx], yOps[idx]);
+        result[idx] = float64_sin((uint64_t)(xOps[idx]), (uint64_t)(yOps[idx]));
     }
 #elif defined(BENCHMARK_SUITE_INT)
     int32_add_test(intXOps, intYOps, intResult);
