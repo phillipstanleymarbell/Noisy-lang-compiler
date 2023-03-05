@@ -41,6 +41,7 @@
 #include "newton-irPass-LLVMIR-constantSubstitution.h"
 #include "newton-irPass-LLVMIR-shrinkTypeByRange.h"
 #include "newton-irPass-LLVMIR-quantization.h"
+#include "newton-irPass-LLVMIR-memoryAlignment.h"
 #endif /* __cplusplus */
 
 #include <algorithm>
@@ -387,16 +388,18 @@ irPassLLVMIROptimizeByRange(State * N)
 		//		}
 	}
 
-	//	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
-	//    for (auto & mi : *Mod)
-	//    {
-	//        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-	//        if (boundInfoIt != funcBoundInfo.end()) {
-	//            shrinkType(N, boundInfoIt->second, mi);
-	//        } else {
-	//            assert(false);
-	//        }
-	//    }
+		flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
+	    for (auto & mi : *Mod)
+	    {
+	        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+	        if (boundInfoIt != funcBoundInfo.end()) {
+	            shrinkType(N, boundInfoIt->second, mi);
+	        }
+//            else
+//            {
+//	            assert(false);
+//	        }
+	    }
 
 	/*
 	 * remove the functions that are optimized by passes.
@@ -406,6 +409,20 @@ irPassLLVMIROptimizeByRange(State * N)
 
 	if (useOverLoad)
 		overloadFunc(Mod, callerMap);
+
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "memory alignment\n");
+    for (auto & mi : *Mod)
+    {
+        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+        if (boundInfoIt != funcBoundInfo.end())
+        {
+            memoryAlignment(N, boundInfoIt->second, mi);
+        }
+//        else
+//        {
+//            assert(false);
+//        }
+    }
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 	funcBoundInfo.clear();
@@ -435,9 +452,6 @@ irPassLLVMIROptimizeByRange(State * N)
 		//			assert(false);
 		//		}
 	}
-
-	//    passManager.add(createGlobalDCEPass());
-	//    passManager.run(*Mod);
 
 	/*
 	 * remove the functions that are optimized by passes.
