@@ -166,10 +166,6 @@ compareICmpWithVariableRange(ICmpInst * llvmIrICmpInstruction, double leftVariab
 {
 	switch (llvmIrICmpInstruction->getPredicate())
 	{
-		/*
-		 * Ordered means that neither operand is a QNAN while unordered means that either operand may be a QNAN.
-		 * More details in https://llvm.org/docs/LangRef.html#icmp-instruction
-		 * */
 		case ICmpInst::ICMP_EQ:
 			if ((leftVariableLowerBound == rightVariableLowerBound) &&
                 (rightVariableLowerBound == leftVariableUpperBound) &&
@@ -308,7 +304,6 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
                             llvmIrICmpInstruction->swapOperands();
                             leftOperand  = llvmIrICmpInstruction->getOperand(0);
                             rightOperand = llvmIrICmpInstruction->getOperand(1);
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tICmp: swap left and right, need to change the type of prediction\n");
 						}
 						else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
@@ -363,7 +358,11 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							double constValue = 0.0;
 							if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
 							{
-								constValue = constInt->getSExtValue();
+                                if (llvmIrICmpInstruction->isSigned()) {
+                                    constValue = constInt->getSExtValue();
+                                } else {
+                                    constValue = constInt->getZExtValue();
+                                }
 							}
 							else
 							{

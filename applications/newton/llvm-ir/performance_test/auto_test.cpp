@@ -379,6 +379,7 @@ int main(int argc, char** argv) {
                 for (auto itOpt = opt_perf_data.ms_time_consumption.begin();
                         itOpt != opt_perf_data.ms_time_consumption.end();) {
                     if (*itOri < *itOpt) {
+//                        assert(false && "Need to check why this case slow down!!!!!!");
                         itOri = ori_perf_data.ms_time_consumption.erase(itOri);
                         itOpt = opt_perf_data.ms_time_consumption.erase(itOpt);
                     } else {
