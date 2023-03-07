@@ -1947,11 +1947,21 @@ upDateInstSignFlag(State * N, Function & llvmIrFunction,
                             rightOperand = llvmIrICmpInstruction->getOperand(1);
                         }
                         if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)) {
-                            if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand)) {
-                                assert(constInt->getSExtValue() >= 0 && "The SCF by range should simplify it!");
-                            } else {
-                                assert(false && "ICmp: it's not a const int!!!!!!!!!!!\n");
+                            /*
+                             * We only check the type has been stored in typeChangedInst, which means might be changed
+                             * and only check if the variable is unsigned.
+                             * */
+                            auto itTC = typeChangedInst.find(leftOperand);
+                            if (itTC == typeChangedInst.end() || itTC->second.signFlag) {
+                                break;
                             }
+
+                            ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand);
+                            assert(nullptr != constInt && "ICmp: it's not a const int!!!!!!!!!!!\n");
+                            if (constInt->getSExtValue() < 0) {
+                                break;
+                            }
+
                             auto originalPred = llvmIrICmpInstruction->getPredicate();
                             llvmIrICmpInstruction->setPredicate(ICmpInst::getUnsignedPredicate(originalPred));
                         }
