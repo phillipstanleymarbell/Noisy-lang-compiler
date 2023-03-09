@@ -358,15 +358,6 @@ irPassLLVMIROptimizeByRange(State * N)
 //	        }
     }
 
-    /*
-     * remove the functions that are optimized by passes.
-     * */
-    if (useOverLoad)
-        cleanFunctionMap(Mod, callerMap);
-
-    if (useOverLoad)
-        overloadFunc(Mod, callerMap);
-
     flexprint(N->Fe, N->Fm, N->Fpinfo, "memory alignment\n");
     for (auto & mi : *Mod)
     {
