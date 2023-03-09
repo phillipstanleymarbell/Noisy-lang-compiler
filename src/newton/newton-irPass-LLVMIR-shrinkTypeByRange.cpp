@@ -624,6 +624,9 @@ matchPhiOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrB
 	}
 }
 
+/*
+ * Make sure the operands have the same type
+ * */
 void
 matchOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasicBlock,
 		 std::map<llvm::Value *, std::pair<double, double>> & virtualRegisterRange,
@@ -1872,46 +1875,47 @@ upDateInstSignFlag(State * N, Function & llvmIrFunction,
     for (BasicBlock & llvmIrBasicBlock : llvmIrFunction) {
         for (BasicBlock::iterator itBB = llvmIrBasicBlock.begin(); itBB != llvmIrBasicBlock.end();) {
             Instruction *llvmIrInstruction = &*itBB++;
-            switch (llvmIrInstruction->getOpcode()) {
-                case Instruction::Add:
-                case Instruction::Sub:
-                case Instruction::Mul:
-                case Instruction::Shl:
-                {
-                    /*
-                     * nsw/nuw
-                     * Implement when meet
-                     * */
-                    auto lhs = llvmIrInstruction->getOperand(0);
-                    auto rhs = llvmIrInstruction->getOperand(1);
-                    auto lhsIt = typeChangedInst.find(lhs);
-                    auto rhsIt = typeChangedInst.find(rhs);
-                    if ((lhsIt != typeChangedInst.end() || rhsIt != typeChangedInst.end())) {
-                        if (lhsIt->second.signFlag || rhsIt->second.signFlag) {
+            if (llvmIrInstruction->getNumOperands() < 2) {
+                continue;
+            }
+            auto lhs = llvmIrInstruction->getOperand(0);
+            auto rhs = llvmIrInstruction->getOperand(1);
+            auto lhsIt = typeChangedInst.find(lhs);
+            auto rhsIt = typeChangedInst.find(rhs);
+            if ((lhsIt != typeChangedInst.end() || rhsIt != typeChangedInst.end())) {
+                // debug info: to check the range of operands
+                auto vrLhsIt = virtualRegisterRange.find(lhs);
+                auto vrRhsIt = virtualRegisterRange.find(rhs);
+//                assert(vrLhsIt != virtualRegisterRange.end() && vrRhsIt != virtualRegisterRange.end());
+                switch (llvmIrInstruction->getOpcode()) {
+                    case Instruction::Add:
+                    case Instruction::Sub:
+                    case Instruction::Mul:
+                    case Instruction::Shl:
+                    {
+                        /*
+                         * nsw/nuw
+                         * Implement when meet
+                         * */
+//                        if (lhsIt->second.signFlag || rhsIt->second.signFlag) {
                             if (llvmIrInstruction->hasNoUnsignedWrap()) {
                                 /*
                                  * change to `nsw`
                                  * */
+                                llvmIrInstruction->setHasNoUnsignedWrap(false);
                             }
-                        } else {
+//                        } else {
                             if (llvmIrInstruction->hasNoSignedWrap()) {
                                 /*
                                  * change to `nuw`
                                  * */
+                                llvmIrInstruction->setHasNoSignedWrap(false);
                             }
-                        }
+//                        }
+//                        flexprint(N->Fe, N->Fm, N->Fperr,
+//                                  "\tupDateInstSignFlag with nsw/nuw: Not Implement!\n");
+                        break;
                     }
-                    flexprint(N->Fe, N->Fm, N->Fperr,
-                              "\tupDateInstSignFlag with nsw/nuw: Not Implement!\n");
-                    break;
-                }
-                case Instruction::SDiv:
-                case Instruction::UDiv:
-                case Instruction::URem:
-                case Instruction::SRem:
-                case Instruction::LShr:
-                case Instruction::AShr:
-                {
                     /*
                      * Different inst for signed/unsigned.
                      * Should also care about
@@ -1920,73 +1924,100 @@ upDateInstSignFlag(State * N, Function & llvmIrFunction,
                      * Check the LLVM Ref: https://llvm.org/docs/LangRef.html#llvm-language-reference-manual
                      * Implement when meet.
                      * */
-                    flexprint(N->Fe, N->Fm, N->Fperr,
-                              "\tupDateInstSignFlag with diff inst: Not Implement!\n");
-                    break;
-                }
-                case Instruction::ICmp:
-                    if (auto llvmIrICmpInstruction = dyn_cast<ICmpInst>(llvmIrInstruction))
+                    case Instruction::SDiv:
                     {
-                        if (llvmIrICmpInstruction->isUnsigned()) {
-                            break;
+                        if (!lhsIt->second.signFlag && !rhsIt->second.signFlag) {
+                            IRBuilder<> Builder(&llvmIrBasicBlock);
+                            Builder.SetInsertPoint(llvmIrInstruction);
+                            auto UDivInst = Builder.CreateUDiv(lhs, rhs);
+                            llvmIrInstruction->replaceAllUsesWith(UDivInst);
+                            llvmIrInstruction->removeFromParent();
                         }
-                        auto leftOperand  = llvmIrICmpInstruction->getOperand(0);
-                        auto rightOperand = llvmIrICmpInstruction->getOperand(1);
-                        /*
-                         * If either of the operand is constant,
-                         * and the variable operand can only change from `signed` to `unsigned`,
-                         * so we only care about when the variable operand is `unsigned`.
-                         * Note: here's instruction is signed!
-                         *  if the constant operand is negative value, the `scf by range` should simplify it
-                         *  if the constant operand is positive value, we can use `unsigned` flag
-                         * */
-                        if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
-                        {
-                            llvmIrICmpInstruction->swapOperands();
-                            leftOperand  = llvmIrICmpInstruction->getOperand(0);
-                            rightOperand = llvmIrICmpInstruction->getOperand(1);
-                        }
-                        if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)) {
-                            /*
-                             * We only check the type has been stored in typeChangedInst, which means might be changed
-                             * and only check if the variable is unsigned.
-                             * */
-                            auto itTC = typeChangedInst.find(leftOperand);
-                            if (itTC == typeChangedInst.end() || itTC->second.signFlag) {
-                                break;
-                            }
-
-                            ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand);
-                            assert(nullptr != constInt && "ICmp: it's not a const int!!!!!!!!!!!\n");
-                            if (constInt->getSExtValue() < 0) {
-                                break;
-                            }
-
-                            auto originalPred = llvmIrICmpInstruction->getPredicate();
-                            llvmIrICmpInstruction->setPredicate(ICmpInst::getUnsignedPredicate(originalPred));
-                        }
-                        /*
-                         * If both of the operands are variable with different sign bit,
-                         * we check the range of them (if we can), e.g.
-                         *
-                         *  %c = icmp slt i16 %a, %b
-                         *
-                         *  if the %a is unsigned, but the max range is less than 32767, we can ignore it.
-                         *  otherwise, it overflows, and we should extend the operands, like,
-                         *
-                         *  %c = sext i16 %a to i32
-                         *  %d = sext i16 %b to i32
-                         *  %e = icmp slt i32 %c, %d
-                         *  %f = trunc i32 %c to i16
-                         *  %g = trunc i32 %d to i16
-                         *
-                         *  Then we replace the `%f`, `%g` to `%a`, `%b`.
-                         *  And also replace the `%e` to the previous icmp result.
-                         * */
-                        flexprint(N->Fe, N->Fm, N->Fperr,
-                                  "\tupDateInstSignFlag ICmp with both variable: Not Implement!\n");
                         break;
                     }
+                    case Instruction::SRem:
+                    {
+                        if (!lhsIt->second.signFlag && !rhsIt->second.signFlag) {
+                            IRBuilder<> Builder(&llvmIrBasicBlock);
+                            Builder.SetInsertPoint(llvmIrInstruction);
+                            auto URemInst = Builder.CreateURem(lhs, rhs);
+                            llvmIrInstruction->replaceAllUsesWith(URemInst);
+                            llvmIrInstruction->removeFromParent();
+                        }
+                        break;
+                    }
+                    case Instruction::AShr:
+                    {
+                        if (!lhsIt->second.signFlag && !rhsIt->second.signFlag) {
+                            IRBuilder<> Builder(&llvmIrBasicBlock);
+                            Builder.SetInsertPoint(llvmIrInstruction);
+                            auto LShrInst = Builder.CreateLShr(lhs, rhs);
+                            llvmIrInstruction->replaceAllUsesWith(LShrInst);
+                            llvmIrInstruction->removeFromParent();
+                        }
+                        break;
+                    }
+                    case Instruction::ICmp:
+                        if (auto llvmIrICmpInstruction = dyn_cast<ICmpInst>(llvmIrInstruction))
+                        {
+                            if (llvmIrICmpInstruction->isUnsigned()) {
+                                break;
+                            }
+                            auto lhs  = llvmIrICmpInstruction->getOperand(0);
+                            auto rhs = llvmIrICmpInstruction->getOperand(1);
+                            /*
+                             * If either of the operand is constant,
+                             * and the variable operand can only change from `signed` to `unsigned`,
+                             * so we only care about when the variable operand is `unsigned`.
+                             * Note: here's instruction is signed!
+                             *  if the constant operand is negative value, the `scf by range` should simplify it
+                             *  if the constant operand is positive value, we can use `unsigned` flag
+                             * */
+                            if ((isa<llvm::Constant>(lhs) && !isa<llvm::Constant>(rhs)))
+                            {
+                                llvmIrICmpInstruction->swapOperands();
+                                lhs  = llvmIrICmpInstruction->getOperand(0);
+                                rhs = llvmIrICmpInstruction->getOperand(1);
+                            }
+                            if (!isa<llvm::Constant>(lhs) && isa<llvm::Constant>(rhs)) {
+                                ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rhs);
+                                assert(nullptr != constInt && "ICmp: it's not a const int!!!!!!!!!!!\n");
+                                if (constInt->getSExtValue() < 0) {
+                                    /*
+                                     * the `scf by range` should simplify it
+                                     * */
+                                    break;
+                                }
+
+                                auto originalPred = llvmIrICmpInstruction->getPredicate();
+                                llvmIrICmpInstruction->setPredicate(ICmpInst::getUnsignedPredicate(originalPred));
+                            } else if (!lhsIt->second.signFlag && !rhsIt->second.signFlag) {
+                                /*
+                                 * If both of the operands are variable with different sign bit,
+                                 * we check the range of them (if we can), e.g.
+                                 *
+                                 *  %c = icmp slt i16 %a, %b
+                                 *
+                                 *  if the %a is unsigned, but the max range is less than 32767, we can ignore it.
+                                 *  otherwise, it overflows, and we should extend the operands, like,
+                                 *
+                                 *  %c = sext i16 %a to i32
+                                 *  %d = sext i16 %b to i32
+                                 *  %e = icmp slt i32 %c, %d
+                                 *  %f = trunc i32 %c to i16
+                                 *  %g = trunc i32 %d to i16
+                                 *
+                                 *  Then we replace the `%f`, `%g` to `%a`, `%b`.
+                                 *  And also replace the `%e` to the previous icmp result.
+                                 * */
+                                auto originalPred = llvmIrICmpInstruction->getPredicate();
+                                llvmIrICmpInstruction->setPredicate(ICmpInst::getUnsignedPredicate(originalPred));
+//                                flexprint(N->Fe, N->Fm, N->Fperr,
+//                                          "\tupDateInstSignFlag ICmp with both variable: Not Implement!\n");
+                            }
+                            break;
+                        }
+                }
             }
         }
     }
