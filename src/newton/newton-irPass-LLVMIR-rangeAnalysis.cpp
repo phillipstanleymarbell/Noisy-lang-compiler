@@ -1443,6 +1443,9 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								 * But we still believe in the range we inferred from the function body.
 								 */
 								DISubprogram * subProgram = realCallee->getSubprogram();
+                                if (nullptr == subProgram) {
+                                    break;
+                                }
 								DITypeRefArray typeArray  = subProgram->getType()->getTypeArray();
 								if (typeArray[0] != nullptr)
 								{
