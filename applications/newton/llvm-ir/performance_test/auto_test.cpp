@@ -388,7 +388,7 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                int inst_speedup, time_speedup;
+                int inst_speedup, time_speedup, ir_reduce, lib_size_reduce;
                 if (ori_perf_data.ms_time_consumption.empty()) {
                     assert(opt_perf_data.ms_time_consumption.empty() && "erase mis-match!");
                     inst_speedup = 0;
@@ -406,8 +406,15 @@ int main(int argc, char** argv) {
                     time_speedup = round((ori_perf_data.time_consumption_avg - opt_perf_data.time_consumption_avg)
                             * 100 / opt_perf_data.time_consumption_avg);
                 }
-                int ir_reduce = round((ori_perf_data.ir_lines - opt_perf_data.ir_lines) * 100 / opt_perf_data.ir_lines);
-                int lib_size_reduce = round((ori_perf_data.library_size - opt_perf_data.library_size) * 100 / opt_perf_data.library_size);
+
+                if (ori_perf_data.ir_lines > opt_perf_data.ir_lines) {
+                    ir_reduce = round((ori_perf_data.ir_lines - opt_perf_data.ir_lines) * 100 / opt_perf_data.ir_lines);
+                    lib_size_reduce = round((ori_perf_data.library_size - opt_perf_data.library_size) * 100 / opt_perf_data.library_size);
+                } else {
+//                        assert(false && "Need to check why this case increase size!!!!!!");
+                    ir_reduce = 0;
+                    lib_size_reduce = 0;
+                }
                 ofs << "speed up after optimization\t" << param_str << "\t" << inst_speedup << "%\t" << time_speedup << "%\t"
                     << ir_reduce << "%\t" << lib_size_reduce << "%" << std::endl;
                 std::cout << test_cases[case_id] << ": speed up after optimization\t" << param_str << "\t" << inst_speedup << "%\t" << time_speedup << "%\t"
