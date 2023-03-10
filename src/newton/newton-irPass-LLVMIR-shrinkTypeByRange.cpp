@@ -1609,7 +1609,6 @@ mergeCast(State * N, Function & llvmIrFunction,
 								llvmIrInstruction->replaceAllUsesWith(newCastInst);
 								sourceInstVec.emplace_back(newCastInst);
 							}
-							sourceInst->removeFromParent();
 							llvmIrInstruction->removeFromParent();
 						}
 						else
