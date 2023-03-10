@@ -1978,6 +1978,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							{
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        lowerBound = static_cast<double>(static_cast<bool>(vrRangeIt->second.first));
+                                        upperBound = static_cast<double>(static_cast<bool>(vrRangeIt->second.second));
+                                        break;
 									case 8:
 										lowerBound = static_cast<double>(static_cast<uint8_t>(vrRangeIt->second.first));
 										upperBound = static_cast<double>(static_cast<uint8_t>(vrRangeIt->second.second));
@@ -2048,6 +2052,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double lowerBound, upperBound;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        lowerBound = constValue << (static_cast<bool>(vrRangeIt->second.first));
+                                        upperBound = constValue << (static_cast<bool>(vrRangeIt->second.second));
+                                        break;
 									case 8:
 										lowerBound = constValue << (static_cast<uint8_t>(vrRangeIt->second.first));
 										upperBound = constValue << (static_cast<uint8_t>(vrRangeIt->second.second));
@@ -2092,6 +2100,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double resMin = 0, resMax = 0;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        resMin = static_cast<bool>(vrRangeIt->second.first) << constValue;
+                                        resMax = static_cast<bool>(vrRangeIt->second.second) << constValue;
+                                        break;
 									case 8:
 										resMin = static_cast<uint8_t>(vrRangeIt->second.first) << constValue;
 										resMax = static_cast<uint8_t>(vrRangeIt->second.second) << constValue;
@@ -2210,6 +2222,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double lowerBound, upperBound;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        lowerBound = constValue >> (static_cast<bool>(vrRangeIt->second.first));
+                                        upperBound = constValue >> (static_cast<bool>(vrRangeIt->second.second));
+                                        break;
 									case 8:
 										lowerBound = constValue >> (static_cast<uint8_t>(vrRangeIt->second.first));
 										upperBound = constValue >> (static_cast<uint8_t>(vrRangeIt->second.second));
@@ -2254,6 +2270,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double resMin = 0, resMax = 0;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        resMin = static_cast<bool>(vrRangeIt->second.first) >> constValue;
+                                        resMax = static_cast<bool>(vrRangeIt->second.second) >> constValue;
+                                        break;
 									case 8:
 										resMin = static_cast<int8_t>(vrRangeIt->second.first) >> constValue;
 										resMax = static_cast<int8_t>(vrRangeIt->second.second) >> constValue;
@@ -2321,6 +2341,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							{
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        leftMin = static_cast<double>(static_cast<bool>(vrRangeIt->second.first));
+                                        leftMax = static_cast<double>(static_cast<bool>(vrRangeIt->second.second));
+                                        break;
 									case 8:
 										leftMin = static_cast<double>(static_cast<uint8_t>(vrRangeIt->second.first));
 										leftMax = static_cast<double>(static_cast<uint8_t>(vrRangeIt->second.second));
@@ -2353,6 +2377,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double rightMin = 0, rightMax = 0;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        rightMin = static_cast<bool>(vrRangeIt->second.first);
+                                        rightMax = static_cast<bool>(vrRangeIt->second.second);
+                                        break;
 									case 8:
 										rightMin = static_cast<uint8_t>(vrRangeIt->second.first);
 										rightMax = static_cast<uint8_t>(vrRangeIt->second.second);
@@ -2410,6 +2438,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double lowerBound, upperBound;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        lowerBound = constValue >> (static_cast<bool>(vrRangeIt->second.first));
+                                        upperBound = constValue >> (static_cast<bool>(vrRangeIt->second.second));
+                                        break;
 									case 8:
 										lowerBound = constValue >> (static_cast<uint8_t>(vrRangeIt->second.first));
 										upperBound = constValue >> (static_cast<uint8_t>(vrRangeIt->second.second));
@@ -2454,6 +2486,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double resMin = 0, resMax = 0;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        resMin = (static_cast<bool>(vrRangeIt->second.first)) >> constValue;
+                                        resMax = (static_cast<bool>(vrRangeIt->second.second)) >> constValue;
+                                        break;
 									case 8:
 										resMin = (static_cast<uint8_t>(vrRangeIt->second.first)) >> constValue;
 										resMax = (static_cast<uint8_t>(vrRangeIt->second.second)) >> constValue;
