@@ -37,7 +37,7 @@
 #
 #	Description: Base signals used in most Newton descriptions.
 #
-include "applications/newton/include/NewtonBaseSignals.nt"
+include "NewtonBaseSignals.nt"
 
 #
 #	Description: Additional signals used in this particular newton description.
@@ -142,9 +142,13 @@ bmx055: sensor (
 	#
 	#	Range of Acceleration can be found in Table 2 on page 11.
 	#
-	range bmx055xAcceleration == [-16 mjf, 16 mjf],
-	range bmx055yAcceleration == [-16 mjf, 16 mjf],
-	range bmx055zAcceleration == [-16 mjf, 16 mjf],
+# range bmx055xAcceleration == [-16 mjf, 16 mjf],
+# range bmx055yAcceleration == [-16 mjf, 16 mjf],
+# range bmx055zAcceleration == [-16 mjf, 16 mjf],
+
+     range bmx055xAcceleration == [-1.2 mjf, 1 mjf],
+     range bmx055yAcceleration == [0 mjf, 10.5 mjf],
+     range bmx055zAcceleration == [0 mjf, 11.5 mjf],
 
 	#
 	#	Range of Temperature can be found in Table 2 on page 11.
@@ -154,16 +158,24 @@ bmx055: sensor (
 	#
 	#	Range of Magnetic Field Density can be found in Table 4 on page 17.
 	#
-	range bmx055xMagneto == [-1300 uT, 1300 uT],
-	range bmx055yMagneto == [-1300 uT, 1300 uT],
-	range bmx055zMagneto == [-2500 uT, 2500 uT],
+# range bmx055xMagneto == [-1300 uT, 1300 uT],
+# range bmx055yMagneto == [-1300 uT, 1300 uT],
+# range bmx055zMagneto == [-2500 uT, 2500 uT],
+
+     range bmx055xMagneto == [-11 uT, -4 uT],
+     range bmx055yMagneto == [-30 uT, 29 uT],
+     range bmx055zMagneto == [-48 uT, -31 uT],
 
 	#
 	#	Range of Angular Rate can be found in Table 3 on page 14.
 	#
-	range bmx055xAngularRate == [0 ajf, 2000 ajf],
-	range bmx055yAngularRate == [0 ajf, 2000 ajf],
-	range bmx055zAngularRate == [0 ajf, 2000 ajf],
+# range bmx055xAngularRate == [0 ajf, 2000 ajf],
+# range bmx055yAngularRate == [0 ajf, 2000 ajf],
+# range bmx055zAngularRate == [0 ajf, 2000 ajf],
+
+     range bmx055xAngularRate == [0 ajf, 5 ajf],
+     range bmx055yAngularRate == [0 ajf, 1 ajf],
+     range bmx055zAngularRate == [0 ajf, 1 ajf],
 
 	#
 	#	The operation sequence needed to get a sample

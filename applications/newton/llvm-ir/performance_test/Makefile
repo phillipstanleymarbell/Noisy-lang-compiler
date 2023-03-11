@@ -22,18 +22,24 @@ TARGET_FLAG = -target aarch64
 TARGET_LLC_FLAG = --march=aarch64
 endif
 
+ifdef REAL_APP
+NT_FILE = BMX055.nt
+else
+NT_FILE = test.nt
+endif
+
 max_opt_fn = opt ../$(1).ll --O3 -S -o $(OUT_FILE)
 non_opt_fn = cp ../$(1).ll $(OUT_FILE)
 necessary_opt_fn = opt ../$(1).ll --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
-newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
+newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/$(NT_FILE)
 
 compile_main_fn = $(CC) $(TARGET_FLAG) main.c -no-pie -L. -lout -D $(1) -O2 -o main_out -lm
 
 make_ll:
-	cd $(SUBDIR) && $(MAKE_CLEAN) && $(MAKE)
 	cd $(CHStone_DIR) && $(MAKE_CLEAN) && $(MAKE)
 	cp ../CHStone_test/*.ll ../.
+	cd $(SUBDIR) && $(MAKE)
 
 compile_lib:
 	llvm-as $(OUT_FILE) -o $(OUT_BC)
@@ -207,6 +213,17 @@ soft_float_api_opt:
 	llvm-dis ../soft_float_api_output.bc
 	$(call max_opt_fn,soft_float_api_output)
 
+madgwick_non_opt:
+	$(call max_opt_fn,MadgwickAHRSfix)
+
+madgwick_opt:
+	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,MadgwickAHRSfix)
+	llvm-dis ../MadgwickAHRSfix_output.bc
+	$(call max_opt_fn,MadgwickAHRSfix)
+
+compile_test_madgwick:
+	$(CC) $(TARGET_FLAG) ../test_madgwick.c -no-pie -L. -lout -O0 -g -o main_out -lm
+
 perf_exp: clean make_ll exp_non_opt compile_lib compile_exp
 
 perf_exp_opt: clean make_ll exp_opt compile_lib compile_exp
@@ -273,6 +290,10 @@ perf_benchmark_suite_quant: clean make_ll benchmark_suite_non_opt compile_lib co
 
 perf_benchmark_suite_fixedpoint: clean make_ll benchmark_suite_non_opt compile_lib compile_benchmark_suite_fixed_point
 
+perf_madgwick: clean make_ll madgwick_non_opt compile_lib compile_test_madgwick
+
+perf_madgwick_opt: clean make_ll madgwick_opt compile_lib compile_test_madgwick
+
 perf_func_call: clean make_ll func_call_opt compile_lib compile_func_call
 
 interface_lib: clean make_ll soft_float_api_opt compile_lib
@@ -286,3 +307,5 @@ default: perf_exp perf_exp_opt perf_log perf_log_opt perf_acosh perf_acosh_opt p
 
 clean:
 	$(QUIET)rm -f *.ll *.o *.s *.txt out.* libout.a main_out auto_test
+	cd $(CHStone_DIR) && $(MAKE_CLEAN)
+	cd $(SUBDIR) && $(MAKE_CLEAN)
