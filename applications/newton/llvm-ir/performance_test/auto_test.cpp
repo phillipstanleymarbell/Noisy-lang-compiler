@@ -17,8 +17,8 @@
 #include <sstream>
 #include <vector>
 
-const size_t iteration_num = 5;
-const size_t result_num = 5;
+const size_t iteration_num = 10;
+const size_t result_num = 10;
 
 struct perfData {
     int64_t inst_count_avg;
@@ -93,13 +93,19 @@ std::pair<int64_t, int64_t> processDataPerf(const std::string test_case, const s
 
     // perf command
     std::string cmd = "make " + test_case + " >& compile.log";
-    system(cmd.data());
+    int command_return = system(cmd.data());
+    if (command_return != 0) {
+        return std::make_pair(0, 0);
+    }
     cmd.clear();
     cmd = "perf stat -B ./main_out " + params;
 
     cmd += "if=/dev/zero of=/dev/null count=1000000";
     cmd += " 2>&1 | tee tmp.log";
-    system(cmd.data());
+    command_return = system(cmd.data());
+    if (command_return != 0) {
+        return std::make_pair(0, 0);
+    }
     std::ifstream ifs("tmp.log");
     if (!ifs.is_open()) {
         std::cout << "error opening tmp.log";
@@ -134,11 +140,17 @@ std::pair<double, std::vector<double>> processDataTimer(const std::string test_c
 
     // perf command
     std::string cmd = "make " + test_case + " >& compile.log";
-    system(cmd.data());
+    int command_return = system(cmd.data());
+    if (command_return != 0) {
+        return std::make_pair(0, std::vector<double>(0));
+    }
     cmd.clear();
     cmd = "./main_out " + params;
     cmd += " 2>&1 | tee tmp.log";
-    system(cmd.data());
+    command_return = system(cmd.data());
+    if (command_return != 0) {
+        return std::make_pair(0, std::vector<double>(0));
+    }
     std::ifstream ifs("tmp.log");
     if (!ifs.is_open()) {
         std::cout << "error opening tmp.log";
@@ -210,14 +222,18 @@ int64_t exactNumber() {
 
 int64_t getIrLines() {
     std::string cmd = "wc -l out.ll >& tmp.log";
-    system(cmd.data());
+    int command_return = system(cmd.data());
+    if (command_return != 0)
+        return 0;
 
     return exactNumber();
 }
 
 int64_t getLibSize() {
     std::string cmd = "wc -c libout.a >& tmp.log";
-    system(cmd.data());
+    int command_return = system(cmd.data());
+    if (command_return != 0)
+        return 0;
 
     return exactNumber();
 }
