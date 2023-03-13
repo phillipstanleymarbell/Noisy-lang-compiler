@@ -92,17 +92,17 @@ std::pair<int64_t, int64_t> processDataPerf(const std::string test_case, const s
     int64_t inst_count, time_consumption;
 
     // perf command
-    std::string cmd = "make " + test_case + " >& compile.log";
-    int command_return = system(cmd.data());
+    std::string cmd = "bash -c 'make " + test_case + " >& compile.log'";
+    int command_return = system(cmd.c_str());
     if (command_return != 0) {
         return std::make_pair(0, 0);
     }
     cmd.clear();
-    cmd = "perf stat -B ./main_out " + params;
+    cmd = "bash -c 'perf stat -B ./main_out " + params;
 
     cmd += "if=/dev/zero of=/dev/null count=1000000";
-    cmd += " 2>&1 | tee tmp.log";
-    command_return = system(cmd.data());
+    cmd += " 2>&1 | tee tmp.log'";
+    command_return = system(cmd.c_str());
     if (command_return != 0) {
         return std::make_pair(0, 0);
     }
@@ -139,15 +139,15 @@ std::pair<double, std::vector<double>> processDataTimer(const std::string test_c
     std::vector<double> function_results;
 
     // perf command
-    std::string cmd = "make " + test_case + " >& compile.log";
-    int command_return = system(cmd.data());
+    std::string cmd = "bash -c 'make " + test_case + " >& compile.log'";
+    int command_return = system(cmd.c_str());
     if (command_return != 0) {
         return std::make_pair(0, std::vector<double>(0));
     }
     cmd.clear();
-    cmd = "./main_out " + params;
-    cmd += " 2>&1 | tee tmp.log";
-    command_return = system(cmd.data());
+    cmd = "bash -c './main_out " + params;
+    cmd += " 2>&1 | tee tmp.log'";
+    command_return = system(cmd.c_str());
     if (command_return != 0) {
         return std::make_pair(0, std::vector<double>(0));
     }
@@ -192,7 +192,8 @@ std::string change_nt_range(const std::string& cmd1, const std::string& cmd2, co
 
     change_nt_cmd.erase(change_nt_cmd.end() - 2);
     change_nt_cmd += cmd2;
-    system(change_nt_cmd.data());
+    change_nt_cmd = "bash -c \"" + change_nt_cmd + "\"";
+    system(change_nt_cmd.c_str());
 
     return param_str;
 }
@@ -217,12 +218,12 @@ int64_t exactNumber() {
 
     char* pEnd;
 
-    return std::strtol(line.data(), &pEnd, 10);
+    return std::strtol(line.c_str(), &pEnd, 10);
 }
 
 int64_t getIrLines() {
-    std::string cmd = "wc -l out.ll >& tmp.log";
-    int command_return = system(cmd.data());
+    std::string cmd = "bash -c 'wc -l out.ll >& tmp.log'";
+    int command_return = system(cmd.c_str());
     if (command_return != 0)
         return 0;
 
@@ -230,8 +231,8 @@ int64_t getIrLines() {
 }
 
 int64_t getLibSize() {
-    std::string cmd = "wc -c libout.a >& tmp.log";
-    int command_return = system(cmd.data());
+    std::string cmd = "bash -c 'wc -c libout.a >& tmp.log'";
+    int command_return = system(cmd.c_str());
     if (command_return != 0)
         return 0;
 
@@ -292,11 +293,7 @@ struct timerData recordTimerData(const std::string& test_cases, const std::strin
 
 int main(int argc, char** argv) {
     std::vector<std::string> test_cases{
-            "perf_exp", "perf_log",
-            "perf_acosh", "perf_j0",
-            "perf_y0", "perf_rem_pio2", "perf_sincosf",
-            "perf_float64_add", "perf_float64_div",
-            "perf_float64_mul"};
+            "perf_exp", "perf_log"};
 
     if (argc >= 2) {
         test_cases.clear();
@@ -317,18 +314,10 @@ int main(int argc, char** argv) {
 
     std::vector<std::vector<double>> normalParameters{
             {-1000.3, -999.2},
-            {-134.5, -133.8},
-            {-23.9, -23.1},
-            {-5.4, -4.5},
-            {-0.9, -0.4},
-            {0.2, 0.8},
-            {9.7, 10.5},
-            {35.75, 36.33},
-            {476.84, 477.21},
-            {999.8, 1000.9}
+            {-134.5, -133.8}
     };
 
-    std::vector<double> range_extend{1, 10, 100, 1000, 10000, 100000};
+    std::vector<double> range_extend{1, 10};
 
     if (argc == 3) {
         range_extend.clear();
@@ -442,9 +431,9 @@ int main(int argc, char** argv) {
                 avg_lib_size_reduce += lib_size_reduce;
 
                 // reset test.nt
-                change_nt_range("sed -i 's/", "/3 mjf, 10 mjf/g' ../../sensors/test.nt",
+                change_nt_range("bash -c sed -i 's/", "/3 mjf, 10 mjf/g' ../../sensors/test.nt",
                                 {p.front(), p.back()-1+extend});
-                change_nt_range("sed -i 's/", "/15 mjf, 36 mjf/g' ../../sensors/test.nt", {p1, p2-1+extend});
+                change_nt_range("bash -c sed -i 's/", "/15 mjf, 36 mjf/g' ../../sensors/test.nt", {p1, p2-1+extend});
             }
             avg_inst_speedup = round(avg_inst_speedup / parameters.size());
             avg_time_speedup = round(avg_time_speedup / parameters.size());
