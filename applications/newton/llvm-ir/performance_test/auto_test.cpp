@@ -293,7 +293,11 @@ struct timerData recordTimerData(const std::string& test_cases, const std::strin
 
 int main(int argc, char** argv) {
     std::vector<std::string> test_cases{
-            "perf_exp", "perf_log"};
+            "perf_exp", "perf_log",
+            "perf_acosh", "perf_j0",
+            "perf_y0", "perf_rem_pio2", "perf_sincosf",
+            "perf_float64_add", "perf_float64_div",
+            "perf_float64_mul"};
 
     if (argc >= 2) {
         test_cases.clear();
@@ -314,10 +318,18 @@ int main(int argc, char** argv) {
 
     std::vector<std::vector<double>> normalParameters{
             {-1000.3, -999.2},
-            {-134.5, -133.8}
+            {-134.5, -133.8},
+            {-23.9, -23.1},
+            {-5.4, -4.5},
+            {-0.9, -0.4},
+            {0.2, 0.8},
+            {9.7, 10.5},
+            {35.75, 36.33},
+            {476.84, 477.21},
+            {999.8, 1000.9}
     };
 
-    std::vector<double> range_extend{1, 10};
+    std::vector<double> range_extend{1, 10, 100, 1000, 10000, 100000};
 
     if (argc == 3) {
         range_extend.clear();
@@ -431,9 +443,9 @@ int main(int argc, char** argv) {
                 avg_lib_size_reduce += lib_size_reduce;
 
                 // reset test.nt
-                change_nt_range("bash -c sed -i 's/", "/3 mjf, 10 mjf/g' ../../sensors/test.nt",
+                change_nt_range("sed -i 's/", "/3 mjf, 10 mjf/g' ../../sensors/test.nt",
                                 {p.front(), p.back()-1+extend});
-                change_nt_range("bash -c sed -i 's/", "/15 mjf, 36 mjf/g' ../../sensors/test.nt", {p1, p2-1+extend});
+                change_nt_range("sed -i 's/", "/15 mjf, 36 mjf/g' ../../sensors/test.nt", {p1, p2-1+extend});
             }
             avg_inst_speedup = round(avg_inst_speedup / parameters.size());
             avg_time_speedup = round(avg_time_speedup / parameters.size());
