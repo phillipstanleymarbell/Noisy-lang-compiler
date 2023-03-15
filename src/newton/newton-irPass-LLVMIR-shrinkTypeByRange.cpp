@@ -432,10 +432,14 @@ rollbackType(State * N, Instruction * inInstruction, unsigned operandIdx, BasicB
 			{
 				newValue = Builder.CreateIntCast(valueInst, instPrevTypeInfo.valueType, false);
 			}
-			else
+			else if (instPrevTypeInfo.valueType->isDoubleTy())
 			{
 				newValue = Builder.CreateFPCast(valueInst, instPrevTypeInfo.valueType);
 			}
+            else
+            {
+                newValue = Builder.CreateBitCast(valueInst, instPrevTypeInfo.valueType);
+            }
 			inInstruction->setOperand(operandIdx, newValue);
 			typeChangedInst.emplace(newValue, instPrevTypeInfo);
 		}
@@ -447,10 +451,14 @@ rollbackType(State * N, Instruction * inInstruction, unsigned operandIdx, BasicB
 			{
 				newValue = Builder.CreateIntCast(valueInst, instPrevTypeInfo.valueType, false);
 			}
-			else
+			else if (instPrevTypeInfo.valueType->isDoubleTy())
 			{
 				newValue = Builder.CreateFPCast(valueInst, instPrevTypeInfo.valueType);
 			}
+            else
+            {
+                newValue = Builder.CreateBitCast(valueInst, instPrevTypeInfo.valueType);
+            }
 			inInstruction->replaceUsesOfWith(valueInst, newValue);
 			typeChangedInst.emplace(newValue, instPrevTypeInfo);
 		}
@@ -551,6 +559,7 @@ matchPhiOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrB
 
 	/*
 	 * If both are non-constant, roll back
+	 * todo: can be optimized by roll back to the largest type
 	 * */
 	if (std::all_of(operands.begin(), operands.end(), [&](Value * const & v) {
 		    return !isa<llvm::Constant>(v);
@@ -879,12 +888,13 @@ matchOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasi
 }
 
 /*
- * There are only two place have "mutateType":
+ * There are only three place do the inplace mutation:
  * 1. Mutate operand constant.
  *    The constant operand type might be changed for several time by different reasons.
  *    So it should always store the original type.
  * 2. Mutate destination type of each instruction.
  *    The destInst type can only be changed once, so we have an assert to check it.
+ * 3. `Alloca` node.
  * */
 /*
  * if dest type cannot change, roll back operands type
@@ -953,7 +963,7 @@ matchDestType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasicBl
 		if (compareType(inInstType, srcType) == 0)
 		{
 			/*
-			 * leave to shrinkInstructionType
+			 * we only care if the inInstType and srcType are matched
 			 * */
 			return;
 		}
@@ -1061,7 +1071,7 @@ shrinkInstructionType(State * N, Instruction * inInstruction, BasicBlock & llvmI
 	}
 
 	changed			= true;
-	auto	      valueType = inInstruction->getType();
+	auto	      inInstType = inInstruction->getType();
 	IRBuilder<>   Builder(&llvmIrBasicBlock);
 	Instruction * insertPoint = inInstruction->getNextNode();
 	while (isa<PHINode>(insertPoint))
@@ -1083,10 +1093,14 @@ shrinkInstructionType(State * N, Instruction * inInstruction, BasicBlock & llvmI
 	{
 		castInst = Builder.CreateIntCast(cloneInst, typeInformation.valueType, typeInformation.signFlag);
 	}
-	else
+	else if (typeInformation.valueType->isDoubleTy())
 	{
 		castInst = Builder.CreateFPCast(cloneInst, typeInformation.valueType);
 	}
+    else
+    {
+        castInst = Builder.CreateBitCast(cloneInst, typeInformation.valueType);
+    }
 	auto vrIt = virtualRegisterRange.find(inInstruction);
 	if (castInst != nullptr && vrIt != virtualRegisterRange.end())
 	{
@@ -1097,7 +1111,7 @@ shrinkInstructionType(State * N, Instruction * inInstruction, BasicBlock & llvmI
 	 * */
 	inInstruction->replaceAllUsesWith(castInst);
 	ReplaceInstWithInst(inInstruction, cloneInst);
-	typeInfo instPrevTypeInfo{valueType, typeInformation.signFlag};
+	typeInfo instPrevTypeInfo{inInstType, typeInformation.signFlag};
 	typeChangedInst.emplace(castInst, instPrevTypeInfo);
 	return changed;
 }
@@ -1201,6 +1215,85 @@ rollBackDependencyLink(State * N, const std::vector<Value *> & depLink,
 }
 
 /*
+ * In the design of `shrinkInstType`, we ideally only generate new castInst to cast type,
+ * but sometimes we change the type inplace (for example by `matchDestType`).
+ * So here we replace the castInst to a new one.
+ * This function is a bit similar with `matchDestType`,
+ * but it only care about the type before shrinkage.
+ *
+ * Considering the type shrinkage won't change between integer, floating point, and pointer,
+ * we only check the `ext` and `trunc`
+ *
+ * Example:
+ *  %srcInst = op bigType %a, %b
+ *  %inst = ext bigType %srcInst to smallType
+ * =======>
+ *  %srcInst = op bigType %a, %b
+ *  %inst = trunc bigType %srcInst to smallType
+ * */
+bool matchCastType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasicBlock,
+                    std::map<llvm::Value *, std::pair<double, double>> & virtualRegisterRange,
+                    std::map<Value *, typeInfo> & typeChangedInst) {
+    bool	 changed	 = false;
+
+    auto inInstType = inInstruction->getType();
+    auto srcInst = inInstruction->getOperand(0);
+    auto srcType = srcInst->getType();
+
+    // todo: get the sign bit from type system
+    bool signFlag = false;
+    auto tcIt = typeChangedInst.find(inInstruction);
+    if (tcIt != typeChangedInst.end()) {
+        signFlag = tcIt->second.signFlag;
+    }
+
+    Value * castInst;
+    IRBuilder<>   Builder(&llvmIrBasicBlock);
+    Builder.SetInsertPoint(inInstruction->getNextNode());
+
+    if (compareType(inInstType, srcType) > 0) {
+        if (inInstruction->getOpcode() == Instruction::Trunc) {
+            castInst = Builder.CreateIntCast(srcInst, inInstType, signFlag);
+            changed = true;
+        } else if (inInstruction->getOpcode() == Instruction::FPTrunc) {
+            castInst = Builder.CreateFPCast(srcInst, inInstType);
+            changed = true;
+        }
+    } else if (compareType(inInstType, srcType) > 0) {
+        if (inInstruction->getOpcode() == Instruction::ZExt ||
+            inInstruction->getOpcode() == Instruction::SExt) {
+            castInst = Builder.CreateIntCast(srcInst, inInstType, signFlag);
+            changed = true;
+        } else if (inInstruction->getOpcode() == Instruction::FPExt) {
+            castInst = Builder.CreateFPCast(srcInst, inInstType);
+            changed = true;
+        }
+    } else {
+        /* mergeCast will do this */
+    }
+
+    if (!changed) {
+        return changed;
+    }
+
+    auto vrIt = virtualRegisterRange.find(inInstruction);
+    if (castInst != nullptr && vrIt != virtualRegisterRange.end())
+    {
+        virtualRegisterRange.emplace(castInst, vrIt->second);
+    }
+
+    if (tcIt != typeChangedInst.end()) {
+        typeChangedInst.emplace(castInst, tcIt->second);
+    }
+
+    Instruction * newCastInst = llvm::dyn_cast<llvm::Instruction>(castInst);
+    inInstruction->replaceAllUsesWith(newCastInst);
+    inInstruction->removeFromParent();
+
+    return changed;
+}
+
+/*
  * Some special instructions that need to pay attention:
  * %i = alloca type, instType is type*
  * %i = call retType @func_name (type %p1, ...)
@@ -1242,10 +1335,14 @@ shrinkInstType(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 			{
 				castValue = Builder.CreateIntCast(paramOp, typeInformation.valueType, typeInformation.signFlag);
 			}
-			else
+			else if (typeInformation.valueType->isDoubleTy())
 			{
 				castValue = Builder.CreateFPCast(paramOp, typeInformation.valueType);
 			}
+            else
+            {
+                castValue = Builder.CreateBitCast(paramOp, typeInformation.valueType);
+            }
 			auto vrIt = boundInfo->virtualRegisterRange.find(paramOp);
 			if (castValue != nullptr && vrIt != boundInfo->virtualRegisterRange.end())
 			{
@@ -1352,16 +1449,6 @@ shrinkInstType(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 				case Instruction::GetElementPtr:
 					matchDestType(N, llvmIrInstruction, llvmIrBasicBlock,
 						      boundInfo->virtualRegisterRange, typeChangedInst);
-				case Instruction::FPToUI:
-				case Instruction::FPToSI:
-				case Instruction::SIToFP:
-				case Instruction::UIToFP:
-				case Instruction::ZExt:
-				case Instruction::SExt:
-				case Instruction::FPExt:
-				case Instruction::Trunc:
-				case Instruction::FPTrunc:
-				case Instruction::BitCast:
 					/*
 					 * only shrink the type because the computation of current operation
 					 * */
@@ -1369,6 +1456,31 @@ shrinkInstType(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							      boundInfo->virtualRegisterRange,
 							      typeChangedInst);
 					break;
+                case Instruction::FPToUI:
+                case Instruction::FPToSI:
+                case Instruction::SIToFP:
+                case Instruction::UIToFP:
+                case Instruction::ZExt:
+                case Instruction::SExt:
+                case Instruction::FPExt:
+                case Instruction::Trunc:
+                case Instruction::FPTrunc:
+                case Instruction::BitCast:
+                    matchCastType(N, llvmIrInstruction, llvmIrBasicBlock,
+                                   boundInfo->virtualRegisterRange,
+                                   typeChangedInst);
+                    /*
+                     * update the llvmIrInstruction,
+                     * maybe there's a better way
+                     *
+                     * question: why `--` get the next instruction?
+                     * */
+                    llvmIrInstruction = &*itBB--;
+                    llvmIrInstruction = &*itBB++;
+                    shrinkInstructionType(N, llvmIrInstruction, llvmIrBasicBlock,
+                                          boundInfo->virtualRegisterRange,
+                                          typeChangedInst);
+                    break;
 				/*
 				 * the return type of storeInst is always void
 				 * the return type of cmpInst is always i1
@@ -1409,10 +1521,14 @@ shrinkInstType(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							{
 								castInst = Builder.CreateIntCast(retValue, funcRetType, false);
 							}
-							else
+							else if (funcRetType->isDoubleTy())
 							{
 								castInst = Builder.CreateFPCast(retValue, funcRetType);
 							}
+                            else
+                            {
+                                castInst = Builder.CreateBitCast(retValue, funcRetType);
+                            }
 							auto vrIt = boundInfo->virtualRegisterRange.find(retValue);
 							if (castInst != nullptr && vrIt != boundInfo->virtualRegisterRange.end())
 							{
@@ -1581,10 +1697,14 @@ mergeCast(State * N, Function & llvmIrFunction,
 									castInst = Builder.CreateIntCast(sourceOperand, valueType,
 													 llvmIrInstruction->getOpcode() == Instruction::SExt);
 								}
-								else
+								else if (valueType->isFloatTy() || valueType->isDoubleTy())
 								{
 									castInst = Builder.CreateFPCast(sourceOperand, valueType);
 								}
+                                else
+                                {
+                                    castInst = Builder.CreateBitCast(sourceOperand, valueType);
+                                }
 								auto vrIt = virtualRegisterRange.find(sourceOperand);
 								if (castInst != nullptr && vrIt != virtualRegisterRange.end())
 								{
