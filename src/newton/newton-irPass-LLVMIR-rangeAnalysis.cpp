@@ -996,7 +996,13 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 									 */
 									if (derivedVariableType->getTag() == llvm::dwarf::DW_TAG_pointer_type)
 									{
-										baseTypeName = derivedVariableType->getBaseType()->getName().str();
+                                        auto baseType = derivedVariableType->getBaseType();
+                                        /*
+                                         * the type is `void*`
+                                         * */
+                                        if (nullptr != baseType) {
+                                            baseTypeName = derivedVariableType->getBaseType()->getName().str();
+                                        }
 									}
 									else
 									{
