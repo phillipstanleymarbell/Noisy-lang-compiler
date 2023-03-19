@@ -294,7 +294,11 @@ getRawType(Type * inputType, std::vector<Value *> indexValue = std::vector<Value
 			/*
 			 * need further check: this might should be removed.
 			 * */
-			eleType = stType->getContainedType(0);
+            if (0 != stType->getNumContainedTypes()) {
+                eleType = stType->getContainedType(0);
+            } else {
+                return stType;
+            }
 		}
 		else
 		{
@@ -916,6 +920,12 @@ matchDestType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasicBl
 	{
 		unsigned ptAddressSpace = srcType->getPointerAddressSpace();
 		srcType			= srcType->getPointerElementType();
+        if (srcType->isAggregateType()) {
+            /*
+             * we don't shrink the aggregate type
+             * */
+            return;
+        }
 		std::vector<Value *> indexValue;
 		for (size_t idx = 0; idx < inInstruction->getNumOperands() - 1; idx++)
 		{
@@ -1303,6 +1313,8 @@ bool matchCastType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBa
  * %i = castInst type1 %op1 to type2
  * store type %op1, type* %op2
  * %.i = phi type [%op1, %bb1], [%op2, %bb2], ...
+ *
+ * todo: Either skip the aggregate type or analyze it. Mainly structure.
  * */
 std::map<Value *, typeInfo>
 shrinkInstType(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
