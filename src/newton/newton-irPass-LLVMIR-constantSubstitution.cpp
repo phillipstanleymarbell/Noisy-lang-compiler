@@ -113,8 +113,17 @@ constantSubstitution(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFu
 					 *   store double 0.000000e+00, double* %12, align 8, !dbg !595
 					 *   ...
 					 * */
-					if (isa<GetElementPtrInst>(llvmIrInstruction) && isa<Argument>(llvmIrInstruction->getOperand(0)))
-						break;
+					if (isa<GetElementPtrInst>(llvmIrInstruction) && isa<Argument>(llvmIrInstruction->getOperand(0))) {
+                        break;
+                    }
+
+                    /*
+                     * if it's a pointer, skip it
+                     * */
+                    if (llvmIrInstruction->getType()->isPointerTy())
+                    {
+                        break;
+                    }
 
 					auto lowerBound = vrIt->second.first;
 					auto upperBound = vrIt->second.second;
