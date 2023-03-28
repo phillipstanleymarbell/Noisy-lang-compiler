@@ -57,11 +57,7 @@ varType
 getIntegerTypeEnum(double min, double max, bool signFlag)
 {
 	varType finalType;
-	if (!signFlag && max <= 1)
-	{
-		finalType = INT1;
-	}
-	else if ((!signFlag && max < UINT8_MAX) ||
+	if ((!signFlag && max < UINT8_MAX) ||
 		 (signFlag && min > INT8_MIN && max < INT8_MAX))
 	{
 		finalType = INT8;
