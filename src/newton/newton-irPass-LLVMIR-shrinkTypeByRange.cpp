@@ -53,27 +53,27 @@ enum varType {
 	UNKNOWN = 8,
 };
 
+/*
+ * get the possible minimum int type.
+ * to simplify the problem, only keep signed type.
+ * */
 varType
 getIntegerTypeEnum(double min, double max, bool signFlag)
 {
 	varType finalType;
-	if ((!signFlag && max < UINT8_MAX) ||
-		 (signFlag && min > INT8_MIN && max < INT8_MAX))
+	if ((signFlag && min > INT8_MIN && max < INT8_MAX))
 	{
 		finalType = INT8;
 	}
-	else if ((!signFlag && max < UINT16_MAX) ||
-		 (signFlag && min > INT16_MIN && max < INT16_MAX))
+	else if ((signFlag && min > INT16_MIN && max < INT16_MAX))
 	{
 		finalType = INT16;
 	}
-	else if ((!signFlag && max < UINT32_MAX) ||
-		 (signFlag && min > INT32_MIN && max < INT32_MAX))
+	else if ((signFlag && min > INT32_MIN && max < INT32_MAX))
 	{
 		finalType = INT32;
 	}
-	else if ((!signFlag && max < UINT64_MAX) ||
-		 (signFlag && min > INT64_MIN && max < INT64_MAX))
+	else if ((signFlag && min > INT64_MIN && max < INT64_MAX))
 	{
 		finalType = INT64;
 	}
@@ -2000,6 +2000,8 @@ getDependencyLink(State * N, Function & llvmIrFunction)
  *  3. sgt/ugt, sge/uge, slt/ult, sle/ule in ICmp
  * Note: Sign bit can only change from `signed` to `unsigned` in `type shrinkage`.
  * Remember: We have matched the type of operands before this function.
+ *
+ * Update: To simplify the problem, we only keep the signed type, so maybe it's not necessary to use this function.
  * */
 void
 upDateInstSignFlag(State * N, Function & llvmIrFunction,
