@@ -37,6 +37,11 @@
 
 #include "newton-irPass-LLVMIR-shrinkTypeByRange.h"
 
+/*
+ * this macro can also move to the compiler config
+ * */
+#define UNSIGNED_SHRINK 0
+
 using namespace llvm;
 
 extern "C"
@@ -53,6 +58,34 @@ enum varType {
 	UNKNOWN = 8,
 };
 
+#ifdef UNSIGNED_SHRINK
+varType
+getIntegerTypeEnum(double min, double max, bool signFlag)
+{
+    varType finalType;
+    if ((!signFlag && max < UINT8_MAX) || (signFlag && min > INT8_MIN && max < INT8_MAX))
+    {
+        finalType = INT8;
+    }
+    else if ((!signFlag && max < UINT16_MAX) || (signFlag && min > INT16_MIN && max < INT16_MAX))
+    {
+        finalType = INT16;
+    }
+    else if ((!signFlag && max < UINT32_MAX) || (signFlag && min > INT32_MIN && max < INT32_MAX))
+    {
+        finalType = INT32;
+    }
+    else if ((!signFlag && max < UINT64_MAX) || (signFlag && min > INT64_MIN && max < INT64_MAX))
+    {
+        finalType = INT64;
+    }
+    else
+    {
+        finalType = UNKNOWN;
+    }
+    return finalType;
+}
+#else
 /*
  * get the possible minimum int type.
  * to simplify the problem, only keep signed type.
@@ -83,6 +116,7 @@ getIntegerTypeEnum(double min, double max, bool signFlag)
 	}
 	return finalType;
 }
+#endif
 
 varType
 getFloatingTypeEnum(double min, double max)
