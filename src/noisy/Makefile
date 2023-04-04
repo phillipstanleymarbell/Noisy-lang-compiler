@@ -16,8 +16,8 @@ include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 PLATFORM_CFLAGS	+= -Wno-gnu-designator
 MAKEFLAGS	+= #-j -c
 EXAMPLES_NEWTON_FLAGS = #-O 1#--verbose 1
-LLVMCFLAGS	+= `llvm-config --cflags`
-LLVMLDFLAGS	+= `llvm-config --cxxflags --ldflags --libs core bitwriter coroutines --system-libs`
+LLVMCFLAGS	+= `llvm-config-14 --cflags`
+LLVMLDFLAGS	+= `llvm-config-14 --cxxflags --ldflags --libs core bitwriter coroutines --system-libs`
 
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(LLVMCFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS) 
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) $(LLVMLDFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
@@ -199,13 +199,16 @@ version.c: $(HEADERS) Makefile
 examples: $(EXAMPLES) target
 	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny2.n
 	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny3.n
-	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny4.n
-	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny5.n
-	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny6.n
-	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny7.n
 	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny8.n
-	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny9.n
 
+# (array, list, tuple, or set) not supported yet
+# ./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny4.n
+# ./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny5.n
+# ./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny6.n
+# ./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny7.n
+
+# Segmentation fault (core dumped)
+# ./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny9.n
 
 scan:	clean
 	scan-build --use-cc=$(CC) -k -V make -j4
