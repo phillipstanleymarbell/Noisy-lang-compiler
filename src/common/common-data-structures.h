@@ -719,6 +719,7 @@ typedef enum
 	kNewtonIrPassSensorsDisable				= (1 << 13),
 	kNewtonIrPassLLVMIRLivenessAnalysis				= (1 << 14),
 	kNewtonirPassLLVMIROptimizeByRange				= (1 << 15),
+    kNewtonirPassLLVMIRAutoQuantization 			= (1 << 16),
 	/*
 	 *	Code depends on this bringing up the rear.
 	 */

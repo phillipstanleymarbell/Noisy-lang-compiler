@@ -472,10 +472,10 @@ static double qzero(x)
     double s,r,z;
     int ix;
     ix = 0x7fffffff&__HI(x);
-    if(ix>=0x40200000)     {p = qR8; q= qS8;}
+    if(ix>=0x40200000)     {p = qR8; q= qS8;} /* |x| >= 8.0 */
     else if(ix>=0x40122E8B){p = qR5; q= qS5;}
-    else if(ix>=0x4006DB6D){p = qR3; q= qS3;}
-    else if(ix>=0x40000000){p = qR2; q= qS2;}
+    else if(ix>=0x4006DB6D){p = qR3; q= qS3;} /* |x| >= 2.857142 */
+    else if(ix>=0x40000000){p = qR2; q= qS2;} /* |x| >= 2.0 */
     z = one/(x*x);
     r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
     s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*(q[4]+z*q[5])))));

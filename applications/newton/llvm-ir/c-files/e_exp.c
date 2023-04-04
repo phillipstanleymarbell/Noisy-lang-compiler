@@ -129,8 +129,8 @@ double __ieee754_exp(x)	/* default IEEE double exp */
     }
 
     /* argument reduction */
-    if(hx > 0x3fd62e42) {		/* if  |x| > 0.5 ln2 */
-        if(hx < 0x3FF0A2B2) {	/* and |x| < 1.5 ln2 */
+    if(hx > 0x3fd62e42) {		/* if  |x| > 0.5 ln2 ~= 0.34657359 */
+        if(hx < 0x3FF0A2B2) {	/* and |x| < 1.5 ln2 ~= 1.039720771 */
             hi = x-ln2HI[xsb]; lo=ln2LO[xsb]; k = 1-xsb-xsb;
         } else {
             k  = (int)(invln2*x+halF[xsb]);
