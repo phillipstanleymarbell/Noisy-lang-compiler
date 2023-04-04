@@ -1249,14 +1249,14 @@ createInstructionsForSignal(State * N, Signal * signal, int * instructionIndex, 
             //     parallel = true;
             // }
         
-            if (parallel)
-            {
-                ;
-            }
-            else if (shorterLength)
-            {
-                ;
-            }
+        //     if (parallel)
+        //     {
+        //         ;
+        //     }
+        //     else if (shorterLength)
+        //     {
+        //         ;
+        //     }
 
 
             for(int i=0; i<j; i++)
