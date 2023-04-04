@@ -16,8 +16,8 @@ include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 PLATFORM_CFLAGS	+= -Wno-gnu-designator
 MAKEFLAGS	+= #-j -c
 EXAMPLES_NEWTON_FLAGS = #-O 1#--verbose 1
-LLVMCFLAGS	+= `llvm-config-14 --cflags`
-LLVMLDFLAGS	+= `llvm-config-14 --cxxflags --ldflags --libs core bitwriter coroutines --system-libs`
+LLVMCFLAGS	+= `llvm-config --cflags`
+LLVMLDFLAGS	+= `llvm-config --cxxflags --ldflags --libs core bitwriter coroutines --system-libs`
 
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(LLVMCFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS) 
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) $(LLVMLDFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
