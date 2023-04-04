@@ -177,7 +177,6 @@ commonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 
 	newScope->parent = scope;
 	newScope->begin = subTree->sourceInfo;
-<<<<<<< HEAD
 	newScope->next = NULL;
 
 	if (siblingScope == NULL)
@@ -199,23 +198,6 @@ commonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 		}		
 		siblingScope->next = newScope;
 		newScope->prev = siblingScope;
-=======
-	/*
-	 *	TODO: Is first child always overwritten by subsequent scope siblings?
-	 */
-	if (scope->firstChild == NULL)
-	{
-		scope->firstChild = newScope;
-	}
-	else
-	{
-		Scope * iter = scope->firstChild;
-		while (iter->next != NULL)
-		{
-			iter = iter->next;
-		}
-		iter->next = newScope;
->>>>>>> 8d1e3cb94... Add function for named scope search
 	}
 
 	return newScope;

@@ -891,10 +891,9 @@ typedef struct Physics		Physics;
 typedef struct IntegralList	IntegralList;
 typedef struct Invariant	Invariant;
 typedef struct Signal		Signal;
-<<<<<<< HEAD
 typedef struct Sensor		Sensor;
 typedef struct Modality		Modality;
-=======
+
 typedef struct NoisyType	NoisyType;
 
 enum
@@ -913,7 +912,6 @@ struct NoisyType
 
 
 
->>>>>>> 1aa380097... Move noisyType to the common data-structure
 
 struct Dimension
 {
@@ -1299,11 +1297,8 @@ typedef struct
 	FlexPrintBuf *		Fpinfo;
 	FlexPrintBuf *		Fpsmt2;
 	FlexPrintBuf *		Fpc;
-<<<<<<< HEAD
 	FlexPrintBuf *		Fph;
-=======
 	FlexPrintBuf *		Fpg;
->>>>>>> 56645ef6f... Add Fpg buffer to the state for the code generation
 	FlexPrintBuf *		Fprtl;
 	FlexPrintBuf *		Fpmathjax;
 	FlexPrintBuf *		Fpipsa;
