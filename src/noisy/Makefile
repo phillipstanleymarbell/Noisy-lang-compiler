@@ -8,6 +8,8 @@ EXAMPLESPATH	= ../../applications/noisy
 
 COMPILERVARIANT	= gcc
 
+LLVM_CONFIG?=llvm-config
+
 SYSNAME		= Noisy
 SYSNAMELOWER	= noisy
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
@@ -16,8 +18,8 @@ include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 PLATFORM_CFLAGS	+= -Wno-gnu-designator
 MAKEFLAGS	+= #-j -c
 EXAMPLES_NEWTON_FLAGS = #-O 1#--verbose 1
-LLVMCFLAGS	+= `llvm-config --cflags`
-LLVMLDFLAGS	+= `llvm-config --cxxflags --ldflags --libs core bitwriter coroutines --system-libs`
+LLVMCFLAGS	+= $(shell $(LLVM_CONFIG) --cflags)
+LLVMLDFLAGS	+= $(shell $(LLVM_CONFIG) --cxxflags --ldflags --libs core bitwriter coroutines --system-libs)
 
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(LLVMCFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS) 
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) $(LLVMLDFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
