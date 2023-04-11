@@ -114,21 +114,49 @@ test: sensor (
 	#
 	
 	accuracy bmx055xAcceleration == {
-					(150 n, 312)
+					(0.00015 g, 312)
 				},
 
 	accuracy bmx055yAcceleration == {
-					(150 n, 312)
+					(0.00015 g, 312)
 				},
 
 	accuracy bmx055zAcceleration == {
-					(150 n, 312)
+					(0.00015 g, 312)
 				},
-				
+
+    # Table 37 of document 9.2.4 on page 122.
 	accuracy bmx055xMagneto == {
 						(1.0 uT, 408),
 						(0.6 uT, 1200),
 						(0.5 uT, 1920),
 						(0.3 uT, 11760)
-					}
+					},
+
+    accuracy bmx055yMagneto == {
+                        (1.0 uT, 408),
+                        (0.6 uT, 1200),
+                        (0.5 uT, 1920),
+                        (0.3 uT, 11760)
+                    },
+
+    accuracy bmx055zMagneto == {
+                        (1.4 uT, 408),
+                        (0.6 uT, 1200),
+                        (0.5 uT, 1920),
+                        (0.3 uT, 11760)
+                    },
+
+    # Table 3 of document 1.2 on page 14.
+    accuracy bmx055xAngularRate == {
+                        (0.1 ajf, 0.012)
+                    },
+
+    accuracy bmx055yAngularRate == {
+                        (0.1 ajf, 0.012)
+                    },
+
+    accuracy bmx055zAngularRate == {
+                        (0.1 ajf, 0.012)
+                    }
 }
