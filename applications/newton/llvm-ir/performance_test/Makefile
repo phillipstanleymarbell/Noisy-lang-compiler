@@ -22,19 +22,35 @@ TARGET_FLAG = -target aarch64
 TARGET_LLC_FLAG = --march=aarch64
 endif
 
+# real-world application configs
 ifdef REAL_APP
 NT_FILE = BMX055.nt
 else
 NT_FILE = test.nt
 endif
 
-max_opt_fn = opt ../$(1).ll --O3 -S -o $(OUT_FILE)
+# auto-quantization configs, FP hardware by default, for Madgwick only currently
+ifdef AUTO_QUANT
+DATA_TYPE=INT_DATA_TYPE
+else
+DATA_TYPE=FP_DATA_TYPE
+
+ifdef SOFT_FLOAT_LIB
+SOFT_FLOAT_LIB=SOFT_FLOAT_LIB
+else ifdef SOFT_FLOAT
+CC_FP_FLAG = -msoft-float
+OPT_FP_FLAG = --float-abi=soft
+endif
+
+endif
+
+max_opt_fn = opt ../$(1).ll $(OPT_FP_FLAG) --O3 -S -o $(OUT_FILE)
 non_opt_fn = cp ../$(1).ll $(OUT_FILE)
 necessary_opt_fn = opt ../$(1).ll --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
 newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/$(NT_FILE)
 
-compile_main_fn = $(CC) $(TARGET_FLAG) main.c -no-pie -L. -lout -D $(1) -O2 -o main_out -lm
+compile_main_fn = $(CC) main.c $(TARGET_FLAG) -no-pie -L. -lout -D $(1) -O2 -o main_out -lm
 
 make_ll:
 	cd $(CHStone_DIR) && $(MAKE_CLEAN) && $(MAKE)
@@ -44,7 +60,7 @@ make_ll:
 compile_lib:
 	llvm-as $(OUT_FILE) -o $(OUT_BC)
 	llc $(TARGET_LLC_FLAG) $(OUT_BC) -o $(OUT_S)
-	$(CC) $(TARGET_FLAG) -c $(OUT_S) -o $(OUT_OBJ)
+	$(CC) $(CC_FP_FLAG) $(TARGET_FLAG) -c $(OUT_S) -o $(OUT_OBJ)
 	ar -rc $(OUT_LIB) $(OUT_OBJ)
 
 exp_non_opt:
@@ -222,7 +238,7 @@ madgwick_opt:
 	$(call max_opt_fn,MadgwickAHRSfix)
 
 compile_test_madgwick:
-	$(CC) $(TARGET_FLAG) ../test_madgwick.c -no-pie -L. -lout -O0 -g -o main_out -lm
+	$(CC) ../test_madgwick.c -D $(DATA_TYPE) $(CC_FP_FLAG) $(TARGET_FLAG) -no-pie -L. -lout -O0 -g -o main_out -lm
 
 perf_exp: clean make_ll exp_non_opt compile_lib compile_exp
 

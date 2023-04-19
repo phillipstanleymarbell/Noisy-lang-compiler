@@ -9,7 +9,19 @@
 #include <sys/time.h>
 #include <time.h>
 
+#if defined(INT_DATA_TYPE)
+#include "c-files/MadgwickAHRSfix.h"
+#elif defined(FP_DATA_TYPE)
+
+#if defined(SOFT_FLOAT_LIB)
 #include "c-files/MadgwickAHRS_softfloat.h"
+#else
+#include "c-files/MadgwickAHRS.h"
+#endif
+
+#else
+#error "Must set data type: FP or INT"
+#endif
 
 #define DATA_SIZE 1000
 
@@ -73,9 +85,17 @@ int main() {
     }
 
     double time[DATA_SIZE];
+#if defined(INT_DATA_TYPE)
     int32_t mag_x[DATA_SIZE], mag_y[DATA_SIZE], mag_z[DATA_SIZE],
             gyr_x[DATA_SIZE], gyr_y[DATA_SIZE], gyr_z[DATA_SIZE],
             acc_x[DATA_SIZE], acc_y[DATA_SIZE], acc_z[DATA_SIZE];
+#elif defined(FP_DATA_TYPE)
+    float mag_x[DATA_SIZE], mag_y[DATA_SIZE], mag_z[DATA_SIZE],
+          gyr_x[DATA_SIZE], gyr_y[DATA_SIZE], gyr_z[DATA_SIZE],
+          acc_x[DATA_SIZE], acc_y[DATA_SIZE], acc_z[DATA_SIZE];
+#else
+#error "Must set data type: FP or INT"
+#endif
 
     char buffer[1024];
     int row = 0, column = 0;
@@ -94,31 +114,67 @@ int main() {
                     time[row-2] = atof(value);
                     break;
                 case 1:
+#if defined(INT_DATA_TYPE)
                     mag_x[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    mag_x[row-2] = atof(value);
+#endif
                     break;
                 case 2:
+#if defined(INT_DATA_TYPE)
                     mag_y[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    mag_y[row-2] = atof(value);
+#endif
                     break;
                 case 3:
+#if defined(INT_DATA_TYPE)
                     mag_z[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    mag_z[row-2] = atof(value);
+#endif
                     break;
                 case 4:
+#if defined(INT_DATA_TYPE)
                     gyr_x[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    gyr_x[row-2] = atof(value);
+#endif
                     break;
                 case 5:
+#if defined(INT_DATA_TYPE)
                     gyr_y[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    gyr_y[row-2] = atof(value);
+#endif
                     break;
                 case 6:
+#if defined(INT_DATA_TYPE)
                     gyr_z[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    gyr_z[row-2] = atof(value);
+#endif
                     break;
                 case 7:
+#if defined(INT_DATA_TYPE)
                     acc_x[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    acc_x[row-2] = atof(value);
+#endif
                     break;
                 case 8:
+#if defined(INT_DATA_TYPE)
                     acc_y[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    acc_y[row-2] = atof(value);
+#endif
                     break;
                 case 9:
+#if defined(INT_DATA_TYPE)
                     acc_z[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    acc_z[row-2] = atof(value);
+#endif
                     break;
                 default:
                     break;
