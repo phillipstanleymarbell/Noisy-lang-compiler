@@ -27,7 +27,12 @@ test: sensor (
             bmx055yAcceleration: acceleration,
             bmx055zAcceleration: acceleration,
             bmx055fAcceleration: acceleration,
-			bmx055xMagneto: magneticFluxDensity
+			bmx055xMagneto: magneticFluxDensity,
+            bmx055yMagneto: magneticFluxDensity,
+            bmx055zMagneto: magneticFluxDensity,
+            bmx055xAngularRate: angularRate,
+            bmx055yAngularRate: angularRate,
+            bmx055zAngularRate: angularRate
 			) =
 {
 	range bmx055xAcceleration == [3 mjf, 10 mjf],
@@ -114,15 +119,15 @@ test: sensor (
 	#
 	
 	accuracy bmx055xAcceleration == {
-					(0.00015 g, 312)
+					(0.15 n, 312)
 				},
 
 	accuracy bmx055yAcceleration == {
-					(0.00015 g, 312)
+					(0.15 n, 312)
 				},
 
 	accuracy bmx055zAcceleration == {
-					(0.00015 g, 312)
+					(0.15 n, 312)
 				},
 
     # Table 37 of document 9.2.4 on page 122.
