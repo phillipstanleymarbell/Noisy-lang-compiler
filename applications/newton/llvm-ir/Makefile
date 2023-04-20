@@ -18,7 +18,7 @@ endif
 
 all: default
 
-default: application.ll simple_control_flow.ll inferBound.ll inferBoundControlFlow.ll e_exp.ll sincosf.ll e_log.ll e_acosh.ll e_j0.ll e_y0.ll e_rem_pio2.ll benchmark_suite.ll phi_two_global_arrays.ll func_call.ll test_shift.ll vec_add.ll vec_add_8.ll MadgwickAHRSfix.ll MadgwickAHRS_softfloat.ll
+default: application.ll simple_control_flow.ll inferBound.ll inferBoundControlFlow.ll e_exp.ll sincosf.ll e_log.ll e_acosh.ll e_j0.ll e_y0.ll e_rem_pio2.ll benchmark_suite.ll phi_two_global_arrays.ll func_call.ll test_shift.ll vec_add.ll vec_add_8.ll MadgwickAHRSfix.ll MadgwickAHRS_softfloat.ll MadgwickAHRS.ll
 
 MadgwickAHRS_softfloat.ll : MadgwickAHRS_softfloat.c
 	@echo Compiling $*.c

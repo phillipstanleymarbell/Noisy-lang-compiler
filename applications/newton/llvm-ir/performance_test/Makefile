@@ -236,7 +236,14 @@ soft_float_api_opt:
 	$(call max_opt_fn,soft_float_api_output)
 
 madgwick_non_opt:
+ifdef AUTO_QUANT
 	$(call max_opt_fn,MadgwickAHRSfix)
+else ifdef SOFT_FLOAT_LIB
+	$(call max_opt_fn,MadgwickAHRS_softfloat)
+else
+	# for both FP hardware and FP software
+	$(call max_opt_fn,MadgwickAHRS)
+endif
 
 madgwick_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,MadgwickAHRSfix)
