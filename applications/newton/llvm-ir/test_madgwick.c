@@ -1,6 +1,13 @@
-//
-// Created by pei on 10/03/23.
-//
+/*
+ * Madgwick test case (run locally)
+ * Compilation command in applications/newton/llvm-ir/performance_test/Makefile
+ *
+ * How to compile and run?
+ * 1. `make perf_madgwick` FP hardware (by default)
+ * 2. `SOFT_FLOAT=1 make perf_madgwick` FP software (clang -msoft-float and opt --float-abi=soft)
+ * 3. `SOFT_FLOAT_LIB=1 make perf_madgwick` FP soft-float lib (from CHStone)
+ * 4. `AUTO_QUANT=1 make perf_madgwick` INT fixed Q number format
+ * */
 
 #include <math.h>
 #include <stdio.h>
@@ -24,6 +31,8 @@
 #endif
 
 #define DATA_SIZE 1000
+
+#define ITERATION 5
 
 /***************************************
  * Timer functions of the test framework
@@ -187,12 +196,14 @@ int main() {
 
     fclose(fp);
 
-    timespec timer = tic();
-    for (size_t ts = 0; ts < DATA_SIZE; ts++) {
-        MadgwickAHRSupdate(gyr_x[ts], gyr_y[ts], gyr_z[ts],
-                           acc_x[ts], acc_y[ts], acc_z[ts],
-                           mag_x[ts], mag_y[ts], mag_z[ts]);
+    for (size_t idx = 0; idx < ITERATION; idx++) {
+        timespec timer = tic();
+        for (size_t ts = 0; ts < DATA_SIZE; ts++) {
+            MadgwickAHRSupdate(gyr_x[ts], gyr_y[ts], gyr_z[ts],
+                               acc_x[ts], acc_y[ts], acc_z[ts],
+                               mag_x[ts], mag_y[ts], mag_z[ts]);
+        }
+        toc(&timer, "computation delay");
     }
-    toc(&timer, "computation delay");
     return 0;
 }

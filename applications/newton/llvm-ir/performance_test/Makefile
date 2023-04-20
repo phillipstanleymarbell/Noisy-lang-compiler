@@ -17,6 +17,12 @@ OUT_S = out.s
 OUT_OBJ = out.o
 OUT_LIB = libout.a
 
+ifdef DEBUG_MODE
+CC_OPT_LEVEL = -O0 -g
+else
+CC_OPT_LEVEL = -O2
+endif
+
 ifdef CROSS_COMPILE
 TARGET_FLAG = -target aarch64
 TARGET_LLC_FLAG = --march=aarch64
@@ -50,7 +56,7 @@ necessary_opt_fn = opt ../$(1).ll --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
 newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/$(NT_FILE)
 
-compile_main_fn = $(CC) main.c $(TARGET_FLAG) -no-pie -L. -lout -D $(1) -O2 -o main_out -lm
+compile_main_fn = $(CC) main.c $(TARGET_FLAG) -no-pie -L. -lout -D $(1) $(CC_OPT_LEVEL) -o main_out -lm
 
 make_ll:
 	cd $(CHStone_DIR) && $(MAKE_CLEAN) && $(MAKE)
@@ -238,7 +244,7 @@ madgwick_opt:
 	$(call max_opt_fn,MadgwickAHRSfix)
 
 compile_test_madgwick:
-	$(CC) ../test_madgwick.c -D $(DATA_TYPE) $(CC_FP_FLAG) $(TARGET_FLAG) -no-pie -L. -lout -O0 -g -o main_out -lm
+	$(CC) ../test_madgwick.c -D $(DATA_TYPE) $(CC_FP_FLAG) $(TARGET_FLAG) -no-pie -L. -lout $(CC_OPT_LEVEL) -o main_out -lm
 
 perf_exp: clean make_ll exp_non_opt compile_lib compile_exp
 
