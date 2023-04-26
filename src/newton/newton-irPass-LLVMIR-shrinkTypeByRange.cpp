@@ -37,6 +37,11 @@
 
 #include "newton-irPass-LLVMIR-shrinkTypeByRange.h"
 
+/*
+ * this macro can also move to the compiler config
+ * */
+#define UNSIGNED_SHRINK 0
+
 using namespace llvm;
 
 extern "C"
@@ -53,31 +58,55 @@ enum varType {
 	UNKNOWN = 8,
 };
 
+#ifdef UNSIGNED_SHRINK
+varType
+getIntegerTypeEnum(double min, double max, bool signFlag)
+{
+    varType finalType;
+    if ((!signFlag && max < UINT8_MAX) || (signFlag && min > INT8_MIN && max < INT8_MAX))
+    {
+        finalType = INT8;
+    }
+    else if ((!signFlag && max < UINT16_MAX) || (signFlag && min > INT16_MIN && max < INT16_MAX))
+    {
+        finalType = INT16;
+    }
+    else if ((!signFlag && max < UINT32_MAX) || (signFlag && min > INT32_MIN && max < INT32_MAX))
+    {
+        finalType = INT32;
+    }
+    else if ((!signFlag && max < UINT64_MAX) || (signFlag && min > INT64_MIN && max < INT64_MAX))
+    {
+        finalType = INT64;
+    }
+    else
+    {
+        finalType = UNKNOWN;
+    }
+    return finalType;
+}
+#else
+/*
+ * get the possible minimum int type.
+ * to simplify the problem, only keep signed type.
+ * */
 varType
 getIntegerTypeEnum(double min, double max, bool signFlag)
 {
 	varType finalType;
-	if (!signFlag && max <= 1)
-	{
-		finalType = INT1;
-	}
-	else if ((!signFlag && max < UINT8_MAX) ||
-		 (signFlag && min > INT8_MIN && max < INT8_MAX))
+	if ((signFlag && min > INT8_MIN && max < INT8_MAX))
 	{
 		finalType = INT8;
 	}
-	else if ((!signFlag && max < UINT16_MAX) ||
-		 (signFlag && min > INT16_MIN && max < INT16_MAX))
+	else if ((signFlag && min > INT16_MIN && max < INT16_MAX))
 	{
 		finalType = INT16;
 	}
-	else if ((!signFlag && max < UINT32_MAX) ||
-		 (signFlag && min > INT32_MIN && max < INT32_MAX))
+	else if ((signFlag && min > INT32_MIN && max < INT32_MAX))
 	{
 		finalType = INT32;
 	}
-	else if ((!signFlag && max < UINT64_MAX) ||
-		 (signFlag && min > INT64_MIN && max < INT64_MAX))
+	else if ((signFlag && min > INT64_MIN && max < INT64_MAX))
 	{
 		finalType = INT64;
 	}
@@ -87,6 +116,7 @@ getIntegerTypeEnum(double min, double max, bool signFlag)
 	}
 	return finalType;
 }
+#endif
 
 varType
 getFloatingTypeEnum(double min, double max)
@@ -233,7 +263,7 @@ getTypeInfo(State * N, Value * inValue,
 	    const std::map<llvm::Value *, std::pair<double, double>> & virtualRegisterRange)
 {
 	typeInfo typeInformation;
-	typeInformation.signFlag  = false;
+	typeInformation.signFlag  = true;
 	typeInformation.valueType = nullptr;
 
 	auto vrRangeIt = virtualRegisterRange.find(inValue);
@@ -434,7 +464,7 @@ rollbackType(State * N, Instruction * inInstruction, unsigned operandIdx, BasicB
 			Builder.SetInsertPoint(terminatorInst);
 			if (instPrevTypeInfo.valueType->isIntegerTy())
 			{
-				newValue = Builder.CreateIntCast(valueInst, instPrevTypeInfo.valueType, false);
+				newValue = Builder.CreateIntCast(valueInst, instPrevTypeInfo.valueType, instPrevTypeInfo.signFlag);
 			}
 			else if (instPrevTypeInfo.valueType->isDoubleTy())
 			{
@@ -453,7 +483,7 @@ rollbackType(State * N, Instruction * inInstruction, unsigned operandIdx, BasicB
 			Builder.SetInsertPoint(inInstruction);
 			if (instPrevTypeInfo.valueType->isIntegerTy())
 			{
-				newValue = Builder.CreateIntCast(valueInst, instPrevTypeInfo.valueType, false);
+				newValue = Builder.CreateIntCast(valueInst, instPrevTypeInfo.valueType, instPrevTypeInfo.signFlag);
 			}
 			else if (instPrevTypeInfo.valueType->isDoubleTy())
 			{
@@ -538,10 +568,11 @@ rollbackType(State * N, Instruction * inInstruction, unsigned operandIdx, BasicB
 bool
 isSignedValue(Value * inValue)
 {
-	bool signFlag = false;
+    // todo: get the sign bit from type system
+	bool signFlag = true;
 	if (Instruction * valueInst = llvm::dyn_cast<llvm::Instruction>(inValue))
 	{
-		signFlag = valueInst->getOpcode() == Instruction::SExt;
+		signFlag = valueInst->getOpcode() != Instruction::ZExt;
 	}
 	return signFlag;
 }
@@ -571,7 +602,7 @@ matchPhiOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrB
 	{
 		typeInfo backType;
 		backType.valueType = nullptr;
-		backType.signFlag  = false;
+		backType.signFlag  = true;
 		bool noPrevType	   = false;
 		for (size_t id = 0; id < operands.size(); id++)
 		{
@@ -706,7 +737,7 @@ matchOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasi
 
 		typeInfo realLeftType  = getTypeInfo(N, leftOperand, virtualRegisterRange);
 		typeInfo realRightType = getTypeInfo(N, rightOperand, virtualRegisterRange);
-		typeInfo backType{nullptr, false};
+		typeInfo backType{nullptr, true};
 		if (compareType(leftType, rightType) < 0)
 		{
 			backType.signFlag  = realLeftType.signFlag;
@@ -750,6 +781,11 @@ matchOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasi
 		Value * nonConstOperand = inInstruction->getOperand(nonConstOperandIdx);
 		auto	constType	= constOperand->getType();
 		auto	nonConstType	= nonConstOperand->getType();
+        bool nonConstSign = true;
+        auto tcIt = typeChangedInst.find(nonConstOperand);
+        if (tcIt != typeChangedInst.end()) {
+            nonConstSign = tcIt->second.signFlag;
+        }
 		if (!isa<llvm::ConstantData>(constOperand))
 		{
 			/*
@@ -758,7 +794,7 @@ matchOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasi
 			 * */
 			typeInfo backType;
 			backType.valueType = constType;
-			backType.signFlag  = false;
+			backType.signFlag  = nonConstSign;
 			if (isa<StoreInst>(inInstruction))
 			{
 				backType.valueType = changeStoreInstSiblingType(backType.valueType, nonConstType);
@@ -796,7 +832,7 @@ matchOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasi
 			{
 				typeInfo backType;
 				backType.valueType = nonConstType;
-				backType.signFlag  = realType.signFlag;
+				backType.signFlag  = nonConstSign;
 				if (isa<StoreInst>(inInstruction))
 				{
 					backType.valueType = changeStoreInstSiblingType(backType.valueType, constType);
@@ -813,7 +849,7 @@ matchOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasi
 			{
 				typeInfo backType;
 				backType.valueType = constType;
-				backType.signFlag  = false;
+				backType.signFlag  = nonConstSign;
 				if (isa<StoreInst>(inInstruction))
 				{
 					backType.valueType = changeStoreInstSiblingType(backType.valueType, nonConstType);
@@ -838,7 +874,7 @@ matchOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasi
 			{
 				typeInfo backType;
 				backType.valueType = nonConstType;
-				backType.signFlag  = realType.signFlag;
+				backType.signFlag  = nonConstSign;
 				if (isa<StoreInst>(inInstruction))
 				{
 					backType.valueType = changeStoreInstSiblingType(backType.valueType, constType);
@@ -855,8 +891,7 @@ matchOperandType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasi
 			{
 				typeInfo backType;
 				backType.valueType = constType;
-				// todo: get the signFlag
-				backType.signFlag = false;
+				backType.signFlag = nonConstSign;
 				if (isa<StoreInst>(inInstruction))
 				{
 					backType.valueType = changeStoreInstSiblingType(backType.valueType, nonConstType);
@@ -912,7 +947,7 @@ matchDestType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasicBl
 {
 	typeInfo typeInformation;
 	typeInformation.valueType = nullptr;
-	typeInformation.signFlag  = false;
+	typeInformation.signFlag  = true;
 	auto inInstType		  = inInstruction->getType();
 	auto srcOperand		  = inInstruction->getOperand(0);
 	auto srcType		  = srcOperand->getType();
@@ -1251,7 +1286,7 @@ bool matchCastType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBa
     auto srcType = srcInst->getType();
 
     // todo: get the sign bit from type system
-    bool signFlag = false;
+    bool signFlag = true;
     auto tcIt = typeChangedInst.find(inInstruction);
     if (tcIt != typeChangedInst.end()) {
         signFlag = tcIt->second.signFlag;
@@ -1531,7 +1566,8 @@ shrinkInstType(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							assert(retValue != nullptr && "return void");
 							if (funcRetType->isIntegerTy())
 							{
-								castInst = Builder.CreateIntCast(retValue, funcRetType, false);
+                                // todo: get the sign bit from type system
+								castInst = Builder.CreateIntCast(retValue, funcRetType, true);
 							}
 							else if (funcRetType->isDoubleTy())
 							{
@@ -1998,6 +2034,8 @@ getDependencyLink(State * N, Function & llvmIrFunction)
  *  3. sgt/ugt, sge/uge, slt/ult, sle/ule in ICmp
  * Note: Sign bit can only change from `signed` to `unsigned` in `type shrinkage`.
  * Remember: We have matched the type of operands before this function.
+ *
+ * Update: To simplify the problem, we only keep the signed type, so maybe it's not necessary to use this function.
  * */
 void
 upDateInstSignFlag(State * N, Function & llvmIrFunction,

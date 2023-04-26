@@ -2129,8 +2129,13 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 									default:
 										assert(false);
 								}
+                                /*
+                                 * lhs of shl can be negative, but the result should be positive.
+                                 * so we need to further check the real min value and real max value
+                                 * */
 								boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
-                                                                        std::make_pair(resMin, resMax));
+                                                                        std::make_pair(min(resMin, resMax),
+                                                                                       max(resMin, resMax)));
 							}
 							else
 							{
