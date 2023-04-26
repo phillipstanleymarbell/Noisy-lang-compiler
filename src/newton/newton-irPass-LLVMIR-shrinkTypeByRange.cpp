@@ -40,7 +40,7 @@
 /*
  * this macro can also move to the compiler config
  * */
-#define UNSIGNED_SHRINK 0
+#define UNSIGNED_SHRINK 1
 
 using namespace llvm;
 
