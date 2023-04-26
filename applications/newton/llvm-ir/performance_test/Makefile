@@ -28,13 +28,13 @@ else
 NT_FILE = test.nt
 endif
 
-max_opt_fn = opt ../$(1).ll --O3 -S -o $(OUT_FILE)
+max_opt_fn = opt ../$(1).ll -O3 -Os -S -o $(OUT_FILE)
 non_opt_fn = cp ../$(1).ll $(OUT_FILE)
 necessary_opt_fn = opt ../$(1).ll --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
 newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/$(NT_FILE)
 
-compile_main_fn = $(CC) $(TARGET_FLAG) main.c -no-pie -L. -lout -D $(1) -O2 -o main_out -lm
+compile_main_fn = $(CC) $(TARGET_FLAG) main.c -no-pie -L. -lout -D $(1) -O3 -Os -o main_out -lm
 
 make_ll:
 	cd $(CHStone_DIR) && $(MAKE_CLEAN) && $(MAKE)
@@ -222,7 +222,7 @@ madgwick_opt:
 	$(call max_opt_fn,MadgwickAHRSfix)
 
 compile_test_madgwick:
-	$(CC) $(TARGET_FLAG) ../test_madgwick.c -no-pie -L. -lout -O0 -g -o main_out -lm
+	$(CC) $(TARGET_FLAG) ../test_madgwick.c -no-pie -L. -lout -O3 -Os -o main_out -lm
 
 perf_exp: clean make_ll exp_non_opt compile_lib compile_exp
 
