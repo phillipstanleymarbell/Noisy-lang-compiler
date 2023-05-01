@@ -37,8 +37,8 @@
 
 #include "newton-irPass-LLVMIR-rangeAnalysis.h"
 
-#define DISABLE_BITWISE_OP 0
-#define DISABLE_MODULO_OP 0
+#define DISABLE_BITWISE_OP
+#define DISABLE_MODULO_OP
 
 using namespace llvm;
 
