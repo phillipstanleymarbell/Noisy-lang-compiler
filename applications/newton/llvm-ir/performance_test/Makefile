@@ -20,7 +20,7 @@ OUT_LIB = libout.a
 ifdef DEBUG_MODE
 CC_OPT_LEVEL = -O0 -g
 else
-CC_OPT_LEVEL = -O2
+CC_OPT_LEVEL = -O3 -Os
 endif
 
 ifdef CROSS_COMPILE
@@ -50,7 +50,7 @@ endif
 
 endif
 
-max_opt_fn = opt ../$(1).ll $(OPT_FP_FLAG) --O3 -S -o $(OUT_FILE)
+max_opt_fn = opt ../$(1).ll $(OPT_FP_FLAG) -O3 -Os -S -o $(OUT_FILE)
 non_opt_fn = cp ../$(1).ll $(OUT_FILE)
 necessary_opt_fn = opt ../$(1).ll --simplifycfg --instsimplify -S -o $(OUT_FILE)
 

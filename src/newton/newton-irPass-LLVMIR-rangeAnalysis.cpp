@@ -37,6 +37,9 @@
 
 #include "newton-irPass-LLVMIR-rangeAnalysis.h"
 
+#define DISABLE_BITWISE_OP
+#define DISABLE_MODULO_OP
+
 using namespace llvm;
 
 extern "C" {
@@ -1875,6 +1878,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 				case Instruction::URem:
 				case Instruction::SRem:
 				case Instruction::FRem:
+#ifndef DISABLE_MODULO_OP
 					if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
 					{
 						Value * leftOperand  = llvmIrInstruction.getOperand(0);
@@ -1953,6 +1957,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							assert(!valueRangeDebug && "failed to get range");
 						}
 					}
+#endif
 					break;
 
 				case Instruction::Shl:
@@ -2537,6 +2542,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 					break;
 
 				case Instruction::And:
+#ifndef DISABLE_BITWISE_OP
 					if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
 					{
 						Value * leftOperand  = llvmIrInstruction.getOperand(0);
@@ -2622,9 +2628,11 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							assert(!valueRangeDebug && "failed to get range");
 						}
 					}
+#endif
 					break;
 
 				case Instruction::Or:
+#ifndef DISABLE_BITWISE_OP
 					if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
 					{
 						Value * leftOperand  = llvmIrInstruction.getOperand(0);
@@ -2710,9 +2718,11 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							assert(!valueRangeDebug && "failed to get range");
 						}
 					}
+#endif
 					break;
 
 				case Instruction::Xor:
+#ifndef DISABLE_BITWISE_OP
 					if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
 					{
 						Value * leftOperand  = llvmIrInstruction.getOperand(0);
@@ -2798,6 +2808,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							assert(!valueRangeDebug && "failed to get range");
 						}
 					}
+#endif
 					break;
 
 				case Instruction::FPToUI:
