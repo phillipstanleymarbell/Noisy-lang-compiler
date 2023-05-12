@@ -1,6 +1,13 @@
-//
-// Created by pei on 10/03/23.
-//
+/*
+ * Madgwick test case (run locally)
+ * Compilation command in applications/newton/llvm-ir/performance_test/Makefile
+ *
+ * How to compile and run?
+ * 1. `make perf_madgwick` FP hardware (by default)
+ * 2. `SOFT_FLOAT=1 make perf_madgwick` FP software (clang -msoft-float and opt --float-abi=soft)
+ * 3. `SOFT_FLOAT_LIB=1 make perf_madgwick` FP soft-float lib (from CHStone)
+ * 4. `AUTO_QUANT=1 make perf_madgwick` INT fixed Q number format
+ * */
 
 #include <math.h>
 #include <stdio.h>
@@ -9,9 +16,23 @@
 #include <sys/time.h>
 #include <time.h>
 
+#if defined(INT_DATA_TYPE)
+#include "c-files/MadgwickAHRSfix.h"
+#elif defined(FP_DATA_TYPE)
+
+#if defined(SOFT_FLOAT_LIB)
 #include "c-files/MadgwickAHRS_softfloat.h"
+#else
+#include "c-files/MadgwickAHRS.h"
+#endif
+
+#else
+#error "Must set data type: FP or INT"
+#endif
 
 #define DATA_SIZE 1000
+
+#define ITERATION 5
 
 /***************************************
  * Timer functions of the test framework
@@ -73,9 +94,17 @@ int main() {
     }
 
     double time[DATA_SIZE];
+#if defined(INT_DATA_TYPE)
     int32_t mag_x[DATA_SIZE], mag_y[DATA_SIZE], mag_z[DATA_SIZE],
             gyr_x[DATA_SIZE], gyr_y[DATA_SIZE], gyr_z[DATA_SIZE],
             acc_x[DATA_SIZE], acc_y[DATA_SIZE], acc_z[DATA_SIZE];
+#elif defined(FP_DATA_TYPE)
+    float mag_x[DATA_SIZE], mag_y[DATA_SIZE], mag_z[DATA_SIZE],
+          gyr_x[DATA_SIZE], gyr_y[DATA_SIZE], gyr_z[DATA_SIZE],
+          acc_x[DATA_SIZE], acc_y[DATA_SIZE], acc_z[DATA_SIZE];
+#else
+#error "Must set data type: FP or INT"
+#endif
 
     char buffer[1024];
     int row = 0, column = 0;
@@ -94,31 +123,67 @@ int main() {
                     time[row-2] = atof(value);
                     break;
                 case 1:
+#if defined(INT_DATA_TYPE)
                     mag_x[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    mag_x[row-2] = atof(value);
+#endif
                     break;
                 case 2:
+#if defined(INT_DATA_TYPE)
                     mag_y[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    mag_y[row-2] = atof(value);
+#endif
                     break;
                 case 3:
+#if defined(INT_DATA_TYPE)
                     mag_z[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    mag_z[row-2] = atof(value);
+#endif
                     break;
                 case 4:
+#if defined(INT_DATA_TYPE)
                     gyr_x[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    gyr_x[row-2] = atof(value);
+#endif
                     break;
                 case 5:
+#if defined(INT_DATA_TYPE)
                     gyr_y[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    gyr_y[row-2] = atof(value);
+#endif
                     break;
                 case 6:
+#if defined(INT_DATA_TYPE)
                     gyr_z[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    gyr_z[row-2] = atof(value);
+#endif
                     break;
                 case 7:
+#if defined(INT_DATA_TYPE)
                     acc_x[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    acc_x[row-2] = atof(value);
+#endif
                     break;
                 case 8:
+#if defined(INT_DATA_TYPE)
                     acc_y[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    acc_y[row-2] = atof(value);
+#endif
                     break;
                 case 9:
+#if defined(INT_DATA_TYPE)
                     acc_z[row-2] = atoi(value);
+#elif defined(FP_DATA_TYPE)
+                    acc_z[row-2] = atof(value);
+#endif
                     break;
                 default:
                     break;
@@ -131,12 +196,14 @@ int main() {
 
     fclose(fp);
 
-    timespec timer = tic();
-    for (size_t ts = 0; ts < DATA_SIZE; ts++) {
-        MadgwickAHRSupdate(gyr_x[ts], gyr_y[ts], gyr_z[ts],
-                           acc_x[ts], acc_y[ts], acc_z[ts],
-                           mag_x[ts], mag_y[ts], mag_z[ts]);
+    for (size_t idx = 0; idx < ITERATION; idx++) {
+        timespec timer = tic();
+        for (size_t ts = 0; ts < DATA_SIZE; ts++) {
+            MadgwickAHRSupdate(gyr_x[ts], gyr_y[ts], gyr_z[ts],
+                               acc_x[ts], acc_y[ts], acc_z[ts],
+                               mag_x[ts], mag_y[ts], mag_z[ts]);
+        }
+        toc(&timer, "computation delay");
     }
-    toc(&timer, "computation delay");
     return 0;
 }

@@ -17,24 +17,46 @@ OUT_S = out.s
 OUT_OBJ = out.o
 OUT_LIB = libout.a
 
+ifdef DEBUG_MODE
+CC_OPT_LEVEL = -O0 -g
+else
+CC_OPT_LEVEL = -O3 -Os
+endif
+
 ifdef CROSS_COMPILE
 TARGET_FLAG = -target aarch64
 TARGET_LLC_FLAG = --march=aarch64
 endif
 
+# real-world application configs
 ifdef REAL_APP
 NT_FILE = BMX055.nt
 else
 NT_FILE = test.nt
 endif
 
-max_opt_fn = opt ../$(1).ll -O3 -Os -S -o $(OUT_FILE)
+# auto-quantization configs, FP hardware by default, for Madgwick only currently
+ifdef AUTO_QUANT
+DATA_TYPE=INT_DATA_TYPE
+else
+DATA_TYPE=FP_DATA_TYPE
+
+ifdef SOFT_FLOAT_LIB
+SOFT_FLOAT_LIB=SOFT_FLOAT_LIB
+else ifdef SOFT_FLOAT
+CC_FP_FLAG = -msoft-float
+OPT_FP_FLAG = --float-abi=soft
+endif
+
+endif
+
+max_opt_fn = opt ../$(1).ll $(OPT_FP_FLAG) -O3 -Os -S -o $(OUT_FILE)
 non_opt_fn = cp ../$(1).ll $(OUT_FILE)
 necessary_opt_fn = opt ../$(1).ll --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
 newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/$(NT_FILE)
 
-compile_main_fn = $(CC) $(TARGET_FLAG) main.c -no-pie -L. -lout -D $(1) -O3 -Os -o main_out -lm
+compile_main_fn = $(CC) main.c $(TARGET_FLAG) -no-pie -L. -lout -D $(1) $(CC_OPT_LEVEL) -o main_out -lm
 
 make_ll:
 	cd $(CHStone_DIR) && $(MAKE_CLEAN) && $(MAKE)
@@ -44,7 +66,7 @@ make_ll:
 compile_lib:
 	llvm-as $(OUT_FILE) -o $(OUT_BC)
 	llc $(TARGET_LLC_FLAG) $(OUT_BC) -o $(OUT_S)
-	$(CC) $(TARGET_FLAG) -c $(OUT_S) -o $(OUT_OBJ)
+	$(CC) $(CC_FP_FLAG) $(TARGET_FLAG) -c $(OUT_S) -o $(OUT_OBJ)
 	ar -rc $(OUT_LIB) $(OUT_OBJ)
 
 exp_non_opt:
@@ -214,7 +236,14 @@ soft_float_api_opt:
 	$(call max_opt_fn,soft_float_api_output)
 
 madgwick_non_opt:
+ifdef AUTO_QUANT
 	$(call max_opt_fn,MadgwickAHRSfix)
+else ifdef SOFT_FLOAT_LIB
+	$(call max_opt_fn,MadgwickAHRS_softfloat)
+else
+	# for both FP hardware and FP software
+	$(call max_opt_fn,MadgwickAHRS)
+endif
 
 madgwick_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,MadgwickAHRSfix)
@@ -222,7 +251,7 @@ madgwick_opt:
 	$(call max_opt_fn,MadgwickAHRSfix)
 
 compile_test_madgwick:
-	$(CC) $(TARGET_FLAG) ../test_madgwick.c -no-pie -L. -lout -O3 -Os -o main_out -lm
+	$(CC) ../test_madgwick.c -D $(DATA_TYPE) $(CC_FP_FLAG) $(TARGET_FLAG) -no-pie -L. -lout $(CC_OPT_LEVEL) -o main_out -lm
 
 perf_exp: clean make_ll exp_non_opt compile_lib compile_exp
 

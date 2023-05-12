@@ -311,6 +311,8 @@ MadgwickAHRSupdate(bmx055xAngularRate gx, bmx055yAngularRate gy, bmx055zAngularR
 	q1 = mulfix(q1, recipNorm);
 	q2 = mulfix(q2, recipNorm);
 	q3 = mulfix(q3, recipNorm);
+
+//    printf("FIX: q0 = %d\n", q0);
 	
 	// /* 2nd iter normalization */
 	// recipNorm = sqrt_rsqrt(mulfix(q0, q0) + mulfix(q1, q1) + mulfix(q2, q2) + mulfix(q3, q3), true);
