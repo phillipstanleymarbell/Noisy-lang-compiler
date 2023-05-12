@@ -1,7 +1,7 @@
 ### Makefile to run the optimization and get the performance data automatically ###
 
 ifndef VERBOSE
-	QUIET:=@
+QUIET:=@
 endif
 
 MAKE_CLEAN = make clean
@@ -248,7 +248,15 @@ endif
 madgwick_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,MadgwickAHRSfix)
 	llvm-dis ../MadgwickAHRSfix_output.bc
-	$(call max_opt_fn,MadgwickAHRSfix)
+	$(call max_opt_fn,MadgwickAHRSfix_output)
+
+inferBoundControlFlow_non_opt:
+	$(call max_opt_fn,inferBoundControlFlow)
+
+inferBoundControlFlow_opt:
+	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,inferBoundControlFlow)
+	llvm-dis ../inferBoundControlFlow_output.bc
+	$(call max_opt_fn,inferBoundControlFlow_output)
 
 compile_test_madgwick:
 	$(CC) ../test_madgwick.c -D $(DATA_TYPE) $(CC_FP_FLAG) $(TARGET_FLAG) -no-pie -L. -lout $(CC_OPT_LEVEL) -o main_out -lm
@@ -326,6 +334,10 @@ perf_madgwick_opt: clean make_ll madgwick_opt compile_lib compile_test_madgwick
 perf_func_call: clean make_ll func_call_opt compile_lib compile_func_call
 
 interface_lib: clean make_ll soft_float_api_opt compile_lib
+
+perf_inferBoundControlFlow: clean make_ll inferBoundControlFlow_non_opt compile_lib
+
+perf_inferBoundControlFlow_opt: clean make_ll inferBoundControlFlow_opt compile_lib
 
 auto_test_compile:
 	clang++ auto_test.cpp -g -o auto_test

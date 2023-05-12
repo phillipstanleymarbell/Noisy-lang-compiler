@@ -42,6 +42,7 @@
 #include "newton-irPass-LLVMIR-shrinkTypeByRange.h"
 #include "newton-irPass-LLVMIR-quantization.h"
 #include "newton-irPass-LLVMIR-memoryAlignment.h"
+#include "newton-irPass-LLVMIR-emitAssume.h"
 #endif /* __cplusplus */
 
 #include <algorithm>
@@ -378,65 +379,65 @@ irPassLLVMIROptimizeByRange(State * N)
         collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
     }
 
-	/*
+    /*
 	 * simplify the condition of each branch
 	 * */
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
-	for (auto & mi : *Mod)
-	{
-		auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-		if (boundInfoIt != funcBoundInfo.end())
-		{
-			simplifyControlFlow(N, boundInfoIt->second, mi);
-		}
-		//		else
-		//		{
-		//			assert(false);
-		//		}
-	}
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "simplify control flow by range\n");
+    for (auto & mi : *Mod)
+    {
+        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+        if (boundInfoIt != funcBoundInfo.end())
+        {
+            simplifyControlFlow(N, boundInfoIt->second, mi);
+        }
+        //		else
+        //		{
+        //			assert(false);
+        //		}
+    }
 
-	legacy::PassManager passManager;
-	passManager.add(createCFGSimplificationPass());
-	passManager.add(createInstSimplifyLegacyPass());
-	passManager.add(createGlobalDCEPass());
-	passManager.run(*Mod);
+    legacy::PassManager passManager;
+    passManager.add(createCFGSimplificationPass());
+    passManager.add(createInstSimplifyLegacyPass());
+    passManager.add(createGlobalDCEPass());
+    passManager.run(*Mod);
 
-	/*
-	 * remove the functions that are optimized by passes.
-	 * */
-	if (useOverLoad)
-		cleanFunctionMap(Mod, callerMap);
+    /*
+     * remove the functions that are optimized by passes.
+     * */
+    if (useOverLoad)
+        cleanFunctionMap(Mod, callerMap);
 
-	if (useOverLoad)
-		overloadFunc(Mod, callerMap);
+    if (useOverLoad)
+        overloadFunc(Mod, callerMap);
 
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
     callerMap.clear();
-	funcBoundInfo.clear();
+    funcBoundInfo.clear();
     useOverLoad = false;
-	for (auto & mi : *Mod)
-	{
-		auto boundInfo = new BoundInfo();
-		mergeBoundInfo(boundInfo, globalBoundInfo);
-		rangeAnalysis(N, mi, boundInfo, callerMap, typeRange, virtualRegisterVectorRange, useOverLoad);
-		funcBoundInfo.emplace(mi.getName().str(), boundInfo);
-		std::vector<std::string> calleeNames;
-		collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
-	}
+    for (auto & mi : *Mod)
+    {
+        auto boundInfo = new BoundInfo();
+        mergeBoundInfo(boundInfo, globalBoundInfo);
+        rangeAnalysis(N, mi, boundInfo, callerMap, typeRange, virtualRegisterVectorRange, useOverLoad);
+        funcBoundInfo.emplace(mi.getName().str(), boundInfo);
+        std::vector<std::string> calleeNames;
+        collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
+    }
 
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
-	for (auto & mi : *Mod)
-	{
-		auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-		if (boundInfoIt != funcBoundInfo.end())
-		{
-			constantSubstitution(N, boundInfoIt->second, mi);
-		}
-		//		else
-		//		{
-		//			assert(false);
-		//		}
-	}
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
+    for (auto & mi : *Mod)
+    {
+        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+        if (boundInfoIt != funcBoundInfo.end())
+        {
+            constantSubstitution(N, boundInfoIt->second, mi);
+        }
+        //		else
+        //		{
+        //			assert(false);
+        //		}
+    }
 
     /*
 	 * remove the functions that are optimized by passes.
@@ -446,6 +447,29 @@ irPassLLVMIROptimizeByRange(State * N)
 
     if (useOverLoad)
         overloadFunc(Mod, callerMap);
+
+    for (auto & mi : *Mod)
+    {
+        auto boundInfo = new BoundInfo();
+        mergeBoundInfo(boundInfo, globalBoundInfo);
+        rangeAnalysis(N, mi, boundInfo, callerMap, typeRange, virtualRegisterVectorRange, useOverLoad);
+        funcBoundInfo.emplace(mi.getName().str(), boundInfo);
+        std::vector<std::string> calleeNames;
+        collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
+    }
+
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "emit builtin_assume intrinsic\n");
+    for (auto & mi : *Mod)
+    {
+        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+        if (boundInfoIt != funcBoundInfo.end()) {
+            emitAssume(N, boundInfoIt->second, mi);
+        }
+//            else
+//            {
+//	            assert(false);
+//	        }
+    }
 
 	/*
 	 * Dump BC file to a file.

@@ -32,7 +32,7 @@
 
 #define DATA_SIZE 1000
 
-#define ITERATION 5
+#define ITERATION 10
 
 /***************************************
  * Timer functions of the test framework
@@ -196,6 +196,8 @@ int main() {
 
     fclose(fp);
 
+    u_int64_t time_slots[ITERATION];
+
     for (size_t idx = 0; idx < ITERATION; idx++) {
         timespec timer = tic();
         for (size_t ts = 0; ts < DATA_SIZE; ts++) {
@@ -203,7 +205,14 @@ int main() {
                                acc_x[ts], acc_y[ts], acc_z[ts],
                                mag_x[ts], mag_y[ts], mag_z[ts]);
         }
-        toc(&timer, "computation delay");
+        time_slots[idx] = toc(&timer, "computation delay").tv_nsec;
     }
+
+    u_int64_t average_time = 0;
+    for (size_t idx = 0; idx < ITERATION; idx++) {
+        average_time += time_slots[idx];
+    }
+    average_time /= ITERATION;
+    printf("average time = %lu nm\n", average_time);
     return 0;
 }
