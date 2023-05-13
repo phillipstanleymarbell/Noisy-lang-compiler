@@ -45,14 +45,13 @@ import platform
 
 # [instruction counts (million)", "time consumption (s)", "IR lines", "size of library (bytes)"]
 y_units = [1000, 1000, 1, 1]
+# changed with auto_test.cpp
+range_extend_list = [1]
 
-params_num = 10
+params_num = 17
 test_case_num = 10
 merit_num = 4
-range_extend_num = 6
-
-# changed with auto_test.cpp
-range_extend_list = [1, 10, 100, 1000, 10000, 100000]
+range_extend_num = len(range_extend_list)
 
 average_data = []
 with open('average_speedup.log', 'r') as f:
@@ -70,13 +69,13 @@ average_libsize_reduce = []
 for i in range(1, len(average_data), range_extend_num):
     time_speedup = 0
     libsize_reduce = 0
-    for j in range(i, i+range_extend_num):
+    for j in range(i, i + range_extend_num):
         time_speedup += float(average_data[j][3].strip('%')) / 100
         libsize_reduce += float(average_data[j][5].strip('%')) / 100
     average_time_speedup.append(time_speedup / range_extend_num * 100)
     average_libsize_reduce.append(libsize_reduce / range_extend_num * 100)
 
-assert(len(average_name_list) == len(average_time_speedup))
+assert (len(average_name_list) == len(average_time_speedup))
 for i in range(0, len(average_name_list)):
     print(average_name_list[i], "with time speed up: ", format(average_time_speedup[i], '.2f'),
           "%, lib size reduce: ", format(average_libsize_reduce[i], '.2f'), "%")
@@ -98,7 +97,7 @@ for i in range(2, len(performance_data), 3):
 
 param_list = []
 for i in range(1, 3 * params_num * range_extend_num, 3):
-    lower, upper = map(float, performance_data[i][1].split( ))
+    lower, upper = map(float, performance_data[i][1].split())
     lower_r1 = round(lower, 1)
     upper_r1 = round(upper, 1)
     param_list.append('[' + str(lower_r1) + ', ' + str(upper_r1) + ']')
@@ -170,26 +169,25 @@ os.mkdir(fig_path)
 
 # Heatmap
 for merit_id in range(1, merit_num, 2):
-    for test_case_id in range(test_case_num):
-        plt.clf()
-        plt.figure(num=merit_id * test_case_num + test_case_id, dpi=300,
-                   constrained_layout=True)
-        fmt = lambda x, pos: '{:.0%}'.format(x)
-        fig = sns.heatmap(data=perf_data_speedup[merit_id][test_case_id].T,
-                          cmap=plt.get_cmap('Greens'),
-                          annot=True,
-                          fmt=".0%",
-                          cbar_kws={'format': FuncFormatter(fmt)},
-                          xticklabels=range_extend_list,
-                          yticklabels=param_list[0:10])
-        fig.set_xlabel('Range Extent')
-        fig.set_ylabel('Function Parameters')
-        plt.title(machine + "-" + name_list[test_case_id * range_extend_num] + "-" + y_labels[merit_id])
-        file_name = fig_path + machine + "-" + name_list[test_case_id * range_extend_num] + "-" + y_labels[
-            merit_id] + ".png"
-        file_name = file_name.replace(" ", "_")
-        plt.savefig(file_name)
-        plt.close()
+    plt.clf()
+    plt.figure(dpi=300, constrained_layout=True)
+    # for test_case_id in range(test_case_num):
+    fmt = lambda x, pos: '{:.0%}'.format(x)
+    fig = sns.heatmap(data=perf_data_speedup[merit_id].reshape([10, 17]).T,
+                      cmap=plt.get_cmap('Purples'),
+                      annot=True,
+                      fmt=".0%",
+                      cbar_kws={'format': FuncFormatter(fmt)},
+                      xticklabels=name_list,
+                      yticklabels=param_list[0:params_num])
+    fig.set_xlabel('Test Cases')
+    fig.set_ylabel('Function Parameters')
+    plt.title(machine + "-" + y_labels[merit_id])
+    file_name = fig_path + machine + "-" + y_labels[merit_id] + ".png"
+    file_name = file_name.replace(" ", "_")
+    plt.savefig(file_name)
+
+plt.close()
 
 os.system('cp perf.log fig/' + machine + "_perf.log")
 os.system('cp average_speedup.log fig/' + machine + "_average_speedup.log")
