@@ -44,7 +44,7 @@ extern "C"
 #endif /* __cplusplus */
 
 void
-irPassLLVMIROptimizeByRange(State * N);
+irPassLLVMIROptimizeByRange(State * N, bool enableOverload, bool enableBuiltinAssume);
 
 #ifdef __cplusplus
 } /* extern "C" */

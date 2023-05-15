@@ -205,7 +205,7 @@ overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> & 
 }
 
 void
-irPassLLVMIROptimizeByRange(State * N)
+irPassLLVMIROptimizeByRange(State * N, bool enableOverload, bool enableBuiltinAssume)
 {
 	if (N->llvmIR == nullptr)
 	{
@@ -368,7 +368,7 @@ irPassLLVMIROptimizeByRange(State * N)
 
     callerMap.clear();
     funcBoundInfo.clear();
-    useOverLoad = true;
+    useOverLoad = enableOverload;
     for (auto & mi : *Mod)
     {
         auto boundInfo = new BoundInfo();
@@ -448,27 +448,29 @@ irPassLLVMIROptimizeByRange(State * N)
     if (useOverLoad)
         overloadFunc(Mod, callerMap);
 
-    for (auto & mi : *Mod)
-    {
-        auto boundInfo = new BoundInfo();
-        mergeBoundInfo(boundInfo, globalBoundInfo);
-        rangeAnalysis(N, mi, boundInfo, callerMap, typeRange, virtualRegisterVectorRange, useOverLoad);
-        funcBoundInfo.emplace(mi.getName().str(), boundInfo);
-        std::vector<std::string> calleeNames;
-        collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
-    }
-
-    flexprint(N->Fe, N->Fm, N->Fpinfo, "emit builtin_assume intrinsic\n");
-    for (auto & mi : *Mod)
-    {
-        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-        if (boundInfoIt != funcBoundInfo.end()) {
-            emitAssume(N, boundInfoIt->second, mi);
+    if (enableBuiltinAssume) {
+        for (auto & mi : *Mod)
+        {
+            auto boundInfo = new BoundInfo();
+            mergeBoundInfo(boundInfo, globalBoundInfo);
+            rangeAnalysis(N, mi, boundInfo, callerMap, typeRange, virtualRegisterVectorRange, useOverLoad);
+            funcBoundInfo.emplace(mi.getName().str(), boundInfo);
+            std::vector<std::string> calleeNames;
+            collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
         }
+
+        flexprint(N->Fe, N->Fm, N->Fpinfo, "emit builtin_assume intrinsic\n");
+        for (auto & mi : *Mod)
+        {
+            auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+            if (boundInfoIt != funcBoundInfo.end()) {
+                emitAssume(N, boundInfoIt->second, mi);
+            }
 //            else
 //            {
 //	            assert(false);
 //	        }
+        }
     }
 
 	/*
