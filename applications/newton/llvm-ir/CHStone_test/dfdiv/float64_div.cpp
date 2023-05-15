@@ -266,8 +266,14 @@ typedef float64 bmx055yAcceleration;
 float64 float64_div (bmx055xAcceleration a, bmx055yAcceleration b)
 {
 #ifdef ASSUME
-    __builtin_assume(a > -16 && a < 16);
-    __builtin_assume(a > -15.4 && a < 16.3);
+    double aLowerBound = -16.0, aUpperBound = 16.0;
+    double bLowerBound = aLowerBound+0.6, bUpperBound = aUpperBound+0.3;
+    bmx055xAcceleration llhs = *(bmx055xAcceleration*)(&aLowerBound);
+    bmx055xAcceleration lrhs = *(bmx055xAcceleration*)(&aUpperBound);
+    bmx055yAcceleration rlhs = *(bmx055xAcceleration*)(&bLowerBound);
+    bmx055yAcceleration rrhs = *(bmx055xAcceleration*)(&bUpperBound);
+    __builtin_assume(a > llhs && a < lrhs);
+    __builtin_assume(b > rlhs && b < rrhs);
 #endif
   flag aSign, bSign, zSign;
   int16 aExp, bExp, zExp;
@@ -454,7 +460,7 @@ const float64 z_output[N] = {
 //    }
 
 
-// clang ../CHStone_test/dfdiv/float64_div.cpp -D DEBUG -D ASSUME -O0 -g -o float64_div_assume -lm
+// clang ../CHStone_test/dfdiv/float64_div.cpp -D DEBUG -D ASSUME -O3 -o float64_div_assume -lm
 #ifdef DEBUG
 
 #include <stdint.h>
@@ -513,10 +519,10 @@ void toc( timespec* start_time, const char* prefix )
 /*
  * random floating point, [min, max]
  * */
-static bmx055xAcceleration
-randomDouble(bmx055xAcceleration min, bmx055xAcceleration max)
+static double
+randomDouble(double min, double max)
 {
-    bmx055xAcceleration randDbValue = min + 1.0 * rand() / RAND_MAX * (max - min);
+    double randDbValue = min + 1.0 * rand() / RAND_MAX * (max - min);
     return randDbValue;
 }
 
@@ -531,9 +537,9 @@ int main(int argc, char** argv) {
         parameters[0] = 3.0;
         parameters[1] = 10.0;
     }
-    double result[iteration_num];
-    bmx055xAcceleration xOps[iteration_num];
-    bmx055yAcceleration yOps[iteration_num];
+    float64 result[iteration_num];
+    double xOps[iteration_num];
+    double yOps[iteration_num];
     for (size_t idx = 0; idx < iteration_num; idx++) {
         xOps[idx] = randomDouble(parameters[0], parameters[1]);
         yOps[idx] = randomDouble(parameters[0] + 0.6, parameters[1] + 0.3);
@@ -541,12 +547,13 @@ int main(int argc, char** argv) {
 
     timespec timer = tic();
     for (size_t idx = 0; idx < iteration_num; idx++) {
-        result[idx] = float64_div((uint64_t)(xOps[idx]), (uint64_t)(yOps[idx]));
+        result[idx] = float64_div(*(bmx055xAcceleration*)(&xOps[idx]), *(bmx055xAcceleration*)(&yOps[idx]));
     }
 
     toc(&timer, "computation delay");
 
-    printf("results: %f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+    printf("results: %f\t%f\t%f\t%f\t%f\n", *(double*)(&result[0]), *(double*)(&result[1]),
+           *(double*)(&result[2]), *(double*)(&result[3]), *(double*)(&result[4]));
 
     return 0;
 }
