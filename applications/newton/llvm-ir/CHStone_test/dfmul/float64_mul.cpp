@@ -262,9 +262,16 @@ extern "C" {
 typedef float64 bmx055xAcceleration;
 typedef float64 bmx055yAcceleration;
 
+#ifndef lowerBound
+#define lowerBound 0
+#endif
+#ifndef upperBound
+#define upperBound 16
+#endif
+
 float64 float64_mul (bmx055xAcceleration a, bmx055yAcceleration b) {
 #ifdef ASSUME
-    double aLowerBound = -16.0, aUpperBound = 16.0;
+    double aLowerBound = lowerBound, aUpperBound = upperBound;
     double bLowerBound = aLowerBound+0.6, bUpperBound = aUpperBound+0.3;
     bmx055xAcceleration llhs = *(bmx055xAcceleration*)(&aLowerBound);
     bmx055xAcceleration lrhs = *(bmx055xAcceleration*)(&aUpperBound);
@@ -434,7 +441,7 @@ const float64 z_output[N] = {
 //    }
 
 
-// clang ../CHStone_test/dfmul/float64_mul.cpp -D DEBUG -D ASSUME -O3 -o float64_mul_assume -lm
+// clang ../CHStone_test/dfmul/float64_mul.cpp -D DEBUG -D ASSUME -D lowerBound=3 -D upperBound=10 -O3 -o float64_mul_assume -lm
 #ifdef DEBUG
 
 #include <stdint.h>
@@ -526,8 +533,9 @@ int main(int argc, char** argv) {
 
     toc(&timer, "computation delay");
 
-    printf("results: %f\t%f\t%f\t%f\t%f\n", *(double*)(&result[0]), *(double*)(&result[1]),
-           *(double*)(&result[2]), *(double*)(&result[3]), *(double*)(&result[4]));
+    printf("results: %llx, %llx, %llx, %llx, %llx\n", result[0], result[1], result[2], result[3], result[4]);
+//    printf("results: %f\t%f\t%f\t%f\t%f\n", *(double*)(&result[0]), *(double*)(&result[1]),
+//           *(double*)(&result[2]), *(double*)(&result[3]), *(double*)(&result[4]));
 
     return 0;
 }
