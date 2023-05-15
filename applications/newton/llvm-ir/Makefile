@@ -21,6 +21,7 @@ CC_FP_FLAG = -msoft-float
 OPT_FP_FLAG = --float-abi=soft
 endif
 
+# e.g. ASSUME=true lowerBound=-2 upperBound=2 make perf_madgwick
 ifdef ASSUME
 MACRO_FLAG += -D ASSUME
 endif
