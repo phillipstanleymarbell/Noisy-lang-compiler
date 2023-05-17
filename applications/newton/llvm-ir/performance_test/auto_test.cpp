@@ -140,7 +140,7 @@ std::pair<double, std::vector<double>> processDataTimer(const std::string test_c
     std::vector<double> function_results;
 
     // perf command
-    std::string cmd = "bash -c 'make " + test_case + " >& compile.log'";
+    std::string cmd = "bash -c 'ENABLE_OVERLOAD=true make " + test_case + " >& compile.log'";
     int command_return = system(cmd.c_str());
     if (command_return != 0) {
         return std::make_pair(0, std::vector<double>(0));
