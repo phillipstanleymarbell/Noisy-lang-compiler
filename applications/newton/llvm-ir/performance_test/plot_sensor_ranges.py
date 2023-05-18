@@ -141,7 +141,7 @@ inst_speedup = np.reshape(inst_speedup, (test_case_num, range_extend_num, params
 
 time_speedup = []
 for i in range(3, len(performance_data), 3):
-    time_speedup.append(float(performance_data[i][3].strip('%')) / 100)
+    time_speedup.append(float(performance_data[i][3].strip('%')) / 100 + 1)
 time_speedup = np.reshape(time_speedup, (test_case_num, range_extend_num, params_num))
 
 ir_reduction = []
@@ -167,16 +167,18 @@ if folder:
     shutil.rmtree(fig_path, ignore_errors=True)
 os.mkdir(fig_path)
 
+heatmap_fmt = ['.2f', '.2f', '.0%', '.0%']
 # Heatmap
 for merit_id in range(1, merit_num, 2):
     plt.clf()
     plt.figure(dpi=300, constrained_layout=True)
     # for test_case_id in range(test_case_num):
-    fmt = lambda x, pos: '{:.0%}'.format(x)
+    cbar_fmt = '{:'+heatmap_fmt[merit_id]+'}'
+    fmt = lambda x, pos: cbar_fmt.format(x)
     fig = sns.heatmap(data=perf_data_speedup[merit_id].reshape([10, 17]).T,
                       cmap=plt.get_cmap('Purples'),
                       annot=True,
-                      fmt=".0%",
+                      fmt=heatmap_fmt[merit_id],
                       cbar_kws={'format': FuncFormatter(fmt)},
                       xticklabels=name_list,
                       yticklabels=param_list[0:params_num])
