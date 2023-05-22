@@ -361,10 +361,10 @@ irPassLLVMIROptimizeByRange(State * N, bool enableOverload, bool enableBuiltinAs
 	 * remove the functions that are optimized by passes.
 	 * */
     if (useOverLoad)
-        cleanFunctionMap(Mod, callerMap);
+        overloadFunc(Mod, callerMap);
 
     if (useOverLoad)
-        overloadFunc(Mod, callerMap);
+        cleanFunctionMap(Mod, callerMap);
 
     callerMap.clear();
     funcBoundInfo.clear();
@@ -406,10 +406,9 @@ irPassLLVMIROptimizeByRange(State * N, bool enableOverload, bool enableBuiltinAs
      * remove the functions that are optimized by passes.
      * */
     if (useOverLoad)
-        cleanFunctionMap(Mod, callerMap);
-
-    if (useOverLoad)
         overloadFunc(Mod, callerMap);
+    if (useOverLoad)
+        cleanFunctionMap(Mod, callerMap);
 
     flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
     callerMap.clear();
@@ -443,10 +442,9 @@ irPassLLVMIROptimizeByRange(State * N, bool enableOverload, bool enableBuiltinAs
 	 * remove the functions that are optimized by passes.
 	 * */
     if (useOverLoad)
-        cleanFunctionMap(Mod, callerMap);
-
-    if (useOverLoad)
         overloadFunc(Mod, callerMap);
+    if (useOverLoad)
+        cleanFunctionMap(Mod, callerMap);
 
     if (enableBuiltinAssume) {
         for (auto & mi : *Mod)
