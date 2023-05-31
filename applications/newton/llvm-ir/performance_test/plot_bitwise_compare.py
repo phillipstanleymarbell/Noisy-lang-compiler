@@ -44,7 +44,7 @@ def bar_plot_groups(labels,
     ax.set_ylabel(ylabel)
     if percentage:
         ax.yaxis.set_major_formatter(PercentFormatter(1))
-        ax.set_ylim([min(min(y1), min(y2))*0.8, max(max(y1), max(y2))*1.3])
+        ax.set_ylim([-0.05, max(max(y1), max(y2))*1.1])
     else:
         ax.set_ylim([min(min(y1), min(y2))*0.8, max(max(y1), max(y2))*1.1])
     ax.set_title(title)
@@ -64,7 +64,7 @@ def bar_plot_groups(labels,
 
 
 if __name__ == '__main__':
-    labels = ["perf_rem_pio2", "perf_sincosf", "perf_float64_add", "perf_float64_div", "perf_float64_mul"]
+    labels = ["rem_pio2", "sincosf", "float64_add", "float64_div", "float64_mul"]
 
     # time speedup
     arm_without_bitwise = [1.04, 1, 1.25, 1.16, 1.22]
@@ -80,10 +80,10 @@ if __name__ == '__main__':
                     'bitwise_op_time_comparison.png')
 
     # size reduction
-    arm_without_bitwise = [0.71, 1, 1, 0.86, 0.89]
-    arm_with_bitwise = [0.8, 0.92, 0.98, 0.79, 0.98]
-    x86_without_bitwise = [0.46, 1, 1, 0.86, 0.86]
-    x86_with_bitwise = [0.65, 0.91, 0.99, 0.79, 0.94]
+    arm_without_bitwise = [1-0.71, 1-1, 1-1, 1-0.86, 1-0.89]
+    arm_with_bitwise = [1-0.8, 1-0.92, 1-0.98, 1-0.79, 1-0.98]
+    x86_without_bitwise = [1-0.46, 1-1, 1-1, 1-0.86, 1-0.86]
+    x86_with_bitwise = [1-0.65, 1-0.91, 1-0.99, 1-0.79, 1-0.94]
     y1 = arm_without_bitwise + x86_without_bitwise
     y2 = arm_with_bitwise + x86_with_bitwise
 
