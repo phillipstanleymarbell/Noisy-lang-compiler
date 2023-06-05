@@ -822,6 +822,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
         {
                 factorType.basicType = noisyBasicTypeNilType;
         }
+	// FIX: factorType can be uninitalized
         noisyFactorNode->noisyType = factorType;
         return factorType;
 }
@@ -1474,6 +1475,8 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 
                                 Token * t = calloc(1,sizeof(Token));
                                 t->sourceInfo = funcSymbol->sourceInfo;
+
+				// FIX: NoisySymbolType to IrNodeType without a cast
                                 t->type = kNoisySymbolTypeNamegenDefinition;
                                 asprintf(&t->identifier,"%s_%d",funcSymbol->identifier,loadCount);
 

@@ -420,6 +420,7 @@ findConstantNoisyType(IrNode * constantNode)
 LLVMTypeRef
 getLLVMTypeFromNoisyType(CodeGenState * S,NoisyType noisyType,bool byRef,int limit)
 {
+	// FIX: Initialize LLVMTypeRef to NULL.
         LLVMTypeRef llvmType;
         NoisyType basicTypeHelper;
         switch (noisyType.basicType)
@@ -769,7 +770,10 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S,IrNode * noisyModuleT
         if (R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PconstantDecl)
         {
                 IrNode * noisyConstantDeclNode = RL(noisyModuleTypeNameDeclNode);
+
+		// FIX: Initialize LLVMTypeRef to NULL.
                 LLVMValueRef constValue;
+		// FIX: Initialize LLVMTypeRef to NULL.
                 LLVMValueRef globalValue;
 
                 if (noisyConstantDeclNode->type == kNoisyIrNodeType_TintegerConst)
@@ -2273,6 +2277,7 @@ noisyAssignmentStatementCodeGen(State * N,CodeGenState * S, IrNode * noisyAssign
                                                 sizeOfExprVal= LLVMBuildGEP2(S->theBuilder,arrayType,LLVMConstPointerNull(LLVMPointerType(arrayType,0)),oneVal,1,"");
                                                 sizeOfExprVal = LLVMBuildPtrToInt(S->theBuilder,sizeOfExprVal,LLVMInt64TypeInContext(S->theContext),"k_sizeOfT");
                                                 srcArrayValue = exprVal;
+						// FIX: Assignment to self without side effects
                                                 dstPtrVal = dstPtrVal;
                                         }
 
