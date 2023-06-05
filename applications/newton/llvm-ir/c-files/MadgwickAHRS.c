@@ -37,7 +37,7 @@
 // Variable definitions
 
 volatile float beta = betaDef;								// 2 * proportional gain (Kp)
-volatile float q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f;	// quaternion of sensor frame relative to auxiliary frame
+volatile float q0 = 0.64306622f, q1 = 0.02828862f, q2 = -0.00567953f, q3 = -0.76526684f;	// quaternion of sensor frame relative to auxiliary frame
 
 //---------------------------------------------------------------------------------------------------
 // Function declarations
@@ -81,7 +81,7 @@ void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float 
 		recipNorm = invSqrt(ax * ax + ay * ay + az * az);
 		ax *= recipNorm;
 		ay *= recipNorm;
-		az *= recipNorm;   
+		az *= recipNorm;
 
 		// Normalise magnetometer measurement
 		recipNorm = invSqrt(mx * mx + my * my + mz * mz);

@@ -20,8 +20,9 @@ typedef int32_t bmx055xMagneto;
 typedef int32_t bmx055yMagneto;
 typedef int32_t bmx055zMagneto;
 
-bmx055xAcceleration	beta = (uint8_t)(betaDef*FRAC_BASE);	//0.1f				// 2 * proportional gain (Kp)
-bmx055xAcceleration	q0 = FRAC_BASE, q1 = 0x0, q2 = 0x0, q3 = 0x0;	// quaternion of sensor frame relative to auxiliary frame
+volatile bmx055xAcceleration	beta = (uint8_t)(betaDef*FRAC_BASE);	//0.1f				// 2 * proportional gain (Kp)
+volatile bmx055xAcceleration	q0 = 0.64306622f*FRAC_BASE, q1 = 0.02828862f*FRAC_BASE,
+                                q2 = -0.00567953f*FRAC_BASE, q3 = -0.76526684f*FRAC_BASE;	// quaternion of sensor frame relative to auxiliary frame
 
 // m=-7 1/Yest=0.0858 Yest=11.3120 Yest_hex=B50
 // m=-6 1/Yest=0.1248 Yest=8.0000 Yest_hex=800
@@ -53,8 +54,6 @@ bmx055xAcceleration	q0 = FRAC_BASE, q1 = 0x0, q2 = 0x0, q3 = 0x0;	// quaternion 
 // m=20 1/Yest=1024.0000 Yest=0.0000 Yest_hex=0
 // m=21 1/Yest=1448.0000 Yest=0.0000 Yest_hex=0
 // m=22 1/Yest=2048.0000 Yest=0.0000 Yest_hex=0
-
-#define MULFIX(_op1, _op2) (((int64_t)_op1*_op2)/FRAC_BASE)
 
 int32_t
 mulfix(int32_t x, int32_t y)
@@ -161,7 +160,7 @@ MadgwickAHRSupdate(bmx055xAngularRate gx, bmx055yAngularRate gy, bmx055zAngularR
 		recipNorm = sqrt_rsqrt(mulfix(ax, ax) + mulfix(ay, ay) + mulfix(az, az), true);
 		ax = mulfix(ax, recipNorm);
 		ay = mulfix(ay, recipNorm);
-		az = mulfix(az, recipNorm);   
+		az = mulfix(az, recipNorm);
 
 		// Normalise magnetometer measurement
 		recipNorm = sqrt_rsqrt(mulfix(mx, mx) + mulfix(my, my) + mulfix(mz, mz), true);
@@ -312,7 +311,11 @@ MadgwickAHRSupdate(bmx055xAngularRate gx, bmx055yAngularRate gy, bmx055zAngularR
 	q2 = mulfix(q2, recipNorm);
 	q3 = mulfix(q3, recipNorm);
 
-//    printf("FIX: q0 = %d\n", q0);
+//    printf("FIX: q0 = %d.%04d, q1 = %d.%04d, q2 = %d.%04d\n",
+//           DISPLAY_INT(q0), DISPLAY_FRAC(q0),
+//           DISPLAY_INT(q1), DISPLAY_FRAC(q1),
+//           DISPLAY_INT(q2), DISPLAY_FRAC(q2));
+//    printf("q0=%d, q1=%d, q2=%d\n", q0, q1, q2);
 	
 	// /* 2nd iter normalization */
 	// recipNorm = sqrt_rsqrt(mulfix(q0, q0) + mulfix(q1, q1) + mulfix(q2, q2) + mulfix(q3, q3), true);

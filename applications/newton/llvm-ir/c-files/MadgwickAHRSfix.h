@@ -20,6 +20,9 @@
 #define FRAC_Q			8
 #define FRAC_BASE		(1<<FRAC_Q)
 #define DEC2FRAC(_d)		((uint8_t)(_d*FRAC_BASE))
+#define DISPLAY_INT(_x)		((_x>>FRAC_Q) + (((uint32_t)_x)>>(sizeof(int32_t)*FRAC_Q-1)))
+#define DISPLAY_FRAC(_y)	(((FRAC_BASE-1)&_y) * (10000/FRAC_BASE))
+#define FORMAT_FIXP		"%s%d.%04d"
 
 void	MadgwickAHRSupdate(int32_t gx, int32_t gy, int32_t gz, int32_t ax, int32_t ay, int32_t az, int32_t mx, int32_t my, int32_t mz);
 void	MadgwickAHRSupdateIMU(int32_t gx, int32_t gy, int32_t gz, int32_t ax, int32_t ay, int32_t az);

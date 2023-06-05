@@ -124,65 +124,65 @@ int main() {
                     break;
                 case 1:
 #if defined(INT_DATA_TYPE)
-                    mag_x[row-2] = atoi(value);
+                    mag_x[row-2] = atoi(value)*FRAC_BASE;
 #elif defined(FP_DATA_TYPE)
                     mag_x[row-2] = atof(value);
 #endif
                     break;
                 case 2:
 #if defined(INT_DATA_TYPE)
-                    mag_y[row-2] = atoi(value);
+                    mag_y[row-2] = atoi(value)*FRAC_BASE;
 #elif defined(FP_DATA_TYPE)
                     mag_y[row-2] = atof(value);
 #endif
                     break;
                 case 3:
 #if defined(INT_DATA_TYPE)
-                    mag_z[row-2] = atoi(value);
+                    mag_z[row-2] = atoi(value)*FRAC_BASE;
 #elif defined(FP_DATA_TYPE)
                     mag_z[row-2] = atof(value);
 #endif
                     break;
                 case 4:
 #if defined(INT_DATA_TYPE)
-                    gyr_x[row-2] = atoi(value);
+                    gyr_x[row-2] = atoi(value)*FRAC_BASE*61;
 #elif defined(FP_DATA_TYPE)
-                    gyr_x[row-2] = atof(value);
+                    gyr_x[row-2] = atof(value)*61;
 #endif
                     break;
                 case 5:
 #if defined(INT_DATA_TYPE)
-                    gyr_y[row-2] = atoi(value);
+                    gyr_y[row-2] = atoi(value)*FRAC_BASE*61;
 #elif defined(FP_DATA_TYPE)
-                    gyr_y[row-2] = atof(value);
+                    gyr_y[row-2] = atof(value)*61;
 #endif
                     break;
                 case 6:
 #if defined(INT_DATA_TYPE)
-                    gyr_z[row-2] = atoi(value);
+                    gyr_z[row-2] = atoi(value)*FRAC_BASE*61;
 #elif defined(FP_DATA_TYPE)
-                    gyr_z[row-2] = atof(value);
+                    gyr_z[row-2] = atof(value)*61;
 #endif
                     break;
                 case 7:
 #if defined(INT_DATA_TYPE)
-                    acc_x[row-2] = atoi(value);
+                    acc_x[row-2] = atoi(value)*FRAC_BASE*2;
 #elif defined(FP_DATA_TYPE)
-                    acc_x[row-2] = atof(value);
+                    acc_x[row-2] = atof(value)*2;
 #endif
                     break;
                 case 8:
 #if defined(INT_DATA_TYPE)
-                    acc_y[row-2] = atoi(value);
+                    acc_y[row-2] = atoi(value)*FRAC_BASE*2;
 #elif defined(FP_DATA_TYPE)
-                    acc_y[row-2] = atof(value);
+                    acc_y[row-2] = atof(value)*2;
 #endif
                     break;
                 case 9:
 #if defined(INT_DATA_TYPE)
-                    acc_z[row-2] = atoi(value);
+                    acc_z[row-2] = atoi(value)*FRAC_BASE*2;
 #elif defined(FP_DATA_TYPE)
-                    acc_z[row-2] = atof(value);
+                    acc_z[row-2] = atof(value)*2;
 #endif
                     break;
                 default:
