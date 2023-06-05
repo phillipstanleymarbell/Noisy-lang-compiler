@@ -10,6 +10,3 @@
 [submodule "submodules/dtrace-scripts"]
 	path = submodules/dtrace-scripts
 	url = ../../phillipstanleymarbell/DTrace-scripts.git
-[submodule "submodules/llvm-project"]
-	path = submodules/llvm-project
-	url = https://github.com/llvm/llvm-project
