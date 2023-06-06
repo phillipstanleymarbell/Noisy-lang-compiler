@@ -1,5 +1,6 @@
 /*
 	Authored 2015. Phillip Stanley-Marbell.
+	Authored 2021. Angelos Plevris.
 
 	All rights reserved.
 
