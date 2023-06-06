@@ -8,6 +8,8 @@ EXAMPLESPATH	= ../../applications/noisy
 
 COMPILERVARIANT	= gcc
 
+LLVM_CONFIG?=llvm-config
+
 SYSNAME		= Noisy
 SYSNAMELOWER	= noisy
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
@@ -16,9 +18,11 @@ include		$(COMMONPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 PLATFORM_CFLAGS	+= -Wno-gnu-designator
 MAKEFLAGS	+= #-j -c
 EXAMPLES_NEWTON_FLAGS = #-O 1#--verbose 1
+LLVMCFLAGS	+= $(shell $(LLVM_CONFIG) --cflags)
+LLVMLDFLAGS	+= $(shell $(LLVM_CONFIG) --cxxflags --ldflags --libs core bitwriter coroutines --system-libs)
 
-CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
-LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
+CCFLAGS		= $(PLATFORM_DBGFLAGS) $(LLVMCFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS) 
+LDFLAGS 	= $(PLATFORM_DBGFLAGS) $(LLVMLDFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
 
 LIBNOISY	= Noisy
 NOISY_L10N	= EN
@@ -52,6 +56,8 @@ SOURCES		=\
 		noisy-irPass-dotBackend.c\
 		noisy-irPass-protobufBackend.c\
 		noisy-timeStamps.c\
+		noisy-typeCheck.c\
+		noisy-codeGeneration.c\
 
 #
 #	Clang seems to be unable to do LTO unless we have all the objects
@@ -73,6 +79,8 @@ OBJS		=\
 		noisy-irHelpers.$(OBJECTEXTENSION)\
 		noisy-irPass-dotBackend.$(OBJECTEXTENSION)\
 		noisy-irPass-protobufBackend.$(OBJECTEXTENSION)\
+		noisy-typeCheck.$(OBJECTEXTENSION)\
+		noisy-codeGeneration.$(OBJECTEXTENSION)\
 
 
 #
@@ -95,6 +103,7 @@ CGIOBJS		=\
 		noisy-irHelpers.$(OBJECTEXTENSION)\
 		noisy-irPass-dotBackend.$(OBJECTEXTENSION)\
 		noisy-irPass-protobufBackend.$(OBJECTEXTENSION)\
+		# noisy-codeGeneration.$(OBJECTEXTENSION)\
 
 
 LIBNOISYOBJS =\
@@ -111,6 +120,7 @@ LIBNOISYOBJS =\
 		noisy-irHelpers.$(OBJECTEXTENSION)\
 		noisy-irPass-dotBackend.$(OBJECTEXTENSION)\
 		noisy-irPass-protobufBackend.$(OBJECTEXTENSION)\
+		# noisy-codeGeneration.$(OBJECTEXTENSION)\
 
 
 HEADERS		=\
@@ -123,6 +133,7 @@ HEADERS		=\
 		noisy-irHelpers.h\
 		noisy-irPass-dotBackend.h\
 		noisy-irPass-protobufBackend.h\
+		noisy-codeGeneration.h\
 
 
 
@@ -185,18 +196,21 @@ noisy.pb-c.$(OBJECTEXTENSION): noisy.pb-c.c noisy.proto Makefile
 	$(CC) $(FLEXFLAGS) $(INCDIRS) $(CCFLAGS) `pkg-config --cflags 'libprotobuf-c >= 1.0.0'` $(WFLAGS) $(OPTFLAGS) -c $<
 
 version.c: $(HEADERS) Makefile
-	echo 'char kNoisyVersion[] = "0.2-alpha-'`git rev-list --count HEAD`' ('`git rev-parse HEAD`') (build '`date '+%m-%d-%Y-%H:%M'`-`whoami`@`hostname -s`-`uname -s`-`uname -r`-`uname -m`\)\"\; > version.c
+	echo 'char kNoisyVersion[] = "0.3-alpha-'`git rev-list --count HEAD`' ('`git rev-parse HEAD`') (build '`date '+%m-%d-%Y-%H:%M'`-`whoami`@`hostname -s`-`uname -s`-`uname -r`-`uname -m`\)\"\; > version.c
 
 examples: $(EXAMPLES) target
 	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny2.n
 	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny3.n
-	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny4.n
-	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny5.n
-	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny6.n
-	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny7.n
 	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny8.n
-	./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny9.n
 
+# (array, list, tuple, or set) not supported yet
+# ./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny4.n
+# ./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny5.n
+# ./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny6.n
+# ./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny7.n
+
+# Segmentation fault (core dumped)
+# ./$(TARGET) $(EXAMPLES_NOISY_FLAGS) $(EXAMPLESPATH)/tiny9.n
 
 scan:	clean
 	scan-build --use-cc=$(CC) -k -V make -j4

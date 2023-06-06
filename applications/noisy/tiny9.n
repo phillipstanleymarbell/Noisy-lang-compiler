@@ -25,7 +25,7 @@ tiny9 : module ()
 	init		: function (argument: int16) -> (result: int16);
 }
 
-init : function (arguments: list of string) -> (results: list of string) =
+init : function (argument: int16) -> (result: int16) =
 {
 	i := 0;
 	iterate

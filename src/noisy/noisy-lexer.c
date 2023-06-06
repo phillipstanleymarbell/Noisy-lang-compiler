@@ -486,6 +486,18 @@ checkWeq3(State *  N, IrNodeType type1, IrNodeType type2, char char2, IrNodeType
 
 	IrNodeType		type;
 
+	if (char2 == '+' && (N->currentToken[N->currentTokenLength - 1] == 'e' || N->currentToken[N->currentTokenLength - 1] == 'E'))
+	{
+		char * leftString = stringAtLeft(N,N->currentToken,N->currentToken[N->currentTokenLength - 1]);
+		if (isDecimalOrRealSeparatedWithChar(N,leftString,'.'))
+		{
+			free(leftString);
+			checkTokenLength(N, 1);
+			N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
+			return;
+		}
+		free(leftString);
+	}
 	/*
 	 *	Gobble any extant chars.
 	 */
@@ -844,6 +856,24 @@ checkMinus(State *  N)
 	TimeStampTraceMacro(kNoisyTimeStampKeyLexerCheckMinus);
 
 	IrNodeType		type;
+
+	/*
+	*	If the previous character of a minus is 'e' or 'E' we check if it is the case of XXXe-YYY which
+	*	corresponds to a float value. Previously it would be parsed as XXX Tminus YYY(integer) and it
+	*	would create problem during typechecking.
+	*/
+	if (N->currentTokenLength >= 1 && (N->currentToken[N->currentTokenLength - 1] == 'e' || N->currentToken[N->currentTokenLength - 1] == 'E'))
+	{
+		char * leftString = stringAtLeft(N,N->currentToken,N->currentToken[N->currentTokenLength - 1]);
+		if (isDecimalOrRealSeparatedWithChar(N,leftString,'.'))
+		{
+			free(leftString);
+			checkTokenLength(N, 1);
+			N->currentToken[N->currentTokenLength++] = N->lineBuffer[N->columnNumber++];
+			return;
+		}
+		free(leftString);
+	}
 
 	/*
 	 *	Gobble any extant chars.

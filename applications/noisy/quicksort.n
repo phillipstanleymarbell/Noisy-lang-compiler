@@ -1,0 +1,100 @@
+# Compile and run at src/noisy/noisyCompileAndRun.sh
+quicksortModule : module ()
+{
+	# printInt32 : function (x : int32) -> (out : int32);
+	init	: function (argumentAx: int32) -> (argumentBx: int32);
+}
+
+
+quicksort: function (arr : array [10] of int32,low : int32, high : int32) -> (ret : array [10] of int32) =
+{
+	b : array [10] of int32;
+	matchseq
+	{
+		low < high =>
+		{
+			pivot := arr[high];  
+
+			i := (low - 1);
+
+			sequence(j:= low; j<= (high -1); j+=1)
+			{
+				match
+				{
+					arr[j] < pivot =>
+					{
+						i += 1;
+						temp := arr[i];
+						arr[i] = arr[j];
+						arr[j] = temp;
+					}
+				};
+			};
+			temp := arr[i+1];
+			arr[i+1] = arr[high];
+			arr[high] = temp;
+			pivotPos := i + 1;
+
+			arr = quicksort(arr : arr, low : low, high : (pivotPos -1));
+			return (ret : quicksort(arr : arr,low : (pivotPos + 1), high : high));
+		}
+	};
+	return (ret : arr);
+	
+}
+
+
+bubblesort : function(arr : array [10] of int32) -> (ret : array [10] of int32) =
+{
+	sequence(i := int32 0; i < 10; i+=1)
+	{
+		sequence(j := int32 0; j < (9 - i); j +=1)
+		{
+			match
+			{
+				arr[j] > arr[j+1] =>
+				{
+					temp := arr[j];
+					arr[j] = arr[j+1];
+					arr[j+1] = temp;
+				}
+			};
+		};
+	};
+
+	return (ret : arr);
+}
+
+
+testsort : function (arr : array [10] of int32, x : int32) -> (ret : array [10] of int32) =
+{
+	matchseq
+	{
+		x == 1 =>
+		{
+			arr = testsort(arr : arr,x : 0);
+		}
+	};
+	return (ret : arr);
+}
+
+init	: function (argumentAx: int32) -> (argumentBx: int32) =
+{
+	a := array [10] of {int32 10,9,8,12,15,2,7,3,9,1};
+	
+	sequence(i := int32 0 ; i < 10 ; i += 1)
+	{
+		#nil = printInt32(x : a[i]);
+ 	};
+
+	a = quicksort(arr : a,low : 0,high : 9);	
+
+	sequence(i = 0 ; i < 10 ; i += 1)
+	{
+		#nil = printInt32(x : a[i]);
+ 	};
+	
+	return (argumentBx : 0);
+}
+
+

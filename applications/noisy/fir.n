@@ -1,0 +1,155 @@
+FIR : module (datatype : type)
+{
+        N : const 26124;
+        filterLen : const 63;
+        maxInputLen : const 80;
+        bufferLen : const 142;
+        readInt16FromCSV : function (nil) -> (ret : int16);
+        printInt32 : function (x : int32) -> (ret : int32);
+        firFloat : function (coeffs : array [63] of float64, input : array [80] of float64, insamp : array [142] of float64,len : int32) -> (out : array [80] of float64);
+        init : function (nil) -> (ret : int32);
+}
+
+firFloat : function (coeffs : array [63] of float64, input : array [80] of float64, insamp : array [142] of float64,len : int32) -> (out : array [80] of float64) =
+{
+        acc : float64;
+        n,k,i : int32;
+        coeffp,inputp : int32;
+
+        output : array [80] of float64;
+
+        sequence(n = 0; n < len; n += 1)
+        {
+                acc = 0.0;
+                inputp = filterLen - 1 + n;
+                coeffp = 0;
+                sequence(k = 0; k < filterLen; k += 1)
+                {
+                        acc += coeffs[coeffp] * insamp[inputp];
+                        coeffp += 1;
+                        inputp -= 1;
+                };
+                output[n] = acc;
+        };
+
+        
+
+        return (out : output);
+}
+
+intToFloat : function (input : array [80] of int16, len : int32) -> (output : array [80] of float64) =
+{
+        out : array [80] of float64;
+        sequence(i := int32 0; i < len; i += 1)
+        {
+                out[i] = float64 input[i];
+        };
+
+        return (output : out);
+}
+
+floatToInt : function (input : array [80] of float64, len : int32) -> (output : array [80] of int16) =
+{
+        out : array [80] of int16;
+
+        sequence(i := int32 0; i < len; i += 1)
+        {
+                matchseq
+                {
+                        input[i] > 32767.0 =>
+                        {
+                                input[i] = 32767.0;
+                        }
+                        input [i] < -32768.0 =>
+                        {
+                                input[i] = -32768.0;
+                        }
+                };
+
+                out[i] = int16 input[i];
+        };
+
+        return (output : out);
+}
+
+init : function (nil) -> (ret : int32) =
+{
+        i : int32;
+        signalArr : array [26124] of int16;
+        input : array[80] of int16;
+        
+        # filter from https://sestevenson.wordpress.com/implementation-of-fir-filtering-in-c-part-1
+        # bandpass filter around 1000Hz and sampling rate = 8000Hz
+        
+        coeffs := array of {float64 0.0448093,  0.0322875,   0.0181163,   0.0087615,   0.0056797,
+                                0.0086685,  0.0148049,   0.0187190,   0.0151019,   0.0027594,
+                                -0.0132676, -0.0232561,  -0.0187804,   0.0006382,   0.0250536,
+                                0.0387214,  0.0299817,   0.0002609,  -0.0345546,  -0.0525282,
+                                -0.0395620,  0.0000246,   0.0440998,   0.0651867,   0.0479110,
+                                0.0000135, -0.0508558,  -0.0736313,  -0.0529380,  -0.0000709,
+                                0.0540186,  0.0766746,   0.0540186,  -0.0000709,  -0.0529380,
+                                -0.0736313, -0.0508558,   0.0000135,   0.0479110,   0.0651867,
+                                0.0440998,  0.0000246,  -0.0395620,  -0.0525282,  -0.0345546,
+                                0.0002609,  0.0299817,   0.0387214,   0.0250536,   0.0006382,
+                                -0.0187804, -0.0232561,  -0.0132676,   0.0027594,   0.0151019,
+                                0.0187190,  0.0148049,   0.0086685,   0.0056797,   0.0087615,
+                                0.0181163,  0.0322875,  -0.0448093 };
+
+        sequence(i = 0; i < N; i += 1 )
+        {
+                signalArr[i] = readInt16FromCSV();
+        };
+
+        insamp := array [142] of {float64 0.0, * => 0.0};
+        
+        k : int32;
+        len : int32;
+        len = maxInputLen;
+        sequence( k = 0; k < N; k+= maxInputLen)
+        {
+                matchseq
+                {
+                        (k + maxInputLen) > N =>
+                        {
+                                len = N - k;
+                        }
+                        true =>
+                        {
+                                len = maxInputLen;
+                        }
+                };
+                sequence(i = 0; i < len; i += 1)
+                {
+                        input[i] = signalArr[i + k];
+                };
+
+                floatInput := intToFloat(input : input, len : len);
+
+                sequence(i = 0; i < len; i+= 1)
+                {
+                        insamp[filterLen - 1 + i] = floatInput[i];
+                };
+
+                firRes := firFloat(coeffs : coeffs, input : floatInput,insamp : insamp,len : len);
+
+                # shift inputs back in time
+
+                sequence(i = 0; i < (filterLen - 1); i += 1)
+                {
+                        insamp[i] =  insamp[len + i];
+                };
+
+                output := floatToInt(input : firRes, len : len);
+
+                #nil = printInt32(x : len);
+                sequence(i = 0 ; i < len; i += 1)
+                {
+                        res := int32 output[i];
+                        nil = printInt32(x : res);
+                };
+                
+        };
+
+       
+        return (ret : 0);
+}

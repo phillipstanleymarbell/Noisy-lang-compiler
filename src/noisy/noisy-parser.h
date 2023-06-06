@@ -166,7 +166,7 @@ IrNode *	noisyParseSetTerm(State *  N, Scope *  currentScope);
 IrNode *	noisyParseSetType(State *  N, Scope *  currentScope);
 IrNode *	noisyParseSigfigDesignation(State *  N, Scope *  currentScope);
 IrNode *	noisyParseSignalDesignation(State *  N, Scope *  currentScope);
-IrNode *	noisyParseSignature(State *  N, Scope *  currentScope);
+IrNode *	noisyParseSignature(State *  N, Scope *  currentScope, bool isReturn);
 IrNode *	noisyParseStarInitList(State *  N, Scope *  scope);
 IrNode *	noisyParseStatement(State *  N, Scope *  currentScope);
 IrNode *	noisyParseStatementList(State *  N, Scope *  currentScope);

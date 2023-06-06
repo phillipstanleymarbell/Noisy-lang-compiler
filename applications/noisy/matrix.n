@@ -1,0 +1,190 @@
+matrix : module(matrixDataType : type)
+{
+        matrixSum : function (matrixA : array [32][32] of matrixDataType, clipval : matrixDataType) -> (result : int32);
+        matrixMulConst : function (matrixA : array [32][32] of matrixDataType, constVal : matrixDataType) -> (result : array [32][32] of matrixDataType);
+        matrixAddConst : function (matrixA : array [32][32] of matrixDataType, constVal : matrixDataType) -> (result : array [32][32] of matrixDataType);
+        matrixMulVect : function (matrixA : array[32][32] of matrixDataType, vectorB : array[32] of matrixDataType) -> (result : array[32] of matrixDataType);
+        matrixMulMatrix : function (matrixA : array[32][32] of matrixDataType, matrixB : array[32][32] of matrixDataType) -> (result : array [32][32] of matrixDataType);
+        printInt32 : function (x : int32) -> (bytesPrinted : int32);
+        printMatrix : function(matrix : array[32][32] of int32) -> (nil);
+        printVector : function(vec : array[32] of int32) -> (nil);
+        init : function (nil) -> (nil);
+}
+
+matrixSum : function (matrixA : array [32][32] of matrixDataType, clipval : matrixDataType) -> (result : int32) =
+{
+        tmp,prev,cur : matrixDataType;
+        tmp = 0;
+        prev= 0;
+        cur = 0;
+        
+        res : int32;
+        res = 0;
+        i,j : int32;
+
+        sequence(i = 0; i < 32; i += 1)
+        {
+                sequence(j = 0; j < 32 ; j += 1)
+                {
+                        cur = matrixA[i][j];
+                        tmp = tmp + cur;
+                        matchseq 
+                        {
+                                tmp > clipval => 
+                                {       
+                                        res += 10;
+                                        tmp = 0;
+                                }
+                                true =>
+                                {
+                                        matchseq
+                                        {
+                                                cur > prev =>
+                                                {
+                                                        res = res + 1;
+                                                }
+                                        };
+                                }
+                        };
+                        prev = cur;
+                };
+        };
+        return (result : res);
+}
+
+matrixMulConst : function (matrixA : array [32][32] of matrixDataType, constVal : matrixDataType) -> (result : array [32][32] of matrixDataType) =
+{
+        i,j : int32;
+        sequence(i = 0; i < 32; i += 1)
+        {
+                sequence(j = 0; j < 32; j += 1)
+                {
+                        matrixA[i][j] *= constVal;
+                };
+        };
+
+        return (result : matrixA);
+}
+
+matrixAddConst : function (matrixA : array [32][32] of matrixDataType, constVal : matrixDataType) -> (result : array [32][32] of matrixDataType) =
+{
+        i,j : int32;
+        sequence(i = 0; i < 32; i += 1)
+        {
+                sequence(j = 0; j < 32; j += 1)
+                {
+                        matrixA[i][j] += constVal;
+                };
+        };
+
+        return (result : matrixA);
+}
+
+matrixMulVect : function (matrixA : array[32][32] of matrixDataType, vectorB : array[32] of matrixDataType) -> (result : array[32] of matrixDataType) =
+{
+        i,j : int32;
+        resVect : array[32] of matrixDataType;
+        sequence(i = 0; i < 32; i+= 1)
+        {
+                resVect[i] = 0;
+                sequence(j = 0; j < 32; j += 1)
+                {
+                        resVect[i] += matrixA[i][j] * vectorB[j];
+                };
+        };
+        return (result : resVect);
+}
+
+matrixMulMatrix : function (matrixA : array[32][32] of matrixDataType, matrixB : array[32][32] of matrixDataType) -> (result : array [32][32] of matrixDataType) =
+{
+        i,j,k : int32;
+        matrixRes : array [32][32] of matrixDataType;
+        sequence(i = 0; i < 32; i += 1)
+        {
+                sequence(j = 0; j < 32; j += 1)
+                {
+                        matrixRes[i][j] = 0;
+                        sequence(k = 0; k < 32; k += 1)
+                        {
+                                matrixRes[i][j] += matrixA[i][k] * matrixB[k][j];
+                        };
+                };
+        };
+
+        return (result : matrixRes);
+}
+
+
+printMatrix : function(matrix : array[32][32] of int32) -> (nil) =
+{
+        i,j : int32;
+        sequence(i = 0; i < 32; i += 1)
+        {
+                sequence(j = 0; j < 32; j += 1)
+                {
+                        nil = printInt32(x : matrix[i][j]);
+                };
+        };
+}
+
+printVector : function(vec : array[32] of int32) -> (nil) =
+{
+        i : int32;
+        sequence(i = 0; i < 32; i += 1)
+        {
+                nil = printInt32(x : vec[i]);
+        };
+}
+
+
+init : function (nil) -> (nil) =
+{
+        int32Sum := load matrix->matrixSum (int32) (path matrix);
+        int32Add := load matrix->matrixAddConst (int32) (path matrix);
+        int32Mul := load matrix->matrixMulConst (int32) (path matrix);
+        int32MulVect := load matrix->matrixMulVect (int32) (path matrix);
+        int32MulMatrix := load matrix->matrixMulMatrix (int32) (path matrix);
+
+        matrixA : array[32][32] of int32;
+        vectorB := array[32] of {int32 1, * => 1};
+        matrixB : array[32][32] of int32;
+
+        i,j : int32;
+        sequence(i = 0; i < 32; i = i + 1)
+        {
+                sequence(j = 0; j < 32; j = j + 1)
+                {
+                        matrixA[i][j] = i * 32 + j;
+                        matchseq
+                        {
+                                i == j =>
+                                {
+                                        matrixB[i][j] = 1;
+                                }
+                                true =>
+                                {
+                                        matrixB[i][j] = 0;
+                                }
+                        };
+                };
+        };
+
+        res : int32;
+
+        matrixA = int32Add(matrixA : matrixA,constVal : 0);
+
+        nil = printMatrix(matrix : matrixA);
+
+        matrixA = int32MulMatrix(matrixA : matrixA, matrixB : matrixB);
+
+        vectorB = int32MulVect(matrixA : matrixA, vectorB  : vectorB);
+
+        nil = printInt32(x : vectorB[0]);
+
+        # matrixA = int32Mul(matrixA : matrixA,constVal : 2);
+
+        # res = int32Sum(matrixA : matrixA, clipval : 120);
+
+
+        # nil = printInt32(x : res);
+}

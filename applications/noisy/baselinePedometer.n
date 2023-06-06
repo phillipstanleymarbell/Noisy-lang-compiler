@@ -1,0 +1,148 @@
+Pedometer : module()
+{
+        DIST_GRANULARITY : const 100;
+        DC_SAMPLES_FACTOR : const 12;
+        fileLines : const 15228;
+        precision : const 0.1;
+        readFloat32FromCSV : function (nil) -> (x : float32);
+        printInt32 : function (x : int32) -> (out : int32);
+        fabsf : function (x : float32) -> (out : float32);
+        init : function (nil) -> (out : int32);
+}
+
+init : function (nil) -> (out : int32) =
+{
+        measurementCount := int32 -1;
+
+        reset := int32 1;
+        steps := int32 0;
+        strides := int32 0;
+        
+        timestamp := float32 0.0;
+        timestampPrevious := float32 -1000.0;
+
+        timestampSamples : array [4] of float32;
+        xSamples : array [4] of float32;
+        ySamples : array [4] of float32;
+        zSamples : array [4] of float32;
+
+        acc_x : float32;
+        acc_y : float32;
+        acc_z : float32;
+
+        max_z := float32 -10000.0;
+        min_z := float32 10000.0;
+        threshold_z := float32 0.0;
+
+        measurementOld_z := float32 0.0;
+        measurementNew_z := float32 0.0;
+
+        zRange : float32;
+
+        
+        sequence(reads := int32 0; reads < fileLines; reads += 1)
+        {
+                timestampAccum := float32 0.0;
+                samplesTaken := int32 0;
+                acc_x = 0.0;
+                acc_y = 0.0;
+                acc_z = 0.0;
+
+                sequence(i := int32 0; i < 4; i += 1)
+                {
+                        timestampSamples[i] = readFloat32FromCSV();
+                        xSamples[i] = readFloat32FromCSV();
+                        ySamples[i] = readFloat32FromCSV();
+                        zSamples[i] = readFloat32FromCSV();
+
+                        timestampAccum += timestamp;
+                        samplesTaken += 1;
+
+                        acc_x += xSamples[i];
+                        acc_y += ySamples[i];
+                        acc_z += zSamples[i];
+                        timestamp = timestampSamples[i];
+                };
+
+                measurementOld_z = measurementNew_z;
+
+                match
+                {
+                        measurementCount == -1 =>
+                        {
+                                measurementNew_z = acc_y;
+                                measurementCount = 0;
+                        }
+                };
+
+                matchseq
+                {
+                        fabsf(x : acc_y - measurementNew_z) > precision =>
+                        {
+                                measurementNew_z = acc_y;
+                                match
+                                {
+                                        measurementNew_z > max_z =>
+                                        {
+                                                max_z = measurementNew_z;
+                                        }
+                                        measurementNew_z < min_z =>
+                                        {
+                                                min_z = measurementNew_z;
+                                        }
+                                };
+
+                                zRange = max_z - min_z;
+
+                                match
+                                {
+                                        (measurementCount < 10) || ((measurementCount % 50) == 0) =>
+                                        {
+                                                threshold_z = (max_z + min_z) / 2.0;
+
+                                                temp_z := max_z;
+                                                max_z = min_z;
+                                                min_z = temp_z;
+                                        }
+                                };
+
+                                match
+                                {
+                                        (measurementOld_z > measurementNew_z) &&
+                                        (threshold_z > measurementNew_z) &&
+                                        (zRange > 2.5) && (zRange < 20.0)             =>
+                                        {
+                                                matchseq
+                                                {
+                                                        (reset != 0) ||
+                                                        (((timestamp - timestampPrevious) > 0.2) &&
+                                                        ((timestamp - timestampPrevious) < 2.0)) =>
+                                                        {
+                                                                steps += 1;
+                                                                reset = 0;
+                                                                timestampPrevious = timestamp;
+                                                        }
+                                                        ((timestamp -timestampPrevious) > 2.0) && (reset == 0) =>
+                                                        {
+                                                                strides += 1;
+                                                                reset = 1;
+                                                        }
+                                                };
+                                        }
+                                };
+
+                                measurementCount += 1;
+                        }
+                        true =>
+                        {
+                                ;
+                        }
+                };
+        };
+
+        nil = printInt32(x : steps);
+        nil = printInt32(x : strides + 1);
+        nil = printInt32(x : measurementCount);
+
+        return(out : 0);
+}

@@ -37,6 +37,8 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <llvm-c/Core.h>
+
 typedef enum
 {
 	kCommonVerbosityDebugLexer	=	(1 << 0),
@@ -848,6 +850,37 @@ typedef enum
 	kCommonPostFileWriteActionMax,
 } PostFileWriteAction;
 
+typedef enum
+{
+        noisyBasicTypeInit,
+        noisyBasicTypeBool,
+        noisyBasicTypeInt4,
+        noisyBasicTypeInt8,
+        noisyBasicTypeInt16,
+        noisyBasicTypeInt32,
+        noisyBasicTypeInt64,
+        noisyBasicTypeInt128,
+        noisyBasicTypeNat4,
+        noisyBasicTypeNat8,
+        noisyBasicTypeNat16,
+        noisyBasicTypeNat32,
+        noisyBasicTypeNat64,
+        noisyBasicTypeNat128,
+        noisyBasicTypeIntegerConstType,
+        noisyBasicTypeFloat16,
+        noisyBasicTypeFloat32,
+        noisyBasicTypeFloat64,
+        noisyBasicTypeFloat128,
+        noisyBasicTypeRealConstType,
+        noisyBasicTypeArithType,
+        noisyBasicTypeString,
+        noisyBasicTypeArrayType,
+        noisyBasicTypeNilType,
+	noisyBasicTypeNamegenType,
+        noisyBasicTypeErrorType
+} NoisyBasicType;
+
+
 
 typedef struct Scope		Scope;
 typedef struct Symbol		Symbol;
@@ -861,6 +894,25 @@ typedef struct Invariant	Invariant;
 typedef struct Signal		Signal;
 typedef struct Sensor		Sensor;
 typedef struct Modality		Modality;
+
+typedef struct NoisyType	NoisyType;
+
+enum
+{
+	kNoisyStaticArrayMaxNumberOfDimensions = 128
+};
+
+struct NoisyType
+{
+        NoisyBasicType basicType;
+        int dimensions;
+        NoisyBasicType arrayType;
+	Symbol * functionDefinition;
+        int sizeOfDimension[kNoisyStaticArrayMaxNumberOfDimensions];
+};
+
+
+
 
 struct Dimension
 {
@@ -1002,6 +1054,7 @@ struct IrNode
 	 *	Used for evaluating dimensions in expressions
 	 */
 	Physics *		physics;
+	NoisyType		noisyType;
 
 	/*
 	 *	Used for connecting invariant parameters to signals.
@@ -1120,6 +1173,27 @@ struct Scope
 	IrNodeColor		nodeColor;
 };
 
+typedef enum
+{
+	kNoisySymbolTypeTypeError,
+	kNoisySymbolTypeProgtype,
+	kNoisySymbolTypeConstantDeclaration,
+	kNoisySymbolTypeTypeDeclaration,
+	kNoisySymbolTypeNamegenDeclaration,
+	kNoisySymbolTypeVariableDeclaration,
+	kNoisySymbolTypeNamegenDefinition,
+	kNoisySymbolTypeUse,
+	kNoisySymbolTypeModule,
+	kNoisySymbolTypeModuleParameter,
+	kNoisySymbolTypeParameter,
+	kNoisySymbolTypeReturnParameter,
+
+	/*
+	 *	Code depends on this bringing up the rear.
+	 */
+	kNoisySymbolTypeMax,
+} NoisySymbolType;
+
 
 struct Symbol
 {
@@ -1134,7 +1208,25 @@ struct Symbol
 	/*
 	 *	Declaration, type definition, use, etc. (kNoisySymbolTypeXXX)
 	 */
-	int 			symbolType;
+	NoisySymbolType 	symbolType;
+	NoisyType		noisyType;
+
+	/*
+	*	The IrNode where function definition starts. Used for loading functions.
+	*/
+	IrNode *		functionDefinition;
+
+	/*
+	*	Number of parameters. Used only for functions and Noisy
+	*	code generation.
+	*/
+	int			parameterNum;
+	bool			isTypeComplete;
+	bool			isSensorChannel;
+	bool			isChannel;
+	int			paramPosition;
+	LLVMValueRef		llvmPointer;
+	LLVMValueRef		inputChanAddress;
 
 	/*
 	 *	Scope within which sym appears
@@ -1154,7 +1246,7 @@ struct Symbol
 	/*
 	 *	If an I_CONST, its value.
 	 */
-	int				intConst;
+	int			intConst;
 	double			realConst;
 	char *			stringConst;
 	
@@ -1207,6 +1299,7 @@ typedef struct
 	FlexPrintBuf *		Fpsmt2;
 	FlexPrintBuf *		Fpc;
 	FlexPrintBuf *		Fph;
+	FlexPrintBuf *		Fpg;
 	FlexPrintBuf *		Fprtl;
 	FlexPrintBuf *		Fpmathjax;
 	FlexPrintBuf *		Fpipsa;
@@ -1259,6 +1352,7 @@ typedef struct
 	uint64_t		currentTokenLength;
 	Token *			tokenList;
 	Token *			lastToken;
+	Symbol *		currentFunction;
 
 	/*
 	 *	The root of the IR tree, and top scope

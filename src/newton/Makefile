@@ -26,6 +26,7 @@ CXXFLAGS	= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) $(PLATFORM_OPTFLAGS)
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
 
+CCFLAGS+=$(shell $(LLVM_CONFIG) --cflags)
 LDFLAGS+=$(shell $(LLVM_CONFIG) --ldflags)
 CXXFLAGS+=$(COMMON_FLAGS) $(shell $(LLVM_CONFIG) --cxxflags) -fno-rtti
 CPPFLAGS+=$(shell $(LLVM_CONFIG) --cppflags) -I$(shell $(LLVM_CONFIG) --includedir)

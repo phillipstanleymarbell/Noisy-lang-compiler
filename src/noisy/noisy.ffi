@@ -1386,6 +1386,7 @@ production	kNoisyIrNodeType_Pstatement:			followset = {
 --//		assignmentStatement	::=	identifierOrNilList ((":" (constantDecl | typeDecl | typeExpr)) | (assignOp expression))
 --//						| "(" identifierOrNilList ")" assignOp expression .
 production	kNoisyIrNodeType_PassignmentStatement:		followset = {
+										kNoisyIrNodeType_TrightParens,
 										kNoisyIrNodeType_Tsemicolon,
 									}
 
@@ -1461,7 +1462,7 @@ production	kNoisyIrNodeType_Pexpression:			followset = {
 										followset(kNoisyIrNodeType_PassignmentStatement)
 										kNoisyIrNodeType_TrightParens,
 										kNoisyIrNodeType_Tsemicolon,
-										kNoisyIrNodeType_Tcomma,
+										kNoisyIrNodeType_TrightBracket,
 										kNoisyIrNodeType_Tcolon,
 									}
 
@@ -1560,6 +1561,7 @@ production	kNoisyIrNodeType_PtupleValue:			followset = {
 production	kNoisyIrNodeType_PfieldSelect:			followset = {
 										followset(kNoisyIrNodeType_PidentifierOrNil),
 										followset(kNoisyIrNodeType_Pfactor),
+										firstset(kNoisyIrNodeType_PfieldSelect)
 									}
 
 --//		highPrecedenceBinaryOp	::=	"*" | "/" | "%" | "&" | "^" | "::" | "lowpass" | "highpass" | "dotproduct"
@@ -1854,8 +1856,8 @@ production	kNoisyIrNodeType_PsetCmpOp:			followset = {
 --//
 --//
 token	kNoisyIrNodeType_Tarray:				followset = {
-										firstset(kNoisyIrNodeType_TleftBracket),
-										firstset(kNoisyIrNodeType_Tof),
+										kNoisyIrNodeType_TleftBracket,
+										kNoisyIrNodeType_Tof,
 									}
 
 token	kNoisyIrNodeType_Tat:					followset = {
@@ -2057,6 +2059,7 @@ token	kNoisyIrNodeType_TminusAssign:				followset = {
 									}
 
 token	kNoisyIrNodeType_TminusMinus:				followset = {
+										followset(kNoisyIrNodeType_Pterm),
 										firstset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 									}
 
@@ -2094,6 +2097,7 @@ token	kNoisyIrNodeType_TplusAssign:				followset = {
 									}
 
 token	kNoisyIrNodeType_TplusPlus:				followset = {
+										followset(kNoisyIrNodeType_Pterm),
 										firstset(kNoisyIrNodeType_PhighPrecedenceBinaryOp),
 									}
 
@@ -2195,6 +2199,7 @@ token	kNoisyIrNodeType_TleftBracket:				followset = {
 
 token	kNoisyIrNodeType_TrightBracket:				followset = {
 										kNoisyIrNodeType_Tof,
+										kNoisyIrNodeType_TleftBracket,
 										followset(kNoisyIrNodeType_PfieldSelect),
 									}
 

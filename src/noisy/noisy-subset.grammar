@@ -1,0 +1,154 @@
+/*
+*       This is the subset of Noisy for which we will create the LLVM backend. This subset exludes the
+*       declarative part of Noisy (problem definitions and predicates) . Regarding the imperative part, it will support only
+*       integer and float arithmetics as well as the most basic data structures.
+*/
+
+/*
+ *	Lexical elements
+ */
+character		::=	Unicode-0000h-to-Unicode-FFFFh .
+reservedOperatorOrSeparatorToken ::=	"~" | "!" | "%" | "^" | "&" | "*" | "(" | ")" | "," | "-" | "+" | "="
+				| "/" | ">" | "<" | ";" | ":" | "'" | "\"" | "{" | "}" | "[" | "]" | "|" 
+				| "<-" | "." | "<=" | ">=" | "^=" | "|=" | "&=" | "%=" | "/=" | "*=" | "-="
+				| "+=" | ":=" | "!=" | ">>" | ">>=" | "<<" | "<<=" | "<-=" | "&&" | "||" 
+				| "::" | "=>" | "<=>" | "==" | "++" | "--" | ">=<" | "@" .
+
+reservedIdentifiers		::=	"A" | "K" | "acceleration" | "adt" | "alpha" | "Ampere" | "and" |
+				"anglerate" | "bool" | "candela" | "cardinality" | "cd" |
+				"complex" | "const" | "crossproduct" | "current" | "dimensions" |
+				"distance" | "dotproduct" | "epsilon" | "erasures" |
+				"distortions" | "exists" | "false" | "fixed" | "float128" "float16" |
+				"float32" | "float4" | "float64" | "float8" | "forall" | "fourier" |
+				"function" | "given" | "head" | "highpass" | "relativehumidity" |
+				"in" | "include" | "int128" | "int16" | "int32" | "int4" | "interrupt" | "exception" |
+				"int64" | "int8" | "iterate" | "Kelvin" | "kg" | "kilogram" | "latency" |
+				"length" | "list" | "load" | "lowpass" | "luminosity" | "m" | "magneticflux" |
+				"mass" | "match" | "matchseq" | "material" | "measurement" | "meter" | "module" | "mole" |
+				"nat128" | "nat16" | "nat32" | "nat4" | "nat64" | "nat8" | "nil" | "of" |
+				"omega" | "parallel" | "predicate" | "pressure" | "probdef" | "quantize" |
+				"rational" | "return" | "reverse" | "s" | "samples" | "sample" | "second" |
+				"sequence" | "set" | "sigfigs" | "signal" | "sort" | "string" | "tail" |
+				"tailtip" | "tau" | "tderivative" | "temperature" | "time" | "timebase" |
+				"timeseries" | "tintegral" | "true" | "type" | "typeannote" | "typemax" |
+				"typemin" | "units" | "valfn" | "vector" .
+
+zeroToNine		=	"0-9" .
+oneToNine		=	"1-9" .
+radix			=	oneToNine {zeroToNine} "r" .
+charConst		=	"'" character "'" .
+integerConst		::=	["+" | "-"] [radix] ("0" | oneToNine {zeroToNine}) | charConst .
+boolConst		::=	"true" | "false" .
+drealConst		=	("0" | oneToNine {zeroToNine}) "." {zeroToNine} .
+erealConst		=	(drealConst | integerConst) ("e" | "E") integerConst .
+realConst		::=	["+" | "-"] (drealConst | erealConst) .
+stringConst		::=	"\"" {character} "\"" .
+idchar			=	char-except-rsvopseptoken .
+identifier		::=	(idchar-except-zeroToNine) {idchar} .
+
+/*
+ *	Syntactic elements: top-level program structure
+ */
+program			::=	moduleDecl {(moduleDecl | functionDefn)} .
+functionDefn		::=	identifier ":" "function" signature "->" signature "="  scopedStatementList .
+signature		::=	"(" ((identifier ":" typeExpr {"," identifier ":" typeExpr}) | "nil") ")" .
+moduleDecl		::=	identifier ":" "module" "(" typeParameterList ")" "{" moduleDeclBody "}" .
+moduleDeclBody		=	{moduleTypeNameDecl ";"} .
+
+/*
+ *	Types
+ */
+moduleTypeNameDecl	::=	identifier ":" (constantDecl | typeDecl | typeAnnoteDecl | functionDecl) .     
+constantDecl		=	"const" (integerConst | realConst | boolConst) . 				 
+typeDecl		=	("type" typeExpr) .
+typeAnnoteDecl		::=	"typeannote" typeAnnoteList .
+valfnSignature		=	identifier ":" "valfn" .
+functionDecl		::=	"function" writeTypeSignature "->" readTypeSignature .
+readTypeSignature	=	signature .
+writeTypeSignature	=	signature .
+identifierOrNil		=	qualifiedIdentifier | "nil" .
+identifierOrNilList	=	identifierOrNil {"," identifierOrNil} .
+identifierList		=	identifier {"," identifier} .
+typeExpr		::=	(basicType ["and" typeAnnoteList]) | anonAggregateType | typeName .
+typeAnnoteItem		= 	dimensionsDesignation | unitsDesignation | signalDesignation
+				| timeseriesDesignation | sigfigDesignation | tolerance .
+typeAnnoteList		=	typeAnnoteItem {"and" typeAnnoteItem} .
+typeName		::=	identifier ["->" identifier] .
+dimensionsDesignation	::=	"dimensions" dimensionArithExpr .
+sigfigDesignation	::=	"sigfigs" integerConst .
+signalDesignation	::=	"signal" (basicSignal | identifier) .
+timeseriesDesignation	::=	"timeseries" | "measurement" .
+unitsDesignation	::=	"units" unitsArithExpr .
+dimensionArithFactor	::=	basicSignalDimension | "(" dimensionArithExpr ")" .
+dimensionArithTerm	::=	dimensionArithFactor {highPrecedenceArith2ArithOp dimensionArithFactor} .
+dimensionArithExpr	::=	dimensionArithTerm {lowPrecedenceArith2ArithOp dimensionArithTerm} .
+unitsArithFactor	::=	(basicSignalUnits | identifier | numericConst) | "(" unitsArithExpr ")" .
+unitsArithTerm		::=	unitsArithFactor {highPrecedenceArith2ArithOp unitsArithFactor} .
+unitsArithExpr		::=	unitsArithTerm {lowPrecedenceArith2ArithOp unitsArithTerm} .
+basicSignalDimension	::=	"distance" | "mass" | "time" | "material" | "current" | "luminosity" | "temperature" | "interrupt" | "exception" .
+basicSignalUnits	::=	"m" | "kg" | "s" | "mole" | "A" | "cd" | "K" | "meter" | "kilogram" | "second" | "mole" | "Ampere" | "candela" | "Kelvin" .
+basicSignal		::=	basicSignalDimension | "pressure" | "acceleration" | "magneticfluxdensity"
+				| "relativehumidity" | "anglerate" .
+tolerance		::=	accuracyTolerance | lossTolerance | latencyTolerance .
+accuracyTolerance	::=	"epsilon" "(" realConst "," realConst ")" .
+lossTolerance		::=	"alpha" "(" realConst "," realConst ")" .
+latencyTolerance	::=	"tau" "(" realConst "," realConst ")" .
+basicType		::=	"bool" | integerType | realType | "string" .
+integerType		::=	"nat4" | "nat8" | "nat16" | "nat32" | "nat64" | "nat128"
+				| "int4" | "int8" | "int16" | "int32" | "int64" | "int128" .
+realType		::=	"float4" | "float8" | "float16" | "float32" | "float64" | "float128" .
+numericType		::=	integerType | realType .
+anonAggregateType	::=	arrayType .
+tupleType		::=	"(" typeExpr {"," typeExpr} ")" .
+arrayType		::=	"array" "[" integerConst "]" {"[" integerConst "]"} "of" typeExpr ["rawmem" "@" intParamOrConst] .
+numericConst		=	integerConst | realConst .
+initList		=	"{" expression {"," expression} "}" .
+idxInitList		=	"{" element {"," element} "}" .
+starInitList		=	"{" element {"," element} ["," "*" "=>" expression] "}" .
+element			=	expression [ "=>" expression ] .
+typeParameterList	=	[identifier ":" "type" {"," identifier ":"  "type"}] .
+
+/*
+ *	Statements
+ */
+scopedStatementList	::=	"{" statementList "}" .
+statementList		=	{statement} .
+statement		::=	[ assignmentStatement | matchStatement | iterateStatement | sequenceStatement
+				| parallelStatement | scopedStatementList | operatorToleranceDecl | returnStatement] ";" .
+assignmentStatement	::=	identifierOrNilList ((":" (constantDecl | typeDecl | typeExpr)) | (assignOp expression))
+				| "(" identifierOrNilList ")" assignOp expression .
+returnStatement		::=	"return" returnSignature .
+returnSignature		=	"(" identifier ":" expression {"," identifier ":" expression} ")" .
+operatorToleranceDecl	=	(highPrecedenceBinaryOp | lowPrecedenceBinaryOp | unaryOp) ":" typeExpr .
+assignOp		::=	"=" | "^=" | "|=" | "&=" | "%=" | "/=" | "*=" | "-=" | "+=" | ">>="
+				| "<<=" | "<-=" | ":=" .
+matchStatement		::=	("match" | "matchseq") "{" guardedStatementList "}" .
+iterateStatement	::=	"iterate" "{" guardedStatementList "}" .
+sequenceStatement	::=	"sequence" orderingHead scopedStatementList .
+orderingHead		=	"(" assignmentStatement ";" expression ";" assignmentStatement ")" .
+guardedStatementList	=	{(expression | chanEventExpr) "=>" scopedStatementList} .
+
+/*
+ *	Expressions
+ */
+expression		::=	(term {lowPrecedenceBinaryOp term}) | anonAggrCastExpr | loadExpr .
+arrayCastExpr		::=	"array" (("of" idxInitList) | ("[" integerConst "]" "of" starInitList)) .
+anonAggrCastExpr	::=     arrayCastExpr .
+chanEventExpr		::=	("erasures" | "distortions" | "latency") "of" identifier cmpOp expression .
+loadExpr		::=	"load" identifier ["->" identifier] [tupleType] (stringConst | "(" "path" typeName ")") .
+term			::=	[basicType] [unaryOp] factor ["++" | "--"] {highPrecedenceBinaryOp factor} .
+factor			::=	qualifiedIdentifier | integerConst | realConst | stringConst | boolConst
+				| "(" expression ")" | namegenInvokeShorthand | typeMinExpr | typeMaxExpr | "nil" .
+qualifiedIdentifier	=	identifier {fieldSelect} .
+typeMinExpr		::=	"typemin" "(" numericType ")" .
+typeMaxExpr		::=	"typemax" "(" numericType ")" .
+namegenInvokeShorthand	=	identifier "(" [identifier ":" expression {","  identifier ":" expression}] ")" .
+fieldSelect		::=	("[" expression [":" expression] "]") .
+highPrecedenceBinaryOp	::=	"*" | "/" | "%" | "&" | highPrecedenceBinaryBoolOp .
+lowPrecedenceBinaryOp	::=	"+" | "-" | ">>" | "<<" | "|"  | cmpOp | lowPrecedenceBinaryBoolOp .
+cmpOp			::=	"==" | "!=" | ">" | "<" | "<=" | ">=" .
+unaryOp			::=	"~" | "-"  | "+" | "<-" | "length" | "sort" | "reverse" | unaryBoolOp .
+lowPrecedenceBinaryBoolOp	::=	"||" .
+highPrecedenceBinaryBoolOp	::=	"&&" | "^" .
+unaryBoolOp			::=	"!" .
+

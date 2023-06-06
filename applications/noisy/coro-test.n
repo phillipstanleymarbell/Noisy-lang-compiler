@@ -1,0 +1,56 @@
+# Compile and run at src/noisy/noisyCompileAndRunCoro.sh
+#
+# Coroutines need to pass from the optimizer before we are able
+# to create the object file with llc tool.
+coroTest : module ()
+{
+	test : function (input : array [10] of int32) -> (output: int32);
+	printInt32 : function (x : int32) -> (bytesPrinted : int32);
+	readInt32 : function (nil) -> (x : int32);
+	init	: function (nil) -> (x : int32);
+}
+
+test : function (input : array [10] of int32) -> (output: int32) =
+{
+        a : array [10] of int32;
+        i := int32 0;
+
+        iterate
+        {
+                true => 
+                {
+                        # readFromChannel
+                        a = <-input;
+                        output <-= a[i];
+                        i += 1;
+			# writeToChannel
+                }
+        };
+}
+
+
+init : function (nil) -> (x : int32) =
+{
+        arr := array[10] of {int32 0, * => 0};
+        n : int32;
+	fibRet : int32;
+
+        #n = readInt32();
+
+        f := load coroTest->test (path coroTest);
+
+        i := int32 0;
+
+        iterate
+        {
+                i < 10 =>
+                {
+                        f <-= arr;
+                        fibRet = <-f;
+                        nil = printInt32(x : fibRet);
+                        i += 1;
+                        arr[i] += i;
+                }
+        };
+	return (x : 0);
+}

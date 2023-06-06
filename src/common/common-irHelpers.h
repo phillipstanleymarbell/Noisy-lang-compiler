@@ -38,6 +38,7 @@
 
 IrNode *	genIrNode(State *  N, IrNodeType type, IrNode *  irLeftChild, IrNode *  irRightChild, SourceInfo *  sourceInfo);
 IrNode *	shallowCopyIrNode(State *  N, IrNode *  original);
+IrNode *	deepCopyIrNode(State * N,IrNode * original, int loadCount);
 void		errorUseBeforeDefinition(State *  N, const char *  identifier);
 void		errorMultiDefinition(State *  N, Symbol *  symbol);
 IrNode *	depthFirstWalk(State *  N, IrNode *  node);

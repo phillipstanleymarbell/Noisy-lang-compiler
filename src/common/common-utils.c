@@ -255,10 +255,25 @@ init(CommonMode mode)
 	}
 
 	/*
+	 *	Used to hold Noisy Code Generation output.
+	 */
+	N->Fpg = (FlexPrintBuf *)calloc(1, sizeof(FlexPrintBuf));
+	if (N->Fpg == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	/*
 	 *	FIXME: need to figure out right buffer size dynamically.
 	 */
 	N->Fph->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
 	if (N->Fph->circbuf == NULL)
+	{
+		fatal(NULL, Emalloc);
+	}
+
+	N->Fpg->circbuf = (char *)calloc(1, FLEX_CIRCBUFSZ);
+	if (N->Fpg->circbuf == NULL)
 	{
 		fatal(NULL, Emalloc);
 	}
@@ -471,6 +486,15 @@ consolePrintBuffers(State *  N)
 	if (N && N->Fph && strlen(N->Fph->circbuf))
 	{
 		fprintf(stdout, "\nSignal typedef header generation Backend output:\n---------------------\n%s", N->Fph->circbuf);
+		if (N->mode & kCommonModeCGI)
+		{
+			fflush(stdout);
+		}
+	}
+
+	if (N && N->Fpg && strlen(N->Fpg->circbuf))
+	{
+		fprintf(stdout, "\nNoisy Code Generation:\n---------------------\n%s", N->Fpg->circbuf);
 		if (N->mode & kCommonModeCGI)
 		{
 			fflush(stdout);

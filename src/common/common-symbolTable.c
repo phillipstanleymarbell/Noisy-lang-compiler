@@ -129,7 +129,9 @@ commonSymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  i
 	{
 		Scope *	moduleScope = N->moduleScopes;
 
-		while (moduleScope != NULL)
+		// while (moduleScope != NULL)
+		// {
+		if (moduleScope != NULL)
 		{
 			Symbol *	moduleSym = moduleScope->firstSymbol;
 
@@ -141,9 +143,9 @@ commonSymbolTableSymbolForIdentifier(State *  N, Scope *  scope, const char *  i
 				}
 				moduleSym = moduleSym->next;
 			}
-
-			moduleScope = moduleScope->next;
 		}
+			// moduleScope = moduleScope->next;
+		// }
 
 		return NULL;
 	}
@@ -201,6 +203,20 @@ commonSymbolTableOpenScope(State *  N, Scope *  scope, IrNode *  subTree)
 	return newScope;
 }
 
+Scope *
+commonSymbolTableGetScopeWithName(State * N, Scope * scope, const char * identifier)
+{
+	Scope * iter = scope;
+	while (iter != NULL)
+	{
+		if (!strcmp(iter->identifier,identifier))
+		{
+			return iter;
+		}
+		iter = iter->next;
+	}
+	return NULL;
+}
 
 void
 commonSymbolTableCloseScope(State *  N, Scope *  scope, IrNode *  subTree)

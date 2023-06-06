@@ -58,6 +58,8 @@
 #include "common-irPass-helpers.h"
 #include "noisy-irPass-dotBackend.h"
 #include "noisy-irPass-protobufBackend.h"
+#include "noisy-codeGeneration.h"
+#include "noisy-typeCheck.h"
 
 static void		usage(State *  N);
 static void		processFile(State *  N, char *  filename);
@@ -316,6 +318,13 @@ processFile(State *  N, char *  fileName)
 	 *	We don't put the following into runPasses() because they are not general-purpose
 	 */
 
+	/*
+	*	Actual code generation takes place.
+	*/
+
+	noisyTypeCheck(N);
+
+	noisyCodeGen(N);
 
 	/*
 	 *	Bytecode backend. Emit IR in protobuf.

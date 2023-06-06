@@ -131,14 +131,46 @@ assignTypes(State *  N, IrNode *  node, IrNode *  typeExpression)
 	{
 		fatal(N, EassignTypeSanity);
 	}
-//XXX FIXME XXX
-return;
 
 	/*
 	 *	Walk subtree identifierList, set each node->symbol.typeExpr = typeExpr
 	 */
-	node->symbol->typeTree = typeExpression;
+	if (node->type == kNoisyIrNodeType_Tidentifier)
+	{
+		node->symbol->typeTree = typeExpression;
+	}
+	else if (node->type == kNoisyIrNodeType_PidentifierList)
+	{
+		for (IrNode * currentNode = node; currentNode != NULL; currentNode = currentNode->irRightChild)
+		{
+			currentNode->irLeftChild->symbol->typeTree = typeExpression;
+		}
+	}
+	else if (node->type == kNoisyIrNodeType_PidentifierOrNilList)
+	{
+		for (IrNode * currentNode = node; currentNode != NULL; currentNode = currentNode->irRightChild)
+		{
+			if (node->irLeftChild->type != kNewtonIrNodeType_Tnil)
+			{
+				assignTypes(N,currentNode->irLeftChild->irLeftChild,typeExpression);
+			}
+		}
+	}
+	else if (node->type == kNoisyIrNodeType_PqualifiedIdentifier)
+	{
+		/*
+		*	Assign types is called only when we declare variables. Therefore the field select does
+		*	not need to be handled when we assign types. However type checker might need to check if
+		*	we declare with a field select.
+		*/
+		node->irLeftChild->symbol->typeTree = typeExpression;
+	}
+	/*
+	*	TODO: It needs fixing for PidentifierOrNilList and PqualifiedIdentifier. It works for
+	*	identifier and identifierList.
+	*/
 
+	return ;
 	/*
 	 *	Might be only one ident, or only two, or a whole Xseq of them
 	 */

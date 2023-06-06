@@ -6,6 +6,8 @@ PRECOMMITHOOK	= precommitStatisticsHook-$(OSTYPE).sh
 COMMONPATH	= ../common
 COMPILERVARIANT = gcc	#clang
 
+LLVM_CONFIG?=llvm-config
+
 include		$(CONFIGPATH)/config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 include		config.$(OSTYPE)-$(MACHTYPE).$(COMPILERVARIANT)
 
@@ -14,6 +16,9 @@ MAKEFLAGS	+= #-j
 
 CCFLAGS		= $(PLATFORM_DBGFLAGS) $(PLATFORM_CFLAGS) $(PLATFORM_DFLAGS) -DVariant$(SYSNAME) $(PLATFORM_OPTFLAGS)
 LDFLAGS 	= $(PLATFORM_DBGFLAGS) -lm $(PLATFORM_LFLAGS) `pkg-config --libs 'libprotobuf-c >= 1.0.0'`
+
+LDFLAGS+=$(shell $(LLVM_CONFIG) --ldflags)
+CCFLAGS+=$(shell $(LLVM_CONFIG) --cflags)
 
 LIBCOMMON	= Common
 COMMON_L10N	= EN
