@@ -67,14 +67,16 @@ mulfix(int32_t x, int32_t y)
 int32_t
 sqrt_rsqrt(int32_t x, int recip) {
     if (recip) {
-        float fp_x = (float)x/FRAC_BASE;
-        float halfx = 0.5f * fp_x;
-        float fp_y = fp_x;
+        int32_t int_halfx = mulfix(0.5*FRAC_BASE, x);
+        float fp_y = (float)x/FRAC_BASE;
         long i = *(long*)&fp_y;
         i = 0x5f3759df - (i>>1);
         fp_y = *(float*)&i;
-        fp_y = fp_y * (1.5f - (halfx * fp_y * fp_y));
-        return fp_y*FRAC_BASE;
+        int32_t int_y = fp_y*FRAC_BASE;
+        int_y = mulfix(int_y, (1.5f*FRAC_BASE - (mulfix(mulfix(int_halfx, int_y), int_y))));
+        return int_y;
+//        fp_y = fp_y * (1.5f - (halfx * fp_y * fp_y));
+//        return fp_y*FRAC_BASE;
     } else {
         int32_t res = (int32_t)sqrtf(x)<<(FRAC_Q/2);
         if (FRAC_Q%2)
