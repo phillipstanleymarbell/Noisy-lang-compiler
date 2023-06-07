@@ -83,7 +83,7 @@ void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float 
 
 		// Normalise accelerometer measurement
 		recipNorm = invSqrt(ax * ax + ay * ay + az * az);
-        printf("%f\n", recipNorm);
+//        printf("1: %f\n", recipNorm);
 		ax *= recipNorm;
 		ay *= recipNorm;
 		az *= recipNorm;
@@ -150,8 +150,8 @@ void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float 
 
 	// Normalise quaternion
 	recipNorm = invSqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
-    printf("q0=%f, q1=%f, q2=%f, q3=%f, recipNorm=%f\n",
-           q0, q1, q2, q3, recipNorm);
+//    printf("q0=%f, q1=%f, q2=%f, q3=%f, recipNorm=%f\n",
+//           q0, q1, q2, q3, recipNorm);
 	q0 *= recipNorm;
 	q1 *= recipNorm;
 	q2 *= recipNorm;

@@ -238,8 +238,8 @@ int main() {
 #if defined(FP_DATA_TYPE)
     FILE *fptr = fopen("fp_result.txt", "w");
     for (size_t ts = 0; ts < DATA_SIZE; ts++) {
-        printf("Original: q0[%d]=%f, q1[%d]=%f, q2[%d]=%f, q3[%d]=%f\n",
-               ts, q0[ts], ts, q1[ts], ts, q2[ts], ts, q3[ts]);
+//        printf("Original: q0[%d]=%f, q1[%d]=%f, q2[%d]=%f, q3[%d]=%f\n",
+//               ts, q0[ts], ts, q1[ts], ts, q2[ts], ts, q3[ts]);
         fprintf(fptr, "Original: q0[%d]=%f, q1[%d]=%f, q2[%d]=%f, q3[%d]=%f\n",
                ts, q0[ts], ts, q1[ts], ts, q2[ts], ts, q3[ts]);
     }
@@ -247,11 +247,11 @@ int main() {
 #elif defined(INT_DATA_TYPE)
     FILE *fptr = fopen("int_result.txt", "w");
     for (size_t ts = 0; ts < DATA_SIZE; ts++) {
-        printf("FIX: q0[%d]=%f, q1[%d]=%f, q2[%d]=%f, q3[%d]=%f\n",
-               ts, (double)q0[ts]/FRAC_BASE,
-               ts, (double)q1[ts]/FRAC_BASE,
-               ts, (double)q2[ts]/FRAC_BASE,
-               ts, (double)q3[ts]/FRAC_BASE);
+//        printf("FIX: q0[%d]=%f, q1[%d]=%f, q2[%d]=%f, q3[%d]=%f\n",
+//               ts, (double)q0[ts]/FRAC_BASE,
+//               ts, (double)q1[ts]/FRAC_BASE,
+//               ts, (double)q2[ts]/FRAC_BASE,
+//               ts, (double)q3[ts]/FRAC_BASE);
         fprintf(fptr, "FIX: q0[%d]=%f, q1[%d]=%f, q2[%d]=%f, q3[%d]=%f\n",
                ts, (double)q0[ts]/FRAC_BASE,
                ts, (double)q1[ts]/FRAC_BASE,

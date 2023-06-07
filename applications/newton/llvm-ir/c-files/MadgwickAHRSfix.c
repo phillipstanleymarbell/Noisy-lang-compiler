@@ -1,6 +1,6 @@
 #include "MadgwickAHRSfix.h"
 
-#define sampleFreq	64		// sample frequency in Hz
+#define sampleFreq	28		// sample frequency in Hz
 #define betaDef		0.1f		// 2 * proportional gain
 
 typedef int32_t bmx055xAcceleration;
@@ -67,7 +67,7 @@ mulfix(int32_t x, int32_t y)
 int32_t
 sqrt_rsqrt(int32_t x, int recip) {
     if (recip) {
-        float fp_x = x/FRAC_BASE;
+        float fp_x = (float)x/FRAC_BASE;
         float halfx = 0.5f * fp_x;
         float fp_y = fp_x;
         long i = *(long*)&fp_y;
@@ -76,7 +76,7 @@ sqrt_rsqrt(int32_t x, int recip) {
         fp_y = fp_y * (1.5f - (halfx * fp_y * fp_y));
         return round(fp_y*FRAC_BASE);
     } else {
-        int32_t res = (int32_t)sqrt(x)<<(FRAC_Q/2);
+        int32_t res = (int32_t)sqrtf(x)<<(FRAC_Q/2);
         if (FRAC_Q%2)
             return res*1.414213562;
         else
@@ -124,7 +124,7 @@ MadgwickAHRSupdate(bmx055xAngularRate gx, bmx055yAngularRate gy, bmx055zAngularR
 
 		// Normalise accelerometer measurement
 		recipNorm = sqrt_rsqrt(mulfix(ax, ax) + mulfix(ay, ay) + mulfix(az, az), true);
-        printf("%f\n", (double)recipNorm/FRAC_BASE);
+//        printf("1: %f\n", (double)recipNorm/FRAC_BASE);
 		ax = mulfix(ax, recipNorm);
 		ay = mulfix(ay, recipNorm);
 		az = mulfix(az, recipNorm);
@@ -273,12 +273,12 @@ MadgwickAHRSupdate(bmx055xAngularRate gx, bmx055yAngularRate gy, bmx055zAngularR
 
 	// Normalise quaternion
 	recipNorm = sqrt_rsqrt(mulfix(q0, q0) + mulfix(q1, q1) + mulfix(q2, q2) + mulfix(q3, q3), true);
-    printf("q0=%f, q1=%f, q2=%f, q3=%f, recipNorm=%f\n",
-           (double)q0/FRAC_BASE,
-           (double)q1/FRAC_BASE,
-           (double)q2/FRAC_BASE,
-           (double)q3/FRAC_BASE,
-           (double)recipNorm/FRAC_BASE);
+//    printf("q0=%f, q1=%f, q2=%f, q3=%f, recipNorm=%f\n",
+//           (double)q0/FRAC_BASE,
+//           (double)q1/FRAC_BASE,
+//           (double)q2/FRAC_BASE,
+//           (double)q3/FRAC_BASE,
+//           (double)recipNorm/FRAC_BASE);
 	q0 = mulfix(q0, recipNorm);
 	q1 = mulfix(q1, recipNorm);
 	q2 = mulfix(q2, recipNorm);
