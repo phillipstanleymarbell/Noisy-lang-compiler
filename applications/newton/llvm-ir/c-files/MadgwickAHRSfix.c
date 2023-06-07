@@ -58,7 +58,7 @@ mulfix(int32_t x, int32_t y)
 //    result = round(temp/FRAC_BASE);
 //    return result;
 //    return ((int64_t)(x*y)) > 0 ? ((int64_t)(x*y))>>FRAC_Q : (((int64_t)(x*y))>>FRAC_Q)+1;
-    return ((int64_t)x*y)/FRAC_BASE;
+    return ((int64_t)x*y)>>FRAC_Q;
 }
 
 /*
