@@ -73,7 +73,7 @@ sqrt_rsqrt(int32_t x, int recip) {
         i = 0x5f3759df - (i>>1);
         fp_y = *(float*)&i;
         int32_t int_y = fp_y*FRAC_BASE;
-        int_y = mulfix(int_y, (1.5f*FRAC_BASE - (mulfix(mulfix(int_halfx, int_y), int_y))));
+        int_y = mulfix(int_y, ((int32_t)(1.5f*FRAC_BASE) - (mulfix(mulfix(int_halfx, int_y), int_y))));
         return int_y;
 //        fp_y = fp_y * (1.5f - (halfx * fp_y * fp_y));
 //        return fp_y*FRAC_BASE;
