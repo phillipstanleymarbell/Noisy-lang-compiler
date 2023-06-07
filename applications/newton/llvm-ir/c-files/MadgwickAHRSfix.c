@@ -51,14 +51,14 @@ volatile bmx055xAcceleration	beta = (uint8_t)(betaDef*FRAC_BASE);	//0.1f				// 2
 int32_t
 mulfix(int32_t x, int32_t y)
 {
-    int32_t result;
-    int64_t temp;
-    temp = (int64_t)x * (int64_t)y;
-    temp += K;
-    result = round(temp/FRAC_BASE);
-    return result;
+//    int32_t result;
+//    int64_t temp;
+//    temp = (int64_t)x * (int64_t)y;
+//    temp += K;
+//    result = round(temp/FRAC_BASE);
+//    return result;
 //    return ((int64_t)(x*y)) > 0 ? ((int64_t)(x*y))>>FRAC_Q : (((int64_t)(x*y))>>FRAC_Q)+1;
-//    return ((int64_t)x*y)/FRAC_BASE;
+    return ((int64_t)x*y)/FRAC_BASE;
 }
 
 /*
@@ -74,7 +74,7 @@ sqrt_rsqrt(int32_t x, int recip) {
         i = 0x5f3759df - (i>>1);
         fp_y = *(float*)&i;
         fp_y = fp_y * (1.5f - (halfx * fp_y * fp_y));
-        return round(fp_y*FRAC_BASE);
+        return fp_y*FRAC_BASE;
     } else {
         int32_t res = (int32_t)sqrtf(x)<<(FRAC_Q/2);
         if (FRAC_Q%2)
