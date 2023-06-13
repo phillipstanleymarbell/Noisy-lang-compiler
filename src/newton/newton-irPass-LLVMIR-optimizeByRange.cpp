@@ -205,7 +205,7 @@ overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> & 
 }
 
 void
-irPassLLVMIROptimizeByRange(State * N, bool enableOverload, bool enableBuiltinAssume)
+irPassLLVMIROptimizeByRange(State * N, bool enableQuantization, bool enableOverload, bool enableBuiltinAssume)
 {
 	if (N->llvmIR == nullptr)
 	{
@@ -311,6 +311,13 @@ irPassLLVMIROptimizeByRange(State * N, bool enableOverload, bool enableBuiltinAs
 			flexprint(N->Fe, N->Fm, N->Fperr, "\t\tUnknown type!\n");
 		}
 	}
+
+    if (enableQuantization) {
+        flexprint(N->Fe, N->Fm, N->Fpinfo, "auto quantization\n");
+        for (auto & mi : *Mod) {
+            irPassLLVMIRAutoQuantization(N, mi);
+        }
+    }
 
 	/*
 	 * analyze the range of all local variables in each function
