@@ -314,8 +314,13 @@ irPassLLVMIROptimizeByRange(State * N, bool enableQuantization, bool enableOverl
 
     if (enableQuantization) {
         flexprint(N->Fe, N->Fm, N->Fpinfo, "auto quantization\n");
+        std::vector<llvm::Function*> functionsToInsert;
         for (auto & mi : *Mod) {
-            irPassLLVMIRAutoQuantization(N, mi);
+            irPassLLVMIRAutoQuantization(N, mi, functionsToInsert);
+        }
+        for (auto mi : functionsToInsert) {
+            Mod->getFunctionList().remove(mi);
+            Mod->getFunctionList().push_front(mi);
         }
     }
 

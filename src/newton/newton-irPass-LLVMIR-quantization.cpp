@@ -185,6 +185,82 @@ void simplifyConstant(Instruction * inInstruction, Type * quantizedType) {
     }
 }
 
+llvm::Function * createFixMul(llvm::Function * inFunction, Type * quantizedType, std::vector<llvm::Function*>& functionsToInsert) {
+    /*
+     * check if this function is exist
+     * */
+    std::string fixmulFuncName = "fixmul";
+    auto irModule = inFunction->getParent();
+    for (auto & function : *irModule) {
+        if (function.getName() == fixmulFuncName) {
+            return &function;
+        }
+    }
+
+    llvm::FunctionType * funcType = llvm::FunctionType::get(quantizedType, {quantizedType, quantizedType}, false);
+    llvm::Function * func = llvm::Function::Create(funcType, llvm::Function::PrivateLinkage, fixmulFuncName, irModule);
+
+    llvm::BasicBlock* entryBB = llvm::BasicBlock::Create(inFunction->getContext(), "entry", func);
+    llvm::IRBuilder<> builder(entryBB);
+    builder.SetInsertPoint(entryBB);
+
+    /*
+     * ((int64_t)x*y)>>FRAC_Q
+     *
+     * ===========>
+     *
+     * define private i32 @mulfix(i32 %0, i32 %1) {
+     * %3 = sext i32 %0 to i64
+     * %4 = sext i32 %1 to i64
+     * %5 = mul nsw i64 %3, %4
+     * %6 = ashr i64 %5, 8
+     * %7 = trunc i64 %6 to i32
+     * ret i32 %7
+     * }
+     * */
+    Type* higherQuantizedType;
+    switch (BIT_WIDTH) {
+        case 8:
+            higherQuantizedType = Type::getInt16Ty(inFunction->getContext());
+            break;
+        case 16:
+            higherQuantizedType = Type::getInt32Ty(inFunction->getContext());
+            break;
+        default:
+            higherQuantizedType = Type::getInt64Ty(inFunction->getContext());
+            break;
+    }
+
+    llvm::Function::arg_iterator arg1 = &*(func->arg_begin());
+    llvm::Function::arg_iterator arg2 = &*(++arg1);
+    llvm::Value* sext1 = builder.CreateSExt(arg1, higherQuantizedType);
+    llvm::Value* sext2 = builder.CreateSExt(arg2, higherQuantizedType);
+    llvm::Value* mulInst = builder.CreateMul(sext1, sext2);
+    llvm::Value* ashrInst = builder.CreateAShr(mulInst, ConstantInt::get(higherQuantizedType, FRAC_Q));
+    llvm::Value* truncInst = builder.CreateTrunc(ashrInst, quantizedType);
+    builder.CreateRet(truncInst);
+
+    functionsToInsert.emplace_back(func);
+
+    return func;
+}
+
+void substituteHardcodeFunc(Instruction * inInstruction, Type * quantizedType, llvm::Function * func) {
+    IRBuilder<> Builder(inInstruction);
+    Instruction * insertPoint = inInstruction->getNextNode();
+    Builder.SetInsertPoint(insertPoint);
+//    Value * newInst = nullptr;
+
+    llvm::CallInst* callInst = Builder.CreateCall(func, {inInstruction->getOperand(0), inInstruction->getOperand(1)});
+//    InlineFunctionInfo inlineFuncInfo;
+//    llvm::InlineFunction(*callInst, inlineFuncInfo);
+
+    inInstruction->replaceAllUsesWith(callInst);
+    inInstruction->removeFromParent();
+
+    int a = 0;
+}
+
 CmpInst::Predicate quantizePredict(CmpInst::Predicate predict) {
     switch (predict) {
         case FCmpInst::FCMP_OEQ:
@@ -242,7 +318,7 @@ void quantizeSimpleFPInstruction(Instruction * inInstruction, Type * quantizedTy
          * */
         case Instruction::FNeg:
         {
-            auto constZero = ConstantInt::get(quantizedType, 0, true);;
+            auto constZero = ConstantInt::get(quantizedType, 0, true);
             newInst = Builder.CreateSub(constZero, inInstruction->getOperand(0));
             break;
         }
@@ -254,7 +330,7 @@ void quantizeSimpleFPInstruction(Instruction * inInstruction, Type * quantizedTy
 }
 
 void
-irPassLLVMIRAutoQuantization(State * N, llvm::Function & llvmIrFunction)
+irPassLLVMIRAutoQuantization(State * N, llvm::Function & llvmIrFunction, std::vector<llvm::Function*>& functionsToInsert)
 {
     flexprint(N->Fe, N->Fm, N->Fpinfo, "\tauto quantization.\n");
 
@@ -276,6 +352,12 @@ irPassLLVMIRAutoQuantization(State * N, llvm::Function & llvmIrFunction)
             flexprint(N->Fe, N->Fm, N->Fperr, "\tunknown int type.\n");
             return;
     }
+
+    /*
+     * generate hardcode function - fixmul and fixdiv
+     * */
+    llvm::Function * fixmul = createFixMul(&llvmIrFunction, quantizedType, functionsToInsert);
+
     /*
      * quantize the arguments type
      * */
@@ -345,7 +427,13 @@ irPassLLVMIRAutoQuantization(State * N, llvm::Function & llvmIrFunction)
                 case Instruction::FMul:
                 case Instruction::FDiv:
                 {
-                    simplifyConstant(llvmIrInstruction, quantizedType);
+                    if (isa<llvm::Constant>(llvmIrInstruction->getOperand(0)) ||
+                            isa<llvm::Constant>(llvmIrInstruction->getOperand(1))) {
+                        simplifyConstant(llvmIrInstruction, quantizedType);
+                    }
+                    else {
+                        substituteHardcodeFunc(llvmIrInstruction, quantizedType, fixmul);
+                    }
                     break;
                 }
 
