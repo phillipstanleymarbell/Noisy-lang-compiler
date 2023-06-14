@@ -85,11 +85,13 @@ void quantizeConstant(Instruction * inInstruction, Type * quantizedType) {
         if (inValue->getType()->isFloatTy())
         {
             float constValue = constFp->getValueAPF().convertToFloat();
+            constValue *= FRAC_BASE;
             newValue	 = ConstantInt::get(quantizedType, round(constValue), true);
         }
         else if (inValue->getType()->isDoubleTy())
         {
             double constValue = constFp->getValueAPF().convertToDouble();
+            constValue *= FRAC_BASE;
             newValue	 = ConstantInt::get(quantizedType, round(constValue), true);
         }
         else
@@ -98,6 +100,88 @@ void quantizeConstant(Instruction * inInstruction, Type * quantizedType) {
         }
 
         inInstruction->replaceUsesOfWith(inValue, newValue);
+    }
+}
+
+void simplifyConstant(Instruction * inInstruction, Type * quantizedType) {
+    auto checkDecimal = [](float decimalNum) {
+        int digits = 0;
+        /*
+         * Since the max value of `int16` is 32767,
+         * we maximum multiply with 1,000 to make sure it won't exceed max_int16
+         * */
+        do {
+            decimalNum *= 10;
+            digits++;
+        } while ((int)round(decimalNum) % 1 != 0 && digits < 4);
+        return decimalNum;
+    };
+
+    auto compensateFP = [inInstruction, quantizedType](float quantizedNum, float decimalNum) {
+        /*
+         * 3333.3 / 3.3333 = 1000
+         * ===>
+         * Example 1:
+         * a * 3.3333 ~= a * (3333 / 1000) ~= (int)a * 3333 / 1000
+         *
+         * Example 2:
+         * a / 3.3333 ~= a / (3333 / 1000) ~= (int)a * 1000 / 3333
+         *
+         * Example 3:
+         * 3.3333 / a ~= (3333 / 1000) / a ~= 3333 / (int)a / 1000
+         * */
+        float compensateNum = quantizedNum / decimalNum;
+        auto quantizeNumValue = ConstantInt::get(quantizedType, round(quantizedNum), true);
+        auto compensateNumValue = ConstantInt::get(quantizedType, round(compensateNum), true);
+
+        IRBuilder<> Builder(inInstruction);
+        Instruction * insertPoint = inInstruction->getNextNode();
+        Builder.SetInsertPoint(insertPoint);
+        Value * newFisrtInst = nullptr;
+        Value * newSecondInst = nullptr;
+        auto instOpCode = inInstruction->getOpcode();
+        auto constOperand = isa<llvm::Constant>(inInstruction->getOperand(0)) ?
+                inInstruction->getOperand(0) : inInstruction->getOperand(1);
+        auto nonConstOperand = isa<llvm::Constant>(inInstruction->getOperand(0)) ?
+                               inInstruction->getOperand(1) : inInstruction->getOperand(0);
+        if (instOpCode == Instruction::FMul) {
+            newFisrtInst = Builder.CreateMul(nonConstOperand, quantizeNumValue);
+            newSecondInst = Builder.CreateSDiv(newFisrtInst, compensateNumValue);
+        } else if (instOpCode == Instruction::FDiv && isa<llvm::Constant>(inInstruction->getOperand(1))) {
+            newFisrtInst = Builder.CreateMul(nonConstOperand, compensateNumValue);
+            newSecondInst = Builder.CreateSDiv(newFisrtInst, quantizeNumValue);
+        } else if (instOpCode == Instruction::FDiv && isa<llvm::Constant>(inInstruction->getOperand(0))) {
+            newFisrtInst = Builder.CreateSDiv(quantizeNumValue, nonConstOperand);
+            newSecondInst = Builder.CreateSDiv(newFisrtInst, compensateNumValue);
+        }
+
+        inInstruction->replaceAllUsesWith(newSecondInst);
+        inInstruction->removeFromParent();
+    };
+
+    for (size_t idx = 0; idx < inInstruction->getNumOperands(); idx++) {
+        Value * inValue = inInstruction->getOperand(idx);
+
+        if (!isa<llvm::ConstantFP>(inValue)) {
+            continue;
+        }
+
+        ConstantFP * constFp = llvm::dyn_cast<llvm::ConstantFP>(inValue);
+        Value * newValue = nullptr;
+        if (inValue->getType()->isFloatTy())
+        {
+            float constValue = constFp->getValueAPF().convertToFloat();
+            compensateFP(checkDecimal(constValue), constValue);
+        }
+        else if (inValue->getType()->isDoubleTy())
+        {
+            double constValue = constFp->getValueAPF().convertToDouble();
+            compensateFP(checkDecimal(constValue), constValue);
+        }
+        else
+        {
+            assert(false && "unknown floating type");
+        }
     }
 }
 
@@ -153,6 +237,8 @@ void quantizeSimpleFPInstruction(Instruction * inInstruction, Type * quantizedTy
                                          fcmp_inst->getOperand(0), fcmp_inst->getOperand(1));
             break;
         }
+        default:
+            break;
     }
     inInstruction->replaceAllUsesWith(newInst);
     inInstruction->removeFromParent();
@@ -249,6 +335,9 @@ irPassLLVMIRAutoQuantization(State * N, llvm::Function & llvmIrFunction)
                  * */
                 case Instruction::FMul:
                 case Instruction::FDiv:
+                {
+                    simplifyConstant(llvmIrInstruction, quantizedType);
+                }
 
 
                 /*
