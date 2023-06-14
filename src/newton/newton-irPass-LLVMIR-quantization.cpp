@@ -237,6 +237,15 @@ void quantizeSimpleFPInstruction(Instruction * inInstruction, Type * quantizedTy
                                          fcmp_inst->getOperand(0), fcmp_inst->getOperand(1));
             break;
         }
+        /*
+         * Change fneg(a) to `0-a`.
+         * */
+        case Instruction::FNeg:
+        {
+            auto constZero = ConstantInt::get(quantizedType, 0, true);;
+            newInst = Builder.CreateSub(constZero, inInstruction->getOperand(0));
+            break;
+        }
         default:
             break;
     }
@@ -337,14 +346,8 @@ irPassLLVMIRAutoQuantization(State * N, llvm::Function & llvmIrFunction)
                 case Instruction::FDiv:
                 {
                     simplifyConstant(llvmIrInstruction, quantizedType);
-                }
-
-
-                /*
-                 * Change fneg(a) to `0-a`.
-                 * */
-                case Instruction::FNeg:
                     break;
+                }
 
                 /*
                  * If either one of the operands is a constant value, quantize it,
@@ -356,7 +359,9 @@ irPassLLVMIRAutoQuantization(State * N, llvm::Function & llvmIrFunction)
                 case Instruction::FRem:
                 {
                     quantizeConstant(llvmIrInstruction, quantizedType);
-                    setQuantizedType(llvmIrInstruction, quantizedType);
+                }
+                case Instruction::FNeg:
+                {
                     quantizeSimpleFPInstruction(llvmIrInstruction, quantizedType);
                     break;
                 }
