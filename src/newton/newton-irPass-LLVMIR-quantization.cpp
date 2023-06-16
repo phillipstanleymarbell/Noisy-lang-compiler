@@ -61,17 +61,6 @@ void setQuantizedType(Value * inValue, Type * quantizedType) {
     }
 }
 
-void setQuantizedPointerType(Value * inValue, Type * quantizedType, unsigned pointerAddr) {
-    auto valueType = inValue->getType();
-    if (valueType != nullptr)
-    {
-        if (valueType->isDoubleTy() || valueType->isFloatTy())
-        {
-            inValue->mutateType(quantizedType->getPointerTo(pointerAddr));
-        }
-    }
-}
-
 void quantizeConstant(Instruction * inInstruction, Type * quantizedType) {
     for (size_t idx = 0; idx < inInstruction->getNumOperands(); idx++) {
         Value * inValue = inInstruction->getOperand(idx);
@@ -110,10 +99,10 @@ void simplifyConstant(Instruction * inInstruction, Type * quantizedType) {
          * Since the max value of `int16` is 32767,
          * we maximum multiply with 1,000 to make sure it won't exceed max_int16
          * */
-        do {
+        while (fabs(round(decimalNum) - decimalNum) > 0.001 && digits < 4) {
             decimalNum *= 10;
             digits++;
-        } while ((int)round(decimalNum) % 1 != 0 && digits < 4);
+        }
         return decimalNum;
     };
 
@@ -131,32 +120,48 @@ void simplifyConstant(Instruction * inInstruction, Type * quantizedType) {
          * 3.3333 / a ~= (3333 / 1000) / a ~= 3333 / (int)a / 1000
          * */
         float compensateNum = quantizedNum / decimalNum;
-        auto quantizeNumValue = ConstantInt::get(quantizedType, round(quantizedNum), true);
-        auto compensateNumValue = ConstantInt::get(quantizedType, round(compensateNum), true);
 
-        IRBuilder<> Builder(inInstruction);
-        Instruction * insertPoint = inInstruction->getNextNode();
-        Builder.SetInsertPoint(insertPoint);
-        Value * newFisrtInst = nullptr;
-        Value * newSecondInst = nullptr;
-        auto instOpCode = inInstruction->getOpcode();
-        auto constOperand = isa<llvm::Constant>(inInstruction->getOperand(0)) ?
-                inInstruction->getOperand(0) : inInstruction->getOperand(1);
-        auto nonConstOperand = isa<llvm::Constant>(inInstruction->getOperand(0)) ?
-                               inInstruction->getOperand(1) : inInstruction->getOperand(0);
-        if (instOpCode == Instruction::FMul) {
-            newFisrtInst = Builder.CreateMul(nonConstOperand, quantizeNumValue);
-            newSecondInst = Builder.CreateSDiv(newFisrtInst, compensateNumValue);
-        } else if (instOpCode == Instruction::FDiv && isa<llvm::Constant>(inInstruction->getOperand(1))) {
-            newFisrtInst = Builder.CreateMul(nonConstOperand, compensateNumValue);
-            newSecondInst = Builder.CreateSDiv(newFisrtInst, quantizeNumValue);
-        } else if (instOpCode == Instruction::FDiv && isa<llvm::Constant>(inInstruction->getOperand(0))) {
-            newFisrtInst = Builder.CreateSDiv(quantizeNumValue, nonConstOperand);
-            newSecondInst = Builder.CreateSDiv(newFisrtInst, compensateNumValue);
+        Value *constOperand, *nonConstOperand;
+        unsigned constIdx, nonConstIdx;
+        if (isa<llvm::Constant>(inInstruction->getOperand(0))) {
+            constIdx = 0;
+            nonConstIdx = 1;
+            constOperand = inInstruction->getOperand(0);
+            nonConstOperand = inInstruction->getOperand(1);
+        } else {
+            constIdx = 1;
+            nonConstIdx = 0;
+            constOperand = inInstruction->getOperand(1);
+            nonConstOperand = inInstruction->getOperand(0);
         }
 
-        inInstruction->replaceAllUsesWith(newSecondInst);
-        inInstruction->removeFromParent();
+        auto quantizeNumValue = ConstantInt::get(quantizedType, round(quantizedNum), true);
+
+        if (compensateNum == 1) {
+            inInstruction->setOperand(constIdx, quantizeNumValue);
+        } else {
+            auto compensateNumValue = ConstantInt::get(quantizedType, round(compensateNum), true);
+
+            IRBuilder<> Builder(inInstruction);
+            Instruction * insertPoint = inInstruction->getNextNode();
+            Builder.SetInsertPoint(insertPoint);
+            Value * newFisrtInst = nullptr;
+            Value * newSecondInst = nullptr;
+            auto instOpCode = inInstruction->getOpcode();
+            if (instOpCode == Instruction::FMul) {
+                newFisrtInst = Builder.CreateMul(nonConstOperand, quantizeNumValue);
+                newSecondInst = Builder.CreateSDiv(newFisrtInst, compensateNumValue);
+            } else if (instOpCode == Instruction::FDiv && isa<llvm::Constant>(inInstruction->getOperand(1))) {
+                newFisrtInst = Builder.CreateMul(nonConstOperand, compensateNumValue);
+                newSecondInst = Builder.CreateSDiv(newFisrtInst, quantizeNumValue);
+            } else if (instOpCode == Instruction::FDiv && isa<llvm::Constant>(inInstruction->getOperand(0))) {
+                newFisrtInst = Builder.CreateSDiv(quantizeNumValue, nonConstOperand);
+                newSecondInst = Builder.CreateSDiv(newFisrtInst, compensateNumValue);
+            }
+
+            inInstruction->replaceAllUsesWith(newSecondInst);
+            inInstruction->removeFromParent();
+        }
     };
 
     for (size_t idx = 0; idx < inInstruction->getNumOperands(); idx++) {
@@ -232,8 +237,8 @@ llvm::Function * createFixMul(llvm::Function * inFunction, Type * quantizedType,
     }
 
     llvm::Function::arg_iterator arg1 = &*(func->arg_begin());
-    llvm::Function::arg_iterator arg2 = &*(++arg1);
     llvm::Value* sext1 = builder.CreateSExt(arg1, higherQuantizedType);
+    llvm::Function::arg_iterator arg2 = &*(++arg1);
     llvm::Value* sext2 = builder.CreateSExt(arg2, higherQuantizedType);
     llvm::Value* mulInst = builder.CreateMul(sext1, sext2);
     llvm::Value* ashrInst = builder.CreateAShr(mulInst, ConstantInt::get(higherQuantizedType, FRAC_Q));
@@ -377,9 +382,11 @@ irPassLLVMIRAutoQuantization(State * N, llvm::Function & llvmIrFunction, std::ve
                 case Instruction::Alloca:
                     if (auto llvmIrAllocaInstruction = dyn_cast<AllocaInst>(llvmIrInstruction))
                     {
-                        unsigned addressSpace = llvmIrAllocaInstruction->getType()->getPointerAddressSpace();
-                        llvmIrAllocaInstruction->setAllocatedType(quantizedType);
-                        setQuantizedPointerType(llvmIrAllocaInstruction, quantizedType, addressSpace);
+                        auto allocaType = llvmIrAllocaInstruction->getAllocatedType();
+                        if (allocaType->isDoubleTy() || allocaType->isFloatTy()) {
+                            llvmIrAllocaInstruction->setAllocatedType(quantizedType);
+                        }
+                        setQuantizedType(llvmIrAllocaInstruction, quantizedType);
                     }
                     break;
 				case Instruction::Call:
@@ -392,11 +399,70 @@ irPassLLVMIRAutoQuantization(State * N, llvm::Function & llvmIrFunction, std::ve
                             !calledFunction->getName().startswith("llvm.dbg.declare") &&
                             !calledFunction->getName().startswith("llvm.dbg.label"))
                         {
-                            for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
+                            if (calledFunction->isDeclaration())
                             {
-                                setQuantizedType(llvmIrCallInstruction->getOperand(idx), quantizedType);
+                                IRBuilder<> Builder(llvmIrCallInstruction);
+                                Instruction * insertPoint = llvmIrCallInstruction->getNextNode();
+                                Builder.SetInsertPoint(insertPoint);
+                                Value * newInst = nullptr;
+                                if (calledFunction->getName().str() == "sqrt") {
+                                    /*
+                                     * if the arg's type is int, convert to fp,
+                                     * after the call node, convert to int and shl FRAC_Q/2
+                                     *
+                                     * int32_t res = (int32_t)sqrt(x)<<(FRAC_Q/2);
+                                     * if (FRAC_Q%2)
+                                     *   return res*1.414213562;
+                                     * else
+                                     *   return res;
+                                     *
+                                     * %25 = sitofp i32 %0 to double
+                                     * %26 = call double @sqrt(double %25) #3
+                                     * %27 = fptosi double %26 to i32
+                                     * %28 = shl i32 %27, 4
+                                     * */
+                                    auto operand = llvmIrCallInstruction->getOperand(0);
+                                    if (operand->getType()->isIntegerTy()) {
+                                        Value * newOperand = Builder.CreateSIToFP(
+                                                operand, llvmIrCallInstruction->getType());
+                                        llvmIrCallInstruction->setOperand(0, newOperand);
+                                    }
+                                    auto cloneInst = llvmIrCallInstruction->clone();
+                                    Value * fptosiInst = Builder.CreateFPToSI(
+                                            cloneInst, quantizedType);
+                                    Value * shlInst = Builder.CreateShl(fptosiInst, FRAC_Q/2);
+                                    Value * resInst = nullptr;
+                                    /*
+                                     * if (FRAC_Q%2) then multiply with 1.414213562;
+                                     * */
+                                    if (FRAC_Q%2) {
+                                        Value * lhsCompensateInst = Builder.CreateSIToFP(
+                                                shlInst, llvmIrCallInstruction->getType());
+                                        auto compensateNum = ConstantFP::get(llvmIrCallInstruction->getType(),
+                                                                            1.414213562);
+                                        Value * mulInst = Builder.CreateFMul(lhsCompensateInst, compensateNum);
+                                        resInst = Builder.CreateFPToSI(mulInst, quantizedType);
+                                    } else {
+                                        resInst = shlInst;
+                                    }
+                                    llvmIrCallInstruction->replaceAllUsesWith(resInst);
+                                    ReplaceInstWithInst(llvmIrCallInstruction, cloneInst);
+                                }
+                                else {
+                                    /*
+                                     * for other lib functions, de-quantize the arguments and quantize the return value
+                                     * */
+                                }
+                            } else {
+                                /*
+                                 * for user-defined function, quantize the arguments
+                                 * */
+                                for (size_t idx = 0; idx < llvmIrCallInstruction->getNumOperands() - 1; idx++)
+                                {
+                                    setQuantizedType(llvmIrCallInstruction->getOperand(idx), quantizedType);
+                                }
+                                quantizeConstant(llvmIrCallInstruction, quantizedType);
                             }
-                            quantizeConstant(llvmIrCallInstruction, quantizedType);
                         }
                     }
                     break;
@@ -475,14 +541,41 @@ irPassLLVMIRAutoQuantization(State * N, llvm::Function & llvmIrFunction, std::ve
 				case Instruction::FPToSI:
 				case Instruction::SIToFP:
 				case Instruction::UIToFP:
-				case Instruction::ZExt:
-				case Instruction::SExt:
-				case Instruction::FPExt:
-				case Instruction::Trunc:
+                    break;
+//				case Instruction::ZExt:
+//				case Instruction::SExt:
+//				case Instruction::Trunc:
+                /*
+                 * since the src type changed, adapt the new instruction
+                 * */
+                case Instruction::FPExt:
 				case Instruction::FPTrunc:
+                {
+                    IRBuilder<> Builder(llvmIrInstruction);
+                    Instruction * insertPoint = llvmIrInstruction->getNextNode();
+                    Builder.SetInsertPoint(insertPoint);
+                    Value * newInst = nullptr;
+                    if (llvmIrInstruction->getOperand(0)->getType()->isIntegerTy()) {
+                        newInst = Builder.CreateSIToFP(
+                                llvmIrInstruction->getOperand(0), llvmIrInstruction->getType());
+                    } else {
+                        newInst = Builder.CreateFPCast(
+                                llvmIrInstruction->getOperand(0), llvmIrInstruction->getType());
+                    }
+                    llvmIrInstruction->replaceAllUsesWith(newInst);
+                    llvmIrInstruction->removeFromParent();
+                    break;
+                }
 				case Instruction::BitCast:
                 {
-                    flexprint(N->Fe, N->Fm, N->Fperr, "\tdidn't support it.\n");
+                    IRBuilder<> Builder(llvmIrInstruction);
+                    Instruction * insertPoint = llvmIrInstruction->getNextNode();
+                    Builder.SetInsertPoint(insertPoint);
+                    Value * newInst = Builder.CreateBitCast(
+                            llvmIrInstruction->getOperand(0), llvmIrInstruction->getType());
+                    llvmIrInstruction->replaceAllUsesWith(newInst);
+                    llvmIrInstruction->removeFromParent();
+                    break;
                 }
 
 				case Instruction::Ret:
