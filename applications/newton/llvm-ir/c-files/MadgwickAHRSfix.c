@@ -78,7 +78,7 @@ sqrt_rsqrt(int32_t x, int recip) {
 //        fp_y = fp_y * (1.5f - (halfx * fp_y * fp_y));
 //        return fp_y*FRAC_BASE;
     } else {
-        int32_t res = (int32_t)sqrtf(x)<<(FRAC_Q/2);
+        int32_t res = (int32_t)sqrt((double)x)<<(FRAC_Q/2);
         if (FRAC_Q%2)
             return res*1.414213562;
         else
