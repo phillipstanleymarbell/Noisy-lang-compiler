@@ -1,13 +1,6 @@
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
-
-//#include "fsl_misc_utilities.h"
-
-//#include "warp.h"
 #include "MadgwickAHRSfix.h"
 
-#define sampleFreq	64		// sample frequency in Hz
+#define sampleFreq	28		// sample frequency in Hz
 #define betaDef		0.1f		// 2 * proportional gain
 
 typedef int32_t bmx055xAcceleration;
@@ -20,8 +13,9 @@ typedef int32_t bmx055xMagneto;
 typedef int32_t bmx055yMagneto;
 typedef int32_t bmx055zMagneto;
 
-bmx055xAcceleration	beta = (uint8_t)(betaDef*FRAC_BASE);	//0.1f				// 2 * proportional gain (Kp)
-bmx055xAcceleration	q0 = FRAC_BASE, q1 = 0x0, q2 = 0x0, q3 = 0x0;	// quaternion of sensor frame relative to auxiliary frame
+volatile bmx055xAcceleration	beta = (uint8_t)(betaDef*FRAC_BASE);	//0.1f				// 2 * proportional gain (Kp)
+//volatile bmx055xAcceleration	q0 = 0.64306622f*FRAC_BASE, q1 = 0.02828862f*FRAC_BASE,
+//                                q2 = -0.00567953f*FRAC_BASE, q3 = -0.76526684f*FRAC_BASE;	// quaternion of sensor frame relative to auxiliary frame
 
 // m=-7 1/Yest=0.0858 Yest=11.3120 Yest_hex=B50
 // m=-6 1/Yest=0.1248 Yest=8.0000 Yest_hex=800
@@ -54,12 +48,17 @@ bmx055xAcceleration	q0 = FRAC_BASE, q1 = 0x0, q2 = 0x0, q3 = 0x0;	// quaternion 
 // m=21 1/Yest=1448.0000 Yest=0.0000 Yest_hex=0
 // m=22 1/Yest=2048.0000 Yest=0.0000 Yest_hex=0
 
-#define MULFIX(_op1, _op2) (((int64_t)_op1*_op2)/FRAC_BASE)
-
 int32_t
 mulfix(int32_t x, int32_t y)
 {
-	return ((int64_t)x*y)/FRAC_BASE;
+//    int32_t result;
+//    int64_t temp;
+//    temp = (int64_t)x * (int64_t)y;
+//    temp += K;
+//    result = round(temp/FRAC_BASE);
+//    return result;
+//    return ((int64_t)(x*y)) > 0 ? ((int64_t)(x*y))>>FRAC_Q : (((int64_t)(x*y))>>FRAC_Q)+1;
+    return ((int64_t)x*y)>>FRAC_Q;
 }
 
 /*
@@ -67,63 +66,24 @@ mulfix(int32_t x, int32_t y)
  */
 int32_t
 sqrt_rsqrt(int32_t x, int recip) {
-	/* assume x>0 */
-	// warpPrint("x=%d.%04d\n", DISPLAY_INT(x), DISPLAY_FRAC(x));
-	
-	/* m ranges in -7 -> 23 */
-	static int32_t  Y_est[31] = 
-		{0xB50,0x800,0x5A8,0x400,0x2D4,0x200,0x16A,0x100,0xB5,0x80,0x5A,0x40,0x2D,0x20,0x16,0x10,0xB,0x8,0x5,0x4,0x2,0x2,0x1,0x1,0x1,0x1,0x1,0x1,0x1,0x1};
-	
-	/* 
-	 *	Initial estimate is sqrt(2^(|_ log_2(x) _| - FRAC_BITS))*FRAC_BASE
-	 */
-	int32_t m = sizeof(int32_t)*8 - 1 - __builtin_clz(x) - FRAC_Q;
-	
-	/*
-	 *
-	 */
-	int32_t bi = x;
-	int32_t Yi = Y_est[m+7];
-	int32_t xi = mulfix(x, Yi); //x*Yi/FRAC_BASE;
-	int32_t yi = Yi;
-
-	/* 1st iteration */
-	bi = mulfix(mulfix(bi, Yi), Yi);
-	Yi = (3*FRAC_BASE - bi)/2;
-	xi = mulfix(xi, Yi);
-	yi = mulfix(yi, Yi);
-	// bi = bi*Yi*Yi/FRAC_BASE/FRAC_BASE;
-	// Yi = (3*FRAC_BASE - bi)/2;
-	// xi = xi*Yi/FRAC_BASE;
-	// yi = yi*Yi/FRAC_BASE;
-
-	// warpPrint("sqrt(x)_1=%d.%04d\n", DISPLAY_INT(xi), DISPLAY_FRAC(xi));
-
-	/* 2nd iteration */
-	bi = mulfix(mulfix(bi, Yi), Yi);
-	Yi = (3*FRAC_BASE - bi)/2;
-	xi = mulfix(xi, Yi);
-	yi = mulfix(yi, Yi);
-
-	// warpPrint("sqrt(x)_2=%d.%04d\n", DISPLAY_INT(xi), DISPLAY_FRAC(xi));
-
-	/* 3rd iteration */
-	bi = mulfix(mulfix(bi, Yi), Yi);
-	Yi = (3*FRAC_BASE - bi)/2;
-	xi = mulfix(xi, Yi);
-	yi = mulfix(yi, Yi);
-
-	// warpPrint("sqrt(x)_3=%d.%04d\n", DISPLAY_INT(xi), DISPLAY_FRAC(xi));
-
-	/* 4th iteration */
-	bi = mulfix(mulfix(bi, Yi), Yi);
-	Yi = (3*FRAC_BASE - bi)/2;
-	xi = mulfix(xi, Yi);
-	yi = mulfix(yi, Yi);
-
-	// warpPrint("sqrt(x)_4=%d.%04d\n", DISPLAY_INT(xi), DISPLAY_FRAC(xi));
-
-	return recip ? (yi>0?yi:1) : (xi>0?xi:1);
+    if (recip) {
+        int32_t int_halfx = mulfix(0.5*FRAC_BASE, x);
+        float fp_y = (float)x/FRAC_BASE;
+        long i = *(long*)&fp_y;
+        i = 0x5f3759df - (i>>1);
+        fp_y = *(float*)&i;
+        int32_t int_y = fp_y*FRAC_BASE;
+        int_y = mulfix(int_y, ((int32_t)(1.5f*FRAC_BASE) - (mulfix(mulfix(int_halfx, int_y), int_y))));
+        return int_y;
+//        fp_y = fp_y * (1.5f - (halfx * fp_y * fp_y));
+//        return fp_y*FRAC_BASE;
+    } else {
+        int32_t res = (int32_t)sqrt((double)x)<<(FRAC_Q/2);
+        if (FRAC_Q%2)
+            return res*1.414213562;
+        else
+            return res;
+    }
 }
 
 //====================================================================================================
@@ -135,7 +95,14 @@ sqrt_rsqrt(int32_t x, int recip) {
 void 
 MadgwickAHRSupdate(bmx055xAngularRate gx, bmx055yAngularRate gy, bmx055zAngularRate gz,
                    bmx055xAcceleration ax, bmx055yAcceleration ay, bmx055zAcceleration az,
-                   bmx055xMagneto mx, bmx055yMagneto my, bmx055zMagneto mz) {
+                   bmx055xMagneto mx, bmx055yMagneto my, bmx055zMagneto mz,
+                   int32_t* q0_ptr, int32_t* q1_ptr, int32_t* q2_ptr, int32_t* q3_ptr) {
+
+    int32_t q0 = *q0_ptr;
+    int32_t q1 = *q1_ptr;
+    int32_t q2 = *q2_ptr;
+    int32_t q3 = *q3_ptr;
+
 	int32_t		recipNorm;
 	int32_t		s0, s1, s2, s3;
 	int32_t		qDot1, qDot2, qDot3, qDot4;
@@ -144,7 +111,7 @@ MadgwickAHRSupdate(bmx055xAngularRate gx, bmx055yAngularRate gy, bmx055zAngularR
 
 	// Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
 	if((mx == 0x0) && (my == 0x0) && (mz == 0x0)) {
-		MadgwickAHRSupdateIMU(gx, gy, gz, ax, ay, az);
+		MadgwickAHRSupdateIMU(gx, gy, gz, ax, ay, az, q0_ptr, q1_ptr, q2_ptr, q3_ptr);
 		return;
 	}
 
@@ -159,9 +126,10 @@ MadgwickAHRSupdate(bmx055xAngularRate gx, bmx055yAngularRate gy, bmx055zAngularR
 
 		// Normalise accelerometer measurement
 		recipNorm = sqrt_rsqrt(mulfix(ax, ax) + mulfix(ay, ay) + mulfix(az, az), true);
+//        printf("1: %f\n", (double)recipNorm/FRAC_BASE);
 		ax = mulfix(ax, recipNorm);
 		ay = mulfix(ay, recipNorm);
-		az = mulfix(az, recipNorm);   
+		az = mulfix(az, recipNorm);
 
 		// Normalise magnetometer measurement
 		recipNorm = sqrt_rsqrt(mulfix(mx, mx) + mulfix(my, my) + mulfix(mz, mz), true);
@@ -307,12 +275,26 @@ MadgwickAHRSupdate(bmx055xAngularRate gx, bmx055yAngularRate gy, bmx055zAngularR
 
 	// Normalise quaternion
 	recipNorm = sqrt_rsqrt(mulfix(q0, q0) + mulfix(q1, q1) + mulfix(q2, q2) + mulfix(q3, q3), true);
+//    printf("q0=%f, q1=%f, q2=%f, q3=%f, recipNorm=%f\n",
+//           (double)q0/FRAC_BASE,
+//           (double)q1/FRAC_BASE,
+//           (double)q2/FRAC_BASE,
+//           (double)q3/FRAC_BASE,
+//           (double)recipNorm/FRAC_BASE);
 	q0 = mulfix(q0, recipNorm);
 	q1 = mulfix(q1, recipNorm);
 	q2 = mulfix(q2, recipNorm);
 	q3 = mulfix(q3, recipNorm);
+    *q0_ptr = q0;
+    *q1_ptr = q1;
+    *q2_ptr = q2;
+    *q3_ptr = q3;
 
-//    printf("FIX: q0 = %d\n", q0);
+//    printf("FIX: q0 = %d.%04d, q1 = %d.%04d, q2 = %d.%04d, q3 = %d.%04d\n",
+//           DISPLAY_INT(q0), DISPLAY_FRAC(q0),
+//           DISPLAY_INT(q1), DISPLAY_FRAC(q1),
+//           DISPLAY_INT(q2), DISPLAY_FRAC(q2),
+//           DISPLAY_INT(q3), DISPLAY_FRAC(q3));
 	
 	// /* 2nd iter normalization */
 	// recipNorm = sqrt_rsqrt(mulfix(q0, q0) + mulfix(q1, q1) + mulfix(q2, q2) + mulfix(q3, q3), true);
@@ -327,7 +309,12 @@ MadgwickAHRSupdate(bmx055xAngularRate gx, bmx055yAngularRate gy, bmx055zAngularR
 
 void 
 MadgwickAHRSupdateIMU(bmx055xAngularRate gx, bmx055yAngularRate gy, bmx055zAngularRate gz,
-                      bmx055xAcceleration ax, bmx055yAcceleration ay, bmx055zAcceleration az) {
+                      bmx055xAcceleration ax, bmx055yAcceleration ay, bmx055zAcceleration az,
+                      int32_t* q0_ptr, int32_t* q1_ptr, int32_t* q2_ptr, int32_t* q3_ptr) {
+    int32_t q0 = *q0_ptr;
+    int32_t q1 = *q1_ptr;
+    int32_t q2 = *q2_ptr;
+    int32_t q3 = *q3_ptr;
 	int32_t		recipNorm;
 	int32_t		s0, s1, s2, s3;
 	int32_t		qDot1, qDot2, qDot3, qDot4;
@@ -413,4 +400,8 @@ MadgwickAHRSupdateIMU(bmx055xAngularRate gx, bmx055yAngularRate gy, bmx055zAngul
 	q1 = mulfix(q1, recipNorm);
 	q2 = mulfix(q2, recipNorm);
 	q3 = mulfix(q3, recipNorm);
+    q0_ptr = &q0;
+    q1_ptr = &q1;
+    q2_ptr = &q2;
+    q3_ptr = &q3;
 }

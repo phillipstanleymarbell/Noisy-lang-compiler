@@ -17,6 +17,8 @@
 #include <sstream>
 #include <vector>
 
+#define SENSOR_RANGE
+
 const size_t iteration_num = 5;
 
 struct perfData {
@@ -138,7 +140,7 @@ std::pair<double, std::vector<double>> processDataTimer(const std::string test_c
     std::vector<double> function_results;
 
     // perf command
-    std::string cmd = "bash -c 'make " + test_case + " >& compile.log'";
+    std::string cmd = "bash -c 'ENABLE_OVERLOAD=true make " + test_case + " >& compile.log'";
     int command_return = system(cmd.c_str());
     if (command_return != 0) {
         return std::make_pair(0, std::vector<double>(0));
@@ -315,6 +317,38 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+#ifdef SENSOR_RANGE
+    std::vector<std::vector<double>> normalParameters{
+            // BMX055 acceleration
+            {-2, 2},
+            {-4, 4},
+            {-8, 8},
+            {-16, 16},
+            // BMX055 gyroscope
+            {-125, 125},
+            // LM35 Centigrade Temperature Sensor
+            {-40, 110},
+            {-55, 150},
+            {0, 100},
+            {0, 70},
+            // LPS25H crazyflie
+            {260, 1260},
+            // MAX31820 1-Wire Ambient Temperature Sensor
+            {10, 45},
+            {-55, 125},
+            // DHT11 Humidity Sensor
+            {20, 80},
+            {0, 50},
+            // LMP82064 Current Sensor and Voltage Monitor with SPI
+            {-0.2, 2},
+            // PCE-353 LEQ Sound Level Meter
+            {30, 130},
+            // LLS05-A Linear Light Sensor
+            {1, 200}
+    };
+
+    std::vector<double> range_extend{1};
+#else
     std::vector<std::vector<double>> normalParameters{
             {-1000.3, -999.2},
             {-134.5, -133.8},
@@ -329,11 +363,7 @@ int main(int argc, char** argv) {
     };
 
     std::vector<double> range_extend{1, 10, 100, 1000, 10000, 100000};
-
-    if (argc == 3) {
-        range_extend.clear();
-        range_extend.emplace_back(strtod(argv[2], nullptr));
-    }
+#endif
 
     std::vector<std::vector<double>> trigonometricParams{
             {0, 0.17453292519943295}, // (0, pi/18)
@@ -347,6 +377,11 @@ int main(int argc, char** argv) {
             {5.585053606381854, 5.759586531581288}, // (16pi/9, 33pi/18)
             {5.934119456780721, 6.1086523819801535} // (17pi/9, 35pi/18)
     };
+
+    if (argc == 3) {
+        range_extend.clear();
+        range_extend.emplace_back(strtod(argv[2], nullptr));
+    }
 
     if (argc == 4) {
         normalParameters.clear();

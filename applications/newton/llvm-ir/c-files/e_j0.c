@@ -56,7 +56,13 @@
  *	3. Special cases: y0(0)=-inf, y0(x<0)=NaN, y0(inf)=0.
  */
 
+#define IEEE_IMPLEMENT_SIN_COS
+
 #include "fdlibm.h"
+#ifdef IEEE_IMPLEMENT_SIN_COS
+#include "s_sin.c"
+#include "s_cos.c"
+#endif
 
 #ifdef __STDC__
 static double pzero(double), qzero(double);
@@ -70,7 +76,9 @@ static const double
 static double
 #endif
         huge 	= 1e300,
+#ifndef IEEE_IMPLEMENT_SIN_COS
         one	= 1.0,
+#endif
         invsqrtpi=  5.64189583547756279280e-01, /* 0x3FE20DD7, 0x50429B6D */
 tpi      =  6.36619772367581382433e-01, /* 0x3FE45F30, 0x6DC9C883 */
 /* R0/S0 on [0, 2.00] */
@@ -83,7 +91,9 @@ S02  =  1.16926784663337450260e-04, /* 0x3F1EA6D2, 0xDD57DBF4 */
 S03  =  5.13546550207318111446e-07, /* 0x3EA13B54, 0xCE84D5A9 */
 S04  =  1.16614003333790000205e-09; /* 0x3E1408BC, 0xF4745D8F */
 
+#ifndef IEEE_IMPLEMENT_SIN_COS
 static double zero = 0.0;
+#endif
 
 /*
 * Definitions generated from Newton
@@ -97,6 +107,9 @@ double __ieee754_j0(x)
         bmx055xAcceleration x;
 #endif
 {
+#ifdef ASSUME
+    __builtin_assume(x > -16 && x < 16);
+#endif
     double z, s,c,ss,cc,r,u,v;
     int hx,ix;
 
@@ -406,3 +419,99 @@ static double qzero(x)
     s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*(q[4]+z*q[5])))));
     return (-.125 + r/s)/x;
 }
+
+// clang ../c-files/e_j0.c -D DEBUG -D ASSUME -O3 -o e_j0_assume -lm
+#ifdef DEBUG
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/time.h>
+#include <time.h>
+
+#define iteration_num 500000
+
+typedef struct timespec timespec;
+timespec diff(timespec start, timespec end)
+{
+    timespec temp;
+    if ((end.tv_nsec-start.tv_nsec)<0) {
+        temp.tv_sec = end.tv_sec-start.tv_sec-1;
+        temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+    } else {
+        temp.tv_sec = end.tv_sec-start.tv_sec;
+        temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+    }
+    return temp;
+}
+
+timespec sum(timespec t1, timespec t2) {
+    timespec temp;
+    if (t1.tv_nsec + t2.tv_nsec >= 1000000000) {
+        temp.tv_sec = t1.tv_sec + t2.tv_sec + 1;
+        temp.tv_nsec = t1.tv_nsec + t2.tv_nsec - 1000000000;
+    } else {
+        temp.tv_sec = t1.tv_sec + t2.tv_sec;
+        temp.tv_nsec = t1.tv_nsec + t2.tv_nsec;
+    }
+    return temp;
+}
+
+void printTimeSpec(timespec t, const char* prefix) {
+    printf("%s: %d.%09d\n", prefix, (int)t.tv_sec, (int)t.tv_nsec);
+}
+
+timespec tic( )
+{
+    timespec start_time;
+    clock_gettime(CLOCK_REALTIME, &start_time);
+    return start_time;
+}
+
+void toc( timespec* start_time, const char* prefix )
+{
+    timespec current_time;
+    clock_gettime(CLOCK_REALTIME, &current_time);
+    printTimeSpec( diff( *start_time, current_time ), prefix );
+    *start_time = current_time;
+}
+
+/*
+ * random floating point, [min, max]
+ * */
+static bmx055xAcceleration
+randomDouble(bmx055xAcceleration min, bmx055xAcceleration max)
+{
+    bmx055xAcceleration randDbValue = min + 1.0 * rand() / RAND_MAX * (max - min);
+    return randDbValue;
+}
+
+int main(int argc, char** argv) {
+    double parameters[2];
+    char *pEnd;
+    if (argc == 3) {
+        for (size_t idx = 0; idx < argc - 1; idx++) {
+            parameters[idx] = strtod(argv[idx + 1], &pEnd);
+        }
+    } else {
+        parameters[0] = 3.0;
+        parameters[1] = 10.0;
+    }
+    double result[iteration_num];
+    bmx055xAcceleration xOps[iteration_num];
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        xOps[idx] = randomDouble(parameters[0], parameters[1]);
+    }
+
+    timespec timer = tic();
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = __ieee754_j0(xOps[idx]);
+    }
+
+    toc(&timer, "computation delay");
+
+    printf("results: %f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+
+    return 0;
+}
+#endif

@@ -13,6 +13,9 @@
 #ifndef MadgwickAHRS_h
 #define MadgwickAHRS_h
 
+#include <math.h>
+#include <stdio.h>
+
 //----------------------------------------------------------------------------------------------------
 // Variable declaration
 
@@ -22,8 +25,10 @@
 //---------------------------------------------------------------------------------------------------
 // Function declarations
 
-void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
-void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
+void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz,
+                        float* q0_ptr, float* q1_ptr, float* q2_ptr, float* q3_ptr);
+void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az,
+                           float* q0_ptr, float* q1_ptr, float* q2_ptr, float* q3_ptr);
 
 #endif
 //=====================================================================================================

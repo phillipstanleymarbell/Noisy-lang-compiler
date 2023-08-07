@@ -39,7 +39,7 @@ cd ../../../src/newton
 cd /path/to/Noisy-lang-compiler/applications/newton/llvm-ir
 make infer_bound_control_flow.ll
 cd ../../../src/newton
-./<newton-executable> --llvm-ir=../../applications/newton/llvm-ir/infer_bound_control_flow.ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
+./<newton-executable> --llvm-ir=../../applications/newton/llvm-ir/infer_bound_control_flow.ll --llvm-ir-liveness-check --llvm-ir-enable-overload --llvm-ir-enable-builtin-assume ../../applications/newton/sensors/test.nt
 opt infer_bound_control_flow_output.ll -O2 -S -o out.ll
 ```
 

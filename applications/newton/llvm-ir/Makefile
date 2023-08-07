@@ -21,6 +21,19 @@ CC_FP_FLAG = -msoft-float
 OPT_FP_FLAG = --float-abi=soft
 endif
 
+# e.g. ASSUME=true lowerBound=-2 upperBound=2 make perf_madgwick
+ifdef ASSUME
+MACRO_FLAG += -D ASSUME
+endif
+
+ifdef lowerBound
+MACRO_FLAG += -D lowerBound=$(lowerBound)
+endif
+
+ifdef upperBound
+MACRO_FLAG += -D upperBound=$(upperBound)
+endif
+
 all: default
 
 default: application.ll simple_control_flow.ll inferBound.ll inferBoundControlFlow.ll e_exp.ll sincosf.ll e_log.ll e_acosh.ll e_j0.ll e_y0.ll e_rem_pio2.ll benchmark_suite.ll phi_two_global_arrays.ll func_call.ll test_shift.ll vec_add.ll vec_add_8.ll MadgwickAHRSfix.ll MadgwickAHRS_softfloat.ll MadgwickAHRS.ll
@@ -33,7 +46,7 @@ MadgwickAHRS_softfloat.ll : MadgwickAHRS_softfloat.c
 
 %.ll : %.c
 	@echo Compiling $*.c
-	$(CC) $(TARGET_FLAG) $(CC_FP_FLAG) -g -O0 -Xclang -disable-O0-optnone -S -emit-llvm $(COMMON_FLAGS) -o $@ $<
+	$(CC) $(TARGET_FLAG) $(CC_FP_FLAG) $(MACRO_FLAG) -g -O0 -Xclang -disable-O0-optnone -S -emit-llvm $(COMMON_FLAGS) -o $@ $<
 	opt $@ $(OPT_FP_FLAG) --mem2reg --instsimplify -S -o $@
 
 clean::

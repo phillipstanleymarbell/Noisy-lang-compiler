@@ -262,7 +262,24 @@ extern "C" {
 typedef float64 bmx055xAcceleration;
 typedef float64 bmx055yAcceleration;
 
+#ifndef lowerBound
+#define lowerBound 0
+#endif
+#ifndef upperBound
+#define upperBound 16
+#endif
+
 float64 float64_mul (bmx055xAcceleration a, bmx055yAcceleration b) {
+#ifdef ASSUME
+    double aLowerBound = lowerBound, aUpperBound = upperBound;
+    double bLowerBound = aLowerBound+0.6, bUpperBound = aUpperBound+0.3;
+    bmx055xAcceleration llhs = *(bmx055xAcceleration*)(&aLowerBound);
+    bmx055xAcceleration lrhs = *(bmx055xAcceleration*)(&aUpperBound);
+    bmx055yAcceleration rlhs = *(bmx055xAcceleration*)(&bLowerBound);
+    bmx055yAcceleration rrhs = *(bmx055xAcceleration*)(&bUpperBound);
+    __builtin_assume(a > llhs && a < lrhs);
+    __builtin_assume(b > rlhs && b < rrhs);
+#endif
   flag aSign, bSign, zSign;
   int16 aExp, bExp, zExp;
   bits64 aSig, bSig, zSig0, zSig1;
@@ -422,3 +439,104 @@ const float64 z_output[N] = {
 //      printf ("%d\n", main_result);
 //      return main_result;
 //    }
+
+
+// clang ../CHStone_test/dfmul/float64_mul.cpp -D DEBUG -D ASSUME -D lowerBound=3 -D upperBound=10 -O3 -o float64_mul_assume -lm
+#ifdef DEBUG
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/time.h>
+#include <time.h>
+
+#define iteration_num 50000
+
+typedef struct timespec timespec;
+timespec diff(timespec start, timespec end)
+{
+    timespec temp;
+    if ((end.tv_nsec-start.tv_nsec)<0) {
+        temp.tv_sec = end.tv_sec-start.tv_sec-1;
+        temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+    } else {
+        temp.tv_sec = end.tv_sec-start.tv_sec;
+        temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+    }
+    return temp;
+}
+
+timespec sum(timespec t1, timespec t2) {
+    timespec temp;
+    if (t1.tv_nsec + t2.tv_nsec >= 1000000000) {
+        temp.tv_sec = t1.tv_sec + t2.tv_sec + 1;
+        temp.tv_nsec = t1.tv_nsec + t2.tv_nsec - 1000000000;
+    } else {
+        temp.tv_sec = t1.tv_sec + t2.tv_sec;
+        temp.tv_nsec = t1.tv_nsec + t2.tv_nsec;
+    }
+    return temp;
+}
+
+void printTimeSpec(timespec t, const char* prefix) {
+    printf("%s: %d.%09d\n", prefix, (int)t.tv_sec, (int)t.tv_nsec);
+}
+
+timespec tic( )
+{
+    timespec start_time;
+    clock_gettime(CLOCK_REALTIME, &start_time);
+    return start_time;
+}
+
+void toc( timespec* start_time, const char* prefix )
+{
+    timespec current_time;
+    clock_gettime(CLOCK_REALTIME, &current_time);
+    printTimeSpec( diff( *start_time, current_time ), prefix );
+    *start_time = current_time;
+}
+
+/*
+ * random floating point, [min, max]
+ * */
+static double
+randomDouble(double min, double max)
+{
+    double randDbValue = min + 1.0 * rand() / RAND_MAX * (max - min);
+    return randDbValue;
+}
+
+int main(int argc, char** argv) {
+    double parameters[2];
+    char *pEnd;
+    if (argc == 3) {
+        for (size_t idx = 0; idx < argc - 1; idx++) {
+            parameters[idx] = strtod(argv[idx + 1], &pEnd);
+        }
+    } else {
+        parameters[0] = 3.0;
+        parameters[1] = 10.0;
+    }
+    float64 result[iteration_num];
+    double xOps[iteration_num];
+    double yOps[iteration_num];
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        xOps[idx] = randomDouble(parameters[0], parameters[1]);
+        yOps[idx] = randomDouble(parameters[0] + 0.6, parameters[1] + 0.3);
+    }
+
+    timespec timer = tic();
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        result[idx] = float64_mul(*(bmx055xAcceleration*)(&xOps[idx]), *(bmx055xAcceleration*)(&yOps[idx]));
+    }
+
+    toc(&timer, "computation delay");
+
+    printf("results: %llx, %llx, %llx, %llx, %llx\n", result[0], result[1], result[2], result[3], result[4]);
+//    printf("results: %f\t%f\t%f\t%f\t%f\n", *(double*)(&result[0]), *(double*)(&result[1]),
+//           *(double*)(&result[2]), *(double*)(&result[3]), *(double*)(&result[4]));
+
+    return 0;
+}
+#endif

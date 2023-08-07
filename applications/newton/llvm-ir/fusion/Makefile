@@ -17,7 +17,7 @@ TARGET_FLAG=-target aarch64
 endif
 
 NEWTON_BIN_DIR = ../../../../src/newton
-newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/fusion/fusion.ll --llvm-ir-liveness-check ../../applications/newton/sensors/BMX055.nt
+newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/fusion/fusion.ll --llvm-ir-liveness-check --llvm-ir-enable-overload --llvm-ir-enable-builtin-assume ../../applications/newton/sensors/BMX055.nt
 
 all: default
 

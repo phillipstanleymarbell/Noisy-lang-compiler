@@ -37,7 +37,7 @@ extern "C"
 #endif /* __cplusplus */
 
 void
-irPassLLVMIRAutoQuantization(State * N, BoundInfo * boundInfo, llvm::Function & llvmIrFunction);
+irPassLLVMIRAutoQuantization(State * N, llvm::Function & llvmIrFunction, std::vector<llvm::Function*>& functionsToInsert);
 
 #ifdef __cplusplus
 } /* extern "C" */

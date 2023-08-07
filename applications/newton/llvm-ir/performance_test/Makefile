@@ -1,7 +1,7 @@
 ### Makefile to run the optimization and get the performance data automatically ###
 
 ifndef VERBOSE
-	QUIET:=@
+QUIET:=@
 endif
 
 MAKE_CLEAN = make clean
@@ -17,18 +17,21 @@ OUT_S = out.s
 OUT_OBJ = out.o
 OUT_LIB = libout.a
 
+# DEBUG_MODE=true make ...
 ifdef DEBUG_MODE
 CC_OPT_LEVEL = -O0 -g
 else
 CC_OPT_LEVEL = -O3 -Os
 endif
 
+# CROSS_COMPILE=true make ...
 ifdef CROSS_COMPILE
 TARGET_FLAG = -target aarch64
 TARGET_LLC_FLAG = --march=aarch64
 endif
 
 # real-world application configs
+# REAL_APP=true make ...
 ifdef REAL_APP
 NT_FILE = BMX055.nt
 else
@@ -36,13 +39,16 @@ NT_FILE = test.nt
 endif
 
 # auto-quantization configs, FP hardware by default, for Madgwick only currently
+# AUTO_QUANT=true make ...
 ifdef AUTO_QUANT
 DATA_TYPE=INT_DATA_TYPE
 else
 DATA_TYPE=FP_DATA_TYPE
 
+# SOFT_FLOAT_LIB=true make ...
 ifdef SOFT_FLOAT_LIB
 SOFT_FLOAT_LIB=SOFT_FLOAT_LIB
+# SOFT_FLOAT=true make ...
 else ifdef SOFT_FLOAT
 CC_FP_FLAG = -msoft-float
 OPT_FP_FLAG = --float-abi=soft
@@ -50,11 +56,20 @@ endif
 
 endif
 
+# ENABLE_OVERLOAD=true ENABLE_BUILTIN_ASSUME=true make ...
+NEWTON_FLAG=--llvm-ir-liveness-check
+ifdef ENABLE_OVERLOAD
+NEWTON_FLAG+=--llvm-ir-enable-overload
+endif
+ifdef ENABLE_BUILTIN_ASSUME
+NEWTON_FLAG+=--llvm-ir-enable-builtin-assume
+endif
+
 max_opt_fn = opt ../$(1).ll $(OPT_FP_FLAG) -O3 -Os -S -o $(OUT_FILE)
 non_opt_fn = cp ../$(1).ll $(OUT_FILE)
 necessary_opt_fn = opt ../$(1).ll --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
-newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/$(NT_FILE)
+newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll $(NEWTON_FLAG) ../../applications/newton/sensors/$(NT_FILE)
 
 compile_main_fn = $(CC) main.c $(TARGET_FLAG) -no-pie -L. -lout -D $(1) $(CC_OPT_LEVEL) -o main_out -lm
 
@@ -248,7 +263,15 @@ endif
 madgwick_opt:
 	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,MadgwickAHRSfix)
 	llvm-dis ../MadgwickAHRSfix_output.bc
-	$(call max_opt_fn,MadgwickAHRSfix)
+	$(call max_opt_fn,MadgwickAHRSfix_output)
+
+inferBoundControlFlow_non_opt:
+	$(call max_opt_fn,inferBoundControlFlow)
+
+inferBoundControlFlow_opt:
+	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,inferBoundControlFlow)
+	llvm-dis ../inferBoundControlFlow_output.bc
+	$(call max_opt_fn,inferBoundControlFlow_output)
 
 compile_test_madgwick:
 	$(CC) ../test_madgwick.c -D $(DATA_TYPE) $(CC_FP_FLAG) $(TARGET_FLAG) -no-pie -L. -lout $(CC_OPT_LEVEL) -o main_out -lm
@@ -326,6 +349,10 @@ perf_madgwick_opt: clean make_ll madgwick_opt compile_lib compile_test_madgwick
 perf_func_call: clean make_ll func_call_opt compile_lib compile_func_call
 
 interface_lib: clean make_ll soft_float_api_opt compile_lib
+
+perf_inferBoundControlFlow: clean make_ll inferBoundControlFlow_non_opt compile_lib
+
+perf_inferBoundControlFlow_opt: clean make_ll inferBoundControlFlow_opt compile_lib
 
 auto_test_compile:
 	clang++ auto_test.cpp -g -o auto_test

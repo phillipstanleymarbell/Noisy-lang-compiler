@@ -378,9 +378,26 @@ normalizeRoundAndPack:
 typedef float64 bmx055xAcceleration;
 typedef float64 bmx055yAcceleration;
 
+#ifndef lowerBound
+#define lowerBound 0
+#endif
+#ifndef upperBound
+#define upperBound 16
+#endif
+
 float64
 float64_add (bmx055xAcceleration a, bmx055yAcceleration b)
 {
+#ifdef ASSUME
+    double aLowerBound = lowerBound, aUpperBound = upperBound;
+    double bLowerBound = aLowerBound+0.6, bUpperBound = aUpperBound+0.3;
+    bmx055xAcceleration llhs = *(bmx055xAcceleration*)(&aLowerBound);
+    bmx055xAcceleration lrhs = *(bmx055xAcceleration*)(&aUpperBound);
+    bmx055yAcceleration rlhs = *(bmx055xAcceleration*)(&bLowerBound);
+    bmx055yAcceleration rrhs = *(bmx055xAcceleration*)(&bUpperBound);
+    __builtin_assume(a > llhs && a < lrhs);
+    __builtin_assume(b > rlhs && b < rrhs);
+#endif
   flag aSign, bSign;
 
   aSign = extractFloat64Sign (a);

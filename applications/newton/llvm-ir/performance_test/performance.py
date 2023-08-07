@@ -168,41 +168,6 @@ if folder:
     shutil.rmtree(fig_path, ignore_errors=True)
 os.mkdir(fig_path)
 
-# Histogram
-# for merit_id in range(merit_num):
-#     for test_case_id in range(test_case_num):
-#         for range_extend_id in range(range_extend_num):
-#             ax1 = plt.figure(num= merit_id * test_case_num * range_extend_num +
-#                              test_case_id * range_extend_num + range_extend_id + 1,
-#                              dpi=300)
-#
-#             x = list(range(params_num))
-#             total_width, n = 0.5, 2
-#             width = total_width / n
-#
-#             plt_y_begin = params_num * (test_case_id * range_extend_num + range_extend_id)
-#             plt_y_end = plt_y_begin + params_num
-#             y_ranges = (min(opt_perf_data[merit_id][plt_y_begin:plt_y_end]) * 0.8,
-#                         max(ori_perf_data[merit_id][plt_y_begin:plt_y_end]) * 1.2)
-#
-#             plt.ylim(y_ranges)
-#             plt.ylabel(y_labels[merit_id])
-#
-#             plt.bar(x, ori_perf_data[merit_id][plt_y_begin:plt_y_end],
-#                     width=width, label='basic performance', fc='y')
-#             for i in range(len(x)):
-#                 x[i] = x[i] + width
-#             plt.bar(x, opt_perf_data[merit_id][plt_y_begin:plt_y_end],
-#                     width=width, label='optimized performance', fc='r')
-#             plt.legend()
-#             file_name = fig_path + name_list[test_case_id * range_extend_num + range_extend_id] + "-" + \
-#                         str(range_extend_list[range_extend_id]) + "-" + y_labels[merit_id] + ".pdf"
-#             file_name = file_name.replace(" ", "_")
-#             plt.savefig(file_name)
-#             plt.close()
-#             if test_case_id == test_case_num - 1:
-#                 break
-
 # Heatmap
 for merit_id in range(1, merit_num, 2):
     for test_case_id in range(test_case_num):

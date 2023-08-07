@@ -109,6 +109,8 @@ main(int argc, char *argv[])
 			{"targetParam",		required_argument,	0,	'T'},
 			{"llvm-ir",             required_argument,      0,      'I'},
 			{"llvm-ir-liveness-check",    no_argument,      0,      'L'},
+            {"llvm-ir-enable-overload",    no_argument,      0,      'o'},
+            {"llvm-ir-enable-builtin-assume",    no_argument,      0,      'A'},
             {"llvm-ir-auto-quantization",    no_argument,      0,      'Q'},
 			{"estimator-synthesis",	required_argument,	0,	420},
 			{"process",		required_argument,	0,	421},
@@ -423,6 +425,18 @@ main(int argc, char *argv[])
 				N->irPasses |= kNewtonirPassLLVMIROptimizeByRange;
 				break;
 			}
+
+            case 'o':
+            {
+                N->irPasses |= kNewtonirPassLLVMIREnableOverload;
+                break;
+            }
+
+            case 'A':
+            {
+                N->irPasses |= kNewtonirPassLLVMIREnableBuiltinAssume;
+                break;
+            }
 
             case 'Q':
             {

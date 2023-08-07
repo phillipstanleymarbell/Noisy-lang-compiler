@@ -43,6 +43,9 @@ typedef double bmx055xAcceleration;
 void
 libc_sincosf (bmx055xAcceleration y, float *sinp, float *cosp)
 {
+#ifdef ASSUME
+    __builtin_assume(y > -16 && y < 16);
+#endif
     double x = y;
     double s;
     int n;
@@ -105,10 +108,101 @@ libc_sincosf (bmx055xAcceleration y, float *sinp, float *cosp)
     }
 }
 
-//#endif
+// clang ../c-files/sincosf.c -D DEBUG -D ASSUME -O3 -o sincosf_assume -lm
+#ifdef DEBUG
 
-//int main() {
-//    float sinp, cosp;
-//    libc_sincosf (35.85, &sinp, &cosp);
-//    printf("sinp: %f, cosp: %f\n", sinp, cosp);
-//}
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/time.h>
+#include <time.h>
+
+#define iteration_num 500000
+
+typedef struct timespec timespec;
+timespec diff(timespec start, timespec end)
+{
+    timespec temp;
+    if ((end.tv_nsec-start.tv_nsec)<0) {
+        temp.tv_sec = end.tv_sec-start.tv_sec-1;
+        temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+    } else {
+        temp.tv_sec = end.tv_sec-start.tv_sec;
+        temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+    }
+    return temp;
+}
+
+timespec sum(timespec t1, timespec t2) {
+    timespec temp;
+    if (t1.tv_nsec + t2.tv_nsec >= 1000000000) {
+        temp.tv_sec = t1.tv_sec + t2.tv_sec + 1;
+        temp.tv_nsec = t1.tv_nsec + t2.tv_nsec - 1000000000;
+    } else {
+        temp.tv_sec = t1.tv_sec + t2.tv_sec;
+        temp.tv_nsec = t1.tv_nsec + t2.tv_nsec;
+    }
+    return temp;
+}
+
+void printTimeSpec(timespec t, const char* prefix) {
+    printf("%s: %d.%09d\n", prefix, (int)t.tv_sec, (int)t.tv_nsec);
+}
+
+timespec tic( )
+{
+    timespec start_time;
+    clock_gettime(CLOCK_REALTIME, &start_time);
+    return start_time;
+}
+
+void toc( timespec* start_time, const char* prefix )
+{
+    timespec current_time;
+    clock_gettime(CLOCK_REALTIME, &current_time);
+    printTimeSpec( diff( *start_time, current_time ), prefix );
+    *start_time = current_time;
+}
+
+/*
+ * random floating point, [min, max]
+ * */
+static bmx055xAcceleration
+randomDouble(bmx055xAcceleration min, bmx055xAcceleration max)
+{
+    bmx055xAcceleration randDbValue = min + 1.0 * rand() / RAND_MAX * (max - min);
+    return randDbValue;
+}
+
+int main(int argc, char** argv) {
+    double parameters[2];
+    char *pEnd;
+    if (argc == 3) {
+        for (size_t idx = 0; idx < argc - 1; idx++) {
+            parameters[idx] = strtod(argv[idx + 1], &pEnd);
+        }
+    } else {
+        parameters[0] = 3.0;
+        parameters[1] = 10.0;
+    }
+    double result[iteration_num];
+    bmx055xAcceleration xOps[iteration_num];
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        xOps[idx] = randomDouble(parameters[0], parameters[1]);
+    }
+
+    timespec timer = tic();
+    float sinp, cosp;
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        sinp = cosp = 0;
+        libc_sincosf(xOps[idx], &sinp, &cosp);
+        result[idx] = sinp;
+    }
+
+    toc(&timer, "computation delay");
+
+    printf("results: %f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+
+    return 0;
+}
+#endif

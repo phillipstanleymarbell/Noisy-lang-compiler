@@ -16,7 +16,6 @@
 // Header files
 
 #include "MadgwickAHRS.h"
-#include <math.h>
 
 //---------------------------------------------------------------------------------------------------
 // Definitions
@@ -26,16 +25,38 @@
 #define sampleFreq	28.0f		// sample frequency in Hz
 #define betaDef		0.1f		// 2 * proportional gain
 
+#ifndef lowerBound
+#define lowerBound -16
+#endif
+#ifndef upperBound
+#define upperBound 16
+#endif
+
 //---------------------------------------------------------------------------------------------------
 // Variable definitions
 
 volatile float beta = betaDef;								// 2 * proportional gain (Kp)
-volatile float q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f;	// quaternion of sensor frame relative to auxiliary frame
+//volatile float q0 = 0.64306622f, q1 = 0.02828862f, q2 = -0.00567953f, q3 = -0.76526684f;	// quaternion of sensor frame relative to auxiliary frame
 
 //---------------------------------------------------------------------------------------------------
 // Function declarations
 
-float invSqrt(float x);
+//---------------------------------------------------------------------------------------------------
+// Fast inverse square-root
+// See: http://en.wikipedia.org/wiki/Fast_inverse_square_root
+
+// 1/sqrtf();
+float invSqrt(float x) {
+    float halfx = 0.5f * x;
+    float y = x;
+//#pragma unsupported
+    long i = *(long*)&y;
+    i = 0x5f3759df - (i>>1);
+    y = *(float*)&i;
+//#end
+    y = y * (1.5f - (halfx * y * y));
+    return y;
+}
 
 //====================================================================================================
 // Functions
@@ -43,7 +64,17 @@ float invSqrt(float x);
 //---------------------------------------------------------------------------------------------------
 // AHRS algorithm update
 
-void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz) {
+void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz,
+                        float* q0_ptr, float* q1_ptr, float* q2_ptr, float* q3_ptr) {
+    float q0 = *q0_ptr;
+    float q1 = *q1_ptr;
+    float q2 = *q2_ptr;
+    float q3 = *q3_ptr;
+#ifdef ASSUME
+    __builtin_assume(ax > lowerBound && ax < upperBound);
+    __builtin_assume(ay > lowerBound && ay < upperBound);
+    __builtin_assume(az > lowerBound && az < upperBound);
+#endif
 	float recipNorm;
 	float s0, s1, s2, s3;
 	float qDot1, qDot2, qDot3, qDot4;
@@ -52,7 +83,7 @@ void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float 
 
 	// Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
 	if((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
-		MadgwickAHRSupdateIMU(gx, gy, gz, ax, ay, az);
+		MadgwickAHRSupdateIMU(gx, gy, gz, ax, ay, az, q0_ptr, q1_ptr, q2_ptr, q3_ptr);
 		return;
 	}
 
@@ -67,9 +98,10 @@ void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float 
 
 		// Normalise accelerometer measurement
 		recipNorm = invSqrt(ax * ax + ay * ay + az * az);
+//        printf("1: %f\n", recipNorm);
 		ax *= recipNorm;
 		ay *= recipNorm;
-		az *= recipNorm;   
+		az *= recipNorm;
 
 		// Normalise magnetometer measurement
 		recipNorm = invSqrt(mx * mx + my * my + mz * mz);
@@ -133,10 +165,16 @@ void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float 
 
 	// Normalise quaternion
 	recipNorm = invSqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
+//    printf("q0=%f, q1=%f, q2=%f, q3=%f, recipNorm=%f\n",
+//           q0, q1, q2, q3, recipNorm);
 	q0 *= recipNorm;
 	q1 *= recipNorm;
 	q2 *= recipNorm;
 	q3 *= recipNorm;
+    *q0_ptr = q0;
+    *q1_ptr = q1;
+    *q2_ptr = q2;
+    *q3_ptr = q3;
 
 //    printf("Original: q0 = %f\n", q0);
 }
@@ -144,7 +182,12 @@ void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float 
 //---------------------------------------------------------------------------------------------------
 // IMU algorithm update
 
-void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az) {
+void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az,
+                           float* q0_ptr, float* q1_ptr, float* q2_ptr, float* q3_ptr) {
+    float q0 = *q0_ptr;
+    float q1 = *q1_ptr;
+    float q2 = *q2_ptr;
+    float q3 = *q3_ptr;
 	float recipNorm;
 	float s0, s1, s2, s3;
 	float qDot1, qDot2, qDot3, qDot4;
@@ -210,20 +253,10 @@ void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, flo
 	q1 *= recipNorm;
 	q2 *= recipNorm;
 	q3 *= recipNorm;
-}
-
-//---------------------------------------------------------------------------------------------------
-// Fast inverse square-root
-// See: http://en.wikipedia.org/wiki/Fast_inverse_square_root
-
-float invSqrt(float x) {
-	float halfx = 0.5f * x;
-	float y = x;
-	long i = *(long*)&y;
-	i = 0x5f3759df - (i>>1);
-	y = *(float*)&i;
-	y = y * (1.5f - (halfx * y * y));
-	return y;
+    *q0_ptr = q0;
+    *q1_ptr = q1;
+    *q2_ptr = q2;
+    *q3_ptr = q3;
 }
 
 //====================================================================================================
