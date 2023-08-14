@@ -50,101 +50,6 @@ enum CmpRes {
 };
 
 CmpRes
-compareFCmpConstWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double variableLowerBound, double variableUpperBound,
-				  double constValue)
-{
-	switch (llvmIrFCmpInstruction->getPredicate())
-	{
-		case FCmpInst::FCMP_TRUE:
-			return CmpRes::AlwaysTrue;
-		case FCmpInst::FCMP_FALSE:
-			return CmpRes::AlwaysFalse;
-			/*
-			 * Ordered means that neither operand is a QNAN while unordered means that either operand may be a QNAN.
-			 * More details in https://llvm.org/docs/LangRef.html#fcmp-instruction
-			 * */
-		case FCmpInst::FCMP_OEQ:
-		case FCmpInst::FCMP_UEQ:
-			if ((variableLowerBound == variableUpperBound) && (variableUpperBound == constValue))
-			{
-				return CmpRes::AlwaysTrue;
-			}
-			else
-			{
-				return CmpRes::AlwaysFalse;
-			}
-		case FCmpInst::FCMP_OGT:
-		case FCmpInst::FCMP_UGT:
-			if (variableLowerBound > constValue)
-			{
-				return CmpRes::AlwaysTrue;
-			}
-			else if (variableUpperBound <= constValue)
-			{
-				return CmpRes::AlwaysFalse;
-			}
-			else
-			{
-				return CmpRes::Depends;
-			}
-		case FCmpInst::FCMP_OGE:
-		case FCmpInst::FCMP_UGE:
-			if (variableLowerBound >= constValue)
-			{
-				return CmpRes::AlwaysTrue;
-			}
-			else if (variableUpperBound < constValue)
-			{
-				return CmpRes::AlwaysFalse;
-			}
-			else
-			{
-				return CmpRes::Depends;
-			}
-		case FCmpInst::FCMP_OLT:
-		case FCmpInst::FCMP_ULT:
-			if (variableUpperBound < constValue)
-			{
-				return CmpRes::AlwaysTrue;
-			}
-			else if (variableLowerBound >= constValue)
-			{
-				return CmpRes::AlwaysFalse;
-			}
-			else
-			{
-				return CmpRes::Depends;
-			}
-		case FCmpInst::FCMP_OLE:
-		case FCmpInst::FCMP_ULE:
-			if (variableUpperBound <= constValue)
-			{
-				return CmpRes::AlwaysTrue;
-			}
-			else if (variableLowerBound > constValue)
-			{
-				return CmpRes::AlwaysFalse;
-			}
-			else
-			{
-				return CmpRes::Depends;
-			}
-		case FCmpInst::FCMP_ONE:
-		case FCmpInst::FCMP_UNE:
-			if ((variableLowerBound == variableUpperBound) && (variableUpperBound != constValue))
-			{
-				return CmpRes::AlwaysTrue;
-			}
-			else
-			{
-				return CmpRes::AlwaysFalse;
-			}
-		default:
-			return CmpRes::Unsupported;
-	}
-}
-
-CmpRes
 compareFCmpWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double leftVariableLowerBound,
 			     double leftVariableUpperBound,
 			     double rightVariableLowerBound, double rightVariableUpperBound)
@@ -162,14 +67,37 @@ compareFCmpWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double leftVariab
 		case FCmpInst::FCMP_OEQ:
 		case FCmpInst::FCMP_UEQ:
 			if ((leftVariableLowerBound == rightVariableLowerBound) &&
-			    (leftVariableUpperBound == rightVariableUpperBound))
+                (rightVariableLowerBound == leftVariableUpperBound) &&
+                (leftVariableUpperBound == rightVariableUpperBound))
 			{
 				return CmpRes::AlwaysTrue;
 			}
-			else
-			{
-				return CmpRes::AlwaysFalse;
-			}
+            else if (leftVariableLowerBound > rightVariableUpperBound ||
+                     leftVariableUpperBound < rightVariableLowerBound)
+            {
+                return CmpRes::AlwaysFalse;
+            }
+            else
+            {
+                return CmpRes::Depends;
+            }
+        case FCmpInst::FCMP_ONE:
+        case FCmpInst::FCMP_UNE:
+            if ((leftVariableUpperBound < rightVariableLowerBound) ||
+                (leftVariableLowerBound > rightVariableUpperBound))
+            {
+                return CmpRes::AlwaysTrue;
+            }
+            else if ((leftVariableLowerBound == rightVariableLowerBound) &&
+                     (rightVariableLowerBound == leftVariableUpperBound) &&
+                     (leftVariableUpperBound == rightVariableUpperBound))
+            {
+                return CmpRes::AlwaysFalse;
+            }
+            else
+            {
+                return CmpRes::Depends;
+            }
 		case FCmpInst::FCMP_OGT:
 		case FCmpInst::FCMP_UGT:
 			if (leftVariableLowerBound > rightVariableUpperBound)
@@ -226,106 +154,6 @@ compareFCmpWithVariableRange(FCmpInst * llvmIrFCmpInstruction, double leftVariab
 			{
 				return CmpRes::Depends;
 			}
-		case FCmpInst::FCMP_ONE:
-		case FCmpInst::FCMP_UNE:
-			if ((leftVariableUpperBound < rightVariableLowerBound) ||
-			    (leftVariableLowerBound > rightVariableUpperBound))
-			{
-				return CmpRes::AlwaysTrue;
-			}
-			else
-			{
-				return CmpRes::AlwaysFalse;
-			}
-		default:
-			return CmpRes::Unsupported;
-	}
-}
-
-CmpRes
-compareICmpConstWithVariableRange(ICmpInst * llvmIrICmpInstruction, double variableLowerBound, double variableUpperBound,
-				  double constValue)
-{
-	switch (llvmIrICmpInstruction->getPredicate())
-	{
-		/*
-		 * Ordered means that neither operand is a QNAN while unordered means that either operand may be a QNAN.
-		 * More details in https://llvm.org/docs/LangRef.html#icmp-instruction
-		 * */
-		case ICmpInst::ICMP_EQ:
-			if ((variableLowerBound == variableUpperBound) && (variableUpperBound == constValue))
-			{
-				return CmpRes::AlwaysTrue;
-			}
-			else
-			{
-				return CmpRes::AlwaysFalse;
-			}
-		case ICmpInst::ICMP_NE:
-			if ((variableLowerBound == variableUpperBound) && (variableUpperBound != constValue))
-			{
-				return CmpRes::AlwaysTrue;
-			}
-			else
-			{
-				return CmpRes::AlwaysFalse;
-			}
-		case ICmpInst::ICMP_UGT:
-		case ICmpInst::ICMP_SGT:
-			if (variableLowerBound > constValue)
-			{
-				return CmpRes::AlwaysTrue;
-			}
-			else if (variableUpperBound <= constValue)
-			{
-				return CmpRes::AlwaysFalse;
-			}
-			else
-			{
-				return CmpRes::Depends;
-			}
-		case ICmpInst::ICMP_UGE:
-		case ICmpInst::ICMP_SGE:
-			if (variableLowerBound >= constValue)
-			{
-				return CmpRes::AlwaysTrue;
-			}
-			else if (variableUpperBound < constValue)
-			{
-				return CmpRes::AlwaysFalse;
-			}
-			else
-			{
-				return CmpRes::Depends;
-			}
-		case ICmpInst::ICMP_ULT:
-		case ICmpInst::ICMP_SLT:
-			if (variableUpperBound < constValue)
-			{
-				return CmpRes::AlwaysTrue;
-			}
-			else if (variableLowerBound >= constValue)
-			{
-				return CmpRes::AlwaysFalse;
-			}
-			else
-			{
-				return CmpRes::Depends;
-			}
-		case ICmpInst::ICMP_ULE:
-		case ICmpInst::ICMP_SLE:
-			if (variableUpperBound <= constValue)
-			{
-				return CmpRes::AlwaysTrue;
-			}
-			else if (variableLowerBound > constValue)
-			{
-				return CmpRes::AlwaysFalse;
-			}
-			else
-			{
-				return CmpRes::Depends;
-			}
 		default:
 			return CmpRes::Unsupported;
 	}
@@ -338,29 +166,37 @@ compareICmpWithVariableRange(ICmpInst * llvmIrICmpInstruction, double leftVariab
 {
 	switch (llvmIrICmpInstruction->getPredicate())
 	{
-		/*
-		 * Ordered means that neither operand is a QNAN while unordered means that either operand may be a QNAN.
-		 * More details in https://llvm.org/docs/LangRef.html#icmp-instruction
-		 * */
 		case ICmpInst::ICMP_EQ:
 			if ((leftVariableLowerBound == rightVariableLowerBound) &&
+                (rightVariableLowerBound == leftVariableUpperBound) &&
 			    (leftVariableUpperBound == rightVariableUpperBound))
 			{
 				return CmpRes::AlwaysTrue;
 			}
-			else
+			else if (leftVariableLowerBound > rightVariableUpperBound ||
+                leftVariableUpperBound < rightVariableLowerBound)
 			{
 				return CmpRes::AlwaysFalse;
 			}
+            else
+            {
+                return CmpRes::Depends;
+            }
 		case ICmpInst::ICMP_NE:
 			if (leftVariableUpperBound < rightVariableLowerBound || leftVariableLowerBound > rightVariableUpperBound)
 			{
 				return CmpRes::AlwaysTrue;
 			}
-			else
+			else if ((leftVariableLowerBound == rightVariableLowerBound) &&
+                     (rightVariableLowerBound == leftVariableUpperBound) &&
+                     (leftVariableUpperBound == rightVariableUpperBound))
 			{
 				return CmpRes::AlwaysFalse;
 			}
+            else
+            {
+                return CmpRes::Depends;
+            }
 		case ICmpInst::ICMP_UGT:
 		case ICmpInst::ICMP_SGT:
 			if (leftVariableLowerBound > rightVariableUpperBound)
@@ -465,8 +301,9 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						auto rightOperand = llvmIrICmpInstruction->getOperand(1);
 						if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
-							std::swap(leftOperand, rightOperand);
-							flexprint(N->Fe, N->Fm, N->Fperr, "\tICmp: swap left and right, need to change the type of prediction\n");
+                            llvmIrICmpInstruction->swapOperands();
+                            leftOperand  = llvmIrICmpInstruction->getOperand(0);
+                            rightOperand = llvmIrICmpInstruction->getOperand(1);
 						}
 						else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
 						{
@@ -521,7 +358,11 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 							double constValue = 0.0;
 							if (ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand))
 							{
-								constValue = constInt->getSExtValue();
+                                if (llvmIrICmpInstruction->isSigned()) {
+                                    constValue = constInt->getSExtValue();
+                                } else {
+                                    constValue = constInt->getZExtValue();
+                                }
 							}
 							else
 							{
@@ -537,10 +378,10 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 								flexprint(N->Fe, N->Fm, N->Fpinfo,
 									  "\tICmp: varibale's lower bound: %f, upper bound: %f\n",
 									  vrRangeIt->second.first, vrRangeIt->second.second);
-								CmpRes compareResult = compareICmpConstWithVariableRange(llvmIrICmpInstruction,
+								CmpRes compareResult = compareICmpWithVariableRange(llvmIrICmpInstruction,
 															 vrRangeIt->second.first,
 															 vrRangeIt->second.second,
-															 constValue);
+															 constValue, constValue);
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tICmp: the comparison result is %d\n",
 									  compareResult);
 								/*
@@ -581,7 +422,7 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 						auto rightOperand = llvmIrFCmpInstruction->getOperand(1);
 						if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
 						{
-							std::swap(leftOperand, rightOperand);
+                            llvmIrFCmpInstruction->swapOperands();
 							flexprint(N->Fe, N->Fm, N->Fperr, "\tFCmp: swap left and right, need to change the type of prediction\n");
 						}
 						else if (isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand))
@@ -656,10 +497,10 @@ simplifyControlFlow(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 								flexprint(N->Fe, N->Fm, N->Fpinfo,
 									  "\tFCmp: varibale's lower bound: %f, upper bound: %f\n",
 									  vrRangeIt->second.first, vrRangeIt->second.second);
-								CmpRes compareResult = compareFCmpConstWithVariableRange(llvmIrFCmpInstruction,
+								CmpRes compareResult = compareFCmpWithVariableRange(llvmIrFCmpInstruction,
 															 vrRangeIt->second.first,
 															 vrRangeIt->second.second,
-															 constValue);
+															 constValue, constValue);
 								flexprint(N->Fe, N->Fm, N->Fpinfo, "\tFCmp: the comparison result is %d\n",
 									  compareResult);
 								/*
