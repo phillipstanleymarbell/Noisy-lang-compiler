@@ -318,7 +318,7 @@ irPassLLVMIROptimizeByRange(State * N)
 	std::map<std::string, CallInst *> callerMap;
 	callerMap.clear();
     funcBoundInfo.clear();
-	bool useOverLoad = false;
+	bool useOverLoad = true;
 	for (auto & mi : *Mod)
 	{
 		auto boundInfo = new BoundInfo();

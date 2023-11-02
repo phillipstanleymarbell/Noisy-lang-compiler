@@ -235,6 +235,17 @@ soft_float_api_opt:
 	llvm-dis ../soft_float_api_output.bc
 	$(call max_opt_fn,soft_float_api_output)
 
+arm_sqrt_q15_non_opt:
+	$(call max_opt_fn,arm_sqrt_q15)
+
+arm_sqrt_q15_opt:
+	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,arm_sqrt_q15)
+	llvm-dis ../arm_sqrt_q15_output.bc
+	$(call max_opt_fn,arm_sqrt_q15_output)
+
+compile_arm_sqrt_q15:
+	$(call compile_main_fn,ARM_SQRT_Q15)
+
 madgwick_non_opt:
 ifdef AUTO_QUANT
 	$(call max_opt_fn,MadgwickAHRSfix)
@@ -325,6 +336,10 @@ perf_madgwick_opt: clean make_ll madgwick_opt compile_lib compile_test_madgwick
 
 perf_func_call: clean make_ll func_call_opt compile_lib compile_func_call
 
+perf_arm_sqrt_q15: clean make_ll arm_sqrt_q15_non_opt compile_lib compile_arm_sqrt_q15
+
+perf_arm_sqrt_q15_opt: clean make_ll arm_sqrt_q15_opt compile_lib compile_arm_sqrt_q15
+
 interface_lib: clean make_ll soft_float_api_opt compile_lib
 
 auto_test_compile:
@@ -332,7 +347,7 @@ auto_test_compile:
 
 all: default
 
-default: perf_exp perf_exp_opt perf_log perf_log_opt perf_acosh perf_acosh_opt perf_j0 perf_j0_opt perf_y0 perf_y0_opt perf_rem_pio2 perf_rem_pio2_opt perf_sincosf perf_sincosf_opt perf_float64_add perf_float64_add_opt perf_float64_div perf_float64_div_opt perf_float64_mul perf_float64_mul_opt perf_float64_sin perf_float64_sin_opt auto_test_compile
+default: perf_exp perf_exp_opt perf_log perf_log_opt perf_acosh perf_acosh_opt perf_j0 perf_j0_opt perf_y0 perf_y0_opt perf_rem_pio2 perf_rem_pio2_opt perf_sincosf perf_sincosf_opt perf_float64_add perf_float64_add_opt perf_float64_div perf_float64_div_opt perf_float64_mul perf_float64_mul_opt perf_float64_sin perf_float64_sin_opt perf_arm_sqrt_q15 perf_arm_sqrt_q15_opt auto_test_compile
 
 clean:
 	$(QUIET)rm -f *.ll *.o *.s *.txt out.* libout.a main_out auto_test

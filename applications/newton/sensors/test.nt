@@ -40,6 +40,8 @@ test: sensor (
 	range bmx055zAcceleration == [90 mjf, 102 mjf],
 	range bmx055fAcceleration == [0 mjf, 127 mjf],
 	range bmx055xMagneto == [0 uT, 127 uT],
+	range bmx055yMagneto == [1024 uT, 1054 uT],
+
 
 	#
 	#	The operation sequence needed to get a sample
