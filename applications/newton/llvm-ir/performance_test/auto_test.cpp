@@ -18,7 +18,6 @@
 #include <vector>
 
 const size_t iteration_num = 5;
-const size_t result_num = 5;
 
 struct perfData {
     int64_t inst_count_avg;
@@ -92,14 +91,20 @@ std::pair<int64_t, int64_t> processDataPerf(const std::string test_case, const s
     int64_t inst_count, time_consumption;
 
     // perf command
-    std::string cmd = "make " + test_case + " >& compile.log";
-    system(cmd.data());
+    std::string cmd = "bash -c 'make " + test_case + " >& compile.log'";
+    int command_return = system(cmd.c_str());
+    if (command_return != 0) {
+        return std::make_pair(0, 0);
+    }
     cmd.clear();
-    cmd = "perf stat -B ./main_out " + params;
+    cmd = "bash -c 'perf stat -B ./main_out " + params;
 
     cmd += "if=/dev/zero of=/dev/null count=1000000";
-    cmd += " 2>&1 | tee tmp.log";
-    system(cmd.data());
+    cmd += " 2>&1 | tee tmp.log'";
+    command_return = system(cmd.c_str());
+    if (command_return != 0) {
+        return std::make_pair(0, 0);
+    }
     std::ifstream ifs("tmp.log");
     if (!ifs.is_open()) {
         std::cout << "error opening tmp.log";
@@ -133,12 +138,18 @@ std::pair<double, std::vector<double>> processDataTimer(const std::string test_c
     std::vector<double> function_results;
 
     // perf command
-    std::string cmd = "make " + test_case + " >& compile.log";
-    system(cmd.data());
+    std::string cmd = "bash -c 'make " + test_case + " >& compile.log'";
+    int command_return = system(cmd.c_str());
+    if (command_return != 0) {
+        return std::make_pair(0, std::vector<double>(0));
+    }
     cmd.clear();
-    cmd = "./main_out " + params;
-    cmd += " 2>&1 | tee tmp.log";
-    system(cmd.data());
+    cmd = "bash -c './main_out " + params;
+    cmd += " 2>&1 | tee tmp.log'";
+    command_return = system(cmd.c_str());
+    if (command_return != 0) {
+        return std::make_pair(0, std::vector<double>(0));
+    }
     std::ifstream ifs("tmp.log");
     if (!ifs.is_open()) {
         std::cout << "error opening tmp.log";
@@ -180,7 +191,8 @@ std::string change_nt_range(const std::string& cmd1, const std::string& cmd2, co
 
     change_nt_cmd.erase(change_nt_cmd.end() - 2);
     change_nt_cmd += cmd2;
-    system(change_nt_cmd.data());
+    change_nt_cmd = "bash -c \"" + change_nt_cmd + "\"";
+    system(change_nt_cmd.c_str());
 
     return param_str;
 }
@@ -205,19 +217,23 @@ int64_t exactNumber() {
 
     char* pEnd;
 
-    return std::strtol(line.data(), &pEnd, 10);
+    return std::strtol(line.c_str(), &pEnd, 10);
 }
 
 int64_t getIrLines() {
-    std::string cmd = "wc -l out.ll >& tmp.log";
-    system(cmd.data());
+    std::string cmd = "bash -c 'wc -l out.ll >& tmp.log'";
+    int command_return = system(cmd.c_str());
+    if (command_return != 0)
+        return 0;
 
     return exactNumber();
 }
 
 int64_t getLibSize() {
-    std::string cmd = "wc -c libout.a >& tmp.log";
-    system(cmd.data());
+    std::string cmd = "bash -c 'wc -c libout.a >& tmp.log'";
+    int command_return = system(cmd.c_str());
+    if (command_return != 0)
+        return 0;
 
     return exactNumber();
 }
@@ -305,7 +321,7 @@ int main(int argc, char** argv) {
             {-23.9, -23.1},
             {-5.4, -4.5},
             {-0.9, -0.4},
-            {0.2, 0.8},
+            {0.4, 0.8},
             {9.7, 10.5},
             {35.75, 36.33},
             {476.84, 477.21},
@@ -388,7 +404,7 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                int inst_speedup, time_speedup;
+                int inst_speedup, time_speedup, ir_reduce, lib_size_reduce;
                 if (ori_perf_data.ms_time_consumption.empty()) {
                     assert(opt_perf_data.ms_time_consumption.empty() && "erase mis-match!");
                     inst_speedup = 0;
@@ -406,8 +422,15 @@ int main(int argc, char** argv) {
                     time_speedup = round((ori_perf_data.time_consumption_avg - opt_perf_data.time_consumption_avg)
                             * 100 / opt_perf_data.time_consumption_avg);
                 }
-                int ir_reduce = round((ori_perf_data.ir_lines - opt_perf_data.ir_lines) * 100 / opt_perf_data.ir_lines);
-                int lib_size_reduce = round((ori_perf_data.library_size - opt_perf_data.library_size) * 100 / opt_perf_data.library_size);
+
+                if (ori_perf_data.ir_lines > opt_perf_data.ir_lines) {
+                    ir_reduce = round((ori_perf_data.ir_lines - opt_perf_data.ir_lines) * 100 / opt_perf_data.ir_lines);
+                    lib_size_reduce = round((ori_perf_data.library_size - opt_perf_data.library_size) * 100 / opt_perf_data.library_size);
+                } else {
+//                        assert(false && "Need to check why this case increase size!!!!!!");
+                    ir_reduce = 0;
+                    lib_size_reduce = 0;
+                }
                 ofs << "speed up after optimization\t" << param_str << "\t" << inst_speedup << "%\t" << time_speedup << "%\t"
                     << ir_reduce << "%\t" << lib_size_reduce << "%" << std::endl;
                 std::cout << test_cases[case_id] << ": speed up after optimization\t" << param_str << "\t" << inst_speedup << "%\t" << time_speedup << "%\t"

@@ -27,7 +27,12 @@ test: sensor (
             bmx055yAcceleration: acceleration,
             bmx055zAcceleration: acceleration,
             bmx055fAcceleration: acceleration,
-			bmx055xMagneto: magneticFluxDensity
+			bmx055xMagneto: magneticFluxDensity,
+            bmx055yMagneto: magneticFluxDensity,
+            bmx055zMagneto: magneticFluxDensity,
+            bmx055xAngularRate: angularRate,
+            bmx055yAngularRate: angularRate,
+            bmx055zAngularRate: angularRate
 			) =
 {
 	range bmx055xAcceleration == [3 mjf, 10 mjf],
@@ -35,6 +40,8 @@ test: sensor (
 	range bmx055zAcceleration == [90 mjf, 102 mjf],
 	range bmx055fAcceleration == [0 mjf, 127 mjf],
 	range bmx055xMagneto == [0 uT, 127 uT],
+	range bmx055yMagneto == [1024 uT, 1054 uT],
+
 
 	#
 	#	The operation sequence needed to get a sample
@@ -114,21 +121,49 @@ test: sensor (
 	#
 	
 	accuracy bmx055xAcceleration == {
-					(150 n, 312)
+					(0.15 n, 312)
 				},
 
 	accuracy bmx055yAcceleration == {
-					(150 n, 312)
+					(0.15 n, 312)
 				},
 
 	accuracy bmx055zAcceleration == {
-					(150 n, 312)
+					(0.15 n, 312)
 				},
-				
+
+    # Table 37 of document 9.2.4 on page 122.
 	accuracy bmx055xMagneto == {
 						(1.0 uT, 408),
 						(0.6 uT, 1200),
 						(0.5 uT, 1920),
 						(0.3 uT, 11760)
-					}
+					},
+
+    accuracy bmx055yMagneto == {
+                        (1.0 uT, 408),
+                        (0.6 uT, 1200),
+                        (0.5 uT, 1920),
+                        (0.3 uT, 11760)
+                    },
+
+    accuracy bmx055zMagneto == {
+                        (1.4 uT, 408),
+                        (0.6 uT, 1200),
+                        (0.5 uT, 1920),
+                        (0.3 uT, 11760)
+                    },
+
+    # Table 3 of document 1.2 on page 14.
+    accuracy bmx055xAngularRate == {
+                        (0.1 ajf, 0.012)
+                    },
+
+    accuracy bmx055yAngularRate == {
+                        (0.1 ajf, 0.012)
+                    },
+
+    accuracy bmx055zAngularRate == {
+                        (0.1 ajf, 0.012)
+                    }
 }

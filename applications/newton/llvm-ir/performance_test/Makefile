@@ -17,28 +17,56 @@ OUT_S = out.s
 OUT_OBJ = out.o
 OUT_LIB = libout.a
 
+ifdef DEBUG_MODE
+CC_OPT_LEVEL = -O0 -g
+else
+CC_OPT_LEVEL = -O3 -Os
+endif
+
 ifdef CROSS_COMPILE
 TARGET_FLAG = -target aarch64
 TARGET_LLC_FLAG = --march=aarch64
 endif
 
-max_opt_fn = opt ../$(1).ll --O3 -S -o $(OUT_FILE)
+# real-world application configs
+ifdef REAL_APP
+NT_FILE = BMX055.nt
+else
+NT_FILE = test.nt
+endif
+
+# auto-quantization configs, FP hardware by default, for Madgwick only currently
+ifdef AUTO_QUANT
+DATA_TYPE=INT_DATA_TYPE
+else
+DATA_TYPE=FP_DATA_TYPE
+
+ifdef SOFT_FLOAT_LIB
+SOFT_FLOAT_LIB=SOFT_FLOAT_LIB
+else ifdef SOFT_FLOAT
+CC_FP_FLAG = -msoft-float
+OPT_FP_FLAG = --float-abi=soft
+endif
+
+endif
+
+max_opt_fn = opt ../$(1).ll $(OPT_FP_FLAG) -O3 -Os -S -o $(OUT_FILE)
 non_opt_fn = cp ../$(1).ll $(OUT_FILE)
 necessary_opt_fn = opt ../$(1).ll --simplifycfg --instsimplify -S -o $(OUT_FILE)
 
-newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/test.nt
+newton_opt_fn = ./newton-linux-EN --llvm-ir=../../applications/newton/llvm-ir/$(1).ll --llvm-ir-liveness-check ../../applications/newton/sensors/$(NT_FILE)
 
-compile_main_fn = $(CC) $(TARGET_FLAG) main.c -no-pie -L. -lout -D $(1) -O2 -o main_out -lm
+compile_main_fn = $(CC) main.c $(TARGET_FLAG) -no-pie -L. -lout -D $(1) $(CC_OPT_LEVEL) -o main_out -lm
 
 make_ll:
-	cd $(SUBDIR) && $(MAKE_CLEAN) && $(MAKE)
 	cd $(CHStone_DIR) && $(MAKE_CLEAN) && $(MAKE)
 	cp ../CHStone_test/*.ll ../.
+	cd $(SUBDIR) && $(MAKE)
 
 compile_lib:
 	llvm-as $(OUT_FILE) -o $(OUT_BC)
 	llc $(TARGET_LLC_FLAG) $(OUT_BC) -o $(OUT_S)
-	$(CC) $(TARGET_FLAG) -c $(OUT_S) -o $(OUT_OBJ)
+	$(CC) $(CC_FP_FLAG) $(TARGET_FLAG) -c $(OUT_S) -o $(OUT_OBJ)
 	ar -rc $(OUT_LIB) $(OUT_OBJ)
 
 exp_non_opt:
@@ -207,6 +235,35 @@ soft_float_api_opt:
 	llvm-dis ../soft_float_api_output.bc
 	$(call max_opt_fn,soft_float_api_output)
 
+arm_sqrt_q15_non_opt:
+	$(call max_opt_fn,arm_sqrt_q15)
+
+arm_sqrt_q15_opt:
+	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,arm_sqrt_q15)
+	llvm-dis ../arm_sqrt_q15_output.bc
+	$(call max_opt_fn,arm_sqrt_q15_output)
+
+compile_arm_sqrt_q15:
+	$(call compile_main_fn,ARM_SQRT_Q15)
+
+madgwick_non_opt:
+ifdef AUTO_QUANT
+	$(call max_opt_fn,MadgwickAHRSfix)
+else ifdef SOFT_FLOAT_LIB
+	$(call max_opt_fn,MadgwickAHRS_softfloat)
+else
+	# for both FP hardware and FP software
+	$(call max_opt_fn,MadgwickAHRS)
+endif
+
+madgwick_opt:
+	cd $(NEWTON_BIN_DIR) && $(call newton_opt_fn,MadgwickAHRSfix)
+	llvm-dis ../MadgwickAHRSfix_output.bc
+	$(call max_opt_fn,MadgwickAHRSfix)
+
+compile_test_madgwick:
+	$(CC) ../test_madgwick.c -D $(DATA_TYPE) $(CC_FP_FLAG) $(TARGET_FLAG) -no-pie -L. -lout $(CC_OPT_LEVEL) -o main_out -lm
+
 perf_exp: clean make_ll exp_non_opt compile_lib compile_exp
 
 perf_exp_opt: clean make_ll exp_opt compile_lib compile_exp
@@ -273,7 +330,15 @@ perf_benchmark_suite_quant: clean make_ll benchmark_suite_non_opt compile_lib co
 
 perf_benchmark_suite_fixedpoint: clean make_ll benchmark_suite_non_opt compile_lib compile_benchmark_suite_fixed_point
 
+perf_madgwick: clean make_ll madgwick_non_opt compile_lib compile_test_madgwick
+
+perf_madgwick_opt: clean make_ll madgwick_opt compile_lib compile_test_madgwick
+
 perf_func_call: clean make_ll func_call_opt compile_lib compile_func_call
+
+perf_arm_sqrt_q15: clean make_ll arm_sqrt_q15_non_opt compile_lib compile_arm_sqrt_q15
+
+perf_arm_sqrt_q15_opt: clean make_ll arm_sqrt_q15_opt compile_lib compile_arm_sqrt_q15
 
 interface_lib: clean make_ll soft_float_api_opt compile_lib
 
@@ -282,7 +347,9 @@ auto_test_compile:
 
 all: default
 
-default: perf_exp perf_exp_opt perf_log perf_log_opt perf_acosh perf_acosh_opt perf_j0 perf_j0_opt perf_y0 perf_y0_opt perf_rem_pio2 perf_rem_pio2_opt perf_sincosf perf_sincosf_opt perf_float64_add perf_float64_add_opt perf_float64_div perf_float64_div_opt perf_float64_mul perf_float64_mul_opt perf_float64_sin perf_float64_sin_opt auto_test_compile
+default: perf_exp perf_exp_opt perf_log perf_log_opt perf_acosh perf_acosh_opt perf_j0 perf_j0_opt perf_y0 perf_y0_opt perf_rem_pio2 perf_rem_pio2_opt perf_sincosf perf_sincosf_opt perf_float64_add perf_float64_add_opt perf_float64_div perf_float64_div_opt perf_float64_mul perf_float64_mul_opt perf_float64_sin perf_float64_sin_opt perf_arm_sqrt_q15 perf_arm_sqrt_q15_opt auto_test_compile
 
 clean:
 	$(QUIET)rm -f *.ll *.o *.s *.txt out.* libout.a main_out auto_test
+	cd $(CHStone_DIR) && $(MAKE_CLEAN)
+	cd $(SUBDIR) && $(MAKE_CLEAN)

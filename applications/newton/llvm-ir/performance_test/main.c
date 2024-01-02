@@ -299,6 +299,12 @@ main(int argc, char** argv)
     for (size_t idx = 0; idx < iteration_num; idx++) {
         result[idx] = funcA(xOps[idx], yOps[idx]);
     }
+#elif defined(ARM_SQRT_Q15)
+    for (size_t idx = 0; idx < iteration_num; idx++) {
+        ///// part of the arm_cmplx_mag_q15, which call arm_sqrt_q15
+//        int32_t x = xOps[idx] * yOps[idx] * 2;
+        intResult[idx] = arm_sqrt_q15((int16_t)xOps[idx]);
+    }
 #else
 	#error "Benchmark function not defined"
 #endif
@@ -314,6 +320,7 @@ main(int argc, char** argv)
     }
 
     printf("results: %f\t%f\t%f\t%f\t%f\n", result[0], result[1], result[2], result[3], result[4]);
+    printf("int results: %d\t%d\t%d\t%d\t%d\n", intResult[0], intResult[1], intResult[2], intResult[3], intResult[4]);
 
 	return 0;
 }

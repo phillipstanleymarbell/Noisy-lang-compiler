@@ -37,6 +37,9 @@
 
 #include "newton-irPass-LLVMIR-rangeAnalysis.h"
 
+//#define DISABLE_BITWISE_OP
+//#define DISABLE_MODULO_OP
+
 using namespace llvm;
 
 extern "C" {
@@ -996,7 +999,13 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 									 */
 									if (derivedVariableType->getTag() == llvm::dwarf::DW_TAG_pointer_type)
 									{
-										baseTypeName = derivedVariableType->getBaseType()->getName().str();
+                                        auto baseType = derivedVariableType->getBaseType();
+                                        /*
+                                         * the type is `void*`
+                                         * */
+                                        if (nullptr != baseType) {
+                                            baseTypeName = derivedVariableType->getBaseType()->getName().str();
+                                        }
 									}
 									else
 									{
@@ -1443,6 +1452,9 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								 * But we still believe in the range we inferred from the function body.
 								 */
 								DISubprogram * subProgram = realCallee->getSubprogram();
+                                if (nullptr == subProgram) {
+                                    break;
+                                }
 								DITypeRefArray typeArray  = subProgram->getType()->getTypeArray();
 								if (typeArray[0] != nullptr)
 								{
@@ -1866,6 +1878,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 				case Instruction::URem:
 				case Instruction::SRem:
 				case Instruction::FRem:
+#ifndef DISABLE_MODULO_OP
 					if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
 					{
 						Value * leftOperand  = llvmIrInstruction.getOperand(0);
@@ -1944,6 +1957,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							assert(!valueRangeDebug && "failed to get range");
 						}
 					}
+#endif
 					break;
 
 				case Instruction::Shl:
@@ -1975,6 +1989,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							{
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        lowerBound = static_cast<double>(static_cast<bool>(vrRangeIt->second.first));
+                                        upperBound = static_cast<double>(static_cast<bool>(vrRangeIt->second.second));
+                                        break;
 									case 8:
 										lowerBound = static_cast<double>(static_cast<uint8_t>(vrRangeIt->second.first));
 										upperBound = static_cast<double>(static_cast<uint8_t>(vrRangeIt->second.second));
@@ -2045,6 +2063,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double lowerBound, upperBound;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        lowerBound = constValue << (static_cast<bool>(vrRangeIt->second.first));
+                                        upperBound = constValue << (static_cast<bool>(vrRangeIt->second.second));
+                                        break;
 									case 8:
 										lowerBound = constValue << (static_cast<uint8_t>(vrRangeIt->second.first));
 										upperBound = constValue << (static_cast<uint8_t>(vrRangeIt->second.second));
@@ -2089,6 +2111,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double resMin = 0, resMax = 0;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        resMin = static_cast<bool>(vrRangeIt->second.first) << constValue;
+                                        resMax = static_cast<bool>(vrRangeIt->second.second) << constValue;
+                                        break;
 									case 8:
 										resMin = static_cast<uint8_t>(vrRangeIt->second.first) << constValue;
 										resMax = static_cast<uint8_t>(vrRangeIt->second.second) << constValue;
@@ -2108,8 +2134,13 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 									default:
 										assert(false);
 								}
+                                /*
+                                 * lhs of shl can be negative, but the result should be positive.
+                                 * so we need to further check the real min value and real max value
+                                 * */
 								boundInfo->virtualRegisterRange.emplace(llvmIrBinaryOperator,
-                                                                        std::make_pair(resMin, resMax));
+                                                                        std::make_pair(min(resMin, resMax),
+                                                                                       max(resMin, resMax)));
 							}
 							else
 							{
@@ -2207,6 +2238,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double lowerBound, upperBound;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        lowerBound = constValue >> (static_cast<bool>(vrRangeIt->second.first));
+                                        upperBound = constValue >> (static_cast<bool>(vrRangeIt->second.second));
+                                        break;
 									case 8:
 										lowerBound = constValue >> (static_cast<uint8_t>(vrRangeIt->second.first));
 										upperBound = constValue >> (static_cast<uint8_t>(vrRangeIt->second.second));
@@ -2251,6 +2286,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double resMin = 0, resMax = 0;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        resMin = static_cast<bool>(vrRangeIt->second.first) >> constValue;
+                                        resMax = static_cast<bool>(vrRangeIt->second.second) >> constValue;
+                                        break;
 									case 8:
 										resMin = static_cast<int8_t>(vrRangeIt->second.first) >> constValue;
 										resMax = static_cast<int8_t>(vrRangeIt->second.second) >> constValue;
@@ -2318,6 +2357,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							{
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        leftMin = static_cast<double>(static_cast<bool>(vrRangeIt->second.first));
+                                        leftMax = static_cast<double>(static_cast<bool>(vrRangeIt->second.second));
+                                        break;
 									case 8:
 										leftMin = static_cast<double>(static_cast<uint8_t>(vrRangeIt->second.first));
 										leftMax = static_cast<double>(static_cast<uint8_t>(vrRangeIt->second.second));
@@ -2350,6 +2393,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double rightMin = 0, rightMax = 0;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        rightMin = static_cast<bool>(vrRangeIt->second.first);
+                                        rightMax = static_cast<bool>(vrRangeIt->second.second);
+                                        break;
 									case 8:
 										rightMin = static_cast<uint8_t>(vrRangeIt->second.first);
 										rightMax = static_cast<uint8_t>(vrRangeIt->second.second);
@@ -2407,6 +2454,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double lowerBound, upperBound;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        lowerBound = constValue >> (static_cast<bool>(vrRangeIt->second.first));
+                                        upperBound = constValue >> (static_cast<bool>(vrRangeIt->second.second));
+                                        break;
 									case 8:
 										lowerBound = constValue >> (static_cast<uint8_t>(vrRangeIt->second.first));
 										upperBound = constValue >> (static_cast<uint8_t>(vrRangeIt->second.second));
@@ -2451,6 +2502,10 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 								double resMin = 0, resMax = 0;
 								switch (bitWidth)
 								{
+                                    case 1:
+                                        resMin = (static_cast<bool>(vrRangeIt->second.first)) >> constValue;
+                                        resMax = (static_cast<bool>(vrRangeIt->second.second)) >> constValue;
+                                        break;
 									case 8:
 										resMin = (static_cast<uint8_t>(vrRangeIt->second.first)) >> constValue;
 										resMax = (static_cast<uint8_t>(vrRangeIt->second.second)) >> constValue;
@@ -2487,6 +2542,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 					break;
 
 				case Instruction::And:
+#ifndef DISABLE_BITWISE_OP
 					if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
 					{
 						Value * leftOperand  = llvmIrInstruction.getOperand(0);
@@ -2572,9 +2628,11 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							assert(!valueRangeDebug && "failed to get range");
 						}
 					}
+#endif
 					break;
 
 				case Instruction::Or:
+#ifndef DISABLE_BITWISE_OP
 					if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
 					{
 						Value * leftOperand  = llvmIrInstruction.getOperand(0);
@@ -2660,9 +2718,11 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							assert(!valueRangeDebug && "failed to get range");
 						}
 					}
+#endif
 					break;
 
 				case Instruction::Xor:
+#ifndef DISABLE_BITWISE_OP
 					if (auto llvmIrBinaryOperator = dyn_cast<BinaryOperator>(&llvmIrInstruction))
 					{
 						Value * leftOperand  = llvmIrInstruction.getOperand(0);
@@ -2748,6 +2808,7 @@ rangeAnalysis(State * N, llvm::Function & llvmIrFunction, BoundInfo * boundInfo,
 							assert(!valueRangeDebug && "failed to get range");
 						}
 					}
+#endif
 					break;
 
 				case Instruction::FPToUI:
