@@ -206,14 +206,14 @@ processNewtonFile(State *  N, char *  filename)
 	{
 		irPassLLVMIROptimizeByRange(N);
 	}
-
-	/*
-	 *	irPassLLVMIRAutoQuantization pass is causing issues with the current implementation.
-	 */
-	// if (N->irPasses & kNewtonirPassLLVMIRAutoQuantization)
-	// {
-	// 	irPassLLVMIRAutoQuantization(N);
-	// }
+	if (N->irPasses & kNewtonirPassLLVMIRAutoQuantization)
+	{
+		/*
+		 *	irPassLLVMIRAutoQuantization pass is causing issues with the current implementation.
+		 */
+		// irPassLLVMIRAutoQuantization(N);
+		flexprint(N->Fe, N->Fm, N->Fperr, "AutoQuantization pass was disabled at compilation.\n");
+	}
 
 	/*
 	 *	Dot backend.
