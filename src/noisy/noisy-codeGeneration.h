@@ -1,1 +1,5 @@
-void noisyCodeGen(State * N);
+/*
+ *	Authored 2021. Angelos Plevris.
+ */
+
+void	noisyCodeGen(State *  N);
