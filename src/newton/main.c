@@ -107,9 +107,9 @@ main(int argc, char *argv[])
 			{"latex",		no_argument,		0,	'x'},
 			{"RTLcodegen",		required_argument,	0,	'l'},
 			{"targetParam",		required_argument,	0,	'T'},
-			{"llvm-ir",             required_argument,      0,      'I'},
-			{"llvm-ir-liveness-check",    no_argument,      0,      'L'},
-            {"llvm-ir-auto-quantization",    no_argument,      0,      'Q'},
+			{"llvm-ir",		required_argument,	0,	'I'},
+			{"llvm-ir-liveness-check",	no_argument,	0,	'L'},
+			{"llvm-ir-auto-quantization",	no_argument,	0,	'Q'},
 			{"estimator-synthesis",	required_argument,	0,	420},
 			{"process",		required_argument,	0,	421},
 			{"measurement",		required_argument,	0,	422},
@@ -424,11 +424,16 @@ main(int argc, char *argv[])
 				break;
 			}
 
-            case 'Q':
-            {
-                N->irPasses |= kNewtonirPassLLVMIRAutoQuantization;
-                break;
-            }
+			case 'Q':
+			{
+				N->irPasses |= kNewtonirPassLLVMIRAutoQuantization;
+
+				flexprint(N->Fe, N->Fm, N->Fperr, "AutoQuantization pass was disabled at compilation.\n");
+				consolePrintBuffers(N);
+				exit(EXIT_FAILURE);
+
+				break;
+			}
 
 			case 494:
 			{
