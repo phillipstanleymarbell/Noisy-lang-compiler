@@ -1,5 +1,6 @@
 /*
 	Authored 2020. Orestis Kaparounakis.
+	Authored 2021. Angelos Plevris.
 
 	All rights reserved.
 
@@ -95,9 +96,9 @@ typedef struct ConstraintNode
 	struct 	ConstraintNode * next;
 } ConstraintNode;
 
-typedef ConstraintNode * ConstraintList;
+typedef ConstraintNode *	ConstraintList;
 
-typedef struct estimatorSynthesisState
+typedef struct PassEstimatorSynthesisStateT
 {
 	int		processParams;
 	int		stateExtraParams;
@@ -123,7 +124,7 @@ typedef struct estimatorSynthesisState
 	bool **		measureRelationMatrix;
 	int *		functionLastArg;
 	int *		measureFunctionLastArg;
-} estimatorSynthesisState;
+} PassEstimatorSynthesisState;
 
 Invariant *
 findInvariantByIdentifier(State *  N, const char *  identifier)
@@ -267,14 +268,14 @@ irPassEstimatorSynthesisInvariantLinear(State *  N, ConstraintList listHead)
 *	Helper function that uses in-order traversal of the AST, starting from the kNewtonIrNodeType_PconstraintList node
 *	of an invariant and inserts all the constraints of the invariant in a simply linked list. The new elements
 *	are appended to the list.
-*	Input : currentNode (at the first call a kNewtonIrNodeType_PconstraintList node is expected),
-*		the head of the simply linked list.
-*	Return:	The list that contains all the constraints of the invariant.
+*	@param currentNode (at the first call a kNewtonIrNodeType_PconstraintList node is expected),
+*	@param listHead the head of the simply linked list.
+*	@returns The list that contains all the constraints of the invariant.
 */
 ConstraintList
 irPassEstimatorSynthesisCreateConstraintList(IrNode * currentNode,ConstraintList listHead)
 {
-	static int caseId = 0;
+	static int	caseId = 0;
 	
 	if (currentNode == NULL)
 	{
@@ -319,8 +320,8 @@ irPassEstimatorSynthesisCreateConstraintList(IrNode * currentNode,ConstraintList
 		listHead = irPassEstimatorSynthesisCreateConstraintList(currentNode->irRightChild,listHead);
 		break;
 		/*
-		*	Skips the condition constraint.
-		*/
+		 *	Skips the condition constraint.
+		 */
 	default:
 		break;
 	}
@@ -431,7 +432,7 @@ irPassEstimatorSynthesisIsolateSymbolFactors(State *  N, IrNode *  ExpressionXSe
 *	stores all the necessary information regarding LHS symbols, names and uncertainties.
 */
 void
-irPassEstimatorSynthesisCountStateDimensions(estimatorSynthesisState * E,State * N)
+irPassEstimatorSynthesisCountStateDimensions(PassEstimatorSynthesisState * E,State * N)
 {
 	ConstraintList iter;
 	/*
@@ -486,7 +487,7 @@ irPassEstimatorSynthesisCountStateDimensions(estimatorSynthesisState * E,State *
 *	stores all the necessary information regarding LHS symbols, names and uncertainties.	
 */
 void
-irPassEstimatorSynthesisCountMeasureDimensions(estimatorSynthesisState * E,State * N,ConstraintList listHead)
+irPassEstimatorSynthesisCountMeasureDimensions(PassEstimatorSynthesisState * E,State * N,ConstraintList listHead)
 {
 	ConstraintList iter;
 	/*
@@ -541,7 +542,7 @@ irPassEstimatorSynthesisCountMeasureDimensions(estimatorSynthesisState * E,State
 *	Counts the parameters of process model that are not state variables and stores their symbols.
 */
 void
-irPassEstimatorSynthesisCountExtraParams(estimatorSynthesisState * E,State * N,IrNode * parameterList)
+irPassEstimatorSynthesisCountExtraParams(PassEstimatorSynthesisState * E,State * N,IrNode * parameterList)
 {
 	E->stateExtraParamSymbols = (Symbol**) malloc(E->stateExtraParams * sizeof(Symbol*));
 	int counter = 0;
@@ -603,7 +604,7 @@ irPassEstimatorSynthesisGetIndentation(int indent)
 *	Needs to start from the process invariant's constraint list.
 */
 void
-irPassEstimatorSynthesisGeneratePredict(estimatorSynthesisState * E,State * N,IrNode * currentNode)
+irPassEstimatorSynthesisGeneratePredict(PassEstimatorSynthesisState * E,State * N,IrNode * currentNode)
 {
 	static int counter = 0;
 	static ConstraintList iter = NULL;
@@ -731,7 +732,7 @@ irPassEstimatorSynthesisGeneratePredict(estimatorSynthesisState * E,State * N,Ir
 *	Needs to start from the measure invariant's constraint list.
 */
 void
-irPassEstimatorSynthesisGenerateUpdate(estimatorSynthesisState * E,State * N,IrNode * currentNode)
+irPassEstimatorSynthesisGenerateUpdate(PassEstimatorSynthesisState * E,State * N,IrNode * currentNode)
 {
 	static int counter = 0;
 	static ConstraintList iter = NULL;
@@ -853,7 +854,7 @@ irPassEstimatorSynthesisGenerateUpdate(estimatorSynthesisState * E,State * N,IrN
 }
 
 void
-irPassEstimatorSynthesisFreeState(estimatorSynthesisState * E)
+irPassEstimatorSynthesisFreeState(PassEstimatorSynthesisState * E)
 {
 	for(int i = 0; i < E->processParams; i++)
 	{
@@ -957,7 +958,7 @@ irPassEstimatorSynthesisProcessInvariantList(State *  N)
 	flexprint(N->Fe, N->Fm, N->Fpc, "#define DEG2RAD (3.1415926535/180)\n");
 
 	IrNode *	constraintXSeq = NULL;
-	estimatorSynthesisState * E = (estimatorSynthesisState *)malloc(sizeof(estimatorSynthesisState));
+	PassEstimatorSynthesisState * E = (PassEstimatorSynthesisState *)malloc(sizeof(PassEstimatorSynthesisState));
 	
 	
 	E->processConstraintList = irPassEstimatorSynthesisCreateConstraintList(processInvariant->constraints,NULL);

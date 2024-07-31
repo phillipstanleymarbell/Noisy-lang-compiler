@@ -21,10 +21,10 @@
 #include "common-irHelpers.h"
 #include "noisy-typeCheck.h"
 
-NoisyType	getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * currentScope);
+NoisyType	getNoisyTypeFromExpression(State *  N, IrNode *  noisyExpressionNode, Scope *  currentScope);
 bool		noisyIsOfType(NoisyType typ1, NoisyBasicType typeSuperSet);
-void		noisyStatementListTypeCheck(State * N, IrNode * statementListNode, Scope * currentScope);
-void		noisyFunctionDefnTypeCheck(State * N, IrNode * noisyFunctionDefnNode, Scope * currentScope);
+void		noisyStatementListTypeCheck(State *  N, IrNode *  statementListNode, Scope *  currentScope);
+void		noisyFunctionDefnTypeCheck(State *  N, IrNode *  noisyFunctionDefnNode, Scope *  currentScope);
 
 extern char *		gNoisyProductionDescriptions[];
 extern const char *	gNoisyTokenDescriptions[];
@@ -35,8 +35,13 @@ static char	kNoisyErrorDetailHtmlTagOpen[]  = "<span style=\"background-color:#A
 static char	kNoisyErrorDetailHtmlTagClose[] = "</span>";
 
 void
-noisySemanticErrorPre(State * N, IrNode * currentlyParsingNode,
-		      const char * string1, const char * string2, const char * string3, const char * string4)
+noisySemanticErrorPre(
+	State *		N,
+	IrNode *	currentlyParsingNode,
+	const char *	string1,
+	const char *	string2,
+	const char *	string3,
+	const char *	string4)
 {
 	flexprint(N->Fe, N->Fm, N->Fperr, "\n-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - --\n");
 	if (N->mode & kCommonModeCGI)
@@ -73,7 +78,7 @@ noisySemanticErrorPre(State * N, IrNode * currentlyParsingNode,
 }
 
 void
-noisySemanticErrorPost(State * N)
+noisySemanticErrorPost(State *  N)
 {
 	if (N->mode & kCommonModeCGI)
 	{
@@ -84,14 +89,14 @@ noisySemanticErrorPost(State * N)
 }
 
 void
-noisySemanticError(State * N, IrNode * currentlyParsingNode, char * details)
+noisySemanticError(State *  N, IrNode *  currentlyParsingNode, char *  details)
 {
 	noisySemanticErrorPre(N, currentlyParsingNode, EsemanticsA, EsemanticsB, details, EsemanticsD);
 	noisySemanticErrorPost(N);
 }
 
 void
-noisySemanticErrorRecovery(State * N)
+noisySemanticErrorRecovery(State *  N)
 {
 	TimeStampTraceMacro(kNoisyTimeStampKeyParserErrorRecovery);
 
@@ -118,11 +123,11 @@ noisySemanticErrorRecovery(State * N)
 	exit(EXIT_SUCCESS);
 }
 /*
- *       If we have templated function declaration, returns false.
- *       We should invoke code generation with the load operator.
+ *	If we have templated function declaration, returns false.
+ *	We should invoke code generation with the load operator.
  */
 bool
-isTypeExprComplete(State * N, IrNode * typeExpr)
+isTypeExprComplete(State *  N, IrNode * typeExpr)
 {
 	if (L(typeExpr)->type == kNoisyIrNodeType_PbasicType)
 	{
@@ -131,7 +136,7 @@ isTypeExprComplete(State * N, IrNode * typeExpr)
 	else if (L(typeExpr)->type == kNoisyIrNodeType_PtypeName)
 	{
 		/*
-		 *       TODO; Scope here needs fixing. Typenames need to be resolved.
+		 *	TODO; Scope here needs fixing. Typenames need to be resolved.
 		 */
 		Symbol * typeSymbol = commonSymbolTableSymbolForIdentifier(N, N->noisyIrTopScope, LL(typeExpr)->tokenString);
 		if (typeSymbol->symbolType == kNoisySymbolTypeModuleParameter)
@@ -163,7 +168,7 @@ isTypeExprComplete(State * N, IrNode * typeExpr)
 }
 
 bool
-isMeasurementType(State * N, IrNode * typeExpr)
+isMeasurementType(State *  N, IrNode *  typeExpr)
 {
 	if (R(typeExpr) != NULL && RL(typeExpr) != NULL)
 	{
@@ -181,7 +186,7 @@ isMeasurementType(State * N, IrNode * typeExpr)
 }
 
 void
-noisyInitNoisyType(NoisyType * typ)
+noisyInitNoisyType(NoisyType *  typ)
 {
 	typ->basicType	= noisyBasicTypeInit;
 	typ->dimensions = 0;
@@ -289,9 +294,9 @@ noisyIsSigned(NoisyType typ)
 	return (typ.basicType > noisyBasicTypeInit && typ.basicType <= noisyBasicTypeInt128);
 }
 /*
- *       Takes two NoisyTypes arguments, compares their basicType
- *       and returns the most specific type. For example if we have
- *       a noisyIntegerConst and a noisyBasicTypeInt32 it returns the noisyBasicTypeInt32 type.
+ *	Takes two NoisyTypes arguments, compares their basicType
+ *	and returns the most specific type. For example if we have
+ *	a noisyIntegerConst and a noisyBasicTypeInt32 it returns the noisyBasicTypeInt32 type.
  */
 NoisyType
 noisyGetMoreSpecificType(NoisyType typ1, NoisyType typ2)
@@ -300,23 +305,23 @@ noisyGetMoreSpecificType(NoisyType typ1, NoisyType typ2)
 }
 
 /*
- *       Takes to NoisyTypes and checks if we can convert from type fromType to type
- *       toType.
+ *	Takes to NoisyTypes and checks if we can convert from type fromType to type
+ *	toType.
  */
 bool
 noisyCanTypeCast(NoisyType fromType, NoisyType toType)
 {
 	/*
-	 *       We can convert from integers to other integers, from integers to floats, from floats
-	 *       to integers, from naturals to integers and from floats to other floats.
-	 *       We do not permit any other type casts.
+	 *	We can convert from integers to other integers, from integers to floats, from floats
+	 *	to integers, from naturals to integers and from floats to other floats.
+	 *	We do not permit any other type casts.
 	 */
 	if (fromType.basicType > noisyBasicTypeBool && fromType.basicType <= noisyBasicTypeRealConstType)
 	{
 		if (toType.basicType > noisyBasicTypeBool && toType.basicType <= noisyBasicTypeRealConstType)
 		{
 			// /*
-			// *       We do not permit from integers to naturals
+			// *	We do not permit from integers to naturals
 			// */
 			// if (fromType.basicType > noisyBasicTypeBool && fromType.basicType <= noisyBasicTypeInt128)
 			// {
@@ -332,9 +337,10 @@ noisyCanTypeCast(NoisyType fromType, NoisyType toType)
 }
 
 NoisyType
-getNoisyTypeFromBasicType(IrNode * basicType)
+getNoisyTypeFromBasicType(IrNode *  basicType)
 {
-	NoisyType noisyType;
+	NoisyType	noisyType;
+
 	noisyType.arrayType  = noisyBasicTypeInit;
 	noisyType.dimensions = 0;
 
@@ -345,8 +351,8 @@ getNoisyTypeFromBasicType(IrNode * basicType)
 	else if (L(basicType)->type == kNoisyIrNodeType_PintegerType)
 	{
 		/*
-		 *       LLVM does not make distintion on signed and unsigned values on its typesystem.
-		 *       However it can differentiate between them during the operations (e.g signed addition).
+		 *	LLVM does not make distintion on signed and unsigned values on its typesystem.
+		 *	However it can differentiate between them during the operations (e.g signed addition).
 		 */
 		switch (LL(basicType)->type)
 		{
@@ -418,11 +424,11 @@ getNoisyTypeFromBasicType(IrNode * basicType)
 }
 
 /*
- *       Takes an arrayType IrNode and returns the corresponding NoisyType
- *       Assumes that arrayTypeNode->type == kNoisyIrNodeType_ParrayType.
+ *	Takes an arrayType IrNode and returns the corresponding NoisyType
+ *	Assumes that arrayTypeNode->type == kNoisyIrNodeType_ParrayType.
  */
 NoisyType
-getNoisyTypeFromArrayNode(State * N, IrNode * arrayTypeNode)
+getNoisyTypeFromArrayNode(State *  N, IrNode *  arrayTypeNode)
 {
 	NoisyType noisyType;
 
@@ -455,22 +461,22 @@ getNoisyTypeFromArrayNode(State * N, IrNode * arrayTypeNode)
 }
 
 /*
- *       Takes the state N (needed for symbolTable search) and a typeNameNode
- *       and returns the corresponding NoisyType.
+ *	Takes the state N (needed for symbolTable search) and a typeNameNode
+ *	and returns the corresponding NoisyType.
  */
 NoisyType
-getNoisyTypeFromTypeSymbol(State * N, IrNode * typeNameNode)
+getNoisyTypeFromTypeSymbol(State *  N, IrNode *  typeNameNode)
 {
-	NoisyType noisyType;
-	// Symbol * typeSymbol = commonSymbolTableSymbolForIdentifier(N,N->noisyIrTopScope,L(typeNameNode)->tokenString);
-	Symbol * typeSymbol = typeNameNode->symbol;
+	NoisyType	noisyType;
+	// Symbol * 	typeSymbol = commonSymbolTableSymbolForIdentifier(N,N->noisyIrTopScope,L(typeNameNode)->tokenString);
+	Symbol *	typeSymbol = typeNameNode->symbol;
 
 	if (typeSymbol == NULL)
 	{
 		/*
-		 *       Type symbol does not exist error?
+		 *	Type symbol does not exist error?
 		 */
-		typeSymbol	    = commonSymbolTableSymbolForIdentifier(N, N->noisyIrTopScope, L(typeNameNode)->tokenString);
+		typeSymbol = commonSymbolTableSymbolForIdentifier(N, N->noisyIrTopScope, L(typeNameNode)->tokenString);
 		noisyType.basicType = noisyBasicTypeErrorType;
 		return noisyType;
 	}
@@ -484,8 +490,8 @@ getNoisyTypeFromTypeSymbol(State * N, IrNode * typeNameNode)
 	}
 
 	/*
-	 *       This case is for loading a templated function. The symbols type tree should be a typeExpr
-	 *       which we assign to it.
+	 *	This case is for loading a templated function. The symbols type tree should be a typeExpr
+	 *	which we assign to it.
 	 */
 	if (typeTree->type == kNoisyIrNodeType_PtypeExpr)
 	{
@@ -512,13 +518,14 @@ getNoisyTypeFromTypeSymbol(State * N, IrNode * typeNameNode)
 }
 
 /*
- *       Takes the state N and a TypeExpr node and returns the corresponding
- *       NoisyType. If it fails the returned basic type is noisyBasicTypeErrorType.
+ *	Takes the state N and a TypeExpr node and returns the corresponding
+ *	NoisyType. If it fails the returned basic type is noisyBasicTypeErrorType.
  */
 NoisyType
-getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
+getNoisyTypeFromTypeExpr(State *  N, IrNode *  typeExpr)
 {
-	NoisyType noisyType;
+	NoisyType	noisyType;
+
 	if (typeExpr->type == kNoisyIrNodeType_PconstantDecl)
 	{
 		NoisyType noisyType;
@@ -555,12 +562,12 @@ getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
 				return getNoisyTypeFromArrayNode(N, arrayType);
 			}
 			/*
-			 *       Lists and other non aggregate types are not supported
+			 *	Lists and other non aggregate types are not supported
 			 */
 			else
 			{
 				/*
-				 *       Not supported types error.
+				 *	Not supported types error.
 				 */
 				char * details;
 
@@ -580,11 +587,11 @@ getNoisyTypeFromTypeExpr(State * N, IrNode * typeExpr)
 }
 
 /*
- *       Takes an argument name, an expression and an inputSIgnature of a function. Checks if the argument name and type matches
- *       with one of the signature's arguments. In that case it returns true. Otherwise, it returns false.
+ *	Takes an argument name, an expression and an inputSIgnature of a function. Checks if the argument name and type matches
+ *	with one of the signature's arguments. In that case it returns true. Otherwise, it returns false.
  */
 bool
-noisyArgumentMatchesSignature(State * N, IrNode * argName, IrNode * expr, IrNode * inputSignature, Scope * currentScope, bool isLoaded)
+noisyArgumentMatchesSignature(State *  N, IrNode *  argName, IrNode *  expr, IrNode *  inputSignature, Scope *  currentScope, bool isLoaded)
 {
 	for (IrNode * iter = inputSignature; iter != NULL; iter = RR(iter))
 	{
@@ -600,19 +607,19 @@ noisyArgumentMatchesSignature(State * N, IrNode * argName, IrNode * expr, IrNode
 		}
 	}
 	/*
-	 *       If we search all arguments and they dont match then we return false.
+	 *	If we search all arguments and they dont match then we return false.
 	 */
 	return false;
 }
 
 /*
- *       Takes a noisyFactor IrNode and a the currentScope and returns the NoisyType of the factor.
- *       If every type check is correct returns the type else it returns noisyBasicTypeErrorType.
+ *	Takes a noisyFactor IrNode and a the currentScope and returns the NoisyType of the factor.
+ *	If every type check is correct returns the type else it returns noisyBasicTypeErrorType.
  */
 NoisyType
-getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope)
+getNoisyTypeFromFactor(State *  N, IrNode *  noisyFactorNode, Scope *  currentScope)
 {
-	NoisyType factorType;
+	NoisyType	factorType;
 
 	if (L(noisyFactorNode)->type == kNoisyIrNodeType_TintegerConst)
 	{
@@ -632,7 +639,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 	}
 	else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PqualifiedIdentifier)
 	{
-		Symbol * identifierSymbol = LL(noisyFactorNode)->symbol;
+		Symbol *  identifierSymbol = LL(noisyFactorNode)->symbol;
 
 		if (identifierSymbol == NULL)
 		{
@@ -657,7 +664,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 				if (!noisyIsOfType(getNoisyTypeFromExpression(N, LR(iter), currentScope), noisyBasicTypeIntegerConstType))
 				{
 					/*
-					 *       Indexes are not integers error.
+					 *	Indexes are not integers error.
 					 */
 					char * details;
 
@@ -671,8 +678,8 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 
 			factorType.dimensions -= dims;
 			/*
-			 *       If there are no type errors on array indexing we the arrayType of the array.
-			 *       e.g. when we index an array of int32 the factor we return has type int32.
+			 *	If there are no type errors on array indexing we the arrayType of the array.
+			 *	e.g. when we index an array of int32 the factor we return has type int32.
 			 */
 			if (factorType.dimensions == 0)
 			{
@@ -681,9 +688,9 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 			else if (factorType.dimensions < 0)
 			{
 				/*
-				 *       Indexing dimension error.
+				 *	Indexing dimension error.
 				 */
-				char * details;
+				char *  details;
 
 				asprintf(&details, "Dimensions of array \"%s\" dont match\n", identifierSymbol->identifier);
 				noisySemanticError(N, noisyFactorNode, details);
@@ -701,10 +708,10 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 	else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PnamegenInvokeShorthand)
 	{
 		/*
-		 *       We search for functionName in the top scope (local functions) and if it fails it searches on the module scope.
+		 *	We search for functionName in the top scope (local functions) and if it fails it searches on the module scope.
 		 */
-		Symbol * functionNameSymbol = commonSymbolTableSymbolForIdentifier(N, N->noisyIrTopScope, LL(noisyFactorNode)->tokenString);
-		bool	 loadedFunction	    = false;
+		Symbol *	functionNameSymbol = commonSymbolTableSymbolForIdentifier(N, N->noisyIrTopScope, LL(noisyFactorNode)->tokenString);
+		bool		loadedFunction = false;
 
 		if (functionNameSymbol == NULL)
 		{
@@ -724,16 +731,16 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 			}
 		}
 
-		bool paramCorrect = true;
-		int  paramCount	  = 0;
+		bool	paramCorrect = true;
+		int	paramCount = 0;
 
-		IrNode * inputSignature = L(functionNameSymbol->typeTree);
+		IrNode *  inputSignature = L(functionNameSymbol->typeTree);
 		if (inputSignature->type == kNoisyIrNodeType_PwriteTypeSignature)
 		{
 			inputSignature = L(inputSignature);
 		}
 		/*
-		 *       Check if inputSignature is nil. Else typeCheck every argument.
+		 *	Check if inputSignature is nil. Else typeCheck every argument.
 		 */
 		if (L(inputSignature)->type == kNoisyIrNodeType_Tnil)
 		{
@@ -743,7 +750,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 			}
 			else
 			{
-				char * details;
+				char *  details;
 				asprintf(&details, "Using arguments for nil function \"%s\"\n", functionNameSymbol->identifier);
 				noisySemanticError(N, noisyFactorNode, details);
 				noisySemanticErrorRecovery(N);
@@ -753,8 +760,8 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 		{
 			for (IrNode * iter = LR(noisyFactorNode); iter != NULL; iter = RR(iter))
 			{
-				IrNode * argName = L(iter);
-				IrNode * expr	 = RL(iter);
+				IrNode *	argName = L(iter);
+				IrNode *	expr = RL(iter);
 
 				paramCount++;
 				paramCorrect = paramCorrect && noisyArgumentMatchesSignature(N, argName, expr, inputSignature, currentScope, loadedFunction);
@@ -784,7 +791,7 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 		}
 
 		/*
-		 *       TypeCheck output signature. The type returned is the return type of the function.
+		 *	TypeCheck output signature. The type returned is the return type of the function.
 		 */
 		if (L(outputSignature)->type == kNoisyIrNodeType_Tnil)
 		{
@@ -814,13 +821,13 @@ getNoisyTypeFromFactor(State * N, IrNode * noisyFactorNode, Scope * currentScope
 }
 
 /*
- *       Take a unaryOp node and a factorType and type checks if the operator can be
- *       applied on the specific factorType.
+ *	Take a unaryOp node and a factorType and type checks if the operator can be
+ *	applied on the specific factorType.
  */
 NoisyType
-noisyUnaryOpTypeCheck(State * N, IrNode * noisyUnaryOpNode, NoisyType factorType)
+noisyUnaryOpTypeCheck(State *  N, IrNode *  noisyUnaryOpNode, NoisyType  factorType)
 {
-	NoisyType returnType = factorType;
+	NoisyType	returnType = factorType;
 
 	if (L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tplus ||
 	    L(noisyUnaryOpNode)->type == kNoisyIrNodeType_Tminus)
@@ -873,7 +880,7 @@ noisyUnaryOpTypeCheck(State * N, IrNode * noisyUnaryOpNode, NoisyType factorType
 	{
 		if (factorType.basicType != noisyBasicTypeNamegenType)
 		{
-			IrNode * qualifiedIdentifierNode = RL(noisyUnaryOpNode->irParent);
+			IrNode *  qualifiedIdentifierNode = RL(noisyUnaryOpNode->irParent);
 			if (qualifiedIdentifierNode->type == kNoisyIrNodeType_PqualifiedIdentifier)
 			{
 				if (qualifiedIdentifierNode->irLeftChild->symbol->symbolType != kNoisySymbolTypeParameter)
@@ -897,7 +904,7 @@ noisyUnaryOpTypeCheck(State * N, IrNode * noisyUnaryOpNode, NoisyType factorType
 		else
 		{
 			factorType.functionDefinition->isChannel = true;
-			IrNode * factorTypeExpr;
+			IrNode *  factorTypeExpr;
 			if (factorType.functionDefinition->typeTree->type == kNoisyIrNodeType_PfunctionDecl)
 			{
 				factorTypeExpr = L(RLR(factorType.functionDefinition->typeTree));
@@ -910,8 +917,8 @@ noisyUnaryOpTypeCheck(State * N, IrNode * noisyUnaryOpNode, NoisyType factorType
 		}
 
 		/*
-		 *       After applying the channel operator on a namegen, the return value has the type of the
-		 *       namegen's return value.
+		 *	After applying the channel operator on a namegen, the return value has the type of the
+		 *	namegen's return value.
 		 */
 	}
 	else
@@ -922,11 +929,11 @@ noisyUnaryOpTypeCheck(State * N, IrNode * noisyUnaryOpNode, NoisyType factorType
 }
 
 /*
- *       Takes a noisyTerNode typechecks it and everything is correct it returns the NoisyType of the term.
- *       TODO; Might need more work.
+ *	Takes a noisyTerNode typechecks it and everything is correct it returns the NoisyType of the term.
+ *	TODO; Might need more work.
  */
 NoisyType
-getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
+getNoisyTypeFromTerm(State *  N, IrNode *  noisyTermNode, Scope *  currentScope)
 {
 	NoisyType basicType, termType;
 	IrNode *  factorNode  = NULL;
@@ -934,8 +941,8 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 	noisyInitNoisyType(&basicType);
 
 	/*
-	 *       This flag is needed because the form of the tree is different based on whether a prefix exists
-	 *       on the term expression.
+	 *	This flag is needed because the form of the tree is different based on whether a prefix exists
+	 *	on the term expression.
 	 */
 	bool prefixExists = false;
 
@@ -978,7 +985,7 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 		}
 	}
 
-	for (IrNode * iter = prefixExists ? R(factorNode) : R(noisyTermNode); iter != NULL; iter = RR(iter))
+	for (IrNode *  iter = prefixExists ? R(factorNode) : R(noisyTermNode); iter != NULL; iter = RR(iter))
 	{
 		NoisyType factorIterType;
 
@@ -987,9 +994,9 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 		if (!noisyTypeEquals(factorIterType, termType))
 		{
 			/*
-			 *       Operands type mismatch.
+			 *	Operands type mismatch.
 			 */
-			char * details;
+			char *  details;
 
 			asprintf(&details, "Operands type mismatch\n");
 			noisySemanticError(N, factorNode, details);
@@ -1002,9 +1009,9 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 			if (!noisyIsOfType(termType, noisyBasicTypeArithType))
 			{
 				/*
-				 *       Operator and operand mismatch.
+				 *	Operator and operand mismatch.
 				 */
-				char * details;
+				char *  details;
 
 				asprintf(&details, "Operator and operands type mismatch\n");
 				noisySemanticError(N, factorNode, details);
@@ -1016,7 +1023,7 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 		{
 			if (!noisyIsOfType(termType, noisyBasicTypeIntegerConstType))
 			{
-				char * details;
+				char *  details;
 
 				asprintf(&details, "Operator and operands type mismatch\n");
 				noisySemanticError(N, factorNode, details);
@@ -1030,9 +1037,9 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 			if (!noisyTypeEquals(termType, boolType))
 			{
 				/*
-				 *       Operator and operand mismatch.
+				 *	Operator and operand mismatch.
 				 */
-				char * details;
+				char *  details;
 
 				asprintf(&details, "Operator and operands type mismatch\n");
 				noisySemanticError(N, factorNode, details);
@@ -1042,9 +1049,9 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 		else
 		{
 			/*
-			 *       Unsupported operators
+			 *	Unsupported operators
 			 */
-			char * details;
+			char *  details;
 
 			asprintf(&details, "Unsupported binary operator\n");
 			noisySemanticError(N, factorNode, details);
@@ -1061,7 +1068,7 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 	if (basicType.basicType != noisyBasicTypeInit)
 	{
 		/*
-		 *       The basic type, typecasts the factor expression.
+		 *	The basic type, typecasts the factor expression.
 		 */
 		if (noisyCanTypeCast(termType, basicType))
 		{
@@ -1069,7 +1076,7 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 		}
 		else
 		{
-			char * details;
+			char *  details;
 
 			asprintf(&details, "Cannot convert types!\n");
 			noisySemanticError(N, noisyTermNode, details);
@@ -1082,12 +1089,14 @@ getNoisyTypeFromTerm(State * N, IrNode * noisyTermNode, Scope * currentScope)
 }
 
 /*
- *       Takes a noisyExpressionNode and returns its NoisyType after typeChecking it.
+ *	Takes a noisyExpressionNode and returns its NoisyType after typeChecking it.
  */
 NoisyType
-getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * currentScope)
+getNoisyTypeFromExpression(State *  N, IrNode *  noisyExpressionNode, Scope *  currentScope)
 {
-	NoisyType typ1, returnType;
+	NoisyType	typ1;
+	NoisyType	returnType;
+
 	noisyInitNoisyType(&returnType);
 
 	if (L(noisyExpressionNode)->type == kNoisyIrNodeType_Pterm)
@@ -1096,10 +1105,10 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 
 		returnType = typ1;
 
-		for (IrNode * iter = R(noisyExpressionNode); iter != NULL; iter = RR(iter))
+		for (IrNode *  iter = R(noisyExpressionNode); iter != NULL; iter = RR(iter))
 		{
-			IrNode * operatorNode = L(iter);
-			IrNode * termNode     = RL(iter);
+			IrNode *  operatorNode = L(iter);
+			IrNode *  termNode     = RL(iter);
 
 			NoisyType termTyp = getNoisyTypeFromTerm(N, termNode, currentScope);
 
@@ -1114,7 +1123,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 							if (L(operatorNode)->type == kNoisyIrNodeType_Tplus && returnType.basicType == noisyBasicTypeString)
 							{
 								/*
-								 *       We use it for emphasis. "+" operator works for strings as well.
+								 *	We use it for emphasis. "+" operator works for strings as well.
 								 */
 							}
 							else
@@ -1127,7 +1136,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 							}
 						}
 						/*
-						 *       returnType = typ1;
+						 *	returnType = typ1;
 						 */
 						break;
 					case kNoisyIrNodeType_TrightShift:
@@ -1154,7 +1163,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 								noisySemanticErrorRecovery(N);
 							}
 							/*
-							 *       This type assignment happens here so we can find constants' type.
+							 *	This type assignment happens here so we can find constants' type.
 							 */
 							RL(iter)->noisyType  = returnType;
 							returnType.basicType = noisyBasicTypeBool;
@@ -1164,14 +1173,14 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 							if (noisyIsOfType(returnType, noisyBasicTypeArithType))
 							{
 								/*
-								 *       This type assignment happens here so we can find constants' type.
+								 *	This type assignment happens here so we can find constants' type.
 								 */
 								RL(iter)->noisyType  = returnType;
 								returnType.basicType = noisyBasicTypeBool;
 							}
 							else
 							{
-								char * details;
+								char *  details;
 
 								asprintf(&details, "Operator \"%s\" and operands type mismatch\n", LL(operatorNode)->tokenString);
 								noisySemanticError(N, L(noisyExpressionNode), details);
@@ -1180,7 +1189,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 						}
 						else
 						{
-							char * details;
+							char *  details;
 
 							asprintf(&details, "Unsupported CmpOp \"%s\"\n", L(operatorNode)->tokenString);
 							noisySemanticError(N, L(noisyExpressionNode), details);
@@ -1190,7 +1199,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 					case kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp:
 						if (returnType.basicType != noisyBasicTypeBool)
 						{
-							char * details;
+							char *  details;
 
 							asprintf(&details, "Operator \"%s\" and operands type mismatch\n", L(operatorNode)->tokenString);
 							noisySemanticError(N, L(noisyExpressionNode), details);
@@ -1204,9 +1213,9 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 			else
 			{
 				/*
-				 *       Operands type mismatch error.
+				 *	Operands type mismatch error.
 				 */
-				char * details;
+				char *  details;
 
 				asprintf(&details, "Operands type mismatch\n");
 				noisySemanticError(N, L(noisyExpressionNode), details);
@@ -1226,7 +1235,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 
 				NoisyType elemType;
 				noisyInitNoisyType(&elemType);
-				for (IrNode * iter = LLL(noisyExpressionNode); iter != NULL; iter = R(iter))
+				for (IrNode *  iter = LLL(noisyExpressionNode); iter != NULL; iter = R(iter))
 				{
 					if (elemType.basicType == noisyBasicTypeInit)
 					{
@@ -1237,7 +1246,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 						if (!noisyTypeEquals(elemType, getNoisyTypeFromExpression(N, LL(iter), currentScope)))
 						{
 							/*
-							 *       Elements type dont match in array.
+							 *	Elements type dont match in array.
 							 */
 							char * details;
 
@@ -1275,9 +1284,9 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 				NoisyType elemType;
 				noisyInitNoisyType(&elemType);
 
-				for (IrNode * iter = LLR(noisyExpressionNode); iter != NULL; iter = R(iter))
+				for (IrNode *  iter = LLR(noisyExpressionNode); iter != NULL; iter = R(iter))
 				{
-					IrNode * exprNode = LL(iter);
+					IrNode *  exprNode = LL(iter);
 					if (L(iter)->type == kNoisyIrNodeType_Tasterisk)
 					{
 						exprNode = RLL(iter);
@@ -1291,7 +1300,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 						if (!noisyTypeEquals(elemType, getNoisyTypeFromExpression(N, exprNode, currentScope)))
 						{
 							/*
-							 *       Elements type dont match in array.
+							 *	Elements type dont match in array.
 							 */
 							char * details;
 
@@ -1324,9 +1333,9 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 		else
 		{
 			/*
-			 *       Unsupported expression.
+			 *	Unsupported expression.
 			 */
-			char * details;
+			char *  details;
 
 			asprintf(&details, "This non aggregate cast expression is not supported\n");
 			noisySemanticError(N, LL(noisyExpressionNode), details);
@@ -1335,12 +1344,12 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 	}
 	else if (L(noisyExpressionNode)->type == kNoisyIrNodeType_PloadExpr)
 	{
-		static int loadCount = 0;
+		static int  loadCount = 0;
 
-		IrNode * moduleNameIrNode = LL(noisyExpressionNode);
-		IrNode * funcNameIrNode;
-		IrNode * tupleTypeNode;
-		// IrNode * typeNameNode;
+		IrNode *  moduleNameIrNode = LL(noisyExpressionNode);
+		IrNode *  funcNameIrNode;
+		IrNode *  tupleTypeNode;
+		// IrNode *  typeNameNode;
 
 		if (LR(noisyExpressionNode)->type == kNoisyIrNodeType_Tidentifier)
 		{
@@ -1371,7 +1380,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 			}
 		}
 
-		Symbol * moduleSymbol = commonSymbolTableSymbolForIdentifier(N, N->moduleScopes, moduleNameIrNode->tokenString);
+		Symbol *  moduleSymbol = commonSymbolTableSymbolForIdentifier(N, N->moduleScopes, moduleNameIrNode->tokenString);
 
 		if (moduleSymbol == NULL || moduleSymbol->symbolType != kNoisySymbolTypeModule)
 		{
@@ -1382,15 +1391,15 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 			noisySemanticErrorRecovery(N);
 		}
 
-		IrNode * typeParameterListNodeIter = RL(moduleSymbol->typeTree->irParent->irParent);
-		for (IrNode * iter = (tupleTypeNode); iter != NULL; iter = R(iter))
+		IrNode *  typeParameterListNodeIter = RL(moduleSymbol->typeTree->irParent->irParent);
+		for (IrNode *  iter = (tupleTypeNode); iter != NULL; iter = R(iter))
 		{
 			/*
-			 *       Assign the type expression to the module parameters.
+			 *	Assign the type expression to the module parameters.
 			 */
 			if (typeParameterListNodeIter == NULL)
 			{
-				char * details;
+				char *  details;
 
 				asprintf(&details, "Type parameters mismatch when loading from module \"%s\"\n", moduleSymbol->identifier);
 				noisySemanticError(N, moduleNameIrNode, details);
@@ -1405,7 +1414,7 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 		{
 			if (typeParameterListNodeIter->irLeftChild != NULL)
 			{
-				char * details;
+				char *  details;
 
 				asprintf(&details, "Type parameters mismatch when loading from module \"%s\"\n", moduleSymbol->identifier);
 				noisySemanticError(N, moduleNameIrNode, details);
@@ -1419,44 +1428,46 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 			funcSymbol = commonSymbolTableSymbolForIdentifier(N, moduleSymbol->scope->firstChild, funcNameIrNode->tokenString);
 			if (funcSymbol == NULL || (funcSymbol->symbolType != kNoisySymbolTypeNamegenDeclaration && funcSymbol->symbolType != kNoisySymbolTypeNamegenDefinition))
 			{
-				char * details;
+				char *  details;
 
 				asprintf(&details, "Could not find a function named \"%s\" in module \"%s\"\n", funcNameIrNode->tokenString, moduleNameIrNode->tokenString);
 				noisySemanticError(N, moduleNameIrNode, details);
 				noisySemanticErrorRecovery(N);
 			}
 			/*
-			 *       We use this for templated functions. Templated functions are not typeComplete. Therefore
-			 *       when we load them with a specific type they become typeComplete and then we can typeCheck them
-			 *       with noisyFunctionDefnTypeCheck.
+			 *	We use this for templated functions. Templated functions are not typeComplete. Therefore
+			 *	when we load them with a specific type they become typeComplete and then we can typeCheck them
+			 *	with noisyFunctionDefnTypeCheck.
 			 */
 			if (!funcSymbol->isTypeComplete)
 			{
 				/*
-				 *       For templated functions we create a new symbol table entry. They have new name (their
-				 *       name with an "_integer" appended) as well as deep copies of the their tree regarding typeTree
-				 *       and function definition nodes. Before entering here we have assigned basic types to the module
-				 *       parameters. Then we typeCheck the function definition with the types assigned and then we deep
-				 *       copy the tree of the function so we can keep all the information we need. During the deepCopy
-				 *       we also copy the symbol nodes. This way we do minimal changes to the whole code for templated
-				 *       functions.
-				 *       TODO; Might need changes if we see that code generation does not have all the necessary information.
+				 *	For templated functions we create a new symbol table entry. They have new name (their
+				 *	name with an "_integer" appended) as well as deep copies of the their tree regarding typeTree
+				 *	and function definition nodes. Before entering here we have assigned basic types to the module
+				 *	parameters. Then we typeCheck the function definition with the types assigned and then we deep
+				 *	copy the tree of the function so we can keep all the information we need. During the deepCopy
+				 *	we also copy the symbol nodes. This way we do minimal changes to the whole code for templated
+				 *	functions.
+				 *	TODO; Might need changes if we see that code generation does not have all the necessary information.
 				 */
 				funcSymbol->isTypeComplete = true;
 
-				Token * t     = calloc(1, sizeof(Token));
+				Token *  t     = calloc(1, sizeof(Token));
 				t->sourceInfo = funcSymbol->sourceInfo;
 
 				// FIX: NoisySymbolType to IrNodeType without a cast
 				t->type = kNoisySymbolTypeNamegenDefinition;
 				asprintf(&t->identifier, "%s_%d", funcSymbol->identifier, loadCount);
 
-				Symbol * newFunctionSym		   = commonSymbolTableAddOrLookupSymbolForToken(N, N->noisyIrTopScope->firstChild, t);
+				Symbol *  newFunctionSym = commonSymbolTableAddOrLookupSymbolForToken(N, N->noisyIrTopScope->firstChild, t);
+
 				newFunctionSym->functionDefinition = deepCopyIrNode(N, funcSymbol->functionDefinition, loadCount);
 				noisyFunctionDefnTypeCheck(N, newFunctionSym->functionDefinition, N->noisyIrTopScope->firstChild);
 				newFunctionSym->parameterNum   = funcSymbol->parameterNum;
 				newFunctionSym->isTypeComplete = funcSymbol->isTypeComplete;
-				IrNode * newTypeTree	       = calloc(1, sizeof(IrNode));
+				
+				IrNode *  newTypeTree	       = calloc(1, sizeof(IrNode));
 				newTypeTree->irLeftChild       = RL(newFunctionSym->functionDefinition);
 				newTypeTree->irRightChild      = RRL(newFunctionSym->functionDefinition);
 				newFunctionSym->typeTree       = newTypeTree;
@@ -1467,14 +1478,14 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 			else
 			{
 				/*
-				 *       If we dont have templated code we just pass the funcSymbol pointer.
+				 *	If we dont have templated code we just pass the funcSymbol pointer.
 				 */
 				returnType.functionDefinition = funcSymbol;
 			}
 		}
 		else
 		{
-			char * details;
+			char *  details;
 
 			asprintf(&details, "We do not support loadExpr with module names only.\n");
 			noisySemanticError(N, moduleNameIrNode, details);
@@ -1482,16 +1493,16 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 		}
 
 		/*
-		 *       If we actually changed a typeTre for type parameters of module we need to revert them back to their initial
-		 *       stage.
+		 *	If we actually changed a typeTre for type parameters of module we need to revert them back to their initial
+		 *	stage.
 		 */
 		if (tupleTypeNode != NULL)
 		{
-			for (IrNode * typeParameterListNodeIter = RL(moduleSymbol->typeTree->irParent->irParent); typeParameterListNodeIter != NULL; typeParameterListNodeIter = R(typeParameterListNodeIter))
+			for (IrNode *  typeParameterListNodeIter = RL(moduleSymbol->typeTree->irParent->irParent); typeParameterListNodeIter != NULL; typeParameterListNodeIter = R(typeParameterListNodeIter))
 			{
 				/*
-				 *       We need to revert what we did before for the next load expressions.
-				 *       Each load does not modify the module permanently but it specialises it and loads it.
+				 *	We need to revert what we did before for the next load expressions.
+				 *	Each load does not modify the module permanently but it specialises it and loads it.
 				 */
 				L(typeParameterListNodeIter)->symbol->typeTree = NULL;
 			}
@@ -1505,15 +1516,20 @@ getNoisyTypeFromExpression(State * N, IrNode * noisyExpressionNode, Scope * curr
 }
 
 /*
- *       Checks if the function is typeComplete and also counts its parameters as preparation
- *       for the code generation.
+ *	Checks if the function is typeComplete and also counts its parameters as preparation
+ *	for the code generation.
  */
 void
-noisyDeclareFunctionTypeCheck(State * N, const char * functionName, IrNode * inputSignature, IrNode * outputSignature, Scope * currentScope)
+noisyDeclareFunctionTypeCheck(
+	State *		N,
+	const char *	functionName,
+	IrNode *	inputSignature,
+	IrNode *	outputSignature,
+	Scope *		currentScope)
 {
-	Symbol * functionSymbol = commonSymbolTableSymbolForIdentifier(N, currentScope, functionName);
+	Symbol *  functionSymbol = commonSymbolTableSymbolForIdentifier(N, currentScope, functionName);
 	/*
-	 *       By default functions are not channels. We check if they use channel operators and then we decide they are channels.
+	 *	By default functions are not channels. We check if they use channel operators and then we decide they are channels.
 	 */
 	functionSymbol->isChannel      = false;
 	functionSymbol->isTypeComplete = false;
@@ -1522,19 +1538,19 @@ noisyDeclareFunctionTypeCheck(State * N, const char * functionName, IrNode * inp
 
 	if (L(inputSignature)->type != kNoisyIrNodeType_Tnil)
 	{
-		for (IrNode * iter = inputSignature; iter != NULL; iter = RR(iter))
+		for (IrNode *  iter = inputSignature; iter != NULL; iter = RR(iter))
 		{
 			parameterCount++;
 
 			functionSymbol->isTypeComplete = isTypeExprComplete(N, RL(iter));
 		}
 		/*
-		 *       We need to save parameterCount so we can allocate memory for the
-		 *       parameters of the generated function.
+		 *	We need to save parameterCount so we can allocate memory for the
+		 *	parameters of the generated function.
 		 */
 	}
 	/*
-	 *       If type == nil then parameterCount = 0
+	 *	If type == nil then parameterCount = 0
 	 */
 
 	functionSymbol->parameterNum = parameterCount;
@@ -1554,48 +1570,53 @@ noisyDeclareFunctionTypeCheck(State * N, const char * functionName, IrNode * inp
 }
 
 void
-noisyModuleTypeNameDeclTypeCheck(State * N, IrNode * noisyModuleTypeNameDeclNode, Scope * currentScope)
+noisyModuleTypeNameDeclTypeCheck(State *  N, IrNode *  noisyModuleTypeNameDeclNode, Scope *  currentScope)
 {
 	/*
-	 *       We do not need to typecheck constant definitions.
+	 *	We do not need to typecheck constant definitions.
 	 */
 	if (R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PtypeDecl || R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PtypeAnnoteDecl)
 	{
 		/*
-		 *       Probably we need to type check if type annotations of units and signals match
-		 *       through Newton API.
+		 *	Probably we need to type check if type annotations of units and signals match
+		 *	through Newton API.
 		 */
 		return;
 	}
 	else if (R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PfunctionDecl)
 	{
-		IrNode * inputSignature	 = RLL(noisyModuleTypeNameDeclNode);
-		IrNode * outputSignature = RRL(noisyModuleTypeNameDeclNode);
+		IrNode *  inputSignature	 = RLL(noisyModuleTypeNameDeclNode);
+		IrNode *  outputSignature = RRL(noisyModuleTypeNameDeclNode);
 		noisyDeclareFunctionTypeCheck(N, L(noisyModuleTypeNameDeclNode)->tokenString, inputSignature, outputSignature, currentScope);
 	}
 }
 
 void
-noisyModuleDeclBodyTypeCheck(State * N, IrNode * noisyModuleDeclBodyNode, Scope * currentScope)
+noisyModuleDeclBodyTypeCheck(State *  N, IrNode *  noisyModuleDeclBodyNode, Scope *  currentScope)
 {
-	for (IrNode * currentNode = noisyModuleDeclBodyNode; currentNode != NULL; currentNode = currentNode->irRightChild)
+	for (IrNode *  currentNode = noisyModuleDeclBodyNode; currentNode != NULL; currentNode = currentNode->irRightChild)
 	{
 		noisyModuleTypeNameDeclTypeCheck(N, currentNode->irLeftChild, currentScope);
 	}
 }
 
 bool
-noisyMatchTypeExpr(State * N, IrNode * typeExpr1, IrNode * typeExpr2)
+noisyMatchTypeExpr(State *  N, IrNode *  typeExpr1, IrNode *  typeExpr2)
 {
-	NoisyType typ1, typ2;
+	NoisyType typ1;
+	NoisyType typ2;
+	bool res;
+
 	typ1	 = getNoisyTypeFromTypeExpr(N, typeExpr1);
 	typ2	 = getNoisyTypeFromTypeExpr(N, typeExpr2);
-	bool res = noisyTypeEquals(typ1, typ2);
+	
+	res = noisyTypeEquals(typ1, typ2);
+
 	return res;
 }
 
 bool
-noisySignatureIsMatching(State * N, IrNode * definitionSignature, IrNode * declarationSignature)
+noisySignatureIsMatching(State *  N, IrNode *  definitionSignature, IrNode *  declarationSignature)
 {
 	if (L(definitionSignature)->type == kNoisyIrNodeType_Tnil || L(declarationSignature)->type == kNoisyIrNodeType_Tnil)
 	{
@@ -1610,11 +1631,11 @@ noisySignatureIsMatching(State * N, IrNode * definitionSignature, IrNode * decla
 	}
 	else
 	{
-		IrNode * declIter = declarationSignature;
-		for (IrNode * iter = definitionSignature; iter != NULL; iter = RR(iter))
+		IrNode *  declIter = declarationSignature;
+		for (IrNode *  iter = definitionSignature; iter != NULL; iter = RR(iter))
 		{
 			/*
-			 *       If one signature has less members than the other.
+			 *	If one signature has less members than the other.
 			 */
 			if (declIter == NULL)
 			{
@@ -1637,7 +1658,7 @@ noisySignatureIsMatching(State * N, IrNode * definitionSignature, IrNode * decla
 		}
 
 		/*
-		 *       If one signature has more members than the other.
+		 *	If one signature has more members than the other.
 		 */
 		if (declIter != NULL)
 		{
@@ -1649,14 +1670,14 @@ noisySignatureIsMatching(State * N, IrNode * definitionSignature, IrNode * decla
 }
 
 /*
- *       TypeChecks an assignment statement.
+ *	TypeChecks an assignment statement.
  */
 void
-noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNode, Scope * currentScope)
+noisyAssignmentStatementTypeCheck(State *  N, IrNode *  noisyAssignmentStatementNode, Scope *  currentScope)
 {
 	/*
-	 *       If type is xseq it means that noisyAssignmentNode is not a declaration but an actual assignment.
-	 *       If it is declaration then R(noisyAssignmentStatementNode)->type ==  kNoisyIrNodeType_PtypeEpxr.
+	 *	If type is xseq it means that noisyAssignmentNode is not a declaration but an actual assignment.
+	 *	If it is declaration then R(noisyAssignmentStatementNode)->type ==  kNoisyIrNodeType_PtypeEpxr.
 	 */
 	if (R(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_Xseq)
 	{
@@ -1665,18 +1686,18 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 			NoisyType lValueType, rValueType, prevLVal, expectedRvalType;
 			rValueType     = getNoisyTypeFromExpression(N, RRL(noisyAssignmentStatementNode), currentScope);
 			bool firstTime = true;
-			for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
+			for (IrNode *  iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
 			{
 				if (LL(iter)->type == kNoisyIrNodeType_Tnil)
 				{
 					/*
-					 *       We do not need to type check lValueType of an assignment to nil.
+					 *	We do not need to type check lValueType of an assignment to nil.
 					 */
 				}
 				else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
 				{
 					prevLVal	    = lValueType;
-					Symbol * lvalSymbol = LLL(iter)->symbol;
+					Symbol *  lvalSymbol = LLL(iter)->symbol;
 					if (lvalSymbol->typeTree != NULL)
 					{
 						lValueType = getNoisyTypeFromTypeExpr(N, lvalSymbol->typeTree);
@@ -1690,14 +1711,14 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 					{
 						// arrayLvalType = lValueType;
 						int dims = 0;
-						for (IrNode * iter2 = LLR(iter); iter2 != NULL; iter2 = R(iter2))
+						for (IrNode *  iter2 = LLR(iter); iter2 != NULL; iter2 = R(iter2))
 						{
 							if (!noisyIsOfType(getNoisyTypeFromExpression(N, LR(iter2), currentScope), noisyBasicTypeIntegerConstType))
 							{
 								/*
-								 *       Indexes are not integers error.
+								 *	Indexes are not integers error.
 								 */
-								char * details;
+								char *  details;
 
 								asprintf(&details, "Indexing \"%s\" array with a non-integer expression\n", LLL(iter)->symbol->identifier);
 								noisySemanticError(N, iter, details);
@@ -1709,8 +1730,8 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 
 						lValueType.dimensions -= dims;
 						/*
-						 *       If there are no type errors on array indexing we the arrayType of the array.
-						 *       e.g. when we index an array of int32 the factor we return has type int32.
+						 *	If there are no type errors on array indexing we the arrayType of the array.
+						 *	e.g. when we index an array of int32 the factor we return has type int32.
 						 */
 						if (lValueType.dimensions == 0)
 						{
@@ -1719,9 +1740,9 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 						else if (lValueType.dimensions < 0)
 						{
 							/*
-							 *       Indexing dimension error.
+							 *	Indexing dimension error.
 							 */
-							char * details;
+							char *  details;
 
 							asprintf(&details, "Dimensions of array \"%s\" dont match\n", LLL(iter)->symbol->identifier);
 							noisySemanticError(N, LL(iter), details);
@@ -1730,7 +1751,7 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 					}
 					if (!firstTime && !noisyTypeEquals(lValueType, prevLVal))
 					{
-						char * details;
+						char *  details;
 
 						asprintf(&details, "Cannot have different lvalue types on assignment\n");
 						noisySemanticError(N, LLL(iter), details);
@@ -1744,12 +1765,12 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 							if (RLL(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_TplusAssign || RLL(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_TminusAssign || RLL(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_TasteriskAssign || RLL(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_TdivideAssign)
 							{
 								/*
-								 *       For "/=", "*=", "-=", "+="
-								 *       operators, values need to have arithmetic type.
+								 *	For "/=", "*=", "-=", "+="
+								 *	operators, values need to have arithmetic type.
 								 */
 								if (!noisyIsOfType(lValueType, noisyBasicTypeArithType))
 								{
-									char * details;
+									char *  details;
 
 									asprintf(&details, "Type operator and operand mismatch on assignment\n");
 									noisySemanticError(N, LL(iter), details);
@@ -1759,12 +1780,12 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 							else
 							{
 								/*
-								 *       For "^=", "|=", "&=", "%=", ">>=", "<<="
-								 *       operators, values need to have integer type.
+								 *	For "^=", "|=", "&=", "%=", ">>=", "<<="
+								 *	operators, values need to have integer type.
 								 */
 								if (!noisyIsOfType(lValueType, noisyBasicTypeIntegerConstType))
 								{
-									char * details;
+									char *  details;
 
 									asprintf(&details, "Type operator and operand mismatch on assignment\n");
 									noisySemanticError(N, LL(iter), details);
@@ -1775,8 +1796,8 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 						else if (RLL(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_TchannelOperatorAssign)
 						{
 							/*
-							 *       If the lval is kNoisySymbolTypeReturnParameter then it means we write
-							 *       to the output channel of a function.
+							 *	If the lval is kNoisySymbolTypeReturnParameter then it means we write
+							 *	to the output channel of a function.
 							 */
 							if (lvalSymbol->symbolType == kNoisySymbolTypeReturnParameter)
 							{
@@ -1789,12 +1810,12 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 						if (lValueType.basicType == noisyBasicTypeNamegenType)
 						{
 							/*
-							 *       Else if lval has noisyBasicTypeNamegenType it means we write to the input channel
-							 *       of a channel function.
+							 *	Else if lval has noisyBasicTypeNamegenType it means we write to the input channel
+							 *	of a channel function.
 							 */
 							if (lValueType.functionDefinition->parameterNum != 1)
 							{
-								char * details;
+								char *  details;
 
 								asprintf(&details, "Cannot write to channel with multiple or zero inputs!\n");
 								noisySemanticError(N, LL(iter), details);
@@ -1805,7 +1826,7 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 							expectedRvalType				    = getNoisyTypeFromTypeExpr(N, LRL(lValueType.functionDefinition->typeTree));
 							if (!noisyTypeEquals(expectedRvalType, rValueType))
 							{
-								char * details;
+								char *  details;
 
 								asprintf(&details, "Channel and value type mismatch!\n");
 								noisySemanticError(N, LL(iter), details);
@@ -1815,7 +1836,7 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 						}
 						else
 						{
-							char * details;
+							char *  details;
 
 							asprintf(&details, "Cannot write to a non channel!\n");
 							noisySemanticError(N, LL(iter), details);
@@ -1825,26 +1846,26 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 					else if (rValueType.basicType == noisyBasicTypeNilType)
 					{
 						/*
-						 *       We can assign nil to any type.
+						 *	We can assign nil to any type.
 						 */
 						;
 					}
 					else
 					{
-						char * details;
+						char *  details;
 
 						asprintf(&details, "Type mismatch on assignment\n");
 						noisySemanticError(N, LL(iter), details);
 						noisySemanticErrorRecovery(N);
 					}
 					/*
-					 *       We need to save the symbol type only on declarations of variables.
-					 *       For assignments we only save the lvalType on the rval expression node
-					 *       so we can use it as  a way to find integer and float constant types during code gen.
+					 *	We need to save the symbol type only on declarations of variables.
+					 *	For assignments we only save the lvalType on the rval expression node
+					 *	so we can use it as  a way to find integer and float constant types during code gen.
 					 */
 
 					/*
-					 *       We assign to the expression the noisyType so we can find the appropriate type for constants.
+					 *	We assign to the expression the noisyType so we can find the appropriate type for constants.
 					 */
 					if (lValueType.basicType != noisyBasicTypeNamegenType)
 					{
@@ -1853,8 +1874,8 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 					else
 					{
 						/*
-						 *       For channel assignment lval and rval do not have the same noisyType.
-						 *       Lval has noisyBasicTypeNamegenType and rval should have the channel's input type.
+						 *	For channel assignment lval and rval do not have the same noisyType.
+						 *	Lval has noisyBasicTypeNamegenType and rval should have the channel's input type.
 						 */
 						RRL(noisyAssignmentStatementNode)->noisyType = expectedRvalType;
 					}
@@ -1864,11 +1885,11 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 		else
 		{
 			NoisyType rValueType = getNoisyTypeFromExpression(N, RRL(noisyAssignmentStatementNode), currentScope);
-			for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
+			for (IrNode *  iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
 			{
 				if (LL(iter)->type == kNoisyIrNodeType_Tnil)
 				{
-					char * details;
+					char *  details;
 
 					asprintf(&details, "We cannot assign type to nil\n");
 					noisySemanticError(N, LL(iter), details);
@@ -1884,11 +1905,11 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 	else
 	{
 		NoisyType typeExprType = getNoisyTypeFromTypeExpr(N, R(noisyAssignmentStatementNode));
-		for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
+		for (IrNode *  iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
 		{
 			if (LL(iter)->type == kNoisyIrNodeType_Tnil)
 			{
-				char * details;
+				char *  details;
 
 				asprintf(&details, "We cannot assign type to nil\n");
 				noisySemanticError(N, LL(iter), details);
@@ -1903,26 +1924,26 @@ noisyAssignmentStatementTypeCheck(State * N, IrNode * noisyAssignmentStatementNo
 }
 
 void
-noisyGuardedStatementTypeCheck(State * N, IrNode * noisyGuardedStatementNode, Scope * currentScope)
+noisyGuardedStatementTypeCheck(State *  N, IrNode *  noisyGuardedStatementNode, Scope *  currentScope)
 {
-	Scope * nextScope = currentScope;
-	for (IrNode * iter = noisyGuardedStatementNode; iter != NULL; iter = RR(iter))
+	Scope *  nextScope = currentScope;
+	for (IrNode *  iter = noisyGuardedStatementNode; iter != NULL; iter = RR(iter))
 	{
 		/*
-		 *       TODO; ChanEvent.
+		 *	TODO; ChanEvent.
 		 */
 		NoisyType exprType = getNoisyTypeFromExpression(N, L(iter), currentScope);
 
 		if (exprType.basicType != noisyBasicTypeBool)
 		{
-			char * details;
+			char *  details;
 
 			asprintf(&details, "Not boolean expression on a match statement\n");
 			noisySemanticError(N, L(iter), details);
 			noisySemanticErrorRecovery(N);
 		}
 		/*
-		 *       For scoped statementLists we move the scopes and we parse the statementList.
+		 *	For scoped statementLists we move the scopes and we parse the statementList.
 		 */
 		noisyStatementListTypeCheck(N, RLL(iter), nextScope);
 		nextScope = nextScope->next;
@@ -1930,25 +1951,25 @@ noisyGuardedStatementTypeCheck(State * N, IrNode * noisyGuardedStatementNode, Sc
 }
 
 void
-noisyMatchStatementTypeCheck(State * N, IrNode * noisyMatchStatementNode, Scope * currentScope)
+noisyMatchStatementTypeCheck(State *  N, IrNode *  noisyMatchStatementNode, Scope *  currentScope)
 {
 	noisyGuardedStatementTypeCheck(N, R(noisyMatchStatementNode), currentScope->firstChild);
 }
 
 void
-noisyIterateStatementTypeCheck(State * N, IrNode * noisyIterateStatementNode, Scope * currentScope)
+noisyIterateStatementTypeCheck(State *  N, IrNode *  noisyIterateStatementNode, Scope *  currentScope)
 {
 	noisyGuardedStatementTypeCheck(N, R(noisyIterateStatementNode), currentScope->firstChild->firstChild);
 }
 
 void
-noisyOrderingHeadTypeCheck(State * N, IrNode * orderingHeadNode, Scope * currentScope)
+noisyOrderingHeadTypeCheck(State *  N, IrNode * orderingHeadNode, Scope *  currentScope)
 {
 	noisyAssignmentStatementTypeCheck(N, L(orderingHeadNode), currentScope);
 	NoisyType exprType = getNoisyTypeFromExpression(N, RL(orderingHeadNode), currentScope);
 	if (exprType.basicType != noisyBasicTypeBool)
 	{
-		char * details;
+		char *  details;
 
 		asprintf(&details, "Not boolean expression on the termination condition of a sequence statement\n");
 		noisySemanticError(N, RL(orderingHeadNode), details);
@@ -1958,37 +1979,38 @@ noisyOrderingHeadTypeCheck(State * N, IrNode * orderingHeadNode, Scope * current
 }
 
 void
-noisySequenceStatementTypeCheck(State * N, IrNode * noisySequenceStatementNode, Scope * currentScope)
+noisySequenceStatementTypeCheck(State *  N, IrNode *  noisySequenceStatementNode, Scope *  currentScope)
 {
 	noisyOrderingHeadTypeCheck(N, L(noisySequenceStatementNode), currentScope->parent);
 	noisyStatementListTypeCheck(N, RL(noisySequenceStatementNode), currentScope);
 }
 
 void
-noisyReturnStatementTypeCheck(State * N, IrNode * noisyReturnStatementNode, Scope * currentScope)
+noisyReturnStatementTypeCheck(State *  N, IrNode *  noisyReturnStatementNode, Scope *  currentScope)
 {
 	/*
-	 *       This should work for multiple return variables but currently we support only one returnType.
+	 *	This should work for multiple return variables but currently we support only one returnType.
 	 */
-	for (IrNode * iter = L(noisyReturnStatementNode); iter != NULL; iter = RR(iter))
+	for (IrNode *  iter = L(noisyReturnStatementNode); iter != NULL; iter = RR(iter))
 	{
-		Symbol * argSymbol = commonSymbolTableSymbolForIdentifier(N, currentScope, L(iter)->tokenString);
+		Symbol *  argSymbol = commonSymbolTableSymbolForIdentifier(N, currentScope, L(iter)->tokenString);
 		if (argSymbol == NULL || argSymbol->symbolType != kNoisySymbolTypeReturnParameter)
 		{
-			char * details;
+			char *  details;
 
 			asprintf(&details, "Unknown return variable\n");
 			noisySemanticError(N, L(iter), details);
 			noisySemanticErrorRecovery(N);
 		}
+
 		/*
-		 *       Since arguments have type in their signature we assume that the typeTree exists.
+		 *	Since arguments have type in their signature we assume that the typeTree exists.
 		 */
 		NoisyType argType  = getNoisyTypeFromTypeExpr(N, argSymbol->typeTree);
 		NoisyType exprType = getNoisyTypeFromExpression(N, RL(iter), currentScope);
 		if (!noisyTypeEquals(argType, exprType))
 		{
-			char * details;
+			char *  details;
 
 			asprintf(&details, "Return expression and variable mismatch\n");
 			noisySemanticError(N, RL(iter), details);
@@ -1999,10 +2021,10 @@ noisyReturnStatementTypeCheck(State * N, IrNode * noisyReturnStatementNode, Scop
 }
 
 /*
- *       TODO; Check scopings.
+ *	TODO; Check scopings.
  */
 void
-noisyStatementTypeCheck(State * N, IrNode * noisyStatementNode, Scope * currentScope)
+noisyStatementTypeCheck(State *  N, IrNode *  noisyStatementNode, Scope *  currentScope)
 {
 	switch (L(noisyStatementNode)->type)
 	{
@@ -2035,11 +2057,12 @@ noisyStatementTypeCheck(State * N, IrNode * noisyStatementNode, Scope * currentS
 }
 
 void
-noisyStatementListTypeCheck(State * N, IrNode * statementListNode, Scope * currentScope)
+noisyStatementListTypeCheck(State *  N, IrNode * statementListNode, Scope *  currentScope)
 {
-	Scope * nextScope     = currentScope;
-	Scope * sequenceScope = currentScope->firstChild;
-	for (IrNode * iter = statementListNode; iter != NULL; iter = R(iter))
+	Scope *  nextScope     = currentScope;
+	Scope *  sequenceScope = currentScope->firstChild;
+
+	for (IrNode *  iter = statementListNode; iter != NULL; iter = R(iter))
 	{
 		if (L(iter) != NULL && LL(iter) != NULL)
 		{
@@ -2062,18 +2085,18 @@ noisyStatementListTypeCheck(State * N, IrNode * statementListNode, Scope * curre
 }
 
 void
-noisyFunctionDefnTypeCheck(State * N, IrNode * noisyFunctionDefnNode, Scope * currentScope)
+noisyFunctionDefnTypeCheck(State *  N, IrNode *  noisyFunctionDefnNode, Scope *  currentScope)
 {
-	Symbol * functionSymbol = commonSymbolTableSymbolForIdentifier(N, N->moduleScopes, noisyFunctionDefnNode->irLeftChild->tokenString);
+	Symbol *  functionSymbol = commonSymbolTableSymbolForIdentifier(N, N->moduleScopes, noisyFunctionDefnNode->irLeftChild->tokenString);
 
 	noisySignatureIsMatching(N, RL(noisyFunctionDefnNode), L(functionSymbol->typeTree));
 	noisySignatureIsMatching(N, RRL(noisyFunctionDefnNode), R(functionSymbol->typeTree));
 
 	/*
-	 *       For local functions we need to typeCheck their declaration.
-	 *       We cannot skip this step because this function initializes parameterNum and isComplete variables
-	 *       for function symbols.
-	 *       If we have a local definition of a function its scope is the TopScope.
+	 *	For local functions we need to typeCheck their declaration.
+	 *	We cannot skip this step because this function initializes parameterNum and isComplete variables
+	 *	for function symbols.
+	 *	If we have a local definition of a function its scope is the TopScope.
 	 */
 
 	if (functionSymbol->scope == N->noisyIrTopScope)
@@ -2089,18 +2112,18 @@ noisyFunctionDefnTypeCheck(State * N, IrNode * noisyFunctionDefnNode, Scope * cu
 }
 
 void
-noisyModuleDeclTypeCheck(State * N, IrNode * noisyModuleDeclNode, Scope * currentScope)
+noisyModuleDeclTypeCheck(State *  N, IrNode *  noisyModuleDeclNode, Scope *  currentScope)
 {
 	/*
-	 *       We do not need to typecheck module parameters.
+	 *	We do not need to typecheck module parameters.
 	 */
 	noisyModuleDeclBodyTypeCheck(N, RR(noisyModuleDeclNode), currentScope);
 }
 
 void
-noisyProgramTypeCheck(State * N, IrNode * noisyProgramNode, Scope * currentScope)
+noisyProgramTypeCheck(State *  N, IrNode *  noisyProgramNode, Scope *  currentScope)
 {
-	for (IrNode * currentNode = noisyProgramNode; currentNode != NULL; currentNode = currentNode->irRightChild)
+	for (IrNode *  currentNode = noisyProgramNode; currentNode != NULL; currentNode = currentNode->irRightChild)
 	{
 		if (currentNode->irLeftChild->type == kNoisyIrNodeType_PmoduleDecl)
 		{
@@ -2114,7 +2137,7 @@ noisyProgramTypeCheck(State * N, IrNode * noisyProgramNode, Scope * currentScope
 }
 
 void
-noisyTypeCheck(State * N)
+noisyTypeCheck(State *  N)
 {
 	noisyProgramTypeCheck(N, N->noisyIrRoot, N->noisyIrTopScope);
 }

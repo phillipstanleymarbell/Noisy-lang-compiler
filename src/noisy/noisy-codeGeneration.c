@@ -29,28 +29,28 @@
 #include <llvm-c/Transforms/PassManagerBuilder.h>
 
 typedef struct FrameListNode {
-	LLVMValueRef	       frameValue;
-	Symbol *	       ownerFunction;
-	struct FrameListNode * next;
+	LLVMValueRef		frameValue;
+	Symbol *		ownerFunction;
+	struct FrameListNode *	next;
 } FrameListNode;
 
-typedef FrameListNode * FrameList;
+typedef FrameListNode *  FrameList;
 
 typedef struct {
-	LLVMContextRef	   theContext;
-	LLVMBuilderRef	   theBuilder;
-	LLVMModuleRef	   theModule;
-	LLVMValueRef	   currentFunction;
-	LLVMPassManagerRef thePassManager;
-	FrameList	   frameList;
-	LLVMBasicBlockRef  suspendBB;
-	LLVMBasicBlockRef  cleanupBB;
+	LLVMContextRef		theContext;
+	LLVMBuilderRef		theBuilder;
+	LLVMModuleRef		theModule;
+	LLVMValueRef		currentFunction;
+	LLVMPassManagerRef	thePassManager;
+	FrameList		frameList;
+	LLVMBasicBlockRef	suspendBB;
+	LLVMBasicBlockRef	cleanupBB;
 } CodeGenState;
 
 /*
- *       We need to save coroutine frame pointers in order to destroy each coroutine created, at the
- *       end of each function that uses coroutines. Owner function is needed so we do not destroy frames that should not
- *       be destroyed yet (owned by other function).
+ *	We need to save coroutine frame pointers in order to destroy each coroutine created, at the
+ *	end of each function that uses coroutines. Owner function is needed so we do not destroy frames that should not
+ *	be destroyed yet (owned by other function).
  */
 FrameList
 noisyAddFrameToList(FrameList list, LLVMValueRef frame, Symbol * ownerFunction)
@@ -90,17 +90,18 @@ noisyGetFrameFromList(FrameList list)
 }
 
 void
-noisyDestroyCoroutineFrames(State * N, CodeGenState * S)
+noisyDestroyCoroutineFrames(State *  N, CodeGenState *  S)
 {
-	FrameListNode * iter = S->frameList;
+	FrameListNode *  iter = S->frameList;
 	while (iter != NULL)
 	{
 		if (iter->ownerFunction == N->currentFunction)
 		{
-			int	     argNum = 1;
-			LLVMValueRef args[1];
-			args[0]		      = noisyGetFrameFromList(iter);
-			iter		      = noisyRemoveFrameFromList(iter);
+			int		argNum = 1;
+			LLVMValueRef	args[1];
+
+			args[0] = noisyGetFrameFromList(iter);
+			iter = noisyRemoveFrameFromList(iter);
 			LLVMValueRef callFunc = LLVMGetNamedFunction(S->theModule, "llvm.coro.destroy");
 			LLVMBuildCall2(S->theBuilder, LLVMGetElementType(LLVMTypeOf(callFunc)), callFunc, args, argNum, "");
 		}
@@ -111,20 +112,20 @@ noisyDestroyCoroutineFrames(State * N, CodeGenState * S)
 	}
 }
 
-LLVMTypeRef  getLLVMTypeFromTypeExpr(State *, IrNode *);
-void	     noisyStatementListCodeGen(State * N, CodeGenState * S, IrNode * statementListNode);
-LLVMValueRef noisyExpressionCodeGen(State * N, CodeGenState * S, IrNode * noisyExpressionNode);
-LLVMValueRef noisyFunctionDefnCodeGen(State * N, CodeGenState * S, IrNode * noisyFunctionDefnNode);
-LLVMTypeRef  getLLVMTypeFromNoisyType(CodeGenState * S, NoisyType noisyType, bool byRef, int limit);
+LLVMTypeRef	getLLVMTypeFromTypeExpr(State *, IrNode *);
+void		noisyStatementListCodeGen(State *  N, CodeGenState *  S, IrNode *  statementListNode);
+LLVMValueRef	noisyExpressionCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyExpressionNode);
+LLVMValueRef	noisyFunctionDefnCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyFunctionDefnNode);
+LLVMTypeRef	getLLVMTypeFromNoisyType(CodeGenState *  S, NoisyType noisyType, bool byRef, int limit);
 
 /*
- *       This functions declares all coroutine intrinsic functions so we can use them in our program.
+ *	This functions declares all coroutine intrinsic functions so we can use them in our program.
  */
 void
 noisyDeclareCoroutineIntrinsics(CodeGenState * S)
 {
 	/*
-	 *       Declare token llvm.coro.id(i32,i8*,i8*,i8*)
+	 *	Declare token llvm.coro.id(i32,i8*,i8*,i8*)
 	 */
 	LLVMTypeRef returnType = LLVMTokenTypeInContext(S->theContext);
 	LLVMTypeRef paramTypes[4];
@@ -137,7 +138,7 @@ noisyDeclareCoroutineIntrinsics(CodeGenState * S)
 	LLVMAddFunction(S->theModule, "llvm.coro.id", functionType);
 
 	/*
-	 *       Declare i1 @llvm.coro.alloc(token)
+	 *	Declare i1 @llvm.coro.alloc(token)
 	 */
 	returnType    = LLVMInt1TypeInContext(S->theContext);
 	parameterNums = 1;
@@ -146,7 +147,7 @@ noisyDeclareCoroutineIntrinsics(CodeGenState * S)
 	LLVMAddFunction(S->theModule, "llvm.coro.alloc", functionType);
 
 	/*
-	 *       Declare i32 @llvm.coro.size.i32()
+	 *	Declare i32 @llvm.coro.size.i32()
 	 */
 	returnType    = LLVMInt32TypeInContext(S->theContext);
 	parameterNums = 0;
@@ -154,7 +155,7 @@ noisyDeclareCoroutineIntrinsics(CodeGenState * S)
 	LLVMAddFunction(S->theModule, "llvm.coro.size.i32", functionType);
 
 	/*
-	 *        Declare i8* @llvm.coro.begin(token,i8*)
+	 *	 Declare i8* @llvm.coro.begin(token,i8*)
 	 */
 	returnType    = LLVMPointerType(LLVMInt8TypeInContext(S->theContext), 0);
 	parameterNums = 2;
@@ -164,7 +165,7 @@ noisyDeclareCoroutineIntrinsics(CodeGenState * S)
 	LLVMAddFunction(S->theModule, "llvm.coro.begin", functionType);
 
 	/*
-	 *        Declare i8  @llvm.coro.suspend(token, i1)
+	 *	 Declare i8  @llvm.coro.suspend(token, i1)
 	 */
 	returnType    = LLVMInt8TypeInContext(S->theContext);
 	parameterNums = 2;
@@ -174,7 +175,7 @@ noisyDeclareCoroutineIntrinsics(CodeGenState * S)
 	LLVMAddFunction(S->theModule, "llvm.coro.suspend", functionType);
 
 	/*
-	 *        Declare i8* @llvm.coro.free(token, i8*)
+	 *	 Declare i8* @llvm.coro.free(token, i8*)
 	 */
 	returnType    = LLVMPointerType(LLVMInt8TypeInContext(S->theContext), 0);
 	parameterNums = 2;
@@ -184,7 +185,7 @@ noisyDeclareCoroutineIntrinsics(CodeGenState * S)
 	LLVMAddFunction(S->theModule, "llvm.coro.free", functionType);
 
 	/*
-	 *       Declare i1 @llvm.coro.end(i8*, i1)
+	 *	Declare i1 @llvm.coro.end(i8*, i1)
 	 */
 	returnType    = LLVMInt1TypeInContext(S->theContext);
 	parameterNums = 2;
@@ -194,7 +195,7 @@ noisyDeclareCoroutineIntrinsics(CodeGenState * S)
 	LLVMAddFunction(S->theModule, "llvm.coro.end", functionType);
 
 	/*
-	 *       Declare void @llvm.coro.resume(i8*)
+	 *	Declare void @llvm.coro.resume(i8*)
 	 */
 	returnType    = LLVMVoidTypeInContext(S->theContext);
 	parameterNums = 1;
@@ -203,7 +204,7 @@ noisyDeclareCoroutineIntrinsics(CodeGenState * S)
 	LLVMAddFunction(S->theModule, "llvm.coro.resume", functionType);
 
 	/*
-	 *       Declare i8* @llvm.coro.promise(i8*, i32, i1)
+	 *	Declare i8* @llvm.coro.promise(i8*, i32, i1)
 	 */
 	returnType    = LLVMPointerType(LLVMInt8TypeInContext(S->theContext), 0);
 	parameterNums = 3;
@@ -214,7 +215,7 @@ noisyDeclareCoroutineIntrinsics(CodeGenState * S)
 	LLVMAddFunction(S->theModule, "llvm.coro.promise", functionType);
 
 	/*
-	 *       Declare void @llvm.coro.destroy(i8*)
+	 *	Declare void @llvm.coro.destroy(i8*)
 	 */
 	returnType    = LLVMVoidTypeInContext(S->theContext);
 	parameterNums = 1;
@@ -224,10 +225,10 @@ noisyDeclareCoroutineIntrinsics(CodeGenState * S)
 }
 
 /*
- *       TODO; Find better name for that function.
+ *	TODO; Find better name for that function.
  */
 LLVMBasicBlockRef
-noisyGenerateCoroutineInitials(CodeGenState * S, State * N, IrNode * outputSignature, LLVMBasicBlockRef funcEntry)
+noisyGenerateCoroutineInitials(CodeGenState *  S, State *  N, IrNode *  outputSignature, LLVMBasicBlockRef funcEntry)
 {
 	static bool  isCoroutineDeclared = false;
 	LLVMValueRef returnPromiseValue;
@@ -249,7 +250,7 @@ noisyGenerateCoroutineInitials(CodeGenState * S, State * N, IrNode * outputSigna
 		isCoroutineDeclared = true;
 	}
 	/*
-	 *       Create coro token.
+	 *	Create coro token.
 	 */
 	LLVMValueRef args[4];
 	int	     argNum    = 4;
@@ -261,7 +262,7 @@ noisyGenerateCoroutineInitials(CodeGenState * S, State * N, IrNode * outputSigna
 	LLVMValueRef coroToken = LLVMBuildCall2(S->theBuilder, LLVMGetElementType(LLVMTypeOf(callFunc)), callFunc, args, argNum, "k_coroId");
 
 	/*
-	 *       Check if dynamic memory allocation is needed for coro token.
+	 *	Check if dynamic memory allocation is needed for coro token.
 	 */
 	args[0]			  = coroToken;
 	argNum			  = 1;
@@ -275,7 +276,7 @@ noisyGenerateCoroutineInitials(CodeGenState * S, State * N, IrNode * outputSigna
 	LLVMPositionBuilderAtEnd(S->theBuilder, dynAlloc);
 
 	/*
-	 *       If dynamic allocation is need then calculate the size needed, allocate the memory and branc to coro begin.
+	 *	If dynamic allocation is need then calculate the size needed, allocate the memory and branc to coro begin.
 	 */
 	argNum		  = 0;
 	callFunc	  = LLVMGetNamedFunction(S->theModule, "llvm.coro.size.i32");
@@ -288,11 +289,11 @@ noisyGenerateCoroutineInitials(CodeGenState * S, State * N, IrNode * outputSigna
 	LLVMPositionBuilderAtEnd(S->theBuilder, coroBegin);
 
 	/*
-	 *       At coro begin we have a phi node indicating if we malloc'ed memory or if it is stack allocated.
-	 *       Then we call coro.begin that return the coro frame,essential for the coroutine handling.
-	 *       After calling coro.begin we immediately call coro.suspend. The semantics should be that when the
-	 *       users calls a loadExpr we allocate memory for the coroFrame. After that every time that the function
-	 *       is invoked via a channel call we actually invoke the resume function of the coroutine.
+	 *	At coro begin we have a phi node indicating if we malloc'ed memory or if it is stack allocated.
+	 *	Then we call coro.begin that return the coro frame,essential for the coroutine handling.
+	 *	After calling coro.begin we immediately call coro.suspend. The semantics should be that when the
+	 *	users calls a loadExpr we allocate memory for the coroFrame. After that every time that the function
+	 *	is invoked via a channel call we actually invoke the resume function of the coroutine.
 	 */
 	LLVMValueRef allocPhi = LLVMBuildPhi(S->theBuilder, LLVMPointerType(LLVMInt8TypeInContext(S->theContext), 0), "k_allocPhi");
 	LLVMValueRef phiValues[2];
@@ -325,7 +326,7 @@ noisyGenerateCoroutineInitials(CodeGenState * S, State * N, IrNode * outputSigna
 
 	LLVMPositionBuilderAtEnd(S->theBuilder, cleanupBB);
 	/*
-	 *       At cleanup we check if we need to deallocate the memory or if it is stack allocated.
+	 *	At cleanup we check if we need to deallocate the memory or if it is stack allocated.
 	 */
 	argNum		 = 2;
 	args[0]		 = coroToken;
@@ -340,7 +341,7 @@ noisyGenerateCoroutineInitials(CodeGenState * S, State * N, IrNode * outputSigna
 	LLVMPositionBuilderAtEnd(S->theBuilder, dynFreeBB);
 
 	/*
-	 *       On dynamic free we free the malloc'ed memory and we branch to suspend.
+	 *	On dynamic free we free the malloc'ed memory and we branch to suspend.
 	 */
 	LLVMBuildFree(S->theBuilder, mem);
 	LLVMBuildBr(S->theBuilder, suspendBB);
@@ -348,7 +349,7 @@ noisyGenerateCoroutineInitials(CodeGenState * S, State * N, IrNode * outputSigna
 	LLVMPositionBuilderAtEnd(S->theBuilder, suspendBB);
 
 	/*
-	 *       On suspend we destory the coroutine stack frame and we return.
+	 *	On suspend we destory the coroutine stack frame and we return.
 	 */
 	argNum	 = 2;
 	args[0]	 = hdl;
@@ -366,14 +367,14 @@ noisyGenerateCoroutineInitials(CodeGenState * S, State * N, IrNode * outputSigna
 }
 
 IrNodeType
-noisyFindDimension(IrNode * typeAnnoteListNode)
+noisyFindDimension(IrNode *  typeAnnoteListNode)
 {
-	for (IrNode * iter = typeAnnoteListNode; iter != NULL; iter = R(iter))
+	for (IrNode *  iter = typeAnnoteListNode; iter != NULL; iter = R(iter))
 	{
 		if (LL(iter)->type == kNoisyIrNodeType_PdimensionsDesignation)
 		{
 			/*
-			 *       Returns the type of the first dimension arith factor. Needs more checking.
+			 *	Returns the type of the first dimension arith factor. Needs more checking.
 			 */
 			return LL(LLL(LL(iter)))->type;
 		}
@@ -382,7 +383,7 @@ noisyFindDimension(IrNode * typeAnnoteListNode)
 }
 
 NoisyType
-findConstantNoisyType(IrNode * constantNode)
+findConstantNoisyType(IrNode *  constantNode)
 {
 	if (constantNode->noisyType.basicType > noisyBasicTypeInit && constantNode->noisyType.basicType != noisyBasicTypeRealConstType && constantNode->noisyType.basicType != noisyBasicTypeIntegerConstType && constantNode->noisyType.basicType != noisyBasicTypeArrayType)
 	{
@@ -401,7 +402,7 @@ findConstantNoisyType(IrNode * constantNode)
 	else if (constantNode->type == kNoisyIrNodeType_PfieldSelect)
 	{
 		/*
-		 *       If it is an index constant we return Int32.
+		 *	If it is an index constant we return Int32.
 		 */
 		NoisyType retType;
 		retType.basicType = noisyBasicTypeInt32;
@@ -414,11 +415,12 @@ findConstantNoisyType(IrNode * constantNode)
 }
 
 LLVMTypeRef
-getLLVMTypeFromNoisyType(CodeGenState * S, NoisyType noisyType, bool byRef, int limit)
+getLLVMTypeFromNoisyType(CodeGenState *  S, NoisyType noisyType, bool byRef, int limit)
 {
 	// FIX: Initialize LLVMTypeRef to NULL.
-	LLVMTypeRef llvmType;
-	NoisyType   basicTypeHelper;
+	LLVMTypeRef	llvmType;
+	NoisyType	basicTypeHelper;
+
 	switch (noisyType.basicType)
 	{
 		case noisyBasicTypeBool:
@@ -493,27 +495,27 @@ getLLVMTypeFromNoisyType(CodeGenState * S, NoisyType noisyType, bool byRef, int 
 }
 
 LLVMValueRef
-noisyDeclareFunction(State * N, CodeGenState * S, IrNode * funcNameNode, IrNode * inputSignature, IrNode * outputSignature)
+noisyDeclareFunction(State *  N, CodeGenState *  S, IrNode *  funcNameNode, IrNode *  inputSignature, IrNode *  outputSignature)
 {
-	Symbol * functionSymbol = funcNameNode->symbol;
+	Symbol *  functionSymbol = funcNameNode->symbol;
 
 	if (!functionSymbol->isTypeComplete)
 	{
 		return NULL;
 	}
 
-	IrNode *    outputBasicType;
-	LLVMTypeRef returnType;
-	NoisyType   returnNoisyType;
+	IrNode *	outputBasicType;
+	LLVMTypeRef	returnType;
+	NoisyType	returnNoisyType;
 	/*
-	 *       Currently we only permit one return argument for functions
-	 *       just like the C convention.
+	 *	Currently we only permit one return argument for functions
+	 *	just like the C convention.
 	 */
 	bool returnsArray = false;
 	if (functionSymbol->isChannel || functionSymbol->isSensorChannel)
 	{
 		/*
-		 *       Coroutines return their coroutine frame which is an i8* value.
+		 *	Coroutines return their coroutine frame which is an i8* value.
 		 */
 		returnType = LLVMPointerType(LLVMInt8TypeInContext(S->theContext), 0);
 	}
@@ -534,19 +536,19 @@ noisyDeclareFunction(State * N, CodeGenState * S, IrNode * funcNameNode, IrNode 
 	}
 
 	/*
-	 *       TODO; Change parameter type for input channel of a function.
+	 *	TODO; Change parameter type for input channel of a function.
 	 */
 	int parameterNumber = functionSymbol->parameterNum;
 	if (returnsArray)
 	{
 		parameterNumber++;
 	}
-	LLVMTypeRef * paramArray = (LLVMTypeRef *)malloc(parameterNumber * sizeof(LLVMTypeRef));
+	LLVMTypeRef *  paramArray = (LLVMTypeRef *)malloc(parameterNumber * sizeof(LLVMTypeRef));
 
 	if (L(inputSignature)->type != kNoisyIrNodeType_Tnil)
 	{
 		int paramIndex = 0;
-		for (IrNode * iter = inputSignature; iter != NULL; iter = RR(iter))
+		for (IrNode *  iter = inputSignature; iter != NULL; iter = RR(iter))
 		{
 			NoisyType   typ	     = getNoisyTypeFromTypeExpr(N, RL(iter));
 			LLVMTypeRef llvmType = getLLVMTypeFromNoisyType(S, typ, true, 0);
@@ -558,14 +560,14 @@ noisyDeclareFunction(State * N, CodeGenState * S, IrNode * funcNameNode, IrNode 
 					if (typ.basicType == noisyBasicTypeArrayType)
 					{
 						/*
-						 *       Arrays are already being passed by reference.
+						 *	Arrays are already being passed by reference.
 						 */
 						paramArray[paramIndex] = llvmType;
 					}
 					else
 					{
 						/*
-						 *       The input channels of a channel function pass values by reference.
+						 *	The input channels of a channel function pass values by reference.
 						 */
 						paramArray[paramIndex] = LLVMPointerType(llvmType, 0);
 					}
@@ -620,7 +622,7 @@ noisyDeclareFunction(State * N, CodeGenState * S, IrNode * funcNameNode, IrNode 
 	functionSymbol->llvmPointer = func;
 
 	/*
-	 *       Auto generate sensor interface channel.
+	 *	Auto generate sensor interface channel.
 	 */
 	if (functionSymbol->functionDefinition == NULL && functionSymbol->isSensorChannel)
 	{
@@ -636,7 +638,7 @@ noisyDeclareFunction(State * N, CodeGenState * S, IrNode * funcNameNode, IrNode 
 		LLVMBuildBr(S->theBuilder, loopBB);
 		LLVMPositionBuilderAtEnd(S->theBuilder, loopBB);
 		/*
-		 *       Call function based on type.
+		 *	Call function based on type.
 		 */
 		LLVMValueRef sensorVal;
 		if (noisyFindDimension(L(RLR(outputSignature))) == kNoisyIrNodeType_Ttemperature)
@@ -647,7 +649,7 @@ noisyDeclareFunction(State * N, CodeGenState * S, IrNode * funcNameNode, IrNode 
 		}
 
 		/*
-		 *       Write to channel.
+		 *	Write to channel.
 		 */
 		LLVMValueRef outChan = L(outputSignature)->symbol->llvmPointer;
 		if (returnNoisyType.basicType == noisyBasicTypeArrayType)
@@ -690,7 +692,7 @@ noisyDeclareFunction(State * N, CodeGenState * S, IrNode * funcNameNode, IrNode 
 	}
 
 	/*
-	 *       TODO; This creates errors when we return an input array parameter.
+	 *	TODO; This creates errors when we return an input array parameter.
 	 */
 	// if (returnsArray)
 	// {
@@ -701,7 +703,7 @@ noisyDeclareFunction(State * N, CodeGenState * S, IrNode * funcNameNode, IrNode 
 	// }
 
 	/*
-	 *       TODO; Maybe deallocation happens elsewhere.
+	 *	TODO; Maybe deallocation happens elsewhere.
 	 */
 
 	free(paramArray);
@@ -709,16 +711,16 @@ noisyDeclareFunction(State * N, CodeGenState * S, IrNode * funcNameNode, IrNode 
 }
 
 LLVMValueRef
-noisyGetArrayPositionPointer(State * N, CodeGenState * S, Symbol * arraySym, IrNode * noisyQualifiedIdentifierNode)
+noisyGetArrayPositionPointer(State *  N, CodeGenState *  S, Symbol * arraySym, IrNode *  noisyQualifiedIdentifierNode)
 {
 	LLVMTypeRef  arrayType;
 	LLVMValueRef arrayPtr  = arraySym->llvmPointer;
 	int	     lim       = 0;
 	bool	     firstTime = true;
 	/*
-	 *       Field select handling.
+	 *	Field select handling.
 	 */
-	for (IrNode * iter = R(noisyQualifiedIdentifierNode); iter != NULL; iter = R(iter))
+	for (IrNode *  iter = R(noisyQualifiedIdentifierNode); iter != NULL; iter = R(iter))
 	{
 		LLVMValueRef idxValue	    = noisyExpressionCodeGen(N, S, LR(iter));
 		LLVMValueRef idxValueList[] = {LLVMConstInt(LLVMInt32TypeInContext(S->theContext), 0, false), idxValue};
@@ -731,8 +733,8 @@ noisyGetArrayPositionPointer(State * N, CodeGenState * S, Symbol * arraySym, IrN
 			idxValueList[0]		    = idxValueList[1];
 
 			/*
-			 *       TODO; If we want to throw exception messages for out of bounds indexing, we can create a runtime library
-			 *       for different types of runtime errors and link it.
+			 *	TODO; If we want to throw exception messages for out of bounds indexing, we can create a runtime library
+			 *	for different types of runtime errors and link it.
 			 */
 
 			// LLVMValueRef boundCheckValue = LLVMBuildICmp(S->theBuilder,LLVMIntULT,idxValue,LLVMConstInt(LLVMInt32Type(),arraySym->noisyType.sizeOfDimension[lim],false),"k_boundCheck");
@@ -759,11 +761,11 @@ noisyGetArrayPositionPointer(State * N, CodeGenState * S, Symbol * arraySym, IrN
 }
 
 void
-noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S, IrNode * noisyModuleTypeNameDeclNode)
+noisyModuleTypeNameDeclCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyModuleTypeNameDeclNode)
 {
 	if (R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PconstantDecl)
 	{
-		IrNode * noisyConstantDeclNode = RL(noisyModuleTypeNameDeclNode);
+		IrNode *  noisyConstantDeclNode = RL(noisyModuleTypeNameDeclNode);
 
 		// FIX: Initialize LLVMTypeRef to NULL.
 		LLVMValueRef constValue;
@@ -791,41 +793,41 @@ noisyModuleTypeNameDeclCodeGen(State * N, CodeGenState * S, IrNode * noisyModule
 	else if (R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PtypeDecl || R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PtypeAnnoteDecl)
 	{
 		/*
-		 *       Type declarations and type annotations declarations are handled by the parser and
-		 *       the Noisy's type system and do not generate code.
+		 *	Type declarations and type annotations declarations are handled by the parser and
+		 *	the Noisy's type system and do not generate code.
 		 */
 		return;
 	}
 	else if (R(noisyModuleTypeNameDeclNode)->type == kNoisyIrNodeType_PfunctionDecl)
 	{
-		IrNode * inputSignature	 = RLL(noisyModuleTypeNameDeclNode);
-		IrNode * outputSignature = RRL(noisyModuleTypeNameDeclNode);
+		IrNode *  inputSignature	 = RLL(noisyModuleTypeNameDeclNode);
+		IrNode *  outputSignature = RRL(noisyModuleTypeNameDeclNode);
 		noisyDeclareFunction(N, S, L(noisyModuleTypeNameDeclNode), inputSignature, outputSignature);
 	}
 }
 
 void
-noisyTypeParameterListCodeGen(State * N, CodeGenState * S, IrNode * noisyTypeParameterListNode)
+noisyTypeParameterListCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyTypeParameterListNode)
 {
 	/*
-	 *       TODO!
+	 *	TODO!
 	 */
 }
 
 void
-noisyModuleDeclBodyCodeGen(State * N, CodeGenState * S, IrNode * noisyModuleDeclBodyNode)
+noisyModuleDeclBodyCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyModuleDeclBodyNode)
 {
-	for (IrNode * currentNode = noisyModuleDeclBodyNode; currentNode != NULL; currentNode = currentNode->irRightChild)
+	for (IrNode *  currentNode = noisyModuleDeclBodyNode; currentNode != NULL; currentNode = currentNode->irRightChild)
 	{
 		noisyModuleTypeNameDeclCodeGen(N, S, currentNode->irLeftChild);
 	}
 }
 
 void
-noisyModuleDeclCodeGen(State * N, CodeGenState * S, IrNode * noisyModuleDeclNode)
+noisyModuleDeclCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyModuleDeclNode)
 {
 	/*
-	 *       The first module declaration gives its name to the LLVM module we are going to create.
+	 *	The first module declaration gives its name to the LLVM module we are going to create.
 	 */
 	static int firstTime = 1;
 	if (firstTime)
@@ -834,23 +836,23 @@ noisyModuleDeclCodeGen(State * N, CodeGenState * S, IrNode * noisyModuleDeclNode
 		firstTime    = 0;
 	}
 	/*
-	 *       TODO: Add code for multiple Module declarations.
+	 *	TODO: Add code for multiple Module declarations.
 	 */
 
-	IrNode * noisyTypeParameterListNode = RL(noisyModuleDeclNode);
-	IrNode * noisyModuleDeclBodyNode    = RR(noisyModuleDeclNode);
+	IrNode *  noisyTypeParameterListNode = RL(noisyModuleDeclNode);
+	IrNode *  noisyModuleDeclBodyNode    = RR(noisyModuleDeclNode);
 
 	noisyTypeParameterListCodeGen(N, S, noisyTypeParameterListNode);
 	noisyModuleDeclBodyCodeGen(N, S, noisyModuleDeclBodyNode);
 }
 
 LLVMValueRef
-noisyFactorCodeGen(State * N, CodeGenState * S, IrNode * noisyFactorNode)
+noisyFactorCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyFactorNode)
 {
 	if (L(noisyFactorNode)->type == kNoisyIrNodeType_TintegerConst)
 	{
 		/*
-		 *       TODO; find a way to change integer and float constant type.
+		 *	TODO; find a way to change integer and float constant type.
 		 */
 		noisyFactorNode->noisyType = findConstantNoisyType(L(noisyFactorNode));
 		return LLVMConstInt(getLLVMTypeFromNoisyType(S, noisyFactorNode->noisyType, 0, false), L(noisyFactorNode)->token->integerConst, true);
@@ -870,7 +872,7 @@ noisyFactorCodeGen(State * N, CodeGenState * S, IrNode * noisyFactorNode)
 	}
 	else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PqualifiedIdentifier)
 	{
-		Symbol * identifierSymbol = LL(noisyFactorNode)->symbol;
+		Symbol *  identifierSymbol = LL(noisyFactorNode)->symbol;
 		if (identifierSymbol->symbolType == kNoisySymbolTypeParameter)
 		{
 			if (identifierSymbol->noisyType.basicType != noisyBasicTypeArrayType && identifierSymbol->noisyType.basicType != noisyBasicTypeString)
@@ -884,7 +886,7 @@ noisyFactorCodeGen(State * N, CodeGenState * S, IrNode * noisyFactorNode)
 			LLVMTypeRef  constType	   = getLLVMTypeFromNoisyType(S, noisyFactorNode->noisyType, false, 0);
 			LLVMValueRef constVal	   = LLVMGetInitializer(LLVMGetNamedGlobal(S->theModule, identifierSymbol->identifier));
 			/*
-			 *       TODO; Add more cases!
+			 *	TODO; Add more cases!
 			 */
 			if (noisyIsOfType(noisyFactorNode->noisyType, noisyBasicTypeIntegerConstType))
 			{
@@ -929,25 +931,26 @@ noisyFactorCodeGen(State * N, CodeGenState * S, IrNode * noisyFactorNode)
 			if (channelSymbol->isChannel)
 			{
 				/*
-				 *       We return the coroutine stack frame.
+				 *	We return the coroutine stack frame.
 				 */
 				return identifierSymbol->llvmPointer;
 			}
 		}
 		/*
-		 *       Noisy namegen type is handled on load expression and on namegen invoke shorthand.
-		 *       TODO; Add channel implementation.
+		 *	Noisy namegen type is handled on load expression and on namegen invoke shorthand.
+		 *	TODO; Add channel implementation.
 		 */
 	}
 	else if (L(noisyFactorNode)->type == kNoisyIrNodeType_PnamegenInvokeShorthand)
 	{
-		Symbol * functionSymbol = LL(noisyFactorNode)->symbol;
+		Symbol *  functionSymbol = LL(noisyFactorNode)->symbol;
 		if (functionSymbol->noisyType.basicType == noisyBasicTypeNamegenType)
 		{
 			functionSymbol = functionSymbol->noisyType.functionDefinition;
 		}
-		IrNode * inputSignature	 = L(functionSymbol->typeTree);
-		IrNode * outputSignature = R(functionSymbol->typeTree);
+
+		IrNode *  inputSignature	 = L(functionSymbol->typeTree);
+		IrNode *  outputSignature = R(functionSymbol->typeTree);
 
 		if (inputSignature->type == kNoisyIrNodeType_PwriteTypeSignature)
 		{
@@ -959,13 +962,14 @@ noisyFactorCodeGen(State * N, CodeGenState * S, IrNode * noisyFactorNode)
 			outputSignature = L(outputSignature);
 		}
 
-		LLVMValueRef * args;
-		LLVMTypeRef *  argTyp;
+		LLVMValueRef *	args;
+		LLVMTypeRef *	argTyp;
 
-		LLVMTypeRef retType;
-		NoisyType   noisyReturnType;
-		bool	    returnsArray    = false;
-		int	    parameterNumber = functionSymbol->parameterNum;
+		LLVMTypeRef	retType;
+		NoisyType	noisyReturnType;
+
+		bool	returnsArray    = false;
+		int	parameterNumber = functionSymbol->parameterNum;
 
 		if (outputSignature->irLeftChild->type != kNoisyIrNodeType_Tnil)
 		{
@@ -997,13 +1001,13 @@ noisyFactorCodeGen(State * N, CodeGenState * S, IrNode * noisyFactorNode)
 			argTyp = calloc(parameterNumber, sizeof(LLVMTypeRef));
 		}
 
-		for (IrNode * iter = LR(noisyFactorNode); iter != NULL; iter = RR(iter))
+		for (IrNode *  iter = LR(noisyFactorNode); iter != NULL; iter = RR(iter))
 		{
-			IrNode * argName = L(iter);
-			IrNode * expr	 = RL(iter);
+			IrNode *  argName = L(iter);
+			IrNode *  expr	 = RL(iter);
 
 			int pos = 0;
-			for (IrNode * iter2 = inputSignature; iter2 != NULL; iter2 = RR(iter2))
+			for (IrNode *  iter2 = inputSignature; iter2 != NULL; iter2 = RR(iter2))
 			{
 				if (!strcmp(L(iter2)->tokenString, argName->tokenString))
 				{
@@ -1013,16 +1017,16 @@ noisyFactorCodeGen(State * N, CodeGenState * S, IrNode * noisyFactorNode)
 			}
 			LLVMValueRef expressionValue = noisyExpressionCodeGen(N, S, expr);
 			/*
-			 *       Passing an array as an argument of a function.
+			 *	Passing an array as an argument of a function.
 			 */
 			if (expr->noisyType.basicType == noisyBasicTypeArrayType)
 			{
 				/*
-				 *       When we pass an array as argument of a function we create a copy of the original array and we pass it by reference
-				 *       to the function. This way functions dont mutate the parameter arrays.
+				 *	When we pass an array as argument of a function we create a copy of the original array and we pass it by reference
+				 *	to the function. This way functions dont mutate the parameter arrays.
 				 *
-				 *       TODO; Maybe we need to allocate the copies on the heap and not on the stack because for every function call
-				 *       with arrays we double the space occupied in the stack.
+				 *	TODO; Maybe we need to allocate the copies on the heap and not on the stack because for every function call
+				 *	with arrays we double the space occupied in the stack.
 				 */
 				LLVMValueRef copyArrayAddress = LLVMBuildAlloca(S->theBuilder, getLLVMTypeFromNoisyType(S, expr->noisyType, false, 0), "k_copyArr");
 
@@ -1051,7 +1055,7 @@ noisyFactorCodeGen(State * N, CodeGenState * S, IrNode * noisyFactorNode)
 		int i = 0;
 		if (parameterNumber != 0)
 		{
-			for (IrNode * iter2 = inputSignature; iter2 != NULL; iter2 = RR(iter2))
+			for (IrNode *  iter2 = inputSignature; iter2 != NULL; iter2 = RR(iter2))
 			{
 				argTyp[i] = getLLVMTypeFromNoisyType(S, L(iter2)->symbol->noisyType, true, 0);
 				i++;
@@ -1122,7 +1126,7 @@ noisyFactorCodeGen(State * N, CodeGenState * S, IrNode * noisyFactorNode)
 			//         break;
 			case noisyBasicTypeFloat16:
 				/*
-				 *       TODO; May be wrong for half float.
+				 *	TODO; May be wrong for half float.
 				 */
 				return LLVMConstReal(LLVMHalfTypeInContext(S->theContext), 65.504f);
 				break;
@@ -1185,7 +1189,7 @@ noisyFactorCodeGen(State * N, CodeGenState * S, IrNode * noisyFactorNode)
 				break;
 			case noisyBasicTypeFloat16:
 				/*
-				 *       TODO; May be wrong for half float.
+				 *	TODO; May be wrong for half float.
 				 */
 				return LLVMConstReal(LLVMHalfTypeInContext(S->theContext), -65.504f);
 				break;
@@ -1208,13 +1212,13 @@ noisyFactorCodeGen(State * N, CodeGenState * S, IrNode * noisyFactorNode)
 		return LLVMConstNull(nilType);
 	}
 	/*
-	 *       TODO; We reach here when we call channel ops.
+	 *	TODO; We reach here when we call channel ops.
 	 */
 	return LLVMConstNull(LLVMInt32TypeInContext(S->theContext));
 }
 
 LLVMValueRef
-noisyUnaryOpCodeGen(State * N, CodeGenState * S, IrNode * noisyUnaryOpNode, LLVMValueRef termVal, IrNode * noisyFactorNode)
+noisyUnaryOpCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyUnaryOpNode, LLVMValueRef termVal, IrNode *  noisyFactorNode)
 {
 	NoisyType   factorNoisyType = noisyFactorNode->noisyType;
 	LLVMTypeRef factorType	    = getLLVMTypeFromNoisyType(S, factorNoisyType, 0, false);
@@ -1222,13 +1226,13 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S, IrNode * noisyUnaryOpNode, LLVM
 	switch (L(noisyUnaryOpNode)->type)
 	{
 		/*
-		 *       case kNoisyIrNodeType_Tplus: Does not do anything.
+		 *	case kNoisyIrNodeType_Tplus: Does not do anything.
 		 */
 		case kNoisyIrNodeType_Tminus:
 			if (noisyIsOfType(noisyFactorNode->noisyType, noisyBasicTypeIntegerConstType))
 			{
 				/*
-				 *       We use sub instruction for integer neg.
+				 *	We use sub instruction for integer neg.
 				 */
 				return LLVMBuildSub(S->theBuilder, LLVMConstInt(factorType, 0, true), termVal, "k_negRes");
 			}
@@ -1239,13 +1243,13 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S, IrNode * noisyUnaryOpNode, LLVM
 			break;
 		case kNoisyIrNodeType_Ttilde:
 			/*
-			 *       We use term XOR 1 for bitwise negation.
+			 *	We use term XOR 1 for bitwise negation.
 			 */
 			return LLVMBuildXor(S->theBuilder, termVal, LLVMConstInt(factorType, 1, false), "k_notRes");
 			break;
 		case kNoisyIrNodeType_PunaryBoolOp:
 			/*
-			 *       We only have 1 unary boolean operator the "!"-negation operator.
+			 *	We only have 1 unary boolean operator the "!"-negation operator.
 			 */
 			return LLVMBuildXor(S->theBuilder, termVal, LLVMConstInt(LLVMInt1TypeInContext(S->theContext), 1, false), "k_notRes");
 			break;
@@ -1254,7 +1258,7 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S, IrNode * noisyUnaryOpNode, LLVM
 			break;
 		case kNoisyIrNodeType_TchannelOperator:
 			/*
-			 *       If the factor has noisyNamegen type it means we read from the output channel of a coroutine.
+			 *	If the factor has noisyNamegen type it means we read from the output channel of a coroutine.
 			 */
 			if (factorNoisyType.basicType == noisyBasicTypeNamegenType)
 			{
@@ -1264,7 +1268,7 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S, IrNode * noisyUnaryOpNode, LLVM
 				LLVMValueRef callFunc = LLVMGetNamedFunction(S->theModule, "llvm.coro.resume");
 				LLVMBuildCall2(S->theBuilder, LLVMGetElementType(LLVMTypeOf(callFunc)), callFunc, args, argNum, "");
 				/*
-				 *       Case for autogen coroutines.
+				 *	Case for autogen coroutines.
 				 */
 				NoisyType   outputNoisyType = (factorNoisyType.functionDefinition->typeTree->type != kNoisyIrNodeType_PfunctionDecl) ? RL(factorNoisyType.functionDefinition->typeTree)->symbol->noisyType
 																		     : RLL(factorNoisyType.functionDefinition->typeTree)->symbol->noisyType;
@@ -1289,13 +1293,13 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S, IrNode * noisyUnaryOpNode, LLVM
 			else
 			{
 				/*
-				 *       This case is when we read from input channel of a channel function.
+				 *	This case is when we read from input channel of a channel function.
 				 */
 				LLVMValueRef readVal;
 				if (noisyFactorNode->noisyType.basicType != noisyBasicTypeArrayType)
 				{
 					/*
-					 *       Since arrays are already passed by reference we don't need to load.
+					 *	Since arrays are already passed by reference we don't need to load.
 					 */
 					readVal = LLVMBuildLoad2(S->theBuilder, LLVMGetElementType(LLVMTypeOf(termVal)), termVal, "k_inputChanRead");
 				}
@@ -1322,7 +1326,7 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S, IrNode * noisyUnaryOpNode, LLVM
 			break;
 		default:
 			/*
-			 *       TODO; length sort reverse (library calls probably) and channel operator
+			 *	TODO; length sort reverse (library calls probably) and channel operator
 			 */
 			return termVal;
 			break;
@@ -1330,15 +1334,15 @@ noisyUnaryOpCodeGen(State * N, CodeGenState * S, IrNode * noisyUnaryOpNode, LLVM
 }
 
 LLVMValueRef
-noisyTermCodeGen(State * N, CodeGenState * S, IrNode * noisyTermNode)
+noisyTermCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyTermNode)
 {
-	IrNode * factorNode  = NULL;
-	IrNode * unaryOpNode = NULL;
-	bool	 typeCast    = false;
+	IrNode *  factorNode  = NULL;
+	IrNode *  unaryOpNode = NULL;
+	bool  typeCast = false;
 
 	/*
-	 *       This flag is needed because the form of the tree is different based on whether a prefix exists
-	 *       on the term expression.
+	 *	This flag is needed because the form of the tree is different based on whether a prefix exists
+	 *	on the term expression.
 	 */
 	bool prefixExists = false;
 
@@ -1373,7 +1377,7 @@ noisyTermCodeGen(State * N, CodeGenState * S, IrNode * noisyTermNode)
 
 	LLVMValueRef termVal = noisyFactorCodeGen(N, S, factorNode);
 
-	for (IrNode * iter = prefixExists ? R(factorNode) : R(noisyTermNode); iter != NULL; iter = RR(iter))
+	for (IrNode *  iter = prefixExists ? R(factorNode) : R(noisyTermNode); iter != NULL; iter = RR(iter))
 	{
 		LLVMValueRef factorIterVal = noisyFactorCodeGen(N, S, RL(iter));
 
@@ -1421,7 +1425,7 @@ noisyTermCodeGen(State * N, CodeGenState * S, IrNode * noisyTermNode)
 				else
 				{
 					/*
-					 *       TODO; I think that type system does not permit us to use remainder for floats.
+					 *	TODO; I think that type system does not permit us to use remainder for floats.
 					 */
 					termVal = LLVMBuildFRem(S->theBuilder, termVal, factorIterVal, "k_modRes");
 				}
@@ -1467,19 +1471,19 @@ noisyTermCodeGen(State * N, CodeGenState * S, IrNode * noisyTermNode)
 					if (noisyIsSigned(termType))
 					{
 						/*
-						 *       Convert from signed to signed.
+						 *	Convert from signed to signed.
 						 */
 						if (factorType.basicType <= termType.basicType)
 						{
 							/*
-							 *       Convert from smaller to bigger signed integer.
+							 *	Convert from smaller to bigger signed integer.
 							 */
 							termVal = LLVMBuildSExtOrBitCast(S->theBuilder, termVal, destType, "k_typeCastRes");
 						}
 						else if (factorType.basicType > termType.basicType)
 						{
 							/*
-							 *       Convert from bigger integer to smaller.
+							 *	Convert from bigger integer to smaller.
 							 */
 							termVal = LLVMBuildTrunc(S->theBuilder, termVal, destType, "k_typeCastRes");
 						}
@@ -1487,8 +1491,8 @@ noisyTermCodeGen(State * N, CodeGenState * S, IrNode * noisyTermNode)
 					else
 					{
 						/*
-						 *       Convert from signed to unsigned.
-						 *       This condition checks if the factorType has less or more bits than termType.
+						 *	Convert from signed to unsigned.
+						 *	This condition checks if the factorType has less or more bits than termType.
 						 */
 						if (factorType.basicType + 6 < termType.basicType)
 						{
@@ -1497,7 +1501,7 @@ noisyTermCodeGen(State * N, CodeGenState * S, IrNode * noisyTermNode)
 						else if (factorType.basicType + 6 > termType.basicType)
 						{
 							/*
-							 *       Convert from bigger integer to smaller (from signed to unsigned)
+							 *	Convert from bigger integer to smaller (from signed to unsigned)
 							 */
 							termVal = LLVMBuildTrunc(S->theBuilder, termVal, destType, "k_typeCastRes");
 						}
@@ -1508,19 +1512,19 @@ noisyTermCodeGen(State * N, CodeGenState * S, IrNode * noisyTermNode)
 					if (noisyIsSigned(termType))
 					{
 						/*
-						 *       Convert from unsigned to signed.
+						 *	Convert from unsigned to signed.
 						 */
 						if (factorType.basicType - 6 < termType.basicType)
 						{
 							/*
-							 *       Convert from smaller to bigger signed integer.
+							 *	Convert from smaller to bigger signed integer.
 							 */
 							termVal = LLVMBuildZExtOrBitCast(S->theBuilder, termVal, destType, "k_typeCastRes");
 						}
 						else if (factorType.basicType - 6 > termType.basicType)
 						{
 							/*
-							 *       Convert from bigger integer to smaller.
+							 *	Convert from bigger integer to smaller.
 							 */
 							termVal = LLVMBuildTrunc(S->theBuilder, termVal, destType, "k_typeCastRes");
 						}
@@ -1528,7 +1532,7 @@ noisyTermCodeGen(State * N, CodeGenState * S, IrNode * noisyTermNode)
 					else
 					{
 						/*
-						 *       Convert from unsigned to unsigned.
+						 *	Convert from unsigned to unsigned.
 						 */
 						if (factorType.basicType <= termType.basicType)
 						{
@@ -1537,7 +1541,7 @@ noisyTermCodeGen(State * N, CodeGenState * S, IrNode * noisyTermNode)
 						else if (factorType.basicType > termType.basicType)
 						{
 							/*
-							 *       Convert from bigger integer to smaller (from unsigned to unsigned)
+							 *	Convert from bigger integer to smaller (from unsigned to unsigned)
 							 */
 							termVal = LLVMBuildTrunc(S->theBuilder, termVal, destType, "k_typeCastRes");
 						}
@@ -1547,7 +1551,7 @@ noisyTermCodeGen(State * N, CodeGenState * S, IrNode * noisyTermNode)
 			else if (noisyIsOfType(termType, noisyBasicTypeRealConstType))
 			{
 				/*
-				 *       Convert from integer to float
+				 *	Convert from integer to float
 				 */
 				if (noisyIsSigned(factorType))
 				{
@@ -1589,16 +1593,16 @@ noisyTermCodeGen(State * N, CodeGenState * S, IrNode * noisyTermNode)
 }
 
 LLVMValueRef
-noisyExpressionCodeGen(State * N, CodeGenState * S, IrNode * noisyExpressionNode)
+noisyExpressionCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyExpressionNode)
 {
 	if (L(noisyExpressionNode)->type == kNoisyIrNodeType_Pterm)
 	{
 		LLVMValueRef exprVal = noisyTermCodeGen(N, S, L(noisyExpressionNode));
 
-		for (IrNode * iter = R(noisyExpressionNode); iter != NULL; iter = RR(iter))
+		for (IrNode *  iter = R(noisyExpressionNode); iter != NULL; iter = RR(iter))
 		{
-			IrNode *     operatorNode = L(iter);
-			IrNode *     termNode	  = RL(iter);
+			IrNode *      operatorNode = L(iter);
+			IrNode *      termNode	  = RL(iter);
 			LLVMValueRef termIterVal  = noisyTermCodeGen(N, S, termNode);
 
 			switch (L(operatorNode)->type)
@@ -1625,7 +1629,7 @@ noisyExpressionCodeGen(State * N, CodeGenState * S, IrNode * noisyExpressionNode
 					break;
 				case kNoisyIrNodeType_TrightShift:
 					/*
-					 *       TODO; Maybe add cases for different types. Sometimes we need logic shift(?).
+					 *	TODO; Maybe add cases for different types. Sometimes we need logic shift(?).
 					 */
 					exprVal = LLVMBuildAShr(S->theBuilder, exprVal, termIterVal, "k_rShiftRes");
 					break;
@@ -1637,7 +1641,7 @@ noisyExpressionCodeGen(State * N, CodeGenState * S, IrNode * noisyExpressionNode
 					break;
 				case kNoisyIrNodeType_PlowPrecedenceBinaryBoolOp:
 					/*
-					 *       We only have the "or" low precedence binary op.
+					 *	We only have the "or" low precedence binary op.
 					 */
 					exprVal = LLVMBuildOr(S->theBuilder, exprVal, termIterVal, "k_bitwiseOrRes");
 					break;
@@ -1747,16 +1751,16 @@ noisyExpressionCodeGen(State * N, CodeGenState * S, IrNode * noisyExpressionNode
 		if (LL(noisyExpressionNode)->type == kNoisyIrNodeType_ParrayCastExpr)
 		{
 			/*
-			 *       TODO; Add support for non-constant expressions. It would also need to change the assignment code
-			 *       since we use the memcpy intrinsic in the assignment codegen.
+			 *	TODO; Add support for non-constant expressions. It would also need to change the assignment code
+			 *	since we use the memcpy intrinsic in the assignment codegen.
 			 */
 			if (LLL(noisyExpressionNode)->type == kNoisyIrNodeType_PinitList)
 			{
 				int	       size	  = noisyExpressionNode->noisyType.sizeOfDimension[0];
-				LLVMValueRef * elemValArr = calloc(size, sizeof(LLVMValueRef));
+				LLVMValueRef *  elemValArr = calloc(size, sizeof(LLVMValueRef));
 
 				int i = 0;
-				for (IrNode * iter = LLL(noisyExpressionNode); iter != NULL; iter = R(iter))
+				for (IrNode *  iter = LLL(noisyExpressionNode); iter != NULL; iter = R(iter))
 				{
 					LLVMValueRef exprVal = noisyExpressionCodeGen(N, S, LL(iter));
 
@@ -1779,11 +1783,11 @@ noisyExpressionCodeGen(State * N, CodeGenState * S, IrNode * noisyExpressionNode
 			}
 			else if (LLL(noisyExpressionNode)->type == kNoisyIrNodeType_TintegerConst)
 			{
-				int	       size	  = noisyExpressionNode->noisyType.sizeOfDimension[0];
-				LLVMValueRef * elemValArr = calloc(size, sizeof(LLVMValueRef));
+				int size = noisyExpressionNode->noisyType.sizeOfDimension[0];
+				LLVMValueRef *  elemValArr = calloc(size, sizeof(LLVMValueRef));
 
-				int	 i = 0;
-				IrNode * iter;
+				int i = 0;
+				IrNode *  iter;
 				for (iter = LLR(noisyExpressionNode); iter != NULL; iter = R(iter))
 				{
 					if (L(iter)->type == kNoisyIrNodeType_Tasterisk)
@@ -1847,17 +1851,17 @@ noisyExpressionCodeGen(State * N, CodeGenState * S, IrNode * noisyExpressionNode
 			LLVMPositionBuilderAtEnd(S->theBuilder, currentBlock);
 		}
 		/*
-		 *       If we load a channel
+		 *	If we load a channel
 		 */
 		Symbol * funcSymbol = noisyExpressionNode->noisyType.functionDefinition;
 		if (funcSymbol->isChannel)
 		{
-			IrNode *       inputSignature = (funcSymbol->functionDefinition != NULL) ? RL(funcSymbol->functionDefinition)
+			IrNode *	inputSignature = (funcSymbol->functionDefinition != NULL) ? RL(funcSymbol->functionDefinition)
 												 : LL(funcSymbol->typeTree);
-			LLVMValueRef * args	      = (LLVMValueRef *)malloc(funcSymbol->parameterNum * sizeof(LLVMValueRef));
+			LLVMValueRef *  args	      = (LLVMValueRef *)malloc(funcSymbol->parameterNum * sizeof(LLVMValueRef));
 
 			int i = 0;
-			for (IrNode * iter = inputSignature; iter != NULL; iter = RR(iter))
+			for (IrNode *  iter = inputSignature; iter != NULL; iter = RR(iter))
 			{
 				if (L(iter)->type == kNoisyIrNodeType_Tnil)
 				{
@@ -1887,18 +1891,18 @@ noisyExpressionCodeGen(State * N, CodeGenState * S, IrNode * noisyExpressionNode
 		return functionVal;
 	}
 	/*
-	 *       Unreachable.
+	 *	Unreachable.
 	 */
 	return LLVMConstInt(LLVMInt32TypeInContext(S->theContext), 42, true);
 }
 
 void
-noisyAssignmentStatementCodeGen(State * N, CodeGenState * S, IrNode * noisyAssignmentStatementNode)
+noisyAssignmentStatementCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyAssignmentStatementNode)
 {
 	if (R(noisyAssignmentStatementNode)->type == kNoisyIrNodeType_Xseq)
 	{
 		/*
-		 *       If it is an actual assignment and not a declaration
+		 *	If it is an actual assignment and not a declaration
 		 */
 		/*
 		 *      Eval expression. Store the result.
@@ -1906,12 +1910,12 @@ noisyAssignmentStatementCodeGen(State * N, CodeGenState * S, IrNode * noisyAssig
 		LLVMValueRef exprVal	   = noisyExpressionCodeGen(N, S, RRL(noisyAssignmentStatementNode));
 		NoisyType    exprNoisyType = RRL(noisyAssignmentStatementNode)->noisyType;
 
-		for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
+		for (IrNode *  iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
 		{
 			if (LL(iter)->type == kNoisyIrNodeType_Tnil)
 			{
 				/*
-				 *       When we assign to nil nothing happens(?).
+				 *	When we assign to nil nothing happens(?).
 				 */
 			}
 			else if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
@@ -2046,7 +2050,7 @@ noisyAssignmentStatementCodeGen(State * N, CodeGenState * S, IrNode * noisyAssig
 						}
 						break;
 					/*
-					 *       TODO; We have not tested the following assign operators.
+					 *	TODO; We have not tested the following assign operators.
 					 */
 					case kNoisyIrNodeType_TorAssign:
 						asprintf(&name, "val_%s", lvalSym->identifier);
@@ -2121,7 +2125,7 @@ noisyAssignmentStatementCodeGen(State * N, CodeGenState * S, IrNode * noisyAssig
 					case kNoisyIrNodeType_TchannelOperatorAssign:
 						asprintf(&name, "val_%s", lvalSym->identifier);
 						/*
-						 *       If we write to the ouptput channel of a coroutine.
+						 *	If we write to the ouptput channel of a coroutine.
 						 */
 						if (lvalSym->symbolType == kNoisySymbolTypeReturnParameter)
 						{
@@ -2165,19 +2169,19 @@ noisyAssignmentStatementCodeGen(State * N, CodeGenState * S, IrNode * noisyAssig
 						else
 						{
 							/*
-							 *       TODO; CHANGE llvmsym pointer to llvm chan address.
+							 *	TODO; CHANGE llvmsym pointer to llvm chan address.
 							 */
 							LLVMValueRef inputChanAddress = lvalSym->noisyType.functionDefinition->inputChanAddress;
 							if (RRL(noisyAssignmentStatementNode)->noisyType.basicType == noisyBasicTypeArrayType)
 							{
 								/*
-								 *       When we have an array cast on the rval of an assignment.
+								 *	When we have an array cast on the rval of an assignment.
 								 */
 								LLVMValueRef oneVal[] = {LLVMConstInt(LLVMInt64TypeInContext(S->theContext), 1, false)};
 
 								/*
-								 *       Solution on how to implement sizeof of a type
-								 *       https://stackoverflow.com/questions/14608250/how-can-i-find-the-size-of-a-type
+								 *	Solution on how to implement sizeof of a type
+								 *	https://stackoverflow.com/questions/14608250/how-can-i-find-the-size-of-a-type
 								 */
 
 								LLVMValueRef sizeOfExprVal;
@@ -2223,13 +2227,13 @@ noisyAssignmentStatementCodeGen(State * N, CodeGenState * S, IrNode * noisyAssig
 				if (RRL(noisyAssignmentStatementNode)->noisyType.basicType == noisyBasicTypeArrayType)
 				{
 					/*
-					 *       When we have an array cast on the rval of an assignment.
+					 *	When we have an array cast on the rval of an assignment.
 					 */
 					LLVMValueRef oneVal[] = {LLVMConstInt(LLVMInt64TypeInContext(S->theContext), 1, false)};
 
 					/*
-					 *       Solution on how to implement sizeof of a type
-					 *       https://stackoverflow.com/questions/14608250/how-can-i-find-the-size-of-a-type
+					 *	Solution on how to implement sizeof of a type
+					 *	https://stackoverflow.com/questions/14608250/how-can-i-find-the-size-of-a-type
 					 */
 
 					LLVMValueRef sizeOfExprVal;
@@ -2268,14 +2272,14 @@ noisyAssignmentStatementCodeGen(State * N, CodeGenState * S, IrNode * noisyAssig
 				else if (lvalSym->noisyType.basicType == noisyBasicTypeArrayType)
 				{
 					/*
-					 *       When we have an array on lval of an assignment.
+					 *	When we have an array on lval of an assignment.
 					 */
 					LLVMBuildStore(S->theBuilder, exprVal, noisyGetArrayPositionPointer(N, S, lvalSym, LL(iter)));
 				}
 				else if (lvalSym->symbolType == kNoisySymbolTypeReturnParameter)
 				{
 					/*
-					 *       TODO; This is placeholder to avoid segafault for fib.n. It needs to change when we implement channels.
+					 *	TODO; This is placeholder to avoid segafault for fib.n. It needs to change when we implement channels.
 					 */
 					;
 				}
@@ -2292,7 +2296,7 @@ noisyAssignmentStatementCodeGen(State * N, CodeGenState * S, IrNode * noisyAssig
 	}
 	else
 	{
-		for (IrNode * iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
+		for (IrNode *  iter = L(noisyAssignmentStatementNode); iter != NULL; iter = R(iter))
 		{
 			if (LL(iter)->type == kNoisyIrNodeType_PqualifiedIdentifier)
 			{
@@ -2309,7 +2313,7 @@ noisyAssignmentStatementCodeGen(State * N, CodeGenState * S, IrNode * noisyAssig
 }
 
 void
-noisyMatchStatementCodeGen(State * N, CodeGenState * S, IrNode * matchNode)
+noisyMatchStatementCodeGen(State *  N, CodeGenState *  S, IrNode *  matchNode)
 {
 	if (L(matchNode)->type == kNoisyIrNodeType_Tmatchseq)
 	{
@@ -2317,7 +2321,7 @@ noisyMatchStatementCodeGen(State * N, CodeGenState * S, IrNode * matchNode)
 		LLVMBasicBlockRef afterBlock = LLVMAppendBasicBlock(S->currentFunction, "after");
 		LLVMBasicBlockRef elseBlock, prevThenBlock;
 
-		for (IrNode * iter = R(matchNode); iter != NULL; iter = RR(iter))
+		for (IrNode *  iter = R(matchNode); iter != NULL; iter = RR(iter))
 		{
 			LLVMValueRef condVal = noisyExpressionCodeGen(N, S, L(iter));
 
@@ -2336,14 +2340,14 @@ noisyMatchStatementCodeGen(State * N, CodeGenState * S, IrNode * matchNode)
 			LLVMPositionBuilderAtEnd(S->theBuilder, thenBlock);
 			noisyStatementListCodeGen(N, S, RLL(iter));
 			/*
-			 *       TODO; This is questionable. I added it so we can have a return statemnt inside statements that end with branc instruction.
-			 *       Probably it works.
+			 *	TODO; This is questionable. I added it so we can have a return statemnt inside statements that end with branc instruction.
+			 *	Probably it works.
 			 */
 			LLVMValueRef terminatorValue = LLVMGetBasicBlockTerminator(LLVMGetInsertBlock(S->theBuilder));
 			if (terminatorValue != NULL)
 			{
 				/*
-				 *       If we do not return then we add branch normally.
+				 *	If we do not return then we add branch normally.
 				 */
 				if (LLVMIsAReturnInst(terminatorValue) == NULL)
 				{
@@ -2367,11 +2371,11 @@ noisyMatchStatementCodeGen(State * N, CodeGenState * S, IrNode * matchNode)
 	else
 	{
 		/*
-		 *       Match statement. Noisy spec defines that the order of evaluation of the guardedStatements is random.
-		 *       However, in this implementation we evaluate them in the order they have been written by the programmer.
+		 *	Match statement. Noisy spec defines that the order of evaluation of the guardedStatements is random.
+		 *	However, in this implementation we evaluate them in the order they have been written by the programmer.
 		 */
 		LLVMBasicBlockRef thenBlock, afterBlock;
-		for (IrNode * iter = R(matchNode); iter != NULL; iter = RR(iter))
+		for (IrNode *  iter = R(matchNode); iter != NULL; iter = RR(iter))
 		{
 			LLVMValueRef condVal = noisyExpressionCodeGen(N, S, L(iter));
 			thenBlock	     = LLVMAppendBasicBlock(S->currentFunction, "then");
@@ -2387,7 +2391,7 @@ noisyMatchStatementCodeGen(State * N, CodeGenState * S, IrNode * matchNode)
 			if (terminatorValue != NULL)
 			{
 				/*
-				 *       If we do not return then we add branch normally.
+				 *	If we do not return then we add branch normally.
 				 */
 				if (LLVMIsAReturnInst(terminatorValue) == NULL)
 				{
@@ -2404,12 +2408,12 @@ noisyMatchStatementCodeGen(State * N, CodeGenState * S, IrNode * matchNode)
 }
 
 void
-noisyIterateStatementCodeGen(State * N, CodeGenState * S, IrNode * iterateNode)
+noisyIterateStatementCodeGen(State *  N, CodeGenState *  S, IrNode *  iterateNode)
 {
 	LLVMBasicBlockRef loopBlock = LLVMAppendBasicBlock(S->currentFunction, "loop");
 	LLVMBuildBr(S->theBuilder, loopBlock);
 	LLVMPositionBuilderAtEnd(S->theBuilder, loopBlock);
-	for (IrNode * iter = R(iterateNode); iter != NULL; iter = RR(iter))
+	for (IrNode *  iter = R(iterateNode); iter != NULL; iter = RR(iter))
 	{
 		LLVMValueRef	  condVal    = noisyExpressionCodeGen(N, S, L(iter));
 		LLVMBasicBlockRef thenBlock  = LLVMAppendBasicBlock(S->currentFunction, "then");
@@ -2426,7 +2430,7 @@ noisyIterateStatementCodeGen(State * N, CodeGenState * S, IrNode * iterateNode)
 }
 
 void
-noisySequenceStatementCodeGen(State * N, CodeGenState * S, IrNode * sequenceNode)
+noisySequenceStatementCodeGen(State *  N, CodeGenState *  S, IrNode *  sequenceNode)
 {
 	noisyAssignmentStatementCodeGen(N, S, LL(sequenceNode));
 	LLVMBasicBlockRef condBlock  = LLVMAppendBasicBlock(S->currentFunction, "cond");
@@ -2447,7 +2451,7 @@ noisySequenceStatementCodeGen(State * N, CodeGenState * S, IrNode * sequenceNode
 	if (terminatorValue != NULL)
 	{
 		/*
-		 *       If we do not return then we add branch normally.
+		 *	If we do not return then we add branch normally.
 		 */
 		if (LLVMIsAReturnInst(terminatorValue) == NULL)
 		{
@@ -2463,15 +2467,15 @@ noisySequenceStatementCodeGen(State * N, CodeGenState * S, IrNode * sequenceNode
 }
 
 void
-noisyOperatorToleranceDeclCodeGen(State * N, CodeGenState * S, IrNode * toleranceDeclNode)
+noisyOperatorToleranceDeclCodeGen(State *  N, CodeGenState *  S, IrNode *  toleranceDeclNode)
 {
 	/*
-	 *       We do not implement that.
+	 *	We do not implement that.
 	 */
 }
 
 void
-noisyReturnStatementCodeGen(State * N, CodeGenState * S, IrNode * returnNode)
+noisyReturnStatementCodeGen(State *  N, CodeGenState *  S, IrNode *  returnNode)
 {
 	noisyDestroyCoroutineFrames(N, S);
 	LLVMValueRef expressionValue = noisyExpressionCodeGen(N, S, LRL(returnNode));
@@ -2492,7 +2496,7 @@ noisyReturnStatementCodeGen(State * N, CodeGenState * S, IrNode * returnNode)
 }
 
 void
-noisyStatementCodeGen(State * N, CodeGenState * S, IrNode * noisyStatementNode)
+noisyStatementCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyStatementNode)
 {
 	switch (L(noisyStatementNode)->type)
 	{
@@ -2525,9 +2529,9 @@ noisyStatementCodeGen(State * N, CodeGenState * S, IrNode * noisyStatementNode)
 }
 
 void
-noisyStatementListCodeGen(State * N, CodeGenState * S, IrNode * statementListNode)
+noisyStatementListCodeGen(State *  N, CodeGenState *  S, IrNode *  statementListNode)
 {
-	for (IrNode * iter = statementListNode; iter != NULL; iter = R(iter))
+	for (IrNode *  iter = statementListNode; iter != NULL; iter = R(iter))
 	{
 		if (L(iter) != NULL && LL(iter) != NULL)
 		{
@@ -2537,7 +2541,7 @@ noisyStatementListCodeGen(State * N, CodeGenState * S, IrNode * statementListNod
 }
 
 LLVMValueRef
-noisyFunctionDefnCodeGen(State * N, CodeGenState * S, IrNode * noisyFunctionDefnNode)
+noisyFunctionDefnCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyFunctionDefnNode)
 {
 	LLVMValueRef func;
 	if (!strcmp(L(noisyFunctionDefnNode)->tokenString, "init"))
@@ -2549,7 +2553,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S, IrNode * noisyFunctionDefn
 		func = LLVMGetNamedFunction(S->theModule, L(noisyFunctionDefnNode)->tokenString);
 	}
 	/*
-	 *       Declare local function
+	 *	Declare local function
 	 */
 	if (func == NULL)
 	{
@@ -2557,7 +2561,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S, IrNode * noisyFunctionDefn
 		if (func == NULL)
 		{
 			/*
-			 *       If func depends on Module parameters we skip its definition until its loaded.
+			 *	If func depends on Module parameters we skip its definition until its loaded.
 			 */
 			return func;
 		}
@@ -2567,18 +2571,18 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S, IrNode * noisyFunctionDefn
 	L(noisyFunctionDefnNode)->symbol->llvmPointer = func;
 	LLVMBasicBlockRef funcEntry		      = LLVMAppendBasicBlock(func, "entry");
 	LLVMPositionBuilderAtEnd(S->theBuilder, funcEntry);
-	IrNode * outputSignature = RRL(noisyFunctionDefnNode);
+	IrNode *  outputSignature = RRL(noisyFunctionDefnNode);
 
 	if (L(noisyFunctionDefnNode)->symbol->isChannel)
 	{
 		LLVMBasicBlockRef cleanupBB = noisyGenerateCoroutineInitials(S, N, outputSignature, funcEntry);
 
 		/*
-		 *       Array arguments need the following processing before any other code generation.
+		 *	Array arguments need the following processing before any other code generation.
 		 */
-		for (IrNode * iter = RL(L(noisyFunctionDefnNode)->symbol->functionDefinition); iter != NULL; iter = RR(iter))
+		for (IrNode *  iter = RL(L(noisyFunctionDefnNode)->symbol->functionDefinition); iter != NULL; iter = RR(iter))
 		{
-			Symbol * identifierSymbol;
+			Symbol *  identifierSymbol;
 			if (L(iter)->type == kNoisyIrNodeType_Tnil)
 			{
 				break;
@@ -2600,10 +2604,11 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S, IrNode * noisyFunctionDefn
 
 		noisyStatementListCodeGen(N, S, RR(noisyFunctionDefnNode)->irRightChild->irLeftChild);
 
-		S->cleanupBB			  = NULL;
-		S->suspendBB			  = NULL;
-		int		    basicBlockNum = LLVMCountBasicBlocks(S->currentFunction);
-		LLVMBasicBlockRef * basicBlocks	  = (LLVMBasicBlockRef *)calloc(basicBlockNum, sizeof(LLVMBasicBlockRef));
+		S->cleanupBB = NULL;
+		S->suspendBB = NULL;
+		int basicBlockNum = LLVMCountBasicBlocks(S->currentFunction);
+
+		LLVMBasicBlockRef *  basicBlocks = (LLVMBasicBlockRef *)calloc(basicBlockNum, sizeof(LLVMBasicBlockRef));
 
 		LLVMGetBasicBlocks(S->currentFunction, basicBlocks);
 
@@ -2621,14 +2626,14 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S, IrNode * noisyFunctionDefn
 	else
 	{
 		/*
-		 *       Normal function code generation.
+		 *	Normal function code generation.
 		 */
 		/*
-		 *       Array arguments need the following processing before any other code generation.
+		 *	Array arguments need the following processing before any other code generation.
 		 */
-		for (IrNode * iter = RL(L(noisyFunctionDefnNode)->symbol->functionDefinition); iter != NULL; iter = RR(iter))
+		for (IrNode *  iter = RL(L(noisyFunctionDefnNode)->symbol->functionDefinition); iter != NULL; iter = RR(iter))
 		{
-			Symbol * identifierSymbol;
+			Symbol *  identifierSymbol;
 			if (L(iter)->type == kNoisyIrNodeType_Tnil)
 			{
 				break;
@@ -2650,7 +2655,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S, IrNode * noisyFunctionDefn
 
 		if (L(outputSignature)->type != kNoisyIrNodeType_Tnil)
 		{
-			Symbol * identifierSymbol = L(outputSignature)->symbol;
+			Symbol *  identifierSymbol = L(outputSignature)->symbol;
 			if (identifierSymbol->noisyType.basicType == noisyBasicTypeArrayType)
 			{
 				LLVMValueRef paramValue	    = LLVMGetLastParam(S->currentFunction);
@@ -2662,7 +2667,7 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S, IrNode * noisyFunctionDefn
 
 		noisyStatementListCodeGen(N, S, RR(noisyFunctionDefnNode)->irRightChild->irLeftChild);
 		/*
-		 *       If the functions returns void the final instruction should be the Ret Void.
+		 *	If the functions returns void the final instruction should be the Ret Void.
 		 */
 		if (L(outputSignature)->type == kNoisyIrNodeType_Tnil)
 		{
@@ -2676,11 +2681,11 @@ noisyFunctionDefnCodeGen(State * N, CodeGenState * S, IrNode * noisyFunctionDefn
 }
 
 void
-noisyProgramCodeGen(State * N, CodeGenState * S, IrNode * noisyProgramNode)
+noisyProgramCodeGen(State *  N, CodeGenState *  S, IrNode *  noisyProgramNode)
 {
 	noisyModuleDeclCodeGen(N, S, noisyProgramNode->irLeftChild);
 
-	for (IrNode * currentNode = R(noisyProgramNode); currentNode != NULL; currentNode = currentNode->irRightChild)
+	for (IrNode *  currentNode = R(noisyProgramNode); currentNode != NULL; currentNode = currentNode->irRightChild)
 	{
 		if (currentNode->irLeftChild->type == kNoisyIrNodeType_PmoduleDecl)
 		{
@@ -2701,9 +2706,9 @@ void
 noisyCodeGen(State * N)
 {
 	/*
-	 *       Declare the basic code generation state and the necessary data structures for LLVM.
+	 *	Declare the basic code generation state and the necessary data structures for LLVM.
 	 */
-	CodeGenState * S  = (CodeGenState *)calloc(1, sizeof(CodeGenState));
+	CodeGenState *  S = (CodeGenState *)calloc(1, sizeof(CodeGenState));
 	S->theContext	  = LLVMContextCreate();
 	S->theBuilder	  = LLVMCreateBuilderInContext(S->theContext);
 	S->thePassManager = LLVMCreatePassManager();
@@ -2718,14 +2723,14 @@ noisyCodeGen(State * N)
 	LLVMRunPassManager(S->thePassManager, S->theModule);
 
 	/*
-	 *       We need to dispose LLVM structures in order to avoid leaking memory. Free code gen state.
+	 *	We need to dispose LLVM structures in order to avoid leaking memory. Free code gen state.
 	 */
-	char * fileName;
-	char * fileName2 = (char *)calloc(strlen(N->fileName) - 1, sizeof(char));
+	char *  fileName;
+	char *  fileName2 = (char *)calloc(strlen(N->fileName) - 1, sizeof(char));
 	strncpy(fileName2, N->fileName, strlen(N->fileName) - 2);
 	// fileName2[strlen(N->fileName)-2]='\0';
 	asprintf(&fileName, "%s.bc", fileName2);
-	char * msg;
+	char *  msg;
 	LLVMVerifyModule(S->theModule, LLVMPrintMessageAction, &msg);
 	LLVMDisposeMessage(msg);
 	LLVMWriteBitcodeToFile(S->theModule, fileName);
