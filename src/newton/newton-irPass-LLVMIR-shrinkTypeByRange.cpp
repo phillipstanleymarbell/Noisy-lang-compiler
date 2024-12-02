@@ -92,11 +92,13 @@ varType
 getFloatingTypeEnum(double min, double max)
 {
 	varType finalType;
-	if ((std::abs(min) < FLT_MAX) && (std::abs(max) < FLT_MAX))
+    if ((FLT_EPSILON < std::abs(min) && std::abs(min) < FLT_MAX) &&
+        (FLT_EPSILON < std::abs(max) && std::abs(max) < FLT_MAX))
 	{
 		finalType = FLOAT;
 	}
-	else if ((std::abs(min) < DBL_MAX) && (std::abs(max) < DBL_MAX))
+    else if ((DBL_EPSILON < std::abs(min) && std::abs(min) < DBL_MAX) &&
+             (DBL_EPSILON < std::abs(max) && std::abs(max) < DBL_MAX))
 	{
 		finalType = DOUBLE;
 	}
@@ -250,7 +252,7 @@ getTypeInfo(State * N, Value * inValue,
 		case Type::FloatTyID:
 			break;
 		case Type::DoubleTyID:
-			typeInformation = getShrinkDoubleType(N, inValue, vrRangeIt->second);
+//			typeInformation = getShrinkDoubleType(N, inValue, vrRangeIt->second);
 			break;
 		default:
 			break;
@@ -925,6 +927,11 @@ matchDestType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasicBl
 			typeInfo backType;
 			backType.signFlag  = isSignedValue(inInstruction);
 			backType.valueType = inInstType;
+            if (isa<LoadInst>(inInstruction))
+            {
+                unsigned ptAddressSpace = srcType->getPointerAddressSpace();
+                backType.valueType	= backType.valueType->getPointerTo(ptAddressSpace);
+            }
 			for (size_t id = 0; id < inInstruction->getNumOperands(); id++)
 			{
 				auto newTypeValue = rollbackType(N, inInstruction, id, llvmIrBasicBlock, typeChangedInst, backType);
@@ -974,7 +981,13 @@ matchDestType(State * N, Instruction * inInstruction, BasicBlock & llvmIrBasicBl
 		/*
 		 * roll back operands to typeInformation.valueType
 		 * */
-		for (size_t id = 0; id < inInstruction->getNumOperands(); id++)
+        if (isa<LoadInst>(inInstruction))
+        {
+            unsigned ptAddressSpace	  = srcType->getPointerAddressSpace();
+            typeInformation.valueType = typeInformation.valueType->getPointerTo(ptAddressSpace);
+        }
+        size_t roll_backed_op_num = isa<GetElementPtrInst>(inInstruction) ? 1 : inInstruction->getNumOperands();
+        for (size_t id = 0; id < roll_backed_op_num; id++)
 		{
 			typeInfo operandPrevTypeInfo{typeInformation.valueType,
 						     isSignedValue(inInstruction->getOperand(id))};
@@ -1496,6 +1509,10 @@ mergeCast(State * N, Function & llvmIrFunction,
 			Instruction * llvmIrInstruction = &*itBB++;
 			switch (llvmIrInstruction->getOpcode())
 			{
+                case Instruction::FPToUI:
+                case Instruction::FPToSI:
+                case Instruction::SIToFP:
+                case Instruction::UIToFP:
 				case Instruction::ZExt:
 				case Instruction::SExt:
 				case Instruction::FPExt:
@@ -1540,7 +1557,23 @@ mergeCast(State * N, Function & llvmIrFunction,
 								 * */
 								Value * castInst;
 								auto	valueType = llvmIrInstruction->getType();
-								if (valueType->isIntegerTy())
+                                if ((valueType->isFloatTy() || valueType->isDoubleTy()) &&
+                                    sourceOperand->getType()->isIntegerTy())
+                                {
+                                    // float fa = (float)ia;
+                                    bool isSigned = sourceInst->getOpcode() == Instruction::SIToFP;
+                                    castInst      = isSigned ? Builder.CreateSIToFP(sourceOperand, valueType)
+                                                             : Builder.CreateUIToFP(sourceOperand, valueType);
+                                }
+                                else if (valueType->isIntegerTy() &&
+                                         (sourceOperand->getType()->isFloatTy() || sourceOperand->getType()->isDoubleTy()))
+                                {
+                                    // int iq = (int)fq;
+                                    bool isSigned = sourceInst->getOpcode() == Instruction::FPToSI;
+                                    castInst      = isSigned ? Builder.CreateFPToSI(sourceOperand, valueType)
+                                                             : Builder.CreateFPToUI(sourceOperand, valueType);
+                                }
+                                else if (valueType->isIntegerTy())
 								{
 									castInst = Builder.CreateIntCast(sourceOperand, valueType,
 													 llvmIrInstruction->getOpcode() == Instruction::SExt);
@@ -1648,6 +1681,10 @@ countCastInst(State * N, Function & llvmIrFunction)
 		{
 			switch (llvmIrInstruction.getOpcode())
 			{
+                case Instruction::FPToUI:
+                case Instruction::FPToSI:
+                case Instruction::SIToFP:
+                case Instruction::UIToFP:
 				case Instruction::ZExt:
 				case Instruction::SExt:
 				case Instruction::FPExt:
@@ -1820,6 +1857,141 @@ getDependencyLink(State * N, Function & llvmIrFunction)
 	return dependencyLink;
 }
 
+/*
+ * There are three kinds of instructions in LLVM that are related with signed/unsigned
+ *  1. nsw/nuw with Add, Sub, Mul, Shl
+ *  2. UDiv/SDiv, URem/SRem, LShr/AShr
+ *  3. sgt/ugt, sge/uge, slt/ult, sle/ule in ICmp
+ * Note: Sign bit can only change from `signed` to `unsigned` in `type shrinkage`.
+ * Remember: We have matched the type of operands before this function.
+ * */
+void
+upDateInstSignFlag(State * N, Function & llvmIrFunction,
+                   std::map<llvm::Value *, std::pair<double, double>> & virtualRegisterRange,
+                   std::map<Value *, typeInfo> & typeChangedInst) {
+    for (BasicBlock & llvmIrBasicBlock : llvmIrFunction) {
+        for (BasicBlock::iterator itBB = llvmIrBasicBlock.begin(); itBB != llvmIrBasicBlock.end();) {
+            Instruction *llvmIrInstruction = &*itBB++;
+            switch (llvmIrInstruction->getOpcode()) {
+                case Instruction::Add:
+                case Instruction::Sub:
+                case Instruction::Mul:
+                case Instruction::Shl:
+                {
+                    /*
+                     * nsw/nuw
+                     * Implement when meet
+                     * */
+                    auto lhs = llvmIrInstruction->getOperand(0);
+                    auto rhs = llvmIrInstruction->getOperand(1);
+                    auto lhsIt = typeChangedInst.find(lhs);
+                    auto rhsIt = typeChangedInst.find(rhs);
+                    if ((lhsIt != typeChangedInst.end() || rhsIt != typeChangedInst.end())) {
+                        if (lhsIt->second.signFlag || rhsIt->second.signFlag) {
+                            if (llvmIrInstruction->hasNoUnsignedWrap()) {
+                                /*
+                                 * change to `nsw`
+                                 * */
+                            }
+                        } else {
+                            if (llvmIrInstruction->hasNoSignedWrap()) {
+                                /*
+                                 * change to `nuw`
+                                 * */
+                            }
+                        }
+                    }
+                    flexprint(N->Fe, N->Fm, N->Fperr,
+                              "\tupDateInstSignFlag with nsw/nuw: Not Implement!\n");
+                    break;
+                }
+                case Instruction::SDiv:
+                case Instruction::UDiv:
+                case Instruction::URem:
+                case Instruction::SRem:
+                case Instruction::LShr:
+                case Instruction::AShr:
+                {
+                    /*
+                     * Different inst for signed/unsigned.
+                     * Should also care about
+                     *  1. the extent.
+                     *  2. one operand is signed, the other is unsigned.
+                     * Check the LLVM Ref: https://llvm.org/docs/LangRef.html#llvm-language-reference-manual
+                     * Implement when meet.
+                     * */
+                    flexprint(N->Fe, N->Fm, N->Fperr,
+                              "\tupDateInstSignFlag with diff inst: Not Implement!\n");
+                    break;
+                }
+                case Instruction::ICmp:
+                    if (auto llvmIrICmpInstruction = dyn_cast<ICmpInst>(llvmIrInstruction))
+                    {
+                        if (llvmIrICmpInstruction->isUnsigned()) {
+                            break;
+                        }
+                        auto leftOperand  = llvmIrICmpInstruction->getOperand(0);
+                        auto rightOperand = llvmIrICmpInstruction->getOperand(1);
+                        /*
+                         * If either of the operand is constant,
+                         * and the variable operand can only change from `signed` to `unsigned`,
+                         * so we only care about when the variable operand is `unsigned`.
+                         * Note: here's instruction is signed!
+                         *  if the constant operand is negative value, the `scf by range` should simplify it
+                         *  if the constant operand is positive value, we can use `unsigned` flag
+                         * */
+                        if ((isa<llvm::Constant>(leftOperand) && !isa<llvm::Constant>(rightOperand)))
+                        {
+                            llvmIrICmpInstruction->swapOperands();
+                            leftOperand  = llvmIrICmpInstruction->getOperand(0);
+                            rightOperand = llvmIrICmpInstruction->getOperand(1);
+                        }
+                        if (!isa<llvm::Constant>(leftOperand) && isa<llvm::Constant>(rightOperand)) {
+                            /*
+                             * We only check the type has been stored in typeChangedInst, which means might be changed
+                             * and only check if the variable is unsigned.
+                             * */
+                            auto itTC = typeChangedInst.find(leftOperand);
+                            if (itTC == typeChangedInst.end() || itTC->second.signFlag) {
+                                break;
+                            }
+
+                            ConstantInt * constInt = llvm::dyn_cast<llvm::ConstantInt>(rightOperand);
+                            assert(nullptr != constInt && "ICmp: it's not a const int!!!!!!!!!!!\n");
+                            if (constInt->getSExtValue() < 0) {
+                                break;
+                            }
+
+                            auto originalPred = llvmIrICmpInstruction->getPredicate();
+                            llvmIrICmpInstruction->setPredicate(ICmpInst::getUnsignedPredicate(originalPred));
+                        }
+                        /*
+                         * If both of the operands are variable with different sign bit,
+                         * we check the range of them (if we can), e.g.
+                         *
+                         *  %c = icmp slt i16 %a, %b
+                         *
+                         *  if the %a is unsigned, but the max range is less than 32767, we can ignore it.
+                         *  otherwise, it overflows, and we should extend the operands, like,
+                         *
+                         *  %c = sext i16 %a to i32
+                         *  %d = sext i16 %b to i32
+                         *  %e = icmp slt i32 %c, %d
+                         *  %f = trunc i32 %c to i16
+                         *  %g = trunc i32 %d to i16
+                         *
+                         *  Then we replace the `%f`, `%g` to `%a`, `%b`.
+                         *  And also replace the `%e` to the previous icmp result.
+                         * */
+                        flexprint(N->Fe, N->Fm, N->Fperr,
+                                  "\tupDateInstSignFlag ICmp with both variable: Not Implement!\n");
+                        break;
+                    }
+            }
+        }
+    }
+}
+
 void
 shrinkType(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 {
@@ -1827,19 +1999,10 @@ shrinkType(State * N, BoundInfo * boundInfo, Function & llvmIrFunction)
 	 * 1. construct instruction dependency link
 	 * 2. work with roll back strategies
 	 * */
-	std::vector<std::vector<Value *>> prevDepLink	  = getDependencyLink(N, llvmIrFunction);
-	std::map<Value *, typeInfo>	  typeChangedInst = shrinkInstType(N, boundInfo, llvmIrFunction);
-	mergeCast(N, llvmIrFunction, boundInfo->virtualRegisterRange, typeChangedInst);
-	std::vector<std::vector<Value *>> newDepLink = getDependencyLink(N, llvmIrFunction);
-
-	for (auto & depLink : newDepLink)
-	{
-		if (rollBackStrategy(N, depLink))
-		{
-			rollBackDependencyLink(N, depLink, boundInfo->virtualRegisterRange, typeChangedInst);
-		}
-	}
+    std::map<Value *, typeInfo> typeChangedInst = shrinkInstType(N, boundInfo, llvmIrFunction);
 
 	mergeCast(N, llvmIrFunction, boundInfo->virtualRegisterRange, typeChangedInst);
+
+    upDateInstSignFlag(N, llvmIrFunction, boundInfo->virtualRegisterRange, typeChangedInst);
 }
 }

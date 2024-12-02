@@ -41,6 +41,7 @@
 #include "newton-irPass-LLVMIR-constantSubstitution.h"
 #include "newton-irPass-LLVMIR-shrinkTypeByRange.h"
 #include "newton-irPass-LLVMIR-quantization.h"
+#include "newton-irPass-LLVMIR-memoryAlignment.h"
 #endif /* __cplusplus */
 
 #include <algorithm>
@@ -66,10 +67,10 @@
 
 using namespace llvm;
 
-extern "C"{
+extern "C" {
 
 void
-dumpIR(State * N, std::string fileSuffix, std::unique_ptr<Module> Mod)
+dumpIR(State * N, std::string fileSuffix, const std::unique_ptr<Module> & Mod)
 {
 	StringRef   filePath(N->llvmIR);
 	std::string dirPath	= std::string(sys::path::parent_path(filePath)) + "/";
@@ -93,20 +94,16 @@ mergeBoundInfo(BoundInfo * dst, const BoundInfo * src)
 }
 
 void
-collectCalleeBoundInfo(std::map<std::string, BoundInfo *> & funcBoundInfo, const BoundInfo * boundInfo)
+collectCalleeInfo(std::vector<std::string> &	       calleeNames,
+		  std::map<std::string, BoundInfo *> & funcBoundInfo,
+		  const BoundInfo *		       boundInfo)
 {
 	for (auto & calleeInfo : boundInfo->calleeBound)
 	{
+		calleeNames.emplace_back(calleeInfo.first);
 		funcBoundInfo.emplace(calleeInfo.first, calleeInfo.second);
-		collectCalleeBoundInfo(funcBoundInfo, calleeInfo.second);
+		collectCalleeInfo(calleeNames, funcBoundInfo, calleeInfo.second);
 	}
-	return;
-}
-
-void
-collectCallerMap(std::map<std::string, CallInst *> & callerMap, const BoundInfo * boundInfo)
-{
-	callerMap.insert(boundInfo->callerMap.begin(), boundInfo->callerMap.end());
 	return;
 }
 
@@ -150,7 +147,19 @@ class FunctionNodeCmp {
 using hashFuncSet = std::set<FunctionNode, FunctionNodeCmp>;
 
 void
-overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> callerMap)
+cleanFunctionMap(const std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> & callerMap)
+{
+	for (auto itFunc = callerMap.begin(); itFunc != callerMap.end();)
+	{
+		if (nullptr == Mod->getFunction(itFunc->first))
+			itFunc = callerMap.erase(itFunc);
+		else
+			++itFunc;
+	}
+}
+
+void
+overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> & callerMap)
 {
 	/*
 	 * compare the functions and remove the redundant one
@@ -189,30 +198,9 @@ overloadFunc(std::unique_ptr<Module> & Mod, std::map<std::string, CallInst *> ca
 			baseFuncNum = baseFuncs.size();
 	}
 
-	std::set<std::string> baseFuncNames;
-	for (auto f : baseFuncs)
-	{
-		baseFuncNames.emplace(f.getFunc()->getName().str());
-	}
-
-	/*
-	 * iterate functions in Mod, if it cannot be found in baseFuncs, delete it.
-	 * */
-	for (auto itFunc = Mod->getFunctionList().begin(); itFunc != Mod->getFunctionList().end(); itFunc++)
-	{
-		if (!itFunc->hasName() || itFunc->getName().empty())
-			continue;
-		if (itFunc->getName().startswith("llvm.dbg.value") ||
-		    itFunc->getName().startswith("llvm.dbg.declare"))
-			continue;
-		if (itFunc->isDeclaration())
-			continue;
-		if (baseFuncNames.find(itFunc->getName().str()) == baseFuncNames.end() && itFunc->hasLocalLinkage())
-		{
-			Mod->getFunctionList().remove(itFunc);
-			itFunc--;
-		}
-	}
+    legacy::PassManager passManager;
+    passManager.add(createGlobalDCEPass());
+    passManager.run(*Mod);
 }
 
 void
@@ -328,15 +316,16 @@ irPassLLVMIROptimizeByRange(State * N)
 	 * */
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
 	std::map<std::string, CallInst *> callerMap;
-	const bool			  useOverLoad = true;
+	callerMap.clear();
+	bool useOverLoad = true;
 	for (auto & mi : *Mod)
 	{
 		auto boundInfo = new BoundInfo();
 		mergeBoundInfo(boundInfo, globalBoundInfo);
-		rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi, useOverLoad);
-		funcBoundInfo.emplace(mi.getName(), boundInfo);
-		collectCalleeBoundInfo(funcBoundInfo, boundInfo);
-		collectCallerMap(callerMap, boundInfo);
+		rangeAnalysis(N, mi, boundInfo, callerMap, typeRange, virtualRegisterVectorRange, useOverLoad);
+		funcBoundInfo.emplace(mi.getName().str(), boundInfo);
+		std::vector<std::string> calleeNames;
+		collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
 	}
 
 	/*
@@ -350,31 +339,75 @@ irPassLLVMIROptimizeByRange(State * N)
 		{
 			simplifyControlFlow(N, boundInfoIt->second, mi);
 		}
-		else
-		{
-			assert(false);
-		}
+		//		else
+		//		{
+		//			assert(false);
+		//		}
 	}
+
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
+    for (auto & mi : *Mod)
+    {
+        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+        if (boundInfoIt != funcBoundInfo.end()) {
+            shrinkType(N, boundInfoIt->second, mi);
+        }
+//            else
+//            {
+//	            assert(false);
+//	        }
+    }
+
+    /*
+     * remove the functions that are optimized by passes.
+     * */
+    if (useOverLoad)
+        cleanFunctionMap(Mod, callerMap);
+
+    if (useOverLoad)
+        overloadFunc(Mod, callerMap);
+
+    flexprint(N->Fe, N->Fm, N->Fpinfo, "memory alignment\n");
+    for (auto & mi : *Mod)
+    {
+        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
+        if (boundInfoIt != funcBoundInfo.end())
+        {
+            memoryAlignment(N, boundInfoIt->second, mi);
+        }
+//        else
+//        {
+//            assert(false);
+//        }
+    }
 
 	legacy::PassManager passManager;
 	passManager.add(createCFGSimplificationPass());
 	passManager.add(createInstSimplifyLegacyPass());
+	passManager.add(createGlobalDCEPass());
 	passManager.run(*Mod);
+
+	/*
+	 * remove the functions that are optimized by passes.
+	 * */
+	if (useOverLoad)
+		cleanFunctionMap(Mod, callerMap);
 
 	if (useOverLoad)
 		overloadFunc(Mod, callerMap);
 
+	useOverLoad = false;
+
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
-	callerMap.clear();
 	funcBoundInfo.clear();
 	for (auto & mi : *Mod)
 	{
 		auto boundInfo = new BoundInfo();
 		mergeBoundInfo(boundInfo, globalBoundInfo);
-		rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi, useOverLoad);
-		funcBoundInfo.emplace(mi.getName(), boundInfo);
-		collectCalleeBoundInfo(funcBoundInfo, boundInfo);
-		collectCallerMap(callerMap, boundInfo);
+		rangeAnalysis(N, mi, boundInfo, callerMap, typeRange, virtualRegisterVectorRange, useOverLoad);
+		funcBoundInfo.emplace(mi.getName().str(), boundInfo);
+		std::vector<std::string> calleeNames;
+		collectCalleeInfo(calleeNames, funcBoundInfo, boundInfo);
 	}
 
 	flexprint(N->Fe, N->Fm, N->Fpinfo, "constant substitution\n");
@@ -385,62 +418,15 @@ irPassLLVMIROptimizeByRange(State * N)
 		{
 			constantSubstitution(N, boundInfoIt->second, mi);
 		}
-		else
-		{
-			assert(false);
-		}
+		//		else
+		//		{
+		//			assert(false);
+		//		}
 	}
-
-	//	flexprint(N->Fe, N->Fm, N->Fpinfo, "shrink data type by range\n");
-	//    for (auto & mi : *Mod)
-	//    {
-	//        auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-	//        if (boundInfoIt != funcBoundInfo.end()) {
-	//            shrinkType(N, boundInfoIt->second, mi);
-	//        } else {
-	//            assert(false);
-	//        }
-	//    }
-
-	if (useOverLoad)
-		overloadFunc(Mod, callerMap);
-
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "infer bound\n");
-	callerMap.clear();
-	funcBoundInfo.clear();
-	for (auto & mi : *Mod)
-	{
-		auto boundInfo = new BoundInfo();
-		mergeBoundInfo(boundInfo, globalBoundInfo);
-		rangeAnalysis(N, typeRange, virtualRegisterVectorRange, boundInfo, mi, useOverLoad);
-		funcBoundInfo.emplace(mi.getName(), boundInfo);
-		collectCalleeBoundInfo(funcBoundInfo, boundInfo);
-		collectCallerMap(callerMap, boundInfo);
-	}
-
-	/*
-	 *
-	 * */
-	flexprint(N->Fe, N->Fm, N->Fpinfo, "auto quantize data by precision\n");
-	for (auto & mi : *Mod)
-	{
-		auto boundInfoIt = funcBoundInfo.find(mi.getName().str());
-		if (boundInfoIt != funcBoundInfo.end())
-		{
-			irPassLLVMIRAutoQuantization(N, boundInfoIt->second, mi);
-		}
-		else
-		{
-			assert(false);
-		}
-	}
-
-	if (useOverLoad)
-		overloadFunc(Mod, callerMap);
 
 	/*
 	 * Dump BC file to a file.
 	 * */
-	dumpIR(N, "output", std::move(Mod));
+	dumpIR(N, "output", Mod);
 }
 }
